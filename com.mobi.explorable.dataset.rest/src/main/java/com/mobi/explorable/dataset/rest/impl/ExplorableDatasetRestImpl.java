@@ -67,9 +67,6 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
@@ -84,6 +81,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -108,7 +106,6 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private BNodeService bNodeService;
-    private RepositoryManager repositoryManager;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -214,11 +211,6 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Reference
     public void setBNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
-    }
-
-    @Reference
-    public void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
     }
 
     @Override
@@ -378,22 +370,18 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private String getInferredClasses(Resource recordId, IRI classIRI) {
         DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
                 ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
-        Repository repo = repositoryManager.createMemoryRepository();
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Model recordModel = record.getModel();
-            conn.begin();
-            record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology ->
-                    ontology.getImportsClosure().forEach(ont -> conn.add(ont.asModel(modelFactory)))));
-            conn.commit();
-            StringBuilder builder = new StringBuilder();
-            builder.append(" <" + classIRI.stringValue() + "> ");
-            ontologyManager.getSubClassesFor(classIRI, conn).forEach(r ->
-                    builder.append("<" + Bindings.requiredResource(r, "s").stringValue() + "> "));
-            return builder.toString();
-        } finally {
-            repo.shutDown();
-        }
+        Model recordModel = record.getModel();
+        StringBuilder builder = new StringBuilder();
+        builder.append(" <").append(classIRI.stringValue()).append("> ");
+        record.getOntology().stream()
+                .map(value -> getOntology(recordModel, value))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(ontology -> ontology.getSubClassesFor(classIRI))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet())
+                .forEach(iri -> builder.append("<").append(iri).append("> "));
+        return builder.toString();
     }
 
     /**

@@ -65,6 +65,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -81,10 +82,12 @@ import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.AsOWLDatatype;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.HasDomain;
 import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
 import org.semanticweb.owlapi.model.OWLDataCardinalityRestriction;
@@ -101,6 +104,7 @@ import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
@@ -147,8 +151,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -159,7 +165,7 @@ import javax.annotation.Nullable;
 
 public class SimpleOntology implements Ontology {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
 
     private OntologyId ontologyId;
     private OntologyManager ontologyManager;
@@ -181,6 +187,8 @@ public class SimpleOntology implements Ontology {
             .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
     private OWLOntologyManager owlManager;
 
+    private static String CONCEPT = SKOS.CONCEPT.stringValue();
+    private static String CONCEPT_SCEHEME = SKOS.CONCEPT_SCHEME.stringValue();
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_CLASSES_FOR;
@@ -641,41 +649,142 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public TupleQueryResult getSubClassesOf() {
-        return runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true);
+    public Map<IRI, Set<IRI>> getSubClassesOf() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            owlOntology.classesInSignature(Imports.INCLUDED)
+                    .forEach(owlClass -> results.put(SimpleOntologyValues.mobiIRI(owlClass.getIRI()),
+                            getSubClassesFor(owlClass, true)));
+            return results;
+        } finally {
+            logTrace("getSubClassesOf()", start);
+        }
     }
 
     @Override
-    public TupleQueryResult getSubClassesFor(IRI iri) {
-        return runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
-                "getSubClassesFor(ontology, iri)", true);
+    public Set<IRI> getSubClassesFor(IRI iri) {
+        long start = getStartTime();
+        try {
+            OWLClass owlClass = owlManager.getOWLDataFactory().getOWLClass(SimpleOntologyValues.owlapiIRI(iri));
+            return getSubClassesFor(owlClass, false);
+        } finally {
+            logTrace("getSubClassesFor(IRI)", start);
+        }
+    }
+
+    private Set<IRI> getSubClassesFor(OWLClass owlClass, boolean direct) {
+        return owlReasoner.getSubClasses(owlClass, direct).entities()
+                .filter(subclass -> !subclass.isOWLNothing())
+                .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()))
+                .collect(Collectors.toSet());
     }
 
     @Override
-    public TupleQueryResult getSubPropertiesFor(IRI iri) {
-        return runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
-                "getSubPropertiesFor(ontology, iri)", true);
+    public Set<IRI> getSubPropertiesFor(IRI iri) {
+        long start = getStartTime();
+        try {
+            org.semanticweb.owlapi.model.IRI owlapiIRI = SimpleOntologyValues.owlapiIRI(iri);
+            if (owlOntology.containsDataPropertyInSignature(owlapiIRI, Imports.INCLUDED)) {
+                OWLDataProperty owlDataProperty = owlManager.getOWLDataFactory().getOWLDataProperty(owlapiIRI);
+                return getSubDatatypePropertiesFor(owlDataProperty, false);
+            } else if (owlOntology.containsObjectPropertyInSignature(owlapiIRI, Imports.INCLUDED)) {
+                OWLObjectProperty owlObjectProperty = owlManager.getOWLDataFactory().getOWLObjectProperty(owlapiIRI);
+                return getSubObjectPropertiesFor(owlObjectProperty, false);
+            } else if (owlOntology.containsAnnotationPropertyInSignature(owlapiIRI, Imports.INCLUDED)) {
+                OWLAnnotationProperty owlAnnotationProperty = owlManager.getOWLDataFactory()
+                        .getOWLAnnotationProperty(owlapiIRI);
+                return getSubAnnotationPropertiesFor(owlAnnotationProperty, false);
+            } else {
+                return Collections.emptySet();
+            }
+        } finally {
+            logTrace("getSubPropertiesFor(IRI)", start);
+        }
     }
 
     @Override
-    public TupleQueryResult getSubDatatypePropertiesOf() {
-        return runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(ontology)", true);
+    public Map<IRI, Set<IRI>> getSubDatatypePropertiesOf() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
+                    .forEach(property -> results.put(SimpleOntologyValues.mobiIRI(property.getIRI()),
+                            getSubDatatypePropertiesFor(property, true)));
+            return results;
+        } finally {
+            logTrace("getSubDatatypePropertiesOf()", start);
+        }
+    }
+
+    private Set<IRI> getSubDatatypePropertiesFor(OWLDataProperty property, boolean direct) {
+        return owlReasoner.getSubDataProperties(property, direct).entities()
+                .filter(subproperty -> !subproperty.isBottomEntity())
+                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()))
+                .collect(Collectors.toSet());
     }
 
     @Override
-    public TupleQueryResult getSubAnnotationPropertiesOf() {
-        return runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(ontology)",
-                true);
+    public Map<IRI, Set<IRI>> getSubAnnotationPropertiesOf() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            owlOntology.annotationPropertiesInSignature()
+                    .forEach(property -> results.put(SimpleOntologyValues.mobiIRI(property.getIRI()),
+                            getSubAnnotationPropertiesFor(property, true)));
+            return results;
+        } finally {
+            logTrace("getSubAnnotationPropertiesOf()", start);
+        }
+    }
+
+    // TODO: Implement indirect
+    private Set<IRI> getSubAnnotationPropertiesFor(OWLAnnotationProperty property, boolean direct) {
+        return owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
+                .filter(axiom -> axiom.getSuperProperty().equals(property))
+                .map(axiom -> SimpleOntologyValues.mobiIRI(axiom.getSubProperty().getIRI()))
+                .collect(Collectors.toSet());
     }
 
     @Override
-    public TupleQueryResult getSubObjectPropertiesOf() {
-        return runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true);
+    public Map<IRI, Set<IRI>> getSubObjectPropertiesOf() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
+                    .forEach(property -> results.put(SimpleOntologyValues.mobiIRI(property.getIRI()),
+                            getSubObjectPropertiesFor(property, true)));
+            return results;
+        } finally {
+            logTrace("getSubObjectPropertiesOf()", start);
+        }
+    }
+
+    private Set<IRI> getSubObjectPropertiesFor(OWLObjectProperty property, boolean direct) {
+        return owlReasoner.getSubObjectProperties(property, direct).entities()
+                .filter(subproperty -> !subproperty.isBottomEntity())
+                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()))
+                .collect(Collectors.toSet());
     }
 
     @Override
-    public TupleQueryResult getClassesWithIndividuals() {
-        return runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true);
+    public Map<IRI, Set<IRI>> getClassesWithIndividuals() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            owlOntology.classesInSignature(Imports.INCLUDED)
+                    .forEach(owlClass -> {
+                        Set<IRI> iris = owlReasoner.instances(owlClass, true)
+                                .map(individual -> SimpleOntologyValues.mobiIRI(individual.getIRI()))
+                                .collect(Collectors.toSet());
+                        if (iris.size() > 0) {
+                            results.put(SimpleOntologyValues.mobiIRI(owlClass.getIRI()), iris);
+                        }
+                    });
+            return results;
+        } finally {
+            logTrace("getClassesWithIndividuals()", start);
+        }
     }
 
     @Override
@@ -712,14 +821,91 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public TupleQueryResult getConceptRelationships() {
-        return runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true);
+    public Map<IRI, Set<IRI>> getConceptRelationships() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            OWLClass owlClass = owlManager.getOWLDataFactory()
+                    .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT));
+            owlReasoner.instances(owlClass).forEach(concept -> {
+                IRI conceptIRI = SimpleOntologyValues.mobiIRI(concept.getIRI());
+                Set<IRI> superConcepts = new HashSet<>();
+                Set<IRI> subConcepts = new HashSet<>();
+                owlOntology.axioms(concept, Imports.INCLUDED)
+                        .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
+                        .map(axiom -> (OWLObjectPropertyAssertionAxiom) axiom)
+                        .forEach(axiom -> {
+                            String property = axiom.getProperty().getNamedProperty().toStringID();
+                            if (property.equals(SKOS.NARROWER.stringValue())
+                                    || property.equals(SKOS.NARROWER_TRANSITIVE.stringValue())
+                                    || property.equals(SKOS.NARROW_MATCH.stringValue())) {
+                                subConcepts.add(SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
+                            } else if (property.equals(SKOS.BROADER.stringValue())
+                                    || property.equals(SKOS.BROADER_TRANSITIVE.stringValue())
+                                    || property.equals(SKOS.BROAD_MATCH.stringValue())) {
+                                superConcepts.add(SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
+                            }
+                        });
+                if (superConcepts.size() == 0 && subConcepts.size() == 0) {
+                    results.put(conceptIRI, Collections.emptySet());
+                } else {
+                    if (results.containsKey(conceptIRI)) {
+                        Set<IRI> existing = results.get(conceptIRI);
+                        existing.addAll(subConcepts);
+                        results.put(conceptIRI, existing);
+                    } else {
+                        results.put(conceptIRI, subConcepts);
+                    }
+                    superConcepts.forEach(sup -> {
+                        if (results.containsKey(sup)) {
+                            Set<IRI> existing = results.get(sup);
+                            existing.add(conceptIRI);
+                            results.put(sup, existing);
+                        } else {
+                            results.put(sup, Collections.singleton(conceptIRI));
+                        }
+                    });
+                }
+            });
+
+            return results;
+        } finally {
+            logTrace("getConceptRelationships()", start);
+        }
     }
 
     @Override
-    public TupleQueryResult getConceptSchemeRelationships() {
-        return runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null, "getConceptSchemeRelationships(ontology)",
-                true);
+    public Map<IRI, Set<IRI>> getConceptSchemeRelationships() {
+        long start = getStartTime();
+        try {
+            Map<IRI, Set<IRI>> results = new HashMap<>();
+            OWLClass owlClass = owlManager.getOWLDataFactory()
+                    .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT_SCEHEME));
+            owlReasoner.instances(owlClass).forEach(conceptScheme -> {
+                IRI conceptSchemeIRI = SimpleOntologyValues.mobiIRI(conceptScheme.getIRI());
+                Set<IRI> concepts = new HashSet<>();
+                owlOntology.referencingAxioms(conceptScheme, Imports.INCLUDED)
+                        .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
+                        .map(owlIndividualAxiom -> (OWLObjectPropertyAssertionAxiom) owlIndividualAxiom)
+                        .forEach(axiom -> {
+                            String property = axiom.getProperty().getNamedProperty().toStringID();
+                            if (property.equals(SKOS.HAS_TOP_CONCEPT.stringValue())) {
+                                concepts.add(SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
+                            } else if (property.equals(SKOS.IN_SCHEME.stringValue())
+                                    || property.equals(SKOS.TOP_CONCEPT_OF.stringValue())) {
+                                concepts.add(SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getSubject().toStringID())));
+                            }
+                        });
+                results.put(conceptSchemeIRI, concepts);
+            });
+            return results;
+        } finally {
+            logTrace("getConceptSchemeRelationships()", start);
+        }
     }
 
     @Override

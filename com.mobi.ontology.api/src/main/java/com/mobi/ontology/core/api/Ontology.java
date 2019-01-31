@@ -39,6 +39,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -253,7 +254,7 @@ public interface Ontology {
      *
      * @return a Set with the query results.
      */
-    TupleQueryResult getSubClassesOf();
+    Map<IRI, Set<IRI>> getSubClassesOf();
 
     /**
      * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
@@ -262,7 +263,7 @@ public interface Ontology {
      * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
      * @return a {@link TupleQueryResult} with the query results.
      */
-    TupleQueryResult getSubClassesFor(IRI iri);
+    Set<IRI> getSubClassesFor(IRI iri);
 
     /**
      * Gets the subPropertyOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
@@ -271,35 +272,36 @@ public interface Ontology {
      * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
      * @return a {@link TupleQueryResult} with the query results.
      */
-    TupleQueryResult getSubPropertiesFor(IRI iri);
+    Set<IRI> getSubPropertiesFor(IRI iri);
 
     /**
      * Gets the subPropertyOf relationships for datatype properties in the Ontology.
      *
      * @return a Set with the query results.
      */
-    TupleQueryResult getSubDatatypePropertiesOf();
+    Map<IRI, Set<IRI>> getSubDatatypePropertiesOf();
 
     /**
      * Gets the subPropertyOf relationships for annotation properties in the Ontology.
      *
      * @return a Set with the query results.
      */
-    TupleQueryResult getSubAnnotationPropertiesOf();
+    Map<IRI, Set<IRI>> getSubAnnotationPropertiesOf();
 
     /**
      * Gets the subPropertyOf relationships for object properties in the Ontology.
      *
      * @return a Set with the query results.
      */
-    TupleQueryResult getSubObjectPropertiesOf();
+    Map<IRI, Set<IRI>> getSubObjectPropertiesOf();
 
     /**
-     * Gets the classes with individuals in the Ontology.
+     * Gets the classes with individuals in the Ontology. The parents will be OWL Classes and the children will be all
+     * instances of the classes directly.
      *
-     * @return a Set with the query results.
+     * @return a Map of Class IRIs to individual IRIs.
      */
-    TupleQueryResult getClassesWithIndividuals();
+    Map<IRI, Set<IRI>> getClassesWithIndividuals();
 
     /**
      * Gets the entity usages for the provided Resource in the Ontology.
@@ -318,18 +320,23 @@ public interface Ontology {
     Model constructEntityUsages(Resource entity, ModelFactory modelFactory);
 
     /**
-     * Gets the concept relationships in the Ontology.
+     * Gets the concept relationships in the Ontology. The parents will be instances of skos:Concept or a subclass and
+     * the children will be instances of skos:Concept or a subclass that have a skos:broader, skos:broaderMatch, or
+     * skos:broaderTransitive property or are the object of a skos:narrower, skos:narrowerMatch, or
+     * skos:narrowerTransitive property.
      *
-     * @return a Set with the query results.
+     * @return a Map of Concept IRIs to Sets or Concept IRIs.
      */
-    TupleQueryResult getConceptRelationships();
+    Map<IRI, Set<IRI>> getConceptRelationships();
 
     /**
-     * Gets the concept scheme relationships in the Ontology.
+     * Gets the concept scheme relationships in the Ontology. The parents will be instances of skos:ConceptScheme or
+     * a subclass and the children are instances of skos:Concept or a subclass that have a skos:inScheme or
+     * skos:topConceptOf property or are the object of a skos:hasTopConcept property.
      *
-     * @return a Set with the query results.
+     * @return a Map of Concept Scheme IRIs to Sets of Concept IRIs.
      */
-    TupleQueryResult getConceptSchemeRelationships();
+    Map<IRI, Set<IRI>> getConceptSchemeRelationships();
 
     /**
      * Searches the Ontology using the provided searchText.

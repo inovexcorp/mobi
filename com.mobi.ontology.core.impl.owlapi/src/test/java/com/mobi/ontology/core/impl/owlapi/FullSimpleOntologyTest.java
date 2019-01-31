@@ -72,6 +72,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -427,130 +428,100 @@ public class FullSimpleOntologyTest {
 
     @Test
     public void testGetSubClassesOf() throws Exception {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
-                "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c");
-        children.put("http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Class1b");
-        children.put("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b");
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Class1b")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class1b"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Class1c")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class1c"), Collections.emptySet());
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class2a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Class2b")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class2b"), Collections.emptySet());
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class3a"), Collections.emptySet());
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryOntology.getSubClassesOf();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
+        Map<IRI, Set<IRI>> result = queryOntology.getSubClassesOf();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+    }
+
+    @Test
+    public void testGetSubClassesFor() {
+        // Setup:
+        Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1b"), vf.createIRI("http://mobi.com/ontology#Class1c")).collect(Collectors.toSet());
+
+        IRI start = vf.createIRI("http://mobi.com/ontology#Class1a");
+        Set<IRI> results = queryOntology.getSubClassesFor(start);
+        assertEquals(results, expected);
     }
 
     @Test
     public void testGetSubDatatypePropertiesOf() throws Exception {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#dataProperty1b",
-                "http://mobi.com/ontology#dataProperty1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#dataProperty1a", "http://mobi.com/ontology#dataProperty1b");
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("http://mobi.com/ontology#dataProperty1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#dataProperty1b")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#dataProperty1b"), Collections.emptySet());
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryOntology.getSubDatatypePropertiesOf();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
+        Map<IRI, Set<IRI>> result = queryOntology.getSubDatatypePropertiesOf();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
     }
 
     @Test
     public void testGetSubAnnotationPropertiesOf() throws Exception {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#annotationProperty1b",
-                "http://mobi.com/ontology#annotationProperty1a", "http://purl.org/dc/terms/title")
-                .collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#annotationProperty1a",
-                "http://mobi.com/ontology#annotationProperty1b");
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("http://mobi.com/ontology#annotationProperty1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#annotationProperty1b")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#annotationProperty1b"), Collections.emptySet());
+        expected.put(vf.createIRI("http://purl.org/dc/terms/title"), Collections.emptySet());
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryOntology.getSubAnnotationPropertiesOf();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
+        Map<IRI, Set<IRI>> result = queryOntology.getSubAnnotationPropertiesOf();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
     }
 
     @Test
     public void testGetSubObjectPropertiesOf() throws Exception {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#objectProperty1b",
-                "http://mobi.com/ontology#objectProperty1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#objectProperty1a", "http://mobi.com/ontology#objectProperty1b");
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("http://mobi.com/ontology#objectProperty1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#objectProperty1b")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#objectProperty1b"), Collections.emptySet());
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryOntology.getSubObjectPropertiesOf();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-//        verifyGetSubObjectPropertiesOf(manager.getSubObjectPropertiesOf(ontology));
+        Map<IRI, Set<IRI>> result = queryOntology.getSubObjectPropertiesOf();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+    }
+
+    @Test
+    public void testSubPropertiesFor() {
+        // Setup:
+        Set<IRI> expected = Collections.singleton(vf.createIRI("http://mobi.com/ontology#annotationProperty1b"));
+
+        IRI start = vf.createIRI("http://mobi.com/ontology#annotationProperty1a");
+        Set<IRI> results = queryOntology.getSubPropertiesFor(start);
+        assertEquals(expected, results);
     }
 
     @Test
     public void testGetClassesWithIndividuals() throws Exception {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
-                "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Individual1a");
-        children.put("http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Individual1b");
-        children.put("http://mobi.com/ontology#Class1c", "http://mobi.com/ontology#Individual1c");
-        children.put("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Individual2a");
-        children.put("http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Individual2b");
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual1a")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class1b"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual1b")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class1c"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual1c")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class2a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual2a")));
+        expected.put(vf.createIRI("http://mobi.com/ontology#Class2b"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual2b")));
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryOntology.getClassesWithIndividuals();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("individual");
-            if (child.isPresent()) {
-                String lclChild = children.get(parent);
-                String individual = child.get().getValue().stringValue();
-                assertEquals(lclChild, individual);
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
+        Map<IRI, Set<IRI>> result = queryOntology.getClassesWithIndividuals();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
     }
 
     @Test
@@ -596,60 +567,39 @@ public class FullSimpleOntologyTest {
 
     @Test
     public void testGetConceptRelationships() throws Exception {
-        Map<String, Boolean> parentMap = new HashMap<>();
-        Stream.of("https://mobi.com/vocabulary#Concept1",
-                "https://mobi.com/vocabulary#Concept2","https://mobi.com/vocabulary#Concept3",
-                "https://mobi.com/vocabulary#Concept4").forEach(parent -> parentMap.put(parent, false));
-        Map<String, Set<String>> children = new HashMap<>();
-        children.put("https://mobi.com/vocabulary#Concept1", Stream.of("https://mobi.com/vocabulary#Concept2", "https://mobi.com/vocabulary#Concept3").collect(Collectors.toSet()));
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept1"), Stream.of(vf.createIRI("https://mobi.com/vocabulary#Concept2"), vf.createIRI("https://mobi.com/vocabulary#Concept3")).collect(Collectors.toSet()));
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept2"), Collections.emptySet());
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept3"), Collections.emptySet());
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept4"), Collections.emptySet());
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryVocabulary.getConceptRelationships();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parentMap.keySet().contains(parent));
-            parentMap.put(parent, true);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                String childStr = child.get().getValue().stringValue();
-                assertTrue(children.get(parent).contains(childStr));
-                children.get(parent).remove(childStr);
-            }
-        });
-        parentMap.values().forEach(Assert::assertTrue);
-        children.values().forEach(set -> assertEquals(0, set.size()));
+        Map<IRI, Set<IRI>> result = queryVocabulary.getConceptRelationships();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
     }
 
     @Test
     public void testGetConceptSchemeRelationships() throws Exception {
-        Set<String> parents = Stream.of("https://mobi.com/vocabulary#ConceptScheme1",
-                "https://mobi.com/vocabulary#ConceptScheme2","https://mobi.com/vocabulary#ConceptScheme3")
-                .collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("https://mobi.com/vocabulary#ConceptScheme1", "https://mobi.com/vocabulary#Concept1");
-        children.put("https://mobi.com/vocabulary#ConceptScheme2", "https://mobi.com/vocabulary#Concept2");
-        children.put("https://mobi.com/vocabulary#ConceptScheme3", "https://mobi.com/vocabulary#Concept3");
+        // Setup:
+        Map<IRI, Set<IRI>> expected = new HashMap<>();
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme1"), Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#Concept1")));
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme2"), Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#Concept2")));
+        expected.put(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme3"), Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#Concept3")));
+        Set<IRI> expectedKeys = expected.keySet();
 
-        TupleQueryResult result = queryVocabulary.getConceptSchemeRelationships();
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
+        Map<IRI, Set<IRI>> result = queryVocabulary.getConceptSchemeRelationships();
+        Set<IRI> keys = result.keySet();
+        assertEquals(expectedKeys, keys);
+        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
     }
 
     @Test
     public void testGetSearchResults() throws Exception {
-        Set<String> entities = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
-                "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
+        Set<String> entities = Stream.of("http://mobi.com/ontology#Class3a", "http://mobi.com/ontology#Class2a",
+                "http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
                 "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
 
         TupleQueryResult result = queryOntology.getSearchResults("class", vf);
@@ -666,7 +616,7 @@ public class FullSimpleOntologyTest {
     @Test
     public void testGetTupleQueryResults() throws Exception {
         List<BindingSet> result = QueryResults.asList(queryOntology.getTupleQueryResults("select distinct ?s where { ?s ?p ?o . }", true));
-        assertEquals(18, result.size());
+        assertEquals(19, result.size());
     }
 
     @Test

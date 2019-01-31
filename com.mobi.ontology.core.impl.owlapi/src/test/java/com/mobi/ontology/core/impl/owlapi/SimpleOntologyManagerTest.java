@@ -44,11 +44,8 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -63,7 +60,6 @@ import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,12 +72,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.cache.Cache;
 
 @RunWith(PowerMockRunner.class)
@@ -199,11 +190,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
 
-
         manager = Mockito.spy(new SimpleOntologyManager());
         injectOrmFactoryReferencesIntoService(manager);
         manager.setValueFactory(VALUE_FACTORY);
-        manager.setModelFactory(MODEL_FACTORY);
         manager.setSesameTransformer(sesameTransformer);
         manager.setConfigProvider(configProvider);
         manager.setCatalogManager(catalogManager);
@@ -503,295 +492,5 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.deleteOntologyBranch(recordIRI, branchIRI);
         verify(catalogManager).removeBranch(catalogIRI, recordIRI, branchIRI);
         verify(ontologyCache).removeFromCache(recordIRI.stringValue(), commitIRI.stringValue());
-    }
-
-    /* Testing getSubClassesOf(Ontology ontology) */
-
-    @Test
-    public void testGetSubClassesOfWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetSubClassesOf(manager.getSubClassesOf(conn));
-        }
-    }
-
-    private void verifyGetSubClassesOf(TupleQueryResult result) {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
-                "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c");
-        children.put("http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Class1b");
-        children.put("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b");
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetSubDatatypePropertiesOfWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifySubDatatypePropertiesOf(manager.getSubDatatypePropertiesOf(conn));
-        }
-    }
-
-    private void verifySubDatatypePropertiesOf(TupleQueryResult result) {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#dataProperty1b",
-                "http://mobi.com/ontology#dataProperty1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#dataProperty1a", "http://mobi.com/ontology#dataProperty1b");
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetSubAnnotationPropertiesOfWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetSubAnnotationPropertiesOf(manager.getSubAnnotationPropertiesOf(conn));
-        }
-    }
-
-    private void verifyGetSubAnnotationPropertiesOf(TupleQueryResult result) {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#annotationProperty1b",
-                "http://mobi.com/ontology#annotationProperty1a", "http://purl.org/dc/terms/title")
-                .collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#annotationProperty1a",
-                "http://mobi.com/ontology#annotationProperty1b");
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-
-    }
-
-    @Test
-    public void testGetSubObjectPropertiesOfWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetSubObjectPropertiesOf(manager.getSubObjectPropertiesOf(conn));
-        }
-    }
-
-    private void verifyGetSubObjectPropertiesOf(TupleQueryResult result) {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#objectProperty1b",
-                "http://mobi.com/ontology#objectProperty1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#objectProperty1a", "http://mobi.com/ontology#objectProperty1b");
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetClassesWithIndividualsWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetClassesWithIndividuals(manager.getClassesWithIndividuals(conn));
-        }
-    }
-
-    private void verifyGetClassesWithIndividuals(TupleQueryResult result) {
-        Set<String> parents = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
-                "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Individual1a");
-        children.put("http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Individual1b");
-        children.put("http://mobi.com/ontology#Class1c", "http://mobi.com/ontology#Individual1c");
-        children.put("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Individual2a");
-        children.put("http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Individual2b");
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("individual");
-            if (child.isPresent()) {
-                String lclChild = children.get(parent);
-                String individual = child.get().getValue().stringValue();
-                assertEquals(lclChild, individual);
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetEntityUsagesWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetEntityUsages(manager.getEntityUsages(VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a"), conn));
-        }
-    }
-
-    private void verifyGetEntityUsages(TupleQueryResult result) {
-        Set<String> subjects = Stream.of("http://mobi.com/ontology#Class1b",
-                "http://mobi.com/ontology#Individual1a").collect(Collectors.toSet());
-        Set<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
-                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toSet());
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            Optional<Binding> optionalSubject = b.getBinding("s");
-            if (optionalSubject.isPresent()) {
-                String subject = optionalSubject.get().getValue().stringValue();
-                assertTrue(subjects.contains(subject));
-                subjects.remove(subject);
-            }
-            Optional<Binding> optionalPredicate = b.getBinding("p");
-            if (optionalPredicate.isPresent()) {
-                String predicate = optionalPredicate.get().getValue().stringValue();
-                assertTrue(predicates.contains(predicate));
-                predicates.remove(predicate);
-            }
-        });
-        assertEquals(0, subjects.size());
-        assertEquals(0, predicates.size());
-    }
-
-    @Test
-    public void testConstructEntityUsagesWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Resource class1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1a");
-            verifyConstructEntityUsages(manager.constructEntityUsages(class1a, conn), class1a);
-        }
-    }
-
-    private void verifyConstructEntityUsages(Model result, Resource class1a) throws Exception {
-        Resource class1b = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Class1b");
-        IRI subClassOf = VALUE_FACTORY.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
-        Resource individual1a = VALUE_FACTORY.createIRI("http://mobi.com/ontology#Individual1a");
-        IRI type = VALUE_FACTORY.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-        Model expected = MODEL_FACTORY.createModel(Stream.of(VALUE_FACTORY.createStatement(class1b, subClassOf,
-                class1a), VALUE_FACTORY.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
-
-        assertTrue(result.equals(expected));
-    }
-
-    @Test
-    public void testGetConceptRelationshipsWithConnection() throws Exception {
-        try (RepositoryConnection conn = vocabRepo.getConnection()) {
-            verifyGetConceptRelationships(manager.getConceptRelationships(conn));
-        }
-    }
-
-    private void verifyGetConceptRelationships(TupleQueryResult result) {
-        Map<String, Boolean> parentMap = new HashMap<>();
-        Stream.of("https://mobi.com/vocabulary#Concept1",
-                "https://mobi.com/vocabulary#Concept2","https://mobi.com/vocabulary#Concept3",
-                "https://mobi.com/vocabulary#Concept4").forEach(parent -> parentMap.put(parent, false));
-        Map<String, Set<String>> children = new HashMap<>();
-        children.put("https://mobi.com/vocabulary#Concept1", Stream.of("https://mobi.com/vocabulary#Concept2", "https://mobi.com/vocabulary#Concept3").collect(Collectors.toSet()));
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parentMap.keySet().contains(parent));
-            parentMap.put(parent, true);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                String childStr = child.get().getValue().stringValue();
-                assertTrue(children.get(parent).contains(childStr));
-                children.get(parent).remove(childStr);
-            }
-        });
-        parentMap.values().forEach(Assert::assertTrue);
-        children.values().forEach(set -> assertEquals(0, set.size()));
-    }
-
-    @Test
-    public void testGetConceptSchemeRelationshipsWithConnection() throws Exception {
-        try (RepositoryConnection conn = vocabRepo.getConnection()) {
-            verifyGetConceptSchemeRelationships(manager.getConceptSchemeRelationships(conn));
-        }
-    }
-
-    private void verifyGetConceptSchemeRelationships(TupleQueryResult result) {
-        Set<String> parents = Stream.of("https://mobi.com/vocabulary#ConceptScheme1",
-                "https://mobi.com/vocabulary#ConceptScheme2","https://mobi.com/vocabulary#ConceptScheme3")
-                .collect(Collectors.toSet());
-        Map<String, String> children = new HashMap<>();
-        children.put("https://mobi.com/vocabulary#ConceptScheme1", "https://mobi.com/vocabulary#Concept1");
-        children.put("https://mobi.com/vocabulary#ConceptScheme2", "https://mobi.com/vocabulary#Concept2");
-        children.put("https://mobi.com/vocabulary#ConceptScheme3", "https://mobi.com/vocabulary#Concept3");
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "parent").stringValue();
-            assertTrue(parents.contains(parent));
-            parents.remove(parent);
-            Optional<Binding> child = b.getBinding("child");
-            if (child.isPresent()) {
-                assertEquals(children.get(parent), child.get().getValue().stringValue());
-                children.remove(parent);
-            }
-        });
-        assertEquals(0, parents.size());
-        assertEquals(0, children.size());
-    }
-
-    @Test
-    public void testGetSearchResultsWithConnection() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            verifyGetSearchResults(manager.getSearchResults("class", conn));
-        }
-    }
-
-    private void verifyGetSearchResults(TupleQueryResult result) throws Exception {
-        Set<String> entities = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
-                "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
-                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
-
-        assertTrue(result.hasNext());
-        result.forEach(b -> {
-            String parent = Bindings.requiredResource(b, "entity").stringValue();
-            assertTrue(entities.contains(parent));
-            entities.remove(parent);
-            assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
-        });
-        assertEquals(0, entities.size());
     }
 }
