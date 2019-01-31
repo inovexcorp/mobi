@@ -42,6 +42,7 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface Ontology {
 
@@ -250,18 +251,19 @@ public interface Ontology {
     Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI);
 
     /**
-     * Gets the subClassOf relationships for classes in the Ontology.
+     * Gets the subClassOf relationships for classes in the Ontology. The parents will be OWL Classes and the
+     * children will be all OWL Classes that are direct subclasses.
      *
-     * @return a Set with the query results.
+     * @return a {@link Map} of Class {@link IRI IRIs} to {@link Set Sets} of Class {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getSubClassesOf();
+    Stream<Map.Entry<IRI, Set<IRI>>> getSubClassesOf();
 
     /**
      * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
      * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
      *
-     * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
-     * @return a {@link TupleQueryResult} with the query results.
+     * @param iri The {@link IRI} of the class for which you want the list of subclasses.
+     * @return a {@link Set} with the {@link IRI IRIs} of the subclasses
      */
     Set<IRI> getSubClassesFor(IRI iri);
 
@@ -269,29 +271,35 @@ public interface Ontology {
      * Gets the subPropertyOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
      * <em>all</em> properties that can be traced back to the provided property IRI, even if nested.
      *
-     * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
-     * @return a {@link TupleQueryResult} with the query results.
+     * @param iri The {@link IRI} of the property for which you want the list of subproperties.
+     * @return a {@link Set} with the {@link IRI IRIs} of the subproperties
      */
     Set<IRI> getSubPropertiesFor(IRI iri);
 
     /**
-     * Gets the subPropertyOf relationships for datatype properties in the Ontology.
+     * Gets the subPropertyOf relationships for datatype properties in the Ontology. The parents will be OWL
+     * DatatypeProperties and the children will be all OWL DatatypeProperties that are direct subproperties.
      *
-     * @return a Set with the query results.
+     * @return a {@link Map} of DatatypeProperty {@link IRI IRIs} to {@link Set Sets} of DatatypeProperty
+     *      {@link IRI IRIs}.
      */
     Map<IRI, Set<IRI>> getSubDatatypePropertiesOf();
 
     /**
-     * Gets the subPropertyOf relationships for annotation properties in the Ontology.
+     * Gets the subPropertyOf relationships for annotation properties in the Ontology. The parents will be OWL
+     * AnnotationProperties and the children will be all OWL AnnotationProperties that are direct subproperties.
      *
-     * @return a Set with the query results.
+     * @return a {@link Map} of AnnotationProperty {@link IRI IRIs} to {@link Set Sets} of AnnotationProperty
+     *      {@link IRI IRIs}.
      */
     Map<IRI, Set<IRI>> getSubAnnotationPropertiesOf();
 
     /**
-     * Gets the subPropertyOf relationships for object properties in the Ontology.
+     * Gets the subPropertyOf relationships for object properties in the Ontology. The parents will be OWL
+     * ObjectProperties and the children will be all OWL ObjectProperties that are direct subproperties.
      *
-     * @return a Set with the query results.
+     * @return a {@link Map} of ObjectProperty {@link IRI IRIs} to {@link Set Sets} of ObjectProperty
+     *      {@link IRI IRIs}.
      */
     Map<IRI, Set<IRI>> getSubObjectPropertiesOf();
 
@@ -299,23 +307,23 @@ public interface Ontology {
      * Gets the classes with individuals in the Ontology. The parents will be OWL Classes and the children will be all
      * instances of the classes directly.
      *
-     * @return a Map of Class IRIs to individual IRIs.
+     * @return a {@link Map} of Class {@link IRI IRIs} to {@link Set Sets} of individual {@link IRI IRIs}.
      */
     Map<IRI, Set<IRI>> getClassesWithIndividuals();
 
     /**
      * Gets the entity usages for the provided Resource in the Ontology.
      *
-     * @param entity   the Resource for the entity you want to get the usages of.
-     * @return a Set with the query results.
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a {@link TupleQueryResult} with the query results.
      */
     TupleQueryResult getEntityUsages(Resource entity);
 
     /**
      * Constructs the entity usages for the provided Resource in the Ontology.
      *
-     * @param entity   the Resource for the entity you want to get the usages of.
-     * @return a Model with the constructed statements.
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a {@link Model} with the constructed statements.
      */
     Model constructEntityUsages(Resource entity, ModelFactory modelFactory);
 
@@ -325,7 +333,7 @@ public interface Ontology {
      * skos:broaderTransitive property or are the object of a skos:narrower, skos:narrowerMatch, or
      * skos:narrowerTransitive property.
      *
-     * @return a Map of Concept IRIs to Sets or Concept IRIs.
+     * @return a {@link Map} of Concept {@link IRI IRIs} to {@link Set Sets} or Concept {@link IRI IRIs}.
      */
     Map<IRI, Set<IRI>> getConceptRelationships();
 
@@ -334,7 +342,7 @@ public interface Ontology {
      * a subclass and the children are instances of skos:Concept or a subclass that have a skos:inScheme or
      * skos:topConceptOf property or are the object of a skos:hasTopConcept property.
      *
-     * @return a Map of Concept Scheme IRIs to Sets of Concept IRIs.
+     * @return a {@link Map} of Concept Scheme {@link IRI IRIs} to {@link Set Sets} of Concept {@link IRI IRIs}.
      */
     Map<IRI, Set<IRI>> getConceptSchemeRelationships();
 
