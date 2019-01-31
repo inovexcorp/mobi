@@ -149,7 +149,10 @@
                     }
                     dvm.removeChanges = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate), $q.reject)
+                            .then(() => {
+                                dvm.os.resetStateTabs();
+                                return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate);
+                            }, $q.reject)
                             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
                     }
                     dvm.orderByIRI = function(item) {
