@@ -24,7 +24,7 @@
     <info-message ng-if="!dvm.flatPropertyTree.length">(No properties defined)</info-message>
     <div ng-if="dvm.flatPropertyTree.length" class="tree hierarchy-tree h-100 p-0 w-100">
         <md-virtual-repeat-container class="h-100 repeater-container w-100" >
-            <div md-virtual-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper">
+            <div md-virtual-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
                 <div ng-if="!node.entityIRI" class="tree-item">
                     <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
                         <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{node.title}}</span>

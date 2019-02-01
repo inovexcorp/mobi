@@ -22,7 +22,7 @@
   -->
 <div class="tree individual-tree hierarchy-tree h-100 p-0 w-100">
     <md-virtual-repeat-container class="h-100 repeater-container w-100">
-        <div md-virtual-repeat="node in dvm.os.listItem.individuals.flat | filter:dvm.isShown" class="tree-item-wrapper">
+        <div md-virtual-repeat="node in dvm.os.listItem.individuals.flat | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
             <div ng-if="node.isClass" class="tree-item" ng-class="{'imported': dvm.isImported(node.entityIRI)}" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}">
                 <a ng-click="dvm.os.setOpened(dvm.os.joinPath(node.path), !dvm.os.getOpened(dvm.os.joinPath(node.path))); $event.stopPropagation()">
                     <i class="fa fa-fw" ng-class="{'fa-folder-open-o': dvm.os.getOpened(dvm.os.joinPath(node.path)), 'fa-folder-o': !dvm.os.getOpened(dvm.os.joinPath(node.path))}"></i><span>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}</span>

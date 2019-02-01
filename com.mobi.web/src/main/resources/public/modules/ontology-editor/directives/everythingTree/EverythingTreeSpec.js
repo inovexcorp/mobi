@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Everything Tree directive', function() {
+fdescribe('Everything Tree directive', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
@@ -95,6 +95,7 @@ describe('Everything Tree directive', function() {
             expect(this.element.find('tree-item').length).toBe(3);
         });
         it('based on .tree-items', function() {
+            console.log(this.element)
             expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
         });
         it('based on .fa-folder-open-o', function() {
