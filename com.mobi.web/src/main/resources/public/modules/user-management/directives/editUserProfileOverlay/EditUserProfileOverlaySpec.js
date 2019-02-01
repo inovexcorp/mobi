@@ -21,23 +21,30 @@
  * #L%
  */
 describe('Edit User Profile Overlay component', function() {
-    var $compile, scope, $q, userManagerSvc, userStateSvc;
+    var $compile, scope, $q, userManagerSvc, userStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('editUserProfileOverlay');
         mockUserManager();
         mockUserState();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _userStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _userStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
+            prefixes = _prefixes_;
         });
 
-        userStateSvc.selectedUser = {username: 'user', firstName: 'John', lastName: 'Doe', email: 'mailto:example@example.com'};
+        userStateSvc.selectedUser = {
+            jsonld: {
+                [prefixes.foaf + 'firstName']: [{'@value': 'John'}],
+                [prefixes.foaf + 'lastName']: [{'@value': 'Doe'}],
+                [prefixes.foaf + 'mbox']: [{'@id': 'john.doe@gmail.com'}]
+            }, username: 'user', firstName: 'John', lastName: 'Doe', email: 'john.doe@gmail.com'};
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
         this.element = $compile(angular.element('<edit-user-profile-overlay close="close()" dismiss="dismiss()"></edit-user-profile-overlay>'))(scope);
@@ -51,6 +58,7 @@ describe('Edit User Profile Overlay component', function() {
         $q = null;
         userManagerSvc = null;
         userStateSvc = null;
+        prefixes = null;
         this.element.remove();
     });
 
