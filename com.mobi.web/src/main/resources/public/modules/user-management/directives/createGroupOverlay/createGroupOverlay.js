@@ -75,7 +75,7 @@
             return _.map(dvm.um.groups, 'title');
         }
         dvm.add = function() {
-            dvm.um.addGroup(dvm.newGroup).then(response => dvm.um.addGroupUsers(dvm.newGroup.title, dvm.newGroup.members), $q.reject)
+            dvm.um.addGroup(dvm.newGroup)
             .then(response => {
                 dvm.errorMessage = '';
                 dvm.close();

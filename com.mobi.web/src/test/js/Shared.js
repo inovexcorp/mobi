@@ -482,6 +482,8 @@ function mockPrefixes() {
             this.mergereq = 'mergereq:';
             this.user = 'user:';
             this.policy = 'policy:';
+            this.roles = "roles:";
+            this.foaf = "foaf:";
         });
     });
 }
@@ -870,6 +872,8 @@ function mockUserManager() {
             this.getGroupUsers = jasmine.createSpy('getGroupUsers').and.returnValue($q.when([]));
             this.addGroupUsers = jasmine.createSpy('addGroupUsers').and.returnValue($q.when());
             this.deleteGroupUser = jasmine.createSpy('deleteGroupUser').and.returnValue($q.when());
+            this.getUserObj = jasmine.createSpy('getUserObj').and.returnValue({});
+            this.getGroupObj = jasmine.createSpy('getGroupObj').and.returnValue({});
             this.isAdmin = jasmine.createSpy('isAdmin');
         });
     });

@@ -26,6 +26,8 @@ package com.mobi.jaas.rest.impl;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -35,27 +37,31 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
+import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.jaas.rest.providers.GroupProvider;
-import com.mobi.jaas.rest.providers.RoleProvider;
-import com.mobi.jaas.rest.providers.RoleSetProvider;
-import com.mobi.jaas.rest.providers.UserProvider;
-import com.mobi.jaas.rest.providers.UserSetProvider;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
@@ -77,11 +83,6 @@ import javax.ws.rs.core.Response;
 public class GroupRestImplTest extends MobiRestTestNg {
     private GroupRestImpl rest;
     private ValueFactory vf;
-    private GroupProvider groupProvider;
-    private RoleProvider roleProvider;
-    private RoleSetProvider roleSetProvider;
-    private UserProvider userProvider;
-    private UserSetProvider userSetProvider;
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
     private OrmFactory<Role> roleFactory;
@@ -98,23 +99,18 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Mock
     private RdfEngine rdfEngine;
 
+    @Mock
+    private SesameTransformer transformer;
+
+    @Mock
+    private GroupFactory groupFactoryMock;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
         userFactory = getRequiredOrmFactory(User.class);
         groupFactory = getRequiredOrmFactory(Group.class);
         roleFactory = getRequiredOrmFactory(Role.class);
-
-        groupProvider = new GroupProvider();
-        roleProvider = new RoleProvider();
-        roleSetProvider = new RoleSetProvider();
-        userProvider = new UserProvider();
-        userSetProvider = new UserSetProvider();
-        groupProvider.setFactory(vf);
-        roleProvider.setFactory(vf);
-        roleSetProvider.setFactory(vf);
-        roleSetProvider.setRoleProvider(roleProvider);
-        userSetProvider.setUserProvider(userProvider);
 
         role = roleFactory.createNew(vf.createIRI("http://mobi.com/roles/user"));
         role.setProperty(vf.createLiteral("user"), vf.createIRI(DCTERMS.TITLE.stringValue()));
@@ -133,33 +129,31 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
         // Setup rest
         MockitoAnnotations.initMocks(this);
-        groupProvider.setEngineManager(engineManager);
-        groupProvider.setRdfEngine(rdfEngine);
+        when(transformer.sesameModel(any(Model.class)))
+                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+
+        when(groupFactoryMock.createNew(any(Resource.class), any(Model.class))).thenReturn(group);
 
         rest = spy(new GroupRestImpl());
         injectOrmFactoryReferencesIntoService(rest);
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
-        rest.setFactory(vf);
+        rest.setValueFactory(vf);
+        rest.setGroupFactory(groupFactoryMock);
+        rest.setTransformer(transformer);
 
         return new ResourceConfig()
                 .register(rest)
-                .register(MultiPartFeature.class)
-                .register(userProvider)
-                .register(userSetProvider)
-                .register(groupProvider)
-                .register(roleProvider)
-                .register(roleSetProvider);
+                .register(MultiPartFeature.class);
     }
 
     @Override
     protected void configureClient(ClientConfig config) {
         config.register(MultiPartFeature.class);
-        config.register(userProvider);
-        config.register(userSetProvider);
-        config.register(groupProvider);
-        config.register(roleProvider);
-        config.register(roleSetProvider);
     }
 
     @BeforeMethod
@@ -179,7 +173,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void listGroupsTest() {
+    public void getGroupsTest() {
         Response response = target().path("groups").request().get();
         verify(engineManager, atLeastOnce()).getGroups(anyString());
         assertEquals(response.getStatus(), 200);
@@ -195,12 +189,15 @@ public class GroupRestImplTest extends MobiRestTestNg {
     public void createGroupTest() {
         // Setup:
         when(engineManager.groupExists(anyString())).thenReturn(false);
-        JSONObject group = new JSONObject();
-        group.put("title", "newGroup");
-        group.put("description", "This is a description");
 
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "newGroup");
+        fd.field("description", "This is a description");
+        fd.field("members", "John Doe");
+        fd.field("members", "Jane Doe");
+        fd.field("roles", "admin");
         Response response = target().path("groups")
-                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(engineManager).storeGroup(anyString(), any(Group.class));
     }
@@ -209,23 +206,24 @@ public class GroupRestImplTest extends MobiRestTestNg {
     public void createGroupWithoutTitleTest() {
         // Setup:
         when(engineManager.groupExists(anyString())).thenReturn(false);
-        JSONObject group = new JSONObject();
-        group.put("description", "This is a description");
-
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("description", "This is a description");
+        fd.field("members", "John Doe");
+        fd.field("members", "Jane Doe");
+        fd.field("roles", "admin");
         Response response = target().path("groups")
-                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void createExistingGroupTest() {
         //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "testGroup");
-        group.put("description", "This is a description");
-
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "testGroup");
+        fd.field("description", "This is a description");
         Response response = target().path("groups")
-                .request().post(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -235,7 +233,9 @@ public class GroupRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertEquals(result.get("title"), "testGroup");
+        assertFalse(result.containsKey("@graph"));
+        assertTrue(result.containsKey("@id"));
+        assertEquals(result.getString("@id"), group.getResource().stringValue());
     }
 
     @Test
@@ -249,13 +249,10 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateGroupTest() {
-        //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "testGroup");
-        group.put("description", "This is a new description");
-
         Response response = target().path("groups/testGroup")
-                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+                .request()
+                .put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
         verify(engineManager).updateGroup(anyString(), any(Group.class));
@@ -264,31 +261,26 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void updateGroupWithDifferentTitleTest() {
         //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "newGroup");
-        group.put("description", "This is a new description");
-        Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/" + group.getString("title")));
-        newGroup.setProperty(vf.createLiteral(group.getString("title")), vf.createIRI(DCTERMS.TITLE.stringValue()));
-        newGroup.setProperty(vf.createLiteral(group.getString("description")),
-                vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
-        when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(newGroup);
 
-        Response response = target().path("groups/testGroup")
-                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/group2"));
+        newGroup.setTitle(Collections.singleton(vf.createLiteral("group2")));
+
+        Response response = target().path("groups/group2")
+                .request().put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void updateGroupThatDoesNotExistTest() {
         //Setup:
-        JSONObject group = new JSONObject();
-        group.put("title", "testGroup");
-        group.put("description", "This is a new description");
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("groups/error")
-                .request().put(Entity.entity(group.toString(), MediaType.APPLICATION_JSON));
+        Response response = target().path("groups/testGroup")
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
+        verify(engineManager, atLeastOnce()).retrieveGroup(anyString(), eq("testGroup"));
     }
 
     @Test
