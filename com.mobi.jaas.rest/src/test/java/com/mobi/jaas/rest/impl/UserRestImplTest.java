@@ -124,7 +124,6 @@ public class UserRestImplTest extends MobiRestTestNg {
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME), role.getModel());
         user.setHasUserRole(roles);
         user.setUsername(vf.createLiteral(UsernameTestFilter.USERNAME));
-        user.setPassword(vf.createLiteral("ABC"));
         user.setMbox(Collections.singleton(email));
         users = Collections.singleton(user);
 
@@ -164,6 +163,8 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
+        user.setPassword(vf.createLiteral("ABC"));
+
         reset(engineManager);
         reset(rdfEngine);
         when(engineManager.getUsers(anyString())).thenReturn(users);
