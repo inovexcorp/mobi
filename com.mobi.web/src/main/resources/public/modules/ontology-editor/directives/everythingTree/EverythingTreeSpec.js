@@ -95,7 +95,6 @@ describe('Everything Tree directive', function() {
             expect(this.element.find('tree-item').length).toBe(3);
         });
         it('based on .tree-items', function() {
-            console.log(this.element)
             expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
         });
         it('based on .fa-folder-open-o', function() {
