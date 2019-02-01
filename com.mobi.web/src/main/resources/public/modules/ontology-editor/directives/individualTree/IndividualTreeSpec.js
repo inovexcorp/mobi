@@ -21,7 +21,7 @@
  * #L%
  */
 
-fdescribe('Individual Tree directive', function() {
+describe('Individual Tree directive', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, util;
 
     beforeEach(function() {
@@ -106,7 +106,6 @@ fdescribe('Individual Tree directive', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
         it('based on tree-items', function() {
-            console.log(this.element)
             expect(this.element.find('tree-item').length).toBe(3);
         });
         it('based on .tree-item-wrapper', function() {

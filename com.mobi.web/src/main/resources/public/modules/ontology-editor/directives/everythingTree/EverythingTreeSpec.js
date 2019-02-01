@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Everything Tree directive', function() {
+describe('Everything Tree directive', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
