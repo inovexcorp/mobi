@@ -209,8 +209,9 @@ describe('User Manager service', function() {
         it('successfully', function() {
             var username = userManagerSvc.users[0].username;
             var newUser = _.clone(userManagerSvc.users[0]);
+            newUser.jsonld[prefixes.foaf + 'firstName'] = [{'@value': 'Jane'}];
             newUser.firstName = 'Jane';
-            $httpBackend.whenPUT('/mobirest/users/' + username, this.userRdf).respond(200, '')
+            $httpBackend.whenPUT('/mobirest/users/' + username, newUser.jsonld).respond(200, '')
             userManagerSvc.updateUser(username, newUser)
                 .then(_.noop, response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
@@ -436,9 +437,10 @@ describe('User Manager service', function() {
         it('successfully', function() {
             var groupTitle = userManagerSvc.groups[0].title;
             var newGroup = _.clone(userManagerSvc.groups[0]);
+            newGroup.jsonld[prefixes.dcterms + 'description'] = [{'@value': 'New Description'}];
             newGroup.description = 'New Description';
 
-            $httpBackend.whenPUT('/mobirest/groups/' + encodeURIComponent(groupTitle), userManagerSvc.getGroupJson(newGroup)).respond(200);
+            $httpBackend.whenPUT('/mobirest/groups/' + encodeURIComponent(groupTitle), newGroup.jsonld).respond(200);
             userManagerSvc.updateGroup(groupTitle, newGroup)
                 .then(_.noop, () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);

@@ -278,7 +278,7 @@
              * with an error message otherwise
              */
             self.updateUser = function(username, newUser) {
-                return $http.put(userPrefix + '/' + encodeURIComponent(username), self.getUserJson(newUser))
+                return $http.put(userPrefix + '/' + encodeURIComponent(username), newUser.jsonld)
                     .then(response => {
                         _.assign(_.find(self.users, {username}), newUser);
                     }, util.rejectError);
@@ -539,7 +539,7 @@
              * with an error message otherwise
              */
             self.updateGroup = function(groupTitle, newGroup) {
-                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), self.getGroupJson(newGroup))
+                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup.jsonld)
                     .then(response => {
                         _.assign(_.find(self.groups, {title: groupTitle}), newGroup);
                     }, util.rejectError);
@@ -790,55 +790,6 @@
                     }),
                     roles: _.map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
                 }
-            }
-            /**
-             * @ngdoc method
-             * @name getUserJson
-             * @methodOf userManager.service:userManagerService
-             *
-             * @description
-             * Returns a JSON-LD representation of the provided user
-             * @param user The user object to convert to JSON-LD
-             * @return A JSON-LD representation of the user
-             */
-            self.getUserJson = function(user) {
-                var jsonld = user.jsonld;
-
-                jsonld[prefixes.user + 'username'] =  [{'@value': user.username}];
-                jsonld[prefixes.foaf + 'firstName'] = [{'@value': user.firstName}];
-                jsonld[prefixes.foaf + 'lastName'] = [{'@value': user.lastName}];
-                jsonld[prefixes.foaf + 'mbox'] = [{'@id': user.email}];
-                jsonld[prefixes.user + 'hasUserRole'] = [];
-                _.forEach(user.roles, role => jsonld[prefixes.user + 'hasUserRole'].push({'@id': prefixes.roles + role}));
-
-                return jsonld;
-            }
-            /**
-             * @ngdoc method
-             * @name getGroupJson
-             * @methodOf userManager.service:userManagerService
-             *
-             * @description
-             * Returns a JSON-LD representation of the provided group
-             * @param group The group object to convert to JSON-LD
-             * @return A JSON-LD representation of the group
-             */
-            self.getGroupJson = function(group) {
-                var jsonld = group.jsonld;
-
-                util.updateDctermsValue(jsonld, 'title', group.title);
-                util.updateDctermsValue(jsonld, 'description', group.description);
-                jsonld[prefixes.foaf + 'member'] = [];
-                _.forEach(group.members, member => {
-                    var user = _.find(self.users, {'username': member});
-                    if (user != undefined) {
-                        jsonld[prefixes.foaf + 'member'].push({'@id': user.iri})
-                    }
-                });
-                jsonld[prefixes.user + 'hasGroupRole'] = [];
-                _.forEach(group.roles, role => jsonld[prefixes.user + 'hasGroupRole'].push({'@id': prefixes.roles + role}));
-
-                return jsonld;
             }
 
             function listUserRoles(username) {
