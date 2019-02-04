@@ -40,6 +40,7 @@
          * @restrict E
          * @requires userManager.service:userManagerService
          * @requires userState.service:userStateService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `editUserProfileOverlay` is a component that creates content for a modal with a form to change the
@@ -56,17 +57,20 @@
                 dismiss: '&'
             },
             controllerAs: 'dvm',
-            controller: ['userStateService', 'userManagerService', EditUserProfileOverlayController],
+            controller: ['userStateService', 'userManagerService', 'prefixes', EditUserProfileOverlayController],
             templateUrl: 'modules/user-management/directives/editUserProfileOverlay/editUserProfileOverlay.html'
         });
 
-    function EditUserProfileOverlayController(userStateService, userManagerService) {
+    function EditUserProfileOverlayController(userStateService, userManagerService, prefixes) {
         var dvm = this;
         dvm.state = userStateService;
         dvm.um = userManagerService;
         dvm.newUser = angular.copy(dvm.state.selectedUser);
 
         dvm.set = function() {
+            dvm.newUser.jsonld[prefixes.foaf + 'firstName'] = [{'@value': dvm.newUser.firstName}];
+            dvm.newUser.jsonld[prefixes.foaf + 'lastName'] = [{'@value': dvm.newUser.lastName}];
+            dvm.newUser.jsonld[prefixes.foaf + 'mbox'] = [{'@id': dvm.newUser.email}];
             dvm.um.updateUser(dvm.state.selectedUser.username, dvm.newUser).then(response => {
                 dvm.errorMessage = '';
                 dvm.state.selectedUser = _.find(dvm.um.users, {username: dvm.newUser.username});

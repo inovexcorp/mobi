@@ -38,6 +38,7 @@
          * @name editGroupInfoOverlay.component:editGroupInfoOverlay
          * @requires userManager.service:userManagerService
          * @requires userState.service:userStateService
+         * @requires util.service:utilService
          *
          * @description
          * `editGroupInfoOverlay` is a component that creates content for a modal with a form to change the
@@ -54,17 +55,18 @@
                 dismiss: '&'
             },
             controllerAs: 'dvm',
-            controller: ['userStateService', 'userManagerService', EditGroupInfoOverlayController],
+            controller: ['userStateService', 'userManagerService', 'utilService', EditGroupInfoOverlayController],
             templateUrl: 'modules/user-management/directives/editGroupInfoOverlay/editGroupInfoOverlay.html'
         });
 
-    function EditGroupInfoOverlayController(userStateService, userManagerService) {
+    function EditGroupInfoOverlayController(userStateService, userManagerService, utilService) {
         var dvm = this;
         dvm.state = userStateService;
         dvm.um = userManagerService;
         dvm.newGroup = angular.copy(dvm.state.selectedGroup);
 
         dvm.set = function() {
+            utilService.updateDctermsValue(dvm.newGroup.jsonld, 'description', dvm.newGroup.description);
             dvm.um.updateGroup(dvm.state.selectedGroup.title, dvm.newGroup).then(response => {
                 dvm.errorMessage = '';
                 dvm.state.selectedGroup = _.find(dvm.um.groups, {title: dvm.newGroup.title});

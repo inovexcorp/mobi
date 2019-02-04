@@ -21,23 +21,31 @@
  * #L%
  */
 describe('Edit Group Info Overlay component', function() {
-    var $compile, scope, $q, userManagerSvc, userStateSvc;
+    var $compile, scope, $q, userManagerSvc, userStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('editGroupInfoOverlay');
         mockUserManager();
         mockUserState();
+        mockUtil();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _userStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _userStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
+            prefixes = _prefixes_;
         });
 
-        userStateSvc.selectedGroup = {title: 'group'};
+        userStateSvc.selectedGroup = {
+            jsonld: {
+                [prefixes.dcterms + 'title']: [{'@value': 'John'}],
+                [prefixes.dcterms + 'description']: [{'@value': 'Doe'}]
+            },
+            title: 'group'};
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
         this.element = $compile(angular.element('<edit-group-info-overlay close="close()" dismiss="dismiss()"></edit-group-info-overlay>'))(scope);
@@ -51,6 +59,7 @@ describe('Edit Group Info Overlay component', function() {
         $q = null;
         userManagerSvc = null;
         userStateSvc = null;
+        prefixes = null;
         this.element.remove();
     });
 
