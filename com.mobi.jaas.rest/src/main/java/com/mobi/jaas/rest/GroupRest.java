@@ -23,139 +23,155 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import com.mobi.jaas.api.ontologies.usermanagement.Group;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/groups")
 @Api( value = "/groups")
 public interface GroupRest {
     /**
-     * Retrieves the list of groups in Mobi.
+     * Retrieves a list of all the {@link Group}s in Mobi.
      *
-     * @return a Response with a JSON array of the groups in Mobi
+     * @return a Response with a JSON-LD list of the {@link Group}s in Mobi
      */
     @GET
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List all Mobi groups")
-    Response listGroups();
+    @ApiOperation("Get all Mobi Groups")
+    Response getGroups();
 
     /**
-     * Creates a group in Mobi with the passed information.
+     * Creates a Group in Mobi with the passed information.
      *
-     * @param group the new group to create
+     * @param title The title of the Group
+     * @param description The description of the Group
+     * @param roles The roles of the Group
+     * @param members The members of the Group
      * @return a Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
-    @ApiOperation("Create a new Mobi group")
+    @ApiOperation("Create a new Mobi Group")
     @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.APPLICATION_JSON)
-    Response createGroup(Group group);
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    Response createGroup(@FormDataParam("title") String title,
+                         @FormDataParam("description") String description,
+                         @FormDataParam("roles") List<FormDataBodyPart> roles,
+                         @FormDataParam("members") List<FormDataBodyPart> members);
 
     /**
-     * Retrieves a specific group in Mobi.
+     * Retrieves a specific Group in Mobi.
      *
-     * @param groupTitle the title of the group to retrieve
-     * @return a Response with a JSON representation of the group in Mobi
+     * @param groupTitle the title of the Group to retrieve
+     * @return a Response with a JSON representation of the Group in Mobi
      */
     @GET
     @Path("{groupTitle}")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Get a single Mobi group")
+    @ApiOperation("Get a single Mobi Group")
     Response getGroup(@PathParam("groupTitle") String groupTitle);
 
     /**
      * Updates information about the specified group in Mobi.
      *
-     * @param groupTitle the title of the group to update
-     * @param newGroup the new group to replace the existing one
+     * @param groupTitle the title of the Group to update
+     * @param newGroupStr the JSON-LD string representation of a Group to replace the existing Group
      * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{groupTitle}")
     @RolesAllowed("admin")
-    @ApiOperation("Update a Mobi group's information")
+    @ApiOperation("Update a Mobi Group's information")
     @Consumes(MediaType.APPLICATION_JSON)
-    Response updateGroup(@PathParam("groupTitle") String groupTitle, Group newGroup);
+    Response updateGroup(@PathParam("groupTitle") String groupTitle, String newGroupStr);
 
     /**
-     * Removes a group from Mobi, and by consequence removing all users from it as well.
+     * Removes a Group from Mobi, and by consequence removing all users from it as well.
      *
-     * @param groupTitle the title of the group to remove
+     * @param groupTitle the title of the Group to remove
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
     @Path("{groupTitle}")
     @RolesAllowed("admin")
-    @ApiOperation("Remove a Mobi group")
+    @ApiOperation("Remove a Mobi Group")
     Response deleteGroup(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Retrieves the list of roles of the specified group in Mobi.
+     * Retrieves the list of roles of the specified Group in Mobi.
      *
-     * @param groupTitle the title of the group to retrieve roles from
-     * @return a Response with a JSON array of the roles of the group in Mobi
+     * @param groupTitle the title of the Group to retrieve roles from
+     * @return a Response with a JSON array of the roles of the Group in Mobi
      */
     @GET
     @Path("{groupTitle}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List roles of a Mobi group")
+    @ApiOperation("List roles of a Mobi Group")
     Response getGroupRoles(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Adds roles to the specified group in Mobi.
+     * Adds roles to the specified Group in Mobi.
      *
-     * @param groupTitle the title of the group to add a role to
-     * @param roles the name of the roles to add to the specified group
+     * @param groupTitle the title of the Group to add a role to
+     * @param roles the name of the roles to add to the specified Group
      * @return a Response indicating the success or failure of the request
      */
     @PUT
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add roles to a Mobi group")
+    @ApiOperation("Add roles to a Mobi Group")
     Response addGroupRoles(@PathParam("groupTitle") String groupTitle, @QueryParam("roles") List<String> roles);
 
     /**
-     * Removes a role from the specified group in Mobi.
+     * Removes a role from the specified Group in Mobi.
      *
-     * @param groupTitle the title of the group to remove a role from
-     * @param role the role to remove from the specified group
+     * @param groupTitle the title of the Group to remove a role from
+     * @param role the role to remove from the specified Group
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Remove role from a Mobi group")
+    @ApiOperation("Remove role from a Mobi Group")
     Response removeGroupRole(@PathParam("groupTitle") String groupTitle, @QueryParam("role") String role);
 
     /**
-     * Retrieves the list of users for the specified group in Mobi.
+     * Retrieves the list of users for the specified Group in Mobi.
      *
-     * @param groupTitle the title of the group to retrieve users from
-     * @return a Response with a JSON array of the users of the group in Mobi
+     * @param groupTitle the title of the Group to retrieve users from
+     * @return a Response with a JSON array of the users of the Group in Mobi
      */
     @GET
     @Path("{groupTitle}/users")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List users of a Mobi group")
+    @ApiOperation("List users of a Mobi Group")
     Response getGroupUsers(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Adds the users specified by usernames to the specified group in Mobi.
+     * Adds the users specified by usernames to the specified Group in Mobi.
      *
-     * @param groupTitle the title of the group to add users to
-     * @param usernames the list of usernames of users to add to the group
+     * @param groupTitle the title of the Group to add users to
+     * @param usernames the list of usernames of users to add to the Group
      * @return a Response indicating the success or failure of the request
      */
     @PUT
@@ -165,10 +181,10 @@ public interface GroupRest {
     Response addGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("users") List<String> usernames);
 
     /**
-     * Removes the user specified by username from the specified group in Mobi.
+     * Removes the user specified by username from the specified Group in Mobi.
      *
-     * @param groupTitle the title of the group to remove a user from
-     * @param username the username of the user to remove from the group
+     * @param groupTitle the title of the Group to remove a user from
+     * @param username the username of the user to remove from the Group
      * @return a Response indicating the success or failure of the request
      */
     @DELETE
