@@ -1,0 +1,56 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#L%
+  -->
+<div class="class-history row p-4 h-100">
+    <div class="col-auto back-column h-100">
+        <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+    </div>
+    <div class="class-history-header col">
+        <div class="row">
+            <h2 class="class-history-title break-word">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
+            <static-iri class="editable-iri" read-only=true iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        </div>
+        <div class="row">
+            <div class="col">
+                <span>View entity at </span>
+                <ui-select ng-model="dvm.selectedEntity" on-select="onChange()" ng-disabled="dvm.commits.length === 0" autofocus>
+                    <ui-select-match placeholder="Entity Id">
+                        <span class="text-truncate">dvm.getHeadTitle()</span>
+                    </ui-select-match>
+                    <ui-select-choices repeat="commit in dvm.commits"></ui-select-choices>
+                </ui-select>
+                <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+                <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
+            </div>
+        </div>
+        <div class="row top-buffer">
+            <div class="col">
+                Additions/Deletions
+            </div>
+            <div class="col">
+                <div class="table-container">
+                    <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" commit-data="dvm.commits"></commit-history-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

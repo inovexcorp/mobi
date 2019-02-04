@@ -22,7 +22,7 @@
   -->
 <div class="commit-history-table" targeted-spinner="dvm.id">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <info-message ng-if="!dvm.commits.length">No commits to display</info-message>
+    <info-message ng-if="!dvm.commits.length && !dvm.error">No commits to display</info-message>
     <div class="wrapper">
         <svg class="commit-graph" ng-style="{'height': (graph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0) + 'px', 'width': (graph ? dvm.deltaX + 10 : 0) + 'px'}"></svg>
         <table class="table table-hover" ng-if="dvm.commits.length">

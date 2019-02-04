@@ -21,8 +21,9 @@
   #L%
   -->
 <div class="ontology-tab h-100">
+    <class-history ng-if="dvm.os.listItem.classHistory"></class-history>
     <merge-tab ng-if="dvm.os.listItem.merge.active"></merge-tab>
-    <div class="main-tabs h-100" ng-if="!dvm.os.listItem.merge.active">
+    <div class="main-tabs h-100" ng-if="!dvm.os.listItem.merge.active && !dvm.os.listItem.classHistory">
         <material-tabset>
             <material-tab heading="'Project'" active="dvm.os.listItem.editorTabStates.project.active"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.project.entityIRI, false)">

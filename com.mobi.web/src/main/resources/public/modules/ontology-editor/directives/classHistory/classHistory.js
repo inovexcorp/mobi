@@ -26,16 +26,16 @@
     angular
         /**
          * @ngdoc overview
-         * @name classesTab
+         * @name classHistory
          *
          * @description
-         * The `classesTab` module only provides the `classesTab` directive which creates a page for viewing the
+         * The `classHistory` module only provides the `classHistory` directive which creates a page for viewing the
          * classes in an ontology.
          */
-        .module('classesTab', [])
+        .module('classHistory', [])
         /**
          * @ngdoc directive
-         * @name classesTab.directive:classesTab
+         * @name classHistory.directive:classHistory
          * @scope
          * @restrict E
          * @requires ontologyState.service:ontologyStateService
@@ -43,7 +43,7 @@
          * @requires modal.service:modalService
          *
          * @description
-         * `classesTab` is a directive that creates a page containing the
+         * `classHistory` is a directive that creates a page containing the
          * {@link classHierarchyBlock.directive:classHierarchyBlock} of the current
          * {@link ontologyState.service:ontologyStateService selected ontology} and information about a
          * selected class from that list. The selected class display includes a
@@ -52,29 +52,23 @@
          * {@link usagesBlock.directive:usagesBlock}. The directive houses the method for opening a modal for deleting
          * classes. The directive is replaced by the contents of its template.
          */
-        .directive('classesTab', classesTab);
+        .component('classHistory', {
+            bindings: {
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', ClassHistoryController],
+            templateUrl: 'modules/ontology-editor/directives/classHistory/classHistory.html'
+        });
 
-        classesTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService']
+        function ClassHistoryController(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
+            var dvm = this;
+            var ontoUtils = ontologyUtilsManagerService;
+            dvm.os = ontologyStateService;
+            dvm.om = ontologyManagerService;
 
-        function classesTab(ontologyStateService, ontologyUtilsManagerService, modalService) {
-            return {
-                restrict: 'E',
-                replace: true,
-                templateUrl: 'modules/ontology-editor/directives/classesTab/classesTab.html',
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService
-                    dvm.os = ontologyStateService;
-
-                    dvm.showDeleteConfirmation = function() {
-                        modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteClass);
-                    }
-                    dvm.classHistory = function() {
-                        dvm.os.listItem.classHistory = true;
-                    }
-                }
+            dvm.goBack = function() {
+                dvm.os.listItem.classHistory = undefined;
             }
         }
 })();

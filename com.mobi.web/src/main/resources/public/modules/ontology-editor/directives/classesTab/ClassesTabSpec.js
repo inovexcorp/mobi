@@ -77,14 +77,15 @@ describe('Classes Tab directive', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
             var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete');
+            expect(button.length).toBe(2);
+            expect(angular.element(button[0]).text()).toContain('See History');
+            expect(angular.element(button[1]).text()).toContain('Delete');
         });
         it('with no button to delete a class if the user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
             var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(0);
+            expect(button.length).toBe(1);
         });
         it('depending on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-class').length).toEqual(1);
@@ -96,7 +97,7 @@ describe('Classes Tab directive', function() {
         it('depending on whether the selected class is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('button')[0]);
+            var button = angular.element(this.element.querySelectorAll('button')[1]);
             expect(button.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
@@ -114,7 +115,7 @@ describe('Classes Tab directive', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
-        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        var button = angular.element(this.element.querySelectorAll('button')[1]);
         button.triggerHandler('click');
         expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });

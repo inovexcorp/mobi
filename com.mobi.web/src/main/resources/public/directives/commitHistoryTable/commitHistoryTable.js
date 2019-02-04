@@ -70,6 +70,7 @@
                     commitId: '<',
                     headTitle: '<?',
                     targetId: '<?',
+                    entityId: '<?',
                     commitData: '=?'
                 },
                 templateUrl: 'directives/commitHistoryTable/commitHistoryTable.html',
@@ -103,7 +104,7 @@
                     dvm.deltaY = 56;
                     dvm.id = 'commit-history-table';
 
-                    $scope.$watchGroup(['dvm.headTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
+                    $scope.$watchGroup(['dvm.headTitle', 'dvm.commitId', 'dvm.targetId', 'dvm.entityId'], () => dvm.getCommits());
 
                     dvm.openCommitOverlay = function(commitId) {
                         cm.getCommit(commitId)
@@ -118,7 +119,7 @@
                     dvm.getCommits = function() {
                         if (dvm.commitId) {
                             httpService.cancel(dvm.id);
-                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
+                            var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.entityId, dvm.id);
                             promise.then(commits => {
                                 dvm.commitData = commits;
                                 dvm.commits = commits;

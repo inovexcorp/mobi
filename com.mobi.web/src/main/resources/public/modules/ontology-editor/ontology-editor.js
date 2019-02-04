@@ -38,6 +38,7 @@
             'classAxioms',
             'classesTab',
             'classHierarchyBlock',
+            'classHistory',
             'commitOverlay',
             'commitsTab',
             'conceptHierarchyBlock',

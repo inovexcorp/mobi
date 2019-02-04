@@ -1032,9 +1032,9 @@
              * @param {string} [id=''] The identifier for this request
              * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
              */
-            self.getCommitHistory = function(commitId, targetId, id = '') {
+            self.getCommitHistory = function(commitId, targetId, entityId, id = '') {
                 var config = {
-                    params: { targetId }
+                    params: { targetId, entityId }
                 };
 
                 var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
