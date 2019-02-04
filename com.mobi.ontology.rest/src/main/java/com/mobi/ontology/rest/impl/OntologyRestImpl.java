@@ -50,6 +50,7 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Entity;
+import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -96,6 +97,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -360,21 +362,36 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getVocabularyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                        String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getVocabularyStuff, true);
-            return Response.ok(result).build();
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private JSONObject getVocabularyStuff(Ontology ontology) {
-        JSONObject result = getDerivedConceptTypeArray(ontology);
-        result.putAll(getDerivedConceptSchemeTypeArray(ontology));
-        result.putAll(getDerivedSemanticRelationArray(ontology));
-        result.put("concepts", getHierarchy(ontology.getConceptRelationships()));
-        result.put("conceptSchemes", getHierarchy(ontology.getConceptSchemeRelationships()));
-        return result;
+    private StreamingOutput getVocabularyStuffStream(Ontology ontology) {
+        return outputStream -> {
+            outputStream.write("{\"derivedConcepts\": ".getBytes());
+            outputStream.write(getDerivedConceptTypes(ontology).toString().getBytes());
+
+            outputStream.write(", \"derivedConceptSchemes\": ".getBytes());
+            outputStream.write(getDerivedConceptSchemeTypes(ontology).toString().getBytes());
+
+            outputStream.write(", \"derivedSemanticRelations\": ".getBytes());
+            outputStream.write(getDerivedSemanticRelations(ontology).toString().getBytes());
+
+            outputStream.write(", \"concepts\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
+
+            outputStream.write(", \"conceptSchemes\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
+            outputStream.write("}".getBytes());
+        };
     }
 
     @Override
@@ -382,110 +399,130 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getOntologyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                      String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getOntologyStuff, true);
-            return Response.ok(result).build();
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private JSONObject getOntologyStuff(Ontology ontology) {
+    private StreamingOutput getOntologyStuffStream(Ontology ontology) {
         Set<Ontology> importedOntologies = ontology.getImportsClosure();
         Set<Ontology> onlyImports = getImportedOntologies(importedOntologies, ontology.getOntologyId());
-        JSONObject result = new JSONObject();
-        StopWatch watch = new StopWatch();
-        log.trace("Start iriList");
-        watch.start();
 
-        result.put("iriList", getAllIRIs(ontology));
+        return outputStream -> {
+            StopWatch watch = new StopWatch();
+            log.trace("Start iriList");
+            watch.start();
 
-        watch.stop();
-        log.trace("End iriList: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start importedIRIs");
-        watch.start();
+            outputStream.write("{ \"iriList\": ".getBytes());
+            outputStream.write(getAllIRIs(ontology).toString().getBytes());
 
-        result.put("importedIRIs", doWithOntologies(onlyImports, this::getAllIRIs));
+            watch.stop();
+            log.trace("End iriList: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start importedIRIs");
+            watch.start();
 
-        watch.stop();
-        log.trace("End importedIRIs: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start importedOntologies");
-        watch.start();
+            outputStream.write(", \"importedIRIs\": ".getBytes());
+            outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
+                    .getBytes());
 
-        result.put("importedOntologies", onlyImports.stream()
-                .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
-                .collect(JSONArray::new, JSONArray::add, JSONArray::add));
+            watch.stop();
+            log.trace("End importedIRIs: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start importedOntologies");
+            watch.start();
 
-        watch.stop();
-        log.trace("End importedOntologies: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start failedImports");
-        watch.start();
+            outputStream.write(", \"importedOntologies\": ".getBytes());
+            JSONArray arr = onlyImports.stream()
+                    .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
+                    .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+            outputStream.write(arr.toString().getBytes());
 
-        result.put("failedImports", getUnloadableImportIRIs(ontology));
+            watch.stop();
+            log.trace("End importedOntologies: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start failedImports");
+            watch.start();
 
-        watch.stop();
-        log.trace("End failedImports: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start classHierarchy");
-        watch.start();
+            outputStream.write(", \"failedImports\": ".getBytes());
+            outputStream.write(JSONArray.fromObject(getUnloadableImportIRIs(ontology)).toString().getBytes());
 
-        result.put("classHierarchy", getHierarchy(ontology.getSubClassesOf()));
+            watch.stop();
+            log.trace("End failedImports: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start classHierarchy");
+            watch.start();
 
-        watch.stop();
-        log.trace("End classHierarchy: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start individuals");
-        watch.start();
+            outputStream.write(", \"classHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubClassesOf(valueFactory, modelFactory), outputStream);
 
-        result.put("individuals", getClassIndividuals(ontology.getClassesWithIndividuals()));
+            watch.stop();
+            log.trace("End classHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start individuals");
+            watch.start();
 
-        watch.stop();
-        log.trace("End individuals: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start dataPropertyHierarchy");
-        watch.start();
+            outputStream.write(", \"individuals\": ".getBytes());
+            JSONObject classesWithIndividuals = JSONObject.fromObject(
+                    ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
+            outputStream.write(classesWithIndividuals.toString().getBytes());
 
-        result.put("dataPropertyHierarchy", getHierarchy(ontology.getSubDatatypePropertiesOf()));
+            watch.stop();
+            log.trace("End individuals: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start dataPropertyHierarchy");
+            watch.start();
 
-        watch.stop();
-        log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start objectPropertyHierarchy");
-        watch.start();
+            outputStream.write(", \"dataPropertyHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory), outputStream);
 
-        result.put("objectPropertyHierarchy", getHierarchy(ontology.getSubObjectPropertiesOf()));
+            watch.stop();
+            log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start objectPropertyHierarchy");
+            watch.start();
 
-        watch.stop();
-        log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start annotationHierarchy");
-        watch.start();
+            outputStream.write(", \"objectPropertyHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubObjectPropertiesOf(valueFactory, modelFactory), outputStream);
 
-        result.put("annotationHierarchy", getHierarchy(ontology.getSubAnnotationPropertiesOf()));
+            watch.stop();
+            log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start annotationHierarchy");
+            watch.start();
 
-        watch.stop();
-        log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start conceptHierarchy");
-        watch.start();
+            outputStream.write(", \"annotationHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory), outputStream);
 
-        result.put("conceptHierarchy", getHierarchy(ontology.getConceptRelationships()));
+            watch.stop();
+            log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptHierarchy");
+            watch.start();
 
-        watch.stop();
-        log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
-        watch.reset();
-        log.trace("Start conceptSchemeHierarchy");
-        watch.start();
+            outputStream.write(", \"conceptHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
 
-        result.put("conceptSchemeHierarchy", getHierarchy(ontology.getConceptSchemeRelationships()));
+            watch.stop();
+            log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptSchemeHierarchy");
+            watch.start();
 
-        watch.stop();
-        log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+            outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
+            outputStream.write("}".getBytes());
 
-        return result;
+            watch.stop();
+            log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+        };
     }
 
     @Override
@@ -841,8 +878,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getSubClassesOf();
-            return Response.ok(getHierarchy(results)).build();
+            return Response.ok(getHierarchyStream(ontology.getSubClassesOf(valueFactory, modelFactory))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -855,8 +891,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getSubObjectPropertiesOf();
-            return Response.ok(getHierarchy(results)).build();
+            return Response.ok(getHierarchyStream(ontology.getSubObjectPropertiesOf(valueFactory, modelFactory)))
+                    .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -869,8 +905,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getSubDatatypePropertiesOf();
-            return Response.ok(getHierarchy(results)).build();
+            return Response.ok(getHierarchyStream(ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory)))
+                    .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -883,8 +919,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getSubAnnotationPropertiesOf();
-            return Response.ok(getHierarchy(results)).build();
+            return Response.ok(getHierarchyStream(ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory)))
+                    .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -897,9 +933,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getConceptRelationships();
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchyStream(ontology.getConceptRelationships(valueFactory, modelFactory)))
+                    .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -912,9 +947,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getConceptSchemeRelationships();
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            return Response.ok(getHierarchyStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory)))
+                    .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -927,9 +961,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            Map<IRI, Set<IRI>> results = ontology.getClassesWithIndividuals();
-            Map<String, Set<String>> classIndividuals = getClassIndividuals(results);
-            JSONObject response = new JSONObject().element("individuals", classIndividuals);
+            JSONObject response = new JSONObject().element("individuals",
+                    ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
             return Response.ok(response).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1050,84 +1083,16 @@ public class OntologyRestImpl implements OntologyRest {
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * Uses the provided Set to construct a hierarchy of the entities provided. Each BindingSet in the Set must have the
-     * parent set as the first binding and the child set as the second binding.
-     *
-     * @param results the TupleQueryResult that contains the parent-child relationships for creating the
-     *                         hierarchy.
-     * @return a JSONObject containing the hierarchy of the entities provided.
-     */
-    private JSONObject getHierarchy(Map<IRI, Set<IRI>> results) {
-        Map<String, Set<String>> index = new HashMap<>();
-        Set<IRI> topLevel = new HashSet<>();
-        Set<IRI> lowerLevel = new HashSet<>();
-        results.keySet().forEach(parent -> {
-            topLevel.add(parent);
-            results.get(parent).forEach(child -> {
-                lowerLevel.add(child);
-                if (index.containsKey(child.stringValue())) {
-                    index.get(child.stringValue()).add(parent.stringValue());
-                } else {
-                    Set<String> newSet = new HashSet<>();
-                    newSet.add(parent.stringValue());
-                    index.put(child.stringValue(), newSet);
-                }
-            });
-        });
-        topLevel.removeAll(lowerLevel);
-        Set<String> hierarchy = createHierarchy(topLevel, results).stream()
-                .map(Object::toString)
-                .collect(Collectors.toSet());
-        return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
+    private StreamingOutput getHierarchyStream(Hierarchy hierarchy) {
+        return outputStream -> writeHierarchyToStream(hierarchy, outputStream);
     }
 
-    /**
-     * Creates a Set of hierarchy items with their IRIs and lists of children based on the provided list of IRIs
-     * of entities without parents and map of IRIs to their Sets of children.
-     *
-     * @param topLevel a set of IRI strings of entities without parents
-     * @param results the results which contains a map of parents and their associated children.
-     * @return a Set of HierarchyNodes representing the top level entities and their children
-     */
-    private Set<HierarchyNode> createHierarchy(Set<IRI> topLevel, Map<IRI, Set<IRI>> results) {
-        Map<IRI, HierarchyNode> nodes = new HashMap<>();
-        results.forEach((key, children) -> {
-            HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
-            children.forEach(child -> {
-                if (!child.equals(key)) {
-                    HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
-                    node.addChild(obj);
-                    nodes.put(child, obj);
-                }
-            });
-            nodes.put(key, node);
-        });
-        return topLevel.stream().map(nodes::get).collect(Collectors.toSet());
-    }
-
-    private class HierarchyNode {
-        private IRI iri;
-        private Set<HierarchyNode> children = new HashSet<>();
-
-        HierarchyNode(IRI iri) {
-            this.iri = iri;
-        }
-
-        void addChild(HierarchyNode node) {
-            children.add(node);
-        }
-
-        public String toString() {
-            StringBuilder builder = new StringBuilder(String.format("{\"entityIRI\": \"%s\"", iri));
-            if (children.size() > 0) {
-                builder.append(", \"subEntities\": [")
-                        .append(String.join(", ", children.stream().map(Object::toString).collect(Collectors.toSet())))
-                        .append("]");
-            }
-            builder.append("}");
-            return builder.toString();
-        }
+    private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream) throws IOException {
+        outputStream.write("{\"hierarchy\": ".getBytes());
+        hierarchy.getHierarchyString(sesameTransformer, outputStream);
+        outputStream.write(", \"index\": ".getBytes());
+        outputStream.write(JSONObject.fromObject(hierarchy.getChildMap()).toString().getBytes());
+        outputStream.write("}".getBytes());
     }
 
     /**
@@ -1448,18 +1413,27 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
-        Set<IRI> iris = ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT));
-        return new JSONObject().element("derivedConcepts", irisToJsonArray(iris));
+        return new JSONObject().element("derivedConcepts", getDerivedConceptTypes(ontology));
+    }
+
+    private JSONArray getDerivedConceptTypes(Ontology ontology) {
+        return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT)));
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
-        Set<IRI> iris = ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME));
-        return new JSONObject().element("derivedConceptSchemes", irisToJsonArray(iris));
+        return new JSONObject().element("derivedConceptSchemes", getDerivedConceptSchemeTypes(ontology));
+    }
+
+    private JSONArray getDerivedConceptSchemeTypes(Ontology ontology) {
+        return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)));
     }
 
     private JSONObject getDerivedSemanticRelationArray(Ontology ontology) {
-        Set<IRI> iris = ontology.getSubPropertiesFor(sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION));
-        return new JSONObject().element("derivedSemanticRelations", irisToJsonArray(iris));
+        return new JSONObject().element("derivedSemanticRelations", getDerivedSemanticRelations(ontology));
+    }
+
+    private JSONArray getDerivedSemanticRelations(Ontology ontology) {
+        return irisToJsonArray(ontology.getSubPropertiesFor(sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION)));
     }
 
     /**
@@ -1679,18 +1653,5 @@ public class OntologyRestImpl implements OntologyRest {
         response.element("commitId", commitId.toString());
 
         return Response.status(Response.Status.CREATED).entity(response).build();
-    }
-
-    /**
-     * Parse the provided Set to provide a map with all the Individuals using their parent(class) as key.
-     *
-     * @param results the TupleQueryResult that contains the parent-individuals relationships for creating the
-     *                         map.
-     * @return a JSONObject containing the map of the individuals provided.
-     */
-    private Map<String, Set<String>> getClassIndividuals(Map<IRI, Set<IRI>> results) {
-        return results.entrySet().stream()
-                .collect(Collectors.toMap(entry -> entry.getKey().stringValue(),
-                        entry -> entry.getValue().stream().map(IRI::stringValue).collect(Collectors.toSet())));
     }
 }

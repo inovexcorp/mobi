@@ -32,6 +32,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
@@ -429,19 +430,20 @@ public class FullSimpleOntologyTest {
     @Test
     public void testGetSubClassesOf() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Class1b")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class1b"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Class1c")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class1c"), Collections.emptySet());
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class2a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Class2b")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class2b"), Collections.emptySet());
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class3a"), Collections.emptySet());
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("http://mobi.com/ontology#Class1a", Collections.singleton("http://mobi.com/ontology#Class1b"));
+        expected.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1c"));
+        expected.put("http://mobi.com/ontology#Class1c", Collections.emptySet());
+        expected.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Class2b"));
+        expected.put("http://mobi.com/ontology#Class2b", Collections.emptySet());
+        expected.put("http://mobi.com/ontology#Class3a", Collections.emptySet());
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryOntology.getSubClassesOf();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryOntology.getSubClassesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test
@@ -457,44 +459,47 @@ public class FullSimpleOntologyTest {
     @Test
     public void testGetSubDatatypePropertiesOf() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("http://mobi.com/ontology#dataProperty1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#dataProperty1b")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#dataProperty1b"), Collections.emptySet());
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("http://mobi.com/ontology#dataProperty1a", Collections.singleton("http://mobi.com/ontology#dataProperty1b"));
+        expected.put("http://mobi.com/ontology#dataProperty1b", Collections.emptySet());
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryOntology.getSubDatatypePropertiesOf();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryOntology.getSubDatatypePropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test
     public void testGetSubAnnotationPropertiesOf() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("http://mobi.com/ontology#annotationProperty1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#annotationProperty1b")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#annotationProperty1b"), Collections.emptySet());
-        expected.put(vf.createIRI("http://purl.org/dc/terms/title"), Collections.emptySet());
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("http://mobi.com/ontology#annotationProperty1a", Collections.singleton("http://mobi.com/ontology#annotationProperty1b"));
+        expected.put("http://mobi.com/ontology#annotationProperty1b", Collections.emptySet());
+        expected.put("http://purl.org/dc/terms/title", Collections.emptySet());
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryOntology.getSubAnnotationPropertiesOf();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryOntology.getSubAnnotationPropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test
     public void testGetSubObjectPropertiesOf() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("http://mobi.com/ontology#objectProperty1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#objectProperty1b")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#objectProperty1b"), Collections.emptySet());
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("http://mobi.com/ontology#objectProperty1a", Collections.singleton("http://mobi.com/ontology#objectProperty1b"));
+        expected.put("http://mobi.com/ontology#objectProperty1b", Collections.emptySet());
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryOntology.getSubObjectPropertiesOf();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryOntology.getSubObjectPropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test
@@ -510,18 +515,19 @@ public class FullSimpleOntologyTest {
     @Test
     public void testGetClassesWithIndividuals() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class1a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual1a")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class1b"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual1b")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class1c"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual1c")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class2a"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual2a")));
-        expected.put(vf.createIRI("http://mobi.com/ontology#Class2b"), Collections.singleton(vf.createIRI("http://mobi.com/ontology#Individual2b")));
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("http://mobi.com/ontology#Class1a", Collections.singleton("http://mobi.com/ontology#Individual1a"));
+        expected.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Individual1b"));
+        expected.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Individual1c"));
+        expected.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Individual2a"));
+        expected.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Individual2b"));
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryOntology.getClassesWithIndividuals();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryOntology.getClassesWithIndividuals(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test
@@ -568,32 +574,34 @@ public class FullSimpleOntologyTest {
     @Test
     public void testGetConceptRelationships() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept1"), Stream.of(vf.createIRI("https://mobi.com/vocabulary#Concept2"), vf.createIRI("https://mobi.com/vocabulary#Concept3")).collect(Collectors.toSet()));
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept2"), Collections.emptySet());
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept3"), Collections.emptySet());
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#Concept4"), Collections.emptySet());
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("https://mobi.com/vocabulary#Concept1", Stream.of("https://mobi.com/vocabulary#Concept2", "https://mobi.com/vocabulary#Concept3").collect(Collectors.toSet()));
+        expected.put("https://mobi.com/vocabulary#Concept2", Collections.emptySet());
+        expected.put("https://mobi.com/vocabulary#Concept3", Collections.emptySet());
+        expected.put("https://mobi.com/vocabulary#Concept4", Collections.emptySet());
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryVocabulary.getConceptRelationships();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryVocabulary.getConceptRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test
     public void testGetConceptSchemeRelationships() throws Exception {
         // Setup:
-        Map<IRI, Set<IRI>> expected = new HashMap<>();
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme1"), Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#Concept1")));
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme2"), Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#Concept2")));
-        expected.put(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme3"), Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#Concept3")));
-        Set<IRI> expectedKeys = expected.keySet();
+        Map<String, Set<String>> expected = new HashMap<>();
+        expected.put("https://mobi.com/vocabulary#ConceptScheme1", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+        expected.put("https://mobi.com/vocabulary#ConceptScheme2", Collections.singleton("https://mobi.com/vocabulary#Concept2"));
+        expected.put("https://mobi.com/vocabulary#ConceptScheme3", Collections.singleton("https://mobi.com/vocabulary#Concept3"));
+        Set<String> expectedKeys = expected.keySet();
 
-        Map<IRI, Set<IRI>> result = queryVocabulary.getConceptSchemeRelationships();
-        Set<IRI> keys = result.keySet();
-        assertEquals(expectedKeys, keys);
-        keys.forEach(iri -> assertEquals(expected.get(iri), result.get(iri)));
+        Hierarchy result = queryVocabulary.getConceptSchemeRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedKeys, parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expected.get(iri), parentMap.get(iri)));
     }
 
     @Test

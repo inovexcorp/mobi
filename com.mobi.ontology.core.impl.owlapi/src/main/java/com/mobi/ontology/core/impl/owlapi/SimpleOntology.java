@@ -28,6 +28,7 @@ import static java.util.Arrays.copyOf;
 
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Annotation;
+import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
@@ -151,10 +152,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -184,57 +183,21 @@ public class SimpleOntology implements Ontology {
     private OWLReasonerFactory owlReasonerFactory = new StructuralReasonerFactory();
     // Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
     private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
-            .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+            .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT)
+            .setTreatDublinCoreAsBuiltIn(true);
     private OWLOntologyManager owlManager;
 
     private static String CONCEPT = SKOS.CONCEPT.stringValue();
     private static String CONCEPT_SCEHEME = SKOS.CONCEPT_SCHEME.stringValue();
 
-    private static final String GET_SUB_CLASSES_OF;
-    private static final String GET_CLASSES_FOR;
-    private static final String GET_PROPERTIES_FOR;
-    private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
-    private static final String GET_SUB_OBJECT_PROPERTIES_OF;
-    private static final String GET_CLASSES_WITH_INDIVIDUALS;
     private static final String SELECT_ENTITY_USAGES;
     private static final String CONSTRUCT_ENTITY_USAGES;
-    private static final String GET_CONCEPT_RELATIONSHIPS;
-    private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
-    private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
-    private static final String FIND_ONTOLOGY;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
-    private static final String ONTOLOGY_IRI = "ontologyIRI";
-    private static final String CATALOG = "catalog";
-    private static final String RECORD = "record";
 
     static {
         try {
-            GET_SUB_CLASSES_OF = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
-                    "UTF-8"
-            );
-            GET_CLASSES_FOR = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-for.rq"),
-                    "UTF-8"
-            );
-            GET_PROPERTIES_FOR = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-properties-for.rq"),
-                    "UTF-8"
-            );
-            GET_SUB_DATATYPE_PROPERTIES_OF = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-datatype-properties-of.rq"),
-                    "UTF-8"
-            );
-            GET_SUB_OBJECT_PROPERTIES_OF = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-object-properties-of.rq"),
-                    "UTF-8"
-            );
-            GET_CLASSES_WITH_INDIVIDUALS = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-classes-with-individuals.rq"),
-                    "UTF-8"
-            );
             SELECT_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-entity-usages.rq"),
                     "UTF-8"
@@ -243,24 +206,8 @@ public class SimpleOntology implements Ontology {
                     SimpleOntologyManager.class.getResourceAsStream("/construct-entity-usages.rq"),
                     "UTF-8"
             );
-            GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
-                    "UTF-8"
-            );
-            GET_CONCEPT_SCHEME_RELATIONSHIPS = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-scheme-relationships.rq"),
-                    "UTF-8"
-            );
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
-                    "UTF-8"
-            );
-            GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
-                    "UTF-8"
-            );
-            FIND_ONTOLOGY = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/find-ontology.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -649,14 +596,21 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getSubClassesOf() {
+    public Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            owlOntology.classesInSignature(Imports.INCLUDED)
-                    .forEach(owlClass -> results.put(SimpleOntologyValues.mobiIRI(owlClass.getIRI()),
-                            getSubClassesFor(owlClass, true)));
-            return results;
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+            getDeclaredClasses()
+                    .forEach(owlClass -> {
+                        if (owlClass.isTopEntity()) {
+                            return;
+                        }
+                        IRI classIRI = SimpleOntologyValues.mobiIRI(owlClass.getIRI());
+                        hierarchy.addIRI(classIRI);
+                        getSubClassesFor(owlClass, true)
+                                .forEach(subclassIRI -> hierarchy.addParentChild(classIRI, subclassIRI));
+                    });
+            return hierarchy;
         } finally {
             logTrace("getSubClassesOf()", start);
         }
@@ -667,17 +621,22 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             OWLClass owlClass = owlManager.getOWLDataFactory().getOWLClass(SimpleOntologyValues.owlapiIRI(iri));
-            return getSubClassesFor(owlClass, false);
+            return getSubClassesFor(owlClass, false).collect(Collectors.toSet());
         } finally {
             logTrace("getSubClassesFor(IRI)", start);
         }
     }
 
-    private Set<IRI> getSubClassesFor(OWLClass owlClass, boolean direct) {
+    private Stream<IRI> getSubClassesFor(OWLClass owlClass, boolean direct) {
         return owlReasoner.getSubClasses(owlClass, direct).entities()
-                .filter(subclass -> !subclass.isOWLNothing())
-                .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()))
-                .collect(Collectors.toSet());
+                .filter(subclass -> !subclass.isBottomEntity())
+                .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()));
+    }
+
+    private Stream<OWLClass> getDeclaredClasses() {
+        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+                .filter(axiom -> axiom.getEntity().isOWLClass())
+                .map(axiom -> axiom.getEntity().asOWLClass());
     }
 
     @Override
@@ -687,14 +646,14 @@ public class SimpleOntology implements Ontology {
             org.semanticweb.owlapi.model.IRI owlapiIRI = SimpleOntologyValues.owlapiIRI(iri);
             if (owlOntology.containsDataPropertyInSignature(owlapiIRI, Imports.INCLUDED)) {
                 OWLDataProperty owlDataProperty = owlManager.getOWLDataFactory().getOWLDataProperty(owlapiIRI);
-                return getSubDatatypePropertiesFor(owlDataProperty, false);
+                return getSubDatatypePropertiesFor(owlDataProperty, false).collect(Collectors.toSet());
             } else if (owlOntology.containsObjectPropertyInSignature(owlapiIRI, Imports.INCLUDED)) {
                 OWLObjectProperty owlObjectProperty = owlManager.getOWLDataFactory().getOWLObjectProperty(owlapiIRI);
-                return getSubObjectPropertiesFor(owlObjectProperty, false);
+                return getSubObjectPropertiesFor(owlObjectProperty, false).collect(Collectors.toSet());
             } else if (owlOntology.containsAnnotationPropertyInSignature(owlapiIRI, Imports.INCLUDED)) {
                 OWLAnnotationProperty owlAnnotationProperty = owlManager.getOWLDataFactory()
                         .getOWLAnnotationProperty(owlapiIRI);
-                return getSubAnnotationPropertiesFor(owlAnnotationProperty, false);
+                return getSubAnnotationPropertiesFor(owlAnnotationProperty, false).collect(Collectors.toSet());
             } else {
                 return Collections.emptySet();
             }
@@ -704,84 +663,116 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getSubDatatypePropertiesOf() {
+    public Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
-                    .forEach(property -> results.put(SimpleOntologyValues.mobiIRI(property.getIRI()),
-                            getSubDatatypePropertiesFor(property, true)));
-            return results;
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+            getDeclaredDatatypeProperties()
+                    .forEach(property -> {
+                        IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
+                        hierarchy.addIRI(propIRI);
+                        getSubDatatypePropertiesFor(property, true)
+                                .forEach(subpropIRI -> hierarchy.addParentChild(propIRI, subpropIRI));
+                    });
+            return hierarchy;
         } finally {
             logTrace("getSubDatatypePropertiesOf()", start);
         }
     }
 
-    private Set<IRI> getSubDatatypePropertiesFor(OWLDataProperty property, boolean direct) {
+    private Stream<IRI> getSubDatatypePropertiesFor(OWLDataProperty property, boolean direct) {
         return owlReasoner.getSubDataProperties(property, direct).entities()
                 .filter(subproperty -> !subproperty.isBottomEntity())
-                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()))
-                .collect(Collectors.toSet());
+                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
+    }
+
+    private Stream<OWLDataProperty> getDeclaredDatatypeProperties() {
+        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+                .filter(axiom -> axiom.getEntity().isOWLDataProperty())
+                .map(axiom -> axiom.getEntity().asOWLDataProperty());
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getSubAnnotationPropertiesOf() {
+    public Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            owlOntology.annotationPropertiesInSignature()
-                    .forEach(property -> results.put(SimpleOntologyValues.mobiIRI(property.getIRI()),
-                            getSubAnnotationPropertiesFor(property, true)));
-            return results;
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+            getDeclaredAnnotationProperties()
+                    .forEach(property -> {
+                        if (property.isBuiltIn()) {
+                            return;
+                        }
+                        IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
+                        hierarchy.addIRI(propIRI);
+                        getSubAnnotationPropertiesFor(property, true)
+                                .forEach(subpropIRI -> hierarchy.addParentChild(propIRI, subpropIRI));
+                    });
+            return hierarchy;
         } finally {
             logTrace("getSubAnnotationPropertiesOf()", start);
         }
     }
 
+    private Stream<OWLAnnotationProperty> getDeclaredAnnotationProperties() {
+        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+                .filter(axiom -> axiom.getEntity().isOWLAnnotationProperty())
+                .map(axiom -> axiom.getEntity().asOWLAnnotationProperty());
+    }
+
     // TODO: Implement indirect
-    private Set<IRI> getSubAnnotationPropertiesFor(OWLAnnotationProperty property, boolean direct) {
+    private Stream<IRI> getSubAnnotationPropertiesFor(OWLAnnotationProperty property, boolean direct) {
         return owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
                 .filter(axiom -> axiom.getSuperProperty().equals(property))
-                .map(axiom -> SimpleOntologyValues.mobiIRI(axiom.getSubProperty().getIRI()))
-                .collect(Collectors.toSet());
+                .map(axiom -> SimpleOntologyValues.mobiIRI(axiom.getSubProperty().getIRI()));
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getSubObjectPropertiesOf() {
+    public Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
-                    .forEach(property -> results.put(SimpleOntologyValues.mobiIRI(property.getIRI()),
-                            getSubObjectPropertiesFor(property, true)));
-            return results;
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+            getDeclaredObjectProperties()
+                    .forEach(property -> {
+                        IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
+                        hierarchy.addIRI(propIRI);
+                        getSubObjectPropertiesFor(property, true)
+                                .forEach(subpropIRI -> hierarchy.addParentChild(propIRI, subpropIRI));
+                    });
+            return hierarchy;
         } finally {
             logTrace("getSubObjectPropertiesOf()", start);
         }
     }
 
-    private Set<IRI> getSubObjectPropertiesFor(OWLObjectProperty property, boolean direct) {
+    private Stream<IRI> getSubObjectPropertiesFor(OWLObjectProperty property, boolean direct) {
         return owlReasoner.getSubObjectProperties(property, direct).entities()
                 .filter(subproperty -> !subproperty.isBottomEntity())
-                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()))
-                .collect(Collectors.toSet());
+                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()));
+    }
+
+    private Stream<OWLObjectProperty> getDeclaredObjectProperties() {
+        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+                .filter(axiom -> axiom.getEntity().isOWLObjectProperty())
+                .map(axiom -> axiom.getEntity().asOWLObjectProperty());
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getClassesWithIndividuals() {
+    public Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            owlOntology.classesInSignature(Imports.INCLUDED)
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+            getDeclaredClasses()
                     .forEach(owlClass -> {
                         Set<IRI> iris = owlReasoner.instances(owlClass, true)
                                 .map(individual -> SimpleOntologyValues.mobiIRI(individual.getIRI()))
                                 .collect(Collectors.toSet());
                         if (iris.size() > 0) {
-                            results.put(SimpleOntologyValues.mobiIRI(owlClass.getIRI()), iris);
+                            IRI classIRI = SimpleOntologyValues.mobiIRI(owlClass.getIRI());
+                            hierarchy.addIRI(classIRI);
+                            iris.forEach(iri -> hierarchy.addParentChild(classIRI, iri));
                         }
                     });
-            return results;
+            return hierarchy;
         } finally {
             logTrace("getClassesWithIndividuals()", start);
         }
@@ -821,14 +812,17 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getConceptRelationships() {
+    public Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            OWLClass owlClass = owlManager.getOWLDataFactory()
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+
+            OWLClass conceptClass = owlManager.getOWLDataFactory()
                     .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT));
-            owlReasoner.instances(owlClass).forEach(concept -> {
+            owlReasoner.instances(conceptClass).forEach(concept -> {
                 IRI conceptIRI = SimpleOntologyValues.mobiIRI(concept.getIRI());
+                hierarchy.addIRI(conceptIRI);
+
                 Set<IRI> superConcepts = new HashSet<>();
                 Set<IRI> subConcepts = new HashSet<>();
                 owlOntology.axioms(concept, Imports.INCLUDED)
@@ -848,61 +842,45 @@ public class SimpleOntology implements Ontology {
                                         org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
                             }
                         });
-                if (superConcepts.size() == 0 && subConcepts.size() == 0) {
-                    results.put(conceptIRI, Collections.emptySet());
-                } else {
-                    if (results.containsKey(conceptIRI)) {
-                        Set<IRI> existing = results.get(conceptIRI);
-                        existing.addAll(subConcepts);
-                        results.put(conceptIRI, existing);
-                    } else {
-                        results.put(conceptIRI, subConcepts);
-                    }
-                    superConcepts.forEach(sup -> {
-                        if (results.containsKey(sup)) {
-                            Set<IRI> existing = results.get(sup);
-                            existing.add(conceptIRI);
-                            results.put(sup, existing);
-                        } else {
-                            results.put(sup, Collections.singleton(conceptIRI));
-                        }
-                    });
-                }
+
+                superConcepts.forEach(iri -> hierarchy.addParentChild(iri, conceptIRI));
+                subConcepts.forEach(iri -> hierarchy.addParentChild(conceptIRI, iri));
             });
 
-            return results;
+            return hierarchy;
         } finally {
             logTrace("getConceptRelationships()", start);
         }
     }
 
     @Override
-    public Map<IRI, Set<IRI>> getConceptSchemeRelationships() {
+    public Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf) {
         long start = getStartTime();
         try {
-            Map<IRI, Set<IRI>> results = new HashMap<>();
-            OWLClass owlClass = owlManager.getOWLDataFactory()
+            Hierarchy hierarchy = new Hierarchy(vf, mf);
+            OWLClass schemeClass = owlManager.getOWLDataFactory()
                     .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT_SCEHEME));
-            owlReasoner.instances(owlClass).forEach(conceptScheme -> {
-                IRI conceptSchemeIRI = SimpleOntologyValues.mobiIRI(conceptScheme.getIRI());
-                Set<IRI> concepts = new HashSet<>();
+            owlReasoner.instances(schemeClass).forEach(conceptScheme -> {
+                IRI schemeIRI = SimpleOntologyValues.mobiIRI(conceptScheme.getIRI());
+                hierarchy.addIRI(schemeIRI);
                 owlOntology.referencingAxioms(conceptScheme, Imports.INCLUDED)
                         .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
                         .map(owlIndividualAxiom -> (OWLObjectPropertyAssertionAxiom) owlIndividualAxiom)
                         .forEach(axiom -> {
                             String property = axiom.getProperty().getNamedProperty().toStringID();
                             if (property.equals(SKOS.HAS_TOP_CONCEPT.stringValue())) {
-                                concepts.add(SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
+                                IRI conceptIRI = SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID()));
+                                hierarchy.addParentChild(schemeIRI, conceptIRI);
                             } else if (property.equals(SKOS.IN_SCHEME.stringValue())
                                     || property.equals(SKOS.TOP_CONCEPT_OF.stringValue())) {
-                                concepts.add(SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getSubject().toStringID())));
+                                IRI conceptIRI = SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getSubject().toStringID()));
+                                hierarchy.addParentChild(schemeIRI, conceptIRI);
                             }
                         });
-                results.put(conceptSchemeIRI, concepts);
             });
-            return results;
+            return hierarchy;
         } finally {
             logTrace("getConceptSchemeRelationships()", start);
         }

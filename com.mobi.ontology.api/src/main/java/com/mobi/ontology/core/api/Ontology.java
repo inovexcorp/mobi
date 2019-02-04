@@ -39,10 +39,8 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 
 import java.io.OutputStream;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public interface Ontology {
 
@@ -254,9 +252,11 @@ public interface Ontology {
      * Gets the subClassOf relationships for classes in the Ontology. The parents will be OWL Classes and the
      * children will be all OWL Classes that are direct subclasses.
      *
-     * @return a {@link Map} of Class {@link IRI IRIs} to {@link Set Sets} of Class {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Class {@link IRI IRIs} to Class {@link IRI IRIs}.
      */
-    Stream<Map.Entry<IRI, Set<IRI>>> getSubClassesOf();
+    Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf);
 
     /**
      * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
@@ -280,36 +280,41 @@ public interface Ontology {
      * Gets the subPropertyOf relationships for datatype properties in the Ontology. The parents will be OWL
      * DatatypeProperties and the children will be all OWL DatatypeProperties that are direct subproperties.
      *
-     * @return a {@link Map} of DatatypeProperty {@link IRI IRIs} to {@link Set Sets} of DatatypeProperty
-     *      {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of DatatypeProperty {@link IRI IRIs} to DatatypeProperty {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getSubDatatypePropertiesOf();
+    Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf);
 
     /**
      * Gets the subPropertyOf relationships for annotation properties in the Ontology. The parents will be OWL
      * AnnotationProperties and the children will be all OWL AnnotationProperties that are direct subproperties.
      *
-     * @return a {@link Map} of AnnotationProperty {@link IRI IRIs} to {@link Set Sets} of AnnotationProperty
-     *      {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of AnnotationProperty {@link IRI IRIs} to AnnotationProperty {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getSubAnnotationPropertiesOf();
+    Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf);
 
     /**
      * Gets the subPropertyOf relationships for object properties in the Ontology. The parents will be OWL
      * ObjectProperties and the children will be all OWL ObjectProperties that are direct subproperties.
      *
-     * @return a {@link Map} of ObjectProperty {@link IRI IRIs} to {@link Set Sets} of ObjectProperty
-     *      {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of ObjectProperty {@link IRI IRIs} to ObjectProperty {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getSubObjectPropertiesOf();
+    Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf);
 
     /**
      * Gets the classes with individuals in the Ontology. The parents will be OWL Classes and the children will be all
      * instances of the classes directly.
      *
-     * @return a {@link Map} of Class {@link IRI IRIs} to {@link Set Sets} of individual {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Class {@link IRI IRIs} to individual {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getClassesWithIndividuals();
+    Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf);
 
     /**
      * Gets the entity usages for the provided Resource in the Ontology.
@@ -333,18 +338,22 @@ public interface Ontology {
      * skos:broaderTransitive property or are the object of a skos:narrower, skos:narrowerMatch, or
      * skos:narrowerTransitive property.
      *
-     * @return a {@link Map} of Concept {@link IRI IRIs} to {@link Set Sets} or Concept {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Concept {@link IRI IRIs} to Concept {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getConceptRelationships();
+    Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf);
 
     /**
      * Gets the concept scheme relationships in the Ontology. The parents will be instances of skos:ConceptScheme or
      * a subclass and the children are instances of skos:Concept or a subclass that have a skos:inScheme or
      * skos:topConceptOf property or are the object of a skos:hasTopConcept property.
      *
-     * @return a {@link Map} of Concept Scheme {@link IRI IRIs} to {@link Set Sets} of Concept {@link IRI IRIs}.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Concept Scheme {@link IRI IRIs} to Concept {@link IRI IRIs}.
      */
-    Map<IRI, Set<IRI>> getConceptSchemeRelationships();
+    Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf);
 
     /**
      * Searches the Ontology using the provided searchText.
