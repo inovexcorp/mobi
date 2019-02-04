@@ -1089,7 +1089,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream) throws IOException {
         outputStream.write("{\"hierarchy\": ".getBytes());
-        hierarchy.getHierarchyString(sesameTransformer, outputStream);
+        hierarchy.writeHierarchyString(sesameTransformer, outputStream);
         outputStream.write(", \"index\": ".getBytes());
         outputStream.write(JSONObject.fromObject(hierarchy.getChildMap()).toString().getBytes());
         outputStream.write("}".getBytes());

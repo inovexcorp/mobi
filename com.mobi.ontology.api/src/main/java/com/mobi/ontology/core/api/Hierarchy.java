@@ -43,6 +43,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A POJO that represents hierarchical relationships within an {@link Ontology}. Contains a {@link Map} of IRI Strings
+ * of parents to IRI strings of their children and a {@link Map} of IRI Strings of children to IRI strings of their
+ * parents. If an entity does not have a parent, it will not be in the parentMap. If an entity does not have a child,
+ * it will not be in the childMap. The POJO also contains a {@link Model} of statements representing the hierarchy.
+ */
 public class Hierarchy {
     private static final Logger LOG = LoggerFactory.getLogger(Hierarchy.class);
 
@@ -54,6 +60,12 @@ public class Hierarchy {
     private IRI nodeType;
     private IRI childProp;
 
+    /**
+     * Creates an empty {@link Hierarchy}.
+     *
+     * @param vf A {@link ValueFactory} to use in initialization
+     * @param mf A {@link ModelFactory} to use in initialization
+     */
     public Hierarchy(ValueFactory vf, ModelFactory mf) {
         model = mf.createModel();
         type = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
@@ -69,6 +81,17 @@ public class Hierarchy {
         return parentMap;
     }
 
+    public Model getModel() {
+        return model;
+    }
+
+    /**
+     * Adjusts the internal {@link Map Maps} and {@link Model} to represent a parent-child relationship between the
+     * provided {@link Resource Resources}.
+     *
+     * @param parent A parent entity's {@link Resource}
+     * @param child A child entity's {@link Resource}
+     */
     public void addParentChild(Resource parent, Resource child) {
         model.add(parent, type, nodeType);
         model.add(child, type, nodeType);
@@ -92,12 +115,17 @@ public class Hierarchy {
     }
 
     public void addIRI(Resource iri) {
-        childMap.put(iri.stringValue(), new HashSet<>());
-        parentMap.put(iri.stringValue(), new HashSet<>());
         model.add(iri, type, nodeType);
     }
 
-    public void getHierarchyString(SesameTransformer transformer, OutputStream outputStream) {
+    /**
+     * Writes the {@link Model} of hierarchy relationships as JSON-LD in a hierarchical view to the provided
+     * {@link OutputStream}.
+     *
+     * @param transformer A {@link SesameTransformer} to utilize when writing the JSON-LD
+     * @param outputStream The {@link OutputStream} to write the hierarchy string to
+     */
+    public void writeHierarchyString(SesameTransformer transformer, OutputStream outputStream) {
         StopWatch watch = new StopWatch();
         LOG.trace("Start writing hierarchy JSON-LD");
         watch.start();

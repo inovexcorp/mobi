@@ -768,7 +768,6 @@ public class SimpleOntology implements Ontology {
                                 .collect(Collectors.toSet());
                         if (iris.size() > 0) {
                             IRI classIRI = SimpleOntologyValues.mobiIRI(owlClass.getIRI());
-                            hierarchy.addIRI(classIRI);
                             iris.forEach(iri -> hierarchy.addParentChild(classIRI, iri));
                         }
                     });
