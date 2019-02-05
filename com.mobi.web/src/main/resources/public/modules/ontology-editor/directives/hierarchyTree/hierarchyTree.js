@@ -27,9 +27,9 @@
         .module('hierarchyTree', [])
         .directive('hierarchyTree', hierarchyTree);
 
-        hierarchyTree.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'INDENT'];
+        hierarchyTree.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'INDENT'];
 
-        function hierarchyTree(ontologyStateService, ontologyUtilsManagerService, INDENT) {
+        function hierarchyTree(ontologyStateService, ontologyUtilsManagerService, prefixes, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -43,9 +43,34 @@
                     dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.ou = ontologyUtilsManagerService;
-                    
+                    dvm.searchText = '';
+                    dvm.filterText = '';
+                    var searchProperties = [prefixes.rdfs + 'label', prefixes.dcterms + 'title', prefixes.dc + 'title', prefixes.skos + 'prefLabel', prefixes.skos + 'altLabel'];
+
                     dvm.isShown = function(node) {
-                        return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                        if (dvm.filterText && dvm.filterText !== '') {
+                            var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
+                            var searchValues = _.pick(entity, searchProperties);
+                            var match = false;
+                            _.forEach(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
+                                if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+                                    match = true;
+                            }));
+                            if (match) {
+                                var path = node.path[0];
+                                for (var i = 1; i < node.path.length; i++) {
+                                    path = path + '.' + node.path[i];
+                                    dvm.os.setOpened(path, true);
+                                }
+                            }
+                            return match;
+                        } else {
+                            return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                        }
+                    }
+
+                    dvm.onKeyup = function() {
+                        dvm.filterText = dvm.searchText;
                     }
                 }
             }
