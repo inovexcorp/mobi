@@ -835,42 +835,34 @@ public class SimpleOntology implements Ontology {
      */
     private org.eclipse.rdf4j.model.Model createSesameModel(InputStream inputStream) throws IOException,
             MobiOntologyException {
-        org.eclipse.rdf4j.model.Model model = null;
+        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS, OWLAPIRDFFormat.OWL_XML,
                 OWLAPIRDFFormat.MANCHESTER_OWL, OWLAPIRDFFormat.OWL_FUNCTIONAL));
 
         Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
-        InputStream markSupported = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
+        InputStream ontologyData = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
 
         try {
-            markSupported.mark(0);
+            ontologyData.mark(0);
 
             while (rdfFormatIterator.hasNext()) {
                 RDFFormat format = rdfFormatIterator.next();
                 try {
-                    model = Rio.parse(markSupported, "", format);
+                    model = Rio.parse(ontologyData, "", format);
                     LOG.debug("File is {} formatted.", format.getName());
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException | OWLRuntimeException e) {
-                    if (e.getClass() == RDFParseException.class && e.getMessage().contains("DOCTYPE is disallowed")) {
-                        throw new MobiOntologyException("For security reasons, DOCTYPE is not allowed in XML files. "
-                                + "Please reference the \"XML External Entity (XXE) Processing\" vulnerability.");
-                    }
-                    markSupported.reset();
+                    ontologyData.reset();
                     LOG.info("File is not {} formatted.", format.getName());
                 }
             }
         } finally {
-            if (markSupported != null) {
-                IOUtils.closeQuietly(markSupported);
-            } else {
-                IOUtils.closeQuietly(inputStream);
-            }
+            IOUtils.closeQuietly(ontologyData);
         }
 
-        if (model == null) {
+        if (model.isEmpty()) {
             throw new MobiOntologyException("Ontology was invalid for all formats.");
         }
 

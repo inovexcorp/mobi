@@ -65,7 +65,7 @@ describe('Create User Overlay component', function() {
         });
         describe('should add a user with the entered information', function() {
             beforeEach(function() {
-                this.controller.newUser = {username: 'username', firstName: 'John', lastName: "Doe", email: 'example@example.com'};
+                this.controller.newUser = {username: 'username', firstName: 'John', lastName: "Doe", email: 'example@example.com', roles: ['user']};
                 this.controller.password = 'password';
             });
             it('unless an error occurs', function() {
@@ -76,25 +76,13 @@ describe('Create User Overlay component', function() {
                 expect(this.controller.errorMessage).toEqual('Error Message');
                 expect(scope.close).not.toHaveBeenCalled();
             });
-            describe('and the correct roles and groups', function() {
-                it('unless an error occurs', function() {
-                    userManagerSvc.addUserRoles.and.returnValue($q.reject('Error Message'));
-                    this.controller.add();
-                    scope.$apply()
-                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(this.controller.newUser, this.controller.password);
-                    expect(userManagerSvc.addUserRoles).toHaveBeenCalledWith(this.controller.newUser.username, ['user']);
-                    expect(this.controller.errorMessage).toEqual('Error Message');
-                    expect(scope.close).not.toHaveBeenCalled();
-                });
-                it('successfully', function() {
-                    this.controller.roles.admin = true;
-                    this.controller.add();
-                    scope.$apply()
-                    expect(userManagerSvc.addUser).toHaveBeenCalledWith(this.controller.newUser, this.controller.password);
-                    expect(userManagerSvc.addUserRoles).toHaveBeenCalledWith(this.controller.newUser.username, ['user', 'admin']);
-                    expect(this.controller.errorMessage).toEqual('');
-                    expect(scope.close).toHaveBeenCalled();
-                });
+            it('successfully', function() {
+                this.controller.roles.admin = true;
+                this.controller.add();
+                scope.$apply();
+                expect(userManagerSvc.addUser).toHaveBeenCalledWith(this.controller.newUser, this.controller.password);
+                expect(this.controller.errorMessage).toEqual('');
+                expect(scope.close).toHaveBeenCalled();
             });
         });
     });

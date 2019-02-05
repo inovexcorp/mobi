@@ -20,6 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+function mockComponent(moduleName, componentName) {
+    module(moduleName, function($provide) {
+        $provide.factory(componentName + 'Directive', function() { return {}; });
+    });
+}
+  
 function createQueryString(obj) {
     var queryString = '';
     var keys = Object.keys(obj);
@@ -224,7 +230,6 @@ function mockOntologyManager() {
             this.ontologyRecords = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
-            this.getAllOntologyRecords = jasmine.createSpy('getAllOntologyRecords').and.returnValue($q.when([]));
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
@@ -477,6 +482,8 @@ function mockPrefixes() {
             this.mergereq = 'mergereq:';
             this.user = 'user:';
             this.policy = 'policy:';
+            this.roles = "roles:";
+            this.foaf = "foaf:";
         });
     });
 }
@@ -748,7 +755,7 @@ function mockOntologyState() {
             this.createOntologyState = jasmine.createSpy('createOntologyState').and.returnValue($q.when());
             this.getOntologyStateByRecordId = jasmine.createSpy('getOntologyStateByRecordId').and.returnValue({});
             this.updateOntologyState = jasmine.createSpy('updateOntologyState').and.returnValue($q.when());
-            this.deleteOntologyBranch = jasmine.createSpy('deleteOntologyBranch').and.returnValue($q.when());
+            this.deleteOntologyBranchState = jasmine.createSpy('deleteOntologyBranchState').and.returnValue($q.when());
             this.deleteOntologyState = jasmine.createSpy('deleteOntologyState').and.returnValue($q.when());
             this.getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId').and.returnValue({});
             this.getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId').and.returnValue('');
@@ -865,6 +872,8 @@ function mockUserManager() {
             this.getGroupUsers = jasmine.createSpy('getGroupUsers').and.returnValue($q.when([]));
             this.addGroupUsers = jasmine.createSpy('addGroupUsers').and.returnValue($q.when());
             this.deleteGroupUser = jasmine.createSpy('deleteGroupUser').and.returnValue($q.when());
+            this.getUserObj = jasmine.createSpy('getUserObj').and.returnValue({});
+            this.getGroupObj = jasmine.createSpy('getGroupObj').and.returnValue({});
             this.isAdmin = jasmine.createSpy('isAdmin');
         });
     });
@@ -887,6 +896,7 @@ function mockUserState() {
 function mockCatalogManager() {
     module(function($provide) {
         $provide.service('catalogManagerService', function($q) {
+            this.coreRecordTypes = [];
             this.sortOptions = [];
             this.recordTypes = [];
             this.localCatalog = undefined;
@@ -957,46 +967,16 @@ function mockCatalogManager() {
 function mockCatalogState() {
     module(function($provide) {
         $provide.service('catalogStateService', function() {
-            this.catalogs = {
-                local: {
-                    show: false,
-                    catalog: {},
-                    openedPath: [],
-                    records: {
-                        recordType: '',
-                        sortOption: {},
-                        searchText: '',
-                        limit: 10
-                    },
-                    branches: {
-                        sortOption: {},
-                        limit: 10
-                    }
-                },
-                distributed: {
-                    show: false,
-                    catalog: {},
-                    openedPath: [],
-                    records: {
-                        recordType: '',
-                        sortOption: {},
-                        searchText: '',
-                        limit: 10
-                    }
-                }
-            };
-            this.currentPage = 1;
-            this.links = {
-                prev: '',
-                next: ''
-            };
-            this.totalSize = 0;
-            this.results = [];
+            this.selectedRecord = undefined;
+            this.totalRecordSize = 0;
+            this.currentRecordPage = 1;
+            this.recordLimit = 10;
+            this.recordSortOption = undefined;
+            this.recordFilterType = '';
+            this.recordSearchText = '';
+            this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
-            this.reset = jasmine.createSpy('reset');
-            this.resetPagination = jasmine.createSpy('resetPagination');
-            this.setPagination = jasmine.createSpy('setPagination');
-            this.getCurrentCatalog = jasmine.createSpy('getCurrentCatalog').and.returnValue({});
+            this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });
 }

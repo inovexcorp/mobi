@@ -176,7 +176,8 @@ public interface CatalogManager {
      * @param unversionedRecordId The Resource identifying the UnversionedRecord which has the Distributions.
      * @return The Set of Distributions for the UnversionedRecord if they exist.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or any of the Distributions could not be found.
+     *                                  Record does not belong to the Catalog, or any of the Distributions could not be
+     *                                  found.
      */
     Set<Distribution> getUnversionedDistributions(Resource catalogId, Resource unversionedRecordId);
 
@@ -196,7 +197,8 @@ public interface CatalogManager {
      * @param unversionedRecordId The Resource identifying the UnversionedRecord which will get the new Distribution.
      * @param distribution        The Distribution to add to the UnversionedRecord.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Distribution already exists in the repository.
+     *                                  Record does not belong to the Catalog, or the Distribution already exists in the
+     *                                  repository.
      */
     void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution distribution);
 
@@ -245,7 +247,8 @@ public interface CatalogManager {
      * @param versionedRecordId The Resource identifying the VersionedRecord which has the Versions.
      * @return The Set of Distributions for the VersionedRecord if they exist.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or any of the Versions could not be found.
+     *                                  Record does not belong to the Catalog, or any of the Versions could not be
+     *                                  found.
      */
     Set<Version> getVersions(Resource catalogId, Resource versionedRecordId);
 
@@ -269,7 +272,8 @@ public interface CatalogManager {
      * @param version           The Version to add to the VersionedRecord.
      * @param <T>               An Object which extends Version.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Version already exists in the repository.
+     *                                  Record does not belong to the Catalog, or the Version already exists in the
+     *                                  repository.
      */
     <T extends Version> void addVersion(Resource catalogId, Resource versionedRecordId, T version);
 
@@ -352,8 +356,8 @@ public interface CatalogManager {
      * @param versionId         The Resource identifying the Version which has the Distributions.
      * @return The Set of Distributions for the Version if they exist.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Version could not be found, or any of the Distributions could
-     *                                  not be found.
+     *                                  Record does not belong to the Catalog, the Version could not be found, or any
+     *                                  of the Distributions could not be found.
      */
     Set<Distribution> getVersionedDistributions(Resource catalogId, Resource versionedRecordId, Resource versionId);
 
@@ -366,8 +370,8 @@ public interface CatalogManager {
      * @param versionId         The Resource identifying the Version which will get the new Distribution.
      * @param distribution      The Distribution to add to the Version.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Version could not be found, or the Distribution already exists
-     *                                  in the repository.
+     *                                  Record does not belong to the Catalog, the Version could not be found, or the
+     *                                  Distribution already exists in the repository.
      */
     void addVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                   Distribution distribution);
@@ -381,8 +385,8 @@ public interface CatalogManager {
      * @param versionId         The Resource identifying the Version which has the Distribution.
      * @param newDistribution   The Distribution with the desired changes.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Version could not be found, or the Distribution could not be
-     *                                  found.
+     *                                  Record does not belong to the Catalog, the Version could not be found, or the
+     *                                  Distribution could not be found.
      */
     void updateVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                      Distribution newDistribution);
@@ -395,8 +399,8 @@ public interface CatalogManager {
      * @param versionId         The Resource identifying the Version which has the Distribution.
      * @param distributionId    The Resource identifying the Distribution you want to remove.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Version could not be found, or the Distribution could not be
-     *                                  found.
+     *                                  Record does not belong to the Catalog, the Version could not be found, or the
+     *                                  Distribution could not be found.
      */
     void removeVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
                                      Resource distributionId);
@@ -411,7 +415,8 @@ public interface CatalogManager {
      * @param distributionId    The Resource identifying the Distribution to retrieve.
      * @return The Distribution if it exists.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Version does not belong to the Record.
+     *                                  Record does not belong to the Catalog, or the Version does not belong to the
+     *                                  Record.
      * @throws IllegalStateException    Thrown if the Version could not be found, or the Distribution could not be
      *                                  found.
      */
@@ -425,7 +430,8 @@ public interface CatalogManager {
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branches.
      * @return The Set of Branches for the VersionedRDFRecord if they exist.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or any of the Branches could not be found.
+     *                                  Record does not belong to the Catalog, or any of the Branches could not be
+     *                                  found.
      */
     Set<Branch> getBranches(Resource catalogId, Resource versionedRDFRecordId);
 
@@ -449,7 +455,8 @@ public interface CatalogManager {
      * @param branch               The Branch to add to the VersionedRDFRecord.
      * @param <T>                  An Object which extends Branch.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Branch already exists in the repository.
+     *                                  Record does not belong to the Catalog, or the Branch already exists in the
+     *                                  repository.
      */
     <T extends Branch> void addBranch(Resource catalogId, Resource versionedRDFRecordId, T branch);
 
@@ -488,7 +495,8 @@ public interface CatalogManager {
      * @param branchId             The Resource identifying the Branch whose head Commit will be updated.
      * @param commitId             The Resource identifying the new head Commit.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Branch could not be found, or the Commit could not be found.
+     *                                  Record does not belong to the Catalog, the Branch could not be found, or the
+     *                                  Commit could not be found.
      */
     void updateHead(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
@@ -570,7 +578,8 @@ public interface CatalogManager {
      * @param additions            The statements which were added to the named graph.
      * @param deletions            The statements which were added to the named graph.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be found.
+     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be
+     *                                  found.
      * @throws IllegalStateException    Thrown if the InProgressCommit does not have the additions/deletions set.
      */
     void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource commitId,
@@ -579,7 +588,8 @@ public interface CatalogManager {
     /**
      * Updates the InProgressCommit identified by the provided Resources and User using the provided addition and
      * deletion statements. These statements were added and deleted respectively and will be used when creating the
-     * completed named graph.
+     * completed named graph. If the User does not have an InProgressCommit, one will be created with the addition and
+     * deletion statements.
      *
      * @param catalogId            The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
@@ -587,7 +597,7 @@ public interface CatalogManager {
      * @param additions            The statements which were added to the named graph.
      * @param deletions            The statements which were added to the named graph.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be found.
+     *                                  Record does not belong to the Catalog
      * @throws IllegalStateException    Thrown if the InProgressCommit does not have the additions/deletions set.
      */
     void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user, @Nullable Model additions,
@@ -602,7 +612,8 @@ public interface CatalogManager {
      *                             InProgressCommit.
      * @param inProgressCommit     The InProgressCommit to add to the VersionedRDFRecord.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the InProgressCommit already exists in the repository.
+     *                                  Record does not belong to the Catalog, or the InProgressCommit already exists
+     *                                  in the repository.
      */
     void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, InProgressCommit inProgressCommit);
 
@@ -627,9 +638,10 @@ public interface CatalogManager {
      * @param commitId             The Resource identifying the Commit to get.
      * @return The Commit if it exists.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Branch does not belong to the Record.
-     * @throws IllegalStateException    Thrown if the Branch could not be found, the Branch does not have a head Commit, or
-     *                                  the Commit could not be found.
+     *                                  Record does not belong to the Catalog, or the Branch does not belong to the
+     *                                  Record.
+     * @throws IllegalStateException    Thrown if the Branch could not be found, the Branch does not have a head Commit,
+     *                                  or the Commit could not be found.
      */
     Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
@@ -641,7 +653,8 @@ public interface CatalogManager {
      * @param branchId             The Resource identifying the Branch which has the head Commit.
      * @return The head Commit if it exists
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the Branch does not belong to the Record.
+     *                                  Record does not belong to the Catalog, or the Branch does not belong to the
+     *                                  Record.
      * @throws IllegalStateException    Thrown if the Branch could not be found, the Branch does not have a head Commit
      *                                  or the Commit could not be found.
      */
@@ -714,7 +727,8 @@ public interface CatalogManager {
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
      * @param inProgressCommitId   The Resource identifying the InProgressCommit to be removed.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be found
+     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be
+     *                                  found
      */
     void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource inProgressCommitId);
 
@@ -725,7 +739,8 @@ public interface CatalogManager {
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
      * @param user                 The User with the InProgressCommit.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be found
+     *                                  Record does not belong to the Catalog, or the InProgressCommit could not be
+     *                                  found
      */
     void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user);
 
@@ -777,10 +792,10 @@ public interface CatalogManager {
      * @param targetId             The Resource identifying the target Branch
      * @return List of Commits between the HEAD of the source branch and the HEAD of the target branch
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Branch could not be found, or any of the Commits could not be
-     *                                  found.
-     * @throws IllegalStateException    Thrown if either Branch does not have a head Commit or if the commit history does
-     *                                  not have a common parent.
+     *                                  Record does not belong to the Catalog, the Branch could not be found, or any of
+     *                                  the Commits could not be found.
+     * @throws IllegalStateException    Thrown if either Branch does not have a head Commit or if the commit history
+     *                                  does not have a common parent.
      */
     List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                 Resource targetId);
@@ -796,11 +811,42 @@ public interface CatalogManager {
      * @param branchId             The Resource identifying the Branch with the chain of Commit.
      * @return List of Commits which make up the commit chain for the head Commit of the Branch.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *                                  Record does not belong to the Catalog, the Branch could not be found, or any of the Commits could not be
-     *                                  found.
+     *                                  Record does not belong to the Catalog, the Branch could not be found, or any of
+     *                                  the Commits could not be found.
      * @throws IllegalStateException    Thrown if the Branch does not have a head Commit.
      */
     List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
+
+    /**
+     * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the first
+     * provided Resource is the first item in the List and it was informed by the previous Commit in the List. Each
+     * addition or deletion of a Commit is then compared to the Entity IRI and removes graphs that don't contain the
+     * entityId. The resulting List can then be thought as the chain of Commits starting with the
+     * Commit identified by the first provided Resource filtered to those containing the Entity IRI.
+     *
+     * @param commitId The Resource identifying the Commit for the desired chain.
+     * @param entityId The Resource identifying the Entity to filter the chain of Commit.
+     * @return List of Commits which make up the commit chain for the provided Commit.
+     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
+     */
+    List<Commit> getCommitEntityChain(Resource commitId, Resource entityId);
+
+    /**
+     * Gets a List of Commits ordered by date descending within the repository starting with the head Commit of the
+     * Branch identified by the provided Resources. The head Commit is the first one in the List and it was informed
+     * by the previous Commit in the List. This association is repeated until you get to the second Resource which is
+     * beginning of the List. Each addition or deletion of a Commit is then compared to the Entity IRI and removes
+     * graphs that don't contain the entityId. The resulting List can then be thought as the chain of Commits on the
+     * Branch starting with the head Commit. That list is then filtered by an Entity IRI resulting in Commits containing
+     * the Entity IRI in the additions or deletions of a Commit.
+     *
+     * @param catalogId            The Resource identifying the Catalog which contains the Record.
+     * @param targetId             The Resource identifying the Commit to terminate the chain.
+     * @param entityId             The Resource identifying the Entity to filter the chain of Commit.
+     * @return List of Commits which make up the commit chain for the provided Commit and Entity IRI.
+     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
+     */
+    List<Commit> getCommitEntityChain(Resource catalogId, Resource targetId, Resource entityId);
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
@@ -814,11 +860,21 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
+     * Gets the Model which represents the entity at the instance of the Commit identified by the provided Commit List
+     * to construct a List of Resources.
+     *
+     * @param commitList The Commit List identifying which Resources are required to return.
+     * @return Model which represents the Resource of the provided Commit List.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    Model getCompiledResource(List<Commit> commitList);
+
+    /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
      * using previous Commit data to construct it.
      *
-     * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that you wish
-     *                             to retrieve.
+     * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
+     *                             you wish to retrieve.
      * @param branchId             The Resource identifying the Branch from where the Commit should originate.
      * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
      * @return Model which represents the resource at the Commit's point in history.

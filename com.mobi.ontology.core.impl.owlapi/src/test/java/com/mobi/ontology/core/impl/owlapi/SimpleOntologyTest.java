@@ -148,11 +148,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
     }
 
-    @Test (expected = MobiOntologyException.class)
-    public void testStreamConstructorXMLDoctype() throws Exception {
-        Ontology ontology = new SimpleOntology(hasDoctypeInputStream, ontologyManager, transformer, bNodeService, true);
-    }
-
     @Test
     public void testEquals() throws Exception {
         InputStream stream1 = new FileInputStream(testFile);

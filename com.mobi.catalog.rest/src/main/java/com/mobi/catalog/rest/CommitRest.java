@@ -23,10 +23,15 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Resource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -64,11 +69,16 @@ public interface CommitRest {
      * Gets a {@link List} of {@link Commit}s, in descending order by date, within the repository which represents the
      * {@link Commit} history starting from the specified {@link Commit}. The {@link Commit} identified by the provided
      * {@code commitId} is the first item in the {@link List} and it was informed by the previous {@link Commit} in the
-     * {@link List}. If a limit is passed which is greater than zero, will paginate the results.
+     * {@link List}. The {@link List} is then filtered by {@link Commit Commits} containing an entity in its additions
+     * or deletions. If a limit is passed which is greater than zero, will paginate the results.
      *
      * @param uriInfo  The {@link UriInfo} of the request.
      * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
      *                 starts with "{@code _:}".
+     * @param targetId {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     *                 {@link String} starts with "{@code _:}".
+     * @param entityId An optional {@link String} value of the entity ID. NOTE: Assumes an {@link IRI} unless
+     *                 {@link String} starts with "{@code _:}".
      * @param offset   An optional offset for the results.
      * @param limit    An optional limit for the results.
      * @return A {@link Response} containing a {@link List} of {@link Commit}s starting with the provided
@@ -82,15 +92,33 @@ public interface CommitRest {
     Response getCommitHistory(@Context UriInfo uriInfo,
                               @PathParam("commitId") String commitId,
                               @QueryParam("targetId") String targetId,
+                              @QueryParam("entityId") String entityId,
                               @QueryParam("offset") int offset,
                               @QueryParam("limit") int limit);
 
     /**
+     * Gets the Compiled Resource of {@link Commit} and or of a specific Entity IRI in that {@link Commit} if present.
+     *
+     * @param commitId {@link String} value of the {@link Commit} ID. NOTE: Assumes an {@link IRI} unless {@link String}
+     *                 starts with "{@code _:}".
+     * @param entityId An Optional Resource identifying the Entity to filter the chain of Commit.
+     * @return a {@link Response} containing a {@link List} of Compiled {@link Resource}s.
+     * @throws IllegalArgumentException Thrown if a CommitId could not be found.
+     */
+    @GET
+    @Path("{commitId}/resource")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the Commit specified by the provided ID.")
+    Response getCompiledResource(@PathParam("commitId") String commitId,
+                                 @QueryParam("entityId") String entityId);
+
+    /**
      * Gets the {@link Difference} between the two specified {@link Commit}s.
      *
-     * @param sourceId  {@link String} value of the sourceId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * @param sourceId  {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
-     * @param targetId  {@link String} value of the targetId {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
+     * @param targetId  {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.

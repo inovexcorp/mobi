@@ -39,6 +39,7 @@
          * @requires $http
          * @requires $q
          * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `userManagerService` is a service that provides access to the Mobi users and
@@ -46,9 +47,9 @@
          */
         .service('userManagerService', userManagerService);
 
-        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
+        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
 
-        function userManagerService($http, $q, REST_PREFIX, utilService) {
+        function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             var self = this,
                 userPrefix = REST_PREFIX + 'users',
                 groupPrefix = REST_PREFIX + 'groups';
@@ -65,6 +66,7 @@
              * each object is:
              * ```
              * {
+             *    jsonld: {},
              *    title: '',
              *    description: '',
              *    roles: [],
@@ -84,6 +86,7 @@
              * each object is:
              * ```
              * {
+             *    jsonld: {},
              *    iri: '',
              *    username: '',
              *    firstName: '',
@@ -115,48 +118,50 @@
              * @description
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
-             * the results of the GET /mobirest/users, GET /mobirest/users/{username},
-             * and GET /mobirest/users/{username}/roles endpoints for the users list. Uses the
-             * results of the GET /mobirest/groups, GET /mobirest/groups/{groupTitle},
-             * GET /mobirest/groups/{groupTitle}/roles, and GET /mobirest/groups/{groupTitle}/roles
-             * endpoints for the groups list. If an error occurs in any of the HTTP calls,
+             * the results of the GET /mobirest/users and the results of the GET /mobirest/groups endpoints to retrieve
+             * the user and group lists, respectively. If an error occurs in either of the HTTP calls,
              * logs the error on the console. Returns a promise.
              *
              * @return {Promise} A Promise that indicates the function has completed.
              */
             self.initialize = function() {
-                return $q.all([
-                    $http.get(userPrefix)
-                        .then(response => $q.all(_.map(response.data, username => self.getUser(username))), error => $q.reject(error))
-                        .then(responses => {
-                            self.users = responses;
-                            return $q.all(_.map(self.users, user => listUserRoles(user.username)));
-                        }, error => $q.reject(error))
-                        .then(responses => {
-                            _.forEach(responses, (response, idx) => {
-                                self.users[idx].roles = response;
-                            });
-                        }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load users.'))),
-                    $http.get(groupPrefix)
-                        .then(response => $q.all(_.map(response.data, groupTitle => self.getGroup(groupTitle))), error => $q.reject(error))
-                        .then(responses => {
-                            self.groups = responses;
-                            return $q.all(_.map(self.groups, group => self.getGroupUsers(group.title)));
-                        }, error => $q.reject(error))
-                        .then(responses => {
-                            _.forEach(responses, (response, idx) => {
-                                self.groups[idx].members = _.map(response, 'username');
-                            });
-                            return $q.all(_.map(self.groups, group => listGroupRoles(group.title)));
-                        }, error => $q.reject(error))
-                        .then(responses => {
-                            _.forEach(responses, (response, idx) => {
-                                self.groups[idx].roles = response;
-                            });
-                        }, error => console.log(util.getErrorMessage(error, 'Something went wrong. Could not load groups.')))
-                    ]);
+                return self.getUsers()
+                    .then(data => {
+                        self.users = _.map(data, self.getUserObj);
+                        return self.getGroups();
+                    }, $q.reject)
+                    .then(data => {
+                        self.groups = _.map(data, self.getGroupObj)
+                    }, error => console.log(util.getErrorMessage(error)));
             }
-
+            /**
+             * @ngdoc method
+             * @name getUsers
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/users endpoint which retrieves a list of Users without their passwords.
+             *
+             * @return {Promise} A promise that resolves with the list of Users or rejects with an error message.
+             */
+            self.getUsers = function() {
+                return $http.get(userPrefix)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name getGroups
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/groups endpoint which retrieves a list of Groups.
+             *
+             * @return {Promise} A promise that resolves with the list of Groups or rejects with an error message.
+             */
+            self.getGroups = function() {
+                return $http.get(groupPrefix)
+                    .then(response => response.data, util.rejectError);
+            }
             /**
              * @ngdoc method
              * @name getUsername
@@ -197,19 +202,43 @@
              * that resolves if the addition was successful and rejects with an error message if it was not.
              * Updates the {@link userManager.service:userManagerService#users users} list appropriately.
              *
-             * @param {string} newUser the new user to add
+             * @param {Object} newUser the new user to add
+             * @param {string} newUser.username The required username for the user
+             * @param {string[]} newUser.roles The required roles for the user
+             * @param {string} newUser.firstName The optional first name of the user
+             * @param {string} newUser.lastName The optional last name of the user
+             * @param {string} newUser.email The optional email for the user
              * @param {string} password the password for the new user
              * @return {Promise} A Promise that resolves if the request was successful; rejects
              * with an error message otherwise
              */
             self.addUser = function(newUser, password) {
-                var config = { params: { password } };
-                return $http.post(userPrefix, newUser, config)
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        },
+                    };
+                fd.append('username', newUser.username);
+                fd.append('password', password);
+                _.forEach(_.get(newUser, 'roles', []), role => fd.append('roles', role));
+                if (_.has(newUser, 'firstName')) {
+                    fd.append('firstName', newUser.firstName);
+                }
+                if (_.has(newUser, 'lastName')) {
+                    fd.append('lastName', newUser.lastName);
+                }
+                if (_.has(newUser, 'email')) {
+                    fd.append('email', newUser.email);
+                }
+
+                return $http.post(userPrefix, fd, config)
                     .then(response => {
                         return self.getUser(newUser.username);
                     }, $q.reject)
-                    .then(response => {
-                        self.users.push(_.merge(newUser, response));
+                    .then(user => {
+                        self.users.push(user);
                     }, util.rejectError);
             }
             /**
@@ -228,7 +257,7 @@
              */
             self.getUser = function(username) {
                 return $http.get(userPrefix + '/' + encodeURIComponent(username))
-                    .then(response => response.data, util.rejectError);
+                    .then(response => self.getUserObj(response.data), util.rejectError);
             }
             /**
              * @ngdoc method
@@ -249,7 +278,7 @@
              * with an error message otherwise
              */
             self.updateUser = function(username, newUser) {
-                return $http.put(userPrefix + '/' + encodeURIComponent(username), newUser)
+                return $http.put(userPrefix + '/' + encodeURIComponent(username), newUser.jsonld)
                     .then(response => {
                         _.assign(_.find(self.users, {username}), newUser);
                     }, util.rejectError);
@@ -441,16 +470,36 @@
              * list appropriately.
              *
              * @param {Object} newGroup the new group to add
+             * @param {string} newGroup.title the required title of the group
+             * @param {string} newGroup.description the optional description of the group
+             * @param {string[]} newGroup.roles the optional roles of the group
+             * @param {string[]} newGroup.members the required members of the group
              * @return {Promise} A Promise that resolves if the request was successful; rejects
              * with an error message otherwise
              */
             self.addGroup = function(newGroup) {
-                return $http.post(groupPrefix, newGroup)
+                var fd = new FormData(),
+                    config = {
+                        transformRequest: _.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        },
+                    };
+                fd.append('title', newGroup.title);
+                _.forEach(_.get(newGroup, 'members', []), member => fd.append('members', member));
+                if (_.has(newGroup, 'description')) {
+                    fd.append('description', newGroup.description);
+                }
+                if (_.has(newGroup, 'roles')) {
+                    _.forEach(_.get(newGroup, 'roles', []), role => fd.append('roles', role));
+                }
+
+                return $http.post(groupPrefix, fd, config)
                     .then(response => {
                         return self.getGroup(newGroup.title);
                     }, $q.reject)
-                    .then(response => {
-                        self.groups.push(_.merge(newGroup, response));
+                    .then(group => {
+                        self.groups.push(group);
                     }, util.rejectError);
             }
             /**
@@ -469,7 +518,7 @@
              */
             self.getGroup = function(groupTitle) {
                 return $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle))
-                    .then(response => response.data, util.rejectError);
+                    .then(response => self.getGroupObj(response.data), util.rejectError);
             }
             /**
              * @ngdoc method
@@ -482,7 +531,7 @@
              * was successful and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
              *
-             * @param {string} title the title of the group to update
+             * @param {string} groupTitle the title of the group to update
              * @param {Object} newGroup an object containing all the new group information to
              * save. The structure of the object should be the same as the structure of the group
              * objects in the {@link userManager.service:userManagerService#groups groups list}
@@ -490,7 +539,7 @@
              * with an error message otherwise
              */
             self.updateGroup = function(groupTitle, newGroup) {
-                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup)
+                return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup.jsonld)
                     .then(response => {
                         _.assign(_.find(self.groups, {title: groupTitle}), newGroup);
                     }, util.rejectError);
@@ -675,6 +724,72 @@
              */
             self.getUserDisplay = function(userObject) {
                 return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
+            }
+            /**
+             * @ngdoc method
+             * @name getUserObj
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a user object from the provided JSON-LD. User object has a format of
+             * ```
+             * {
+             *    jsonld: {},
+             *    iri: '',
+             *    username: '',
+             *    firstName: '',
+             *    lastName: '',
+             *    email: '',
+             *    roles: []
+             * }
+             * ```
+             * @param jsonld The JSON-LD representation of a User
+             * @return An object representing a user
+             */
+            self.getUserObj = function(jsonld) {
+                return {
+                    jsonld,
+                    iri: jsonld['@id'],
+                    username: util.getPropertyValue(jsonld, prefixes.user + 'username'),
+                    firstName: util.getPropertyValue(jsonld, prefixes.foaf + 'firstName'),
+                    lastName: util.getPropertyValue(jsonld, prefixes.foaf + 'lastName'),
+                    email: util.getPropertyId(jsonld, prefixes.foaf + 'mbox'),
+                    roles: _.map(jsonld[prefixes.user + 'hasUserRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
+                }
+            }
+            /**
+             * @ngdoc method
+             * @name getGroupObj
+             * @methodOf userManager.service:userManagerService
+             *
+             * @description
+             * Returns a group object from the provided JSON-LD. Group object has a format of
+             * ```
+             * {
+             *    jsonld: {},
+             *    title: '',
+             *    description: '',
+             *    roles: [],
+             *    members: []
+             * }
+             * ```
+             * @param jsonld The JSON-LD representation of a Group
+             * @return An object representing a group
+             */
+            self.getGroupObj = function(jsonld) {
+                return {
+                    jsonld,
+                    iri: jsonld['@id'],
+                    title: util.getDctermsValue(jsonld, 'title'),
+                    description: util.getDctermsValue(jsonld, 'description'),
+                    members: _.map(jsonld[prefixes.foaf + 'member'], member => {
+                        var user = _.find(self.users, {'iri': member['@id']});
+                        if (user != undefined) {
+                            return user.username;
+                        }
+                    }),
+                    roles: _.map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
+                }
             }
 
             function listUserRoles(username) {

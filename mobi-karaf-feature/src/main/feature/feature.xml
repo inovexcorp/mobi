@@ -181,6 +181,7 @@
         <bundle start-level="80">mvn:com.mobi/persistence.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/sparql.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/document.translator.cli/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/utils.cli/${project.version}</bundle>
     </feature>
     <feature name="mobi-web" description="Mobi Web Bundles" version="${project.version}">
         <feature prerequisite="true">mobi-core</feature>

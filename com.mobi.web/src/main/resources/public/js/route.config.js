@@ -60,7 +60,7 @@
                 url: '/home',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/home/home.html'
+                        template: '<home-page></home-page>'
                     }
                 },
                 data: {
@@ -82,7 +82,7 @@
                 url: '/catalog',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/catalog/catalog.html'
+                        template: '<catalog-page></catalog-page>'
                     }
                 },
                 data: {
@@ -115,7 +115,7 @@
                 url: '/settings',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/settings/settings.html'
+                        template: '<settings-page></settings-page>'
                     }
                 },
                 data: {

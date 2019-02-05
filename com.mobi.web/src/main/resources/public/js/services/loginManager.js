@@ -163,7 +163,6 @@
              * is current. Navigates back to the login page.
              */
             self.logout = function() {
-                catalogStateService.reset();
                 datasetStateService.reset();
                 delimitedManagerService.reset();
                 discoverStateService.reset();

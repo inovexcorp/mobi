@@ -168,7 +168,6 @@ describe('Login Manager service', function() {
         $httpBackend.expectGET('/mobirest/user/logout').respond(200, {});
         loginManagerSvc.logout();
         flushAndVerify($httpBackend);
-        expect(catalogStateSvc.reset).toHaveBeenCalled();
         expect(datasetStateSvc.reset).toHaveBeenCalled();
         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         expect(discoverStateSvc.reset).toHaveBeenCalled();

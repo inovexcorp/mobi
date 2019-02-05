@@ -159,8 +159,24 @@
             dvm.deleteBranch = function(branch) {
                 om.deleteOntologyBranch(dvm.listItem.ontologyRecord.recordId, branch['@id'])
                     .then(() => dvm.os.removeBranch(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
+                    .then(() => dvm.os.deleteOntologyBranchState(dvm.listItem.ontologyRecord.recordId, branch['@id']), $q.reject)
                     .then(() => {
                         if (!dvm.os.isStateBranch(dvm.currentState)) {
+                            dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
+                                .then(_.noop, () => {
+                                    dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
+                                    dvm.changeEntity({'@id': dvm.listItem.masterBranchIRI, '@type': [prefixes.catalog + 'Branch']});
+                                });
+                        }
+                        setSelectList();
+                        dvm.os.resetStateTabs(dvm.listItem);
+                    }, dvm.util.createErrorToast);
+            }
+            dvm.deleteTag = function(tag) {
+                dvm.cm.deleteRecordVersion(tag['@id'], dvm.listItem.ontologyRecord.recordId, catalogId)
+                    .then(() => {
+                        _.remove(dvm.listItem.tags, {'@id': tag['@id']});
+                        if (!dvm.os.isStateTag(dvm.currentState)) {
                             dvm.cm.getCommit(dvm.util.getPropertyId(dvm.currentState, prefixes.ontologyState + 'commit'))
                                 .then(_.noop, error => {
                                     dvm.util.createWarningToast((dvm.os.isStateTag(dvm.currentState) ? 'Tag' : 'Commit') + ' no longer exists. Opening MASTER');
@@ -168,13 +184,7 @@
                                 });
                         }
                         setSelectList();
-                    }, dvm.util.createErrorToast);
-            }
-            dvm.deleteTag = function(tag) {
-                dvm.cm.deleteRecordVersion(tag['@id'], dvm.listItem.ontologyRecord.recordId, catalogId)
-                    .then(() => {
-                        _.remove(dvm.listItem.tags, {'@id': tag['@id']});
-                        setSelectList();
+                        dvm.os.resetStateTabs(dvm.listItem);
                     }, dvm.util.createErrorToast)
             }
             dvm.submit = function(branch) {

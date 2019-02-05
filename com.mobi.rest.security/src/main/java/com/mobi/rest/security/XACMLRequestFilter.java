@@ -22,7 +22,7 @@ package com.mobi.rest.security;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
@@ -124,7 +124,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext context) throws IOException {
-        log.info("Authorizing...");
+        log.debug("Authorizing...");
         long start = System.currentTimeMillis();
 
         MultivaluedMap<String, String> pathParameters = uriInfo.getPathParameters();
@@ -229,7 +229,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         Request request = pdp.createRequest(subjectId, subjectAttributes, resourceId, resourceAttributes, actionId,
                 actionAttributes);
         log.debug(request.toString());
-        Response response = pdp.evaluate(request);
+        Response response = pdp.evaluate(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
         log.debug(response.toString());
 
         Decision decision = response.getDecision();
