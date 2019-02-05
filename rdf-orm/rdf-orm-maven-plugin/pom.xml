@@ -28,7 +28,7 @@
 	<parent>
 		<artifactId>rdf-orm</artifactId>
 		<groupId>com.mobi</groupId>
-		<version>1.15.13-SNAPSHOT</version>
+		<version>1.15.14-SNAPSHOT</version>
 	</parent>
 	<name>RDF ORM Maven Plugin</name>
 	<packaging>maven-plugin</packaging>
@@ -47,6 +47,24 @@
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-vfs2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.servicemix.bundles</groupId>
+            <artifactId>org.apache.servicemix.bundles.commons-httpclient</artifactId>
+            <version>3.1_7</version>
         </dependency>
 
         <!-- dependencies to annotations -->
