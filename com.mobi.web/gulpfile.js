@@ -39,6 +39,7 @@ var jsFiles = function(prefix) {
             prefix + 'js/services/prefixes.js',
             prefix + 'js/filters/!(*Spec).js',
             prefix + 'js/services/!(*Spec).js',
+            prefix + 'components/**/!(*Spec).js',
             prefix + 'directives/**/!(*Spec).js',
             prefix + 'modules/*/!(*Spec).js',
             prefix + 'modules/**/*/services/**/!(*Spec).js',
@@ -87,6 +88,7 @@ var jsFiles = function(prefix) {
     },
     styleFiles = function(prefix, suffix) {
         return [
+            prefix + '**/components/**/*' + suffix,
             prefix + '**/css/**/*.' + suffix,
             prefix + '**/directives/**/*.' + suffix,
             prefix + '**/modules/**/*.' + suffix

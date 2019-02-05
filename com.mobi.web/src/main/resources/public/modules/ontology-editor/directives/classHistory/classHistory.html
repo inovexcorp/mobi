@@ -26,30 +26,40 @@
     </div>
     <div class="class-history-header col">
         <div class="row">
-            <h2 class="class-history-title break-word">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
-            <static-iri class="editable-iri" read-only=true iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+            <h2 class="class-history-title break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
+            <static-iri class="editable-iri align-self-end" read-only=true iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         </div>
         <div class="row">
-            <div class="col">
-                <span>View entity at </span>
-                <ui-select ng-model="dvm.selectedEntity" on-select="onChange()" ng-disabled="dvm.commits.length === 0" autofocus>
-                    <ui-select-match placeholder="Entity Id">
-                        <span class="text-truncate">dvm.getHeadTitle()</span>
-                    </ui-select-match>
-                    <ui-select-choices repeat="commit in dvm.commits"></ui-select-choices>
-                </ui-select>
-                <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
-                <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
-            </div>
-        </div>
-        <div class="row top-buffer">
-            <div class="col">
-                Additions/Deletions
-            </div>
-            <div class="col">
-                <div class="table-container">
-                    <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" commit-data="dvm.commits"></commit-history-table>
+            <div class="col-xl-6">
+                <div class="row">
+                    <div class="col form-inline">
+                        <div class="right-buffer">
+                            <span>View entity at</span>
+                        </div>
+                        <div class="form-group">
+                            <ui-select ng-model="dvm.selectedEntity" on-select="onChange()" ng-disabled="dvm.commits.length === 0" autofocus>
+                                <ui-select-match placeholder="Commit Id">
+                                    <span>{{dvm.util.condenseCommitId($select.selected.id)}}</span>
+                                </ui-select-match>
+                                <ui-select-choices repeat="commit in dvm.commits track by commit.id | filter:$select.search">
+                                    <div ng-bind-html="dvm.util.condenseCommitId(commit.id) | highlight:$select.search | trusted"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="form-group">
+                            <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+                            <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
+                        </div>
+                    </div>
                 </div>
+                <div class="top-buffer row">
+                    <div class="col">
+                        <commit-compiled-resource commit-id="dvm.selectedEntity.id" entity-id="dvm.os.listItem.selected['@id']" resource-data="dvm.resources"></commit-compiled-resource>
+                    </div>
+                </div>
+            </div>
+            <div class="top-buffer col remove-min-width">
+                <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" commit-data="dvm.commits"></commit-history-table>
             </div>
         </div>
     </div>

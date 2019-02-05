@@ -72,6 +72,7 @@
             'clickAnywhereButHere',
             'clickToCopy',
             'commitChangesDisplay',
+            'commitCompiledResource',
             'commitDifferenceTabset',
             'commitHistoryTable',
             'commitInfoOverlay',

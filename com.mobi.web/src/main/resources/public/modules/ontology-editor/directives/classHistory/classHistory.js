@@ -57,15 +57,18 @@
                 dismiss: '&'
             },
             controllerAs: 'dvm',
-            controller: ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', ClassHistoryController],
+            controller: ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService', ClassHistoryController],
             templateUrl: 'modules/ontology-editor/directives/classHistory/classHistory.html'
         });
 
-        function ClassHistoryController(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
+        function ClassHistoryController(catalogManagerService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
             var dvm = this;
             var ontoUtils = ontologyUtilsManagerService;
+            dvm.cm = catalogManagerService;
             dvm.os = ontologyStateService;
             dvm.om = ontologyManagerService;
+            dvm.util = utilService;
+
 
             dvm.goBack = function() {
                 dvm.os.listItem.classHistory = undefined;

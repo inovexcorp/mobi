@@ -2,7 +2,14 @@
 @import "./src/main/resources/public/css/variables";
 
 class-history {
+    .class-history-title {
+        margin-bottom:0px;
+        margin-right:5px;
+    }
+    .right-buffer {
+        margin-right:8px;
+    }
     .top-buffer {
-        margin-top:40px;
+        margin-top:30px;
     }
 }

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit History Table directive', function() {
+describe('Commit Compiled Resource directive', function() {
     var $compile, scope, $q, catalogManagerSvc, Snap, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('commitHistoryTable');
+        module('commitCompiledResource');
         injectChromaConstant();
         mockOntologyState();
         mockCatalogManager();
@@ -54,14 +54,12 @@ describe('Commit History Table directive', function() {
         this.commitId = 'commit';
         this.commits = [{id: this.commitId}];
 
-        scope.headTitle = 'title';
         scope.commitId = 'commit';
-        scope.targetId = 'target';
         scope.entityId = 'entity';
         scope.commitData = [];
-        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" head-title="headTitle" target-id="targetId" entity-id="entityId" commit-data="commitData"></commit-history-table>'))(scope);
+        this.element = $compile(angular.element('<commit-compiled-resource commit-id="commitId" entity-id="entityId" commit-data="commitData"></commit-compiled-resource>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('commitHistoryTable');
+        this.controller = this.element.controller('commitCompiledResource');
         this.isolatedScope = this.element.isolateScope();
     });
 
@@ -82,7 +80,7 @@ describe('Commit History Table directive', function() {
         });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('commit-history-table')).toBe(true);
+            expect(this.element.hasClass('commit-compiled-resource')).toBe(true);
             expect(this.element.querySelectorAll('.wrapper').length).toBe(1);
         });
         _.forEach(['table', 'thead', 'tbody', 'svg'], function(item) {
