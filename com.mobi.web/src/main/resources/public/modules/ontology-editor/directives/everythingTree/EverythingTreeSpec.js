@@ -91,23 +91,8 @@ describe('Everything Tree directive', function() {
         it('based on .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
-        it('based on tree-items', function() {
-            expect(this.element.find('tree-item').length).toBe(3);
-        });
         it('based on .tree-items', function() {
             expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
-        });
-        it('based on .fa-folder-open-o', function() {
-            expect(this.element.querySelectorAll('.tree-item .fa-folder-open-o').length).toBe(1);
-            ontologyStateSvc.listItem.flatEverythingTree[2].get.and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.tree-item .fa-folder-open-o').length).toBe(0);
-        });
-        it('based on .fa-folder-o', function() {
-            expect(this.element.querySelectorAll('.tree-item .fa-folder-o').length).toBe(0);
-            ontologyStateSvc.listItem.flatEverythingTree[2].get.and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.tree-item .fa-folder-o').length).toBe(1);
         });
     });
     describe('controller methods', function() {
