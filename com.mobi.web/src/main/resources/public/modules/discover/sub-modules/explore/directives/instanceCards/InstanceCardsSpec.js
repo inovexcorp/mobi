@@ -81,37 +81,7 @@ describe('Instance Cards directive', function() {
             expect(this.element.querySelectorAll('.rows-container.h-100').length).toBe(1);
         });
         it('with a .row', function() {
-            expect(this.element.querySelectorAll('.row').length).toBe(2);
-        });
-        it('with a .col-4.card-container', function() {
-            expect(this.element.querySelectorAll('.col-4.card-container').length).toBe(4);
-        });
-        it('with a md-card', function() {
-            expect(this.element.find('md-card').length).toBe(4);
-        });
-        it('with a md-card-title', function() {
-            expect(this.element.find('md-card-title').length).toBe(4);
-        });
-        it('with a md-card-title-text', function() {
-            expect(this.element.find('md-card-title-text').length).toBe(4);
-        });
-        it('with a .card-header', function() {
-            expect(this.element.querySelectorAll('.card-header').length).toBe(4);
-        });
-        it('with a .md-headline.text', function() {
-            expect(this.element.querySelectorAll('.md-headline.text').length).toBe(4);
-        });
-        it('with a md-card-content', function() {
-            expect(this.element.find('md-card-content').length).toBe(4);
-        });
-        it('with a .overview', function() {
-            expect(this.element.querySelectorAll('.overview').length).toBe(4);
-        });
-        it('with a md-card-actions', function() {
-            expect(this.element.find('md-card-actions').length).toBe(4);
-        });
-        it('with a md-button', function() {
-            expect(this.element.find('md-button').length).toBe(8);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
     });
     it('properly defines controller.chunks on load', function() {

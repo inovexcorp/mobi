@@ -67,33 +67,6 @@ describe('Property Hierarchy Block directive', function() {
             expect(this.element.find('info-message').length).toEqual(0);
             expect(this.element.querySelectorAll('.tree').length).toBe(1);
         });
-        it('depending on whether there is a flat data property hierarchy', function() {
-            expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
-            expect(this.element.find('tree-item').length).toBe(0);
-
-            ontologyStateSvc.listItem.dataProperties.flat = [{entityIRI: 'iri'}];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
-            expect(this.element.find('tree-item').length).toBe(1);
-        });
-        it('depending on whether there is a flat object property hierarchy', function() {
-            expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
-            expect(this.element.find('tree-item').length).toBe(0);
-
-            ontologyStateSvc.listItem.objectProperties.flat = [{entityIRI: 'iri'}];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
-            expect(this.element.find('tree-item').length).toBe(1);
-        });
-        it('depending on whether there is an annotation in the ontology', function() {
-            expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
-            expect(this.element.find('tree-item').length).toBe(0);
-
-            ontologyStateSvc.listItem.annotations.flat = [{entityIRI: 'iri'}];
-            scope.$digest();
-            expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
-            expect(this.element.find('tree-item').length).toBe(1);
-        });
     });
     describe('controller methods', function() {
         describe('isShown returns', function() {
