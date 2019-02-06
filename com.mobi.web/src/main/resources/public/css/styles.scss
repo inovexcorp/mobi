@@ -11,6 +11,9 @@ md-backdrop.md-select-backdrop {
 .md-button {
     text-transform: none;
 }
+.md-virtual-repeat-container .md-virtual-repeat-scroller {
+    overflow-x: auto;
+}
 
 // Fixes for Material Bootstrap
 .ui-select-bootstrap > .ui-select-choices,
