@@ -28,6 +28,8 @@ describe('Hierarchy Tree directive', function() {
     beforeEach(function() {
         module('templates');
         module('hierarchyTree');
+        mockPrefixes();
+        mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         injectUniqueKeyFilter();

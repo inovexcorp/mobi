@@ -41,13 +41,16 @@ describe('Property Values directive', function() {
         ontologyManagerSvc.isBlankNodeId.and.callFake(function(string) {
             return string === '_:genid0';
         });
-        scope.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
-        scope.property = 'prop';
+
         scope.edit = jasmine.createSpy('edit');
         scope.remove = jasmine.createSpy('remove');
-        this.element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
+        this.element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)" highlight-iris="" highlight-text=""></property-values>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('propertyValues');
+        this.controller.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
+        this.controller.property = 'prop';
+        scope.$apply();
     });
 
     afterEach(function() {
@@ -63,20 +66,20 @@ describe('Property Values directive', function() {
         it('property should be one way bound', function() {
             this.isolatedScope.property = 'test';
             scope.$digest();
-            expect(scope.property).toBe('prop');
+            expect(this.controller.property).toBe('prop');
         });
         it('entity should be one way bound', function() {
-            var entity = angular.copy(scope.entity);
+            var entity = angular.copy(this.controller.entity);
             this.isolatedScope.entity = {test: 'test'};
             scope.$digest();
-            expect(scope.entity).not.toEqual({test: 'test'});
+            expect(this.controller.entity).not.toEqual({test: 'test'});
         });
         it('edit should be called in the parent scope', function() {
-            this.isolatedScope.edit();
+            this.controller.edit();
             expect(scope.edit).toHaveBeenCalled();
         });
         it('remove should be called in the parent scope', function() {
-            this.isolatedScope.remove();
+            this.controller.remove();
             expect(scope.remove).toHaveBeenCalled();
         });
     });
@@ -116,13 +119,13 @@ describe('Property Values directive', function() {
         scope.$digest();
         var editButton = angular.element(this.element.querySelectorAll('.prop-value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
-        expect(scope.edit).toHaveBeenCalledWith(scope.property, 0);
+        expect(scope.edit).toHaveBeenCalledWith(this.controller.property, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
         var removeButton = angular.element(this.element.querySelectorAll('.prop-value-container [title=Delete]')[0]);
         removeButton.triggerHandler('click');
-        expect(scope.remove).toHaveBeenCalledWith(scope.property, 0);
+        expect(scope.remove).toHaveBeenCalledWith(this.controller.property, 0);
     });
 });

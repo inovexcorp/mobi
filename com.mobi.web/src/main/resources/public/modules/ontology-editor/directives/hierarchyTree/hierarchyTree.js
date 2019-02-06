@@ -27,15 +27,17 @@
         .module('hierarchyTree', [])
         .directive('hierarchyTree', hierarchyTree);
 
-        hierarchyTree.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'INDENT'];
+        hierarchyTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'INDENT'];
 
-        function hierarchyTree(ontologyStateService, ontologyUtilsManagerService, prefixes, INDENT) {
+        function hierarchyTree(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/hierarchyTree/hierarchyTree.html',
-                scope: {
-                    hierarchy: '<'
+                scope: {},
+                bindToController: {
+                    hierarchy: '<',
+                    updateSearch: '<'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -45,12 +47,15 @@
                     dvm.ou = ontologyUtilsManagerService;
                     dvm.searchText = '';
                     dvm.filterText = '';
-                    var searchProperties = [prefixes.rdfs + 'label', prefixes.dcterms + 'title', prefixes.dc + 'title', prefixes.skos + 'prefLabel', prefixes.skos + 'altLabel'];
+                    var om = ontologyManagerService;
 
                     dvm.isShown = function(node) {
+                        return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                    }
+                    dvm.searchFilter = function(node) {
                         if (dvm.filterText && dvm.filterText !== '') {
                             var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
-                            var searchValues = _.pick(entity, searchProperties);
+                            var searchValues = _.pick(entity, om.entityNameProps);
                             var match = false;
                             _.forEach(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
                                 if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
@@ -65,12 +70,13 @@
                             }
                             return match;
                         } else {
-                            return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                            return true;
                         }
                     }
 
                     dvm.onKeyup = function() {
                         dvm.filterText = dvm.searchText;
+                        dvm.updateSearch(dvm.filterText);
                     }
                 }
             }

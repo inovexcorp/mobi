@@ -42,7 +42,8 @@
                 bindToController: {
                     currentEntity: '<',
                     isOpened: '=',
-                    path: '<'
+                    path: '<',
+                    filtered: '<'
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',

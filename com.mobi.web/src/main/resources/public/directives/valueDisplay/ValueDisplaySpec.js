@@ -27,6 +27,8 @@ describe('Value Display directive', function() {
         module('templates');
         module('valueDisplay');
         injectPrefixationFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockUtil();
         mockDiscoverState();
 
@@ -35,11 +37,12 @@ describe('Value Display directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.value = {'@id': 'new'};
-        this.element = $compile(angular.element('<value-display value="value"></value-display>'))(scope);
+        this.element = $compile(angular.element('<value-display value="value" highlight-text=""></value-display>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('valueDisplay');
+        this.controller.value = {'@id': 'new'};
+        scope.$apply();
     });
 
     afterEach(function() {
@@ -52,7 +55,7 @@ describe('Value Display directive', function() {
         it('value should be one way bound', function() {
             this.isolatedScope.value = {'@id': 'different'};
             scope.$digest();
-            expect(scope.value).toEqual({'@id': 'new'});
+            expect(this.controller.value).toEqual({'@id': 'new'});
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -63,7 +66,7 @@ describe('Value Display directive', function() {
         it('with a .has-id', function() {
             expect(this.element.querySelectorAll('.has-id').length).toBe(1);
 
-            scope.value = {};
+            this.controller.value = {};
             scope.$apply();
 
             expect(this.element.querySelectorAll('.has-id').length).toBe(0);
@@ -71,7 +74,7 @@ describe('Value Display directive', function() {
         it('with a .has-value', function() {
             expect(this.element.querySelectorAll('.has-value').length).toBe(0);
 
-            scope.value = {'@value': 'value'};
+            this.controller.value = {'@value': 'value'};
             scope.$apply();
 
             expect(this.element.querySelectorAll('.has-value').length).toBe(1);
@@ -79,7 +82,7 @@ describe('Value Display directive', function() {
         it('with a .text-muted.lang-display', function() {
             expect(this.element.querySelectorAll('.text-muted.lang-display').length).toBe(0);
 
-            scope.value = {'@value': 'value', '@language': 'en'};
+            this.controller.value = {'@value': 'value', '@language': 'en'};
             scope.$apply();
 
             expect(this.element.querySelectorAll('.text-muted.lang-display').length).toBe(1);
@@ -87,7 +90,7 @@ describe('Value Display directive', function() {
         it('with a .text-muted.type-display', function() {
             expect(this.element.querySelectorAll('.text-muted.type-display').length).toBe(0);
 
-            scope.value = {'@value': 'value', '@type': 'type'};
+            this.controller.value = {'@value': 'value', '@type': 'type'};
             scope.$apply();
 
             expect(this.element.querySelectorAll('.text-muted.type-display').length).toBe(1);

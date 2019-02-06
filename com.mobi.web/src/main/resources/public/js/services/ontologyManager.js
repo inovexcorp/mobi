@@ -69,6 +69,16 @@
              * associated with that record.
              */
             self.ontologyRecords = [];
+            /**
+             * @ngdoc property
+             * @name entityNameProps
+             * @propertyOf ontologyManager.service:ontologyManagerService
+             * @type {Object[]}
+             *
+             * @description
+             * 'entityNameProps' holds an array of properties used to determine an entity name.
+             */
+            self.entityNameProps = [prefixes.rdfs + 'label', prefixes.dcterms + 'title', prefixes.dc + 'title', prefixes.skos + 'prefLabel', prefixes.skos + 'altLabel'];
 
             /**
              * @ngdoc method
