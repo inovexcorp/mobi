@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Policy Manager service', function() {
-    var analyticManagerSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
+    var policyManagerSvc, $q, $httpBackend, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {
         module('policyManager');
@@ -29,13 +29,12 @@ describe('Policy Manager service', function() {
         injectRestPathConstant();
         mockPrefixes();
 
-        inject(function(policyManagerService, _$rootScope_, _utilService_, _$httpBackend_, _$httpParamSerializer_, _$q_) {
+        inject(function(policyManagerService, _$q_, _$httpBackend_, _$httpParamSerializer_, _utilService_) {
             policyManagerSvc = policyManagerService;
-            scope = _$rootScope_;
-            utilSvc = _utilService_;
+            $q = _$q_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
-            $q = _$q_;
+            utilSvc = _utilService_;
         });
 
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
@@ -43,12 +42,11 @@ describe('Policy Manager service', function() {
     });
 
     afterEach(function() {
-        analyticManagerSvc = null;
-        scope = null;
+        policyManagerSvc = null;
+        $q = null;
         $httpBackend = null;
         $httpParamSerializer = null
         utilSvc = null;
-        $q = null;
     });
 
     describe('should retrieve a list of policies', function() {

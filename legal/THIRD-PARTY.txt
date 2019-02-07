@@ -1,5 +1,5 @@
 
-Lists of 335 third-party dependencies.
+Lists of 331 third-party dependencies.
      (Revised BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
@@ -179,9 +179,6 @@ Lists of 335 third-party dependencies.
      (Revised BSD License) Stax2 API (org.codehaus.woodstox:stax2-api:3.1.4 - http://wiki.fasterxml.com/WoodstoxStax2)
      (The Apache Software License, Version 2.0) Woodstox (org.codehaus.woodstox:woodstox-core-asl:4.4.1 - http://woodstox.codehaus.org)
      (The Apache Software License, Version 2.0) EasyMock (org.easymock:easymock:3.4 - http://easymock.org/easymock)
-     (Eclipse Distribution License v. 1.0) (Eclipse Public License v1.0) EclipseLink ASM (org.eclipse.persistence:org.eclipse.persistence.asm:2.6.1 - http://www.eclipse.org/eclipselink)
-     (Eclipse Distribution License v. 1.0) (Eclipse Public License v1.0) EclipseLink Core (org.eclipse.persistence:org.eclipse.persistence.core:2.6.1 - http://www.eclipse.org/eclipselink)
-     (Eclipse Distribution License v. 1.0) (Eclipse Public License v1.0) EclipseLink Moxy (org.eclipse.persistence:org.eclipse.persistence.moxy:2.6.1 - http://www.eclipse.org/eclipselink)
      (Eclipse Public License) OSGi System Bundle (org.eclipse.platform:org.eclipse.osgi:3.12.50 - http://www.eclipse.org/platform)
      (Eclipse Distribution License v1.0) RDF4J: Client Library (org.eclipse.rdf4j:rdf4j-client:2.4.3 - http://www.rdf4j.org/rdf4j-client/)
      (Eclipse Distribution License v1.0) RDF4J: application configuration (org.eclipse.rdf4j:rdf4j-config:2.4.3 - http://www.rdf4j.org/rdf4j-config/)
@@ -217,7 +214,6 @@ Lists of 335 third-party dependencies.
      (Eclipse Distribution License v1.0) RDF4J: util (org.eclipse.rdf4j:rdf4j-util:2.4.3 - http://www.rdf4j.org/rdf4j-util/)
      (The Apache Software License, Version 2.0) Ehcache (org.ehcache:ehcache:3.3.1 - http://ehcache.org)
      (The Apache Software License, Version 2.0) jansi (org.fusesource.jansi:jansi:1.17 - http://fusesource.github.io/jansi/jansi)
-     (Dual license consisting of the CDDL v1.1 and GPL v2) JSR 353 (JSON Processing) Default Provider (org.glassfish:javax.json:1.0.4 - http://jsonp.java.net)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) HK2 API module (org.glassfish.hk2:hk2-api:2.5.0-b32 - https://hk2.java.net/hk2-api)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) ServiceLocator Default Implementation (org.glassfish.hk2:hk2-locator:2.5.0-b32 - https://hk2.java.net/hk2-locator)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) HK2 Implementation Utilities (org.glassfish.hk2:hk2-utils:2.5.0-b32 - https://hk2.java.net/hk2-utils)
