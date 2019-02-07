@@ -23,14 +23,13 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
+import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
+import com.mobi.ontology.core.api.classexpression.OClass;
+import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.propertyexpression.DataProperty;
 import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.core.api.axiom.Axiom;
-import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -163,8 +162,6 @@ public interface Ontology {
      * @return a Set of all data properties without a domain
      */
     Set<DataProperty> getAllNoDomainDataProperties();
-
-    Set<Axiom> getAxioms();
 
     Set<Datatype> getAllDatatypes();
 

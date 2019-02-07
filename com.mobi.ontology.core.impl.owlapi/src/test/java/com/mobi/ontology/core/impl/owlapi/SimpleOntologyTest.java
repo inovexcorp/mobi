@@ -35,7 +35,6 @@ import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.axiom.Axiom;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
@@ -59,7 +58,6 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
@@ -204,30 +202,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         // Assertions
         assertTrue(annotations.size() == 1);
-    }
-
-    @Test
-    public void axiomsAreEmptyForEmptyOntology() throws Exception {
-        Model emptyModel = MODEL_FACTORY.createModel();
-        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService);
-        Set<Axiom> axioms = ontology.getAxioms();
-        assertTrue(axioms.size() == 0);
-    }
-
-    @Test
-    public void axiomsAreCorrectForNonemptyOntology() throws Exception {
-        // Behaviors
-        when(SimpleOntologyValues.mobiAxiom(any(OWLAxiom.class))).thenReturn(mock(Axiom.class));
-
-        // Setup
-        InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
-
-        // Test
-        Set<Axiom> axioms = ontology.getAxioms();
-
-        // Assertions
-        assertTrue(axioms.size() == 1);
     }
     
     @Test

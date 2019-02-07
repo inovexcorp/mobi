@@ -32,7 +32,6 @@ import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.axiom.Axiom;
 import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
@@ -436,13 +435,6 @@ public class SimpleOntology implements Ontology {
                         OWLDataPropertyExpression.class, property, Imports.INCLUDED,
                         Navigation.IN_SUB_POSITION)))
                 .map(SimpleOntologyValues::mobiDataProperty)
-                .collect(Collectors.toSet());
-    }
-
-    @Override
-    public Set<Axiom> getAxioms() {
-        return owlOntology.axioms()
-                .map(SimpleOntologyValues::mobiAxiom)
                 .collect(Collectors.toSet());
     }
 

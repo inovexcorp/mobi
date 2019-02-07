@@ -35,24 +35,23 @@ import static org.powermock.api.easymock.PowerMock.replay;
 
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.AnonymousIndividual;
+import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.OntologyId;
+import com.mobi.ontology.core.api.classexpression.OClass;
+import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.propertyexpression.DataProperty;
 import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.api.types.AxiomType;
 import com.mobi.ontology.core.api.types.ClassExpressionType;
 import com.mobi.ontology.core.api.types.EntityType;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import com.mobi.ontology.core.api.NamedIndividual;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.NodeID;
@@ -466,171 +465,6 @@ public class SimpleOntologyValuesTest {
 //    }
     
     @Test
-    public void testMobiAxiomType() throws Exception {
-        org.semanticweb.owlapi.model.AxiomType owlType1 = org.semanticweb.owlapi.model.AxiomType.CLASS_ASSERTION;
-        org.semanticweb.owlapi.model.AxiomType owlType2 = org.semanticweb.owlapi.model.AxiomType.DATA_PROPERTY_ASSERTION;
-        org.semanticweb.owlapi.model.AxiomType owlType3 = org.semanticweb.owlapi.model.AxiomType.DECLARATION;
-        org.semanticweb.owlapi.model.AxiomType owlType4 = org.semanticweb.owlapi.model.AxiomType.NEGATIVE_DATA_PROPERTY_ASSERTION;
-        
-        Assert.assertEquals("ClassAssertion", SimpleOntologyValues.mobiAxiomType(owlType1).getName());
-        Assert.assertEquals("DataPropertyAssertion", SimpleOntologyValues.mobiAxiomType(owlType2).getName());
-        Assert.assertEquals("Declaration", SimpleOntologyValues.mobiAxiomType(owlType3).getName());
-        Assert.assertEquals("NegativeDataPropertyAssertion", SimpleOntologyValues.mobiAxiomType(owlType4).getName());
-        Assert.assertEquals(null, SimpleOntologyValues.mobiAxiomType(null));
-    }
-    
-    @Test
-    public void testOwlapiAxiomType() throws Exception {
-        AxiomType axiomType1 = AxiomType.ASYMMETRIC_OBJECT_PROPERTY;
-        AxiomType axiomType2 = AxiomType.DISJOINT_CLASSES;
-        AxiomType axiomType3 = AxiomType.DECLARATION;
-        AxiomType axiomType4 = AxiomType.INVERSE_FUNCTIONAL_OBJECT_PROPERTY;
-        
-        assertEquals(axiomType1.getName(), SimpleOntologyValues.owlapiAxiomType(axiomType1).getName());
-        assertEquals(axiomType2.getName(), SimpleOntologyValues.owlapiAxiomType(axiomType2).getName());
-        assertEquals(axiomType3.getName(), SimpleOntologyValues.owlapiAxiomType(axiomType3).getName());
-        assertEquals(axiomType4.getName(), SimpleOntologyValues.owlapiAxiomType(axiomType4).getName());
-        assertEquals(null, SimpleOntologyValues.owlapiAxiomType(null));
-    }
-    
-    @Test
-    public void testMobiEntityType() throws Exception {
-        org.semanticweb.owlapi.model.EntityType entityType1 = org.semanticweb.owlapi.model.EntityType.ANNOTATION_PROPERTY;
-        org.semanticweb.owlapi.model.EntityType entityType2 = org.semanticweb.owlapi.model.EntityType.NAMED_INDIVIDUAL;
-        org.semanticweb.owlapi.model.EntityType entityType3 = org.semanticweb.owlapi.model.EntityType.CLASS;
-        
-        Assert.assertEquals("AnnotationProperty", SimpleOntologyValues.mobiEntityType(entityType1).getName());
-        Assert.assertEquals("NamedIndividual", SimpleOntologyValues.mobiEntityType(entityType2).getName());
-        Assert.assertEquals("Class", SimpleOntologyValues.mobiEntityType(entityType3).getName());
-    }
-    
-    @Test
-    public void testOwlapiEntityType() throws Exception {
-        EntityType entityType1 = EntityType.OBJECT_PROPERTY;
-        EntityType entityType2 = EntityType.DATATYPE;
-        EntityType entityType3 = EntityType.DATA_PROPERTY;
-                
-        assertEquals(entityType1.getName(), SimpleOntologyValues.owlapiEntityType(entityType1).getName());
-        assertEquals(entityType2.getName(), SimpleOntologyValues.owlapiEntityType(entityType2).getName());
-        assertEquals(entityType3.getName(), SimpleOntologyValues.owlapiEntityType(entityType3).getName());
-        assertEquals(null, SimpleOntologyValues.owlapiEntityType(null));
-    }
-    
-//    @Test
-//    public void testMobiClassExpressionType() throws Exception {
-//        org.semanticweb.owlapi.model.ClassExpressionType expressionType1 = org.semanticweb.owlapi.model.ClassExpressionType.DATA_SOME_VALUES_FROM;
-//        org.semanticweb.owlapi.model.ClassExpressionType expressionType2 = org.semanticweb.owlapi.model.ClassExpressionType.DATA_EXACT_CARDINALITY;
-//        org.semanticweb.owlapi.model.ClassExpressionType expressionType3 = org.semanticweb.owlapi.model.ClassExpressionType.OBJECT_HAS_VALUE;
-//        org.semanticweb.owlapi.model.ClassExpressionType expressionType4 = org.semanticweb.owlapi.model.ClassExpressionType.OWL_CLASS;
-        
-//        ClassExpressionType type = ClassExpressionType.DATA_ALL_VALUES_FROM;
-//        expect(type.valueOf(isA(String.class))).andReturn(ClassExpressionType.DATA_SOME_VALUES_FROM);
-//             
-//        IRI iri1 = mock(IRI.class);
-//        expect(factory.createIRI(isA(String.class), isA(String.class))).andReturn(iri1).anyTimes();
-//        replay(factory, iri1, ClassExpressionType.class);       
-//        
-//        type.setValueFactory(factory);
-//        assertEquals(expressionType1.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType1).getName());
-//        assertEquals(expressionType2.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType2).getName());
-//        assertEquals(expressionType3.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType3).getName());
-//        assertEquals(expressionType4.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType4).getName());
-//    }
-    
-//    @Test
-//    public void testOwlapiClassExpressionType() throws Exception {
-//        ClassExpressionType expressionType1 = ClassExpressionType.DATA_ALL_VALUES_FROM;
-//        ClassExpressionType expressionType2 = ClassExpressionType.OBJECT_ALL_VALUES_FROM;
-//        ClassExpressionType expressionType3 = ClassExpressionType.OWL_CLASS;
-//        ClassExpressionType expressionType4 = ClassExpressionType.OBJECT_EXACT_CARDINALITY;
-//        
-//        assertEquals(expressionType1.getName(), SimpleOntologyValues.owlapiClassExpressionType(expressionType1).getName());
-//        assertEquals(expressionType2.getName(), SimpleOntologyValues.owlapiClassExpressionType(expressionType1).getName());
-//        assertEquals(expressionType3.getName(), SimpleOntologyValues.owlapiClassExpressionType(expressionType1).getName());
-//        assertEquals(expressionType4.getName(), SimpleOntologyValues.owlapiClassExpressionType(expressionType1).getName());       
-//    }
-    
-//    @Test
-//    public void testMobiDataRangeType() throws Exception {
-//        org.semanticweb.owlapi.model.DataRangeType type1 = org.semanticweb.owlapi.model.DataRangeType.DATA_COMPLEMENT_OF;
-//        org.semanticweb.owlapi.model.DataRangeType type2 = org.semanticweb.owlapi.model.DataRangeType.DATATYPE;
-//        org.semanticweb.owlapi.model.DataRangeType type3 = org.semanticweb.owlapi.model.DataRangeType.DATATYPE_RESTRICTION;
-//        
-//        assertEquals(type1.getName(), SimpleOntologyValues.mobiDataRangeType(type1).getName());
-//        assertEquals(type2.getName(), SimpleOntologyValues.mobiDataRangeType(type2).getName());
-//        assertEquals(type3.getName(), SimpleOntologyValues.mobiDataRangeType(type3).getName());
-//    }
-    
-//    @Test
-//    public void testOwlapiDataRangeType() throws Exception {
-//        DataRangeType type1 = DataRangeType.DATA_COMPLEMENT_OF;
-//        DataRangeType type2 = DataRangeType.DATATYPE;
-//        DataRangeType type3 = DataRangeType.DATATYPE_RESTRICTION;
-//        
-//        assertEquals(type1.getName(), SimpleOntologyValues.owlapiDataRangeType(type1).getName());
-//        assertEquals(type2.getName(), SimpleOntologyValues.owlapiDataRangeType(type2).getName());
-//        assertEquals(type3.getName(), SimpleOntologyValues.owlapiDataRangeType(type3).getName());
-//    }
-    
-//    @Test
-//    public void testMobiFacet() throws Exception {
-//        OWLFacet facet1 = OWLFacet.FRACTION_DIGITS;
-//        OWLFacet facet2 = OWLFacet.LENGTH;
-//        OWLFacet facet3 = OWLFacet.MIN_EXCLUSIVE;
-//        
-//        assertEquals(facet1.getShortForm(), SimpleOntologyValues.mobiFacet(facet1).getShortForm());
-//        assertEquals(facet2.getShortForm(), SimpleOntologyValues.mobiFacet(facet2).getShortForm());
-//        assertEquals(facet3.getShortForm(), SimpleOntologyValues.mobiFacet(facet3).getShortForm());
-//    }
-    
-//    @Test
-//    public void testOwlapiFacet() throws Exception {
-//        Facet facet1 = Facet.FRACTION_DIGITS;
-//        Facet facet2 = Facet.LENGTH;
-//        Facet facet3 = Facet.MAX_INCLUSIVE;
-//        
-//        assertEquals(facet1.getShortForm(), SimpleOntologyValues.owlapiFacet(facet1).getShortForm());
-//        assertEquals(facet2.getShortForm(), SimpleOntologyValues.owlapiFacet(facet2).getShortForm());
-//        assertEquals(facet3.getShortForm(), SimpleOntologyValues.owlapiFacet(facet3).getShortForm());
-//    }
-    
-//    @Test
-//    public void testMobiFacetRestriction() throws Exception {
-//        OWLFacetRestriction owlRestriction = mock(OWLFacetRestriction.class);
-//        OWLFacet owlFacet = OWLFacet.FRACTION_DIGITS;
-//        Facet facet = Facet.FRACTION_DIGITS;
-//        OWLLiteral owlLiteral = mock(OWLLiteral.class);
-//        Literal literal = mock(Literal.class);
-//        
-//        expect(owlRestriction.getFacet()).andReturn(owlFacet);
-//        expect(owlRestriction.getFacetValue()).andReturn(owlLiteral);
-//        
-//        mockStaticPartial(SimpleOntologyValues.class, "mobiFacet", "mobiLiteral");
-//        expect(SimpleOntologyValues.mobiFacet(owlFacet)).andReturn(facet);
-//        expect(SimpleOntologyValues.mobiLiteral(owlLiteral)).andReturn(literal);
-//        
-//        replay(owlRestriction, owlFacet, facet, owlLiteral, literal, SimpleOntologyValues.class);
-//        
-//        assertEquals(facet, SimpleOntologyValues.mobiFacetRestriction(owlRestriction).getFacet());
-//        assertEquals(literal, SimpleOntologyValues.mobiFacetRestriction(owlRestriction).getFacetValue());
-//    }
-    
-//    @Test
-//    public void testOwlapiFacetRestriction() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testMobiDataOneOf() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testOwlapiDataOneOf() throws Exception {
-//
-//    }
-    
-    @Test
     public void testMobiObjectProperty() throws Exception {
         OWLObjectProperty property = mock(OWLObjectProperty.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
@@ -719,14 +553,4 @@ public class SimpleOntologyValuesTest {
         
         assertEquals(owlIRI, SimpleOntologyValues.owlapiAnnotationProperty(property).getIRI());
     }
-    
-//    @Test
-//    public void testMobiDeclarationAxiom() throws Exception {
-//
-//    }
-//
-//    @Test
-//    public void testOwlapiDeclarationAxiom() throws Exception {
-//
-//    }
 }
