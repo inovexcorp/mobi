@@ -33,17 +33,16 @@
             return {
                 restrict: 'E',
                 replace: true,
-                scope: {
+                scope: {},
+                bindToController: {
                     hasChildren: '<',
                     isActive: '<',
                     isBold: '<',
-                    onClick: '&'
-                },
-                bindToController: {
+                    onClick: '&',
                     currentEntity: '<',
                     isOpened: '<',
                     path: '<',
-                    filtered: '<'
+                    underline: '<'
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
@@ -58,12 +57,10 @@
                         }
                         return _.get(dvm.currentEntity, 'mobi.anonymous', '');
                     }
-
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
                         os.setOpened(_.join(dvm.path, '.'), dvm.isOpened);
                     }
-
                     dvm.isSaved = function() {
                         var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
                         return _.includes(ids, _.get(dvm.currentEntity, '@id'));
@@ -71,7 +68,7 @@
 
                     dvm.saved = dvm.isSaved();
 
-                    $scope.$watch(() => os.listItem.inProgressCommit.additions + os.listItem.inProgressCommit.deletions, () => dvm.saved = dvm.isSaved() );
+                    $scope.$watch(() => os.listItem.inProgressCommit.additions + os.listItem.inProgressCommit.deletions, () => dvm.saved = dvm.isSaved());
                 }]
             }
         }

@@ -68,10 +68,9 @@ describe('Hierarchy Tree directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('hierarchy should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.hierarchy = [];
+            this.controller.hierarchy = [];
             scope.$digest();
             expect(angular.copy(scope.hierarchy)).toEqual([{
                 entityIRI: 'class1',

@@ -1003,7 +1003,7 @@
              * and individuals to be used with a virtual scrolling solution.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
-             * @returns {Object[]} An array which contains the class-individuals replationships.
+             * @returns {Object[]} An array which contains the class-individuals relationships.
              */
             self.createFlatIndividualTree = function(listItem) {
                 var result = [];

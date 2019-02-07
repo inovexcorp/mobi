@@ -50,9 +50,10 @@
                     var om = ontologyManagerService;
                     var newSearch = false;
 
-                    dvm.isShown = function(node) {
-                        newSearch = false;
-                        return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                    dvm.onKeyup = function() {
+                        dvm.filterText = dvm.searchText;
+                        dvm.updateSearch(dvm.filterText);
+                        newSearch = true;
                     }
                     dvm.searchFilter = function(node) {
                         if (dvm.filterText && dvm.filterText !== '') {
@@ -63,22 +64,46 @@
                                 if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                     match = true;
                             }));
-                            if (match && newSearch) {
-                                var path = node.path[0];
-                                for (var i = 1; i < node.path.length; i++) {
-                                    path = path + '.' + node.path[i];
-                                    dvm.os.setOpened(path, true);
+                            if (newSearch) {
+                                delete node.underline;
+                                delete node.parentNoMatch;
+                                delete node.displayNode;
+                                if (match) {
+                                    var path = node.path[0];
+                                    for (var i = 1; i < node.path.length; i++) {
+                                        var iri = node.path[i];
+                                        path = path + '.' + iri;
+                                        dvm.os.setOpened(path, true);
+
+                                        var parentNode = _.find(dvm.hierarchy, {'entityIRI': iri});
+                                        parentNode.displayNode = true;
+                                    }
+                                    node.underline = true;
                                 }
+                            }
+                            if (!match && node.hasChildren) {
+                                node.parentNoMatch = true;
+                                return true;
                             }
                             return match;
                         } else {
+                            delete node.underline;
+                            delete node.parentNoMatch;
+                            delete node.displayNode;
                             return true;
                         }
                     }
-                    dvm.onKeyup = function() {
-                        dvm.filterText = dvm.searchText;
-                        dvm.updateSearch(dvm.filterText);
-                        newSearch = true;
+                    dvm.isShown = function(node) {
+                        newSearch = false;
+                        var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                        if (dvm.filterText && dvm.filterText !== '' && node.parentNoMatch) {
+                            if (node.displayNode === undefined) {
+                                return false;
+                            } else {
+                                return displayNode && node.displayNode;
+                            }
+                        }
+                        return displayNode;
                     }
                 }
             }

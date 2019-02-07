@@ -25,12 +25,13 @@
         <search-bar ng-model="dvm.searchText" submit-event="dvm.onKeyup()"></search-bar>
     </div>
     <md-virtual-repeat-container class="h-100 repeater-container w-100">
-        <div md-virtual-repeat="node in dvm.hierarchy | filter:dvm.searchFilter | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
+        <div md-virtual-repeat="node in dvm.hierarchy | filter:dvm.searchFilter | filter:dvm.isShown | filter:dvm.resetSearch" class="tree-item-wrapper" md-item-size="26">
             <tree-item ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
                        current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
                        on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
-                       path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
+                       path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"
+                       underline="node.underline"></tree-item>
         </div>
     </md-virtual-repeat-container>
 </div>
