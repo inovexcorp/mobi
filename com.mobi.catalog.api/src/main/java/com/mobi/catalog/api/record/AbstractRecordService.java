@@ -43,6 +43,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -155,6 +156,10 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null) {
             record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
                     valueFactory.createIRI(_Thing.description_IRI));
+        }
+        if (config.get(RecordCreateSettings.RECORD_MARKDOWN) != null) {
+            record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_MARKDOWN)),
+                    valueFactory.createIRI(DCTERMS.ABSTRACT.stringValue()));
         }
         if (config.get(RecordCreateSettings.RECORD_KEYWORDS).size() > 0) {
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream()
