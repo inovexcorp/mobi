@@ -93,15 +93,9 @@
         <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
         <bundle start-level="80">mvn:com.github.vsonnier/hppcrt/0.7.5</bundle>
 
-        <!-- Analytic Dependencies -->
-        <feature prerequisite="true">transaction-api</feature>
-        <feature prerequisite="true">transaction</feature>
-        <feature prerequisite="true">eclipselink</feature>
-        <bundle start-level="80">mvn:org.glassfish/javax.json/1.0.4</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-1.1.0/2.9.0</bundle>
-        <bundle start-level="80">mvn:org.eclipse.persistence/org.eclipse.persistence.moxy/${eclipse.persistence.version}</bundle>
-
         <!-- Document Translation -->
+        <bundle start-level="80">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-1.1.0/2.9.0</bundle>
+        <bundle start-level="80">mvn:org.glassfish/javax.json/1.0.4</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-expression/5.0.2.RELEASE_1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-core/5.0.2.RELEASE_1</bundle>
 
