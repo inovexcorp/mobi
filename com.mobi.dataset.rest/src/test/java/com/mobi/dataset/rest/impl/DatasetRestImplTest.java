@@ -37,6 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -78,6 +79,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -301,13 +303,24 @@ public class DatasetRestImplTest extends MobiRestTestNg {
                 .field("datasetIRI", "http://example.com/dataset")
                 .field("repositoryId", "system")
                 .field("description", "description")
+                .field("markdown", "#markdown")
                 .field("keywords", "test")
                 .field("keywords", "demo")
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        verify(datasetManager).createDataset(any(DatasetRecordConfig.class));
+        ArgumentCaptor<DatasetRecordConfig> config = ArgumentCaptor.forClass(DatasetRecordConfig.class);
+        verify(datasetManager).createDataset(config.capture());
+        assertEquals("http://example.com/dataset", config.getValue().getDataset());
+        assertEquals("system", config.getValue().getRepositoryId());
+        assertEquals(1, config.getValue().getOntologies().size());
+        assertEquals("title", config.getValue().getTitle());
+        assertEquals("description", config.getValue().getDescription());
+        assertEquals("#markdown", config.getValue().getMarkdown());
+        assertNull(config.getValue().getIdentifier());
+        assertEquals(Stream.of("test", "demo").collect(Collectors.toSet()), config.getValue().getKeywords());
+        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
         verify(catalogManager).getMasterBranch(localIRI, ontologyRecordIRI);
         assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
         verify(provUtils).startCreateActivity(user);

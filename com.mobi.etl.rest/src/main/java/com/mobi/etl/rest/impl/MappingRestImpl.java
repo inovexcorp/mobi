@@ -59,6 +59,7 @@ import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -170,7 +171,7 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
-    public Response upload(ContainerRequestContext context, String title, String description,
+    public Response upload(ContainerRequestContext context, String title, String description, String markdown,
                            List<FormDataBodyPart> keywords, InputStream fileInputStream,
                            FormDataContentDisposition fileDetail, String jsonld) {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
@@ -191,8 +192,11 @@ public class MappingRestImpl implements MappingRest {
             }
             MappingRecordConfig.MappingRecordBuilder builder = new MappingRecordConfig.MappingRecordBuilder(title,
                     Collections.singleton(user));
-            if (description != null) {
+            if (StringUtils.isNotEmpty(description)) {
                 builder.description(description);
+            }
+            if (StringUtils.isNotEmpty(markdown)) {
+                builder.markdown(markdown);
             }
             if (keywords != null) {
                 builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
