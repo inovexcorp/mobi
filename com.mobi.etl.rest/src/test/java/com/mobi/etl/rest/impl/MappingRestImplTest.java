@@ -32,7 +32,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
@@ -85,12 +85,14 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
@@ -283,14 +285,24 @@ public class MappingRestImplTest extends MobiRestTestNg {
     public void uploadFileTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
+        fd.field("description", "Description");
+        fd.field("markdown", "#Markdown");
+        fd.field("keywords", "keyword");
         InputStream content = getClass().getResourceAsStream("/mapping.jsonld");
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertTrue(response.readEntity(String.class).equals(MAPPING_RECORD_IRI));
+        assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
         verify(manager).createMapping(any(InputStream.class), eq(RDFFormat.JSONLD));
-        verify(manager).createMappingRecord(any(MappingRecordConfig.class));
+        ArgumentCaptor<MappingRecordConfig> config = ArgumentCaptor.forClass(MappingRecordConfig.class);
+        verify(manager).createMappingRecord(config.capture());
+        assertEquals("Title", config.getValue().getTitle());
+        assertEquals("Description", config.getValue().getDescription());
+        assertEquals("#Markdown", config.getValue().getMarkdown());
+        assertNull(config.getValue().getIdentifier());
+        assertEquals(Collections.singleton("keyword"), config.getValue().getKeywords());
+        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
         verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
         verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(user);
@@ -301,12 +313,22 @@ public class MappingRestImplTest extends MobiRestTestNg {
     public void uploadStringTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("title", "Title");
+        fd.field("description", "Description");
+        fd.field("markdown", "#Markdown");
+        fd.field("keywords", "keyword");
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertTrue(response.readEntity(String.class).equals(MAPPING_RECORD_IRI));
+        assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
         verify(manager).createMapping(mappingJsonld);
-        verify(manager).createMappingRecord(any(MappingRecordConfig.class));
+        ArgumentCaptor<MappingRecordConfig> config = ArgumentCaptor.forClass(MappingRecordConfig.class);
+        verify(manager).createMappingRecord(config.capture());
+        assertEquals("Title", config.getValue().getTitle());
+        assertEquals("Description", config.getValue().getDescription());
+        assertEquals("#Markdown", config.getValue().getMarkdown());
+        assertNull(config.getValue().getIdentifier());
+        assertEquals(Collections.singleton("keyword"), config.getValue().getKeywords());
+        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
         verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
         verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(user);

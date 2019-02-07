@@ -39,6 +39,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -93,6 +94,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -3269,13 +3271,21 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         fd.field("type", ormFactory.getTypeIRI().stringValue());
         fd.field("title", "Title");
         fd.field("description", "Description");
+        fd.field("markdown", "#Markdown");
         fd.field("keywords", "keyword");
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(response.readEntity(String.class), RECORD_IRI);
-        verify(catalogManager).createRecord(any(RecordConfig.class), eq(ormFactory));
+        ArgumentCaptor<RecordConfig> config = ArgumentCaptor.forClass(RecordConfig.class);
+        verify(catalogManager).createRecord(config.capture(), eq(ormFactory));
+        assertEquals("Title", config.getValue().getTitle());
+        assertEquals("Description", config.getValue().getDescription());
+        assertEquals("#Markdown", config.getValue().getMarkdown());
+        assertNull(config.getValue().getIdentifier());
+        assertEquals(Collections.singleton("keyword"), config.getValue().getKeywords());
+        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
         verify(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).endCreateActivity(createActivity, vf.createIRI(RECORD_IRI));

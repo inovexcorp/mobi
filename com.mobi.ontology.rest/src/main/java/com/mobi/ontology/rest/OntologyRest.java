@@ -57,7 +57,8 @@ public interface OntologyRest {
      * @param context         the context of the request.
      * @param fileInputStream the ontology file to upload.
      * @param title           the title for the OntologyRecord.
-     * @param description     the description for the OntologyRecord.
+     * @param description     the optional description for the OntologyRecord.
+     * @param markdown        the optional markdown abstract for the new OntologyRecord.
      * @param keywords        the optional list of keyword strings for the OntologyRecord.
      * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      *      SERVER ERROR if there is a problem creating the OntologyRecord.
@@ -71,6 +72,7 @@ public interface OntologyRest {
                         @FormDataParam("file") InputStream fileInputStream,
                         @FormDataParam("title") String title,
                         @FormDataParam("description") String description,
+                        @FormDataParam("markdown") String markdown,
                         @FormDataParam("keywords") List<FormDataBodyPart> keywords);
 
     /**
@@ -80,7 +82,8 @@ public interface OntologyRest {
      *
      * @param context      the context of the request.
      * @param title        the title for the OntologyRecord.
-     * @param description  the description for the OntologyRecord.
+     * @param description  the optional description for the OntologyRecord.
+     * @param markdown     the optional markdown abstract for the new OntologyRecord.
      * @param keywords     the optional list of keyword strings for the OntologyRecord.
      * @param ontologyJson the ontology JSON-LD to upload.
      * @return OK with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
@@ -94,6 +97,7 @@ public interface OntologyRest {
     Response uploadOntologyJson(@Context ContainerRequestContext context,
                                 @QueryParam("title") String title,
                                 @QueryParam("description") String description,
+                                @QueryParam("markdown") String markdown,
                                 @QueryParam("keywords") List<String> keywords,
                                 String ontologyJson);
 
