@@ -48,8 +48,10 @@
                     dvm.searchText = '';
                     dvm.filterText = '';
                     var om = ontologyManagerService;
+                    var newSearch = false;
 
                     dvm.isShown = function(node) {
+                        newSearch = false;
                         return (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
                     }
                     dvm.searchFilter = function(node) {
@@ -61,7 +63,7 @@
                                 if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                     match = true;
                             }));
-                            if (match) {
+                            if (match && newSearch) {
                                 var path = node.path[0];
                                 for (var i = 1; i < node.path.length; i++) {
                                     path = path + '.' + node.path[i];
@@ -73,10 +75,10 @@
                             return true;
                         }
                     }
-
                     dvm.onKeyup = function() {
                         dvm.filterText = dvm.searchText;
                         dvm.updateSearch(dvm.filterText);
+                        newSearch = true;
                     }
                 }
             }

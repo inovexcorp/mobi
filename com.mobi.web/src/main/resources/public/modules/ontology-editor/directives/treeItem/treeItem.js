@@ -41,7 +41,7 @@
                 },
                 bindToController: {
                     currentEntity: '<',
-                    isOpened: '=',
+                    isOpened: '<',
                     path: '<',
                     filtered: '<'
                 },
