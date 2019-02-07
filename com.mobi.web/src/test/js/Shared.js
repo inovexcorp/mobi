@@ -478,7 +478,6 @@ function mockPrefixes() {
             this.matprov = 'matprov:';
             this.prov = 'prov:';
             this.matprov = 'matprov:';
-            this.analytic = 'https://mobi.com/analytic#';
             this.mergereq = 'mergereq:';
             this.user = 'user:';
             this.policy = 'policy:';
@@ -1199,60 +1198,6 @@ function mockSearch() {
             this.createRegexQuery = jasmine.createSpy('createRegexQuery').and.returnValue({});
             this.createRangeQuery = jasmine.createSpy('createRangeQuery').and.returnValue({});
             this.createBooleanQuery = jasmine.createSpy('createBooleanQuery').and.returnValue({});
-        });
-    });
-}
-
-function mockAnalyticState() {
-    module(function($provide) {
-        $provide.service('analyticStateService', function($q) {
-            this.landing = true;
-            this.editor = false;
-            this.datasets = [];
-            this.classes = [];
-            this.defaultProperties = [];
-            this.properties = [];
-            this.selectedClass = undefined;
-            this.enabledProperties = [];
-            this.selectedProperties = [];
-            this.results = undefined;
-            this.variables = {};
-            this.spinnerId = 'analytic-spinner';
-            this.queryError = '';
-            this.currentPage = 0;
-            this.totalSize = 0;
-            this.limit = 100;
-            this.links = {};
-            this.query = {};
-            this.record = {};
-            this.selectedConfigurationId = '';
-            this.reset = jasmine.createSpy('reset');
-            this.showEditor = jasmine.createSpy('showEditor');
-            this.showLanding = jasmine.createSpy('showLanding');
-            this.resetSelected = jasmine.createSpy('resetSelected');
-            this.selectClass = jasmine.createSpy('selectClass');
-            this.selectProperty = jasmine.createSpy('selectProperty');
-            this.removeProperty = jasmine.createSpy('removeProperty');
-            this.createQueryString = jasmine.createSpy('createQueryString');
-            this.getPage = jasmine.createSpy('getPage');
-            this.sortResults = jasmine.createSpy('sortResults');
-            this.reorderColumns = jasmine.createSpy('reorderColumns');
-            this.setClassesAndProperties = jasmine.createSpy('setClassesAndProperties').and.returnValue($q.when());
-            this.populateEditor = jasmine.createSpy('populateEditor').and.returnValue($q.when());
-            this.getOntologies = jasmine.createSpy('getOntologies').and.returnValue([]);
-            this.createTableConfigurationConfig = jasmine.createSpy('createTableConfigurationConfig').and.returnValue({});
-        });
-    });
-}
-function mockAnalyticManager() {
-    module(function($provide) {
-        $provide.service('analyticManagerService', function($q) {
-            this.configurationTypes = [];
-            this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
-            this.getConfigurationTypes = jasmine.createSpy('getConfigurationTypes').and.returnValue($q.when([]));
-            this.createAnalytic = jasmine.createSpy('createAnalytic').and.returnValue($q.when(''));
-            this.getAnalytic = jasmine.createSpy('getAnalytic').and.returnValue($q.when([]));
-            this.updateAnalytic = jasmine.createSpy('updateAnalytic').and.returnValue($q.when());
         });
     });
 }

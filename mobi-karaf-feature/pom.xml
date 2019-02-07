@@ -269,21 +269,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>analytic.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>analytic.impl</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>analytic.rest</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>prov.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
