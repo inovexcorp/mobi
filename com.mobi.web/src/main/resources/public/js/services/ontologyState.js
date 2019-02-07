@@ -186,7 +186,9 @@
                 iriList: [],
                 selected: {},
                 failedImports: [],
-                classSearchText: ''
+                classSearchText: '',
+                conceptSearchText: '',
+                schemeSearchText: ''
             };
             _.forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate.dataPropertyRange, iri));
             _.forEach(pm.defaultAnnotations, iri => addIri(ontologyListItemTemplate.annotations.iris, iri));
