@@ -843,9 +843,10 @@ public class SourceGenerator {
             // Track field names to the IRI.
             final Map<String, IRI> fieldIriMap = new HashMap<>();
             final Map<String, IRI> rangeMap = new HashMap<>();
-            identifyAllDomainProperties(metaModel).stream().filter(resource -> resource instanceof IRI).forEach(resource -> {
+            // Identify all no domain properties from THIS ontology
+            identifyAllDomainProperties(model).stream().filter(resource -> resource instanceof IRI).forEach(resource -> {
                 // Set a static final field for the IRI.
-                final String fieldName = getName(false, (IRI) resource, this.metaModel);
+                final String fieldName = getName(false, (IRI) resource, this.model);
                 final IRI range = getRangeOfProperty((IRI) resource);
                 ontologyThing.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, fieldName + "_IRI",
                         JExpr.lit(resource.stringValue())).javadoc()
