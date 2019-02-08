@@ -478,13 +478,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         manager.createRecord(user, config, Record.class);
 
-        verify(recordService).create(any(User.class), any(RecordOperationConfig.class),
-                any(RepositoryConnection.class));
+        verify(recordService).create(any(User.class), eq(config), any(RepositoryConnection.class));
     }
 
     @Test
@@ -499,13 +499,13 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
         manager.createRecord(user, config, VersionedRDFRecord.class);
 
-        verify(versionedRDFRecordService).create(any(User.class), any(RecordOperationConfig.class),
-                any(RepositoryConnection.class));
+        verify(versionedRDFRecordService).create(any(User.class), eq(config), any(RepositoryConnection.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -520,6 +520,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         manager.removeRecordService(versionedRecordService);
@@ -539,6 +540,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.CATALOG_ID, localCatalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_MARKDOWN, "#Title");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
