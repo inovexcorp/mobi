@@ -136,6 +136,7 @@ public interface CatalogRest {
      * @param title The required title for the new Record.
      * @param identifier The required identifier for the new Record. Must be a valid IRI.
      * @param description The optional description for the new Record.
+     * @param markdown The optional markdown abstract for the new Record.
      * @param keywords The optional list of keywords strings for the new Record.
      * @return A Response with the IRI string of the created Record.
      */
@@ -151,6 +152,7 @@ public interface CatalogRest {
                           @FormDataParam("title") String title,
                           @FormDataParam("identifier") String identifier,
                           @FormDataParam("description") String description,
+                          @FormDataParam("markdown") String markdown,
                           @FormDataParam("keywords") List<FormDataBodyPart> keywords);
 
     /**
