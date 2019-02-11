@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Value Display directive', function() {
+describe('Value Display directive', function() {
     var $compile, scope;
 
     beforeEach(function() {
