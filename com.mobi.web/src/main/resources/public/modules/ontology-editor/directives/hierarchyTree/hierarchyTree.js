@@ -47,31 +47,29 @@
                     dvm.ou = ontologyUtilsManagerService;
                     dvm.filteredHierarchy = dvm.hierarchy;
                     dvm.searchText = '';
+                    dvm.filterText = '';
                     var om = ontologyManagerService;
 
                     dvm.onKeyup = function() {
-                        dvm.updateSearch(dvm.searchText);
-                        if (dvm.searchText && dvm.searchText !== '') {
-                            dvm.filteredHierarchy = _.filter(_.filter(dvm.hierarchy, dvm.searchFilter), dvm.isShown);
-                        } else {
-                            dvm.filteredHierarchy = dvm.hierarchy;
-                        }
+                        dvm.filterText = dvm.searchText;
+                        dvm.updateSearch(dvm.filterText);
+                        dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
                     }
                     dvm.searchFilter = function(node) {
                         delete node.underline;
                         delete node.parentNoMatch;
                         delete node.displayNode;
-                        if (dvm.searchText && dvm.searchText !== '') {
+                        if (dvm.filterText) {
                             var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
                             var searchValues = _.pick(entity, om.entityNameProps);
                             var match = false;
                             _.forEach(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
-                                if (value['@value'].toLowerCase().includes(dvm.searchText.toLowerCase()))
+                                if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                     match = true;
                             }));
                             if (match) {
                                 var path = node.path[0];
-                                for (var i = 1; i < node.path.length; i++) {
+                                for (var i = 1; i < node.path.length - 1; i++) {
                                     var iri = node.path[i];
                                     path = path + '.' + iri;
                                     dvm.os.setOpened(path, true);
@@ -92,7 +90,7 @@
                     }
                     dvm.isShown = function(node) {
                         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
-                        if (dvm.searchText && dvm.searchText !== '' && node.parentNoMatch) {
+                        if (dvm.filterText && node.parentNoMatch) {
                             if (node.displayNode === undefined) {
                                 return false;
                             } else {

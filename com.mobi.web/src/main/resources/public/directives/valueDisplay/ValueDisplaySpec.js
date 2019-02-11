@@ -43,7 +43,6 @@ describe('Value Display directive', function() {
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('valueDisplay');
-        scope.$apply();
     });
 
     afterEach(function() {
