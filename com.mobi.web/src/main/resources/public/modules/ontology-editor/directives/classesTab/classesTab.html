@@ -29,8 +29,8 @@
                 <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()">Delete</button>
             </div>
         </div>
-        <div class="row flex-1">
-            <div class="col-7 vertical-scroll">
+        <div class="row flex-1 remove-min-height">
+            <div class="col-7 vertical-scroll h-100">
                 <div class="row py-2">
                     <annotation-block class="col" highlight-iris="dvm.om.entityNameProps" highlight-text="dvm.os.listItem.classSearchText"></annotation-block>
                 </div>
@@ -38,7 +38,7 @@
                     <axiom-block class="col"></axiom-block>
                 </div>
             </div>
-            <usages-block class="col-5 pt-2 vertical-scroll"></usages-block>
+            <usages-block class="col-5 pt-2 vertical-scroll h-100"></usages-block>
         </div>
     </div>
 </div>
