@@ -44,12 +44,12 @@ describe('Property Values directive', function() {
 
         scope.edit = jasmine.createSpy('edit');
         scope.remove = jasmine.createSpy('remove');
+        scope.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
+        scope.property = 'prop';
         this.element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)" highlight-iris="" highlight-text=""></property-values>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('propertyValues');
-        this.controller.entity = {'prop': [{'@id': 'value1'}, {'@id': '_:genid0'}]};
-        this.controller.property = 'prop';
         scope.$apply();
     });
 
@@ -62,7 +62,7 @@ describe('Property Values directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('property should be one way bound', function() {
             this.isolatedScope.property = 'test';
             scope.$digest();

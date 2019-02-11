@@ -51,11 +51,7 @@
                     dvm.os = ontologyStateService;
 
                     dvm.valueInList = function() {
-                        if (_.includes(dvm.highlightIris, dvm.property)) {
-                            return true;
-                        } else {
-                            return false;
-                        }
+                        return _.includes(dvm.highlightIris, dvm.property);
                     }
                 }
             }

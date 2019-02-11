@@ -25,7 +25,7 @@
         <search-bar ng-model="dvm.searchText" submit-event="dvm.onKeyup()"></search-bar>
     </div>
     <md-virtual-repeat-container class="h-100 repeater-container w-100">
-        <div md-virtual-repeat="node in dvm.hierarchy | filter:dvm.searchFilter | filter:dvm.isShown | filter:dvm.resetSearch" class="tree-item-wrapper" md-item-size="26">
+        <div md-virtual-repeat="node in dvm.filteredHierarchy | filter: dvm.isShown" class="tree-item-wrapper" md-item-size="26">
             <tree-item ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
                        current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"

@@ -72,7 +72,8 @@
                     active: false
                 },
                 classes: {
-                    active: false
+                    active: false,
+                    searchText: ''
                 },
                 properties: {
                     active: false
@@ -81,10 +82,12 @@
                     active: false
                 },
                 concepts: {
-                    active: false
+                    active: false,
+                    searchText: ''
                 },
                 schemes: {
-                    active: false
+                    active: false,
+                    searchText: ''
                 },
                 search: {
                     active: false
@@ -185,10 +188,7 @@
                 individualsParentPath: [],
                 iriList: [],
                 selected: {},
-                failedImports: [],
-                classSearchText: '',
-                conceptSearchText: '',
-                schemeSearchText: ''
+                failedImports: []
             };
             _.forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate.dataPropertyRange, iri));
             _.forEach(pm.defaultAnnotations, iri => addIri(ontologyListItemTemplate.annotations.iris, iri));

@@ -59,7 +59,7 @@ describe('Tree Item directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('hasChildren should be one way bound', function() {
             this.controller.hasChildren = false;
             scope.$digest();

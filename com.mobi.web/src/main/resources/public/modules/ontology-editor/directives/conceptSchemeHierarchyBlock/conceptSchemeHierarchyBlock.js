@@ -62,7 +62,7 @@
                     dvm.os = ontologyStateService;
 
                     dvm.updateSearch = function(value) {
-                        dvm.os.listItem.schemeSearchText = value;
+                        dvm.os.listItem.editorTabStates.schemes.searchText = value;
                     }
                 }
             }

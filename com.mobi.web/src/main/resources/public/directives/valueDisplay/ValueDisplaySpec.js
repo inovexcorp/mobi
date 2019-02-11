@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Value Display directive', function() {
+fdescribe('Value Display directive', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -37,11 +37,12 @@ describe('Value Display directive', function() {
             scope = _$rootScope_;
         });
 
-        this.element = $compile(angular.element('<value-display value="value" highlight-text=""></value-display>'))(scope);
+        scope.value = {'@id': 'new'};
+        scope.highlightText = 'text';
+        this.element = $compile(angular.element('<value-display value="value" highlight-text="highlightText"></value-display>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('valueDisplay');
-        this.controller.value = {'@id': 'new'};
         scope.$apply();
     });
 
@@ -56,6 +57,11 @@ describe('Value Display directive', function() {
             this.isolatedScope.value = {'@id': 'different'};
             scope.$digest();
             expect(this.controller.value).toEqual({'@id': 'new'});
+        });
+        it('value should be one way bound', function() {
+            this.isolatedScope.highlightText = 'new text';
+            scope.$digest();
+            expect(this.controller.highlightText).toEqual('text');
         });
     });
     describe('replaces the element with the correct html', function() {
