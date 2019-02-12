@@ -33,6 +33,9 @@
          * overlay. The `recordAccessOverlay` controls saving any changes of a record policy access control.
          */
         .module('recordAccessOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name recordAccessOverlay.directive:recordAccessOverlay

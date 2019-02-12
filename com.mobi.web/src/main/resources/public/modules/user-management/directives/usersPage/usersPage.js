@@ -34,6 +34,9 @@
          * {@link userManager.service:userManagerService#users users list}.
          */
         .module('usersPage', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name usersPage.directive:usersPage

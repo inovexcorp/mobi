@@ -32,5 +32,6 @@
             'newDatasetOverlay',
             'datasetsOntologyPicker',
             'uploadDataOverlay'
-        ]);
+        ])
+    ;
 })();

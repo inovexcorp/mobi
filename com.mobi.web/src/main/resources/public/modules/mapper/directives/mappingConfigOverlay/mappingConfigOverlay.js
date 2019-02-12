@@ -302,5 +302,8 @@
          * for a modal to edit the configuration of a mapping.
          */
         .module('mappingConfigOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         .component('mappingConfigOverlay', mappingConfigOverlayComponent);
 })();

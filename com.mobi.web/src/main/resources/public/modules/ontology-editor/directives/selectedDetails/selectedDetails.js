@@ -25,6 +25,9 @@
 
     angular
         .module('selectedDetails', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         .directive('selectedDetails', selectedDetails);
 
         selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'manchesterConverterService', 'modalService'];

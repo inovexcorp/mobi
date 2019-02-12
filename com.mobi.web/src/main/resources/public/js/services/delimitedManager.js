@@ -34,6 +34,9 @@
          * pertaining to the results of these endpoints.
          */
         .module('delimitedManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name delimitedManager.service:delimitedManagerService

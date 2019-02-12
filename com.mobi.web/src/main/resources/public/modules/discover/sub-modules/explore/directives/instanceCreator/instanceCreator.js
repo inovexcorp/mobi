@@ -33,6 +33,9 @@
          * the instance creator page.
          */
         .module('instanceCreator', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name instanceCreator.directive:instanceCreator

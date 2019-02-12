@@ -25,6 +25,9 @@
 
     angular
         .module('ontologyTab', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name ontologyTab.directive:ontologyTab

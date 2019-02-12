@@ -34,6 +34,9 @@
          * those variables.
          */
         .module('datasetState', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name datasetState.service:datasetStateService

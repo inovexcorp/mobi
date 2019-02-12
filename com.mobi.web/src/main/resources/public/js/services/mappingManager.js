@@ -34,6 +34,9 @@
          * manipulating mapping arrays
          */
         .module('mappingManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name mappingManager.service:mappingManagerService

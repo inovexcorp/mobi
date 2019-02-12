@@ -34,6 +34,9 @@
          * difference of a Merge Request.
          */
         .module('mergeRequestDiscussion', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc component
          * @name mergeRequestDiscussion.component:mergeRequestDiscussion

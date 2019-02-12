@@ -33,6 +33,9 @@
          * a span element which displays a json-ld object in a readable format.
          */
         .module('valueDisplay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name valueDisplay.directive:valueDisplay

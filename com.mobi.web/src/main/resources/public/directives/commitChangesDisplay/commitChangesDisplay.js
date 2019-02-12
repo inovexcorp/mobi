@@ -33,6 +33,9 @@
          * a display of all the changes from a commit separated by subject.
          */
         .module('commitChangesDisplay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name commitChangesDisplay.directive:commitChangesDisplay

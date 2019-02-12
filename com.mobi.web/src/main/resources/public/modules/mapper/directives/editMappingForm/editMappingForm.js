@@ -33,6 +33,9 @@
          * different sections for editing the current {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('editMappingForm', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name editMappingForm.directive:editMappingForm

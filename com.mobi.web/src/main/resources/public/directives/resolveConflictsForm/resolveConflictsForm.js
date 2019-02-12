@@ -25,6 +25,9 @@
 
     angular
         .module('resolveConflictsForm', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         .directive('resolveConflictsForm', resolveConflictsForm);
 
         resolveConflictsForm.$inject = ['utilService'];

@@ -33,6 +33,9 @@
          * to the Mobi explorable-datasets REST endpoints.
          */
         .module('explore', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name explore.service:exploreService

@@ -33,6 +33,9 @@
          * contains various utility methods used throughout the Ontology Editor.
          */
         .module('ontologyUtilsManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name ontologyUtilsManager.service:ontologyUtilsManagerService

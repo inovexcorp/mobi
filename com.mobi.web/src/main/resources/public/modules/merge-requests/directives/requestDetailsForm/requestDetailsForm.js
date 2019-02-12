@@ -33,6 +33,9 @@
          * which creates a form for setting the metadata of a new MergeRequest.
          */
         .module('requestDetailsForm', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name requestDetailsForm.directive:requestDetailsForm

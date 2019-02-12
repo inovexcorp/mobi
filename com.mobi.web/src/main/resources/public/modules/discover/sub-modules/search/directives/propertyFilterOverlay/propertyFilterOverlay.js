@@ -33,6 +33,9 @@
          * for a modal to create a property filter for a faceted search.
          */
         .module('propertyFilterOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc component
          * @name propertyFilterOverlay.component:propertyFilterOverlay

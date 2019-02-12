@@ -34,6 +34,9 @@
          * permissions of the application.
          */
         .module('permissionsPage', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name permissionsPage.directive:permissionsPage

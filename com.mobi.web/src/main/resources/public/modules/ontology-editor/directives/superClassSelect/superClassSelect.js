@@ -33,6 +33,9 @@
          * {@link classSelect.directive:classSelect} for super classes.
          */
         .module('superClassSelect', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name superClassSelect.directive:superClassSelect

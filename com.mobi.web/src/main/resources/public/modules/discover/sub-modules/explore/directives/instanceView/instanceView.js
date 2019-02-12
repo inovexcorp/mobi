@@ -33,6 +33,9 @@
          * the instance view page.
          */
         .module('instanceView', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name instanceView.directive:instanceView

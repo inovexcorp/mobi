@@ -33,6 +33,9 @@
          * Mobi Provenance REST endpoints.
          */
         .module('provManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name provManager.service:provManagerService

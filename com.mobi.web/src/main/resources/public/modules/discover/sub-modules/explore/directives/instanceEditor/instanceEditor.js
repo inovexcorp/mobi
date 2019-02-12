@@ -33,6 +33,9 @@
          * the instance editor page.
          */
         .module('instanceEditor', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name instanceEditor.directive:instanceEditor

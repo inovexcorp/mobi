@@ -33,6 +33,9 @@
          * display for resolving conflicts between two branches of an ontology being merged together.
          */
         .module('resolveConflictsBlock', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name resolveConflictsBlock.directive:resolveConflictsBlock

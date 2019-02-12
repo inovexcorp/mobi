@@ -33,6 +33,9 @@
          * a "boxed" area with a preview of a mapping.
          */
         .module('mappingPreview', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name mappingPreview.directive:mappingPreview

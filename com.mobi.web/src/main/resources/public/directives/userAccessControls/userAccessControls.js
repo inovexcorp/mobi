@@ -32,6 +32,9 @@
          * selectors for viewing and updating permissions of the application.
          */
         .module('userAccessControls', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name userAccessControls.directive:userAccessControls

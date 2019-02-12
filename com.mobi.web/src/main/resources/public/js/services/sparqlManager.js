@@ -34,6 +34,9 @@
          * the SPARQL Editor
          */
         .module('sparqlManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService

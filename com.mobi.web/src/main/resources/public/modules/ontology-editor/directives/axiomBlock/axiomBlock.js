@@ -33,6 +33,9 @@
          * axioms on an entity.
          */
         .module('axiomBlock', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name axiomBlock.directive:axiomBlock

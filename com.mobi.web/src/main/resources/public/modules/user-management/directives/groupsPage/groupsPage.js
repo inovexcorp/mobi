@@ -34,6 +34,9 @@
          * {@link userManager.service:userManagerServiec#groups groups list}.
          */
         .module('groupsPage', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name groupsPage.directive:groupsPage

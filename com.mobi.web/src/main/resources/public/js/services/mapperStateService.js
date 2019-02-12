@@ -34,6 +34,9 @@
          * utility functions to update those variables.
          */
         .module('mapperState', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService

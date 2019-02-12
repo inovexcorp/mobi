@@ -33,6 +33,9 @@
          * the super property select.
          */
         .module('superPropertySelect', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name superPropertySelect.directive:superPropertySelect

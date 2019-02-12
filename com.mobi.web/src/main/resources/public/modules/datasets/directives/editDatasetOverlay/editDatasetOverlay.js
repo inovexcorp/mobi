@@ -176,5 +176,8 @@
          * modal to edit a Dataset Record.
          */
         .module('editDatasetOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         .component('editDatasetOverlay', editDatasetOverlayComponent);
 })();

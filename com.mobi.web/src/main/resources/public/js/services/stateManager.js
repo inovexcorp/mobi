@@ -33,6 +33,9 @@
          * state REST endpoints and all of the current user's state.
          */
         .module('stateManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name stateManager.service:stateManagerService

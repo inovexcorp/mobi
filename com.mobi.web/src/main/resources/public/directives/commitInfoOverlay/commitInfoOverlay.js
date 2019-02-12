@@ -33,6 +33,9 @@
          * content for a modal with information about a particular commit.
          */
         .module('commitInfoOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name commitInfoOverlay.directive:commitInfoOverlay

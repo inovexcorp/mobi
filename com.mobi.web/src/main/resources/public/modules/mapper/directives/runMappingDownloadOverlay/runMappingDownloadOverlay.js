@@ -33,6 +33,9 @@
          * content for a modal to download the results of a mapping.
          */
         .module('runMappingDownloadOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc component
          * @name runMappingDownloadOverlay.component:runMappingDownloadOverlay

@@ -35,6 +35,9 @@
          * to the Mobi Dataset REST endpoints.
          */
         .module('datasetManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name datasetManager.service:datasetManagerService

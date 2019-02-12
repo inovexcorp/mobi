@@ -30,5 +30,8 @@
      * @description
      * The `home` module provides components that make up the Home module in the Mobi application.
      */
-    angular.module('home', []);
+    angular.module('home', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }]);
 })();

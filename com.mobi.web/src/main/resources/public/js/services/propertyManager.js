@@ -25,6 +25,9 @@
 
     angular
         .module('propertyManager', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         .service('propertyManagerService', propertyManagerService);
 
         propertyManagerService.$inject = ['prefixes'];

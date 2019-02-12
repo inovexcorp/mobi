@@ -33,6 +33,9 @@
          * commit history of an ontology.
          */
         .module('commitsTab', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name commitsTab.directive:commitsTab

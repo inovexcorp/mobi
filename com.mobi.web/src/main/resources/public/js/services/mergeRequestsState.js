@@ -34,6 +34,9 @@
          * to update those variables.
          */
         .module('mergeRequestsState', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name mergeRequestsState.service:mergeRequestsStateService

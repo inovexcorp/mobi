@@ -34,6 +34,9 @@
          * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('mappingCommitsPage', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name mappingCommitsPage.directive:mappingCommitsPage

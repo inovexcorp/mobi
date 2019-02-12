@@ -33,6 +33,12 @@
          * for a modal to display information about a property value on an instance.
          */
         .module('propertyValueOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
+        .config(function($compileProvider) {
+            $compileProvider.preAssignBindingsEnabled(true);
+        })
         /**
          * @ngdoc component
          * @name propertyValueOverlay.component:propertyValueOverlay

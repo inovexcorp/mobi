@@ -34,6 +34,9 @@
          * IRI.
          */
         .module('iriSelect', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name iriSelect.directive:iriSelect

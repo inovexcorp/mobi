@@ -33,6 +33,9 @@
          * a `ui-select` with a list of ClassMappings.
          */
         .module('classMappingSelect', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name classMappingSelect.directive:classMappingSelect

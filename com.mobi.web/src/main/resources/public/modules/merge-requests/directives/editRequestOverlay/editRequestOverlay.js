@@ -33,6 +33,9 @@
          * for a modal to edit a merge request.
          */
         .module('editRequestOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc component
          * @name editRequestOverlay.component:editRequestOverlay

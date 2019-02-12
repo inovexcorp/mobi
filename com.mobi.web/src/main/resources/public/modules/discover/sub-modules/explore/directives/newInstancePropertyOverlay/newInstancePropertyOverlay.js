@@ -33,6 +33,9 @@
          * creates content for a modal to add a property to an instance.
          */
         .module('newInstancePropertyOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc component
          * @name newInstancePropertyOverlay.component:newInstancePropertyOverlay

@@ -33,6 +33,9 @@
          * methods for the creating and submitting search queries.
          */
         .module('search', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc service
          * @name search.service:searchService

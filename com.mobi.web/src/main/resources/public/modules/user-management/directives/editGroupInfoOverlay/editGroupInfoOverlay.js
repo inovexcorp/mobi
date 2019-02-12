@@ -33,6 +33,9 @@
          * for a modal to change a groups's information in Mobi.
          */
         .module('editGroupInfoOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc component
          * @name editGroupInfoOverlay.component:editGroupInfoOverlay

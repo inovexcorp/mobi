@@ -33,6 +33,9 @@
          * content for a modal to add an object property to an individual.
          */
         .module('objectPropertyOverlay', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name objectPropertyOverlay.directive:objectPropertyOverlay

@@ -68,5 +68,11 @@
     }
 
     angular.module('catalog')
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
+        .config(function($compileProvider) {
+            $compileProvider.preAssignBindingsEnabled(true);
+        })
         .component('limitDescription', limitDescriptionComponent);
 })();

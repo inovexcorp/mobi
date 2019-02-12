@@ -33,6 +33,9 @@
          * classes in the imports closure of an ontology.
          */
         .module('ontologyClassSelect', [])
+        .config(['$qProvider', function($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
+        }])
         /**
          * @ngdoc directive
          * @name ontologyClassSelect.directive:ontologyClassSelect
