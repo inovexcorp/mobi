@@ -46,11 +46,11 @@
 
     function limitDescriptionComponentCtrl() {
         var dvm = this;
-        dvm.descriptionLimit = dvm.limit || 200;
         dvm.full = false;
         dvm.display = '';
 
         dvm.$onInit = function() {
+            dvm.descriptionLimit = dvm.limit || 200;
             dvm.display = getLimitedDescription();
         }
         dvm.$onChanges = function() {
@@ -71,8 +71,5 @@
         .config(['$qProvider', function($qProvider) {
             $qProvider.errorOnUnhandledRejections(false);
         }])
-        .config(function($compileProvider) {
-            $compileProvider.preAssignBindingsEnabled(true);
-        })
         .component('limitDescription', limitDescriptionComponent);
 })();

@@ -36,9 +36,6 @@
         .config(['$qProvider', function($qProvider) {
             $qProvider.errorOnUnhandledRejections(false);
         }])
-        .config(function($compileProvider) {
-            $compileProvider.preAssignBindingsEnabled(true);
-        })
         /**
          * @ngdoc component
          * @name propertyValueOverlay.component:propertyValueOverlay
@@ -60,7 +57,7 @@
          * @param {Function} dismiss A function that dismisses the modal
          * @param {Object} resolve An object with data provided to the modal
          * @param {string} resolve.iri The IRI of the property
-         * @param {nummber} resolve.index The index of the value being viewed from the property array on the instance
+         * @param {number} resolve.index The index of the value being viewed from the property array on the instance
          * @param {Object[]} resolve.properties The list of properties to select from
          * @param {string} resolve.text The text of the propery value being viewed
          */
@@ -82,24 +79,25 @@
             dvm.util = utilService;
             dvm.propertyText = '';
 
-            var instance = ds.getInstance();
-            var object = angular.copy(_.get(_.get(instance, dvm.resolve.iri, []), dvm.resolve.index));
-            var ommitted = ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'];
+            dvm.$onInit = function() {
+                var instance = ds.getInstance();
+                dvm.object = angular.copy(_.get(_.get(instance, dvm.resolve.iri, []), dvm.resolve.index));
+                dvm.ommitted = ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'];
 
-            dvm.reification = dvm.eu.getReification(ds.explore.instance.entity, instance['@id'], dvm.resolve.iri, object)
-                || {
-                    '@id': dvm.util.getSkolemizedIRI(),
-                    '@type': [prefixes.rdf + 'Statement'],
-                    [prefixes.rdf + 'subject']: [{'@id': instance['@id']}],
-                    [prefixes.rdf + 'predicate']: [{'@id': dvm.resolve.iri}],
-                    [prefixes.rdf + 'object']: [object]
-                };
-
+                dvm.reification = dvm.eu.getReification(ds.explore.instance.entity, instance['@id'], dvm.resolve.iri, dvm.object)
+                    || {
+                        '@id': dvm.util.getSkolemizedIRI(),
+                        '@type': [prefixes.rdf + 'Statement'],
+                        [prefixes.rdf + 'subject']: [{'@id': instance['@id']}],
+                        [prefixes.rdf + 'predicate']: [{'@id': dvm.resolve.iri}],
+                        [prefixes.rdf + 'object']: [dvm.object]
+                    };
+            }
             dvm.showReifiedPropertyOverlay = function() {
                 modalService.openModal('newInstancePropertyOverlay', {properties: dvm.resolve.properties, instance: dvm.reification}, dvm.addToChanged);
             }
             dvm.notOmmitted = function(propertyIRI) {
-                return !_.includes(ommitted, propertyIRI);
+                return !_.includes(dvm.ommitted, propertyIRI);
             }
             dvm.submit = function() {
                 _.forOwn(dvm.reification, (value, key) => {
