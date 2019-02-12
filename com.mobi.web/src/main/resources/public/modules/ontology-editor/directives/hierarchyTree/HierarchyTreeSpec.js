@@ -55,7 +55,8 @@ describe('Hierarchy Tree directive', function() {
             indent: 0,
             path: []
         }];
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy"></hierarchy-tree>'))(scope);
+        scope.updateSearch = jasmine.createSpy('updateSearch');
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" update-search="updateSearch"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });

@@ -45,9 +45,9 @@
                     dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
                     dvm.ou = ontologyUtilsManagerService;
-                    dvm.filteredHierarchy = dvm.hierarchy;
                     dvm.searchText = '';
                     dvm.filterText = '';
+                    dvm.updateSearch(dvm.filterText);
                     var om = ontologyManagerService;
 
                     dvm.onKeyup = function() {
@@ -99,6 +99,8 @@
                         }
                         return displayNode;
                     }
+
+                    dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
                 }
             }
         }
