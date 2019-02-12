@@ -82,6 +82,9 @@
                             ontoUtils.deleteDataTypeProperty();
                         }
                     }
+                    dvm.classHistory = function() {
+                        dvm.os.listItem.classHistory = true;
+                    }
                 },
                 templateUrl: 'modules/ontology-editor/directives/overviewTab/overviewTab.html'
             }

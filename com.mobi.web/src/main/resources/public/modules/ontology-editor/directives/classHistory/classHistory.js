@@ -57,21 +57,41 @@
                 dismiss: '&'
             },
             controllerAs: 'dvm',
-            controller: ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService', ClassHistoryController],
+            controller: ['$filter', 'catalogManagerService', 'manchesterConverterService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService', ClassHistoryController],
             templateUrl: 'modules/ontology-editor/directives/classHistory/classHistory.html'
         });
 
-        function ClassHistoryController(catalogManagerService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
+        function ClassHistoryController($filter, catalogManagerService, manchesterConverterService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
             var dvm = this;
             var ontoUtils = ontologyUtilsManagerService;
+            var mc = manchesterConverterService;
             dvm.cm = catalogManagerService;
             dvm.os = ontologyStateService;
             dvm.om = ontologyManagerService;
             dvm.util = utilService;
 
-
             dvm.goBack = function() {
                 dvm.os.listItem.classHistory = undefined;
+                dvm.os.listItem.selectedEntity = undefined;
+            }
+            dvm.prev = function() {
+                var index = dvm.commits.indexOf(dvm.os.listItem.selectedEntity);
+                dvm.os.listItem.selectedEntity = dvm.commits[index+1];
+            }
+            dvm.next = function() {
+                var index = dvm.commits.indexOf(dvm.os.listItem.selectedEntity);
+                dvm.os.listItem.selectedEntity = dvm.commits[index-1];
+            }
+            dvm.getTypes = function() {
+                return _.join(_.orderBy(
+                        _.map(_.get(dvm.os.listItem.selected, '@type', []), t => {
+                            if (dvm.om.isBlankNodeId(t)) {
+                                return mc.jsonldToManchester(t, dvm.os.listItem.ontology);
+                            } else {
+                                return $filter('prefixation')(t);
+                            }
+                        })
+                ), ', ');
             }
         }
 })();

@@ -29,7 +29,6 @@
      * @scope
      * @restrict E
      * @requires catalogManager.service:catalogManagerService
-     * @requires util.service:utilService
      * @requires userManager.service:userManagerService
      * @requires modal.service:modalService
      *
@@ -56,39 +55,58 @@
         controller: commitCompiledResourceCtrl
     };
 
-    commitCompiledResourceCtrl.$inject = ['httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
+    commitCompiledResourceCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-    function commitCompiledResourceCtrl(httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
+    function commitCompiledResourceCtrl($q, httpService, catalogManagerService, ontologyStateService, ontologyUtilsManagerService) {
         var dvm = this;
         var cm = catalogManagerService;
-        var util = utilService;
-        var um = userManagerService;
+        dvm.ontoUtils = ontologyUtilsManagerService;
+        dvm.os = ontologyStateService;
+
         dvm.error = '';
         dvm.additions = [];
         dvm.deletions = [];
+        dvm.resource = undefined;
         dvm.id = 'commit-compiled-resource';
 
         dvm.$onChanges = function(changes) {
             if (_.has(changes, 'commitId') || _.has(changes, 'entityId')) {
-                dvm.getResources();
+                dvm.setResource();
             }
         }
-        dvm.getResources = function() {
-            if(dvm.commitId) {
+        dvm.setResource = function() {
+            if (dvm.commitId) {
                 httpService.cancel(dvm.id);
-                var promise = cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id);
-                promise.then(resources => {
-                    dvm.resources = resources;
-                    dvm.resourceData = resources;
-                    dvm.error = '';
-                }, errorMessage => {
-                    dvm.error = errorMessage;
-                    dvm.resources = [];
-                    dvm.resourceData = [];
-                });
+                cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
+                    .then(resources => {
+                        dvm.resource = _.omit(resources[0], ['@id', '@type']);
+                        dvm.resourceData = dvm.resource;
+                        return cm.getCommit(dvm.commitId);
+                    }, $q.reject)
+                    .then(response => {
+                        var additions = _.omit(_.find(response.additions, {'@id': dvm.entityId}), ['@id', '@type']);
+                        var deletions = _.omit(_.find(response.deletions, {'@id': dvm.entityId}), ['@id', '@type']);
+                        _.forEach(additions, (values, prop) => {
+                            _.forEach(values, value => {
+                                var resourceVal = _.find(dvm.resource[prop], value);
+                                if (resourceVal) {
+                                    resourceVal.add = true;
+                                }
+                            });
+                        });
+                        _.forEach(deletions, (values, prop) => {
+                            _.forEach(values, value => { value.del = true });
+                        });
+                        _.mergeWith(dvm.resource, deletions, (objValue, srcValue) => objValue.concat(srcValue));
+                        dvm.error = '';
+                    }, errorMessage => {
+                        dvm.error = errorMessage;
+                        dvm.resource = undefined;
+                        dvm.resourceData = undefined;
+                    });
             } else {
-                dvm.resources = [];
-                dvm.resourceData = [];
+                dvm.resource = undefined;
+                dvm.resourceData = undefined;
             }
         }
     }

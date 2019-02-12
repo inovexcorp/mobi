@@ -77,6 +77,9 @@
                     dvm.showDeleteConfirmation = function() {
                         modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteConcept);
                     }
+                     dvm.classHistory = function() {
+                         dvm.os.listItem.classHistory = true;
+                     }
                 }
             }
         }

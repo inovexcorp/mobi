@@ -24,10 +24,16 @@
     <div class="col-auto back-column h-100">
         <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
-    <div class="class-history-header col">
+    <div class="class-history-header remove-min-width col">
         <div class="row">
             <h2 class="class-history-title break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
             <static-iri class="editable-iri align-self-end" read-only=true iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        </div>
+        <div class="row">
+            <div class="type-wrapper align-self-end" ng-if="dvm.os.listItem.selected['@type'].length">
+                <span class="type-label">Type(s):</span>
+                <span class="types text-muted">{{dvm.getTypes()}}</span>
+            </div>
         </div>
         <div class="row">
             <div class="col-xl-6">
@@ -37,7 +43,7 @@
                             <span>View entity at</span>
                         </div>
                         <div class="form-group">
-                            <ui-select ng-model="dvm.selectedEntity" on-select="onChange()" ng-disabled="dvm.commits.length === 0" autofocus>
+                            <ui-select ng-model="dvm.os.listItem.selectedEntity" on-select="onChange()" ng-disabled="dvm.commits.length === 0" autofocus>
                                 <ui-select-match placeholder="Commit Id">
                                     <span>{{dvm.util.condenseCommitId($select.selected.id)}}</span>
                                 </ui-select-match>
@@ -47,19 +53,19 @@
                             </ui-select>
                         </div>
                         <div class="form-group">
-                            <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
-                            <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
+                            <button ng-click="dvm.prev()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedEntity) + 1 === dvm.commits.length || !dvm.os.listItem.selectedEntity" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+                            <button ng-click="dvm.next()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedEntity) === 0 || !dvm.os.listItem.selectedEntity" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
                         </div>
                     </div>
                 </div>
                 <div class="top-buffer row">
                     <div class="col">
-                        <commit-compiled-resource commit-id="dvm.selectedEntity.id" entity-id="dvm.os.listItem.selected['@id']" resource-data="dvm.resources"></commit-compiled-resource>
+                        <commit-compiled-resource commit-id="dvm.os.listItem.selectedEntity.id" entity-id="dvm.os.listItem.selected['@id']" resource-data="dvm.resources"></commit-compiled-resource>
                     </div>
                 </div>
             </div>
             <div class="top-buffer col remove-min-width">
-                <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" commit-data="dvm.commits"></commit-history-table>
+                <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" commit-data="dvm.commits"></commit-history-table>
             </div>
         </div>
     </div>
