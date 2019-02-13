@@ -1,0 +1,38 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="record-markdown">
+    <div ng-if="!dvm.edit" class="view-record-markdown p-2" ng-click="dvm.showEdit()" ng-class="{'hover': dvm.canEdit}">
+        <div ng-if="!dvm.markdownHTML" class="text-muted">(No overview)</div>
+        <div ng-if="dvm.markdownHTML" class="markdown" ng-bind-html="dvm.markdownHTML | trusted"></div>
+    </div>
+    <div ng-if="dvm.edit" class="edit-record-markdown form-group p-2">
+        <div class="markdown-editor-header border-bottom-0 p-1">
+            <span class="fa fa-info text-muted p-1" uib-popover-html="dvm.markdownTooltip" popover-trigger="'outsideClick'"></span>
+            <div class="click-icon p-1 fa" ng-class="dvm.showPreview ? 'fa-eye-slash' : 'fa-eye'" ng-click="dvm.togglePreview()"></div>
+            <div class="click-icon fa fa-save p-1 float-right" ng-click="dvm.saveEdit()"></div>
+            <div class="click-icon fa fa-trash p-1 float-right" ng-click="dvm.cancelEdit()"></div>
+        </div>
+        <textarea ng-if="!dvm.showPreview" class="form-control" ng-model="dvm.editMarkdown" focus-me="true" rows="10"></textarea>
+        <div class="markdown-preview markdown p-3" ng-if="dvm.showPreview" ng-bind-html="dvm.preview | trusted"></div>
+    </div>
+</div>

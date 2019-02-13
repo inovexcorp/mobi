@@ -975,6 +975,7 @@ function mockCatalogState() {
             this.recordSearchText = '';
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
+            this.reset = jasmine.createSpy('reset');
             this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });

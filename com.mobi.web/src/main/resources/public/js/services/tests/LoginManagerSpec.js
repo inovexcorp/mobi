@@ -178,6 +178,7 @@ describe('Login Manager service', function() {
         expect(ontologyStateSvc.reset).toHaveBeenCalled();
         expect(sparqlManagerSvc.reset).toHaveBeenCalled();
         expect(userStateSvc.reset).toHaveBeenCalled();
+        expect(catalogStateSvc.reset).toHaveBeenCalled();
         expect(loginManagerSvc.currentUser).toBe('');
         expect(loginManagerSvc.currentUserIRI).toBe('');
         expect(state.go).toHaveBeenCalledWith('login');

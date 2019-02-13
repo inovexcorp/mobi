@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Record View component', function() {
-    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, utilSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -33,15 +33,17 @@ describe('Record View component', function() {
         mockComponent('catalog', 'limit-description');
         mockCatalogManager();
         mockCatalogState();
+        mockPolicyEnforcement();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _policyEnforcementService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
+            policyEnforcementSvc = _policyEnforcementService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
@@ -70,6 +72,7 @@ describe('Record View component', function() {
         $q = null;
         catalogManagerSvc = null;
         catalogStateSvc = null;
+        policyEnforcementSvc = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();
@@ -84,15 +87,18 @@ describe('Record View component', function() {
             expect(this.controller.description).toEqual('description');
             expect(this.controller.modified).toEqual('date');
             expect(this.controller.issued).toEqual('date');
+            expect(policyEnforcementSvc.evaluateRequest).toHaveBeenCalledWith(jasmine.any(Object));
             expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
         });
         it('unless the record is not found', function() {
+            policyEnforcementSvc.evaluateRequest.calls.reset();
             catalogManagerSvc.getRecord.and.returnValue($q.reject('Error message'));
             this.element = $compile(angular.element('<record-view></record-view>'))(scope);
             scope.$digest();
             this.controller = this.element.controller('recordView');
             expect(this.controller.record).toBeUndefined();
             expect(catalogStateSvc.selectedRecord).toBeUndefined();
+            expect(policyEnforcementSvc.evaluateRequest).not.toHaveBeenCalled();
             expect(utilSvc.createWarningToast).toHaveBeenCalled();
         });
     });
@@ -100,6 +106,69 @@ describe('Record View component', function() {
         it('should go back', function() {
            this.controller.goBack();
            expect(catalogStateSvc.selectedRecord).toBeUndefined();
+        });
+        describe('should update the record', function() {
+            beforeEach(function() {
+                this.controller.title = 'TEST';
+                this.controller.description = 'TEST';
+                this.controller.modified = 'TEST';
+                this.controller.issued = 'TEST';
+            });
+            it('if updateRecord resolves', function() {
+                this.controller.updateRecord(this.record)
+                    .then(angular.noop, () => fail('Promise should have resolved'));
+                scope.$apply();
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, this.record);
+                expect(this.controller.record).toEqual(this.record);
+                expect(catalogStateSvc.selectedRecord).toEqual(this.record);
+                expect(this.controller.title).toEqual('title');
+                expect(this.controller.description).toEqual('description');
+                expect(this.controller.modified).toEqual('date');
+                expect(this.controller.issued).toEqual('date');
+                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('unless updateRecord rejects', function() {
+                catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error message'));
+                this.controller.updateRecord(this.record)
+                    .then(() => fail('Promise should have rejected'), angular.noop);
+                scope.$apply();
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, this.record);
+                expect(this.controller.title).toEqual('TEST');
+                expect(this.controller.description).toEqual('TEST');
+                expect(this.controller.modified).toEqual('TEST');
+                expect(this.controller.issued).toEqual('TEST');
+                expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
+            });
+        });
+        describe('should set whether the user can edit the record', function() {
+            describe('when evaluateRequest resolves', function() {
+                it('with Permit', function() {
+                    policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.permit));
+                    this.controller.setCanEdit();
+                    scope.$apply();
+                    expect(policyEnforcementSvc.evaluateRequest).toHaveBeenCalledWith({resourceId: this.recordId, actionId: prefixes.policy + 'Update'});
+                    expect(this.controller.canEdit).toEqual(true);
+                    expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                });
+                it('with Deny', function() {
+                    policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
+                    this.controller.setCanEdit();
+                    scope.$apply();
+                    expect(policyEnforcementSvc.evaluateRequest).toHaveBeenCalledWith({resourceId: this.recordId, actionId: prefixes.policy + 'Update'});
+                    expect(this.controller.canEdit).toEqual(false);
+                    expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                });
+            });
+            it('when evaluateRequest rejects', function() {
+                policyEnforcementSvc.evaluateRequest.and.returnValue($q.reject('Error message'));
+                this.controller.setCanEdit();
+                scope.$apply();
+                expect(policyEnforcementSvc.evaluateRequest).toHaveBeenCalledWith({resourceId: this.recordId, actionId: prefixes.policy + 'Update'});
+                expect(this.controller.canEdit).toEqual(false);
+                expect(utilSvc.createWarningToast).toHaveBeenCalled();
+            });
         });
     });
     describe('contains the correct html', function() {
