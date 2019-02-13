@@ -294,7 +294,8 @@ public class CatalogRestImpl implements CatalogRest {
                     type = ValueType.BODY))
     @ResourceId(value = "catalogId", type = ValueType.PATH)
     public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
-                                 String identifierIRI, String description, List<FormDataBodyPart> keywords) {
+                                 String identifierIRI, String description, String markdown,
+                                 List<FormDataBodyPart> keywords) {
         checkStringParam(title, "Record title is required");
         Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
         if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
@@ -305,13 +306,16 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             createActivity = provUtils.startCreateActivity(activeUser);
             RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(activeUser));
-            if (identifierIRI != null) {
+            if (StringUtils.isNotEmpty(identifierIRI)) {
                 builder.identifier(identifierIRI);
             }
-            if (description != null) {
+            if (StringUtils.isNotEmpty(description)) {
                 builder.description(description);
             }
-            if (keywords != null) {
+            if (StringUtils.isNotEmpty(markdown)) {
+                builder.markdown(markdown);
+            }
+            if (keywords != null && keywords.size() > 0) {
                 builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
             }
 

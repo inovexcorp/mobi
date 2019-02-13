@@ -21,26 +21,26 @@
   #L%
   -->
 <div class="search-tab row m-0">
-    <div class="col-4 d-flex flex-column pt-2">
+    <div class="col-4 d-flex flex-column pt-2 h-100">
         <div class="search pb-1">
             <search-bar ng-model="dvm.os.listItem.editorTabStates.search.searchText" submit-event="dvm.onKeyup()"></search-bar>
         </div>
-        <div class="flex-1 vertical-scroll" targeted-spinner="dvm.id">
+        <div class="flex-1 vertical-scroll" targeted-spinner="dvm.os.listItem.editorTabStates.search.id">
             <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
                 <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-up': isClosed, 'fa-chevron-down': !isClosed}"></i></div>
                 <ul class="tree" ng-if="!isClosed">
                     <tree-item ng-repeat="item in value track by item"
-                               current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
-                               is-active="dvm.os.getActiveEntityIRI() === item"
-                               on-click="dvm.os.selectItem(item, false)"
-                               ng-dblclick="dvm.goToIfYouCan(item)"></tree-item>
+                            current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
+                            is-active="dvm.os.getActiveEntityIRI() === item"
+                            on-click="dvm.selectItem(item)"
+                            ng-dblclick="dvm.goToIfYouCan(item)"></tree-item>
                 </ul>
             </div>
         </div>
     </div>
-    <div class="entity-IRI col-8 d-flex flex-column pt-2" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
+    <div class="entity-IRI col-8 d-flex flex-column pt-2 h-100" ng-if="dvm.os.listItem.editorTabStates.search.entityIRI">
         <div class="flex-1 vertical-scroll">
             <div class="d-flex">
                 <selected-details class="flex-1 remove-min-width" read-only="true"></selected-details>

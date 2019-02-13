@@ -611,8 +611,8 @@
                         .then(response => {
                             inProgressCommit = response;
                             return om.getOntology(recordId, branchId, commitId, rdfFormat);
-                        }, errorMessage => {
-                            if (errorMessage === 'InProgressCommit could not be found') {
+                        }, response => {
+                            if (_.get(response, 'status') === 404) {
                                 return om.getOntology(recordId, branchId, commitId, rdfFormat);
                             }
                             return $q.reject();
@@ -1181,15 +1181,7 @@
              * @returns {Promise} A promise with the ontology ID.
              */
             self.saveChanges = function(recordId, differenceObj) {
-                return cm.getInProgressCommit(recordId, catalogId)
-                    .then($q.when, errorMessage => {
-                        if (errorMessage === 'InProgressCommit could not be found') {
-                            return cm.createInProgressCommit(recordId, catalogId);
-                        } else {
-                            return $q.reject(errorMessage);
-                        }
-                    })
-                    .then(() => cm.updateInProgressCommit(recordId, catalogId, differenceObj), $q.reject);
+                return cm.updateInProgressCommit(recordId, catalogId, differenceObj);
             }
             self.addToAdditions = function(recordId, json) {
                 addToInProgress(recordId, json, 'additions');
@@ -1369,11 +1361,22 @@
                     }
                     _.unset(value, 'usages');
                 });
+                self.resetSearchTab(listItem);
                 if (self.getActiveKey() !== 'project') {
                     listItem.selected = undefined;
                 } else {
                     listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, listItem.editorTabStates.project.entityIRI);
                 }
+            }
+            self.resetSearchTab = function(listItem = self.listItem) {
+                httpService.cancel(listItem.editorTabStates.search.id);
+                listItem.editorTabStates.search.errorMessage = '';
+                listItem.editorTabStates.search.highlightText = '';
+                listItem.editorTabStates.search.infoMessage = '';
+                listItem.editorTabStates.search.results = {};
+                listItem.editorTabStates.search.searchText = '';
+                listItem.editorTabStates.search.selected = {};
+                listItem.editorTabStates.search.entityIRI = '';
             }
             self.getActiveKey = function(listItem = self.listItem) {
                 return _.findKey(listItem.editorTabStates, 'active') || 'project';

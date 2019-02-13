@@ -41,7 +41,8 @@
          *
          * @description
          * `clickToCopy` is a directive that adds directives to the parent element so that a user can click on the
-         * element and copy provided text that is resolved from the parent scope.
+         * element and copy provided text that is resolved from the parent scope. To customize the text displayed in the
+         * tootltip, set the `title` attribute on the parent.
          *
          * @param {*} clickToCopy The expression to be evaluated in the parent scope that should result in text that
          * will be copied on click.
@@ -59,7 +60,7 @@
                     }
                     elem.removeAttr('click-to-copy');
                     elem.addClass('click-to-copy');
-                    elem.attr('uib-tooltip', 'Copy to clipboard');
+                    elem.attr('uib-tooltip', attrs.title || 'Copy to clipboard');
                     elem.attr('ngclipboard', '');
                     elem.attr('data-clipboard-text', '{{' + attrs.clickToCopy + '}}');
                     elem.attr('ngclipboard-success', 'onSuccess()');

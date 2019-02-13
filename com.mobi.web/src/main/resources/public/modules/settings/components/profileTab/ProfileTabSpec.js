@@ -21,24 +21,36 @@
  * #L%
  */
 describe('Profile Tab component', function() {
-    var $compile, scope, $q, userManagerSvc, loginManagerSvc;
+    var $compile, scope, $q, userManagerSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('settings');
         mockUserManager();
         mockLoginManager();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _loginManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _loginManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             userManagerSvc = _userManagerService_;
             loginManagerSvc = _loginManagerService_;
+            prefixes = _prefixes_;
         });
 
         loginManagerSvc.currentUser = 'user';
-        userManagerSvc.users = [{username: 'user'}];
+        userManagerSvc.users = [{
+            jsonld: {
+                [prefixes.foaf + 'firstName']: [{'@value': 'John'}],
+                [prefixes.foaf + 'lastName']: [{'@value': 'Doe'}],
+                [prefixes.foaf + 'mbox']: [{'@id': 'john.doe@gmail.com'}]
+            },
+            username: 'user',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@gmail.com'
+        }];
         this.element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('profileTab');
@@ -50,6 +62,7 @@ describe('Profile Tab component', function() {
         $q = null;
         userManagerSvc = null;
         loginManagerSvc = null;
+        prefixes = null;
         this.element.remove();
     });
 

@@ -14,5 +14,4 @@
 (&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=ontologyCache))
 (&(objectClass=com.mobi.platform.config.api.server.Mobi)(component.name=com.mobi.platform.server))
 (&(objectClass=com.mobi.prov.rest.ProvRest))
-(&(objectClass=com.mobi.analytic.rest.AnalyticRest))
 (&(objectClass=com.mobi.catalog.rest.MergeRequestRest))

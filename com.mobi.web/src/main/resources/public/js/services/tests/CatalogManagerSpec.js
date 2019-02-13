@@ -128,7 +128,7 @@ describe('Catalog Manager service', function() {
         it('unless there is an error', function() {
             $httpBackend.expectGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getResultsPage(this.url)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -158,14 +158,14 @@ describe('Catalog Manager service', function() {
                 var params = $httpParamSerializer(this.config);
                 $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                 catalogManagerSvc.getRecords(this.catalogId, this.config)
-                    .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                    .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                 flushAndVerify($httpBackend);
                 expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
             });
             it('with a promise id set', function() {
                 httpSvc.get.and.returnValue($q.reject({}));
                 catalogManagerSvc.getRecords(this.catalogId, this.config, this.promiseId)
-                    .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                    .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                 scope.$apply();
                 expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
                 expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
@@ -221,7 +221,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecord(this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -245,7 +245,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -253,7 +253,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.recordId);
             var self = this;
             catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
-                .then(response =>expect(response).toBe(self.recordId), response => fail('Promise should have resolved'));
+                .then(response =>expect(response).toEqual(self.recordId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a description or keywords', function() {
@@ -262,7 +262,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.recordId);
             var self = this;
             catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
-                .then(response => expect(response).toBe(self.recordId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.recordId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -274,7 +274,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newRecord).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecord(this.recordId, this.catalogId, this.newRecord).then(() => fail('Promise should have rejected'),
-                    response => expect(response).toBe('Error Message'));
+                    response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -293,7 +293,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecord(this.recordId, this.catalogId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
                 expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -319,7 +319,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordDistributions(this.recordId, this.catalogId, this.config)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -348,7 +348,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordDistribution(this.distributionId, this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -373,7 +373,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -381,7 +381,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.distributionId);
             var self = this;
             catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
-                .then(response => expect(response).toBe(self.distributionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a description, format, access URL, or download URL', function() {
@@ -392,7 +392,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.distributionId);
             var self = this;
             catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
-                .then(response => expect(response).toBe(self.distributionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -404,7 +404,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newDistribution).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecordDistribution(this.distributionId, this.recordId, this.catalogId, this.newDistribution)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -412,7 +412,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPUT(this.url, this.newDistribution).respond(200);
             var self = this;
             catalogManagerSvc.updateRecordDistribution(this.distributionId, this.recordId, this.catalogId, this.newDistribution)
-                .then(response => expect(response).toBe(self.distributionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -423,7 +423,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordDistribution(this.distributionId, this.recordId, this.catalogId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -449,7 +449,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordVersions(this.recordId, this.catalogId, this.config)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -478,7 +478,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordLatestVersion(this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -496,7 +496,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordVersion(this.versionId, this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response =>  expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response =>  expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -518,7 +518,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -526,7 +526,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
             var self = this;
             catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
-                .then(response => expect(response).toBe(self.versionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a description', function() {
@@ -534,7 +534,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
             var self = this;
             catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
-                .then(response => expect(response).toBe(self.versionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -552,7 +552,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -560,7 +560,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
             var self = this;
             catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
-                .then(response => expect(response).toBe(self.versionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a description', function() {
@@ -568,7 +568,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.versionId);
             var self = this;
             catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.tagConfig)
-                .then(response => expect(response).toBe(self.versionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.versionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -580,14 +580,14 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newVersion).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecordVersion(this.versionId, this.recordId, this.catalogId, this.newVersion)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
             $httpBackend.expectPUT(this.url, this.newVersion).respond(200, '');
             catalogManagerSvc.updateRecordVersion(this.versionId, this.recordId, this.catalogId, this.newVersion)
-                .then(response => expect(response).toBe(''), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(''), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -598,7 +598,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordVersion(this.versionId, this.recordId, this.catalogId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -617,7 +617,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -651,7 +651,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionDistributions(this.versionId, this.recordId, this.catalogId, this.config)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -680,7 +680,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -705,7 +705,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -713,7 +713,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data =>  data instanceof FormData).respond(200, this.distributionId);
             var self = this;
             catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
-                .then(response => expect(response).toBe(self.distributionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a description, format, access URL, or download URL', function() {
@@ -724,7 +724,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.distributionId);
             var self = this;
             catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
-                .then(response => expect(response).toBe(self.distributionId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.distributionId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -736,14 +736,14 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newDistribution).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId, this.newDistribution)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
             $httpBackend.expectPUT(this.url, this.newDistribution).respond(200, '');
             catalogManagerSvc.updateVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId, this.newDistribution)
-                .then(response => expect(response).toBe(''), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(''), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -754,7 +754,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -781,7 +781,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordBranches(this.recordId, this.catalogId, this.config)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -812,7 +812,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordMasterBranch(this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -830,7 +830,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordBranch(this.branchId, this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -855,7 +855,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -865,7 +865,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.branchId);
             var self = this;
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
-                .then(response => expect(response).toBe(self.branchId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
             expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
@@ -877,7 +877,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url,data => data instanceof FormData).respond(200, this.branchId);
             var self = this;
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
-                .then(response => expect(response).toBe(self.branchId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
             expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
@@ -897,7 +897,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -908,7 +908,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.branchId);
             var self = this;
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
-                .then(response => expect(response).toBe(self.branchId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
             expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
@@ -921,7 +921,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url, data => data instanceof FormData).respond(200, this.branchId);
             var self = this;
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
-                .then(response => expect(response).toBe(self.branchId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
             expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
@@ -935,7 +935,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(this.url, this.newBranch).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecordBranch(this.branchId, this.recordId, this.catalogId, this.newBranch)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -943,7 +943,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPUT(this.url, this.newBranch).respond(200);
             var self = this;
             catalogManagerSvc.updateRecordBranch(this.branchId, this.recordId, this.catalogId, this.newBranch)
-                .then(response => expect(response).toBe(self.branchId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -954,7 +954,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordBranch(this.branchId, this.recordId, this.catalogId)
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -972,7 +972,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1000,14 +1000,14 @@ describe('Catalog Manager service', function() {
                 it('with no promise id set', function() {
                     $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
                     catalogManagerSvc.getCommitHistory(this.commitId)
-                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     flushAndVerify($httpBackend);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
                     catalogManagerSvc.getCommitHistory(this.commitId, '', '', this.promiseId)
-                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     scope.$apply();
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
@@ -1018,14 +1018,14 @@ describe('Catalog Manager service', function() {
                     var params = $httpParamSerializer({targetId: this.commitId});
                     $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                     catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
-                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     flushAndVerify($httpBackend);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
                     catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, '', this.promiseId)
-                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     scope.$apply();
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
@@ -1036,14 +1036,14 @@ describe('Catalog Manager service', function() {
                     var params = $httpParamSerializer({targetId: '', entityId: this.commitId});
                     $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
                     catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId)
-                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     flushAndVerify($httpBackend);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
                     catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId, this.promiseId)
-                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     scope.$apply();
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
@@ -1109,7 +1109,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer({message: this.message});
             $httpBackend.expectPOST(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createBranchCommit(this.branchId, this.recordId, this.catalogId, this.message)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1118,7 +1118,7 @@ describe('Catalog Manager service', function() {
             $httpBackend.expectPOST(this.url + '?' + params).respond(200, this.commitId);
             var self = this;
             catalogManagerSvc.createBranchCommit(this.branchId, this.recordId, this.catalogId, this.message)
-                .then(response => expect(response).toBe(self.commitId), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(self.commitId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -1130,7 +1130,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1157,7 +1157,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getCommit(this.commitId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1184,7 +1184,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1215,7 +1215,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getDifference(this.commitId, this.commitId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response =>  expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response =>  expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1247,7 +1247,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1279,7 +1279,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1308,7 +1308,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer({targetId: this.branchId});
             $httpBackend.expectPOST(this.url + '?' + params, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1343,7 +1343,7 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'jsonld')
-                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(() => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1352,14 +1352,14 @@ describe('Catalog Manager service', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, '');
             catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'turtle')
-                .then(response => expect(response).toBe(''), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(''), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, '');
             catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true)
-                .then(response => expect(response).toBe(''), response => fail('Promise should have resolved'));
+                .then(response => expect(response).toEqual(''), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
@@ -1391,7 +1391,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenPOST(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createInProgressCommit(this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1409,9 +1409,8 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getInProgressCommit(this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual(jasmine.objectContaining({statusText: 'Error Message'})));
             flushAndVerify($httpBackend);
-            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
             $httpBackend.whenGET(this.url).respond(200, {});
@@ -1428,7 +1427,7 @@ describe('Catalog Manager service', function() {
             var differenceObj = {};
             $httpBackend.whenPUT(this.url, data => data instanceof FormData).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateInProgressCommit(this.recordId, this.catalogId, differenceObj)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1454,7 +1453,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteInProgressCommit(this.recordId, this.catalogId)
-                .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
@@ -1469,74 +1468,74 @@ describe('Catalog Manager service', function() {
         it('if it has a title', function() {
             var title = 'Title';
             utilSvc.getDctermsValue.and.returnValue(title);
-            expect(catalogManagerSvc.getEntityName({})).toBe(title);
+            expect(catalogManagerSvc.getEntityName({})).toEqual(title);
         });
         it('if it does not have a title', function() {
-            expect(catalogManagerSvc.getEntityName({})).toBe('(Anonymous)');
+            expect(catalogManagerSvc.getEntityName({})).toEqual('(Anonymous)');
         });
     });
     it('should test whether an entity is a Record', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isRecord(entity)).toBe(false);
+        expect(catalogManagerSvc.isRecord(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'Record');
-        expect(catalogManagerSvc.isRecord(entity)).toBe(true);
+        expect(catalogManagerSvc.isRecord(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isRecord(entity)).toBe(true);
+        expect(catalogManagerSvc.isRecord(entity)).toEqual(true);
     });
     it('should test whether an entity is a VersionedRDFRecord', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isVersionedRDFRecord(entity)).toBe(false);
+        expect(catalogManagerSvc.isVersionedRDFRecord(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'VersionedRDFRecord');
-        expect(catalogManagerSvc.isVersionedRDFRecord(entity)).toBe(true);
+        expect(catalogManagerSvc.isVersionedRDFRecord(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isVersionedRDFRecord(entity)).toBe(true);
+        expect(catalogManagerSvc.isVersionedRDFRecord(entity)).toEqual(true);
     });
     it('should test whether an entity is a Distribution', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isDistribution(entity)).toBe(false);
+        expect(catalogManagerSvc.isDistribution(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'Distribution');
-        expect(catalogManagerSvc.isDistribution(entity)).toBe(true);
+        expect(catalogManagerSvc.isDistribution(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isDistribution(entity)).toBe(true);
+        expect(catalogManagerSvc.isDistribution(entity)).toEqual(true);
     });
     it('should test whether an entity is a Branch', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isBranch(entity)).toBe(false);
+        expect(catalogManagerSvc.isBranch(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'Branch');
-        expect(catalogManagerSvc.isBranch(entity)).toBe(true);
+        expect(catalogManagerSvc.isBranch(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isBranch(entity)).toBe(true);
+        expect(catalogManagerSvc.isBranch(entity)).toEqual(true);
     });
     it('should test whether an entity is a UserBranch', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isUserBranch(entity)).toBe(false);
+        expect(catalogManagerSvc.isUserBranch(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'UserBranch');
-        expect(catalogManagerSvc.isUserBranch(entity)).toBe(true);
+        expect(catalogManagerSvc.isUserBranch(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isUserBranch(entity)).toBe(true);
+        expect(catalogManagerSvc.isUserBranch(entity)).toEqual(true);
     });
     it('should test whether an entity is a Version', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isVersion(entity)).toBe(false);
+        expect(catalogManagerSvc.isVersion(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'Version');
-        expect(catalogManagerSvc.isVersion(entity)).toBe(true);
+        expect(catalogManagerSvc.isVersion(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isVersion(entity)).toBe(true);
+        expect(catalogManagerSvc.isVersion(entity)).toEqual(true);
     });
     it('should test whether an entity is a Tag', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isTag(entity)).toBe(false);
+        expect(catalogManagerSvc.isTag(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'Tag');
-        expect(catalogManagerSvc.isTag(entity)).toBe(true);
+        expect(catalogManagerSvc.isTag(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isTag(entity)).toBe(true);
+        expect(catalogManagerSvc.isTag(entity)).toEqual(true);
     });
     it('should test whether an entity is a Commit', function() {
         var entity = {'@type': []};
-        expect(catalogManagerSvc.isCommit(entity)).toBe(false);
+        expect(catalogManagerSvc.isCommit(entity)).toEqual(false);
         entity['@type'].push(prefixes.catalog + 'Commit');
-        expect(catalogManagerSvc.isCommit(entity)).toBe(true);
+        expect(catalogManagerSvc.isCommit(entity)).toEqual(true);
         entity['@type'].push(prefixes.catalog + 'Test');
-        expect(catalogManagerSvc.isCommit(entity)).toBe(true);
+        expect(catalogManagerSvc.isCommit(entity)).toEqual(true);
     });
 });

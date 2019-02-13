@@ -136,6 +136,7 @@ public interface CatalogRest {
      * @param title The required title for the new Record.
      * @param identifier The required identifier for the new Record. Must be a valid IRI.
      * @param description The optional description for the new Record.
+     * @param markdown The optional markdown abstract for the new Record.
      * @param keywords The optional list of keywords strings for the new Record.
      * @return A Response with the IRI string of the created Record.
      */
@@ -151,6 +152,7 @@ public interface CatalogRest {
                           @FormDataParam("title") String title,
                           @FormDataParam("identifier") String identifier,
                           @FormDataParam("description") String description,
+                          @FormDataParam("markdown") String markdown,
                           @FormDataParam("keywords") List<FormDataBodyPart> keywords);
 
     /**
@@ -1101,7 +1103,8 @@ public interface CatalogRest {
 
     /**
      * Updates the InProgressCommit for a user identified by the provided IDs using the statements found in the provided
-     * form data. Returns a Response indicating whether it was successfully updated.
+     * form data. Returns a Response indicating whether it was successfully updated. If the user does not have an
+     * InProgressCommit, one will be created with the provided data.
      *
      * @param context The context of the request.
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins

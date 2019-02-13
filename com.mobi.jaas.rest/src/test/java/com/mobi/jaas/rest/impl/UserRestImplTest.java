@@ -25,15 +25,17 @@ package com.mobi.jaas.rest.impl;
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -42,14 +44,14 @@ import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.jaas.rest.providers.GroupProvider;
-import com.mobi.jaas.rest.providers.GroupSetProvider;
-import com.mobi.jaas.rest.providers.RoleProvider;
-import com.mobi.jaas.rest.providers.RoleSetProvider;
-import com.mobi.jaas.rest.providers.UserProvider;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.MobiRestTestNg;
@@ -58,6 +60,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
@@ -81,11 +84,6 @@ import javax.ws.rs.core.Response;
 public class UserRestImplTest extends MobiRestTestNg {
     private UserRestImpl rest;
     private ValueFactory vf;
-    private UserProvider userProvider;
-    private RoleProvider roleProvider;
-    private RoleSetProvider roleSetProvider;
-    private GroupProvider groupProvider;
-    private GroupSetProvider groupSetProvider;
     private OrmFactory<User> userFactory;
     private OrmFactory<Role> roleFactory;
     private OrmFactory<Thing> thingFactory;
@@ -103,6 +101,12 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Mock
     private RdfEngine rdfEngine;
 
+    @Mock
+    private SesameTransformer transformer;
+
+    @Mock
+    private UserFactory userFactoryMock;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
@@ -110,18 +114,6 @@ public class UserRestImplTest extends MobiRestTestNg {
         userFactory = getRequiredOrmFactory(User.class);
         roleFactory = getRequiredOrmFactory(Role.class);
         thingFactory = getRequiredOrmFactory(Thing.class);
-
-        userProvider = new UserProvider();
-        roleProvider = new RoleProvider();
-        roleSetProvider = new RoleSetProvider();
-        groupProvider = new GroupProvider();
-        groupSetProvider = new GroupSetProvider();
-        roleProvider.setFactory(vf);
-        roleSetProvider.setFactory(vf);
-        roleSetProvider.setRoleProvider(roleProvider);
-        groupProvider.setFactory(vf);
-        groupSetProvider.setFactory(vf);
-        groupSetProvider.setGroupProvider(groupProvider);
 
         email = thingFactory.createNew(vf.createIRI("mailto:example@example.com"));
 
@@ -132,7 +124,6 @@ public class UserRestImplTest extends MobiRestTestNg {
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME), role.getModel());
         user.setHasUserRole(roles);
         user.setUsername(vf.createLiteral(UsernameTestFilter.USERNAME));
-        user.setPassword(vf.createLiteral("ABC"));
         user.setMbox(Collections.singleton(email));
         users = Collections.singleton(user);
 
@@ -144,38 +135,36 @@ public class UserRestImplTest extends MobiRestTestNg {
         groups = Collections.singleton(group);
 
         MockitoAnnotations.initMocks(this);
-        groupProvider.setRdfEngine(rdfEngine);
-        userProvider.setEngineManager(engineManager);
-        userProvider.setRdfEngine(rdfEngine);
+        when(transformer.sesameModel(any(Model.class)))
+                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+        when(userFactoryMock.createNew(any(Resource.class), any(Model.class))).thenReturn(user);
 
-        rest = spy(new UserRestImpl());
+        rest = new UserRestImpl();
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
-        rest.setFactory(vf);
+        rest.setValueFactory(vf);
+        rest.setTransformer(transformer);
+        rest.setUserFactory(userFactoryMock);
 
         return new ResourceConfig()
                 .register(rest)
                 .register(MultiPartFeature.class)
-                .register(UsernameTestFilter.class)
-                .register(userProvider)
-                .register(groupProvider)
-                .register(groupSetProvider)
-                .register(roleProvider)
-                .register(roleSetProvider);
+                .register(UsernameTestFilter.class);
     }
 
     @Override
     protected void configureClient(ClientConfig config) {
         config.register(MultiPartFeature.class);
-        config.register(userProvider);
-        config.register(groupProvider);
-        config.register(groupSetProvider);
-        config.register(roleProvider);
-        config.register(roleSetProvider);
     }
 
     @BeforeMethod
     public void setupMocks() {
+        user.setPassword(vf.createLiteral("ABC"));
+
         reset(engineManager);
         reset(rdfEngine);
         when(engineManager.getUsers(anyString())).thenReturn(users);
@@ -197,7 +186,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void listUsersTest() {
+    public void getUsersTest() {
         Response response = target().path("users").request().get();
         verify(engineManager, atLeastOnce()).getUsers(anyString());
         assertEquals(response.getStatus(), 200);
@@ -213,16 +202,18 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void createUserTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "testUser");
-        user.put("email", "example@example.com");
-        user.put("firstName", "John");
-        user.put("lastName", "Doe");
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("username", "testUser");
+        fd.field("email", "example@example.com");
+        fd.field("firstName", "John");
+        fd.field("lastName", "Doe");
+        fd.field("password", "123");
+        fd.field("roles", "admin");
+        fd.field("roles", "user");
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .queryParam("password", "123")
-                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(engineManager).storeUser(anyString(), any(User.class));
     }
@@ -230,45 +221,47 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void createUserWithoutPasswordTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "testUser");
-        user.put("email", "example@example.com");
-        user.put("firstName", "John");
-        user.put("lastName", "Doe");
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("username", "testUser");
+        fd.field("email", "example@example.com");
+        fd.field("firstName", "John");
+        fd.field("lastName", "Doe");
+
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void createUserWithoutUsernameTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("email", "example@example.com");
-        user.put("firstName", "John");
-        user.put("lastName", "Doe");
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("email", "example@example.com");
+        fd.field("firstName", "John");
+        fd.field("lastName", "Doe");
+        fd.field("password", "123");
+
         when(engineManager.userExists(anyString())).thenReturn(false);
 
         Response response = target().path("users")
-                .queryParam("password", "123")
-                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void createExistingUserTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", UsernameTestFilter.USERNAME);
-        user.put("email", "example@example.com");
-        user.put("firstName", "John");
-        user.put("lastName", "Doe");
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("username", "testUser");
+        fd.field("email", "example@example.com");
+        fd.field("firstName", "John");
+        fd.field("lastName", "Doe");
+        fd.field("password", "123");
 
         Response response = target().path("users")
-                .queryParam("password", "123")
-                .request().post(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -278,12 +271,9 @@ public class UserRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("iri"));
-        assertEquals(result.getString("iri"), user.getResource().stringValue());
-        assertTrue(result.containsKey("username"));
-        assertEquals(result.getString("username"), UsernameTestFilter.USERNAME);
-        assertTrue(result.containsKey("email"));
-        assertEquals(result.getString("email"), email.getResource().stringValue());
+        assertFalse(result.containsKey("@graph"));
+        assertTrue(result.containsKey("@id"));
+        assertEquals(result.getString("@id"), user.getResource().stringValue());
     }
 
     @Test
@@ -299,14 +289,9 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void updateUserTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", UsernameTestFilter.USERNAME);
-        user.put("email", "maryjane@example.com");
-        user.put("firstName", "Mary");
-        user.put("lastName", "Jane");
-
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
-                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 200);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
         verify(engineManager).updateUser(anyString(), any(User.class));
@@ -315,36 +300,25 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void updateUserWithDifferentUsernameTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "testUser");
-        user.put("email", "maryjane@example.com");
-        user.put("firstName", "Mary");
-        user.put("lastName", "Jane");
-        User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + user.getString("username")));
-        newUser.setUsername(vf.createLiteral(user.getString("username")));
-        newUser.setFirstName(Collections.singleton(vf.createLiteral(user.getString("firstName"))));
-        newUser.setLastName(Collections.singleton(vf.createLiteral(user.getString("lastName"))));
-        newUser.setMbox(Collections.singleton(thingFactory.createNew(vf.createIRI("mailto:" + user.getString("email")))));
-        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(newUser);
+        User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/user2"));
+        newUser.setUsername(vf.createLiteral("user2"));
 
-        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
-                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        Response response = target().path("users/user2")
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void updateUserThatDoesNotExistTest() {
         //Setup:
-        JSONObject user = new JSONObject();
-        user.put("username", "error");
-        user.put("email", "maryjane@example.com");
-        user.put("firstName", "Mary");
-        user.put("lastName", "Jane");
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("users/error")
-                .request().put(Entity.entity(user.toString(), MediaType.APPLICATION_JSON));
+        Response response = target().path("users/" + UsernameTestFilter.USERNAME)
+                .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
+                        MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
     }
 
     @Test
@@ -412,7 +386,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     public void resetPasswordTest() {
         Response response = target().path("users/username/password")
                 .queryParam("newPassword", "XYZ")
-                .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
+                .request().put(Entity.entity("user", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq("username"));
         verify(engineManager).updateUser(anyString(), any(User.class));

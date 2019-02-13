@@ -21,8 +21,8 @@
   #L%
   -->
 <div class="class-cards h-100">
-    <div vs-repeat="183" class="rows-container h-100">
-        <div ng-repeat="chunk in dvm.chunks" class="row">
+    <md-virtual-repeat-container class="rows-container h-100">
+        <div md-virtual-repeat="chunk in dvm.chunks" class="row" md-item-size="267">
             <div ng-repeat="item in chunk" class="card-container col-4">
                 <md-card class="card">
                     <md-card-title>
@@ -44,5 +44,5 @@
                 </md-card>
             </div>
         </div>
-    </div>
+    </md-virtual-repeat-container>
 </div>

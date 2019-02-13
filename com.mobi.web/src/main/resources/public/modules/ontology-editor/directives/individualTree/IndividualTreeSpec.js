@@ -106,16 +106,10 @@ describe('Individual Tree directive', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
         it('based on tree-items', function() {
-            expect(this.element.find('tree-item').length).toBe(3);
+            expect(this.element.find('tree-item').length).toBe(1);
         });
         it('based on .tree-item-wrapper', function() {
-            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(6);
-        });
-        it('based on .imported', function() {
-            expect(this.element.querySelectorAll('.imported').length).toBe(3);
-            spyOn(this.controller, 'isImported').and.returnValue(false);
-            scope.$digest();
-            expect(this.element.querySelectorAll('.imported').length).toBe(0);
+            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
         });
     });
     describe('controller methods', function() {

@@ -77,7 +77,6 @@ var jsFiles = function(prefix) {
             prefix + 'chroma-js/**/chroma.min.js',
             prefix + 'angular-toastr/**/angular-toastr.tpls.js',
             prefix + 'snapsvg/**/snap.svg-min.js',
-            prefix + 'angular-vs-repeat/**/angular-vs-repeat.min.js',
             prefix + 'clipboard/**/clipboard.min.js',
             prefix + 'ngclipboard/**/ngclipboard.min.js',
             prefix + 'angular-aria/angular-aria.min.js',

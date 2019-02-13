@@ -78,37 +78,7 @@ describe('Class Cards directive', function() {
             expect(this.element.querySelectorAll('.rows-container.h-100').length).toBe(1);
         });
         it('with .rows', function() {
-            expect(this.element.querySelectorAll('.row').length).toBe(2);
-        });
-        it('with .col-4.card-containers', function() {
-            expect(this.element.querySelectorAll('.col-4.card-container').length).toBe(4);
-        });
-        it('with md-cards', function() {
-            expect(this.element.find('md-card').length).toBe(4);
-        });
-        it('with md-card-titles', function() {
-            expect(this.element.find('md-card-title').length).toBe(4);
-        });
-        it('with md-card-title-texts', function() {
-            expect(this.element.find('md-card-title-text').length).toBe(4);
-        });
-        it('with .card-headers', function() {
-            expect(this.element.querySelectorAll('.card-header').length).toBe(4);
-        });
-        it('with .md-headline.texts', function() {
-            expect(this.element.querySelectorAll('.md-headline.text').length).toBe(4);
-        });
-        it('with .badges', function() {
-            expect(this.element.querySelectorAll('.badge').length).toBe(4);
-        });
-        it('with md-card-contents', function() {
-            expect(this.element.find('md-card-content').length).toBe(4);
-        });
-        it('with .overviews', function() {
-            expect(this.element.querySelectorAll('.overview').length).toBe(4);
-        });
-        it('with .text-muteds', function() {
-            expect(this.element.querySelectorAll('.text-muted').length).toBe(8);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
     });
     it('properly defines controller.chunks on load', function() {

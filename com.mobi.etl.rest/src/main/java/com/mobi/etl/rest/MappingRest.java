@@ -74,6 +74,7 @@ public interface MappingRest {
      *
      * @param title The required title for the new MappingRecord
      * @param description The optional description for the new MappingRecord
+     * @param markdown The optional markdown abstract for the new MappingRecord.
      * @param keywords The optional list of keywords strings for the new MappingRecord
      * @param fileInputStream an InputStream of a mapping file passed as form data
      * @param fileDetail information about the file being uploaded, including the name
@@ -87,6 +88,7 @@ public interface MappingRest {
     Response upload(@Context ContainerRequestContext context,
                     @FormDataParam("title") String title,
                     @FormDataParam("description") String description,
+                    @FormDataParam("markdown") String markdown,
                     @FormDataParam("keywords") List<FormDataBodyPart> keywords,
                     @FormDataParam("file") InputStream fileInputStream,
                     @FormDataParam("file") FormDataContentDisposition fileDetail,
