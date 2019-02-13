@@ -20,13 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit Compiled Resource directive', function() {
+describe('Commit Compiled Resource component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('commitCompiledResource');
         injectChromaConstant();
+        injectTrustedFilter();
+        injectHighlightFilter();
         mockCatalogManager();
         mockOntologyState();
         mockOntologyUtilsManager();
@@ -44,11 +46,15 @@ describe('Commit Compiled Resource directive', function() {
 
         this.error = 'error';
         this.commitId = 'commit';
-        this.commits = [{id: this.commitId}];
+        this.entityId = 'entity';
+        this.resource = 'resource';
+        this.additions = 'addition';
+        this.deletions = 'deletion';
 
-        scope.commitId = 'commit';
-        scope.entityId = 'entity';
-        scope.commitData = [];
+        catalogManagerSvc.getCompiledResource.and.returnValue($q.when([this.resource]));
+        catalogManagerSvc.getCommit.and.returnValue($q.when([this.commitId]));
+
+        scope.commits = [{id: this.commitId}];
         this.element = $compile(angular.element('<commit-compiled-resource commit-id="commitId" entity-id="entityId" commit-data="commitData"></commit-compiled-resource>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitCompiledResource');
@@ -65,35 +71,68 @@ describe('Commit Compiled Resource directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
+    describe('controller bound variable', function() {
+        it('commits is one way bound', function() {
             this.controller.commits = this.commits;
-            scope.$apply();
+            scope.$digest();
+            expect(scope.commits).toEqual([ {'id': this.commitId} ]);
         });
+    });
+    describe('controller methods', function() {
+        beforeEach(function() {
+            this.controller.commitId = this.commitId;
+            this.controller.entityId = this.entityId;
+        });
+        it('should get compiled resource and the commit', function() {
+            this.controller.setResource();
+            scope.$apply();
+            expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
+            expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+            expect(this.controller.resource).toBeDefined();
+        });
+        it('should set additions', function() {
+            expect(this.controller.additions).toBeDefined();
+        });
+        it('should set deletions', function() {
+            expect(this.controller.deletions).toBeDefined();
+        });
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('commit-compiled-resource')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('COMMIT-COMPILED-RESOURCE');
+        });
+        it('depending on whether a resource is found', function() {
+            this.controller.resource = [{"@name": [
+                                             "http://www.w3.org/2002/07/owl#Class"
+                                           ]}];
+            this.controller.commitId = 'commit';
+            this.controller.entityId = 'entity';
+            scope.$digest();
             expect(this.element.querySelectorAll('.wrapper').length).toBe(1);
             expect(this.element.querySelectorAll('.property-values').length).toBe(1);
             expect(this.element.querySelectorAll('.prop-value-container').length).toBe(1);
             expect(this.element.querySelectorAll('.value-display-wrapper').length).toBe(1);
             expect(this.element.querySelectorAll('.prop-header').length).toBe(1);
             expect(this.element.querySelectorAll('.value-signs').length).toBe(1);
-            expect(this.element.querySelectorAll('.value-display').length).toBe(1);
-        });
-        it('with tt', function() {
-            expect(this.element.find('tt').length).toBe(2);
+            expect(this.element.querySelectorAll('.value-display').length).toBe(2);
         });
         it('depending on whether there is a error', function() {
+            this.controller.error = undefined;
+            scope.$digest();
             expect(this.element.find('error-display').length).toBe(0);
             this.controller.error = this.error;
-            scope.$apply();
+            scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on whether there are commits', function() {
+        it('depending on whether there is no resource and no error', function() {
+            this.controller.error = undefined;
+            this.controller.resource = [{"@type": [
+                                "http://www.w3.org/2002/07/owl#Class"
+                              ]}];
+            scope.$digest();
             expect(this.element.find('info-message').length).toBe(0);
-            this.controller.commits = [];
-            scope.$apply();
+            this.controller.resource = undefined;
+            scope.$digest();
             expect(this.element.find('info-message').length).toBe(1);
         });
     });

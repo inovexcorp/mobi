@@ -28,21 +28,21 @@
      * @name public.component:commitCompiledResource
      * @scope
      * @restrict E
+     * @requires $q
+     * @requires http.service:httpService
      * @requires catalogManager.service:catalogManagerService
-     * @requires userManager.service:userManagerService
-     * @requires modal.service:modalService
+     * @requires ontologyState.service:ontologyStateService
+     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
      *
      * @description
      * `commitCompiledResource` is a component that creates a table containing the commit chain of the provided commit.
-     * Can optionally also display a SVG graph generated using Snap.svg showing the network of the commits along
-     * with an optional title for the top commit. Clicking on a commit id or its corresponding circle in the graph
-     * will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}. Can optionally
-     * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
+     * This table can show the additions and deletions in addition to the previous commit's data
+     * of a particular entity at the provided commit.
      *
      * @param {string} commitId The IRI string of a commit in the local catalog
      * @param {string} [entityId=''] entityId filters the resource with entityId as the
      *          subject.
-     * @param {Object[]} commitData A variable to bind the retrieved commits to
+     * @param {Object[]} resourceData A variable to bind the retrieved commits to
      */
     const commitCompiledResourceComponent = {
         templateUrl: 'components/commitCompiledResource/commitCompiledResource.html',

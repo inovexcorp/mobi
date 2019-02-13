@@ -83,8 +83,8 @@
                             ontoUtils.deleteAnnotationProperty();
                         }
                     }
-                    dvm.classHistory = function() {
-                        dvm.os.listItem.classHistory = true;
+                    dvm.seeHistory = function() {
+                        dvm.os.listItem.seeHistory = true;
                     }
                 }
             }

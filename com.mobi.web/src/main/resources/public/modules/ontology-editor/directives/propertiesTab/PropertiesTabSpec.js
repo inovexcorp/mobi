@@ -82,18 +82,20 @@ describe('Properties Tab directive', function() {
         it('with a usages-block', function() {
             expect(this.element.find('usages-block').length).toBe(1);
         });
-        it('with a button to delete a property if a user can modify', function() {
+        it('with a button to delete a property if a user can modify and a see history button', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
             var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete');
+            expect(button.length).toBe(2);
+            expect(angular.element(button[0]).text()).toContain('See History');
+            expect(angular.element(button[1]).text()).toContain('Delete');
         });
         it('with no button to delete a property if a user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
             var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(0);
+            expect(button.length).toBe(1);
+            expect(angular.element(button[0]).text()).toContain('See History');
         });
         it('depending on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-property').length).toEqual(1);
@@ -148,11 +150,17 @@ describe('Properties Tab directive', function() {
             });
         });
     });
-    it('should call showDeleteConfirmation when the delete property button is clicked', function() {
+    it('should set seeHistory to true when the see history properties button is clicked', function() {
+        scope.$digest();
+        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.listItem.seeHistory).toEqual(true);
+    });
+    it('should call showDeleteConfirmation when the delete properties button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
-        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        var button = angular.element(this.element.querySelectorAll('button')[1]);
         button.triggerHandler('click');
         expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });

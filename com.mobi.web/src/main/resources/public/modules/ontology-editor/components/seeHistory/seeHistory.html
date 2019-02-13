@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #L%
   -->
-<div class="class-history row p-4 h-100">
+<div class="see-history row p-4 h-100">
     <div class="col-auto back-column h-100">
         <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
-    <div class="class-history-header remove-min-width col">
+    <div class="see-history-header remove-min-width col">
         <div class="row">
-            <h2 class="class-history-title break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
+            <h2 class="see-history-title break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
             <static-iri class="editable-iri align-self-end" read-only=true iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
         </div>
         <div class="row">

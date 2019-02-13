@@ -82,18 +82,19 @@ describe('Concepts Tab directive', function() {
         it('with a usages-block', function() {
             expect(this.element.find('usages-block').length).toBe(1);
         });
-        it('with a button to delete a concept if the user can modify', function() {
+        it('with a button to delete a concept if the user can modify and a button to see history', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
             var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete');
+            expect(button.length).toBe(2);
+            expect(angular.element(button[1]).text()).toContain('Delete');
         });
         it('with no button to delete a concept if the user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
             var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(0);
+            expect(button.length).toBe(1);
+            expect(angular.element(button[0]).text()).toContain('See History');
         });
         it('depending on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-concept').length).toEqual(1);
@@ -119,11 +120,17 @@ describe('Concepts Tab directive', function() {
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), ontologyUtilsManagerSvc.deleteConcept);
         });
     });
+    it('should set seeHistory to true when the see history concept button is clicked', function() {
+        scope.$digest();
+        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.listItem.seeHistory).toEqual(true);
+    });
     it('should call showDeleteConfirmation when the delete concept button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
-        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        var button = angular.element(this.element.querySelectorAll('button')[1]);
         button.triggerHandler('click');
         expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });

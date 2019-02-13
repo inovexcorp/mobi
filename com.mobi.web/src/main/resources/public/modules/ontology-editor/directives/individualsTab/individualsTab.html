@@ -26,7 +26,7 @@
         <div class="selected-header d-flex">
             <selected-details class="flex-1"></selected-details>
             <div>
-                <button class="btn btn-primary" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.classHistory()">See History</button>
+                <button class="btn btn-primary" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.seeHistory()">See History</button>
                 <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><span>Delete</span></button>
             </div>
         </div>

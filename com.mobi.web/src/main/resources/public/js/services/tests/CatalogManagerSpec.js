@@ -1006,7 +1006,7 @@ describe('Catalog Manager service', function() {
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
-                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.promiseId)
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', '', this.promiseId)
                         .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
                     scope.$apply();
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
@@ -1024,7 +1024,25 @@ describe('Catalog Manager service', function() {
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
-                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, this.promiseId)
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, '', this.promiseId)
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                    scope.$apply();
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
+                });
+            });
+            describe('with a entityId set', function() {
+                it('with no promise id set', function() {
+                    var params = $httpParamSerializer({targetId: '', entityId: this.commitId});
+                    $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId)
+                        .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+                    flushAndVerify($httpBackend);
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                });
+                it('with a promise id set', function() {
+                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId, this.promiseId)
                         .then(response => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
                     scope.$apply();
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
@@ -1042,26 +1060,42 @@ describe('Catalog Manager service', function() {
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.when({data: []}));
-                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.promiseId)
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', '',this.promiseId)
                         .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
                     scope.$apply();
-                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: ''}}, this.promiseId);
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: '', entityId: ''}}, this.promiseId);
                 });
             });
             describe('with a targetId set', function() {
                 it('with no promise id set', function() {
-                    var params = $httpParamSerializer({targetId: this.commitId});
+                    var params = $httpParamSerializer({targetId: this.commitId, entityId: ''});
                     $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
-                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId)
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, '')
                         .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
                     flushAndVerify($httpBackend);
                 });
                 it('with a promise id set', function() {
                     httpSvc.get.and.returnValue($q.when({data: []}));
-                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, this.promiseId)
+                    catalogManagerSvc.getCommitHistory(this.commitId, this.commitId, '', this.promiseId)
                         .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
                     scope.$apply();
-                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: this.commitId}}, this.promiseId);
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: this.commitId, entityId: ''}}, this.promiseId);
+                });
+            });
+            describe('with a entityId set', function() {
+                it('with no promise id set', function() {
+                    var params = $httpParamSerializer({targetId: '', entityId: this.commitId});
+                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId)
+                        .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
+                    flushAndVerify($httpBackend);
+                });
+                it('with a promise id set', function() {
+                    httpSvc.get.and.returnValue($q.when({data: []}));
+                    catalogManagerSvc.getCommitHistory(this.commitId, '', this.commitId, this.promiseId)
+                        .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
+                    scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params:{targetId: '', entityId: this.commitId}}, this.promiseId);
                 });
             });
         });
