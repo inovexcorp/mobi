@@ -30,15 +30,20 @@
      *
      * @description
      * `recordViewTabset` is a component which creates a {@link materialTabset.directive:materialTabset} with tabs
-     * displaying information about the provided catalog Record. If the Record is a VersionedRDFRecord, a tab with a
-     * {@link catalog.component:branchList} will be shown.
+     * displaying information about the provided catalog Record. These tabs contain a
+     * {@link catalog.component.recordMarkdown} and a {@link catalog.component:branchList} if the Record is a 
+     * `VersionedRDFRecord`.
      * 
      * @param {Object} record A JSON-LD object for a catalog Record
+     * @param {boolean} canEdit Whether the Record can be edited by the current user
+     * @param {Function} updateRecord A method to update the Record. Expects a parameter called `record`
      */
     const recordViewTabsetComponent = {
         templateUrl: 'modules/catalog/components/recordViewTabset/recordViewTabset.html',
         bindings: {
-            record: '<'
+            record: '<',
+            canEdit: '<',
+            updateRecord: '&'
         },
         controllerAs: 'dvm',
         controller: recordViewTabsetComponentCtrl
@@ -51,14 +56,20 @@
         var cm = catalogManagerService;
         dvm.isVersionedRDFRecord = false;
         dvm.tabs = {
-            branches: true
+            overview: true,
+            branches: false
         };
 
         dvm.$onInit = function() {
             dvm.isVersionedRDFRecord = cm.isVersionedRDFRecord(dvm.record);
         }
         dvm.$onChanges = function(changesObj) {
-            dvm.isVersionedRDFRecord = cm.isVersionedRDFRecord(changesObj.record.currentValue);
+            if (changesObj.record) {
+                dvm.isVersionedRDFRecord = cm.isVersionedRDFRecord(changesObj.record.currentValue);
+            }
+        }
+        dvm.updateRecordCall = function(record) {
+            return dvm.updateRecord({record});
         }
     }
 

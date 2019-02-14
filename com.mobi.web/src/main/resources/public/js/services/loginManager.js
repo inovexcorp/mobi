@@ -173,6 +173,7 @@
                 ontologyManagerService.reset();
                 ontologyStateService.reset();
                 sparqlManagerService.reset();
+                catalogStateService.reset();
                 $http.get(prefix + 'logout')
                     .then(response => {
                         self.currentUser = '';

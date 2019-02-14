@@ -60,6 +60,10 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/annotationBlock/annotationBlock.html',
                 scope: {},
+                bindToController: {
+                    highlightIris: '<',
+                    highlightText: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
