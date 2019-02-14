@@ -33,9 +33,7 @@
          * a span element which displays a json-ld object in a readable format.
          */
         .module('valueDisplay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name valueDisplay.directive:valueDisplay
@@ -58,8 +56,10 @@
             return {
                 restrict: 'E',
                 replace: true,
-                scope: {
-                    value: '<'
+                scope: {},
+                bindToController: {
+                    value: '<',
+                    highlightText: '<'
                 },
                 templateUrl: 'directives/valueDisplay/valueDisplay.html',
                 controllerAs: 'dvm',

@@ -190,13 +190,4 @@
         <bundle start-level="80">mvn:com.mobi/explorable.dataset.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/prov.rest/${project.version}</bundle>
     </feature>
-    <feature name="mobi-federation" description="Mobi Federation API and implementations" version="${project.version}">
-        <feature prerequisite="true">mobi-core</feature>
-        <feature prerequisite="true">jasypt-encryption</feature>
-        <bundle start-level="80">mvn:com.mobi/federation.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.hazelcast/hazelcast/${hazelcast.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/federation.hazelcast/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/federation.cli/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/federation.utils/${project.version}</bundle>
-    </feature>
 </features>

@@ -33,9 +33,7 @@
          * for a modal to edit an branch on an ontology.
          */
         .module('editBranchOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name editBranchOverlay.directive:editBranchOverlay

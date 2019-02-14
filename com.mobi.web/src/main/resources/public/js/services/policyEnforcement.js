@@ -33,9 +33,7 @@
          * provides access to the Mobi Policy Enforcement REST endpoint.
          */
         .module('policyEnforcement', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name policyEnforcement.service:policyEnforcementService
@@ -72,7 +70,7 @@
              *     "resourceId": "http://mobi.com/catalog-local",
              *     "actionId": "http://mobi.com/ontologies/policy#Create",
              *     "actionAttrs": {
-             *     "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/ontology-editor#OntologyRecord"
+             *         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type":"http://mobi.com/ontologies/ontology-editor#OntologyRecord"
              *     }
              * }
              *

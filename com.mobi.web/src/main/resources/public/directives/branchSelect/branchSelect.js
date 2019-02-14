@@ -33,9 +33,7 @@
          * which creates a ui-select to select a branch from within the provided list of branches.
          */
         .module('branchSelect', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name branchSelect.directive:branchSelect

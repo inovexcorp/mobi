@@ -1,12 +1,10 @@
-package com.mobi.federation.utils.api.jaas.token;
-
 /*-
  * #%L
- * federation.api
+ * com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,28 +20,8 @@ package com.mobi.federation.utils.api.jaas.token;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+ignoreUnhandledRejectionsConfig.$inject = ['$qProvider'];
 
-import com.mobi.federation.api.FederationService;
-import com.mobi.jaas.api.modules.token.TokenCallback;
-
-public class FederationTokenCallback extends TokenCallback {
-
-    private FederationService service;
-    private String nodeId;
-
-    public FederationService getService() {
-        return service;
-    }
-
-    public void setService(FederationService service) {
-        this.service = service;
-    }
-
-    public String getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(String nodeId) {
-        this.nodeId = nodeId;
-    }
+function ignoreUnhandledRejectionsConfig($qProvider) {
+    $qProvider.errorOnUnhandledRejections(false);
 }

@@ -33,9 +33,7 @@
          * content for a modal to add a data property to an individual.
          */
         .module('datatypePropertyOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name datatypePropertyOverlay.directive:datatypePropertyOverlay

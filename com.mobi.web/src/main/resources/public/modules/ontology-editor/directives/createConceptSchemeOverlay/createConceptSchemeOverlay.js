@@ -33,9 +33,7 @@
          * creates content for a modal to add a concept scheme to an ontology/vocabulary.
          */
         .module('createConceptSchemeOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name createConceptSchemeOverlay.directive:createConceptSchemeOverlay

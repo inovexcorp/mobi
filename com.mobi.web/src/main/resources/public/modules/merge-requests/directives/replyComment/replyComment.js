@@ -78,5 +78,9 @@
                     dvm.request.comments = comments;
                 }, util.createErrorToast);
         }
+        dvm.cancel = function() {
+            dvm.replyComment = '';
+            dvm.edit = false;
+        }
     }
 })();

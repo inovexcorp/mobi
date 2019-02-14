@@ -33,9 +33,7 @@
          * for a modal to add or edit an annotation on an entity.
          */
         .module('annotationOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name annotationOverlay.directive:annotationOverlay

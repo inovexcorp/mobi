@@ -33,9 +33,7 @@
          * for a modal to commit changes to an ontology.
          */
         .module('commitOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitOverlay.directive:commitOverlay

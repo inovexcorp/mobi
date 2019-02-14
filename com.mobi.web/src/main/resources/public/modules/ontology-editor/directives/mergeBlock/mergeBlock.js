@@ -33,9 +33,7 @@
          * merging two branches of an ontology together.
          */
         .module('mergeBlock', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mergeBlock.directive:mergeBlock

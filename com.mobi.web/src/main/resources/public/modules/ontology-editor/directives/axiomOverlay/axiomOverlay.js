@@ -33,9 +33,7 @@
          * an axiom on an entity.
          */
         .module('axiomOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name axiomOverlay.directive:axiomOverlay

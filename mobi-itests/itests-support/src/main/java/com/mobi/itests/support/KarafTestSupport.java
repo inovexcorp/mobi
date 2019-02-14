@@ -26,6 +26,7 @@ package com.mobi.itests.support;
 import org.apache.karaf.features.BootFinished;
 import org.apache.karaf.features.Feature;
 import org.apache.karaf.features.FeaturesService;
+import org.apache.karaf.features.Repository;
 import org.apache.karaf.shell.api.console.Session;
 import org.apache.karaf.shell.api.console.SessionFactory;
 import org.junit.Assert;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -127,12 +129,9 @@ public class KarafTestSupport {
         MavenArtifactUrlReference karafUrl = CoreOptions.maven()
                 .groupId("com.mobi")
                 .artifactId("mobi-distribution")
-                .versionAsInProject()
                 .type("tar.gz");
 
-        List<Option> options = new ArrayList<>();
-
-        options.addAll(Arrays.asList(
+        List<Option> options = new ArrayList<>(Arrays.asList(
                 KarafDistributionOption.karafDistributionConfiguration()
                         .frameworkUrl(karafUrl)
                         .unpackDirectory(new File("target/exam"))
@@ -148,7 +147,6 @@ public class KarafTestSupport {
                 CoreOptions.mavenBundle()
                         .groupId("com.mobi")
                         .artifactId("itests-support")
-                        .versionAsInProject()
         ));
 
         Files.list(getFileResource("/etc").toPath()).forEach(path ->
@@ -204,20 +202,17 @@ public class KarafTestSupport {
         final SessionFactory sessionFactory = getOsgiService(SessionFactory.class);
         final Session session = sessionFactory.create(System.in, printStream, System.err);
 
-        final Callable<String> commandCallable = new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                try {
-                    if (!silent) {
-                        System.err.println(command);
-                    }
-                    session.execute(command);
-                } catch (Exception e) {
-                    throw new RuntimeException(e.getMessage(), e);
+        final Callable<String> commandCallable = () -> {
+            try {
+                if (!silent) {
+                    System.err.println(command);
                 }
-                printStream.flush();
-                return byteArrayOutputStream.toString();
+                session.execute(command);
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
+            printStream.flush();
+            return byteArrayOutputStream.toString();
         };
 
         FutureTask<String> commandFuture;
@@ -258,7 +253,7 @@ public class KarafTestSupport {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected <T> T getOsgiService(Class<T> type, String filter, long timeout) {
-        ServiceTracker tracker = null;
+        ServiceTracker tracker;
         try {
             String flt;
             if (filter != null) {
@@ -342,7 +337,7 @@ public class KarafTestSupport {
     @SuppressWarnings("rawtypes")
     private static String explode(Dictionary dictionary) {
         Enumeration keys = dictionary.keys();
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
             result.append(String.format("%s=%s", key, dictionary.get(key)));
@@ -359,6 +354,21 @@ public class KarafTestSupport {
     @SuppressWarnings("rawtypes")
     private static Collection<ServiceReference> asCollection(ServiceReference[] references) {
         return references != null ? Arrays.asList(references) : Collections.<ServiceReference>emptyList();
+    }
+
+    protected void addAndAssertFeatureRepo(URI featureURI) throws Exception {
+        featureService.addRepository(featureURI);
+        assertFeatureRepoAdded(featureURI);
+    }
+
+    protected void assertFeatureRepoAdded(URI featureURI) throws Exception {
+        Repository[] repositories = featureService.listRepositories();
+        for (Repository repo : repositories) {
+            if (repo.getURI().equals(featureURI)) {
+                return;
+            }
+        }
+        Assert.fail("Feature Repository " + featureURI + " should be added but is not");
     }
 
     protected void installAndAssertFeature(String feature) throws Exception {
@@ -405,8 +415,7 @@ public class KarafTestSupport {
     }
 
     protected org.osgi.service.cm.Configuration[] getFactoryConfigs(String factoryPid) throws IOException, InvalidSyntaxException {
-        org.osgi.service.cm.Configuration[] configs = configAdmin.listConfigurations("(service.factorypid="+ factoryPid + ")");
-        return configs;
+        return configAdmin.listConfigurations("(service.factorypid="+ factoryPid + ")");
     }
 
     protected void close(Closeable closeAble) {

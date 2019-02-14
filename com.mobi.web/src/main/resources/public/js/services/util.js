@@ -33,9 +33,7 @@
          * methods for use across Mobi.
          */
         .module('util', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name util.service:utilService
@@ -252,6 +250,21 @@
              */
             self.getDctermsValue = function(entity, property) {
                 return self.getPropertyValue(entity, prefixes.dcterms + property);
+            }
+            /**
+             * @ngdoc method
+             * @name removeDctermsValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed value of the specified dcterms property from the passed entity.
+             *
+             * @param {Object} entity The entity to remove the property value from
+             * @param {string} property The local name of a dcterms property IRI
+             * @param {string} value The value to remove
+             */
+            self.removeDctermsValue = function(entity, property, value) {
+                self.removePropertyValue(entity, prefixes.dcterms + property, value);
             }
             /**
              * @ngdoc method
