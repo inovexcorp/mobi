@@ -31,9 +31,8 @@
      * @description
      * `recordMarkdown` is a component which creates a display for the `dcterms:abstract` of the provided catalog Record
      * as markdown HTML. If the user can edit the record, as determined by the provided `canEdit` boolean, the display
-     * will turn into an editor for the markdown when clicked. The markdown editor contains a button with information
-     * about the markdown syntax, a button to preview the markdown, a button to cancel the edit, and a button to save
-     * the edited markdown which will call the provided `updateRecord` method passing the edited Record JSON-LD.
+     * will turn into a {@link markdownEditor.component:markdownEditor}. Saving the edited markdown will call the
+     * provided `updateRecord` method passing the edited Record JSON-LD.
      * 
      * @param {Object} record A JSON-LD object for a catalog Record
      * @param {boolean} canEdit Whether the Record can be edited by the current user
@@ -51,20 +50,17 @@
         controller: recordMarkdownComponentCtrl
     };
 
-    recordMarkdownComponentCtrl.$inject = ['$sce', '$q', 'utilService', 'showdown'];
+    recordMarkdownComponentCtrl.$inject = ['$q', 'utilService', 'showdown'];
 
-    function recordMarkdownComponentCtrl($sce, $q, utilService, showdown) {
+    function recordMarkdownComponentCtrl($q, utilService, showdown) {
         var dvm = this;
         var util = utilService;
         dvm.converter = new showdown.Converter();
         dvm.converter.setFlavor('github');
         dvm.markdownHTML = '';
         dvm.edit = false;
-        dvm.showPreview = false;
         dvm.editMarkdown = ''
-        dvm.preview = '';
-        dvm.markdownTooltip = $sce.trustAsHtml('For information about markdown syntax, see <a href="https://guides.github.com/features/mastering-markdown/" target="_blank">here</a>');
-
+        
         dvm.$onInit = function() {
             if (dvm.record && !_.isEmpty(dvm.record)) {
                 dvm.markdownHTML = dvm.converter.makeHtml(util.getDctermsValue(dvm.record, 'abstract'));
@@ -73,15 +69,6 @@
         dvm.$onChanges = function() {
             if (dvm.record && !_.isEmpty(dvm.record)) {
                 dvm.markdownHTML = dvm.converter.makeHtml(util.getDctermsValue(dvm.record, 'abstract'));                
-            }
-        }
-        dvm.togglePreview = function() {
-            if (dvm.showPreview) {
-                dvm.preview = '';
-                dvm.showPreview = false;
-            } else {
-                dvm.preview = dvm.converter.makeHtml(dvm.editMarkdown);
-                dvm.showPreview = true;
             }
         }
         dvm.showEdit = function() {
@@ -94,19 +81,13 @@
             this.originalValue = util.getDctermsValue(dvm.record, 'abstract');
             if (this.originalValue === this.editMarkdown) {
                 dvm.edit = false;
-                dvm.showPreview = false;
-                dvm.preview = '';
                 dvm.editMarkdown = '';
             } else {
                 util.updateDctermsValue(dvm.record, 'abstract', this.editMarkdown);
                 $q.when()
-                    .then(() => {
-                        return dvm.updateRecord({record: dvm.record});
-                    })
+                    .then(() => dvm.updateRecord({record: dvm.record}))
                     .then(() => {
                         dvm.edit = false;
-                        dvm.showPreview = false;
-                        dvm.preview = '';
                         dvm.editMarkdown = '';
                     }, () => {
                         util.updateDctermsValue(dvm.record, 'abstract', this.originalValue);
@@ -115,8 +96,6 @@
         }
         dvm.cancelEdit = function() {
             dvm.edit = false;
-            dvm.showPreview = false;
-            dvm.preview = '';
             dvm.editMarkdown = '';
         }
     }

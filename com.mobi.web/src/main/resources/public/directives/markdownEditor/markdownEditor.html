@@ -29,5 +29,6 @@
         <textarea ng-if="!dvm.showPreview" class="form-control" ng-model="dvm.bindModel" placeholder="{{dvm.placeHolder}}" focus-me="dvm.isFocusMe"></textarea>
         <div class="markdown-preview markdown p-3" ng-if="dvm.showPreview" ng-bind-html="dvm.preview | trusted"></div>
     </div>
-    <button type="button" class="btn btn-primary float-right" ng-disabled="!dvm.bindModel" ng-click="dvm.click()">{{dvm.buttonText}}</button>
+    <button type="button" class="btn btn-primary float-right mr-2" ng-disabled="!dvm.bindModel" ng-click="dvm.click()">{{dvm.buttonText}}</button>
+    <button ng-if="dvm.cancelEvent" type="button" class="btn btn float-right" ng-click="dvm.cancel()">Cancel</button>
 </div>

@@ -52,8 +52,9 @@ describe('Record Markdown component', function() {
         this.record = {'@id': this.recordId};
         utilSvc.getDctermsValue.and.callFake((obj, propId) => propId === 'abstract' ? this.abstract : '');
         scope.record = this.record;
+        scope.canEdit = false;
         scope.updateRecord = jasmine.createSpy('updateRecord').and.returnValue($q.when());
-        this.element = $compile(angular.element('<record-markdown record="record" update-record="updateRecord(record)"></record-markdown>'))(scope);
+        this.element = $compile(angular.element('<record-markdown record="record" update-record="updateRecord(record)" can-edit="canEdit"></record-markdown>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('recordMarkdown');
     });
@@ -79,28 +80,17 @@ describe('Record Markdown component', function() {
             scope.$digest();
             expect(scope.record).toEqual(this.record);
         });
+        it('canEdit is one way bound', function() {
+            this.controller.canEdit = true;
+            scope.$digest();
+            expect(scope.canEdit).toEqual(false);
+        });
+        it('updateRecord is called in the parent scope', function() {
+            this.controller.updateRecord({record: {}});
+            expect(scope.updateRecord).toHaveBeenCalledWith({});
+        });
     });
     describe('controller methods', function() {
-        describe('should toggle the preview to', function() {
-            beforeEach(function() {
-                this.controller.converter.makeHtml.calls.reset();
-            });
-            it('true', function() {
-                this.controller.converter.makeHtml.and.returnValue('WOW');
-                this.controller.togglePreview();
-                expect(this.controller.showPreview).toEqual(true);
-                expect(this.controller.converter.makeHtml).toHaveBeenCalledWith(this.controller.editMarkdown);
-                expect(this.controller.preview).toEqual('WOW');
-            });
-            it('false', function() {
-                this.controller.showPreview = true;
-                this.controller.preview = 'WOW';
-                this.controller.togglePreview();
-                expect(this.controller.showPreview).toEqual(false);
-                expect(this.controller.converter.makeHtml).not.toHaveBeenCalled();
-                expect(this.controller.preview).toEqual('');
-            });
-        });
         describe('should show the markdown editor', function() {
             it('if the record can be edited', function() {
                 this.controller.canEdit = true;
@@ -118,8 +108,6 @@ describe('Record Markdown component', function() {
             beforeEach(function() {
                 this.editedMarkdown = 'Test';
                 this.controller.edit = true;
-                this.controller.showPreview = true;
-                this.controller.preview = '<h1>Test</h1>';
             });
             describe('if the edited value is different than the original value', function() {
                 beforeEach(function() {
@@ -131,9 +119,7 @@ describe('Record Markdown component', function() {
                     expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
                     expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.editedMarkdown);
                     expect(this.controller.edit).toEqual(false);
-                    expect(this.controller.showPreview).toEqual(false);
                     expect(this.controller.editMarkdown).toEqual('');
-                    expect(this.controller.preview).toEqual('');
                 });
                 it('unless updateRecord rejects', function() {
                     scope.updateRecord.and.returnValue($q.reject());
@@ -142,9 +128,7 @@ describe('Record Markdown component', function() {
                     expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
                     expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.editedMarkdown);
                     expect(this.controller.edit).toEqual(true);
-                    expect(this.controller.showPreview).toEqual(true);
                     expect(this.controller.editMarkdown).toEqual(this.editedMarkdown);
-                    expect(this.controller.preview).toEqual('<h1>Test</h1>');
                     expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.abstract);
                 });
             });
@@ -155,17 +139,13 @@ describe('Record Markdown component', function() {
                 expect(scope.updateRecord).not.toHaveBeenCalled();
                 expect(utilSvc.updateDctermsValue).not.toHaveBeenCalled();
                 expect(this.controller.edit).toEqual(false);
-                expect(this.controller.showPreview).toEqual(false);
                 expect(this.controller.editMarkdown).toEqual('');
-                expect(this.controller.preview).toEqual('');
             });
         });
         it('should cancel the markdown edit', function() {
             this.controller.cancelEdit();
             expect(this.controller.edit).toEqual(false);
-            expect(this.controller.showPreview).toEqual(false);
             expect(this.controller.editMarkdown).toEqual('');
-            expect(this.controller.preview).toEqual('');
         });
     });
     describe('contains the correct html', function() {
@@ -182,12 +162,12 @@ describe('Record Markdown component', function() {
         });
         it('depending on whether the markdown is being edited', function() {
             expect(this.element.querySelectorAll('.view-record-markdown').length).toEqual(1);
-            expect(this.element.querySelectorAll('.edit-record-markdown').length).toEqual(0);
+            expect(this.element.find('markdown-editor').length).toEqual(0);
 
             this.controller.edit = true;
             scope.$digest();
             expect(this.element.querySelectorAll('.view-record-markdown').length).toEqual(0);
-            expect(this.element.querySelectorAll('.edit-record-markdown').length).toEqual(1);
+            expect(this.element.find('markdown-editor').length).toEqual(1);
         });
         it('depending on whether there is any markdown', function() {
             expect(this.element.querySelectorAll('.view-record-markdown .markdown').length).toEqual(1);
@@ -204,29 +184,5 @@ describe('Record Markdown component', function() {
         var div = angular.element(this.element.querySelectorAll('.view-record-markdown')[0]);
         div.triggerHandler('click');
         expect(this.controller.showEdit).toHaveBeenCalled();
-    });
-    it('should call saveEdit when the save icon is clicked', function() {
-        this.controller.edit = true;
-        scope.$digest();
-        spyOn(this.controller, 'saveEdit');
-        var icon = angular.element(this.element.querySelectorAll('.edit-record-markdown .markdown-editor-header .fa-save')[0]);
-        icon.triggerHandler('click');
-        expect(this.controller.saveEdit).toHaveBeenCalled();
-    });
-    it('should call cancelEdit when the trash icon is clicked', function() {
-        this.controller.edit = true;
-        scope.$digest();
-        spyOn(this.controller, 'cancelEdit');
-        var icon = angular.element(this.element.querySelectorAll('.edit-record-markdown .markdown-editor-header .fa-trash')[0]);
-        icon.triggerHandler('click');
-        expect(this.controller.cancelEdit).toHaveBeenCalled();
-    });
-    it('should call togglePreview when the eye icon is clicked', function() {
-        this.controller.edit = true;
-        scope.$digest();
-        spyOn(this.controller, 'togglePreview');
-        var icon = angular.element(this.element.querySelectorAll('.edit-record-markdown .markdown-editor-header .fa-eye')[0]);
-        icon.triggerHandler('click');
-        expect(this.controller.togglePreview).toHaveBeenCalled();
     });
 });
