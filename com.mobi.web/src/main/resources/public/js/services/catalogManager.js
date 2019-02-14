@@ -34,9 +34,7 @@
          * results of those endpoints
          */
         .module('catalogManager', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name catalogManager.service:catalogManagerService

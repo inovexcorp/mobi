@@ -33,9 +33,7 @@
          * the imports of an ontology.
          */
         .module('importsBlock', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name importsBlock.directive:importsBlock

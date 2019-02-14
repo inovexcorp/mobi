@@ -68,8 +68,6 @@
     }
 
     angular.module('catalog')
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         .component('limitDescription', limitDescriptionComponent);
 })();

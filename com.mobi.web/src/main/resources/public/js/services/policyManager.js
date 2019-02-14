@@ -34,9 +34,7 @@
          * used in policies.
          */
         .module('policyManager', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name policyManager.service:policyManagerService

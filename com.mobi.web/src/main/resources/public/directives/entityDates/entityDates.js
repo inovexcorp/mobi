@@ -33,9 +33,7 @@
          * with displays for an entity's dcterms:issued and dcterms:modified date property values.
          */
         .module('entityDates', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name entityDates.directive:entityDates

@@ -33,9 +33,7 @@
          * methods for use across Mobi.
          */
         .module('util', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name util.service:utilService

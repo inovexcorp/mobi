@@ -34,9 +34,7 @@
          * manipulating ontologies
          */
         .module('ontologyManager', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name ontologyManager.service:ontologyManagerService

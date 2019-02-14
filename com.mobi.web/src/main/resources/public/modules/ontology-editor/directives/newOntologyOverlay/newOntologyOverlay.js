@@ -33,9 +33,7 @@
          * modal to create a new ontology.
          */
         .module('newOntologyOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name newOntologyOverlay.directive:newOntologyOverlay

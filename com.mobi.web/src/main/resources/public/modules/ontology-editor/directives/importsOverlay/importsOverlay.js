@@ -184,8 +184,6 @@
          * for a modal to add an import to an ontology.
          */
         .module('importsOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         .component('importsOverlay', importsOverlayComponent);
 })();

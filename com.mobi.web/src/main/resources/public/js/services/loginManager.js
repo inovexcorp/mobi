@@ -34,9 +34,7 @@
          * provides utilities to log into and log out of Mobi.
          */
         .module('loginManager', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name loginManager.service:loginManagerService

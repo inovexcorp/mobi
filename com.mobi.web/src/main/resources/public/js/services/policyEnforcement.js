@@ -33,9 +33,7 @@
          * provides access to the Mobi Policy Enforcement REST endpoint.
          */
         .module('policyEnforcement', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name policyEnforcement.service:policyEnforcementService

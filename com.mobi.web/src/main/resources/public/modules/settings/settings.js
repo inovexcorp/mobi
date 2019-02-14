@@ -31,7 +31,5 @@
      * The `settings` module provides components that make up the Settings module in the Mobi application.
      */
     angular.module('settings', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }]);
+        .config(ignoreUnhandledRejectionsConfig);
 })();

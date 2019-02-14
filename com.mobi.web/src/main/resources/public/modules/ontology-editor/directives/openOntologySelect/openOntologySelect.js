@@ -33,9 +33,7 @@
          * to open the current ontology at.
          */
         .module('openOntologySelect', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name openOntologySelect.component:openOntologySelect

@@ -37,6 +37,7 @@ var jsFiles = function(prefix) {
         return [
             prefix + 'js/vendor/manchestersyntax.js',
             prefix + 'js/services/prefixes.js',
+            prefix + 'js/configs/configurations.js',
             prefix + 'js/filters/!(*Spec).js',
             prefix + 'js/services/!(*Spec).js',
             prefix + 'directives/**/!(*Spec).js',

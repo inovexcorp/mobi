@@ -33,9 +33,7 @@
          * provides utilities for saving user settings for the application.
          */
         .module('settingsManager', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name settingsManager.service:settingsManagerService

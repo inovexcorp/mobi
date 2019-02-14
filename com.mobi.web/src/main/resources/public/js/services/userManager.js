@@ -33,9 +33,7 @@
          * utilities for adding, removing, and editing Mobi users and groups.
          */
         .module('userManager', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name userManager.service:userManagerService

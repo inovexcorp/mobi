@@ -33,9 +33,7 @@
          * a table of commits and optionally a graph of the commit network.
          */
         .module('commitHistoryTable', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitHistoryTable.directive:commitHistoryTable

@@ -33,9 +33,7 @@
          * a div with an optionally expandable display of the dcterms:description of an entity.
          */
         .module('entityDescription', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name entityDescription.directive:entityDescription

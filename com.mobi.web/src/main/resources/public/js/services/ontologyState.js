@@ -29,9 +29,7 @@
          * @name ontologyState
          */
         .module('ontologyState', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name ontologyState.service:ontologyStateService

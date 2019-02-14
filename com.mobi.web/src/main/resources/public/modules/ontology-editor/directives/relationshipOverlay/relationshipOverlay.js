@@ -33,9 +33,7 @@
          * content for a modal to add a relationship to a concept in an ontology.
          */
         .module('relationshipOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name relationshipOverlay.directive:relationshipOverlay

@@ -33,9 +33,7 @@
          * content for a modal to add a top concept to a concept scheme.
          */
         .module('topConceptOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name topConceptOverlay.directive:topConceptOverlay
