@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.15.13-SNAPSHOT</version>
+        <version>1.15.21-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -44,7 +44,6 @@
         <module>itests-platform</module>
         <module>itests-etl</module>
         <module>itests-rest</module>
-        <module>itests-federation</module>
         <module>itests-vfs</module>
     </modules>
 

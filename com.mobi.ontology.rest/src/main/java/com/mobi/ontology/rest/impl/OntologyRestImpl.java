@@ -177,7 +177,7 @@ public class OntologyRestImpl implements OntologyRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
-                               String description, List<FormDataBodyPart> keywords) {
+                               String description, String markdown, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
@@ -188,14 +188,14 @@ public class OntologyRestImpl implements OntologyRest {
         }
         RecordOperationConfig config = new OperationConfig();
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
-        return createOntologyRecord(context, title, description, keywordSet, config);
+        return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
     @Override
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
-                                       List<String> keywords, String ontologyJson) {
+                                       String markdown, List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
         Set<String> keywordSet = Collections.emptySet();
@@ -205,7 +205,7 @@ public class OntologyRestImpl implements OntologyRest {
         RecordOperationConfig config = new OperationConfig();
         Model jsonModel = getModelFromJson(ontologyJson);
         config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-        return createOntologyRecord(context, title, description, keywordSet, config);
+        return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
     @Override
@@ -1616,7 +1616,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a Response indicating the success of the creation.
      */
     private Response createOntologyRecord(ContainerRequestContext context, String title, String description,
-                                          Set<String> keywordSet, RecordOperationConfig config) {
+                                          String markdown, Set<String> keywordSet, RecordOperationConfig config) {
         User user = getActiveUser(context, engineManager);
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
@@ -1624,6 +1624,7 @@ public class OntologyRestImpl implements OntologyRest {
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(RecordCreateSettings.RECORD_TITLE, title);
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
+        config.set(RecordCreateSettings.RECORD_MARKDOWN, markdown);
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywordSet);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         OntologyRecord record;

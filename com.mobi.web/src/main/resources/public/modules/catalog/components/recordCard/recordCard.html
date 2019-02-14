@@ -22,7 +22,7 @@
   -->
 <div class="card record-card" ng-click="dvm.clickCard()" ng-class="{'clickable': !!dvm.clickCard}">
     <div class="card-body">
-        <h5 class="card-title">{{dvm.title}}</h5>
+        <h5 class="card-title"><span click-to-copy="dvm.record['@id']" ng-click="$event.stopPropagation()" title="Copy Record IRI" tooltip-append-to-body="true">{{dvm.title}}</span></h5>
         <h6 class="card-subtitle mb-2 text-muted"><record-icon record="dvm.record"></record-icon> <record-type record="dvm.record"></record-type> &bull; Updated {{dvm.modified}}</h6>
         <p class="card-text record-description">{{dvm.description}}</p>
         <catalog-record-keywords record="dvm.record"></catalog-record-keywords>

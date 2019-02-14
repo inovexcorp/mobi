@@ -87,6 +87,7 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1330,12 +1331,13 @@ public class SimpleCatalogManager implements CatalogManager {
         record.setProperties(config.getPublishers().stream().map(User::getResource).collect(Collectors.toSet()),
                 vf.createIRI(_Thing.publisher_IRI));
         if (config.getIdentifier() != null) {
-            record.setProperty(vf.createLiteral(config.getIdentifier()),
-                    vf.createIRI(_Thing.identifier_IRI));
+            record.setProperty(vf.createLiteral(config.getIdentifier()), vf.createIRI(_Thing.identifier_IRI));
         }
         if (config.getDescription() != null) {
-            record.setProperty(vf.createLiteral(config.getDescription()),
-                    vf.createIRI(_Thing.description_IRI));
+            record.setProperty(vf.createLiteral(config.getDescription()), vf.createIRI(_Thing.description_IRI));
+        }
+        if (config.getMarkdown() != null) {
+            record.setProperty(vf.createLiteral(config.getMarkdown()), vf.createIRI(DCTERMS.ABSTRACT.stringValue()));
         }
         if (config.getKeywords() != null) {
             record.setKeyword(config.getKeywords().stream().map(vf::createLiteral).collect(Collectors.toSet()));

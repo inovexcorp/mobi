@@ -59,6 +59,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
 import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -176,8 +177,8 @@ public class DatasetRestImpl implements DatasetRest {
 
     @Override
     public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId,
-                                        String datasetIRI, String description, List<FormDataBodyPart> keywords,
-                                        List<FormDataBodyPart> ontologies) {
+                                        String datasetIRI, String description, String markdown,
+                                        List<FormDataBodyPart> keywords, List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
@@ -186,11 +187,14 @@ public class DatasetRestImpl implements DatasetRest {
             createActivity = provUtils.startCreateActivity(activeUser);
             DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
                     Collections.singleton(activeUser), repositoryId);
-            if (datasetIRI != null && !datasetIRI.isEmpty()) {
+            if (StringUtils.isNotEmpty(datasetIRI)) {
                 builder.dataset(datasetIRI);
             }
-            if (description != null && !description.isEmpty()) {
+            if (StringUtils.isNotEmpty(description)) {
                 builder.description(description);
+            }
+            if (StringUtils.isNotEmpty(markdown)) {
+                builder.markdown(markdown);
             }
             if (keywords != null) {
                 builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));

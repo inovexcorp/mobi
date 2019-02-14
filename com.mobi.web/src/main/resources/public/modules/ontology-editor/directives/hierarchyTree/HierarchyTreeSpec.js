@@ -100,10 +100,10 @@ describe('Hierarchy Tree directive', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
         it('based on tree-items', function() {
-            expect(this.element.find('tree-item').length).toBe(3);
+            expect(this.element.find('tree-item').length).toBe(1);
         });
         it('based on .tree-item-wrapper', function() {
-            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(3);
+            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
         });
     });
     describe('controller methods', function() {

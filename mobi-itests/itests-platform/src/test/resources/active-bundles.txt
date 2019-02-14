@@ -1,6 +1,3 @@
-com.mobi.analytic.api
-com.mobi.analytic.impl
-com.mobi.analytic.rest
 com.mobi.api
 com.mobi.rest.util
 com.mobi.etl.api
@@ -41,13 +38,8 @@ com.mobi.platform.config.rest
 com.mobi.prov.api
 com.mobi.prov.impl
 com.mobi.prov.rest
-com.mobi.analytic.api
-com.mobi.analytic.impl
 com.mobi.cache
 com.mobi.cache.impl.ehcache
-com.mobi.federation.api
-com.mobi.federation.hazelcast
-com.mobi.federation.cli
 com.mobi.security.policy.api
 com.mobi.security.policy.api.xacml
 com.mobi.security.policy.impl.core

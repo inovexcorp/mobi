@@ -51,7 +51,9 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -69,6 +71,7 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactor
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.propertyexpression.DataProperty;
 import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
+import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.impl.owlapi.SimpleAnnotation;
 import com.mobi.ontology.core.impl.owlapi.SimpleNamedIndividual;
 import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
@@ -111,6 +114,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -672,6 +676,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("title", "title");
         fd.field("description", "description");
+        fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
@@ -679,7 +684,15 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertCreatedOntologyIRI(getResponse(response));
-        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
+        ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
+        verify(catalogManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class));
+        assertEquals(catalogId.stringValue(), config.getValue().get(RecordCreateSettings.CATALOG_ID));
+        assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
+        assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
+        assertEquals("#markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
+        assertEquals(Stream.of("keyword1", "keyword2").collect(Collectors.toSet()), config.getValue().get(RecordCreateSettings.RECORD_KEYWORDS));
+        assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
+        assertNotNull(config.getValue().get(OntologyRecordCreateSettings.INPUT_STREAM));
         assertGetUserFromContext();
     }
 
@@ -688,6 +701,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
         fd.field("description", "description");
+        fd.field("markdown", "#markdown");
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
@@ -702,11 +716,22 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
 
-        Response response = target().path("ontologies").queryParam("title", "title")
-                .queryParam("description", "description").queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
+        Response response = target().path("ontologies")
+                .queryParam("title", "title")
+                .queryParam("description", "description")
+                .queryParam("markdown", "#markdown")
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(ontologyJson));
         assertEquals(response.getStatus(), 201);
-        verify(catalogManager).createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class));
+        ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
+        verify(catalogManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class));
+        assertEquals(catalogId.stringValue(), config.getValue().get(RecordCreateSettings.CATALOG_ID));
+        assertEquals("title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
+        assertEquals("description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
+        assertEquals("#markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
+        assertEquals(Stream.of("keyword1", "keyword2").collect(Collectors.toSet()), config.getValue().get(RecordCreateSettings.RECORD_KEYWORDS));
+        assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
+        assertNotNull(config.getValue().get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
         assertCreatedOntologyIRI(getResponse(response));
         assertGetUserFromContext();
     }
@@ -715,7 +740,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJsonWithoutTitle() {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
-        Response response = target().path("ontologies").queryParam("description", "description")
+        Response response = target().path("ontologies")
+                .queryParam("description", "description")
+                .queryParam("markdown", "#markdown")
                 .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
@@ -723,9 +750,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies").queryParam("title", "title")
-                .queryParam("description", "description").queryParam("keywords", "keyword1")
-                .queryParam("keywords", "keyword2")
+        Response response = target().path("ontologies")
+                .queryParam("title", "title")
+                .queryParam("markdown", "#markdown")
+                .queryParam("description", "description")
+                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
