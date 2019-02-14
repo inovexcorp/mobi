@@ -108,6 +108,13 @@ describe('Reply Comment component', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
         });
+        it('should cancel the reply', function() {
+            this.controller.edit = true;
+            this.controller.replyComment = 'test';
+            this.controller.cancel();
+            expect(this.controller.edit).toEqual(false);
+            expect(this.controller.replyComment).toEqual('');
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

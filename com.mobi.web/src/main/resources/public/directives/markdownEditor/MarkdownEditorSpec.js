@@ -38,8 +38,10 @@ describe('Markdown Editor component', function() {
         scope.placeHolder = '';
         scope.isFocusMe = true;
         scope.buttonText = '';
+        scope.allowBlankValue = false;
         scope.clickEvent = jasmine.createSpy('clickEvent');
-        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder" click-event="clickEvent()" button-text="buttonText"></markdown-editor>'))(scope);
+        scope.cancelEvent = jasmine.createSpy('cancelEvent');
+        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder" button-text="buttonText" allow-blank-value="allowBlankValue" click-event="clickEvent()" cancel-event="cancelEvent()"></markdown-editor>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('markdownEditor');
     });
@@ -66,14 +68,23 @@ describe('Markdown Editor component', function() {
             scope.$digest();
             expect(scope.isFocusMe).toBe(true);
         });
-        it('clickEvent should be called in the parent scope', function() {
-            this.controller.clickEvent();
-            expect(scope.clickEvent).toHaveBeenCalled();
-        });
         it('buttonText should be one way bound', function() {
             this.controller.buttonText = 'Test';
             scope.$digest();
             expect(scope.buttonText).toEqual('');
+        });
+        it('allowBlankValue should be one way bound', function() {
+            this.controller.allowBlankValue = true;
+            scope.$digest();
+            expect(scope.allowBlankValue).toEqual(false);
+        });
+        it('clickEvent should be called in the parent scope', function() {
+            this.controller.clickEvent();
+            expect(scope.clickEvent).toHaveBeenCalled();
+        });
+        it('cancelEvent should be called in the parent scope', function() {
+            this.controller.cancelEvent();
+            expect(scope.cancelEvent).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
@@ -82,6 +93,20 @@ describe('Markdown Editor component', function() {
             expect(scope.clickEvent).toHaveBeenCalled();
             expect(this.controller.preview).toEqual('');
             expect(this.controller.showPreview).toEqual(false);
+        });
+        it('should cancel the markdown', function() {
+            this.controller.cancel();
+            expect(scope.cancelEvent).toHaveBeenCalled();
+            expect(this.controller.preview).toEqual('');
+            expect(this.controller.showPreview).toEqual(false);
+        });
+        it('should test whether the submit button should be disabled', function() {
+            expect(this.controller.isDisabled()).toEqual(true);
+            this.controller.bindModel = 'test';
+            expect(this.controller.isDisabled()).toEqual(false);
+            this.controller.bindModel = '';
+            this.controller.allowBlankValue = true;
+            expect(this.controller.isDisabled()).toEqual(false);
         });
         describe('should toggle the preview to', function() {
             it('true', function() {
@@ -108,8 +133,20 @@ describe('Markdown Editor component', function() {
             expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
             expect(this.element.querySelectorAll('.markdown-editor-header').length).toEqual(1);
         });
-        it('with a button to comment', function() {
-            expect(this.element.find('button').length).toEqual(1);
+        it('with a button to submit', function() {
+            var buttons = this.element.querySelectorAll('button.btn-primary');
+            expect(buttons.length).toBe(1);
+            expect(angular.element(buttons[0]).text().trim()).toEqual(scope.buttonText);
+        });
+        it('depending on whether a cancelEvent was supplied', function() {
+            var buttons = this.element.querySelectorAll('button:not(.btn-primary)');
+            expect(buttons.length).toBe(1);
+            expect(angular.element(buttons[0]).text().trim()).toEqual('Cancel');
+            
+            this.controller.cancelEvent = undefined;
+            scope.$digest();
+            var buttons = this.element.querySelectorAll('button:not(.btn-primary)');
+            expect(buttons.length).toBe(0);
         });
         it('if the preview of the markdown should be shown', function() {
             var button = angular.element(this.element.querySelectorAll('.preview-button')[0]);
@@ -136,7 +173,7 @@ describe('Markdown Editor component', function() {
     });
     it('should call click when the button is clicked', function() {
         spyOn(this.controller, 'click');
-        var button = this.element.find('button');
+        var button = angular.element(this.element.querySelectorAll('button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.click).toHaveBeenCalled();
     });
