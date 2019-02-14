@@ -88,6 +88,10 @@ describe('Hierarchy Tree component', function() {
                 path: []
             }]);
         });
+        it('updateSearch is one way bound', function() {
+            this.controller.updateSearch('value');
+            expect(scope.updateSearch).toHaveBeenCalledWith('value');
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {

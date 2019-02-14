@@ -57,7 +57,7 @@ describe('Value Display directive', function() {
             scope.$digest();
             expect(this.controller.value).toEqual({'@id': 'new'});
         });
-        it('value should be one way bound', function() {
+        it('highlightText should be one way bound', function() {
             this.isolatedScope.highlightText = 'new text';
             scope.$digest();
             expect(this.controller.highlightText).toEqual('text');
