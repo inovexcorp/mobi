@@ -22,12 +22,13 @@
  */
 
 
-describe('Hierarchy Tree directive', function() {
+describe('Hierarchy Tree component', function() {
     var $compile, scope, ontologyStateSvc, ontologyUtils;
 
     beforeEach(function() {
         module('templates');
-        module('hierarchyTree');
+        module('ontology-editor');
+        mockComponent('treeItem', 'treeItem');
         mockPrefixes();
         mockOntologyManager();
         mockOntologyState();
@@ -94,9 +95,7 @@ describe('Hierarchy Tree directive', function() {
             scope.$apply();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('hierarchy-tree')).toBe(true);
-            expect(this.element.hasClass('tree')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('HIERARCHY-TREE');
         });
         it('based on .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
