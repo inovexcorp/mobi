@@ -1,4 +1,4 @@
-@Version("5.1.3.${build}")
+@Version("6.0.0.${build}")
 
 package com.mobi.ontology.core.api;
 

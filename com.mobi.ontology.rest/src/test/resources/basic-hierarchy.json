@@ -1,10 +1,12 @@
 {
   "hierarchy": [
     {
-      "entityIRI": "https://mobi.com#parent",
-      "subEntities": [
+      "@id": "https://mobi.com#parent",
+      "@type": ["http://mobi.com/hierarchy#Node"],
+      "http://mobi.com/hierarchy#child": [
         {
-          "entityIRI": "https://mobi.com#child"
+          "@id": "https://mobi.com#child",
+          "@type": ["http://mobi.com/hierarchy#Node"]
         }
       ]
     }
