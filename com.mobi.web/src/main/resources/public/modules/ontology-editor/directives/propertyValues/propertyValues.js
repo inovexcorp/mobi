@@ -34,11 +34,14 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/propertyValues/propertyValues.html',
-                scope: {
+                scope: {},
+                bindToController: {
                     property: '<',
                     entity: '<',
                     edit: '&?',
-                    remove: '&?'
+                    remove: '&?',
+                    highlightIris: '<',
+                    highlightText: '<'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -46,6 +49,10 @@
                     dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
+
+                    dvm.valueInList = function() {
+                        return _.includes(dvm.highlightIris, dvm.property);
+                    }
                 }
             }
         }

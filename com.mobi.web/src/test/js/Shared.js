@@ -228,6 +228,7 @@ function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
             this.ontologyRecords = [];
+            this.entityNameProps = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));

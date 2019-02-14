@@ -22,12 +22,15 @@
  */
 
 
-describe('Hierarchy Tree directive', function() {
+describe('Hierarchy Tree component', function() {
     var $compile, scope, ontologyStateSvc, ontologyUtils;
 
     beforeEach(function() {
         module('templates');
-        module('hierarchyTree');
+        module('ontology-editor');
+        mockComponent('treeItem', 'treeItem');
+        mockPrefixes();
+        mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         injectUniqueKeyFilter();
@@ -53,7 +56,8 @@ describe('Hierarchy Tree directive', function() {
             indent: 0,
             path: []
         }];
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy"></hierarchy-tree>'))(scope);
+        scope.updateSearch = jasmine.createSpy('updateSearch');
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" update-search="updateSearch"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });
@@ -66,10 +70,9 @@ describe('Hierarchy Tree directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('hierarchy should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.hierarchy = [];
+            this.controller.hierarchy = [];
             scope.$digest();
             expect(angular.copy(scope.hierarchy)).toEqual([{
                 entityIRI: 'class1',
@@ -85,6 +88,10 @@ describe('Hierarchy Tree directive', function() {
                 path: []
             }]);
         });
+        it('updateSearch is one way bound', function() {
+            this.controller.updateSearch('value');
+            expect(scope.updateSearch).toHaveBeenCalledWith('value');
+        });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
@@ -92,9 +99,7 @@ describe('Hierarchy Tree directive', function() {
             scope.$apply();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('hierarchy-tree')).toBe(true);
-            expect(this.element.hasClass('tree')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('HIERARCHY-TREE');
         });
         it('based on .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);

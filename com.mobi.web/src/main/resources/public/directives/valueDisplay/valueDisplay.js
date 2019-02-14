@@ -55,8 +55,10 @@
             return {
                 restrict: 'E',
                 replace: true,
-                scope: {
-                    value: '<'
+                scope: {},
+                bindToController: {
+                    value: '<',
+                    highlightText: '<'
                 },
                 templateUrl: 'directives/valueDisplay/valueDisplay.html',
                 controllerAs: 'dvm',

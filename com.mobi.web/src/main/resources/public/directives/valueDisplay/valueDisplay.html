@@ -21,6 +21,12 @@
   #L%
   -->
 <span class="value-display">
-    <span ng-if="dvm.has(value, '@id')" class="has-id">{{dvm.ds.explore.instance.objectMap[value['@id']] || dvm.util.getBeautifulIRI(value['@id'])}} <small>&lt;{{value['@id']}}&gt;</small></span>
-    <span ng-if="dvm.has(value, '@value')" class="has-value">{{value['@value']}}<small class="text-muted lang-display" ng-if="value['@language']">[language: {{value['@language']}}]</small><small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span>
+    <div ng-if="dvm.has(dvm.value, '@id')" class="has-id">
+        <span ng-bind-html="dvm.ds.explore.instance.objectMap[dvm.value['@id']] || dvm.util.getBeautifulIRI(dvm.value['@id']) | highlight:dvm.highlightText | trusted"></span>
+        <span><small>&lt;{{dvm.value['@id']}}&gt;</small></span>
+    </div>
+    <div ng-if="dvm.has(dvm.value, '@value')" class="has-value">
+        <span ng-bind-html="dvm.value['@value'] | highlight:dvm.highlightText | trusted"></span>
+        <span><small class="text-muted lang-display" ng-if="dvm.value['@language']">[language: {{dvm.value['@language']}}]</small><small ng-if="dvm.value['@type']" class="text-muted type-display">[type: {{dvm.value['@type'] | prefixation}}]</small></span>
+    </div>
 </span>

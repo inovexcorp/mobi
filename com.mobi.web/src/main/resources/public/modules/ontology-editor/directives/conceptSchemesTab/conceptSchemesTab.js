@@ -69,27 +69,28 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var pm = propertyManagerService;
-                    var om = ontologyManagerService;
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.relationshipList = [];
+                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+
 
                     dvm.showDeleteConfirmation = function() {
                         modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
                     }
                     dvm.deleteEntity = function() {
-                        if (om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
+                        if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
                             ontoUtils.deleteConcept();
-                        } else if (om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                        } else if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
                             ontoUtils.deleteConceptScheme();
                         }
                     }
 
                     $scope.$watch(() => dvm.os.listItem.selected, function(newValue) {
-                        if (om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
+                        if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
                             var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(dvm.os.listItem.iriList, iri));
                             dvm.relationshipList = _.concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
-                        } else if (om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
+                        } else if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
                             dvm.relationshipList = pm.schemeRelationshipList;
                         }
                     });
