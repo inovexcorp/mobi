@@ -59,24 +59,24 @@ describe('Tree Item directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
         it('hasChildren should be one way bound', function() {
-            this.isolatedScope.hasChildren = false;
+            this.controller.hasChildren = false;
             scope.$digest();
             expect(scope.hasChildren).toBe(true);
         });
         it('isActive should be one way bound', function() {
-            this.isolatedScope.isActive = true;
+            this.controller.isActive = true;
             scope.$digest();
             expect(scope.isActive).toBe(false);
         });
         it('isBold should be one way bound', function() {
-            this.isolatedScope.isBold = true;
+            this.controller.isBold = true;
             scope.$digest();
             expect(scope.isBold).toBe(false);
         });
         it('onClick should be called in parent scope when invoked', function() {
-            this.isolatedScope.onClick();
+            this.controller.onClick();
             expect(scope.onClick).toHaveBeenCalled();
         });
     });

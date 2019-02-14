@@ -26,6 +26,7 @@ describe('Concepts Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('conceptsTab');
+        mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockPropertyManager();
