@@ -38,6 +38,7 @@
          * @name classesTab.directive:classesTab
          * @scope
          * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires modal.service:modalService
@@ -54,9 +55,9 @@
          */
         .directive('classesTab', classesTab);
 
-        classesTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService']
+        classesTab.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService']
 
-        function classesTab(ontologyStateService, ontologyUtilsManagerService, modalService) {
+        function classesTab(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -67,6 +68,7 @@
                     var dvm = this;
                     var ontoUtils = ontologyUtilsManagerService
                     dvm.os = ontologyStateService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.showDeleteConfirmation = function() {
                         modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteClass);

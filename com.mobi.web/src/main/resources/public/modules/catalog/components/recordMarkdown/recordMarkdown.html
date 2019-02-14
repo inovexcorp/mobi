@@ -4,7 +4,7 @@
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="reply-comment mt-3">
-    <div ng-if="!dvm.edit" class="reply-box text-muted border p-1 rounded" ng-click="dvm.edit = true">Reply here...</div>
-    <markdown-editor ng-if="dvm.edit" ng-model="dvm.replyComment" place-holder="'Write your reply comment here...'" is-focus-me="true" click-event="dvm.reply()" cancel-event="dvm.cancel()" button-text="'Comment'"></markdown-editor>
+<div class="record-markdown">
+    <div ng-if="!dvm.edit" class="view-record-markdown break-word p-2" ng-click="dvm.showEdit()" ng-class="{'hover': dvm.canEdit}">
+        <div ng-if="!dvm.markdownHTML" class="text-muted">(No overview)</div>
+        <div ng-if="dvm.markdownHTML" class="markdown" ng-bind-html="dvm.markdownHTML | trusted"></div>
+    </div>
+    <div ng-if="dvm.edit" class="p-2">
+        <markdown-editor ng-model="dvm.editMarkdown" click-event="dvm.saveEdit()" cancel-event="dvm.cancelEdit()" is-focus-me="true" button-text="'Save'" allow-blank-value="true"></markdown-editor>
+    </div>
 </div>

@@ -22,5 +22,5 @@
   -->
 <div class="concept-hierarchy-block py-1">
     <info-message ng-if="!dvm.os.listItem.concepts.flat.length">(No concepts defined)</info-message>
-    <hierarchy-tree ng-if="dvm.os.listItem.concepts.flat.length" hierarchy="dvm.os.listItem.concepts.flat"></hierarchy-tree>
+    <hierarchy-tree ng-if="dvm.os.listItem.concepts.flat.length" hierarchy="dvm.os.listItem.concepts.flat" update-search="dvm.updateSearch"></hierarchy-tree>
 </div>

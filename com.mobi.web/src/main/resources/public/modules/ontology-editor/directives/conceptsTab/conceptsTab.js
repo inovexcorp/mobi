@@ -38,6 +38,7 @@
          * @name conceptsTab.directive:conceptsTab
          * @scope
          * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires propertyManager.service:propertyManagerService
@@ -56,9 +57,9 @@
          */
         .directive('conceptsTab', conceptsTab);
 
-        conceptsTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
+        conceptsTab.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
 
-        function conceptsTab(ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
+        function conceptsTab(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -69,6 +70,7 @@
                     var dvm = this;
                     var pm = propertyManagerService;
                     var ontoUtils = ontologyUtilsManagerService;
+                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
 
                     var schemeRelationships = _.filter(pm.conceptSchemeRelationshipList, iri => _.includes(dvm.os.listItem.iriList, iri));

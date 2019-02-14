@@ -26,6 +26,7 @@ describe('Classes Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('classesTab');
+        mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockModal();

@@ -228,6 +228,7 @@ function mockOntologyManager() {
     module(function($provide) {
         $provide.service('ontologyManagerService', function($q) {
             this.ontologyRecords = [];
+            this.entityNameProps = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
@@ -976,6 +977,7 @@ function mockCatalogState() {
             this.recordSearchText = '';
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
+            this.reset = jasmine.createSpy('reset');
             this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });
@@ -996,6 +998,7 @@ function mockUtil() {
             this.removePropertyId = jasmine.createSpy('removePropertyId');
             this.replacePropertyId = jasmine.createSpy('replacePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
+            this.removeDctermsValue = jasmine.createSpy('getDctermsValue');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.updateDctermsValue = jasmine.createSpy('updateDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');

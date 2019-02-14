@@ -59,7 +59,6 @@
             'datatypePropertyOverlay',
             'editBranchOverlay',
             'everythingTree',
-            'hierarchyTree',
             'importsBlock',
             'importsOverlay',
             'individualsTab',
