@@ -219,7 +219,6 @@
                         <feature>mobi-core</feature>
                         <feature>mobi-cli</feature>
                         <feature>mobi-web</feature>
-                        <feature>mobi-federation</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>

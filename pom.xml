@@ -71,10 +71,6 @@
         <module>com.mobi.jaas</module>
         <module>com.mobi.web.security</module>
         <module>com.mobi.jaas.rest</module>
-        <module>com.mobi.federation.api</module>
-        <module>com.mobi.federation.hazelcast</module>
-        <module>com.mobi.federation.cli</module>
-        <module>com.mobi.federation.utils</module>
         <module>mobi-karaf-feature</module>
         <module>com.mobi.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
