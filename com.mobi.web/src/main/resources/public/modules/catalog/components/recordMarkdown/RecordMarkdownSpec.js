@@ -110,26 +110,51 @@ describe('Record Markdown component', function() {
                 this.controller.edit = true;
             });
             describe('if the edited value is different than the original value', function() {
-                beforeEach(function() {
-                    this.controller.editMarkdown = this.editedMarkdown;
+                describe('if the new value is empty', function() {
+                    beforeEach(function() {
+                        this.controller.editMarkdown = '';
+                    });
+                    it('if updateRecord resolves', function() {
+                        this.controller.saveEdit();
+                        scope.$apply();
+                        expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
+                        expect(utilSvc.removeDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.abstract);
+                        expect(this.controller.edit).toEqual(false);
+                        expect(this.controller.editMarkdown).toEqual('');
+                    });
+                    it('unless updateRecord rejects', function() {
+                        scope.updateRecord.and.returnValue($q.reject());
+                        this.controller.saveEdit();
+                        scope.$apply();
+                        expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
+                        expect(utilSvc.removeDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.abstract);
+                        expect(this.controller.edit).toEqual(true);
+                        expect(this.controller.editMarkdown).toEqual('');
+                        expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.abstract);
+                    });
                 });
-                it('if updateRecord resolves', function() {
-                    this.controller.saveEdit();
-                    scope.$apply();
-                    expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
-                    expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.editedMarkdown);
-                    expect(this.controller.edit).toEqual(false);
-                    expect(this.controller.editMarkdown).toEqual('');
-                });
-                it('unless updateRecord rejects', function() {
-                    scope.updateRecord.and.returnValue($q.reject());
-                    this.controller.saveEdit();
-                    scope.$apply();
-                    expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
-                    expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.editedMarkdown);
-                    expect(this.controller.edit).toEqual(true);
-                    expect(this.controller.editMarkdown).toEqual(this.editedMarkdown);
-                    expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.abstract);
+                describe('if the new value is not empty', function() {
+                    beforeEach(function() {
+                        this.controller.editMarkdown = this.editedMarkdown;
+                    });
+                    it('if updateRecord resolves', function() {
+                        this.controller.saveEdit();
+                        scope.$apply();
+                        expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
+                        expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.editedMarkdown);
+                        expect(this.controller.edit).toEqual(false);
+                        expect(this.controller.editMarkdown).toEqual('');
+                    });
+                    it('unless updateRecord rejects', function() {
+                        scope.updateRecord.and.returnValue($q.reject());
+                        this.controller.saveEdit();
+                        scope.$apply();
+                        expect(scope.updateRecord).toHaveBeenCalledWith(this.record);
+                        expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.editedMarkdown);
+                        expect(this.controller.edit).toEqual(true);
+                        expect(this.controller.editMarkdown).toEqual(this.editedMarkdown);
+                        expect(utilSvc.updateDctermsValue).toHaveBeenCalledWith(this.record, 'abstract', this.abstract);
+                    });
                 });
             });
             it('unless the edited value is the same as the original value', function() {

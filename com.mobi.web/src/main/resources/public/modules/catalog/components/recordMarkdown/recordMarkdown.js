@@ -83,7 +83,11 @@
                 dvm.edit = false;
                 dvm.editMarkdown = '';
             } else {
-                util.updateDctermsValue(dvm.record, 'abstract', this.editMarkdown);
+                if (!dvm.editMarkdown) {
+                    util.removeDctermsValue(dvm.record, 'abstract', this.originalValue);
+                } else {
+                    util.updateDctermsValue(dvm.record, 'abstract', this.editMarkdown);
+                }
                 $q.when()
                     .then(() => dvm.updateRecord({record: dvm.record}))
                     .then(() => {

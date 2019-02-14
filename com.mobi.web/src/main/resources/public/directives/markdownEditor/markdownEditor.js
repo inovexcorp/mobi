@@ -48,6 +48,7 @@
             placeHolder: '<',
             isFocusMe: '<?',
             buttonText: '<',
+            allowBlankValue: '<',
             clickEvent: '&',
             cancelEvent: '&?'
         },
@@ -75,6 +76,9 @@
             dvm.cancelEvent();
             dvm.preview = '';
             dvm.showPreview = false;
+        }
+        dvm.isDisabled = function() {
+            return dvm.allowBlankValue ? false : !dvm.bindModel;
         }
         dvm.togglePreview = function() {
             if (dvm.showPreview) {
