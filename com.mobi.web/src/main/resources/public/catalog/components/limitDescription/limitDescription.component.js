@@ -68,6 +68,5 @@
     }
 
     angular.module('catalog')
-        .config(ignoreUnhandledRejectionsConfig)
         .component('limitDescription', limitDescriptionComponent);
 })();
