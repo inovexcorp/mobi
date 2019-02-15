@@ -33,9 +33,7 @@
          * which creates a form for selecting the source and target Branch of a new MergeRequest.
          */
         .module('requestBranchSelect', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name requestBranchSelect.directive:requestBranchSelect

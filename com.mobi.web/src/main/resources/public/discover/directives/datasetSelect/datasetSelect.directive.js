@@ -33,9 +33,7 @@
          * the dataset select.
          */
         .module('datasetSelect', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name datasetSelect.directive:datasetSelect

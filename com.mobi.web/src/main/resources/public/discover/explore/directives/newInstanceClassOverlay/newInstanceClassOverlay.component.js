@@ -33,9 +33,7 @@
          * content for a modal to add an instance of a class to a dataset.
          */
         .module('newInstanceClassOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name newInstanceClassOverlay.component:newInstanceClassOverlay

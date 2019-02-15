@@ -33,9 +33,7 @@
          * editing an instance within a dataset.
          */
         .module('instanceForm', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceForm.directive:instanceForm

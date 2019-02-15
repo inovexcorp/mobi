@@ -33,9 +33,7 @@
          * the property selector.
          */
         .module('propertySelector', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name propertySelector.directive:propertySelector

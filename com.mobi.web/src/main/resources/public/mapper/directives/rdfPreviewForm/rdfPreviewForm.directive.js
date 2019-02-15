@@ -35,9 +35,7 @@
          * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('rdfPreviewForm', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name rdfPreviewForm.directive:rdfPreviewForm

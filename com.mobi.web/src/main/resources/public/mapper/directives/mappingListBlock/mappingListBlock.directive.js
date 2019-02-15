@@ -33,9 +33,7 @@
          * with a list of saved mappings in the repository.
          */
         .module('mappingListBlock', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mappingListBlock.directive:mappingListBlock

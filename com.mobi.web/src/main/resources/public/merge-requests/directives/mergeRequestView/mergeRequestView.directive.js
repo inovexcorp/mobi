@@ -33,9 +33,7 @@
          * {@link block.directive:block} with a display of a selected MergeRequest.
          */
         .module('mergeRequestView', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mergeRequestView.directive:mergeRequestView

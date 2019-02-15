@@ -33,9 +33,7 @@
          * a number of different tools to view and edit information about a class mapping.
          */
         .module('classMappingDetails', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name classMappingDetails.directive:classMappingDetails

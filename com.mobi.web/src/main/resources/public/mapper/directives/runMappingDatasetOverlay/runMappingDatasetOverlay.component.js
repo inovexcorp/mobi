@@ -33,9 +33,7 @@
          * content for a modal to upload a mapping into a dataset.
          */
         .module('runMappingDatasetOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name runMappingDatasetOverlay.component:runMappingDatasetOverlay

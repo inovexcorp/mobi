@@ -104,8 +104,6 @@
          * modal to create a new Dataset Record.
          */
         .module('newDatasetOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         .component('newDatasetOverlay', newDatasetOverlayComponent);
 })();

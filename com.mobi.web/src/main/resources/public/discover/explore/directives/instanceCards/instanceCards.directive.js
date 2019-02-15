@@ -33,9 +33,7 @@
          * with all of the instance details about a class associated with a dataset record.
          */
         .module('instanceCards', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceCards.directive:instanceCards

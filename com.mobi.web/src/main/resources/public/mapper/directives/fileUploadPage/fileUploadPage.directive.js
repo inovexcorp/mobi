@@ -34,9 +34,7 @@
          * {@link previewDataGrid.directive:previewDataGrid previewing} delimited data.
          */
         .module('fileUploadPage', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name fileUploadPage.directive:fileUploadPage
