@@ -33,9 +33,7 @@
          * modal to upload data in a file into a Dataset.
          */
         .module('uploadDataOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name uploadDataOverlay.component:uploadDataOverlay

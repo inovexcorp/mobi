@@ -33,9 +33,7 @@
          * a brief description of the passed property and its range.
          */
         .module('propPreview', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name propPreview.directive:propPreview

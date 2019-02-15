@@ -33,9 +33,7 @@
          * the search form within the Search page.
          */
         .module('searchForm', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name searchForm.directive:searchForm

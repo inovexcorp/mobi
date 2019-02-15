@@ -33,9 +33,7 @@
          * the dataset selector to determine what class details are to be shown on the page.
          */
         .module('classBlockHeader', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name classBlockHeader.directive:classBlockHeader

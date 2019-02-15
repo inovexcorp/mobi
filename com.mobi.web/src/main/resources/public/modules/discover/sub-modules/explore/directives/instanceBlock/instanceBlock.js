@@ -34,9 +34,7 @@
          * class.
          */
         .module('instanceBlock', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceBlock.directive:instanceBlock

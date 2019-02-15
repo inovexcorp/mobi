@@ -33,9 +33,7 @@
          * to comments on a Merge Request.
          */
         .module('replyComment', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name replyComment.component:replyComment

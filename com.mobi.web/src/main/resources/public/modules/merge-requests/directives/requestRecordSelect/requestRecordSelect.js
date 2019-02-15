@@ -33,9 +33,7 @@
          * which creates a form for selecting the VersionedRDFRecord of a new MergeRequest.
          */
         .module('requestRecordSelect', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name requestRecordSelect.directive:requestRecordSelect

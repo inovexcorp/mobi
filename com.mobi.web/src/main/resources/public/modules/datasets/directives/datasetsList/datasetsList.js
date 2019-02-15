@@ -33,9 +33,7 @@
          * row containing a block for displaying the paginated list of Dataset Records.
          */
         .module('datasetsList', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name datasetsList.directive:datasetsList

@@ -33,9 +33,7 @@
          * Request Comment.
          */
         .module('commentDisplay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name commentDisplay.component:commentDisplay

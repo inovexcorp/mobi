@@ -33,9 +33,7 @@
          * which creates the main div containing the Merge Requests page.
          */
         .module('createRequest', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name createRequest.directive:createRequest

@@ -33,9 +33,7 @@
          * content for a modal to commit the results of a mapping to an Ontology.
          */
         .module('runMappingOntologyOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name runMappingOntologyOverlay.component:runMappingOntologyOverlay

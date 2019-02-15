@@ -33,9 +33,7 @@
          * functions for the explore sub module.
          */
         .module('exploreUtils', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService
