@@ -21,6 +21,9 @@
   #L%
   -->
 <material-tabset>
+    <material-tab heading="'Overview'" active="dvm.tabs.overview">
+        <record-markdown record="dvm.record" update-record="dvm.updateRecordCall(record)" can-edit="dvm.canEdit"></record-markdown>
+    </material-tab>
     <material-tab hide-tab="!dvm.isVersionedRDFRecord" heading="'Branches'" active="dvm.tabs.branches">
         <branch-list record="dvm.record"></branch-list>
     </material-tab>

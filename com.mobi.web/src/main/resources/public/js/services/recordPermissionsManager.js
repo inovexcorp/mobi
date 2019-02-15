@@ -32,17 +32,17 @@
          * The `recordPermissionsManager` module only provides the `recordPermissionsManagerService` service which
          * provides access to the Mobi record-permissions REST endpoints to get and update record permissions.
          */
-            .module('recordPermissionsManager', [])
-            /**
-             * @ngdoc service
-             * @name recordPermissionsManager.service:recordPermissionsManagerService
-             * @requires httpService.service:httpService
-             *
-             * @description
-             * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST
-             * endpoints and variables with common IRIs used in policies.
-             */
-            .service('recordPermissionsManagerService', recordPermissionsManagerService);
+        .module('recordPermissionsManager', [])
+        /**
+         * @ngdoc service
+         * @name recordPermissionsManager.service:recordPermissionsManagerService
+         * @requires httpService.service:httpService
+         *
+         * @description
+         * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST
+         * endpoints and variables with common IRIs used in policies.
+         */
+        .service('recordPermissionsManagerService', recordPermissionsManagerService);
 
         recordPermissionsManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 

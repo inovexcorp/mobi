@@ -5,6 +5,30 @@
     display: inline-block;
     min-width: 100%;
 
+    .search {
+        position: relative;
+
+        .fa-search,
+        .fa-times-circle {
+            position: absolute;
+            font-size: 1.25em;
+            top: 12px;
+        }
+
+        .fa-search {
+            left: 10px;
+        }
+
+        .fa-times-circle {
+            right: 10px;
+            text-decoration: none;
+
+            &:hover {
+                color: var(--body) !important;
+            }
+        }
+    }
+
     .repeater-container {
         overflow-x: auto;
 

@@ -76,7 +76,7 @@ describe('Branch Select directive', function() {
             expect(scope.changeEvent).toHaveBeenCalled();
         });
     });
-    describe('controll bound variable', function() {
+    describe('controller bound variable', function() {
         it('bindModel should be two way bound', function() {
             this.controller.bindModel = {};
             scope.$digest();
