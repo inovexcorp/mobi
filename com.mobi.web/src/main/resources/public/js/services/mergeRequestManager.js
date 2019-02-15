@@ -33,7 +33,6 @@
          * provides access to the Mobi merge-requests REST endpoints and utility methods.
          */
         .module('mergeRequestManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name mergeRequestManager.service:mergeRequestManagerService

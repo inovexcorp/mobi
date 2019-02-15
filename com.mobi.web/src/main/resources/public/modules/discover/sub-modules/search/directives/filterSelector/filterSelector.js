@@ -33,7 +33,6 @@
          * the filter selector.
          */
         .module('filterSelector', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name filterSelector.directive:filterSelector

@@ -33,7 +33,6 @@
          * creates content for a modal to add a concept scheme to an ontology/vocabulary.
          */
         .module('createConceptSchemeOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name createConceptSchemeOverlay.directive:createConceptSchemeOverlay

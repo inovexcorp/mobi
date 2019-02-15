@@ -35,7 +35,6 @@
          * to the Mobi Dataset REST endpoints.
          */
         .module('datasetManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name datasetManager.service:datasetManagerService

@@ -33,7 +33,6 @@
          * the instance view page.
          */
         .module('instanceView', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceView.directive:instanceView

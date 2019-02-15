@@ -33,7 +33,6 @@
          * Mobi Provenance REST endpoints.
          */
         .module('provManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name provManager.service:provManagerService

@@ -34,7 +34,6 @@
          * manipulating ontologies
          */
         .module('ontologyManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name ontologyManager.service:ontologyManagerService

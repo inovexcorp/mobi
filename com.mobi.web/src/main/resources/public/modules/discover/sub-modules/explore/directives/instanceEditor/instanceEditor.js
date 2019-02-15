@@ -33,7 +33,6 @@
          * the instance editor page.
          */
         .module('instanceEditor', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceEditor.directive:instanceEditor

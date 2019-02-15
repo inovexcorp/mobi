@@ -33,7 +33,6 @@
          * contains various utility methods used throughout the Ontology Editor.
          */
         .module('ontologyUtilsManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name ontologyUtilsManager.service:ontologyUtilsManagerService

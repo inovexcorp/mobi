@@ -25,7 +25,6 @@
 
     angular
         .module('individualTree', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .directive('individualTree', individualTree);
 
         individualTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'INDENT'];

@@ -33,7 +33,6 @@
          * page with a list of ontologies in the Mobi instance and buttons to add to the list.
          */
         .module('openOntologyTab', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name openOntologyTab.directive:openOntologyTab

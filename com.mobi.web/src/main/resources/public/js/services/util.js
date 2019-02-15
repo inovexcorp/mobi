@@ -33,7 +33,6 @@
          * methods for use across Mobi.
          */
         .module('util', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name util.service:utilService

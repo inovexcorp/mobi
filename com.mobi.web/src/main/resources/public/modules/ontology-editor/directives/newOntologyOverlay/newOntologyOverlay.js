@@ -33,7 +33,6 @@
          * modal to create a new ontology.
          */
         .module('newOntologyOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name newOntologyOverlay.directive:newOntologyOverlay

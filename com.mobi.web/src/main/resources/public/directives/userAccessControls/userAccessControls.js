@@ -32,7 +32,6 @@
          * selectors for viewing and updating permissions of the application.
          */
         .module('userAccessControls', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name userAccessControls.directive:userAccessControls

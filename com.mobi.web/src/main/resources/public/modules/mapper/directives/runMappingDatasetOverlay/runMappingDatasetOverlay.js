@@ -33,7 +33,6 @@
          * content for a modal to upload a mapping into a dataset.
          */
         .module('runMappingDatasetOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name runMappingDatasetOverlay.component:runMappingDatasetOverlay

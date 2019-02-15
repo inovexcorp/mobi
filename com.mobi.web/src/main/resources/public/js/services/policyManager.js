@@ -34,7 +34,6 @@
          * used in policies.
          */
         .module('policyManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name policyManager.service:policyManagerService

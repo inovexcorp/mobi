@@ -176,6 +176,5 @@
          * modal to edit a Dataset Record.
          */
         .module('editDatasetOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .component('editDatasetOverlay', editDatasetOverlayComponent);
 })();

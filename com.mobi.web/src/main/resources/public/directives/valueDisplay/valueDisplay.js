@@ -33,7 +33,6 @@
          * a span element which displays a json-ld object in a readable format.
          */
         .module('valueDisplay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name valueDisplay.directive:valueDisplay

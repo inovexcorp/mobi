@@ -33,7 +33,6 @@
          * to the Mobi explorable-datasets REST endpoints.
          */
         .module('explore', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name explore.service:exploreService

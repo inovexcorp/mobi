@@ -33,7 +33,6 @@
          * the instance creator page.
          */
         .module('instanceCreator', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceCreator.directive:instanceCreator

@@ -33,7 +33,6 @@
          * the property selector.
          */
         .module('propertySelector', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name propertySelector.directive:propertySelector

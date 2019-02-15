@@ -33,7 +33,6 @@
          * provides utilities for saving user settings for the application.
          */
         .module('settingsManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name settingsManager.service:settingsManagerService

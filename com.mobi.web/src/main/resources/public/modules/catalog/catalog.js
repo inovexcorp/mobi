@@ -30,6 +30,5 @@
      * @description
      * The `catalog` module provides components that make up the Catalog module in the Mobi application.
      */
-    angular.module('catalog', [])
-        .config(ignoreUnhandledRejectionsConfig)
+    angular.module('catalog', []);
 })();

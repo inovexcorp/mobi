@@ -33,7 +33,6 @@
          * overlay. The `recordAccessOverlay` controls saving any changes of a record policy access control.
          */
         .module('recordAccessOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name recordAccessOverlay.directive:recordAccessOverlay

@@ -33,7 +33,6 @@
          * utilities for adding, removing, and editing Mobi users and groups.
          */
         .module('userManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name userManager.service:userManagerService

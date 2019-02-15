@@ -33,7 +33,6 @@
          * for a modal to change a groups's information in Mobi.
          */
         .module('editGroupInfoOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name editGroupInfoOverlay.component:editGroupInfoOverlay

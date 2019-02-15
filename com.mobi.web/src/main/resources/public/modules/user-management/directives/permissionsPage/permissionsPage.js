@@ -34,7 +34,6 @@
          * permissions of the application.
          */
         .module('permissionsPage', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name permissionsPage.directive:permissionsPage
