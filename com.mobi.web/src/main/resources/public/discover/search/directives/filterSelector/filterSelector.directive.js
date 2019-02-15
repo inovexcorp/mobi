@@ -70,14 +70,16 @@
                     var dvm = this;
                     var needsOneInput = ['Contains', 'Exact', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to'];
                     dvm.util = utilService;
-                    dvm.type = dvm.util.getInputType(dvm.range);
-                    dvm.pattern = dvm.util.getPattern(dvm.range);
                     dvm.types = {
                         'datetime-local': ['Exact', 'Existence', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to', 'Range'],
                         number: ['Exact', 'Existence', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to', 'Range'],
                         text: ['Contains', 'Exact', 'Existence', 'Regex']
                     };
-                    
+
+                    dvm.$onInit = function() {
+                        dvm.type = dvm.util.getInputType(dvm.range);
+                        dvm.pattern = dvm.util.getPattern(dvm.range);
+                    }
                     dvm.needsOneInput = function() {
                         return _.includes(needsOneInput, dvm.filterType);
                     }
