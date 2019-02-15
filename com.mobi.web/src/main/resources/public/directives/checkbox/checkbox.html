@@ -21,6 +21,6 @@
   #L%
   -->
 <div class="checkbox form-check" ng-class="{'disabled': dvm.isDisabled, 'form-check-inline': dvm.inline}">
-    <input type="checkbox" class="form-check-input" ng-model="dvm.bindModel" ng-change="dvm.onChange()" ng-disabled="dvm.isDisabled" ng-attr-id="{{::('checkbox-' + $id)}}"/>
+    <input type="checkbox" class="form-check-input" ng-model="dvm.bindModel" ng-click="dvm.onChange()" ng-disabled="dvm.isDisabled" ng-attr-id="{{::('checkbox-' + $id)}}"/>
     <label class="form-check-label" ng-attr-for="{{::('checkbox-' + $id)}}">{{dvm.displayText}}</label>
 </div>
