@@ -157,7 +157,7 @@
              * from {@link catalogManager.service:catalogManagerService catalogManagerService}.
              */
             self.initialize = function() {
-                self.recordSortOption = _.find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
+                self.initializeRecordSortOption();
             }
             /**
              * @ngdoc method
@@ -173,6 +173,34 @@
             self.getRecordIcon = function(record) {
                 var type = _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type));
                 return self.recordIcons[type || 'default'];
+            }
+            /**
+             * @ngdoc method
+             * @name reset
+             * @methodOf catalogState.service:catalogStateService
+             *
+             * @description
+             * Resets all state variables for the {@link catalog.component:catalogPage}.
+             */
+            self.reset = function() {
+                self.totalRecordSize = 0;
+                self.currentRecordPage = 1;
+                self.recordFilterType = '';
+                self.recordSearchText = '';
+                self.initializeRecordSortOption();
+                self.selectedRecord = undefined;
+            }
+            /**
+             * @ngdoc method
+             * @name initializeRecordSortOption
+             * @methodOf catalogState.service:catalogStateService
+             *
+             * @description
+             * Initializes the `recordSortOption` to a certain sort option from the
+             * {@link catalogManager.service:catalogManagerService catalogManagerService}.
+             */
+            self.initializeRecordSortOption = function() {
+                self.recordSortOption = _.find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
             }
         }
 })();

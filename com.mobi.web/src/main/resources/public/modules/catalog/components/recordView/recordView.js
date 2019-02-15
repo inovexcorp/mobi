@@ -28,6 +28,7 @@
      * @name catalog.component:recordView
      * @requires catalogState.service:cataStateService
      * @requires catalogManager.service:catalogManagerService
+     * @requires policyEnforcement.service:policyEnforcementService
      * @requires utilService.service:utilService
      * @requires prefixes.service:prefixes
      *
@@ -48,27 +49,26 @@
         controller: recordViewComponentCtrl
     };
 
-    recordViewComponentCtrl.$inject = ['catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+    recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'policyEnforcementService', 'utilService', 'prefixes'];
 
-    function recordViewComponentCtrl(catalogStateService, catalogManagerService, utilService, prefixes) {
+    function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, policyEnforcementService, utilService, prefixes) {
         var dvm = this;
         var state = catalogStateService;
         var cm = catalogManagerService;
+        var pep = policyEnforcementService;
         var util = utilService;
         dvm.record = undefined;
         dvm.title = '';
         dvm.description = '';
         dvm.modified = '';
         dvm.issued = '';
+        dvm.canEdit = false;
 
         dvm.$onInit = function() {
             cm.getRecord(state.selectedRecord['@id'], util.getPropertyId(state.selectedRecord, prefixes.catalog + 'catalog'))
                 .then(response => {
-                    dvm.record = response;
-                    dvm.title = util.getDctermsValue(dvm.record, 'title');
-                    dvm.description = util.getDctermsValue(dvm.record, 'description') || '(No description)';
-                    dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
-                    dvm.issued = util.getDate(util.getDctermsValue(dvm.record, 'issued'), 'short');
+                    setInfo(response);
+                    dvm.setCanEdit();
                 }, () => {
                     util.createWarningToast('The record you were viewing no longer exists');
                     state.selectedRecord = undefined;
@@ -76,6 +76,42 @@
         }
         dvm.goBack = function() {
             state.selectedRecord = undefined;
+        }
+        dvm.updateRecord = function(record) {
+            return cm.updateRecord(record['@id'], util.getPropertyId(record, prefixes.catalog + 'catalog'), record)
+                .then(() => {
+                    util.createSuccessToast('Successfully updated the record');
+                    state.selectedRecord = record;
+                    setInfo(record);
+                }, errorMessage => {
+                    util.createErrorToast(errorMessage);
+                    return $q.reject();
+                });
+        }
+        dvm.setCanEdit = function() {
+            var request = {
+                resourceId: dvm.record['@id'],
+                actionId: prefixes.policy + 'Update'
+            };
+            pep.evaluateRequest(request)
+                .then(response => {
+                    if (response === pep.permit) {
+                        dvm.canEdit = true;
+                    } else {
+                        dvm.canEdit = false;
+                    }
+                }, () => {
+                    util.createWarningToast('Could not retrieve record permissions');
+                    dvm.canEdit = false;
+                });
+        }
+
+        function setInfo(record) {
+            dvm.record = angular.copy(record);
+            dvm.title = util.getDctermsValue(dvm.record, 'title');
+            dvm.description = util.getDctermsValue(dvm.record, 'description') || '(No description)';
+            dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
+            dvm.issued = util.getDate(util.getDctermsValue(dvm.record, 'issued'), 'short');
         }
     }
 

@@ -211,7 +211,8 @@ function injectUniqueKeyFilter() {
 }
 
 function mockStateManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('stateManagerService', function($q) {
             this.states = [];
             this.initialize = jasmine.createSpy('initialize');
@@ -225,9 +226,11 @@ function mockStateManager() {
 }
 
 function mockOntologyManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('ontologyManagerService', function($q) {
             this.ontologyRecords = [];
+            this.entityNameProps = [];
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
@@ -314,7 +317,8 @@ function mockOntologyManager() {
 }
 
 function mockMappingManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mappingManagerService', function($q) {
             this.annotationProperties = [];
 
@@ -366,7 +370,8 @@ function mockMappingManager() {
 }
 
 function mockDelimitedManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('delimitedManagerService', function($q) {
             this.dataRows = undefined;
             this.fileName = '';
@@ -395,7 +400,8 @@ function mockDelimitedManager() {
 }
 
 function mockMapperState() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mapperStateService', function($q) {
             this.selectMappingStep = 0;
             this.fileUploadStep = 1;
@@ -450,7 +456,8 @@ function mockMapperState() {
 }
 
 function mockHttpService() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('httpService', function() {
             this.pending = [];
             this.isPending = jasmine.createSpy('isPending');
@@ -497,7 +504,8 @@ function mockUpdateRefs() {
 }
 
 function mockSparqlManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('sparqlManagerService', function($q) {
             this.data = undefined;
             this.bindings = [];
@@ -535,7 +543,8 @@ function mockSettingsManager() {
 }
 
 function mockOntologyState() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('ontologyStateService', function($q) {
             this.recordIdToClose = 'recordIdToClose';
             this.annotationSelect = 'select';
@@ -767,7 +776,8 @@ function mockOntologyState() {
 }
 
 function mockOntologyUtilsManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('ontologyUtilsManagerService', function($q) {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
             this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
@@ -806,7 +816,8 @@ function mockOntologyUtilsManager() {
 }
 
 function mockPropertyManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('propertyManagerService', function($q) {
             this.defaultAnnotations = [];
             this.owlAnnotations = [];
@@ -831,7 +842,8 @@ function mockPropertyManager() {
 }
 
 function mockLoginManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('loginManagerService', function($q) {
             this.currentUser = '';
             this.login = jasmine.createSpy('login').and.returnValue($q.when());
@@ -843,7 +855,8 @@ function mockLoginManager() {
 }
 
 function mockUserManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('userManagerService', function($q) {
             this.users = [];
             this.groups = [];
@@ -893,7 +906,8 @@ function mockUserState() {
 }
 
 function mockCatalogManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('catalogManagerService', function($q) {
             this.coreRecordTypes = [];
             this.sortOptions = [];
@@ -975,13 +989,15 @@ function mockCatalogState() {
             this.recordSearchText = '';
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
+            this.reset = jasmine.createSpy('reset');
             this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });
 }
 
 function mockUtil() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('utilService', function($q) {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
@@ -995,6 +1011,7 @@ function mockUtil() {
             this.removePropertyId = jasmine.createSpy('removePropertyId');
             this.replacePropertyId = jasmine.createSpy('replacePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
+            this.removeDctermsValue = jasmine.createSpy('getDctermsValue');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.updateDctermsValue = jasmine.createSpy('updateDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');
@@ -1028,7 +1045,8 @@ function mockUtil() {
 }
 
 function mockDatasetManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('datasetManagerService', function($q) {
             this.datasetRecords = [];
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
@@ -1151,7 +1169,8 @@ function mockDiscoverState() {
 }
 
 function mockExplore() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
@@ -1166,7 +1185,8 @@ function mockExplore() {
 }
 
 function mockExploreUtils() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('exploreUtilsService', function($q) {
             this.getInputType = jasmine.createSpy('getInputType').and.returnValue('');
             this.getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
@@ -1187,7 +1207,8 @@ function mockExploreUtils() {
 }
 
 function mockSearch() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('searchService', function($q) {
             this.getPropertiesForDataset = jasmine.createSpy('getPropertiesForDataset').and.returnValue($q.when([]));
             this.createQueryString = jasmine.createSpy("createQueryString").and.returnValue('');
@@ -1203,7 +1224,8 @@ function mockSearch() {
 }
 
 function mockProvManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('provManagerService', function($q) {
             this.activityTypes = [];
             this.getActivities = jasmine.createSpy('getActivities').and.returnValue($q.when({}));
@@ -1212,7 +1234,8 @@ function mockProvManager() {
 }
 
 function mockMergeRequestManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mergeRequestManagerService', function($q) {
             this.getRequests = jasmine.createSpy('getRequests').and.returnValue($q.when([]));
             this.createRequest = jasmine.createSpy('createRequest').and.returnValue($q.when());
@@ -1229,7 +1252,8 @@ function mockMergeRequestManager() {
 }
 
 function mockMergeRequestsState() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mergeRequestsStateService', function($q) {
             this.selected = undefined;
             this.acceptedFilter = false;
@@ -1249,7 +1273,8 @@ function mockMergeRequestsState() {
 }
 
 function mockPolicyManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('policyManagerService', function($q) {
             this.actionCreate = 'create';
             this.actionRead = 'read';
@@ -1270,7 +1295,8 @@ function mockPolicyManager() {
 }
 
 function mockPolicyEnforcement() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('policyEnforcementService', function($q) {
             this.permit = 'Permit';
             this.deny = 'Deny';
@@ -1290,7 +1316,8 @@ function mockModal() {
 }
 
 function mockRecordPermissionsManager() {
-    module(function($provide) {
+    module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
         $provide.service('recordPermissionsManagerService', function($q) {
             this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
             this.updateRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when());

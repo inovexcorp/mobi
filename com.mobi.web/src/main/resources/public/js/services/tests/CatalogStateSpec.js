@@ -41,10 +41,30 @@ describe('Catalog State service', function() {
         prefixes = null;
     });
 
-    it('should initialize catalogs state', function() {
-        catalogManagerSvc.sortOptions = [{field: prefixes.dcterms + 'modified', asc: false}, {field: prefixes.dcterms + 'modified', asc: true}];
+    it('should initialize catalog state', function() {
+        spyOn(catalogStateSvc, 'initializeRecordSortOption');
         catalogStateSvc.initialize();
+        expect(catalogStateSvc.initializeRecordSortOption).toHaveBeenCalled();
+    });
+    it('should initialize the recordSortOption', function() {
+        catalogManagerSvc.sortOptions = [{field: prefixes.dcterms + 'modified', asc: false}, {field: prefixes.dcterms + 'modified', asc: true}];
+        catalogStateSvc.initializeRecordSortOption();
         expect(catalogStateSvc.recordSortOption).toEqual({field: prefixes.dcterms + 'modified', asc: false});
+    });
+    it('should reset the important state variables', function() {
+        spyOn(catalogStateSvc, 'initializeRecordSortOption');
+        catalogStateSvc.totalRecordSize = 10;
+        catalogStateSvc.currentRecordPage = 10;
+        catalogStateSvc.recordFilterType = 'test';
+        catalogStateSvc.recordSearchText = 'test';
+        catalogStateSvc.selectedRecord = {};
+        catalogStateSvc.reset();
+        expect(catalogStateSvc.totalRecordSize).toEqual(0);
+        expect(catalogStateSvc.currentRecordPage).toEqual(1);
+        expect(catalogStateSvc.initializeRecordSortOption).toHaveBeenCalled();
+        expect(catalogStateSvc.recordFilterType).toEqual('');
+        expect(catalogStateSvc.recordSearchText).toEqual('');
+        expect(catalogStateSvc.selectedRecord).toBeUndefined();
     });
     describe('should retrieve the icon class for a record', function() {
         it('if the record is an OntologyRecord', function() {
