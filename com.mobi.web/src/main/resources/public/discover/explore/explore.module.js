@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
-
-    angular
-        .module('explore', []);
-})();
+// (function() {
+//     'use strict';
+//
+//     angular
+//         .module('explore', []);
+// })();
