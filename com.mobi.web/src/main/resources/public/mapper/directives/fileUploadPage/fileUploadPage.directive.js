@@ -34,7 +34,6 @@
          * {@link previewDataGrid.directive:previewDataGrid previewing} delimited data.
          */
         .module('fileUploadPage', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name fileUploadPage.directive:fileUploadPage

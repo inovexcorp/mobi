@@ -34,7 +34,6 @@
          * those variables.
          */
         .module('datasetState', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name datasetState.service:datasetStateService

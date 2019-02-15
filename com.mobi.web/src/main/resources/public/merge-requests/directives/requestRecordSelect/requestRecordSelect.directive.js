@@ -33,7 +33,6 @@
          * which creates a form for selecting the VersionedRDFRecord of a new MergeRequest.
          */
         .module('requestRecordSelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name requestRecordSelect.directive:requestRecordSelect

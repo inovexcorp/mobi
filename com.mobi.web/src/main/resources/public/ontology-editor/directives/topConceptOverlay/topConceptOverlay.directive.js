@@ -33,7 +33,6 @@
          * content for a modal to add a top concept to a concept scheme.
          */
         .module('topConceptOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name topConceptOverlay.directive:topConceptOverlay

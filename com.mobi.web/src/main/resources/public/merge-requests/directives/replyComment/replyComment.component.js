@@ -33,7 +33,6 @@
          * to comments on a Merge Request.
          */
         .module('replyComment', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name replyComment.component:replyComment

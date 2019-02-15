@@ -33,7 +33,6 @@
          * {@link classSelect.directive:classSelect} for super classes.
          */
         .module('superClassSelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name superClassSelect.directive:superClassSelect

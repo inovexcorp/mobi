@@ -33,7 +33,6 @@
          * with a list of saved mappings in the repository.
          */
         .module('mappingListBlock', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mappingListBlock.directive:mappingListBlock

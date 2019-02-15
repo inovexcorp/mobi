@@ -34,7 +34,6 @@
          * to update those variables.
          */
         .module('mergeRequestsState', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name mergeRequestsState.service:mergeRequestsStateService

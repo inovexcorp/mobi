@@ -34,7 +34,6 @@
          * utility functions to update those variables.
          */
         .module('mapperState', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name mapperState.service:mapperStateService

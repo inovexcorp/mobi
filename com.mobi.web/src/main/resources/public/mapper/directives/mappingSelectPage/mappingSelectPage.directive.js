@@ -33,7 +33,6 @@
          * `row` with {@link block.directive:block blocks} for editing the selecting and previewing a mapping.
          */
         .module('mappingSelectPage', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mappingSelectPage.directive:mappingSelectPage

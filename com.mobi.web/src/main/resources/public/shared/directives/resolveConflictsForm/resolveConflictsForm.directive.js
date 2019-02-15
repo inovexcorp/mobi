@@ -25,7 +25,6 @@
 
     angular
         .module('resolveConflictsForm', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .directive('resolveConflictsForm', resolveConflictsForm);
 
         resolveConflictsForm.$inject = ['utilService'];

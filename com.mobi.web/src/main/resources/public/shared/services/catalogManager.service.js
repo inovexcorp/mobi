@@ -34,7 +34,6 @@
          * results of those endpoints
          */
         .module('catalogManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name catalogManager.service:catalogManagerService

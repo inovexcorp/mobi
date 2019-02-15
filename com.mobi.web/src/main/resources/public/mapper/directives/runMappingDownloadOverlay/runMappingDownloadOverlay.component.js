@@ -33,7 +33,6 @@
          * content for a modal to download the results of a mapping.
          */
         .module('runMappingDownloadOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name runMappingDownloadOverlay.component:runMappingDownloadOverlay

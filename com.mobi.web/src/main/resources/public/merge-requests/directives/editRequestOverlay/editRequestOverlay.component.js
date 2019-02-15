@@ -33,7 +33,6 @@
          * for a modal to edit a merge request.
          */
         .module('editRequestOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name editRequestOverlay.component:editRequestOverlay

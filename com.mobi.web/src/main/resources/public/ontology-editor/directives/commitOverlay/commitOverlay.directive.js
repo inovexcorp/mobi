@@ -33,7 +33,6 @@
          * for a modal to commit changes to an ontology.
          */
         .module('commitOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitOverlay.directive:commitOverlay

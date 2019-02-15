@@ -33,7 +33,6 @@
          * classes in the imports closure of an ontology.
          */
         .module('ontologyClassSelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name ontologyClassSelect.directive:ontologyClassSelect

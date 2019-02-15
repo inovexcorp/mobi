@@ -30,7 +30,6 @@
          *
          */
         .module('statementDisplay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name statementDisplay.directive:statementDisplay

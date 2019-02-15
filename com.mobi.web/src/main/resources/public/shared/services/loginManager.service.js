@@ -34,7 +34,6 @@
          * provides utilities to log into and log out of Mobi.
          */
         .module('loginManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name loginManager.service:loginManagerService

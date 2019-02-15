@@ -33,7 +33,6 @@
          * which creates the main div containing the Merge Requests page.
          */
         .module('createRequest', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name createRequest.directive:createRequest

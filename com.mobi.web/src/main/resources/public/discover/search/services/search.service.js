@@ -33,7 +33,6 @@
          * methods for the creating and submitting search queries.
          */
         .module('search', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name search.service:searchService

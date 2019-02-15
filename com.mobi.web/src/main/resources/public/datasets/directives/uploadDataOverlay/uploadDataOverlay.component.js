@@ -33,7 +33,6 @@
          * modal to upload data in a file into a Dataset.
          */
         .module('uploadDataOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name uploadDataOverlay.component:uploadDataOverlay

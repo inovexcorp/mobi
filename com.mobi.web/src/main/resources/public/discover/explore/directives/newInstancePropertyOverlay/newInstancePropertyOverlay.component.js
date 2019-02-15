@@ -33,7 +33,6 @@
          * creates content for a modal to add a property to an instance.
          */
         .module('newInstancePropertyOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name newInstancePropertyOverlay.component:newInstancePropertyOverlay

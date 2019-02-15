@@ -33,7 +33,6 @@
          * content for a modal with information about a particular commit.
          */
         .module('commitInfoOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitInfoOverlay.directive:commitInfoOverlay

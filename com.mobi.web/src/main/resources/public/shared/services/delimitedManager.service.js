@@ -34,7 +34,6 @@
          * pertaining to the results of these endpoints.
          */
         .module('delimitedManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name delimitedManager.service:delimitedManagerService

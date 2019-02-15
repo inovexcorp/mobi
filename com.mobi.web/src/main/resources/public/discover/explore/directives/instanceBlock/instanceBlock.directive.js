@@ -34,7 +34,6 @@
          * class.
          */
         .module('instanceBlock', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceBlock.directive:instanceBlock

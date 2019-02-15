@@ -33,7 +33,6 @@
          * modal to create or edit a PropertyMapping.
          */
         .module('propMappingOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name propMappingOverlay.component:propMappingOverlay

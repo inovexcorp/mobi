@@ -34,7 +34,6 @@
          * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('mappingCommitsPage', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mappingCommitsPage.directive:mappingCommitsPage

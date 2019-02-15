@@ -33,7 +33,6 @@
          * different sections for editing the current {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('editMappingForm', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name editMappingForm.directive:editMappingForm

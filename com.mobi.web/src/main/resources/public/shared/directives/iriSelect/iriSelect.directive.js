@@ -34,7 +34,6 @@
          * IRI.
          */
         .module('iriSelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name iriSelect.directive:iriSelect

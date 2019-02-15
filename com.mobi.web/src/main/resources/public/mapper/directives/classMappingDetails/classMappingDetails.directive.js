@@ -33,7 +33,6 @@
          * a number of different tools to view and edit information about a class mapping.
          */
         .module('classMappingDetails', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name classMappingDetails.directive:classMappingDetails

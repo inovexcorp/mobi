@@ -33,7 +33,6 @@
          * merging two branches of an ontology together.
          */
         .module('mergeBlock', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mergeBlock.directive:mergeBlock

@@ -25,7 +25,6 @@
 
     angular
         .module('selectedDetails', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .directive('selectedDetails', selectedDetails);
 
         selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'manchesterConverterService', 'modalService'];

@@ -33,7 +33,6 @@
          * display for resolving conflicts between two branches of an ontology being merged together.
          */
         .module('resolveConflictsBlock', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name resolveConflictsBlock.directive:resolveConflictsBlock

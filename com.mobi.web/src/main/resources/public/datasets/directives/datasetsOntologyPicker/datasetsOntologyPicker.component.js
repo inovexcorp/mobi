@@ -132,6 +132,5 @@
          * paged list for selecting ontologies.
          */
         .module('datasetsOntologyPicker', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .component('datasetsOntologyPicker', datasetsOntologyPickerComponent);
 })();

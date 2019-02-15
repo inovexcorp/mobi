@@ -33,7 +33,6 @@
          * a table of commits and optionally a graph of the commit network.
          */
         .module('commitHistoryTable', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitHistoryTable.directive:commitHistoryTable

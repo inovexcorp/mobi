@@ -34,7 +34,6 @@
          * {@link userManager.service:userManagerService#users users list}.
          */
         .module('usersPage', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name usersPage.directive:usersPage

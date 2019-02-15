@@ -33,7 +33,6 @@
          * the super property select.
          */
         .module('superPropertySelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name superPropertySelect.directive:superPropertySelect

@@ -33,7 +33,6 @@
          * {@link block.directive:block} with a display of a selected MergeRequest.
          */
         .module('mergeRequestView', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name mergeRequestView.directive:mergeRequestView

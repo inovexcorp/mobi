@@ -33,7 +33,6 @@
          * the saved changes (aka inProgressCommit) of an ontology.
          */
         .module('savedChangesTab', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name savedChangesTab.directive:savedChangesTab

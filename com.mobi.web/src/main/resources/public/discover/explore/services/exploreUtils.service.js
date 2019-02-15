@@ -33,7 +33,6 @@
          * functions for the explore sub module.
          */
         .module('exploreUtils', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService

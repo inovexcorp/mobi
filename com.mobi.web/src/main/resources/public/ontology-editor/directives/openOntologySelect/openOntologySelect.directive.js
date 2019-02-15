@@ -33,7 +33,6 @@
          * to open the current ontology at.
          */
         .module('openOntologySelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name openOntologySelect.component:openOntologySelect

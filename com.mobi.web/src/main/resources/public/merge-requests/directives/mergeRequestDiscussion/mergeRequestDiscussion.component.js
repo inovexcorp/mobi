@@ -34,7 +34,6 @@
          * difference of a Merge Request.
          */
         .module('mergeRequestDiscussion', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name mergeRequestDiscussion.component:mergeRequestDiscussion

@@ -33,7 +33,6 @@
          * an axiom on an entity.
          */
         .module('axiomOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name axiomOverlay.directive:axiomOverlay

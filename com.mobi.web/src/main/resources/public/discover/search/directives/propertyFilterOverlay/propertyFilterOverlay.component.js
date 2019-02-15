@@ -33,7 +33,6 @@
          * for a modal to create a property filter for a faceted search.
          */
         .module('propertyFilterOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name propertyFilterOverlay.component:propertyFilterOverlay

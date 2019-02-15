@@ -33,7 +33,6 @@
          * provides utility functions for converting blank nodes into Manchester Syntax and vice versa.
          */
         .module('manchesterConverter', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name manchesterConverter.service:manchesterConverterService

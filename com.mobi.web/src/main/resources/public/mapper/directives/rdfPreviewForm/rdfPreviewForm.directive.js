@@ -35,7 +35,6 @@
          * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('rdfPreviewForm', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name rdfPreviewForm.directive:rdfPreviewForm

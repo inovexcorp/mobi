@@ -33,7 +33,6 @@
          * the imports of an ontology.
          */
         .module('importsBlock', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name importsBlock.directive:importsBlock

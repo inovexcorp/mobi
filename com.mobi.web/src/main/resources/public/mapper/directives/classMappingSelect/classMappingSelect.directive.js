@@ -33,7 +33,6 @@
          * a `ui-select` with a list of ClassMappings.
          */
         .module('classMappingSelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name classMappingSelect.directive:classMappingSelect

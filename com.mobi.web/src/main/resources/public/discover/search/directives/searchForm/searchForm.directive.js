@@ -33,7 +33,6 @@
          * the search form within the Search page.
          */
         .module('searchForm', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name searchForm.directive:searchForm

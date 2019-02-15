@@ -33,7 +33,6 @@
          * a display of all the changes from a commit separated by subject.
          */
         .module('commitChangesDisplay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitChangesDisplay.directive:commitChangesDisplay

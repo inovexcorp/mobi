@@ -33,7 +33,6 @@
          * commit history of an ontology.
          */
         .module('commitsTab', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name commitsTab.directive:commitsTab

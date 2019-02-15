@@ -25,7 +25,6 @@
 
     angular
         .module('propertyManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .service('propertyManagerService', propertyManagerService);
 
         propertyManagerService.$inject = ['prefixes'];

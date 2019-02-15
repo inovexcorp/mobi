@@ -33,7 +33,6 @@
          * row containing a block for displaying the paginated list of Dataset Records.
          */
         .module('datasetsList', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name datasetsList.directive:datasetsList

@@ -33,7 +33,6 @@
          * content for a modal to add an object property to an individual.
          */
         .module('objectPropertyOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name objectPropertyOverlay.directive:objectPropertyOverlay

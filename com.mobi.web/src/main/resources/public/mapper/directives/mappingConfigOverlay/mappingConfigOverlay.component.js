@@ -302,6 +302,5 @@
          * for a modal to edit the configuration of a mapping.
          */
         .module('mappingConfigOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .component('mappingConfigOverlay', mappingConfigOverlayComponent);
 })();

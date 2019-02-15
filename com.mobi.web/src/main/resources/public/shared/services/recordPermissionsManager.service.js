@@ -33,7 +33,6 @@
          * provides access to the Mobi record-permissions REST endpoints to get and update record permissions.
          */
         .module('recordPermissionsManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name recordPermissionsManager.service:recordPermissionsManagerService

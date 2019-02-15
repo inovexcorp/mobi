@@ -33,7 +33,6 @@
          * axioms on an entity.
          */
         .module('axiomBlock', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name axiomBlock.directive:axiomBlock
