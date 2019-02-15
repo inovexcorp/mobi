@@ -45,7 +45,7 @@
         templateUrl: 'components/commitCompiledResource/commitCompiledResource.html',
         bindings: {
             commitId: '<',
-            entityId: '<?',
+            entityId: '<?'
         },
         controllerAs: 'dvm',
         controller: commitCompiledResourceComponentCtrl

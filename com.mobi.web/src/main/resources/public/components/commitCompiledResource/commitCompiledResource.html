@@ -28,14 +28,14 @@
             <div class="prop-value-container" ng-repeat="item in value">
                 <span class="value-display-wrapper" ng-class="{'text-success': item.add, 'text-danger': item.del}">
                     <div class="prop-header d-flex align-items-center clearfix">
-                        <tt class="px-1" ng-if="item.add">++</tt>
-                        <tt class="px-1" ng-if="item.del">--</tt>
+                        <tt class="text-monospace px-1" ng-if="item.add">++</tt>
+                        <tt class="text-monospace px-1" ng-if="item.del">--</tt>
                         <p class="text text-truncate m-0" title="{{key}}" ng-class="{'text-success': item.add, 'text-danger': item.del}"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | trusted"></span></p>
                         <small class="ml-1 text-muted text-truncate flex-1" ng-class="{'text-success': item.add, 'text-danger': item.del}">&lt;<span ng-bind-html="key | trusted"></span>&gt;</small>
                     </div>
                     <div class="value-signs">
-                        <span class="even-text px-1" ng-if="item.add">++</span>
-                        <span class="even-text px-1" ng-if="item.del">--</span>
+                        <span class="text-monospace px-1" ng-if="item.add">++</span>
+                        <span class="text-monospace px-1" ng-if="item.del">--</span>
                     </div>
                     <div class="value-display px-5">
                         <span ng-if="::dvm.ontoUtils.isLinkable(item['@id'])" class="value-display"><span ng-bind-html="dvm.ontoUtils.getLabelForIRI(item['@id']) | trusted"></span> <small>&lt;<a ng-click="dvm.os.goTo(item['@id'])" ng-bind-html="item['@id'] | trusted"></a>&gt;</small></span>

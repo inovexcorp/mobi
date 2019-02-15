@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Commit Compiled Resource component', function() {
+describe('Commit Compiled Resource component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
