@@ -33,9 +33,7 @@
          * the filter selector.
          */
         .module('filterSelector', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name filterSelector.directive:filterSelector

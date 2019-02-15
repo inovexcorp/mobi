@@ -33,9 +33,7 @@
          * modal to edit the IRI template of a class mapping.
          */
         .module('iriTemplateOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name iriTemplateOverlay.component:iriTemplateOverlay

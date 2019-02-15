@@ -33,9 +33,7 @@
          * modal to create or edit a PropertyMapping.
          */
         .module('propMappingOverlay', [])
-        .config(['$qProvider', function($qProvider) {
-            $qProvider.errorOnUnhandledRejections(false);
-        }])
+        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name propMappingOverlay.component:propMappingOverlay
