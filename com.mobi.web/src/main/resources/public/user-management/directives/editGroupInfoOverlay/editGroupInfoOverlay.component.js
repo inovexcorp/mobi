@@ -57,7 +57,7 @@
             },
             controllerAs: 'dvm',
             controller: ['userStateService', 'userManagerService', 'utilService', EditGroupInfoOverlayController],
-            templateUrl: 'modules/user-management/directives/editGroupInfoOverlay/editGroupInfoOverlay.component.html'
+            templateUrl: 'user-management/directives/editGroupInfoOverlay/editGroupInfoOverlay.component.html'
         });
 
     function EditGroupInfoOverlayController(userStateService, userManagerService, utilService) {

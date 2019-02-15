@@ -32,7 +32,7 @@
      * {@link home.component:activityCard list of activities} within the Mobi instance.
      */
     const homePageComponent = {
-        templateUrl: 'modules/home/components/homePage/homePage.component.html',
+        templateUrl: 'home/components/homePage/homePage.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: homePageComponentCtrl

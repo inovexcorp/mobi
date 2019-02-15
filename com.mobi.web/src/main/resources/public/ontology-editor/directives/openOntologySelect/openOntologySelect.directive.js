@@ -63,7 +63,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$scope', '$q', '$timeout', 'catalogManagerService', 'ontologyStateService', 'prefixes', 'ontologyManagerService', 'utilService', 'modalService', OpenOntologySelectController],
-            templateUrl: 'modules/ontology-editor/directives/openOntologySelect/openOntologySelect.directive.html'
+            templateUrl: 'ontology-editor/directives/openOntologySelect/openOntologySelect.directive.html'
         });
 
         function OpenOntologySelectController($scope, $q, $timeout, catalogManagerService, ontologyStateService, prefixes, ontologyManagerService, utilService, modalService) {

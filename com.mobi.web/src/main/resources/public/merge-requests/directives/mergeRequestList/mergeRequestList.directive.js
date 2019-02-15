@@ -54,7 +54,7 @@
         function mergeRequestList(mergeRequestsStateService, modalService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/merge-requests/directives/mergeRequestList/mergeRequestList.directive.html',
+                templateUrl: 'merge-requests/directives/mergeRequestList/mergeRequestList.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

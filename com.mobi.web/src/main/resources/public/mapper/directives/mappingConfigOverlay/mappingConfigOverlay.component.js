@@ -53,7 +53,7 @@
         },
         controllerAs: 'dvm',
         controller: mappingConfigOverlayComponentCtrl,
-        templateUrl: 'modules/mapper/directives/mappingConfigOverlay/mappingConfigOverlay.component.html'
+        templateUrl: 'mapper/directives/mappingConfigOverlay/mappingConfigOverlay.component.html'
     };
 
     mappingConfigOverlayComponentCtrl.$inject = ['$q', 'httpService', 'utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'catalogManagerService', 'prefixes'];

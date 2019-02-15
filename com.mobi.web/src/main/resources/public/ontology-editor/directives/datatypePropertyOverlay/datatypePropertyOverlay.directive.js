@@ -63,7 +63,7 @@
         function datatypePropertyOverlay(ontologyStateService, utilService, prefixes, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/datatypePropertyOverlay/datatypePropertyOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/datatypePropertyOverlay/datatypePropertyOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

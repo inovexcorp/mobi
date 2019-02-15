@@ -36,7 +36,7 @@
      * in the {@link ontologyTab.directive:ontologyTab}.
      */
     const searchTabComponent = {
-        templateUrl: 'modules/ontology-editor/directives/searchTab/searchTab.component.html',
+        templateUrl: 'ontology-editor/directives/searchTab/searchTab.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: searchTabComponentCtrl

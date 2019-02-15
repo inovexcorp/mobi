@@ -66,7 +66,7 @@
         function axiomOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, propertyManagerService, $filter) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/axiomOverlay/axiomOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/axiomOverlay/axiomOverlay.directive.html',
                 scope: {
                     resolve: '<',
                     dismiss: '&',

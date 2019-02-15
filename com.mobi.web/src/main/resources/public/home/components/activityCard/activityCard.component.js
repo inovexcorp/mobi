@@ -36,7 +36,7 @@
      * {@link home.component:activityTitle activityTitles}.
      */
     const activityCardComponent = {
-        templateUrl: 'modules/home/components/activityCard/activityCard.component.html',
+        templateUrl: 'home/components/activityCard/activityCard.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: activityCardComponentCtrl

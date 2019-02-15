@@ -58,7 +58,7 @@
     function createRequest(mergeRequestManagerService, mergeRequestsStateService, utilService) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/createRequest/createRequest.directive.html',
+            templateUrl: 'merge-requests/directives/createRequest/createRequest.directive.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',

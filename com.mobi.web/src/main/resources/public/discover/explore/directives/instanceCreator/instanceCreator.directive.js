@@ -59,7 +59,7 @@
         function instanceCreator($q, discoverStateService, utilService, exploreService, exploreUtilsService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCreator/instanceCreator.directive.html',
+                templateUrl: 'discover/explore/directives/instanceCreator/instanceCreator.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

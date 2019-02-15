@@ -58,7 +58,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$q', 'mergeRequestManagerService', 'utilService', MergeRequestDiscussionController],
-            templateUrl: 'modules/merge-requests/directives/mergeRequestDiscussion/mergeRequestDiscussion.component.html',
+            templateUrl: 'merge-requests/directives/mergeRequestDiscussion/mergeRequestDiscussion.component.html',
         });
 
     function MergeRequestDiscussionController($q, mergeRequestManagerService, utilService) {

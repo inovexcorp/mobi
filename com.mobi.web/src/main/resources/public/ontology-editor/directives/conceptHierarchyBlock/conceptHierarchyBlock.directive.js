@@ -54,7 +54,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/conceptHierarchyBlock/conceptHierarchyBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/conceptHierarchyBlock/conceptHierarchyBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

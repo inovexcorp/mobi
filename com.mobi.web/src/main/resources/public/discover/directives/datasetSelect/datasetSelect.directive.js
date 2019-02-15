@@ -55,7 +55,7 @@
         function datasetSelect(utilService, datasetManagerService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/directives/datasetSelect/datasetSelect.directive.html',
+                templateUrl: 'discover/directives/datasetSelect/datasetSelect.directive.html',
                 replace: true,
                 scope: {
                     onSelect: '&?'

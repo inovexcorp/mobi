@@ -62,7 +62,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$timeout', 'utilService', 'exploreUtilsService', NewInstancePropertyOverlayController],
-            templateUrl: 'modules/discover/sub-modules/explore/directives/newInstancePropertyOverlay/newInstancePropertyOverlay.component.html'
+            templateUrl: 'discover/explore/directives/newInstancePropertyOverlay/newInstancePropertyOverlay.component.html'
         });
 
         function NewInstancePropertyOverlayController($timeout, utilService, exploreUtilsService) {

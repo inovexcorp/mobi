@@ -55,7 +55,7 @@
             },
             controllerAs: 'dvm',
             controller: ['userStateService', 'userManagerService', ResetPasswordOverlayController],
-            templateUrl: 'modules/user-management/directives/resetPasswordOverlay/resetPasswordOverlay.component.html'
+            templateUrl: 'user-management/directives/resetPasswordOverlay/resetPasswordOverlay.component.html'
         });
 
     function ResetPasswordOverlayController(userStateService, userManagerService) {

@@ -110,7 +110,7 @@
                     dvm.state.selectedGroup = group;
                 }
             }],
-            templateUrl: 'modules/user-management/directives/usersPage/usersPage.directive.html'
+            templateUrl: 'user-management/directives/usersPage/usersPage.directive.html'
         };
     }
 })();

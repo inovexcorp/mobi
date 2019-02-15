@@ -51,7 +51,7 @@
         function sparqlResultTable() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/directives/sparqlResultTable/sparqlResultTable.directive.html',
+                templateUrl: 'discover/directives/sparqlResultTable/sparqlResultTable.directive.html',
                 replace: true,
                 scope: {
                     bindings: '<',

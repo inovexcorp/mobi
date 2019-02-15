@@ -63,7 +63,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/mapper/directives/mappingSelectPage/mappingSelectPage.directive.html',
+                templateUrl: 'mapper/directives/mappingSelectPage/mappingSelectPage.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

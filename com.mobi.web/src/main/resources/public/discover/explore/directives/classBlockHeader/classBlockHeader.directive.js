@@ -58,7 +58,7 @@
         function classBlockHeader(discoverStateService, exploreService, exploreUtilsService, utilService, modalService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/classBlockHeader/classBlockHeader.directive.html',
+                templateUrl: 'discover/explore/directives/classBlockHeader/classBlockHeader.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

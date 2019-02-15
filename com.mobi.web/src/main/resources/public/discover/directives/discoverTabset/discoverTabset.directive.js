@@ -50,7 +50,7 @@
     function discoverTabset(discoverStateService) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/discover/directives/discoverTabset/discoverTabset.directive.html',
+            templateUrl: 'discover/directives/discoverTabset/discoverTabset.directive.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',

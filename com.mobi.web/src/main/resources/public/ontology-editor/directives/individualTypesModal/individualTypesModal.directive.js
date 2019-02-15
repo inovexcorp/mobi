@@ -58,7 +58,7 @@
         function individualTypesModal($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/individualTypesModal/individualTypesModal.directive.html',
+                templateUrl: 'ontology-editor/directives/individualTypesModal/individualTypesModal.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

@@ -59,7 +59,7 @@
         function instanceCards($q, discoverStateService, exploreService, exploreUtilsService, utilService, modalService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCards/instanceCards.directive.html',
+                templateUrl: 'discover/explore/directives/instanceCards/instanceCards.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

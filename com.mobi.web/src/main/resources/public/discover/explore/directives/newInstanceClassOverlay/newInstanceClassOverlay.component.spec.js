@@ -37,7 +37,7 @@ describe('New Instance Class Overlay component', function() {
             });
         });
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$q_, _discoverStateService_, _exploreService_, _utilService_, _splitIRIFilter_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;

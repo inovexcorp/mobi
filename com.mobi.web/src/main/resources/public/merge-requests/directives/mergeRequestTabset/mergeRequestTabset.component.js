@@ -53,7 +53,7 @@
             },
             controllerAs: 'dvm',
             controller: MergeRequestTabsetController,
-            templateUrl: 'modules/merge-requests/directives/mergeRequestTabset/mergeRequestTabset.component.html',
+            templateUrl: 'merge-requests/directives/mergeRequestTabset/mergeRequestTabset.component.html',
         });
 
     function MergeRequestTabsetController() {

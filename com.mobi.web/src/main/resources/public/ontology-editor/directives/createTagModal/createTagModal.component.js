@@ -55,7 +55,7 @@
             },
             controllerAs: 'dvm',
             controller: CreateTagModalCtrl,
-            templateUrl: 'modules/ontology-editor/directives/createTagModal/createTagModal.component.html',
+            templateUrl: 'ontology-editor/directives/createTagModal/createTagModal.component.html',
         });
 
     CreateTagModalCtrl.$inject = ['$q', '$filter', 'REGEX', 'catalogManagerService', 'ontologyStateService'];

@@ -61,7 +61,7 @@
         function objectPropertyOverlay(ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/objectPropertyOverlay/objectPropertyOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/objectPropertyOverlay/objectPropertyOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

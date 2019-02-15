@@ -61,7 +61,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/importsBlock/importsBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/importsBlock/importsBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {

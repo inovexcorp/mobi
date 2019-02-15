@@ -54,7 +54,7 @@
      * This function should update the `selectedOntologies` binding.
      */
     const datasetsOntologyPickerComponent = {
-        templateUrl: 'modules/datasets/directives/datasetsOntologyPicker/datasetsOntologyPicker.component.html',
+        templateUrl: 'datasets/directives/datasetsOntologyPicker/datasetsOntologyPicker.component.html',
         bindings: {
             selectedOntologies: '<',
             selectOntology: '&',

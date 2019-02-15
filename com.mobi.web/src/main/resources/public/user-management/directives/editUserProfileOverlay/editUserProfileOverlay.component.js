@@ -58,7 +58,7 @@
             },
             controllerAs: 'dvm',
             controller: ['userStateService', 'userManagerService', 'prefixes', EditUserProfileOverlayController],
-            templateUrl: 'modules/user-management/directives/editUserProfileOverlay/editUserProfileOverlay.component.html'
+            templateUrl: 'user-management/directives/editUserProfileOverlay/editUserProfileOverlay.component.html'
         });
 
     function EditUserProfileOverlayController(userStateService, userManagerService, prefixes) {

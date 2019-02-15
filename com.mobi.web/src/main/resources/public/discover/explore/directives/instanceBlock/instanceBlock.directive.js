@@ -61,7 +61,7 @@
         function instanceBlock($filter, discoverStateService, exploreService, utilService, uuid) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlock/instanceBlock.directive.html',
+                templateUrl: 'discover/explore/directives/instanceBlock/instanceBlock.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

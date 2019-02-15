@@ -34,7 +34,7 @@
      * {@link settings.component:customPreference customPreference}.
      */
     const preferencesTabComponent = {
-        templateUrl: 'modules/settings/components/preferencesTab/preferencesTab.component.html',
+        templateUrl: 'settings/components/preferencesTab/preferencesTab.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: preferencesTabComponentCtrl

@@ -43,7 +43,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const editDatasetOverlayComponent = {
-        templateUrl: 'modules/datasets/directives/editDatasetOverlay/editDatasetOverlay.component.html',
+        templateUrl: 'datasets/directives/editDatasetOverlay/editDatasetOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'

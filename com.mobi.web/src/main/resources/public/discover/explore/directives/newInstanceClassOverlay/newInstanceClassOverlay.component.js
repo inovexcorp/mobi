@@ -66,7 +66,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$timeout', '$filter', 'uuid', 'discoverStateService', 'exploreService', 'utilService', NewInstanceClassOverlayController],
-            templateUrl: 'modules/discover/sub-modules/explore/directives/newInstanceClassOverlay/newInstanceClassOverlay.component.html'
+            templateUrl: 'discover/explore/directives/newInstanceClassOverlay/newInstanceClassOverlay.component.html'
         });
 
         function NewInstanceClassOverlayController($timeout, $filter, uuid, discoverStateService, exploreService, utilService) {

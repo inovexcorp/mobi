@@ -40,7 +40,7 @@
      * method will return a Promise.
      */
     const recordMarkdownComponent = {
-        templateUrl: 'modules/catalog/components/recordMarkdown/recordMarkdown.component.html',
+        templateUrl: 'catalog/components/recordMarkdown/recordMarkdown.component.html',
         bindings: {
             record: '<',
             canEdit: '<',

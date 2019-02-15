@@ -62,7 +62,7 @@
         function editBranchOverlay(catalogManagerService, ontologyStateService, prefixes, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/editBranchOverlay/editBranchOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/editBranchOverlay/editBranchOverlay.directive.html',
                 scope: {
                     resolve: '<',
                     close: '&',

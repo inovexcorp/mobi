@@ -60,7 +60,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/datatypePropertyAxioms/datatypePropertyAxioms.directive.html',
+                templateUrl: 'ontology-editor/directives/datatypePropertyAxioms/datatypePropertyAxioms.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

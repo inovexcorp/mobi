@@ -62,7 +62,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/staticIri/staticIri.directive.html',
+                templateUrl: 'ontology-editor/directives/staticIri/staticIri.directive.html',
                 scope: {
                     onEdit: '&'
                 },

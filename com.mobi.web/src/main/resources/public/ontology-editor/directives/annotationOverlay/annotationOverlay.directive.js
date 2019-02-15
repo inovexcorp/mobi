@@ -63,7 +63,7 @@
         function annotationOverlay(propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/annotationOverlay/annotationOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/annotationOverlay/annotationOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

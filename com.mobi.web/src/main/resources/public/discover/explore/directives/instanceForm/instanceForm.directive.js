@@ -65,7 +65,7 @@
         function instanceForm($q, $filter, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceForm/instanceForm.directive.html',
+                templateUrl: 'discover/explore/directives/instanceForm/instanceForm.directive.html',
                 replace: true,
                 scope: {
                     header: '<'

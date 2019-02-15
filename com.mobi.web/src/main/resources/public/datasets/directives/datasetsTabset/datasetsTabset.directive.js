@@ -58,7 +58,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/datasets/directives/datasetsTabset/datasetsTabset.directive.html',
+                templateUrl: 'datasets/directives/datasetsTabset/datasetsTabset.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

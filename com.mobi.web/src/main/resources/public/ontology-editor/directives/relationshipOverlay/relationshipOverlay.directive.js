@@ -64,7 +64,7 @@
         function relationshipOverlay(ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, propertyManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/relationshipOverlay/relationshipOverlay.directive.html',
                 scope: {
                     resolve: '<',
                     close: '&',

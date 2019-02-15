@@ -61,7 +61,7 @@
             },
             controllerAs: 'dvm',
             controller: ['mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService', RunMappingDatasetOverlayController],
-            templateUrl: 'modules/mapper/directives/runMappingDatasetOverlay/runMappingDatasetOverlay.component.html'
+            templateUrl: 'mapper/directives/runMappingDatasetOverlay/runMappingDatasetOverlay.component.html'
         });
 
         function RunMappingDatasetOverlayController(mapperStateService, delimitedManagerService, datasetManagerService, utilService) {

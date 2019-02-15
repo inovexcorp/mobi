@@ -33,7 +33,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/propertyValues/propertyValues.directive.html',
+                templateUrl: 'ontology-editor/directives/propertyValues/propertyValues.directive.html',
                 scope: {},
                 bindToController: {
                     property: '<',

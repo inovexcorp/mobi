@@ -33,7 +33,7 @@
      * {@link settings.component:preferencesTab preferencesTab}.
      */
     const settingsPageComponent = {
-        templateUrl: 'modules/settings/components/settingsPage/settingsPage.component.html',
+        templateUrl: 'settings/components/settingsPage/settingsPage.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: settingsPageComponentCtrl

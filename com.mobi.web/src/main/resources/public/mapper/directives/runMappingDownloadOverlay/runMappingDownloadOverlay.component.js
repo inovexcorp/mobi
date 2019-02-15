@@ -63,7 +63,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$filter', 'mapperStateService', 'delimitedManagerService', 'utilService', RunMappingDownloadOverlayController],
-            templateUrl: 'modules/mapper/directives/runMappingDownloadOverlay/runMappingDownloadOverlay.component.html'
+            templateUrl: 'mapper/directives/runMappingDownloadOverlay/runMappingDownloadOverlay.component.html'
         });
 
         function RunMappingDownloadOverlayController($filter, mapperStateService, delimitedManagerService, utilService) {

@@ -108,7 +108,7 @@
                     dvm.um.addUserGroup(member, dvm.state.selectedGroup.title).then(_.noop, dvm.util.createErrorToast);
                 }
             }],
-            templateUrl: 'modules/user-management/directives/groupsPage/groupsPage.directive.html'
+            templateUrl: 'user-management/directives/groupsPage/groupsPage.directive.html'
         };
     }
 })();

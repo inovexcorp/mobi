@@ -162,7 +162,7 @@
                     return _.sortBy(groups, 'title');
                 }
             }],
-            templateUrl: 'modules/user-management/directives/permissionsPage/permissionsPage.directive.html'
+            templateUrl: 'user-management/directives/permissionsPage/permissionsPage.directive.html'
         };
     }
 })();

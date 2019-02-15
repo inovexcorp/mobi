@@ -81,7 +81,7 @@
                         return clazz.ontologyId || $filter('splitIRI')(clazz.classObj['@id']).begin;
                     }
                 },
-                templateUrl: 'modules/mapper/directives/classSelect/classSelect.directive.html'
+                templateUrl: 'mapper/directives/classSelect/classSelect.directive.html'
             }
         }
 })();

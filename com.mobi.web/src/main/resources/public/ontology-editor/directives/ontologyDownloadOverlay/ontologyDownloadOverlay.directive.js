@@ -57,7 +57,7 @@
         function ontologyDownloadOverlay($q, $filter, REGEX, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/ontologyDownloadOverlay/ontologyDownloadOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

@@ -60,7 +60,7 @@
     function requestBranchSelect(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, utilService, prefixes) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/requestBranchSelect/requestBranchSelect.directive.html',
+            templateUrl: 'merge-requests/directives/requestBranchSelect/requestBranchSelect.directive.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',

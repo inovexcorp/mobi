@@ -99,7 +99,7 @@
                         dvm.error = errorMessage;
                     }
                 }],
-                templateUrl: 'modules/ontology-editor/directives/newOntologyOverlay/newOntologyOverlay.directive.html'
+                templateUrl: 'ontology-editor/directives/newOntologyOverlay/newOntologyOverlay.directive.html'
             }
         }
 })();

@@ -58,7 +58,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/uploadSnackbar/uploadSnackbar.directive.html',
+                templateUrl: 'ontology-editor/directives/uploadSnackbar/uploadSnackbar.directive.html',
                 scope: {},
                 bindToController: {
                     showSnackbar: '='

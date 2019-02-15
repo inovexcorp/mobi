@@ -54,7 +54,7 @@
             },
             controllerAs: 'dvm',
             controller: ['mappingManagerService', 'mapperStateService', DownloadMappingOverlayController],
-            templateUrl: 'modules/mapper/directives/downloadMappingOverlay/downloadMappingOverlay.component.html'
+            templateUrl: 'mapper/directives/downloadMappingOverlay/downloadMappingOverlay.component.html'
         });
 
         function DownloadMappingOverlayController(mappingManagerService, mapperStateService) {

@@ -35,7 +35,7 @@
      * @param {number} limit An optional number of characters to limit the description to (default is 200)
      */
     const limitDescriptionComponent = {
-        templateUrl: 'modules/catalog/components/limitDescription/limitDescription.component.html',
+        templateUrl: 'catalog/components/limitDescription/limitDescription.component.html',
         bindings: {
             description: '<',
             limit: '<?'

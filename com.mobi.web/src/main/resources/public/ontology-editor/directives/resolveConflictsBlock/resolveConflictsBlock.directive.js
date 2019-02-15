@@ -58,7 +58,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/resolveConflictsBlock/resolveConflictsBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/resolveConflictsBlock/resolveConflictsBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {

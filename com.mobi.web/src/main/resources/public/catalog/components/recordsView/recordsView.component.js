@@ -39,7 +39,7 @@
      * {@link catalogState.service:catalogStateService} when clicked.
      */
     const recordsViewComponent = {
-        templateUrl: 'modules/catalog/components/recordsView/recordsView.component.html',
+        templateUrl: 'catalog/components/recordsView/recordsView.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: recordsViewComponentCtrl

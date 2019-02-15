@@ -59,7 +59,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                 },
-                templateUrl: 'modules/mapper/directives/mappingTitle/mappingTitle.directive.html'
+                templateUrl: 'mapper/directives/mappingTitle/mappingTitle.directive.html'
             }
         }
 })();

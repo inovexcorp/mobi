@@ -156,7 +156,7 @@
                     dvm.getPolicy($scope.resolve.resource);
                     getRuleTitle();
                 }],
-                templateUrl: 'modules/ontology-editor/directives/recordAccessOverlay/recordAccessOverlay.directive.html'
+                templateUrl: 'ontology-editor/directives/recordAccessOverlay/recordAccessOverlay.directive.html'
             }
         }
 })();

@@ -58,7 +58,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$q', 'mergeRequestManagerService', 'userManagerService', 'loginManagerService', 'utilService', 'prefixes', 'modalService', 'showdown', CommentDisplayController],
-            templateUrl: 'modules/merge-requests/directives/commentDisplay/commentDisplay.component.html',
+            templateUrl: 'merge-requests/directives/commentDisplay/commentDisplay.component.html',
         });
 
     function CommentDisplayController($q, mergeRequestManagerService, userManagerService, loginManagerService, utilService, prefixes, modalService, showdown) {

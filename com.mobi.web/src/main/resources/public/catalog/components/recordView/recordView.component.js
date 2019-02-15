@@ -43,7 +43,7 @@
      * the Record to ensure that it still exists.
      */
     const recordViewComponent = {
-        templateUrl: 'modules/catalog/components/recordView/recordView.component.html',
+        templateUrl: 'catalog/components/recordView/recordView.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: recordViewComponentCtrl

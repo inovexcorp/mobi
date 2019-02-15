@@ -63,7 +63,7 @@
         function createConceptSchemeOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createConceptSchemeOverlay/createConceptSchemeOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/createConceptSchemeOverlay/createConceptSchemeOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

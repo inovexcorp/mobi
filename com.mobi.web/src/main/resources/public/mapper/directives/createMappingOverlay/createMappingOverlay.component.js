@@ -55,7 +55,7 @@
             },
             controllerAs: 'dvm',
             controller: ['mappingManagerService', 'mapperStateService', CreateMappingOverlayController],
-            templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.component.html'
+            templateUrl: 'mapper/directives/createMappingOverlay/createMappingOverlay.component.html'
         });
 
         function CreateMappingOverlayController(mappingManagerService, mapperStateService) {

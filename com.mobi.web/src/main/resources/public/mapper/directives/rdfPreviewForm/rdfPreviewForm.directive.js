@@ -99,7 +99,7 @@
 
                     setMode();
                 },
-                templateUrl: 'modules/mapper/directives/rdfPreviewForm/rdfPreviewForm.directive.html'
+                templateUrl: 'mapper/directives/rdfPreviewForm/rdfPreviewForm.directive.html'
             }
         }
 })();

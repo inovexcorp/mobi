@@ -50,7 +50,7 @@
         function discoverSearchTab(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/search/directives/discoverSearchTab/discoverSearchTab.directive.html',
+                templateUrl: 'discover/search/directives/discoverSearchTab/discoverSearchTab.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

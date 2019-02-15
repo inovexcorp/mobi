@@ -51,7 +51,7 @@
         function classBlock(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/classBlock/classBlock.directive.html',
+                templateUrl: 'discover/explore/directives/classBlock/classBlock.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

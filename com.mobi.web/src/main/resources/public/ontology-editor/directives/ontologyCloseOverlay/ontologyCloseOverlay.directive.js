@@ -56,7 +56,7 @@
         function ontologyCloseOverlay($q, ontologyStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/ontologyCloseOverlay/ontologyCloseOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/ontologyCloseOverlay/ontologyCloseOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

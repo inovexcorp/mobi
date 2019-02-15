@@ -59,7 +59,7 @@
                     isDisabledWhen: '<',
                     onChange: '&'
                 },
-                templateUrl: 'modules/user-management/directives/permissionsInput/permissionsInput.directive.html'
+                templateUrl: 'user-management/directives/permissionsInput/permissionsInput.directive.html'
             }
         }
 })();

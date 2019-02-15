@@ -57,7 +57,7 @@
         function propertySelector($timeout, discoverStateService, ontologyManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/search/directives/propertySelector/propertySelector.directive.html',
+                templateUrl: 'discover/search/directives/propertySelector/propertySelector.directive.html',
                 replace: true,
                 require: '^^propertyFilterOverlay',
                 scope: {},

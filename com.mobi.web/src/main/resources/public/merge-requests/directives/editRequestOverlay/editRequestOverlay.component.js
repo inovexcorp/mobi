@@ -60,7 +60,7 @@
             },
             controllerAs: 'dvm',
             controller: ['mergeRequestsStateService', 'mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', EditRequestOverlayController],
-            templateUrl: 'modules/merge-requests/directives/editRequestOverlay/editRequestOverlay.component.html'
+            templateUrl: 'merge-requests/directives/editRequestOverlay/editRequestOverlay.component.html'
         });
 
         function EditRequestOverlayController(mergeRequestsStateService, mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes) {

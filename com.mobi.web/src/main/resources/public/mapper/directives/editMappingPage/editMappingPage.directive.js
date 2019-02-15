@@ -119,7 +119,7 @@
                         dvm.dm.reset();
                     }
                 },
-                templateUrl: 'modules/mapper/directives/editMappingPage/editMappingPage.directive.html'
+                templateUrl: 'mapper/directives/editMappingPage/editMappingPage.directive.html'
             }
         }
 })();

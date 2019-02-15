@@ -61,7 +61,7 @@
         function createClassOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createClassOverlay/createClassOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/createClassOverlay/createClassOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

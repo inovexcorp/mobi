@@ -133,7 +133,7 @@
                             }, dvm.util.createErrorToast);
                     }
                 },
-                templateUrl: 'modules/mapper/directives/mappingListBlock/mappingListBlock.directive.html'
+                templateUrl: 'mapper/directives/mappingListBlock/mappingListBlock.directive.html'
             }
         }
 })();

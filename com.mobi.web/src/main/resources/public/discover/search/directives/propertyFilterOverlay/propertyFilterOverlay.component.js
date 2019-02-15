@@ -56,7 +56,7 @@
             },
             controllerAs: 'dvm',
             controller: ['discoverStateService', 'utilService', 'searchService', 'prefixes', 'ontologyManagerService', PropertyFilterOverlayController],
-            templateUrl: 'modules/discover/sub-modules/search/directives/propertyFilterOverlay/propertyFilterOverlay.component.html'
+            templateUrl: 'discover/search/directives/propertyFilterOverlay/propertyFilterOverlay.component.html'
         });
 
         function PropertyFilterOverlayController(discoverStateService, utilService, searchService, prefixes, ontologyManagerService) {

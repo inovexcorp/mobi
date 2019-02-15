@@ -67,7 +67,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/savedChangesTab/savedChangesTab.directive.html',
+                templateUrl: 'ontology-editor/directives/savedChangesTab/savedChangesTab.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {

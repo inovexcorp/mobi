@@ -35,7 +35,7 @@
      * @param {string} question the text to display as the setting's representative question
      */
     const customPreferenceComponent = {
-        templateUrl: 'modules/settings/components/customPreference/customPreference.component.html',
+        templateUrl: 'settings/components/customPreference/customPreference.component.html',
         transclude: true,
         bindings: {
             header: '<',

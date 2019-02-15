@@ -59,7 +59,7 @@
     function requestRecordSelect(catalogManagerService, mergeRequestsStateService, utilService, prefixes) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/requestRecordSelect/requestRecordSelect.directive.html',
+            templateUrl: 'merge-requests/directives/requestRecordSelect/requestRecordSelect.directive.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',

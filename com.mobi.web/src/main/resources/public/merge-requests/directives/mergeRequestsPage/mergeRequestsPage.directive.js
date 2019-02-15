@@ -54,7 +54,7 @@
     function mergeRequestsPage(mergeRequestsStateService) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/mergeRequestsPage/mergeRequestsPage.directive.html',
+            templateUrl: 'merge-requests/directives/mergeRequestsPage/mergeRequestsPage.directive.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',

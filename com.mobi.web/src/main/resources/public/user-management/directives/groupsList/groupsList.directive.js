@@ -100,7 +100,7 @@
                         dvm.state.selectedGroup = group;
                     }
                 },
-                templateUrl: 'modules/user-management/directives/groupsList/groupsList.directive.html'
+                templateUrl: 'user-management/directives/groupsList/groupsList.directive.html'
             }
         }
 })();

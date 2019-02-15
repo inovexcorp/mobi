@@ -69,7 +69,7 @@
                         dvm.state.setMasterBranch();
                     }
                 },
-                templateUrl: 'modules/mapper/directives/mappingCommitsPage/mappingCommitsPage.directive.html'
+                templateUrl: 'mapper/directives/mappingCommitsPage/mappingCommitsPage.directive.html'
             }
         }
 })();

@@ -87,7 +87,7 @@
                         return _.some(dvm.state.invalidProps, {'@id': propMappingId});
                     }
                 },
-                templateUrl: 'modules/mapper/directives/mappingPreview/mappingPreview.directive.html'
+                templateUrl: 'mapper/directives/mappingPreview/mappingPreview.directive.html'
             }
         }
 })();

@@ -147,7 +147,7 @@
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                     }
                 },
-                templateUrl: 'modules/mapper/directives/classMappingDetails/classMappingDetails.directive.html'
+                templateUrl: 'mapper/directives/classMappingDetails/classMappingDetails.directive.html'
             }
         }
 })();

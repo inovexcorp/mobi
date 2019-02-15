@@ -58,7 +58,7 @@
         function instanceView(discoverStateService, utilService, exploreUtilsService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceView/instanceView.directive.html',
+                templateUrl: 'discover/explore/directives/instanceView/instanceView.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

@@ -87,7 +87,7 @@
                         return dvm.util.getDctermsValue(_.find(dvm.state.mapping.jsonld, {'@id': id}), 'title');
                     }
                 },
-                templateUrl: 'modules/mapper/directives/editMappingForm/editMappingForm.directive.html'
+                templateUrl: 'mapper/directives/editMappingForm/editMappingForm.directive.html'
             }
         }
 })();

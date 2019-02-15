@@ -54,7 +54,7 @@
             },
             controllerAs: 'dvm',
             controller: ['mapperStateService', 'mappingManagerService', ClassMappingOverlayController],
-            templateUrl: 'modules/mapper/directives/classMappingOverlay/classMappingOverlay.component.html'
+            templateUrl: 'mapper/directives/classMappingOverlay/classMappingOverlay.component.html'
         });
 
         function ClassMappingOverlayController(mapperStateService, mappingManagerService) {

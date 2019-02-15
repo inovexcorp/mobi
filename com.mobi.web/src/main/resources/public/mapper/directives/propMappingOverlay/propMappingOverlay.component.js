@@ -64,7 +64,7 @@
             },
             controllerAs: 'dvm',
             controller: ['prefixes', 'utilService', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'propertyManagerService', PropMappingOverlayController],
-            templateUrl: 'modules/mapper/directives/propMappingOverlay/propMappingOverlay.component.html'
+            templateUrl: 'mapper/directives/propMappingOverlay/propMappingOverlay.component.html'
         });
 
         function PropMappingOverlayController(prefixes, utilService, ontologyManagerService, mapperStateService, mappingManagerService, propertyManagerService) {

@@ -58,7 +58,7 @@
         function searchForm(searchService, discoverStateService, exploreService, utilService, modalService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.directive.html',
+                templateUrl: 'discover/search/directives/searchForm/searchForm.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

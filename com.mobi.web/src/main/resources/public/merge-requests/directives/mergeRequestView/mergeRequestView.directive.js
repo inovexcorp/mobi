@@ -65,7 +65,7 @@
         function mergeRequestView($q, mergeRequestManagerService, mergeRequestsStateService, utilService, modalService, ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/merge-requests/directives/mergeRequestView/mergeRequestView.directive.html',
+                templateUrl: 'merge-requests/directives/mergeRequestView/mergeRequestView.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

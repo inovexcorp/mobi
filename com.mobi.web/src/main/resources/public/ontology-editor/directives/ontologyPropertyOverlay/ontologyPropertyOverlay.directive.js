@@ -65,7 +65,7 @@
         function ontologyPropertyOverlay(ontologyStateService, REGEX, propertyManagerService, utilService, ontologyUtilsManagerService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/ontologyPropertyOverlay/ontologyPropertyOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/ontologyPropertyOverlay/ontologyPropertyOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

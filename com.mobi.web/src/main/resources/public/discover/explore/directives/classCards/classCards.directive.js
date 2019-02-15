@@ -56,7 +56,7 @@
         function classCards(discoverStateService, exploreService, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/classCards/classCards.directive.html',
+                templateUrl: 'discover/explore/directives/classCards/classCards.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

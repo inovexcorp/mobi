@@ -69,7 +69,7 @@
             },
             controllerAs: 'dvm',
             controller: ['discoverStateService', 'prefixes', 'uuid', 'utilService', 'exploreUtilsService', 'modalService', PropertyValueOverlayController],
-            templateUrl: 'modules/discover/sub-modules/explore/directives/propertyValueOverlay/propertyValueOverlay.component.html'
+            templateUrl: 'discover/explore/directives/propertyValueOverlay/propertyValueOverlay.component.html'
         });
 
         function PropertyValueOverlayController(discoverStateService, prefixes, uuid, utilService, exploreUtilsService, modalService) {

@@ -35,7 +35,7 @@
      * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput}.
      */
     const passwordTabComponent = {
-        templateUrl: 'modules/settings/components/passwordTab/passwordTab.component.html',
+        templateUrl: 'settings/components/passwordTab/passwordTab.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: passwordTabComponentCtrl

@@ -61,7 +61,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/mergeBlock/mergeBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/mergeBlock/mergeBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

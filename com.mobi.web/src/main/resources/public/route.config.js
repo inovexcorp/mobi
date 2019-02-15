@@ -43,7 +43,7 @@
                 url: '/login',
                 views: {
                     container: {
-                        templateUrl: 'modules/login/login.html'
+                        templateUrl: 'login/login.html'
                     }
                 },
                 data: {
@@ -71,7 +71,7 @@
                 url: '/webtop',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/webtop/webtop.html'
+                        templateUrl: 'webtop/webtop.html'
                     }
                 },
                 data: {
@@ -93,7 +93,7 @@
                 url: '/ontology-editor',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/ontology-editor/ontology-editor.html'
+                        templateUrl: 'ontology-editor/ontology-editor.html'
                     }
                 },
                 data: {
@@ -104,7 +104,7 @@
                 url: '/mapper',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/mapper/mapper.html'
+                        templateUrl: 'mapper/mapper.html'
                     }
                 },
                 data: {
@@ -126,7 +126,7 @@
                 url: '/discover',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/discover/discover.html'
+                        templateUrl: 'discover/discover.html'
                     }
                 },
                 data: {
@@ -136,7 +136,7 @@
                 url: '/user-management',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/user-management/user-management.html'
+                        templateUrl: 'user-management/user-management.html'
                     }
                 },
                 data: {
@@ -146,7 +146,7 @@
                 url: '/datasets',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/datasets/datasets.html'
+                        templateUrl: 'datasets/datasets.html'
                     }
                 },
                 data: {
@@ -156,7 +156,7 @@
                 url: '/merge-requests',
                 views: {
                     'container@': {
-                        templateUrl: 'modules/merge-requests/merge-requests.html'
+                        templateUrl: 'merge-requests/merge-requests.html'
                     }
                 },
                 data: {

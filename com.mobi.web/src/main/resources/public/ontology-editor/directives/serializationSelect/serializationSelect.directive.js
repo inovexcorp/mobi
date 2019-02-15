@@ -31,7 +31,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/serializationSelect/serializationSelect.directive.html',
+                templateUrl: 'ontology-editor/directives/serializationSelect/serializationSelect.directive.html',
                 scope: {
                     bindModel: '=ngModel'
                 }

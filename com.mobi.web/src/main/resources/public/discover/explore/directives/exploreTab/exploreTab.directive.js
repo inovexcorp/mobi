@@ -51,7 +51,7 @@
         function exploreTab(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/exploreTab/exploreTab.directive.html',
+                templateUrl: 'discover/explore/directives/exploreTab/exploreTab.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

@@ -62,7 +62,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/propertiesTab/propertiesTab.directive.html',
+                templateUrl: 'ontology-editor/directives/propertiesTab/propertiesTab.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

@@ -34,7 +34,7 @@
      * @param {string} header the text to display in the section's header
      */
     const preferencesContainerComponent = {
-        templateUrl: 'modules/settings/components/preferencesContainer/preferencesContainer.component.html',
+        templateUrl: 'settings/components/preferencesContainer/preferencesContainer.component.html',
         transclude: true,
         bindings: {
             header: '<'

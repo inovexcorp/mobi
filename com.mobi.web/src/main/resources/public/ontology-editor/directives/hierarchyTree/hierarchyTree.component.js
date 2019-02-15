@@ -40,7 +40,7 @@
      * @param {Function} updateSearch A function to update the state variable used to track the search filter text
      */
     const hierarchyTreeComponent = {
-        templateUrl: 'modules/ontology-editor/directives/hierarchyTree/hierarchyTree.component.html',
+        templateUrl: 'ontology-editor/directives/hierarchyTree/hierarchyTree.component.html',
         bindings: {
             hierarchy: '<',
             updateSearch: '<'

@@ -58,7 +58,7 @@
         function instanceEditor($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.directive.html',
+                templateUrl: 'discover/explore/directives/instanceEditor/instanceEditor.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

@@ -33,7 +33,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/blankNodeValueDisplay/blankNodeValueDisplay.directive.html',
+                templateUrl: 'ontology-editor/directives/blankNodeValueDisplay/blankNodeValueDisplay.directive.html',
                 scope: {
                     nodeId: '<'
                 },

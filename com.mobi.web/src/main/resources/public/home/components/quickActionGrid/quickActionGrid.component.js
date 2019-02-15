@@ -35,7 +35,7 @@
      * of its template.
      */
     const quickActionGridComponent = {
-        templateUrl: 'modules/home/components/quickActionGrid/quickActionGrid.component.html',
+        templateUrl: 'home/components/quickActionGrid/quickActionGrid.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: quickActionGridComponentCtrl

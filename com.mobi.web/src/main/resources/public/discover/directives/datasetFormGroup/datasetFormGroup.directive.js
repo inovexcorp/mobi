@@ -48,7 +48,7 @@
         function datasetFormGroup() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/directives/datasetFormGroup/datasetFormGroup.directive.html',
+                templateUrl: 'discover/directives/datasetFormGroup/datasetFormGroup.directive.html',
                 replace: true,
                 scope: {
                     onSelect: '&?'

@@ -60,7 +60,7 @@
                     var dvm = this;
                     dvm.os = ontologyStateService;
                 },
-                templateUrl: 'modules/ontology-editor/directives/associationBlock/associationBlock.directive.html'
+                templateUrl: 'ontology-editor/directives/associationBlock/associationBlock.directive.html'
             }
         }
 })();

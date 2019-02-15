@@ -32,7 +32,7 @@
      * `groupTab` is a component which creates a Bootstrap list of groups a user is in.
      */
     const groupTabComponent = {
-        templateUrl: 'modules/settings/components/groupTab/groupTab.component.html',
+        templateUrl: 'settings/components/groupTab/groupTab.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: groupTabComponentCtrl

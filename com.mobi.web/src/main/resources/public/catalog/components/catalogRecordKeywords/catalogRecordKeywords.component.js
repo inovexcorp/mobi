@@ -35,7 +35,7 @@
      * @param {Object} record A JSON-LD object for a catalog Record
      */
     const catalogRecordKeywordsComponent = {
-        templateUrl: 'modules/catalog/components/catalogRecordKeywords/catalogRecordKeywords.component.html',
+        templateUrl: 'catalog/components/catalogRecordKeywords/catalogRecordKeywords.component.html',
         bindings: {
             record: '<'
         },

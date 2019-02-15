@@ -58,7 +58,7 @@
         function createBranchOverlay($q, catalogManagerService, ontologyStateService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createBranchOverlay/createBranchOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/createBranchOverlay/createBranchOverlay.directive.html',
                 scope: {
                     dismiss: '&',
                     close: '&'

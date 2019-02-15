@@ -58,7 +58,7 @@
     function requestDetailsForm(mergeRequestsStateService, userManagerService, utilService, prefixes) {
         return {
             restrict: 'E',
-            templateUrl: 'modules/merge-requests/directives/requestDetailsForm/requestDetailsForm.directive.html',
+            templateUrl: 'merge-requests/directives/requestDetailsForm/requestDetailsForm.directive.html',
             replace: true,
             scope: {},
             controllerAs: 'dvm',

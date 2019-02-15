@@ -94,7 +94,7 @@
                         dvm.state.invalidProps = [];
                     }
                 }],
-                templateUrl: 'modules/mapper/directives/fileUploadForm/fileUploadForm.directive.html'
+                templateUrl: 'mapper/directives/fileUploadForm/fileUploadForm.directive.html'
             }
         }
 })();

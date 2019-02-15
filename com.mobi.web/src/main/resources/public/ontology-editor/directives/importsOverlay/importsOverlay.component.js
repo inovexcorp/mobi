@@ -46,7 +46,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const importsOverlayComponent = {
-        templateUrl: 'modules/ontology-editor/directives/importsOverlay/importsOverlay.component.html',
+        templateUrl: 'ontology-editor/directives/importsOverlay/importsOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'

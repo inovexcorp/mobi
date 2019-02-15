@@ -56,7 +56,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$q', 'userStateService', 'userManagerService', 'REGEX', CreateUserOverlayController],
-            templateUrl: 'modules/user-management/directives/createUserOverlay/createUserOverlay.component.html'
+            templateUrl: 'user-management/directives/createUserOverlay/createUserOverlay.component.html'
         });
 
     function CreateUserOverlayController($q, userStateService, userManagerService, REGEX) {

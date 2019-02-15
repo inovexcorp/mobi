@@ -57,7 +57,7 @@
         function sparqlResultBlock(sparqlManagerService, modalService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/query/directives/sparqlResultBlock/sparqlResultBlock.directive.html',
+                templateUrl: 'discover/query/directives/sparqlResultBlock/sparqlResultBlock.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

@@ -35,7 +35,7 @@
      * name, and email address.
      */
     const profileTabComponent = {
-        templateUrl: 'modules/settings/components/profileTab/profileTab.component.html',
+        templateUrl: 'settings/components/profileTab/profileTab.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: profileTabComponentCtrl

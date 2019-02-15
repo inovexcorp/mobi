@@ -39,7 +39,7 @@
      * {@link catalogManager.service:catalogManagerService}
      */
     const sortOptionsComponent = {
-        templateUrl: 'modules/catalog/components/sortOptions/sortOptions.component.html',
+        templateUrl: 'catalog/components/sortOptions/sortOptions.component.html',
         bindings: {
             sortOption: '<',
             changeSort: '&'

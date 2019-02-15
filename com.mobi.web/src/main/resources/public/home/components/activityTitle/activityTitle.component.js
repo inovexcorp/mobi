@@ -40,7 +40,7 @@
      * @param {Object[]} entities An array of JSON-LD objects of `Entities`
      */
     const activityTitleComponent = {
-        templateUrl: 'modules/home/components/activityTitle/activityTitle.component.html',
+        templateUrl: 'home/components/activityTitle/activityTitle.component.html',
         bindings: {
             activity: '<',
             entities: '<'

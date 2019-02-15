@@ -99,7 +99,7 @@
                         dvm.state.selectedUser = user;
                     }
                 },
-                templateUrl: 'modules/user-management/directives/memberTable/memberTable.directive.html'
+                templateUrl: 'user-management/directives/memberTable/memberTable.directive.html'
             }
         }
 })();

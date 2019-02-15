@@ -56,7 +56,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$q', 'userManagerService', 'loginManagerService', CreateGroupOverlayController],
-            templateUrl: 'modules/user-management/directives/createGroupOverlay/createGroupOverlay.component.html'
+            templateUrl: 'user-management/directives/createGroupOverlay/createGroupOverlay.component.html'
         });
 
     function CreateGroupOverlayController($q, userManagerService, loginManagerService) {

@@ -59,7 +59,7 @@
             },
             controllerAs: 'dvm',
             controller: ['datasetManagerService', 'datasetStateService', 'utilService', 'httpService', UploadDataOverlayController],
-            templateUrl: 'modules/datasets/directives/uploadDataOverlay/uploadDataOverlay.component.html',
+            templateUrl: 'datasets/directives/uploadDataOverlay/uploadDataOverlay.component.html',
         });
 
         function UploadDataOverlayController(datasetManagerService, datasetStateService, utilService, httpService) {

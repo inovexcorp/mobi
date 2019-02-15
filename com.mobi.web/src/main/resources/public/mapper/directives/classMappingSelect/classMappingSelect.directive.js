@@ -79,7 +79,7 @@
                         return dvm.util.getDctermsValue(classMapping, 'title');
                     }
                 },
-                templateUrl: 'modules/mapper/directives/classMappingSelect/classMappingSelect.directive.html'
+                templateUrl: 'mapper/directives/classMappingSelect/classMappingSelect.directive.html'
             }
         }
 })();

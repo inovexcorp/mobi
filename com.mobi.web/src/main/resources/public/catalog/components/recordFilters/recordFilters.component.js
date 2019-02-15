@@ -40,7 +40,7 @@
      * @param {string} recordType The selected record type filter. Should be a catalog Record type string.
      */
     const recordFiltersComponent = {
-        templateUrl: 'modules/catalog/components/recordFilters/recordFilters.component.html',
+        templateUrl: 'catalog/components/recordFilters/recordFilters.component.html',
         bindings: {
             changeFilter: '&',
             recordType: '<'

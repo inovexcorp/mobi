@@ -44,7 +44,7 @@
                     path: '<',
                     underline: '<'
                 },
-                templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.directive.html',
+                templateUrl: 'ontology-editor/directives/treeItem/treeItem.directive.html',
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;

@@ -56,7 +56,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/user-management/directives/userManagementTabset/userManagementTabset.directive.html',
+                templateUrl: 'user-management/directives/userManagementTabset/userManagementTabset.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

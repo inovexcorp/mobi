@@ -59,7 +59,7 @@
         function commitOverlay($q, ontologyStateService, catalogManagerService, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/commitOverlay/commitOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/commitOverlay/commitOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

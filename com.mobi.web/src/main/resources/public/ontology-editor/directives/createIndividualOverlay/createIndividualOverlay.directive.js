@@ -59,7 +59,7 @@
         function createIndividualOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createIndividualOverlay/createIndividualOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/createIndividualOverlay/createIndividualOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

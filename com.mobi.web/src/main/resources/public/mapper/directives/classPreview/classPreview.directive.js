@@ -77,7 +77,7 @@
                         }
                     });
                 }],
-                templateUrl: 'modules/mapper/directives/classPreview/classPreview.directive.html'
+                templateUrl: 'mapper/directives/classPreview/classPreview.directive.html'
             }
         }
 })();

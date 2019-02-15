@@ -34,7 +34,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/selectedDetails/selectedDetails.directive.html',
+                templateUrl: 'ontology-editor/directives/selectedDetails/selectedDetails.directive.html',
                 scope: {},
                 bindToController: {
                     readOnly: '<'

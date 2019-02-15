@@ -61,7 +61,7 @@
         function createAnnotationPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

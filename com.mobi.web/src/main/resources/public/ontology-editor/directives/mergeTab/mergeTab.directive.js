@@ -33,7 +33,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/mergeTab/mergeTab.directive.html',
+                templateUrl: 'ontology-editor/directives/mergeTab/mergeTab.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

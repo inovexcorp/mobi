@@ -62,7 +62,7 @@
         function topConceptOverlay(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/topConceptOverlay/topConceptOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/topConceptOverlay/topConceptOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

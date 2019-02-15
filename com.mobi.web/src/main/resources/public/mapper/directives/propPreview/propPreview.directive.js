@@ -97,7 +97,7 @@
                         }
                     });
                 }],
-                templateUrl: 'modules/mapper/directives/propPreview/propPreview.directive.html'
+                templateUrl: 'mapper/directives/propPreview/propPreview.directive.html'
             }
         }
 })();

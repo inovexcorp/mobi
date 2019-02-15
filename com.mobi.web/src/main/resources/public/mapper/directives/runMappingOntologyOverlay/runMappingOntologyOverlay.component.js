@@ -65,7 +65,7 @@
             },
             controllerAs: 'dvm',
             controller: ['mapperStateService', 'delimitedManagerService', 'utilService', 'catalogManagerService', 'ontologyStateService', 'prefixes', RunMappingOntologyOverlayController],
-            templateUrl: 'modules/mapper/directives/runMappingOntologyOverlay/runMappingOntologyOverlay.component.html'
+            templateUrl: 'mapper/directives/runMappingOntologyOverlay/runMappingOntologyOverlay.component.html'
         });
 
         function RunMappingOntologyOverlayController(mapperStateService, delimitedManagerService, utilService, catalogManagerService, ontologyStateService, prefixes) {

@@ -83,7 +83,7 @@
                         }
                     }
                 },
-                templateUrl: 'modules/ontology-editor/directives/overviewTab/overviewTab.directive.html'
+                templateUrl: 'ontology-editor/directives/overviewTab/overviewTab.directive.html'
             }
         }
 })();

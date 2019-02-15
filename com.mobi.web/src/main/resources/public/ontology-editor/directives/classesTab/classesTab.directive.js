@@ -61,7 +61,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/classesTab/classesTab.directive.html',
+                templateUrl: 'ontology-editor/directives/classesTab/classesTab.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

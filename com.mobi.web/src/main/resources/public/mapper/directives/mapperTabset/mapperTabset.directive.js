@@ -56,7 +56,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/mapper/directives/mapperTabset/mapperTabset.directive.html',
+                templateUrl: 'mapper/directives/mapperTabset/mapperTabset.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

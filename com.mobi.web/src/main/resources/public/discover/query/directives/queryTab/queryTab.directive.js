@@ -47,7 +47,7 @@
         function queryTab() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/query/directives/queryTab/queryTab.directive.html',
+                templateUrl: 'discover/query/directives/queryTab/queryTab.directive.html',
                 replace: true,
                 scope: {}
             }

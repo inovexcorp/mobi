@@ -31,7 +31,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/advancedLanguageSelect/advancedLanguageSelect.directive.html',
+                templateUrl: 'ontology-editor/directives/advancedLanguageSelect/advancedLanguageSelect.directive.html',
                 scope: {},
                 bindToController: {
                     bindModel: '=ngModel'

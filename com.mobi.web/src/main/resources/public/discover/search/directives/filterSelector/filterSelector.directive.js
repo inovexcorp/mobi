@@ -55,7 +55,7 @@
         function filterSelector(utilService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/search/directives/filterSelector/filterSelector.directive.html',
+                templateUrl: 'discover/search/directives/filterSelector/filterSelector.directive.html',
                 replace: true,
                 require: '^^propertyFilterOverlay',
                 scope: {},

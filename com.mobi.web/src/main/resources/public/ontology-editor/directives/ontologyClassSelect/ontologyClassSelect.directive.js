@@ -59,7 +59,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/ontologyClassSelect/ontologyClassSelect.directive.html',
+                templateUrl: 'ontology-editor/directives/ontologyClassSelect/ontologyClassSelect.directive.html',
                 scope: {},
                 bindToController: {
                     values: '=',

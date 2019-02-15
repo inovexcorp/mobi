@@ -40,7 +40,7 @@
      * @param {Function} [clickCard=undefined] An optional function that will be called when the whole card is clicked
      */
     const recordCardComponent = {
-        templateUrl: 'modules/catalog/components/recordCard/recordCard.component.html',
+        templateUrl: 'catalog/components/recordCard/recordCard.component.html',
         bindings: {
             record: '<',
             clickCard: '&?'

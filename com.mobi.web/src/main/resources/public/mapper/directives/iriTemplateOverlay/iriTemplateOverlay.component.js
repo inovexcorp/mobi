@@ -62,7 +62,7 @@
             },
             controllerAs: 'dvm',
             controller: ['prefixes', 'utilService', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', IriTemplateOverlayController],
-            templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.component.html'
+            templateUrl: 'mapper/directives/iriTemplateOverlay/iriTemplateOverlay.component.html'
         });
 
         function IriTemplateOverlayController(prefixes, utilService, mapperStateService, mappingManagerService, delimitedManagerService) {

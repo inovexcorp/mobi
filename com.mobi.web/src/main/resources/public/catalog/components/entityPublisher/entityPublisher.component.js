@@ -36,7 +36,7 @@
      * @param {Object} entity A JSON-LD object
      */
     const entityPublisherComponent = {
-        templateUrl: 'modules/catalog/components/entityPublisher/entityPublisher.component.html',
+        templateUrl: 'catalog/components/entityPublisher/entityPublisher.component.html',
         bindings: {
             entity: '<'
         },

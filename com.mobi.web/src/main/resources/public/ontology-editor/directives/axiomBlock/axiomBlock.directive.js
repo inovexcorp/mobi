@@ -64,7 +64,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/axiomBlock/axiomBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/axiomBlock/axiomBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

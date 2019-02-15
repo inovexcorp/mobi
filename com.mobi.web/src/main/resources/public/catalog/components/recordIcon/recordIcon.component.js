@@ -35,7 +35,7 @@
      * @param {object} Record A catalog Record JSON-LD object
      */
     const recordIconComponent = {
-        templateUrl: 'modules/catalog/components/recordIcon/recordIcon.component.html',
+        templateUrl: 'catalog/components/recordIcon/recordIcon.component.html',
         bindings: {
             record: '<'
         },

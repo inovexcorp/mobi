@@ -60,7 +60,7 @@
         function uploadOntologyOverlay(ontologyManagerService, ontologyStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/uploadOntologyOverlay/uploadOntologyOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/uploadOntologyOverlay/uploadOntologyOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

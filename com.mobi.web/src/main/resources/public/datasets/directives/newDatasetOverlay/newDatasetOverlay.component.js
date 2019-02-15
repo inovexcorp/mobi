@@ -42,7 +42,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const newDatasetOverlayComponent = {
-        templateUrl: 'modules/datasets/directives/newDatasetOverlay/newDatasetOverlay.component.html',
+        templateUrl: 'datasets/directives/newDatasetOverlay/newDatasetOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'

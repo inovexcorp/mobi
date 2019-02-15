@@ -55,7 +55,7 @@
         function sparqlEditor(sparqlManagerService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/query/directives/sparqlEditor/sparqlEditor.directive.html',
+                templateUrl: 'discover/query/directives/sparqlEditor/sparqlEditor.directive.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

@@ -57,7 +57,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/commitsTab/commitsTab.directive.html',
+                templateUrl: 'ontology-editor/directives/commitsTab/commitsTab.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

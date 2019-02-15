@@ -55,7 +55,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/propertyHierarchyBlock/propertyHierarchyBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/propertyHierarchyBlock/propertyHierarchyBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {

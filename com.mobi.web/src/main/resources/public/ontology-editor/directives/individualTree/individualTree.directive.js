@@ -34,7 +34,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/individualTree/individualTree.directive.html',
+                templateUrl: 'ontology-editor/directives/individualTree/individualTree.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

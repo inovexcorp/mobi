@@ -54,7 +54,7 @@
                 restrict: 'E',
                 replace: true,
                 scope: {},
-                templateUrl: 'modules/ontology-editor/directives/projectTab/projectTab.directive.html'
+                templateUrl: 'ontology-editor/directives/projectTab/projectTab.directive.html'
             }
         }
 })();

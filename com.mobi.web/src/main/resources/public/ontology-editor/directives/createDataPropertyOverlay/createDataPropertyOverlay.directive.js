@@ -64,7 +64,7 @@
         function createDataPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/ontology-editor/directives/createDataPropertyOverlay/createDataPropertyOverlay.directive.html',
+                templateUrl: 'ontology-editor/directives/createDataPropertyOverlay/createDataPropertyOverlay.directive.html',
                 scope: {
                     close: '&',
                     dismiss: '&'

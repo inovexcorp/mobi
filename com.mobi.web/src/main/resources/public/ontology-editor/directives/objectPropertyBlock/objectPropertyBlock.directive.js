@@ -58,7 +58,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/objectPropertyBlock/objectPropertyBlock.directive.html',
+                templateUrl: 'ontology-editor/directives/objectPropertyBlock/objectPropertyBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {

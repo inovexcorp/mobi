@@ -80,7 +80,7 @@
                         return prop.ontologyId || $filter('splitIRI')(prop.propObj['@id']).begin;
                     }
                 },
-                templateUrl: 'modules/mapper/directives/propSelect/propSelect.directive.html'
+                templateUrl: 'mapper/directives/propSelect/propSelect.directive.html'
             }
         }
 })();

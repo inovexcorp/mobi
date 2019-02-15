@@ -39,7 +39,7 @@
      * @param {Function} updateRecord A method to update the Record. Expects a parameter called `record`
      */
     const recordViewTabsetComponent = {
-        templateUrl: 'modules/catalog/components/recordViewTabset/recordViewTabset.component.html',
+        templateUrl: 'catalog/components/recordViewTabset/recordViewTabset.component.html',
         bindings: {
             record: '<',
             canEdit: '<',

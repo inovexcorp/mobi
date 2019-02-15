@@ -33,7 +33,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/iriSelectOntology/iriSelectOntology.directive.html',
+                templateUrl: 'ontology-editor/directives/iriSelectOntology/iriSelectOntology.directive.html',
                 scope: {
                     displayText: '<',
                     mutedText: '<',

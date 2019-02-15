@@ -54,7 +54,7 @@
             },
             controllerAs: 'dvm',
             controller: ['sparqlManagerService', DownloadQueryOverlayController],
-            templateUrl: 'modules/discover/sub-modules/query/directives/downloadQueryOverlay/downloadQueryOverlay.component.html'
+            templateUrl: 'discover/query/directives/downloadQueryOverlay/downloadQueryOverlay.component.html'
         });
 
         function DownloadQueryOverlayController(sparqlManagerService) {

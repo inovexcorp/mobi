@@ -57,7 +57,7 @@
             },
             controllerAs: 'dvm',
             controller: ['$q', 'mergeRequestManagerService', 'utilService', ReplyCommentController],
-            templateUrl: 'modules/merge-requests/directives/replyComment/replyComment.component.html',
+            templateUrl: 'merge-requests/directives/replyComment/replyComment.component.html',
         });
 
     function ReplyCommentController($q, mergeRequestManagerService, utilService) {

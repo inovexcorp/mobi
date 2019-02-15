@@ -74,7 +74,7 @@
                         return _.get(dvm.dm.dataRows, '[' + firstRowIndex + '][' + dvm.selectedColumn + ']', '(None)');
                     }
                 },
-                templateUrl: 'modules/mapper/directives/columnSelect/columnSelect.directive.html'
+                templateUrl: 'mapper/directives/columnSelect/columnSelect.directive.html'
             }
         }
 })();

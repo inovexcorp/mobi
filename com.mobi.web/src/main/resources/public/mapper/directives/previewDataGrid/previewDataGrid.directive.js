@@ -117,7 +117,7 @@
                         }
                     });
                 }],
-                templateUrl: 'modules/mapper/directives/previewDataGrid/previewDataGrid.directive.html'
+                templateUrl: 'mapper/directives/previewDataGrid/previewDataGrid.directive.html'
             }
         }
 })();

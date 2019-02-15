@@ -74,7 +74,7 @@
                         }
                     ];
                 },
-                templateUrl: 'modules/mapper/directives/mapperSerializationSelect/mapperSerializationSelect.directive.html'
+                templateUrl: 'mapper/directives/mapperSerializationSelect/mapperSerializationSelect.directive.html'
             }
         }
 })();
