@@ -34,7 +34,6 @@
          * manipulating mapping arrays
          */
         .module('mappingManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name mappingManager.service:mappingManagerService

@@ -33,7 +33,6 @@
          * with all of the class details about a dataset record.
          */
         .module('classCards', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name classCards.directive:classCards

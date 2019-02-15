@@ -33,7 +33,6 @@
          * editing an instance within a dataset.
          */
         .module('instanceForm', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name instanceForm.directive:instanceForm

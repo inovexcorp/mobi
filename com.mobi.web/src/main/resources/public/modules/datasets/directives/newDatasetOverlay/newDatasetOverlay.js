@@ -104,6 +104,5 @@
          * modal to create a new Dataset Record.
          */
         .module('newDatasetOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         .component('newDatasetOverlay', newDatasetOverlayComponent);
 })();

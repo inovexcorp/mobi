@@ -33,7 +33,6 @@
          * a brief description of the passed property and its range.
          */
         .module('propPreview', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name propPreview.directive:propPreview

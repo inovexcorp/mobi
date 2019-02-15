@@ -33,7 +33,6 @@
          * state REST endpoints and all of the current user's state.
          */
         .module('stateManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name stateManager.service:stateManagerService

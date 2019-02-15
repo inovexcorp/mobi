@@ -29,7 +29,6 @@
          * @name ontologyState
          */
         .module('ontologyState', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name ontologyState.service:ontologyStateService

@@ -34,7 +34,6 @@
          * the SPARQL Editor
          */
         .module('sparqlManager', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService

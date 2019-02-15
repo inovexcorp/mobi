@@ -33,7 +33,6 @@
          * content for a modal to add or edit an ontology property on an ontology.
          */
         .module('ontologyPropertyOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name ontologyPropertyOverlay.directive:ontologyPropertyOverlay

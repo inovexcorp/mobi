@@ -33,7 +33,6 @@
          * for a modal to display information about a property value on an instance.
          */
         .module('propertyValueOverlay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name propertyValueOverlay.component:propertyValueOverlay

@@ -25,7 +25,6 @@
 
     angular
         .module('ontologyTab', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name ontologyTab.directive:ontologyTab

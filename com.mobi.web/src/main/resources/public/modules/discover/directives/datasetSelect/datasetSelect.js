@@ -33,7 +33,6 @@
          * the dataset select.
          */
         .module('datasetSelect', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name datasetSelect.directive:datasetSelect

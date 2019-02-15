@@ -33,7 +33,6 @@
          * Request Comment.
          */
         .module('commentDisplay', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc component
          * @name commentDisplay.component:commentDisplay

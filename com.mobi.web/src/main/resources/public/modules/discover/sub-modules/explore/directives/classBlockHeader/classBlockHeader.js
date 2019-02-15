@@ -33,7 +33,6 @@
          * the dataset selector to determine what class details are to be shown on the page.
          */
         .module('classBlockHeader', [])
-        .config(ignoreUnhandledRejectionsConfig)
         /**
          * @ngdoc directive
          * @name classBlockHeader.directive:classBlockHeader
