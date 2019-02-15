@@ -1053,7 +1053,7 @@
              * @description
              * Calls the GET /mobirest/commits/{commitId}/resource endpoint with the passed Commit id.
              *
-             * @param {string} commitId - The commit id of the commit which should be tmost recent commit in
+             * @param {string} commitId - The commit id of the commit which should be the most recent commit in
              *      the history.
              * @param {string} entityId - The id of the entity which is used to filter the resource list.
              * @return {Promise} A promise that resolves with the Compiled Resource of a commit or rejects with an error

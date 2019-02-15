@@ -25,10 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name seeHistory
      * @name seeHistory.component:seeHistory
-     * @scope
-     * @restrict E
      * @requires $filter
      * @requires catalogManager.service:catalogManagerService
      * @requires manchesterConverter.service:manchesterConverterService
@@ -38,15 +35,12 @@
      * @requires util.service:utilService
      *
      * @description
-     * The `seeHistory` module only provides the `seeHistory` component which creates a page for viewing the
-     * addition and deletion history of commits on a particular entity in an ontology.
-     *
-     * @param {Function} dismiss A function that dismisses the modal
+     * The `seeHistory` component creates a page for viewing the addition and deletion history of commits on a
+     * particular entity in an ontology. If no commitId is selected, no compiled resource will be shown.
      */
     const seeHistoryComponent = {
         templateUrl: 'modules/ontology-editor/components/seeHistory/seeHistory.html',
         bindings: {
-            dismiss: '&'
         },
         controllerAs: 'dvm',
         controller: seeHistoryComponentCtrl
@@ -65,15 +59,15 @@
 
         dvm.goBack = function() {
             dvm.os.listItem.seeHistory = undefined;
-            dvm.os.listItem.selectedEntity = undefined;
+            dvm.os.listItem.selectedCommit = undefined;
         }
         dvm.prev = function() {
-            var index = dvm.commits.indexOf(dvm.os.listItem.selectedEntity);
-            dvm.os.listItem.selectedEntity = dvm.commits[index+1];
+            var index = dvm.commits.indexOf(dvm.os.listItem.selectedCommit);
+            dvm.os.listItem.selectedCommit = dvm.commits[index + 1];
         }
         dvm.next = function() {
-            var index = dvm.commits.indexOf(dvm.os.listItem.selectedEntity);
-            dvm.os.listItem.selectedEntity = dvm.commits[index-1];
+            var index = dvm.commits.indexOf(dvm.os.listItem.selectedCommit);
+            dvm.os.listItem.selectedCommit = dvm.commits[index - 1];
         }
         dvm.getTypes = function() {
             return _.join(_.orderBy(

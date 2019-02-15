@@ -50,11 +50,9 @@ describe('See History component', function() {
         });
 
         this.commits = ['commits1', 'commits2'];
-        scope.dismiss = false;
         this.element = $compile(angular.element('<see-history></see-history>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('seeHistory');
-        this.isolatedScope = this.element.isolateScope();
     });
 
     afterEach(function() {
@@ -74,7 +72,6 @@ describe('See History component', function() {
         it('if the ontology state seeHistory is set to true', function() {
             ontologyStateSvc.listItem.seeHistory = true;
             scope.$digest();
-            expect(scope.dismiss).toEqual(false);
         });
     });
     describe('controller methods', function() {
@@ -97,22 +94,22 @@ describe('See History component', function() {
         });
         it('should go to prev', function() {
             this.controller.commits = [this.commits];
-            ontologyStateSvc.listItem.selectedEntity = this.controller.commits[1];
+            ontologyStateSvc.listItem.selectedCommit = this.controller.commits[1];
             scope.$digest();
             this.controller.prev();
-            expect(ontologyStateSvc.listItem.selectedEntity).toEqual(this.controller.commits[0]);
+            expect(ontologyStateSvc.listItem.selectedCommit).toEqual(this.controller.commits[0]);
         });
         it('should go to next', function() {
             this.controller.commits = [this.commits];
-            ontologyStateSvc.listItem.selectedEntity = this.controller.commits[0];
+            ontologyStateSvc.listItem.selectedCommit = this.controller.commits[0];
             scope.$digest();
             this.controller.next();
-            expect(ontologyStateSvc.listItem.selectedEntity).toEqual(this.controller.commits[1]);
+            expect(ontologyStateSvc.listItem.selectedCommit).toEqual(this.controller.commits[1]);
         });
         it('should go back', function() {
             this.controller.goBack();
             expect(ontologyStateSvc.listItem.seeHistory).toBeUndefined();
-            expect(ontologyStateSvc.listItem.selectedEntity).toBeUndefined();
+            expect(ontologyStateSvc.listItem.selectedCommit).toBeUndefined();
         });
     });
     describe('contains the correct html', function() {

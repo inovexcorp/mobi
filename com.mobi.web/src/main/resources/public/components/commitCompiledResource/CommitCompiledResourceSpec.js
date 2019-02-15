@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit Compiled Resource component', function() {
+fdescribe('Commit Compiled Resource component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
@@ -28,7 +28,6 @@ describe('Commit Compiled Resource component', function() {
         module('commitCompiledResource');
         injectChromaConstant();
         injectTrustedFilter();
-        injectHighlightFilter();
         mockCatalogManager();
         mockOntologyState();
         mockOntologyUtilsManager();
@@ -55,10 +54,10 @@ describe('Commit Compiled Resource component', function() {
         catalogManagerSvc.getCommit.and.returnValue($q.when([this.commitId]));
 
         scope.commits = [{id: this.commitId}];
-        this.element = $compile(angular.element('<commit-compiled-resource commit-id="commitId" entity-id="entityId" commit-data="commitData"></commit-compiled-resource>'))(scope);
+        scope.entityId = [{id: this.entityId}];
+        this.element = $compile(angular.element('<commit-compiled-resource commit-id="commitId" entity-id="entityId"></commit-compiled-resource>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitCompiledResource');
-        this.isolatedScope = this.element.isolateScope();
     });
 
     afterEach(function() {
@@ -76,6 +75,7 @@ describe('Commit Compiled Resource component', function() {
             this.controller.commits = this.commits;
             scope.$digest();
             expect(scope.commits).toEqual([ {'id': this.commitId} ]);
+            expect(scope.entityId).toEqual([ {'id': this.entityId} ]);
         });
     });
     describe('controller methods', function() {

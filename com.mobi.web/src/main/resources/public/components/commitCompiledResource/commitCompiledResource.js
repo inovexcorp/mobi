@@ -25,9 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name public.component:commitCompiledResource
-     * @scope
-     * @restrict E
+     * @name commitCompiledResource.component:commitCompiledResource
      * @requires $q
      * @requires http.service:httpService
      * @requires catalogManager.service:catalogManagerService
@@ -35,29 +33,27 @@
      * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
      *
      * @description
-     * `commitCompiledResource` is a component that creates a table containing the commit chain of the provided commit.
-     * This table can show the additions and deletions in addition to the previous commit's data
-     * of a particular entity at the provided commit.
+     * `commitCompiledResource` is a component that returns a compiled resource containing the commit chain of the
+     * provided commit. This compiled resource can be used to show the additions and deletions in addition to the
+     * previous commit's data of a particular entity at the provided commit.
      *
      * @param {string} commitId The IRI string of a commit in the local catalog
      * @param {string} [entityId=''] entityId filters the resource with entityId as the
      *          subject.
-     * @param {Object[]} resourceData A variable to bind the retrieved commits to
      */
     const commitCompiledResourceComponent = {
         templateUrl: 'components/commitCompiledResource/commitCompiledResource.html',
         bindings: {
             commitId: '<',
             entityId: '<?',
-            resourceData: '=?'
         },
         controllerAs: 'dvm',
-        controller: commitCompiledResourceCtrl
+        controller: commitCompiledResourceComponentCtrl
     };
 
-    commitCompiledResourceCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
+    commitCompiledResourceComponentCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
 
-    function commitCompiledResourceCtrl($q, httpService, catalogManagerService, ontologyStateService, ontologyUtilsManagerService) {
+    function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerService, ontologyStateService, ontologyUtilsManagerService) {
         var dvm = this;
         var cm = catalogManagerService;
         dvm.ontoUtils = ontologyUtilsManagerService;
@@ -80,7 +76,6 @@
                 cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
                     .then(resources => {
                         dvm.resource = _.omit(resources[0], ['@id', '@type']);
-                        dvm.resourceData = dvm.resource;
                         return cm.getCommit(dvm.commitId);
                     }, $q.reject)
                     .then(response => {
@@ -102,11 +97,9 @@
                     }, errorMessage => {
                         dvm.error = errorMessage;
                         dvm.resource = undefined;
-                        dvm.resourceData = undefined;
                     });
             } else {
                 dvm.resource = undefined;
-                dvm.resourceData = undefined;
             }
         }
     }

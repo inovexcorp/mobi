@@ -11,7 +11,10 @@
                 color: rgba(0, 0, 0, 0.38);
             }
             .value-signs {
-                float:left
+                float:left;
+                .even-text {
+                    .text-monospace;
+                }
             }
             .value-display {
                 margin-bottom: 15px;

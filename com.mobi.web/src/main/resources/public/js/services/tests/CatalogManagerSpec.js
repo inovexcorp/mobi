@@ -1028,7 +1028,6 @@ describe('Catalog Manager service', function() {
                         .then(response => fail('Promise should have rejected'), response => expect(response).toEqual('Error Message'));
                     scope.$apply();
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
                 });
             });
             describe('with a entityId set', function() {
