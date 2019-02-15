@@ -46,11 +46,11 @@
 
     function limitDescriptionComponentCtrl() {
         var dvm = this;
-        dvm.descriptionLimit = dvm.limit || 200;
         dvm.full = false;
         dvm.display = '';
 
         dvm.$onInit = function() {
+            dvm.descriptionLimit = dvm.limit || 200;
             dvm.display = getLimitedDescription();
         }
         dvm.$onChanges = function() {

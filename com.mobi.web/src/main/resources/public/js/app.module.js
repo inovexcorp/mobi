@@ -180,6 +180,7 @@
         .constant('INDENT', 1.28571429)
         .constant('REST_PREFIX', '/mobirest/')
         .config(httpInterceptorConfig)
+        .config(ignoreUnhandledRejectionsConfig)
         .config(ariaConfig)
         .config(theming)
         .factory('requestInterceptor', requestInterceptor)
@@ -209,6 +210,12 @@
 
         function httpInterceptorConfig($httpProvider) {
             $httpProvider.interceptors.push('requestInterceptor');
+        }
+
+        ignoreUnhandledRejectionsConfig.$inject = ['$qProvider'];
+
+        function ignoreUnhandledRejectionsConfig($qProvider) {
+            $qProvider.errorOnUnhandledRejections(false);
         }
 
         requestInterceptor.$inject = ['$q', '$rootScope', '$httpParamSerializer'];
