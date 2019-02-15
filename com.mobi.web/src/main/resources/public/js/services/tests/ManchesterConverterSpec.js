@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Manchester Converter service', function() {
-    var manchesterConverterSvc, ontologyManagerSvc, prefixes, splitIRIFilter, antlr;
+    var manchesterConverterSvc, ontologyManagerSvc, prefixes, utilSvc, splitIRIFilter, antlr;
 
     beforeEach(function() {
         module('manchesterConverter');

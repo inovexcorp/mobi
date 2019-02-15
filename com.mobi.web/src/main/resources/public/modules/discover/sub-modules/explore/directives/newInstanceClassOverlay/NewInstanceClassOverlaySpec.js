@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Instance Property Overlay component', function() {
+describe('New Instance Class Overlay component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, util, splitIRI;
 
     beforeEach(function() {
