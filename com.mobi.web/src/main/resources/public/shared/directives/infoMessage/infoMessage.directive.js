@@ -32,7 +32,7 @@
                 restrict: 'E',
                 replace: true,
                 transclude: true,
-                templateUrl: 'directives/infoMessage/infoMessage.html',
+                templateUrl: 'shared/directives/infoMessage/infoMessage.directive.html',
                 scope: {}
             }
         }

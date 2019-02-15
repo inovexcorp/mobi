@@ -58,7 +58,7 @@
                     return _.get(user, 'firstName') || _.get(user, 'username');
                 }
             },
-            templateUrl: 'directives/sidebar/sidebar.directive.html'
+            templateUrl: 'shared/directives/sidebar/sidebar.directive.html'
         }
     }
 })();

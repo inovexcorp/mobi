@@ -90,7 +90,7 @@
                     isInvalid: '<',
                     isValid: '<'
                 },
-                templateUrl: 'directives/emailInput/emailInput.directive.html'
+                templateUrl: 'shared/directives/emailInput/emailInput.directive.html'
             }
         }
 })();

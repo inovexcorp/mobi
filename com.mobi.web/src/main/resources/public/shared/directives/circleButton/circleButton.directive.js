@@ -67,7 +67,7 @@
                     btnSmall: '<',
                     displayText: '<'
                 },
-                templateUrl: 'directives/circleButton/circleButton.directive.html'
+                templateUrl: 'shared/directives/circleButton/circleButton.directive.html'
             }
         }
 })();

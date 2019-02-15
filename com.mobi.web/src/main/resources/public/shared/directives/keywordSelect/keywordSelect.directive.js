@@ -31,7 +31,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'directives/keywordSelect/keywordSelect.directive.html',
+                templateUrl: 'shared/directives/keywordSelect/keywordSelect.directive.html',
                 scope: {},
                 bindToController: {
                     bindModel: '=ngModel'

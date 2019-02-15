@@ -70,7 +70,7 @@
                     return utilService.getDate(dateStr, 'short');
                 }
             },
-            templateUrl: 'directives/entityDates/entityDates.directive.html'
+            templateUrl: 'shared/directives/entityDates/entityDates.directive.html'
         };
     }
 })();

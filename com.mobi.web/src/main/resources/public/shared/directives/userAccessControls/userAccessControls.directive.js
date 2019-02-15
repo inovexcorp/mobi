@@ -190,7 +190,7 @@
                     return _.sortBy(groups, 'title');
                 }
             }],
-            templateUrl: 'directives/userAccessControls/userAccessControls.directive.html'
+            templateUrl: 'shared/directives/userAccessControls/userAccessControls.directive.html'
         };
     }
 

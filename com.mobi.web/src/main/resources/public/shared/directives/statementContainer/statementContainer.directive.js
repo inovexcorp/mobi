@@ -45,7 +45,7 @@
                 replace: true,
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/statementContainer/statementContainer.directive.html',
+                templateUrl: 'shared/directives/statementContainer/statementContainer.directive.html',
                 controller: angular.noop,
                 link: function(scope, element, attrs) {
                     scope.hasAdditions = 'additions' in attrs;

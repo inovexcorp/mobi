@@ -62,7 +62,7 @@
                 controller: ['$scope', function($scope) {
                     $scope.Math = window.Math;
                 }],
-                templateUrl: 'directives/pagingDetails/pagingDetails.directive.html'
+                templateUrl: 'shared/directives/pagingDetails/pagingDetails.directive.html'
             }
         }
 })();

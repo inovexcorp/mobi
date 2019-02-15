@@ -477,7 +477,7 @@
                     });
                 }
             },
-            templateUrl: 'directives/rdfVisualization/rdfVisualization.directive.html'
+            templateUrl: 'shared/directives/rdfVisualization/rdfVisualization.directive.html'
         }
     }
 })();

@@ -41,7 +41,7 @@
                     onClick: '&',
                     onClose: '&?'
                 },
-                templateUrl: 'directives/tab/tab.directive.html',
+                templateUrl: 'shared/directives/tab/tab.directive.html',
                 link: function(scope, elem, attr, tabsetController) {
                     tabsetController.addTab(scope);
                     scope.$on('$destroy', function() {

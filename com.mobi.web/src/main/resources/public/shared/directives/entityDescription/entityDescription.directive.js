@@ -83,7 +83,7 @@
                     return dvm.util.getDctermsValue(dvm.entity, 'description');
                 }
             },
-            templateUrl: 'directives/entityDescription/entityDescription.directive.html'
+            templateUrl: 'shared/directives/entityDescription/entityDescription.directive.html'
         };
     }
 })();

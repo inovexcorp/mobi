@@ -46,7 +46,7 @@
                 require: '^^block',
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/blockFooter/blockFooter.directive.html'
+                templateUrl: 'shared/directives/blockFooter/blockFooter.directive.html'
             }
         }
 })();

@@ -68,7 +68,7 @@
                     }
                 }
             },
-            templateUrl: 'directives/searchBar/searchBar.directive.html'
+            templateUrl: 'shared/directives/searchBar/searchBar.directive.html'
         }
     }
 })();

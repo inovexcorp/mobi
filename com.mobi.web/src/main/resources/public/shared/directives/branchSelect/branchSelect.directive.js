@@ -61,7 +61,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'directives/branchSelect/branchSelect.directive.html',
+                templateUrl: 'shared/directives/branchSelect/branchSelect.directive.html',
                 scope: {
                     required: '<',
                     branches: '<',

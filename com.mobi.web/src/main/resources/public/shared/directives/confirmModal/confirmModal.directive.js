@@ -73,7 +73,7 @@
                         Promise.resolve($scope.resolve.no()).then(() => $scope.dismiss());
                     }
                 }],
-                templateUrl: 'directives/confirmModal/confirmModal.directive.html'
+                templateUrl: 'shared/directives/confirmModal/confirmModal.directive.html'
             }
         }
 })();

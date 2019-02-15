@@ -60,7 +60,7 @@
                     heading: '<',
                     onClick: '&'
                 },
-                templateUrl: 'directives/materialTab/materialTab.directive.html',
+                templateUrl: 'shared/directives/materialTab/materialTab.directive.html',
                 link: function(scope, elem, attr, materialTabsetController) {
                     materialTabsetController.addTab(scope);
                     scope.$on('$destroy', function() {

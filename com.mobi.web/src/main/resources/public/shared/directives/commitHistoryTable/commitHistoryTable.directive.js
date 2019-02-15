@@ -73,7 +73,7 @@
                     targetId: '<?',
                     commitData: '=?'
                 },
-                templateUrl: 'directives/commitHistoryTable/commitHistoryTable.directive.html',
+                templateUrl: 'shared/directives/commitHistoryTable/commitHistoryTable.directive.html',
                 link: function(scope, el, attrs, ctrl) {
                     scope.graph = attrs.hasOwnProperty('graph');
                 },

@@ -66,7 +66,7 @@
                     return _.map(_.get(record, prefixes.catalog + 'keyword', []), '@value').sort();
                 }
             },
-            templateUrl: 'directives/recordKeywords/recordKeywords.directive.html'
+            templateUrl: 'shared/directives/recordKeywords/recordKeywords.directive.html'
         };
     }
 })();

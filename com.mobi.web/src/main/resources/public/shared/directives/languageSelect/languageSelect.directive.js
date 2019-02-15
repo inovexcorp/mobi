@@ -56,7 +56,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'directives/languageSelect/languageSelect.directive.html',
+                templateUrl: 'shared/directives/languageSelect/languageSelect.directive.html',
                 scope: {},
                 bindToController: {
                     bindModel: '=ngModel',

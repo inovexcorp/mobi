@@ -35,7 +35,7 @@
                 replace: true,
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/tabset/tabset.directive.html',
+                templateUrl: 'shared/directives/tabset/tabset.directive.html',
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;

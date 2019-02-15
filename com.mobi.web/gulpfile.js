@@ -29,24 +29,27 @@ var gulp = require('gulp'),
 var src = './src/main/resources/public/',
     dest = './target/classes/build/',
     nodeDir = './node_modules/',
-    spec = src + '**/*Spec.js';
+    spec = src + '**/*.spec.js';
 
 // JS and CSS file lists
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
-            prefix + 'js/vendor/manchestersyntax.js',
-            prefix + 'js/services/prefixes.js',
-            prefix + 'js/configs/configurations.js',
-            prefix + 'js/filters/!(*Spec).js',
-            prefix + 'js/services/!(*Spec).js',
-            prefix + 'directives/**/!(*Spec).js',
-            prefix + 'modules/*/!(*Spec).js',
-            prefix + 'modules/**/*/services/**/!(*Spec).js',
-            prefix + 'modules/**/*/directives/**/!(*Spec).js',
-            prefix + 'modules/**/!(*Spec).js',
-            prefix + 'js/app.module.js',
-            prefix + 'js/route.config.js'
+            prefix + 'vendor/manchestersyntax.js',
+            prefix + 'shared/services/prefixes.service.js',
+            prefix + 'shared/configs/configurations.js',
+            prefix + 'shared/filters/!(*.spec).js',
+            prefix + 'shared/services/!(*.spec).js',
+            prefix + 'shared/directives/**/!(*.spec).js',
+            prefix + 'shared/components/**/!(*.spec).js',
+            prefix + '*/!(*.spec).js',
+            prefix + '**/*/services/**/!(*.spec).js',
+            prefix + '**/*/components/**/!(*.spec).js',
+            prefix + '**/*/directives/**/!(*.spec).js',
+            prefix + '**/!(*.spec).js',
+            prefix + 'login/login.module.js',
+            prefix + 'app.module.js',
+            prefix + 'route.config.js'
         ]
     },
     nodeJsFiles = function(prefix) {
@@ -89,6 +92,7 @@ var jsFiles = function(prefix) {
         return [
             prefix + '**/css/**/*.' + suffix,
             prefix + '**/directives/**/*.' + suffix,
+            prefix + '**/components/**/*.' + suffix,
             prefix + '**/modules/**/*.' + suffix
         ]
     },

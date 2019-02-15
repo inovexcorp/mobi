@@ -77,7 +77,7 @@
                         });
                     }
                 }],
-                templateUrl: 'directives/paging/paging.directive.html'
+                templateUrl: 'shared/directives/paging/paging.directive.html'
             }
         }
 })();

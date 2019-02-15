@@ -103,7 +103,7 @@
                         results[id] = { additions: additions, deletions: deletions };
                     }
                 }],
-                templateUrl: 'directives/commitChangesDisplay/commitChangesDisplay.directive.html'
+                templateUrl: 'shared/directives/commitChangesDisplay/commitChangesDisplay.directive.html'
             }
         }
 })();

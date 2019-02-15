@@ -104,7 +104,7 @@
                 controller: function() {
                     var dvm = this;
                 },
-                templateUrl: 'directives/passwordConfirmInput/passwordConfirmInput.directive.html'
+                templateUrl: 'shared/directives/passwordConfirmInput/passwordConfirmInput.directive.html'
             }
         }
 })();

@@ -75,7 +75,7 @@
                         $timeout(() => dvm.getPage());
                     }
                 },
-                templateUrl: 'directives/pagination/pagination.directive.html'
+                templateUrl: 'shared/directives/pagination/pagination.directive.html'
             }
         }
 })();

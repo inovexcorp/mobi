@@ -74,7 +74,7 @@
                         });
                     }
                 },
-                templateUrl: 'directives/checkbox/checkbox.directive.html'
+                templateUrl: 'shared/directives/checkbox/checkbox.directive.html'
             }
         }
 })();

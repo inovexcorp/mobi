@@ -42,7 +42,7 @@
      * @param {Function} cancelEvent A function to call when the "cancel" button is clicked
      */
     const markdownEditorComponent = {
-        templateUrl: 'directives/markdownEditor/markdownEditor.component.html',
+        templateUrl: 'shared/directives/markdownEditor/markdownEditor.component.html',
         bindings: {
             bindModel: '=ngModel',
             placeHolder: '<',

@@ -43,7 +43,7 @@
                     return _.range(0, num);
                 }
             },
-            templateUrl: 'directives/stepProgressBar/stepProgressBar.directive.html'
+            templateUrl: 'shared/directives/stepProgressBar/stepProgressBar.directive.html'
         };
     }
 })();

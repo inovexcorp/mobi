@@ -48,7 +48,7 @@
                 replace: true,
                 transclude: true,
                 require: '^^statementContainer',
-                templateUrl: 'directives/statementDisplay/statementDisplay.directive.html',
+                templateUrl: 'shared/directives/statementDisplay/statementDisplay.directive.html',
                 scope: {
                     predicate: '<'
                 },

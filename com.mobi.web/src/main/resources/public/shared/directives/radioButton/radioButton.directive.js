@@ -103,7 +103,7 @@
                         });
                     }
                 }],
-                templateUrl: 'directives/radioButton/radioButton.directive.html'
+                templateUrl: 'shared/directives/radioButton/radioButton.directive.html'
             }
         }
 })();

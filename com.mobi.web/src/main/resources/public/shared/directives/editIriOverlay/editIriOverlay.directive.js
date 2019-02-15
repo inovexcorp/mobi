@@ -66,7 +66,7 @@
         function editIriOverlay(REGEX) {
             return {
                 restrict: 'E',
-                templateUrl: 'directives/editIriOverlay/editIriOverlay.directive.html',
+                templateUrl: 'shared/directives/editIriOverlay/editIriOverlay.directive.html',
                 scope: {
                     resolve: '<',
                     close: '&',

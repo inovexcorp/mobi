@@ -80,7 +80,7 @@
                         $scope.dismiss();
                     }
                 }],
-                templateUrl: 'directives/commitInfoOverlay/commitInfoOverlay.directive.html'
+                templateUrl: 'shared/directives/commitInfoOverlay/commitInfoOverlay.directive.html'
             }
         }
 })();

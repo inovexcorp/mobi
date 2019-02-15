@@ -53,7 +53,7 @@
                 replace: true,
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/actionMenu/actionMenu.directive.html'
+                templateUrl: 'shared/directives/actionMenu/actionMenu.directive.html'
             };
         }
 })();

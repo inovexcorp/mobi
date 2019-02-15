@@ -59,7 +59,7 @@
                     displayText: '<',
                     icon: '<'
                 },
-                templateUrl: 'directives/actionMenuItem/actionMenuItem.directive.html'
+                templateUrl: 'shared/directives/actionMenuItem/actionMenuItem.directive.html'
             };
         }
 })();

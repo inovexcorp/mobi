@@ -68,7 +68,7 @@
                     textAreaName: '<',
                     isFocusMe: '<?'
                 },
-                templateUrl: 'directives/textArea/textArea.directive.html'
+                templateUrl: 'shared/directives/textArea/textArea.directive.html'
             }
         }
 })();

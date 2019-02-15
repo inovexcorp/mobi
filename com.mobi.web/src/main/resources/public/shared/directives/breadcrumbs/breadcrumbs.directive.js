@@ -47,7 +47,7 @@
         function breadcrumbs() {
             return {
                 restrict: 'E',
-                templateUrl: 'directives/breadcrumbs/breadcrumbs.directive.html',
+                templateUrl: 'shared/directives/breadcrumbs/breadcrumbs.directive.html',
                 replace: true,
                 scope: {
                     items: '<',

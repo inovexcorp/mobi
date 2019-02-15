@@ -49,7 +49,7 @@
                     keyupEvent: '&',
                     clearEvent: '&'
                 },
-                templateUrl: 'directives/blockSearch/blockSearch.directive.html'
+                templateUrl: 'shared/directives/blockSearch/blockSearch.directive.html'
             }
         }
 })();

@@ -57,7 +57,7 @@
     function commitDifferenceTabset() {
         return {
             restrict: 'E',
-            templateUrl: 'directives/commitDifferenceTabset/commitDifferenceTabset.directive.html',
+            templateUrl: 'shared/directives/commitDifferenceTabset/commitDifferenceTabset.directive.html',
             replace: true,
             scope: {},
             bindToController: {

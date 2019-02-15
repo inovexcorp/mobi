@@ -43,7 +43,7 @@
                 url: '/login',
                 views: {
                     container: {
-                        templateUrl: 'login/login.html'
+                        templateUrl: 'login/login.module.html'
                     }
                 },
                 data: {
@@ -93,7 +93,7 @@
                 url: '/ontology-editor',
                 views: {
                     'container@': {
-                        templateUrl: 'ontology-editor/ontology-editor.html'
+                        templateUrl: 'ontology-editor/ontology-editor.module.html'
                     }
                 },
                 data: {
@@ -104,7 +104,7 @@
                 url: '/mapper',
                 views: {
                     'container@': {
-                        templateUrl: 'mapper/mapper.html'
+                        templateUrl: 'mapper/mapper.module.html'
                     }
                 },
                 data: {
@@ -126,7 +126,7 @@
                 url: '/discover',
                 views: {
                     'container@': {
-                        templateUrl: 'discover/discover.html'
+                        templateUrl: 'discover/discover.module.html'
                     }
                 },
                 data: {
@@ -136,7 +136,7 @@
                 url: '/user-management',
                 views: {
                     'container@': {
-                        templateUrl: 'user-management/user-management.html'
+                        templateUrl: 'user-management/user-management.module.html'
                     }
                 },
                 data: {
@@ -146,7 +146,7 @@
                 url: '/datasets',
                 views: {
                     'container@': {
-                        templateUrl: 'datasets/datasets.html'
+                        templateUrl: 'datasets/datasets.module.html'
                     }
                 },
                 data: {
@@ -156,7 +156,7 @@
                 url: '/merge-requests',
                 views: {
                     'container@': {
-                        templateUrl: 'merge-requests/merge-requests.html'
+                        templateUrl: 'merge-requests/merge-requests.module.html'
                     }
                 },
                 data: {

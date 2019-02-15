@@ -58,7 +58,7 @@
                 scope: {
                     mutedText: '<'
                 },
-                templateUrl: 'directives/customLabel/customLabel.directive.html'
+                templateUrl: 'shared/directives/customLabel/customLabel.directive.html'
             }
         }
 })();

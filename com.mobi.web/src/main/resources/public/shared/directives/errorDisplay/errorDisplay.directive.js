@@ -32,7 +32,7 @@
                 restrict: 'E',
                 replace: true,
                 transclude: true,
-                templateUrl: 'directives/errorDisplay/errorDisplay.directive.html',
+                templateUrl: 'shared/directives/errorDisplay/errorDisplay.directive.html',
                 scope: {}
             }
         }

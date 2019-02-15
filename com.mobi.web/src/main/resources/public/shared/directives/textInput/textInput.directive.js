@@ -76,7 +76,7 @@
                     isValid: '<',
                     isFocusMe: '<?'
                 },
-                templateUrl: 'directives/textInput/textInput.directive.html'
+                templateUrl: 'shared/directives/textInput/textInput.directive.html'
             }
         }
 })();

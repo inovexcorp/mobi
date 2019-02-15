@@ -33,7 +33,7 @@
                 replace: true,
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/circleButtonStack/circleButtonStack.directive.html'
+                templateUrl: 'shared/directives/circleButtonStack/circleButtonStack.directive.html'
             }
         }
 })();

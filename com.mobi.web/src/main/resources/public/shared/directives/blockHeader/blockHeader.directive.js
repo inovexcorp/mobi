@@ -46,7 +46,7 @@
                 restrict: 'E',
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/blockHeader/blockHeader.directive.html'
+                templateUrl: 'shared/directives/blockHeader/blockHeader.directive.html'
             }
         }
 })();

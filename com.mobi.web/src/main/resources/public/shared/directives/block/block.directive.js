@@ -45,7 +45,7 @@
                 replace: true,
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/block/block.directive.html'
+                templateUrl: 'shared/directives/block/block.directive.html'
             }
         }
 })();

@@ -55,7 +55,7 @@
                 replace: true,
                 transclude: true,
                 scope: {},
-                templateUrl: 'directives/materialTabset/materialTabset.directive.html',
+                templateUrl: 'shared/directives/materialTabset/materialTabset.directive.html',
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;

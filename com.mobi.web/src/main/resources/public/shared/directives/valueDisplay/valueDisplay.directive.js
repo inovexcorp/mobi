@@ -61,7 +61,7 @@
                     value: '<',
                     highlightText: '<'
                 },
-                templateUrl: 'directives/valueDisplay/valueDisplay.directive.html',
+                templateUrl: 'shared/directives/valueDisplay/valueDisplay.directive.html',
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;

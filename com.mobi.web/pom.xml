@@ -211,7 +211,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target/classes/build/directives/sidebar</outputDirectory>
+                            <outputDirectory>${basedir}/target/classes/build/shared/directives/sidebar</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${basedir}/target/filtered-resources</directory>

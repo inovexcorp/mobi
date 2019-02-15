@@ -34,7 +34,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'directives/resolveConflictsForm/resolveConflictsForm.directive.html',
+                templateUrl: 'shared/directives/resolveConflictsForm/resolveConflictsForm.directive.html',
                 scope: {},
                 bindToController: {
                     conflicts: '<',

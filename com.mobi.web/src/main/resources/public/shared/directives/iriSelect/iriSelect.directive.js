@@ -63,7 +63,7 @@
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'directives/iriSelect/iriSelect.directive.html',
+                templateUrl: 'shared/directives/iriSelect/iriSelect.directive.html',
                 scope: {},
                 bindToController: {
                     bindModel: '=ngModel',
