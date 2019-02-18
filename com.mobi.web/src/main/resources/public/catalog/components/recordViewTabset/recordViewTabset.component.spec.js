@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 describe('Record View Tabset component', function() {
     var $compile, scope, $q, catalogManagerSvc;
 

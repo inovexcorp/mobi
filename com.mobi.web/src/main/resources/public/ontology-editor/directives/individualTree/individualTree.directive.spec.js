@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 describe('Individual Tree directive', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, util;
 

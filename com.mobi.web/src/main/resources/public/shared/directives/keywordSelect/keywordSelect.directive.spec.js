@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 describe('Keyword Select directive', function() {
     var $compile, scope;
 

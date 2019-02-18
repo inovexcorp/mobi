@@ -21,7 +21,6 @@
  * #L%
  */
 
-
 describe('Hierarchy Tree component', function() {
     var $compile, scope, ontologyStateSvc, ontologyUtils;
 
