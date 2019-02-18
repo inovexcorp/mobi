@@ -45,7 +45,7 @@ var jsFiles = function(prefix) {
             prefix + '**/*/services/**/!(*.spec).js',
             prefix + '**/*/components/**/!(*.spec).js',
             prefix + '**/*/directives/**/!(*.spec).js',
-            prefix + '*/**/!(*.spec).js',
+            prefix + '!(vendor)*/**/!(*.spec).js',
             prefix + 'app.module.js',
             prefix + 'route.config.js'
         ]
@@ -111,8 +111,8 @@ var jsFiles = function(prefix) {
         ]
     },
     bundledFiles = [
-        dest + 'js/manchester.js',
-        dest + 'js/sparql.js'
+        dest + 'vendor/manchester.js',
+        dest + 'vendor/sparql.js'
     ],
     minifiedFiles = [
         dest + '**/vendor.js',
@@ -175,21 +175,21 @@ gulp.task('minify-scripts', ['antlr4', 'sparqljs'], function() {
         .pipe(babel({
             presets: ['es2015']
         }));
-    var bundledFileStream = gulp.src(bundledFiles)
+    var bundledFileStream = gulp.src(bundledFiles);
 
     return queue({ objectMode: true }, bundledFileStream, customFiles)
         .pipe(concat('main.js'))
         .pipe(ngAnnotate())
         .pipe(rename({suffix: '.min'}))
         .pipe(uglify())
-        .pipe(gulp.dest(dest + 'js'));
+        .pipe(gulp.dest(dest + 'vendor'));
 });
 
 // Concatenates and minifies vendor JS files
 gulp.task('minify-vendor-scripts', function() {
     return gulp.src(nodeJsFiles(nodeDir))
         .pipe(concat('vendor.js'))
-        .pipe(gulp.dest(dest + 'js'));
+        .pipe(gulp.dest(dest + 'vendor'));
 });
 
 // Concatenates and minifies CSS Files
@@ -245,7 +245,7 @@ gulp.task('antlr4', function() {
         .transform(strictify)
         .bundle()
         .pipe(source('manchester.js'))
-        .pipe(gulp.dest(dest + 'js'));
+        .pipe(gulp.dest(dest + 'vendor'));
 });
 
 gulp.task('sparqljs', function() {
@@ -256,7 +256,7 @@ gulp.task('sparqljs', function() {
         })
         .bundle()
         .pipe(source('sparql.js'))
-        .pipe(gulp.dest(dest + 'js'));
+        .pipe(gulp.dest(dest + 'vendor'));
 });
 
 // Moves all node_modules js files to build folder
@@ -264,7 +264,7 @@ gulp.task('move-node-js', function() {
     return gulp.src(nodeJsFiles(nodeDir), {base: './'})
         .pipe(flatten({includeParents: 2}))
         .pipe(flatten({includeParents: -1}))
-        .pipe(gulp.dest(dest + 'js'));
+        .pipe(gulp.dest(dest + 'vendor'));
 });
 
 // Moves all node_modules css files to build folder
@@ -294,7 +294,7 @@ gulp.task('change-to-css', function() {
 
 // Injects un-minified CSS and JS files
 gulp.task('inject-unminified', ['antlr4', 'sparqljs', 'move-custom-js', 'html', 'filtered-html', 'move-node-js', 'move-node-css', 'change-to-css'], function() {
-    var allJsFiles = nodeJsFiles(dest + 'js/').concat(bundledFiles).concat(jsFiles(dest)),
+    var allJsFiles = nodeJsFiles(dest + 'vendor/').concat(bundledFiles).concat(jsFiles(dest)),
         allStyleFiles = nodeStyleFiles(dest + 'css/').concat(styleFiles(dest, 'css')),
         allFiles = allJsFiles.concat(allStyleFiles);
     return injectFiles(allFiles);
