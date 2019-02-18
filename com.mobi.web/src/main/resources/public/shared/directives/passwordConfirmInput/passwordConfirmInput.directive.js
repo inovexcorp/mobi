@@ -23,6 +23,50 @@
 (function() {
     'use strict';
 
+    function samePassword() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            scope: {
+                password: "=samePassword"
+            },
+            link: function(scope, el, attrs, ctrl) {
+                ctrl.$validators.samePassword = function(modelValue, viewValue) {
+                    var value = modelValue || viewValue;
+                    if (ctrl.$isEmpty(value)) {
+                        return true;
+                    }
+                    return value === scope.password;
+                };
+
+                scope.$watch("password", function() {
+                    ctrl.$validate();
+                });
+            }
+        }
+    }
+    function passwordConfirmInput() {
+        return {
+            restrict: 'E',
+            require: '^form',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {
+                password: '=',
+                confirmedPassword: '=?',
+                label: '<'
+            },
+            link: function(scope, el, attrs, form) {
+                scope.form = form;
+                scope.required = attrs.hasOwnProperty('required');
+            },
+            controller: function() {
+                var dvm = this;
+            },
+            templateUrl: 'shared/directives/passwordConfirmInput/passwordConfirmInput.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -63,48 +107,4 @@
          * of the parent element to false.
          */
         .directive('samePassword', samePassword);
-
-        function samePassword() {
-            return {
-                restrict: 'A',
-                require: 'ngModel',
-                scope: {
-                    password: "=samePassword"
-                },
-                link: function(scope, el, attrs, ctrl) {
-                    ctrl.$validators.samePassword = function(modelValue, viewValue) {
-                        var value = modelValue || viewValue;
-                        if (ctrl.$isEmpty(value)) {
-                            return true;
-                        }
-                        return value === scope.password;
-                    };
-
-                    scope.$watch("password", function() {
-                        ctrl.$validate();
-                    });
-                }
-            }
-        }
-        function passwordConfirmInput() {
-            return {
-                restrict: 'E',
-                require: '^form',
-                replace: true,
-                controllerAs: 'dvm',
-                scope: {
-                    password: '=',
-                    confirmedPassword: '=?',
-                    label: '<'
-                },
-                link: function(scope, el, attrs, form) {
-                    scope.form = form;
-                    scope.required = attrs.hasOwnProperty('required');
-                },
-                controller: function() {
-                    var dvm = this;
-                },
-                templateUrl: 'shared/directives/passwordConfirmInput/passwordConfirmInput.directive.html'
-            }
-        }
 })();

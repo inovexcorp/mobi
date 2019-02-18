@@ -23,6 +23,22 @@
 (function() {
     'use strict';
 
+    function textArea() {
+        return {
+            restrict: 'E',
+            scope: {
+                bindModel: '=ngModel',
+                changeEvent: '&',
+                displayText: '<',
+                mutedText: '<',
+                required: '<',
+                textAreaName: '<',
+                isFocusMe: '<?'
+            },
+            templateUrl: 'shared/directives/textArea/textArea.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -55,20 +71,4 @@
          * @param {boolean} Whether the textarea should be focused once rendered
          */
         .directive('textArea', textArea);
-
-        function textArea() {
-            return {
-                restrict: 'E',
-                scope: {
-                    bindModel: '=ngModel',
-                    changeEvent: '&',
-                    displayText: '<',
-                    mutedText: '<',
-                    required: '<',
-                    textAreaName: '<',
-                    isFocusMe: '<?'
-                },
-                templateUrl: 'shared/directives/textArea/textArea.directive.html'
-            }
-        }
 })();

@@ -23,6 +23,42 @@
 (function() {
     'use strict';
 
+    materialTabset.$inject = ['$timeout'];
+
+    function materialTabset($timeout) {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: true,
+            scope: {},
+            templateUrl: 'shared/directives/materialTabset/materialTabset.directive.html',
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+
+                dvm.tabs = [];
+
+                dvm.addTab = function(tab) {
+                    dvm.tabs.push(tab);
+                }
+                dvm.removeTab = function(tab) {
+                    _.pull(dvm.tabs, tab);
+                }
+                dvm.select = function(selectedTab) {
+                    _.forEach(dvm.tabs, tab => {
+                        if (tab.active && !_.isEqual(tab, selectedTab)) {
+                            tab.active = false;
+                        }
+                    });
+                    $timeout(function() {
+                        selectedTab.onClick();
+                        selectedTab.active = true;
+                    });
+                }
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -46,40 +82,4 @@
          * by the contents of its template.
          */
         .directive('materialTabset', materialTabset);
-
-        materialTabset.$inject = ['$timeout'];
-
-        function materialTabset($timeout) {
-            return {
-                restrict: 'E',
-                replace: true,
-                transclude: true,
-                scope: {},
-                templateUrl: 'shared/directives/materialTabset/materialTabset.directive.html',
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-
-                    dvm.tabs = [];
-
-                    dvm.addTab = function(tab) {
-                        dvm.tabs.push(tab);
-                    }
-                    dvm.removeTab = function(tab) {
-                        _.pull(dvm.tabs, tab);
-                    }
-                    dvm.select = function(selectedTab) {
-                        _.forEach(dvm.tabs, tab => {
-                            if (tab.active && !_.isEqual(tab, selectedTab)) {
-                                tab.active = false;
-                            }
-                        });
-                        $timeout(function() {
-                            selectedTab.onClick();
-                            selectedTab.active = true;
-                        });
-                    }
-                }
-            }
-        }
 })();

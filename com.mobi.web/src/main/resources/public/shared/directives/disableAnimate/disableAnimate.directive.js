@@ -23,6 +23,17 @@
 (function() {
     'use strict';
 
+    disableAnimate.$inject = ['$animate'];
+
+    function disableAnimate($animate) {
+        return {
+            restrict: 'A',
+            link: function(scope, el) {
+                $animate.enabled(el, false);
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -44,15 +55,4 @@
          * ngAnimate classes such as `.ng-enter` and `.ng-leave` will not be added to the element.
          */
         .directive('disableAnimate', disableAnimate);
-
-        disableAnimate.$inject = ['$animate'];
-
-        function disableAnimate($animate) {
-            return {
-                restrict: 'A',
-                link: function(scope, el) {
-                    $animate.enabled(el, false);
-                }
-            }
-        }
 })();

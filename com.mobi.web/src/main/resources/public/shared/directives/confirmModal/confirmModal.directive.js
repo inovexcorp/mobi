@@ -23,6 +23,31 @@
 (function() {
     'use strict';
 
+    function confirmModal() {
+        return {
+            restrict: 'E',
+            scope: {
+                resolve: '<',
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['$scope', function($scope) {
+                var dvm = this;
+
+                dvm.yes = function() {
+                    Promise.resolve($scope.resolve.yes()).then(() => {
+                        $scope.close();
+                    });
+                }
+                dvm.no = function() {
+                    Promise.resolve($scope.resolve.no()).then(() => $scope.dismiss());
+                }
+            }],
+            templateUrl: 'shared/directives/confirmModal/confirmModal.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -51,29 +76,4 @@
          * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('confirmModal', confirmModal);
-
-        function confirmModal() {
-            return {
-                restrict: 'E',
-                scope: {
-                    resolve: '<',
-                    close: '&',
-                    dismiss: '&'
-                },
-                controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
-                    var dvm = this;
-
-                    dvm.yes = function() {
-                        Promise.resolve($scope.resolve.yes()).then(() => {
-                            $scope.close();
-                        });
-                    }
-                    dvm.no = function() {
-                        Promise.resolve($scope.resolve.no()).then(() => $scope.dismiss());
-                    }
-                }],
-                templateUrl: 'shared/directives/confirmModal/confirmModal.directive.html'
-            }
-        }
 })();

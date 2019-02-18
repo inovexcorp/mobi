@@ -23,6 +23,34 @@
 (function() {
     'use strict';
 
+    paging.$inject = ['$timeout']
+
+    function paging($timeout) {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {},
+            bindToController: {
+                total: '<',
+                currentPage: '=',
+                limit: '<',
+                changeEvent: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['$scope', function($scope) {
+                var dvm = this;
+                $scope.Math = window.Math;
+
+                dvm.onChange = function() {
+                    $timeout(function() {
+                        dvm.changeEvent();
+                    });
+                }
+            }],
+            templateUrl: 'shared/directives/paging/paging.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -52,32 +80,4 @@
          * @param {function} changeEvent the function to be called when a directional button is clicked
          */
         .directive('paging', paging);
-
-        paging.$inject = ['$timeout']
-
-        function paging($timeout) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    total: '<',
-                    currentPage: '=',
-                    limit: '<',
-                    changeEvent: '&'
-                },
-                controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
-                    var dvm = this;
-                    $scope.Math = window.Math;
-
-                    dvm.onChange = function() {
-                        $timeout(function() {
-                            dvm.changeEvent();
-                        });
-                    }
-                }],
-                templateUrl: 'shared/directives/paging/paging.directive.html'
-            }
-        }
 })();

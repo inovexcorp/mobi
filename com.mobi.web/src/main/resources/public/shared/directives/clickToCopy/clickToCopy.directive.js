@@ -23,6 +23,27 @@
 (function() {
     'use strict';
 
+    clickToCopy.$inject = ['$compile', 'toastr'];
+
+    function clickToCopy($compile, toastr) {
+        return {
+            restrict: 'A',
+            link: function(scope, elem, attrs) {
+                scope.onSuccess = function() {
+                    toastr.success('', 'Copied', {timeOut: 2000});
+                }
+                elem.removeAttr('click-to-copy');
+                elem.addClass('click-to-copy');
+                elem.attr('uib-tooltip', attrs.title || 'Copy to clipboard');
+                elem.attr('ngclipboard', '');
+                elem.attr('data-clipboard-text', '{{' + attrs.clickToCopy + '}}');
+                elem.attr('ngclipboard-success', 'onSuccess()');
+
+                $compile(elem)(scope);
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -48,25 +69,4 @@
          * will be copied on click.
          */
         .directive('clickToCopy', clickToCopy);
-
-        clickToCopy.$inject = ['$compile', 'toastr'];
-
-        function clickToCopy($compile, toastr) {
-            return {
-                restrict: 'A',
-                link: function(scope, elem, attrs) {
-                    scope.onSuccess = function() {
-                        toastr.success('', 'Copied', {timeOut: 2000});
-                    }
-                    elem.removeAttr('click-to-copy');
-                    elem.addClass('click-to-copy');
-                    elem.attr('uib-tooltip', attrs.title || 'Copy to clipboard');
-                    elem.attr('ngclipboard', '');
-                    elem.attr('data-clipboard-text', '{{' + attrs.clickToCopy + '}}');
-                    elem.attr('ngclipboard-success', 'onSuccess()');
-
-                    $compile(elem)(scope);
-                }
-            }
-        }
 })();

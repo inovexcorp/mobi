@@ -23,37 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name rdfVisualization
-         *
-         * @description
-         * The `rdfVisualization` module provides the `rdfVisualization` directive which generate
-         * a force directed graph from a json ld object using the D3 library capabilities.
-         */
-        .module('rdfVisualization', [])
-        /**
-         * @ngdoc directive
-         * @name
-         * @scope
-         * @restrict E
-         *
-         * @description
-         * `rdfVisualization` is a directive that generates an SVG visualisation from a provided
-         * JSON-LD array of objects, this JSON-LD object array will be transformed to provide a list
-         * of data objects and uses them as nodes. Think of those nodes as the data bubbles,
-         * it also provides a list of links, they connect nodes to display (complex) relations.
-         * Every link needs to have at least a source and a target. Both are ids referencing a node.
-         * The visualization will have default functionalities like zoom, pan, remove node,
-         * highlight node nearest neighbors and dragging events. The directive is replaced by the contents of its
-         * template.
-         *
-         * @param {Object} entity A JSON-LD array
-         *
-         */
-        .directive('rdfVisualization', rdfVisualization);
-
     rdfVisualization.$inject = ['d3TransformerService', 'd3'];
 
     function rdfVisualization(d3TransformerService, d3) {
@@ -480,4 +449,35 @@
             templateUrl: 'shared/directives/rdfVisualization/rdfVisualization.directive.html'
         }
     }
+
+    angular
+        /**
+         * @ngdoc overview
+         * @name rdfVisualization
+         *
+         * @description
+         * The `rdfVisualization` module provides the `rdfVisualization` directive which generate
+         * a force directed graph from a json ld object using the D3 library capabilities.
+         */
+        .module('rdfVisualization', [])
+        /**
+         * @ngdoc directive
+         * @name
+         * @scope
+         * @restrict E
+         *
+         * @description
+         * `rdfVisualization` is a directive that generates an SVG visualisation from a provided
+         * JSON-LD array of objects, this JSON-LD object array will be transformed to provide a list
+         * of data objects and uses them as nodes. Think of those nodes as the data bubbles,
+         * it also provides a list of links, they connect nodes to display (complex) relations.
+         * Every link needs to have at least a source and a target. Both are ids referencing a node.
+         * The visualization will have default functionalities like zoom, pan, remove node,
+         * highlight node nearest neighbors and dragging events. The directive is replaced by the contents of its
+         * template.
+         *
+         * @param {Object} entity A JSON-LD array
+         *
+         */
+        .directive('rdfVisualization', rdfVisualization);
 })();

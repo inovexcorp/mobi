@@ -23,6 +23,25 @@
 (function() {
     'use strict';
 
+    function textInput() {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {
+                bindModel: '=ngModel',
+                changeEvent: '&',
+                displayText: '<',
+                mutedText: '<',
+                required: '<',
+                inputName: '<',
+                isInvalid: '<',
+                isValid: '<',
+                isFocusMe: '<?'
+            },
+            templateUrl: 'shared/directives/textInput/textInput.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -60,23 +79,4 @@
          * @param {boolean} isFocusMe Whether the text input should be focused once rendered
          */
         .directive('textInput', textInput);
-
-        function textInput() {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {
-                    bindModel: '=ngModel',
-                    changeEvent: '&',
-                    displayText: '<',
-                    mutedText: '<',
-                    required: '<',
-                    inputName: '<',
-                    isInvalid: '<',
-                    isValid: '<',
-                    isFocusMe: '<?'
-                },
-                templateUrl: 'shared/directives/textInput/textInput.directive.html'
-            }
-        }
 })();

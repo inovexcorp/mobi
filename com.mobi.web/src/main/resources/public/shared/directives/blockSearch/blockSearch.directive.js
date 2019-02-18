@@ -23,6 +23,20 @@
 (function() {
     'use strict';
 
+    function blockSearch() {
+        return {
+            restrict: 'E',
+            replace: true,
+            require: '^^block',
+            scope: {
+                bindModel: '=ngModel',
+                keyupEvent: '&',
+                clearEvent: '&'
+            },
+            templateUrl: 'shared/directives/blockSearch/blockSearch.directive.html'
+        }
+    }
+    
     angular
         /**
          * @ngdoc overview
@@ -38,18 +52,4 @@
          *
          */
         .directive('blockSearch', blockSearch);
-
-        function blockSearch() {
-            return {
-                restrict: 'E',
-                replace: true,
-                require: '^^block',
-                scope: {
-                    bindModel: '=ngModel',
-                    keyupEvent: '&',
-                    clearEvent: '&'
-                },
-                templateUrl: 'shared/directives/blockSearch/blockSearch.directive.html'
-            }
-        }
 })();

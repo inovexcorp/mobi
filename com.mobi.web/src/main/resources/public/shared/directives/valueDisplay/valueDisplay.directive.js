@@ -23,6 +23,31 @@
 (function() {
     'use strict';
 
+    valueDisplay.$inject = ['discoverStateService', 'utilService'];
+
+    function valueDisplay(discoverStateService, utilService) {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {},
+            bindToController: {
+                value: '<',
+                highlightText: '<'
+            },
+            templateUrl: 'shared/directives/valueDisplay/valueDisplay.directive.html',
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+                dvm.util = utilService;
+                dvm.ds = discoverStateService;
+
+                dvm.has = function(obj, key) {
+                    return _.has(obj, key);
+                }
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -48,29 +73,4 @@
          * @param {object} value the json-ld value to display to a user.
          */
         .directive('valueDisplay', valueDisplay);
-
-        valueDisplay.$inject = ['discoverStateService', 'utilService'];
-
-        function valueDisplay(discoverStateService, utilService) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    value: '<',
-                    highlightText: '<'
-                },
-                templateUrl: 'shared/directives/valueDisplay/valueDisplay.directive.html',
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.util = utilService;
-                    dvm.ds = discoverStateService;
-
-                    dvm.has = function(obj, key) {
-                        return _.has(obj, key);
-                    }
-                }
-            }
-        }
 })();

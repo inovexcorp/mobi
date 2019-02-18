@@ -23,6 +23,17 @@
 (function() {
     'use strict';
 
+    function focusMe() {
+        return {
+            restrict: 'A',
+            link: function(scope, elem, attrs) {
+                scope.$watch(attrs.focusMe, function(newValue) {
+                    newValue && elem[0].focus()
+                });
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -43,15 +54,4 @@
          * directive value is set to true.
          */
         .directive('focusMe', focusMe);
-
-        function focusMe() {
-            return {
-                restrict: 'A',
-                link: function(scope, elem, attrs) {
-                    scope.$watch(attrs.focusMe, function(newValue) {
-                        newValue && elem[0].focus()
-                    });
-                }
-            }
-        }
 })();

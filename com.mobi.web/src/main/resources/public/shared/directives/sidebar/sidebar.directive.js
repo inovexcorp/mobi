@@ -23,10 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        .module('sidebar', [])
-        .directive('sidebar', sidebar);
-
     sidebar.$inject = ['$rootScope', '$state', 'loginManagerService', 'userManagerService'];
 
     function sidebar($rootScope, $state, loginManagerService, userManagerService) {
@@ -61,4 +57,8 @@
             templateUrl: 'shared/directives/sidebar/sidebar.directive.html'
         }
     }
+
+    angular
+        .module('sidebar', [])
+        .directive('sidebar', sidebar);
 })();

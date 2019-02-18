@@ -23,6 +23,38 @@
 (function() {
     'use strict';
 
+    languageSelect.$inject = ['propertyManagerService'];
+
+    function languageSelect(propertyManagerService) {
+        return {
+            restrict: 'E',
+            replace: true,
+            templateUrl: 'shared/directives/languageSelect/languageSelect.directive.html',
+            scope: {},
+            bindToController: {
+                bindModel: '=ngModel',
+                disableClear: '<'
+            },
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+                var pm = propertyManagerService;
+                dvm.languages = pm.languageList;
+
+                dvm.clear = function() {
+                    dvm.bindModel = undefined;
+                }
+
+                if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
+                    dvm.bindModel = 'en';
+                }
+            },
+            link: function(scope, element, attrs) {
+                scope.required = 'required' in attrs;
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -49,36 +81,4 @@
          * @param {boolean} disableClear A boolean that indicates if the clear button should be disabled
          */
         .directive('languageSelect', languageSelect);
-
-        languageSelect.$inject = ['propertyManagerService'];
-
-        function languageSelect(propertyManagerService) {
-            return {
-                restrict: 'E',
-                replace: true,
-                templateUrl: 'shared/directives/languageSelect/languageSelect.directive.html',
-                scope: {},
-                bindToController: {
-                    bindModel: '=ngModel',
-                    disableClear: '<'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    var pm = propertyManagerService;
-                    dvm.languages = pm.languageList;
-
-                    dvm.clear = function() {
-                        dvm.bindModel = undefined;
-                    }
-
-                    if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
-                        dvm.bindModel = 'en';
-                    }
-                },
-                link: function(scope, element, attrs) {
-                    scope.required = 'required' in attrs;
-                }
-            }
-        }
 })();

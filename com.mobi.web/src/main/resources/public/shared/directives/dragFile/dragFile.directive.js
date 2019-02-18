@@ -23,31 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name dragFile
-         *
-         * @description
-         * The `dragFile` module only provides the `dragFile` directive which creates the draggable
-         * file section.
-         */
-        .module('dragFile', [])
-        /**
-         * @ngdoc directive
-         * @name dragFile.directive:dragFile
-         * @scope
-         * @restrict E
-         * @requires $window
-         *
-         * @description
-         * HTML contents in the drag file which provides an area to drop or browse for files.
-         *
-         * @param {Function} onDrop the function to execute on file drop
-         * @param {Object[]} files the list of files that were dropped
-         */
-        .directive('dragFile', dragFile);
-
     dragFile.$inject = ['$window', '$parse', '$compile'];
 
     function dragFile($window, $parse, $compile) {
@@ -105,4 +80,29 @@
             }
         }
     }
+
+    angular
+        /**
+         * @ngdoc overview
+         * @name dragFile
+         *
+         * @description
+         * The `dragFile` module only provides the `dragFile` directive which creates the draggable
+         * file section.
+         */
+        .module('dragFile', [])
+        /**
+         * @ngdoc directive
+         * @name dragFile.directive:dragFile
+         * @scope
+         * @restrict E
+         * @requires $window
+         *
+         * @description
+         * HTML contents in the drag file which provides an area to drop or browse for files.
+         *
+         * @param {Function} onDrop the function to execute on file drop
+         * @param {Object[]} files the list of files that were dropped
+         */
+        .directive('dragFile', dragFile);
 })();

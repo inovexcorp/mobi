@@ -23,6 +23,36 @@
 (function() {
     'use strict';
 
+    branchSelect.$inject = ['$timeout', 'utilService'];
+
+    function branchSelect($timeout, utilService) {
+        return {
+            restrict: 'E',
+            replace: true,
+            templateUrl: 'shared/directives/branchSelect/branchSelect.directive.html',
+            scope: {
+                required: '<',
+                branches: '<',
+                isDisabledWhen: '<',
+                changeEvent: '&',
+            },
+            bindToController: {
+                bindModel: '=ngModel'
+            },
+            controllerAs: 'dvm',
+            controller: ['$scope', function($scope) {
+                var dvm = this;
+                dvm.util = utilService;
+
+                dvm.onChange = function() {
+                    $timeout(function() {
+                        $scope.changeEvent();
+                    });
+                }
+            }]
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -53,34 +83,4 @@
          * @param {Object} bindModel The variable to bind the value of the select field to
          */
         .directive('branchSelect', branchSelect);
-
-        branchSelect.$inject = ['$timeout', 'utilService'];
-
-        function branchSelect($timeout, utilService) {
-            return {
-                restrict: 'E',
-                replace: true,
-                templateUrl: 'shared/directives/branchSelect/branchSelect.directive.html',
-                scope: {
-                    required: '<',
-                    branches: '<',
-                    isDisabledWhen: '<',
-                    changeEvent: '&',
-                },
-                bindToController: {
-                    bindModel: '=ngModel'
-                },
-                controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
-                    var dvm = this;
-                    dvm.util = utilService;
-
-                    dvm.onChange = function() {
-                        $timeout(function() {
-                            $scope.changeEvent();
-                        });
-                    }
-                }]
-            }
-        }
 })();

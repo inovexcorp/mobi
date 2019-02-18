@@ -23,6 +23,28 @@
 (function() {
     'use strict';
 
+    function materialTab() {
+        return {
+            restrict: 'E',
+            require: '^^materialTabset',
+            transclude: true,
+            replace: true,
+            scope: {
+                active: '=?',
+                hideTab: '<?',
+                heading: '<',
+                onClick: '&'
+            },
+            templateUrl: 'shared/directives/materialTab/materialTab.directive.html',
+            link: function(scope, elem, attr, materialTabsetController) {
+                materialTabsetController.addTab(scope);
+                scope.$on('$destroy', function() {
+                    materialTabsetController.removeTab(scope);
+                });
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -47,26 +69,4 @@
          * The directive is replaced by the contents of its template.
          */
         .directive('materialTab', materialTab);
-
-        function materialTab() {
-            return {
-                restrict: 'E',
-                require: '^^materialTabset',
-                transclude: true,
-                replace: true,
-                scope: {
-                    active: '=?',
-                    hideTab: '<?',
-                    heading: '<',
-                    onClick: '&'
-                },
-                templateUrl: 'shared/directives/materialTab/materialTab.directive.html',
-                link: function(scope, elem, attr, materialTabsetController) {
-                    materialTabsetController.addTab(scope);
-                    scope.$on('$destroy', function() {
-                        materialTabsetController.removeTab(scope);
-                    });
-                }
-            }
-        }
 })();

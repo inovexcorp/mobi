@@ -23,6 +23,29 @@
 (function() {
     'use strict';
 
+    function searchBar() {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {},
+            bindToController: {
+                bindModel: '=ngModel',
+                submitEvent: '&'
+            },
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+
+                dvm.onKeyUp = function(event) {
+                    if (event.keyCode === 13) {
+                        dvm.submitEvent();
+                    }
+                }
+            },
+            templateUrl: 'shared/directives/searchBar/searchBar.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -48,27 +71,4 @@
          * @param {function} submitEvent The function to be called when the enter button is clicked
          */
         .directive('searchBar', searchBar);
-
-    function searchBar() {
-        return {
-            restrict: 'E',
-            replace: true,
-            scope: {},
-            bindToController: {
-                bindModel: '=ngModel',
-                submitEvent: '&'
-            },
-            controllerAs: 'dvm',
-            controller: function() {
-                var dvm = this;
-
-                dvm.onKeyUp = function(event) {
-                    if (event.keyCode === 13) {
-                        dvm.submitEvent();
-                    }
-                }
-            },
-            templateUrl: 'shared/directives/searchBar/searchBar.directive.html'
-        }
-    }
 })();

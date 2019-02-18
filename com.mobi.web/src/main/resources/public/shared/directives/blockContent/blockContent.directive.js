@@ -23,6 +23,17 @@
 (function() {
     'use strict';
 
+    function blockContent() {
+        return {
+            restrict: 'E',
+            replace: true,
+            require: '^^block',
+            transclude: true,
+            scope: {},
+            templateUrl: 'shared/directives/blockContent/blockContent.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -38,15 +49,4 @@
          *
          */
         .directive('blockContent', blockContent);
-
-        function blockContent() {
-            return {
-                restrict: 'E',
-                replace: true,
-                require: '^^block',
-                transclude: true,
-                scope: {},
-                templateUrl: 'shared/directives/blockContent/blockContent.directive.html'
-            }
-        }
 })();

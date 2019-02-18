@@ -23,6 +23,29 @@
 (function() {
     'use strict';
 
+    commitInfoOverlay.$inject = ['utilService', 'userManagerService']
+
+    function commitInfoOverlay(utilService, userManagerService) {
+        return {
+            restrict: 'E',
+            controllerAs: 'dvm',
+            scope: {
+                resolve: '<',
+                dismiss: '&'
+            },
+            controller: ['$scope', function($scope) {
+                var dvm = this;
+                dvm.util = utilService;
+                dvm.um = userManagerService;
+
+                dvm.cancel = function() {
+                    $scope.dismiss();
+                }
+            }],
+            templateUrl: 'shared/directives/commitInfoOverlay/commitInfoOverlay.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -59,27 +82,4 @@
          * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('commitInfoOverlay', commitInfoOverlay);
-
-        commitInfoOverlay.$inject = ['utilService', 'userManagerService']
-
-        function commitInfoOverlay(utilService, userManagerService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                scope: {
-                    resolve: '<',
-                    dismiss: '&'
-                },
-                controller: ['$scope', function($scope) {
-                    var dvm = this;
-                    dvm.util = utilService;
-                    dvm.um = userManagerService;
-
-                    dvm.cancel = function() {
-                        $scope.dismiss();
-                    }
-                }],
-                templateUrl: 'shared/directives/commitInfoOverlay/commitInfoOverlay.directive.html'
-            }
-        }
 })();

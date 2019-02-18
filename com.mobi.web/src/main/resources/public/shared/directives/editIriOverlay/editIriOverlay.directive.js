@@ -23,6 +23,42 @@
 (function() {
     'use strict';
 
+    editIriOverlay.$inject = ['REGEX'];
+
+    function editIriOverlay(REGEX) {
+        return {
+            restrict: 'E',
+            templateUrl: 'shared/directives/editIriOverlay/editIriOverlay.directive.html',
+            scope: {
+                resolve: '<',
+                close: '&',
+                dismiss: '&'
+            },
+            controllerAs: 'dvm',
+            controller: ['$scope', function($scope) {
+                var dvm = this;
+                dvm.namespacePattern = REGEX.IRI;
+                dvm.localNamePattern = REGEX.LOCALNAME;
+
+                dvm.iriBegin = $scope.resolve.iriBegin;
+                dvm.iriThen = $scope.resolve.iriThen;
+                dvm.iriEnd = $scope.resolve.iriEnd;
+
+                dvm.submit = function() {
+                    $scope.close({$value: {iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}})
+                }
+                dvm.resetVariables = function() {
+                    dvm.iriBegin = $scope.resolve.iriBegin;
+                    dvm.iriThen = $scope.resolve.iriThen;
+                    dvm.iriEnd = $scope.resolve.iriEnd;
+                }
+                dvm.cancel = function() {
+                    $scope.dismiss();
+                }
+            }]
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -60,40 +96,4 @@
          * @param {Function} dismiss A function that dismisses the modal
          */
         .directive('editIriOverlay', editIriOverlay);
-
-        editIriOverlay.$inject = ['REGEX'];
-
-        function editIriOverlay(REGEX) {
-            return {
-                restrict: 'E',
-                templateUrl: 'shared/directives/editIriOverlay/editIriOverlay.directive.html',
-                scope: {
-                    resolve: '<',
-                    close: '&',
-                    dismiss: '&'
-                },
-                controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
-                    var dvm = this;
-                    dvm.namespacePattern = REGEX.IRI;
-                    dvm.localNamePattern = REGEX.LOCALNAME;
-
-                    dvm.iriBegin = $scope.resolve.iriBegin;
-                    dvm.iriThen = $scope.resolve.iriThen;
-                    dvm.iriEnd = $scope.resolve.iriEnd;
-
-                    dvm.submit = function() {
-                        $scope.close({$value: {iriBegin: dvm.iriBegin, iriThen: dvm.iriThen, iriEnd: dvm.iriEnd}})
-                    }
-                    dvm.resetVariables = function() {
-                        dvm.iriBegin = $scope.resolve.iriBegin;
-                        dvm.iriThen = $scope.resolve.iriThen;
-                        dvm.iriEnd = $scope.resolve.iriEnd;
-                    }
-                    dvm.cancel = function() {
-                        $scope.dismiss();
-                    }
-                }]
-            }
-        }
 })();

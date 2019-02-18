@@ -23,6 +23,29 @@
 (function() {
     'use strict';
 
+    function commitDifferenceTabset() {
+        return {
+            restrict: 'E',
+            templateUrl: 'shared/directives/commitDifferenceTabset/commitDifferenceTabset.directive.html',
+            replace: true,
+            scope: {},
+            bindToController: {
+                branchTitle: '<',
+                commitId: '<',
+                targetId: '<',
+                difference: '<'
+            },
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+                dvm.tabs = {
+                    changes: true,
+                    commits: false
+                };
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -53,27 +76,4 @@
          * @param {Object} difference The object representing the difference between the two Commits
          */
         .directive('commitDifferenceTabset', commitDifferenceTabset);
-
-    function commitDifferenceTabset() {
-        return {
-            restrict: 'E',
-            templateUrl: 'shared/directives/commitDifferenceTabset/commitDifferenceTabset.directive.html',
-            replace: true,
-            scope: {},
-            bindToController: {
-                branchTitle: '<',
-                commitId: '<',
-                targetId: '<',
-                difference: '<'
-            },
-            controllerAs: 'dvm',
-            controller: function() {
-                var dvm = this;
-                dvm.tabs = {
-                    changes: true,
-                    commits: false
-                };
-            }
-        }
-    }
 })();

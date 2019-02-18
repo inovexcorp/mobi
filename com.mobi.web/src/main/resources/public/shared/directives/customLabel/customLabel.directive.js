@@ -23,6 +23,18 @@
 (function() {
     'use strict';
 
+    function customLabel() {
+        return {
+            restrict: 'E',
+            transclude: true,
+            replace: true,
+            scope: {
+                mutedText: '<'
+            },
+            templateUrl: 'shared/directives/customLabel/customLabel.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -49,16 +61,4 @@
          * transcluded content.
          */
         .directive('customLabel', customLabel);
-
-        function customLabel() {
-            return {
-                restrict: 'E',
-                transclude: true,
-                replace: true,
-                scope: {
-                    mutedText: '<'
-                },
-                templateUrl: 'shared/directives/customLabel/customLabel.directive.html'
-            }
-        }
 })();

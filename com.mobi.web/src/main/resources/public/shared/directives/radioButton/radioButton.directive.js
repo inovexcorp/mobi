@@ -23,6 +23,35 @@
 (function() {
     'use strict';
 
+    radioButton.$inject = ['$timeout'];
+
+    function radioButton($timeout) {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {},
+            bindToController: {
+                bindModel: '=ngModel',
+                changeEvent: '&',
+                displayText: '<',
+                inline: '<?',
+                isDisabled: '<',
+                value: '<'
+            },
+            controllerAs: 'dvm',
+            controller: ['$scope', function($scope) {
+                var dvm = this;
+
+                dvm.onChange = function() {
+                    $timeout(function() {
+                        dvm.changeEvent();
+                    });
+                }
+            }],
+            templateUrl: 'shared/directives/radioButton/radioButton.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -77,33 +106,4 @@
          * </example>
          */
         .directive('radioButton', radioButton);
-
-        radioButton.$inject = ['$timeout'];
-
-        function radioButton($timeout) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    bindModel: '=ngModel',
-                    changeEvent: '&',
-                    displayText: '<',
-                    inline: '<?',
-                    isDisabled: '<',
-                    value: '<'
-                },
-                controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
-                    var dvm = this;
-
-                    dvm.onChange = function() {
-                        $timeout(function() {
-                            dvm.changeEvent();
-                        });
-                    }
-                }],
-                templateUrl: 'shared/directives/radioButton/radioButton.directive.html'
-            }
-        }
 })();

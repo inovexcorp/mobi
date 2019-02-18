@@ -23,6 +23,33 @@
 (function() {
     'use strict';
 
+    function emailIri() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function(scope, element, attrs, ctrl) {
+                ctrl.$formatters.push(value => _.replace(value, 'mailto:', ''));
+                ctrl.$parsers.push(value => 'mailto:' + value);
+            }
+        }
+    }
+    function emailInput() {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {
+                bindModel: '=ngModel',
+                changeEvent: '&',
+                mutedText: '<',
+                required: '<',
+                inputName: '<',
+                isInvalid: '<',
+                isValid: '<'
+            },
+            templateUrl: 'shared/directives/emailInput/emailInput.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -65,32 +92,4 @@
          * value to be preceded by the string "mailto:" and this be a valid IRI.
          */
         .directive('emailIri', emailIri);
-
-        function emailIri() {
-            return {
-                restrict: 'A',
-                require: 'ngModel',
-                link: function(scope, element, attrs, ctrl) {
-                    ctrl.$formatters.push(value => _.replace(value, 'mailto:', ''));
-                    ctrl.$parsers.push(value => 'mailto:' + value);
-                }
-            }
-        }
-
-        function emailInput() {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {
-                    bindModel: '=ngModel',
-                    changeEvent: '&',
-                    mutedText: '<',
-                    required: '<',
-                    inputName: '<',
-                    isInvalid: '<',
-                    isValid: '<'
-                },
-                templateUrl: 'shared/directives/emailInput/emailInput.directive.html'
-            }
-        }
 })();

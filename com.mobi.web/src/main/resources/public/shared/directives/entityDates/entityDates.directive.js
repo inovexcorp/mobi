@@ -23,6 +23,28 @@
 (function () {
     'use strict';
 
+    entityDates.$inject = ['$filter', 'utilService'];
+
+    function entityDates($filter, utilService) {
+        return {
+            restrict: 'E',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {
+                entity: '<'
+            },
+            controller: function() {
+                var dvm = this;
+
+                dvm.getDate = function(entity, key) {
+                    var dateStr = utilService.getDctermsValue(entity, key);
+                    return utilService.getDate(dateStr, 'short');
+                }
+            },
+            templateUrl: 'shared/directives/entityDates/entityDates.directive.html'
+        };
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -50,26 +72,4 @@
          * @param {Object} entity A JSON-LD object
          */
         .directive('entityDates', entityDates);
-
-    entityDates.$inject = ['$filter', 'utilService'];
-
-    function entityDates($filter, utilService) {
-        return {
-            restrict: 'E',
-            replace: true,
-            controllerAs: 'dvm',
-            scope: {
-                entity: '<'
-            },
-            controller: function() {
-                var dvm = this;
-
-                dvm.getDate = function(entity, key) {
-                    var dateStr = utilService.getDctermsValue(entity, key);
-                    return utilService.getDate(dateStr, 'short');
-                }
-            },
-            templateUrl: 'shared/directives/entityDates/entityDates.directive.html'
-        };
-    }
 })();

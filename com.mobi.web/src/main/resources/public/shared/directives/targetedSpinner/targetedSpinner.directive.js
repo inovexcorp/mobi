@@ -23,6 +23,32 @@
 (function() {
     'use strict';
 
+    targetedSpinner.$inject = ['$compile', 'httpService'];
+
+    function targetedSpinner($compile, httpService) {
+        return {
+            restrict: 'A',
+            link: function(scope, el, attrs) {
+                scope.cancelOnDestroy = 'cancelOnDestroy' in attrs;
+                scope.small = 'small' in attrs;
+                scope.httpService = httpService;
+                scope.id = scope.$eval(attrs.targetedSpinner);
+                el.addClass('spinner-container');
+                el.append($compile('<spinner ng-show="httpService.isPending(id)" small="small"></spinner>')(scope));
+
+                scope.$on('$destroy', () => {
+                    if (scope.cancelOnDestroy) {
+                        httpService.cancel(scope.id);
+                    }
+                });
+
+                scope.$watch(attrs.targetedSpinner, (newValue, oldValue) => {
+                    scope.id = newValue;
+                });
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -52,30 +78,4 @@
          * @param {boolean} small Whether or not the spinner should be a smaller size
          */
         .directive('targetedSpinner', targetedSpinner);
-
-        targetedSpinner.$inject = ['$compile', 'httpService'];
-
-        function targetedSpinner($compile, httpService) {
-            return {
-                restrict: 'A',
-                link: function(scope, el, attrs) {
-                    scope.cancelOnDestroy = 'cancelOnDestroy' in attrs;
-                    scope.small = 'small' in attrs;
-                    scope.httpService = httpService;
-                    scope.id = scope.$eval(attrs.targetedSpinner);
-                    el.addClass('spinner-container');
-                    el.append($compile('<spinner ng-show="httpService.isPending(id)" small="small"></spinner>')(scope));
-
-                    scope.$on('$destroy', () => {
-                        if (scope.cancelOnDestroy) {
-                            httpService.cancel(scope.id);
-                        }
-                    });
-
-                    scope.$watch(attrs.targetedSpinner, (newValue, oldValue) => {
-                        scope.id = newValue;
-                    });
-                }
-            }
-        }
 })();

@@ -23,35 +23,6 @@
 (function () {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name entityDescription
-         *
-         * @description
-         * The `entityDescription` module only provides the `entityDescription` directive which creates
-         * a div with an optionally expandable display of the dcterms:description of an entity.
-         */
-        .module('entityDescription', [])
-        /**
-         * @ngdoc directive
-         * @name entityDescription.directive:entityDescription
-         * @scope
-         * @restrict E
-         * @requires $filter
-         * @requires utilService.service:utilService
-         *
-         * @description
-         * `entityDescription` is a directive which creates a div with a display of a JSON-LD object's
-         * dcterms:description property value. Based on the limited variable, will optionally limit the
-         * display to the first 200 characters and provide a button to toggle the full display. The
-         * directive is replaced by the contents of its template.
-         *
-         * @param {boolean} limited Whether or not the display should be limited to the first 200 charaters
-         * @param {Object} entity A JSON-LD object
-         */
-        .directive('entityDescription', entityDescription);
-
     entityDescription.$inject = ['$filter', 'utilService'];
 
     function entityDescription($filter, utilService) {
@@ -85,4 +56,33 @@
             templateUrl: 'shared/directives/entityDescription/entityDescription.directive.html'
         };
     }
+
+    angular
+        /**
+         * @ngdoc overview
+         * @name entityDescription
+         *
+         * @description
+         * The `entityDescription` module only provides the `entityDescription` directive which creates
+         * a div with an optionally expandable display of the dcterms:description of an entity.
+         */
+        .module('entityDescription', [])
+        /**
+         * @ngdoc directive
+         * @name entityDescription.directive:entityDescription
+         * @scope
+         * @restrict E
+         * @requires $filter
+         * @requires utilService.service:utilService
+         *
+         * @description
+         * `entityDescription` is a directive which creates a div with a display of a JSON-LD object's
+         * dcterms:description property value. Based on the limited variable, will optionally limit the
+         * display to the first 200 characters and provide a button to toggle the full display. The
+         * directive is replaced by the contents of its template.
+         *
+         * @param {boolean} limited Whether or not the display should be limited to the first 200 charaters
+         * @param {Object} entity A JSON-LD object
+         */
+        .directive('entityDescription', entityDescription);
 })();

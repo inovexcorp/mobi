@@ -23,6 +23,17 @@
 (function() {
     'use strict';
 
+    function blockHeader() {
+        return {
+            require: '^^block',
+            replace: true,
+            restrict: 'E',
+            transclude: true,
+            scope: {},
+            templateUrl: 'shared/directives/blockHeader/blockHeader.directive.html'
+        }
+    }
+    
     angular
         /**
          * @ngdoc overview
@@ -38,15 +49,4 @@
          *
          */
         .directive('blockHeader', blockHeader);
-
-        function blockHeader() {
-            return {
-                require: '^^block',
-                replace: true,
-                restrict: 'E',
-                transclude: true,
-                scope: {},
-                templateUrl: 'shared/directives/blockHeader/blockHeader.directive.html'
-            }
-        }
 })();

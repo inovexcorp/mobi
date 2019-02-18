@@ -23,6 +23,27 @@
 (function () {
     'use strict';
 
+    recordKeywords.$inject = ['prefixes'];
+
+    function recordKeywords(prefixes) {
+        return {
+            restrict: 'E',
+            replace: true,
+            controllerAs: 'dvm',
+            scope: {
+                record: '<'
+            },
+            controller: function() {
+                var dvm = this;
+
+                dvm.getKeywords = function(record) {
+                    return _.map(_.get(record, prefixes.catalog + 'keyword', []), '@value').sort();
+                }
+            },
+            templateUrl: 'shared/directives/recordKeywords/recordKeywords.directive.html'
+        };
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -48,25 +69,4 @@
          * @param {Object} record The JSON-LD object for a record
          */
         .directive('recordKeywords', recordKeywords);
-
-    recordKeywords.$inject = ['prefixes'];
-
-    function recordKeywords(prefixes) {
-        return {
-            restrict: 'E',
-            replace: true,
-            controllerAs: 'dvm',
-            scope: {
-                record: '<'
-            },
-            controller: function() {
-                var dvm = this;
-
-                dvm.getKeywords = function(record) {
-                    return _.map(_.get(record, prefixes.catalog + 'keyword', []), '@value').sort();
-                }
-            },
-            templateUrl: 'shared/directives/recordKeywords/recordKeywords.directive.html'
-        };
-    }
 })();

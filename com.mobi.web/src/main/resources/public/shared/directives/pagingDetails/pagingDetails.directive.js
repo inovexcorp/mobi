@@ -23,6 +23,22 @@
 (function() {
     'use strict';
 
+    function pagingDetails() {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {
+                totalSize: '<',
+                pageIndex: '<',
+                limit: '<'
+            },
+            controller: ['$scope', function($scope) {
+                $scope.Math = window.Math;
+            }],
+            templateUrl: 'shared/directives/pagingDetails/pagingDetails.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -50,19 +66,4 @@
          */
         .directive('pagingDetails', pagingDetails);
 
-        function pagingDetails() {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {
-                    totalSize: '<',
-                    pageIndex: '<',
-                    limit: '<'
-                },
-                controller: ['$scope', function($scope) {
-                    $scope.Math = window.Math;
-                }],
-                templateUrl: 'shared/directives/pagingDetails/pagingDetails.directive.html'
-            }
-        }
 })();

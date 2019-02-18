@@ -23,6 +23,20 @@
 (function() {
     'use strict';
 
+    function dragMe() {
+        return {
+            restrict: 'A',
+            link: function(scope, elem, attrs) {
+                elem.on('dragstart', event => {
+                    event.dataTransfer.setData(scope.$eval(attrs.dragId), JSON.stringify(scope.$eval(attrs.info)));
+                });
+                scope.$watch(() => _.get(attrs, 'disabled'), newValue => {
+                    elem.prop('draggable', !newValue);
+                });
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -43,18 +57,4 @@
          * is a unique identifier to match up to a "dropId" where you can actually drop this directive.
          */
         .directive('dragMe', dragMe);
-
-        function dragMe() {
-            return {
-                restrict: 'A',
-                link: function(scope, elem, attrs) {
-                    elem.on('dragstart', event => {
-                        event.dataTransfer.setData(scope.$eval(attrs.dragId), JSON.stringify(scope.$eval(attrs.info)));
-                    });
-                    scope.$watch(() => _.get(attrs, 'disabled'), newValue => {
-                        elem.prop('draggable', !newValue);
-                    });
-                }
-            }
-        }
 })();

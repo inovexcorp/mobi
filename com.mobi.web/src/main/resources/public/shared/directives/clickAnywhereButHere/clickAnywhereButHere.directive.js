@@ -23,6 +23,52 @@
 (function() {
     'use strict';
 
+    clickAnywhereButHereService.$inject = ['$document'];
+
+    function clickAnywhereButHereService($document) {
+        var tracker = [];
+
+        return function($scope, expr) {
+            var t = _.find(tracker, tr => tr.expr === expr && tr.scope === $scope);
+            if (t) {
+                return t;
+            }
+            var handler = function() {
+                $scope.$apply(expr);
+            };
+            $document.on('click', handler);
+
+            // IMPORTANT! Tear down this event handler when the scope is destroyed.
+            $scope.$on('$destroy', function() {
+                $document.off('click', handler);
+            });
+
+            t = { scope: $scope, expr };
+            tracker.push(t);
+            return t;
+        };
+    }
+
+    clickAnywhereButHere.$inject = ['clickAnywhereButHereService'];
+
+    function clickAnywhereButHere(clickAnywhereButHereService) {
+        return {
+            restrict: 'A',
+            link: function(scope, elem, attr, ctrl) {
+                var handler = function(e) {
+                    e.stopPropagation();
+                };
+                elem.on('click', handler);
+
+                scope.$on('$destroy', function() {
+                    elem.off('click', handler);
+                });
+
+                clickAnywhereButHereService(scope, attr.clickAnywhereButHere);
+            }
+        };
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -61,50 +107,4 @@
          * attaching a click handler to the document to call the passed expression from the directive.
          */
         .directive('clickAnywhereButHere', clickAnywhereButHere);
-
-        clickAnywhereButHereService.$inject = ['$document'];
-
-        function clickAnywhereButHereService($document) {
-          var tracker = [];
-
-          return function($scope, expr) {
-                var t = _.find(tracker, tr => tr.expr === expr && tr.scope === $scope);
-                if (t) {
-                    return t;
-                }
-                var handler = function() {
-                    $scope.$apply(expr);
-                };
-                $document.on('click', handler);
-
-                // IMPORTANT! Tear down this event handler when the scope is destroyed.
-                $scope.$on('$destroy', function() {
-                    $document.off('click', handler);
-                });
-
-                t = { scope: $scope, expr };
-                tracker.push(t);
-                return t;
-            };
-        }
-
-        clickAnywhereButHere.$inject = ['clickAnywhereButHereService'];
-
-        function clickAnywhereButHere(clickAnywhereButHereService) {
-            return {
-                restrict: 'A',
-                link: function(scope, elem, attr, ctrl) {
-                    var handler = function(e) {
-                        e.stopPropagation();
-                    };
-                    elem.on('click', handler);
-
-                    scope.$on('$destroy', function() {
-                        elem.off('click', handler);
-                    });
-
-                    clickAnywhereButHereService(scope, attr.clickAnywhereButHere);
-                }
-            };
-        }
 })();

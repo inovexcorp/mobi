@@ -23,6 +23,18 @@
 (function() {
     'use strict';
 
+    function breadcrumbs() {
+        return {
+            restrict: 'E',
+            templateUrl: 'shared/directives/breadcrumbs/breadcrumbs.directive.html',
+            replace: true,
+            scope: {
+                items: '<',
+                onClick: '&'
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -43,16 +55,4 @@
          * HTML contents which shows the breadcrumb trail for the current page.
          */
         .directive('breadcrumbs', breadcrumbs);
-
-        function breadcrumbs() {
-            return {
-                restrict: 'E',
-                templateUrl: 'shared/directives/breadcrumbs/breadcrumbs.directive.html',
-                replace: true,
-                scope: {
-                    items: '<',
-                    onClick: '&'
-                }
-            }
-        }
 })();

@@ -23,10 +23,6 @@
 (function () {
     'use strict';
 
-    angular
-        .module('stepProgressBar', [])
-        .directive('stepProgressBar', stepProgressBar);
-
     function stepProgressBar() {
         return {
             restrict: 'E',
@@ -46,4 +42,8 @@
             templateUrl: 'shared/directives/stepProgressBar/stepProgressBar.directive.html'
         };
     }
+
+    angular
+        .module('stepProgressBar', [])
+        .directive('stepProgressBar', stepProgressBar);
 })();

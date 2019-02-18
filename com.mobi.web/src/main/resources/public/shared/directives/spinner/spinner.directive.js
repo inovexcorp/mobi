@@ -23,6 +23,16 @@
 (function() {
     'use strict';
 
+    function spinner() {
+        return {
+            restrict: 'E',
+            scope: {
+                small: '<?'
+            },
+            template: '<div class="spinner"><div class="icon-wrapper"><i class="fa fa-spin fa-spinner" ng-class="{\'fa-4x\': !small}"></i></div></div>'
+        };
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -43,14 +53,4 @@
          * the containing the element. Spinner size is controller by the scope variable `small`.
          */
         .directive('spinner', spinner);
-
-        function spinner() {
-            return {
-                restrict: 'E',
-                scope: {
-                    small: '<?'
-                },
-                template: '<div class="spinner"><div class="icon-wrapper"><i class="fa fa-spin fa-spinner" ng-class="{\'fa-4x\': !small}"></i></div></div>'
-            };
-        }
 })();

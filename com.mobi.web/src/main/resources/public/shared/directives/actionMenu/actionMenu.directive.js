@@ -23,6 +23,16 @@
 (function() {
     'use strict';
 
+    function actionMenu() {
+        return {
+            restrict: 'E',
+            replace: true,
+            transclude: true,
+            scope: {},
+            templateUrl: 'shared/directives/actionMenu/actionMenu.directive.html'
+        };
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -46,14 +56,4 @@
          * template.
          */
         .directive('actionMenu', actionMenu);
-
-        function actionMenu() {
-            return {
-                restrict: 'E',
-                replace: true,
-                transclude: true,
-                scope: {},
-                templateUrl: 'shared/directives/actionMenu/actionMenu.directive.html'
-            };
-        }
 })();

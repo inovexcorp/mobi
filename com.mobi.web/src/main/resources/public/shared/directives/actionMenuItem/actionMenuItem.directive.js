@@ -23,6 +23,19 @@
 (function() {
     'use strict';
 
+    function actionMenuItem() {
+        return {
+            require: '^^actionMenu',
+            restrict: 'E',
+            replace: true,
+            scope: {
+                displayText: '<',
+                icon: '<'
+            },
+            templateUrl: 'shared/directives/actionMenuItem/actionMenuItem.directive.html'
+        };
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -49,17 +62,4 @@
          * @param {string} icon A Font Awesome class name for an icon in the action menu item
          */
         .directive('actionMenuItem', actionMenuItem);
-
-        function actionMenuItem() {
-            return {
-                require: '^^actionMenu',
-                restrict: 'E',
-                replace: true,
-                scope: {
-                    displayText: '<',
-                    icon: '<'
-                },
-                templateUrl: 'shared/directives/actionMenuItem/actionMenuItem.directive.html'
-            };
-        }
 })();

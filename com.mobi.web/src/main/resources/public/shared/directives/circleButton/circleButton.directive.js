@@ -23,6 +23,19 @@
 (function() {
     'use strict';
 
+    function circleButton() {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {
+                btnIcon: '<',
+                btnSmall: '<',
+                displayText: '<'
+            },
+            templateUrl: 'shared/directives/circleButton/circleButton.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -57,17 +70,4 @@
          * <circle-button btn-icon="fa-camera" btn-small="true" is-enabled="true" on-click="console.log('Hello world!')"></circle-button>
          */
         .directive('circleButton', circleButton);
-
-        function circleButton() {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {
-                    btnIcon: '<',
-                    btnSmall: '<',
-                    displayText: '<'
-                },
-                templateUrl: 'shared/directives/circleButton/circleButton.directive.html'
-            }
-        }
 })();

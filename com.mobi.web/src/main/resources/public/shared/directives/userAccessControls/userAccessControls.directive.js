@@ -23,42 +23,6 @@
 (function () {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name userAccessControls
-         * @description
-         * The `userAccessControls` module only provides the `userAccessControls` directive which which creates
-         * selectors for viewing and updating permissions of the application.
-         */
-        .module('userAccessControls', [])
-        /**
-         * @ngdoc directive
-         * @name userAccessControls.directive:userAccessControls
-         * @scope
-         * @restrict E
-         * @requires policyManager.service:policyManagerService
-         * @requires util.service:utilService
-         * @requires loginManager.service:loginManagerService
-         * @requires prefixes.service:prefixes
-         *
-         * @description
-         * `userAccessControls` is a directive that creates a Bootstrap `row` div with a single column
-         * containing a {@link block.directive:block block} for viewing and updating overall permissions
-         * from policies. The directive is replaced by the contents of its template.
-         */
-        .directive('userAccessControls', userAccessControls)
-        /**
-         * @ngdoc directive
-         * @name userAccessControls.directive:hideLabel
-         * @restrict A
-         *
-         * @description
-         * `hideLabel` is a utility directive for working with Angular Material inputs so that
-         * the placeholder for a md-autocomplete is set appropriately on the underlying <input>.
-         */
-        .directive('hideLabel', hideLabel);
-
     userAccessControls.$inject = ['$q', 'policyManagerService', 'utilService', 'loginManagerService', 'prefixes'];
 
     function userAccessControls($q, policyManagerService, utilService, loginManagerService, prefixes) {
@@ -205,4 +169,40 @@
             }
         }
     }
+
+    angular
+        /**
+         * @ngdoc overview
+         * @name userAccessControls
+         * @description
+         * The `userAccessControls` module only provides the `userAccessControls` directive which which creates
+         * selectors for viewing and updating permissions of the application.
+         */
+        .module('userAccessControls', [])
+        /**
+         * @ngdoc directive
+         * @name userAccessControls.directive:userAccessControls
+         * @scope
+         * @restrict E
+         * @requires policyManager.service:policyManagerService
+         * @requires util.service:utilService
+         * @requires loginManager.service:loginManagerService
+         * @requires prefixes.service:prefixes
+         *
+         * @description
+         * `userAccessControls` is a directive that creates a Bootstrap `row` div with a single column
+         * containing a {@link block.directive:block block} for viewing and updating overall permissions
+         * from policies. The directive is replaced by the contents of its template.
+         */
+        .directive('userAccessControls', userAccessControls)
+        /**
+         * @ngdoc directive
+         * @name userAccessControls.directive:hideLabel
+         * @restrict A
+         *
+         * @description
+         * `hideLabel` is a utility directive for working with Angular Material inputs so that
+         * the placeholder for a md-autocomplete is set appropriately on the underlying <input>.
+         */
+        .directive('hideLabel', hideLabel);
 })();

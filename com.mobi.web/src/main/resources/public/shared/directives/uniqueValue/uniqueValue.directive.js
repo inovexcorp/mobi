@@ -23,6 +23,22 @@
 (function () {
     'use strict';
 
+    function uniqueValue() {
+        return {
+            restrict: 'A',
+            require: 'ngModel',
+            link: function(scope, el, attrs, ctrl) {
+                ctrl.$validators.uniqueValue = function(modelValue, viewValue) {
+                    var value = modelValue || viewValue;
+                    if (ctrl.$isEmpty(value)) {
+                        return true;
+                    }
+                    return !_.includes(scope.$eval(attrs.uniqueValue), value);
+                }
+            }
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -44,20 +60,4 @@
          * it sets the uniqueValue validity of the parent element to false.
          */
         .directive('uniqueValue', uniqueValue);
-
-    function uniqueValue() {
-        return {
-            restrict: 'A',
-            require: 'ngModel',
-            link: function(scope, el, attrs, ctrl) {
-                ctrl.$validators.uniqueValue = function(modelValue, viewValue) {
-                    var value = modelValue || viewValue;
-                    if (ctrl.$isEmpty(value)) {
-                        return true;
-                    }
-                    return !_.includes(scope.$eval(attrs.uniqueValue), value);
-                }
-            }
-        }
-    }
 })();

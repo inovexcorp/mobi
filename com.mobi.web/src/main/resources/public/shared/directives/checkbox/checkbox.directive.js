@@ -23,6 +23,34 @@
 (function() {
     'use strict';
 
+    checkbox.$inject = ['$timeout'];
+
+    function checkbox($timeout) {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {},
+            bindToController: {
+                bindModel: '=ngModel',
+                changeEvent: '&',
+                displayText: '<',
+                inline: '<?',
+                isDisabled: '<'
+            },
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+
+                dvm.onChange = function() {
+                    $timeout(function() {
+                        dvm.changeEvent();
+                    });
+                }
+            },
+            templateUrl: 'shared/directives/checkbox/checkbox.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -49,32 +77,4 @@
          * @param {boolean=false} isDisabledWhen when the checkbox should be disabled
          */
         .directive('checkbox', checkbox);
-
-        checkbox.$inject = ['$timeout'];
-
-        function checkbox($timeout) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    bindModel: '=ngModel',
-                    changeEvent: '&',
-                    displayText: '<',
-                    inline: '<?',
-                    isDisabled: '<'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-
-                    dvm.onChange = function() {
-                        $timeout(function() {
-                            dvm.changeEvent();
-                        });
-                    }
-                },
-                templateUrl: 'shared/directives/checkbox/checkbox.directive.html'
-            }
-        }
 })();

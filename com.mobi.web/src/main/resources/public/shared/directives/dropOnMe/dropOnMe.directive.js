@@ -22,6 +22,39 @@
  */
 (function() {
     'use strict';
+        
+    dropOnMe.$inject = ['$timeout'];
+
+    function dropOnMe($timeout) {
+        return {
+            restrict: 'A',
+            scope: {
+                dropId: '<',
+                onDrop: '&'
+            },
+            link: function(scope, elem) {
+                elem.on('dragover', event => {
+                    if (_.includes(event.dataTransfer.types, scope.dropId)) {
+                        event.preventDefault();
+                        elem.addClass('drop-hover');
+                    }
+                });
+                elem.on('drop', event => {
+                    var data = event.dataTransfer.getData(scope.dropId);
+                    if (data) {
+                        $timeout(function() {
+                            event.preventDefault();
+                            scope.onDrop({data: JSON.parse(data)});
+                        });
+                    }
+                    elem.removeClass('drop-hover');
+                });
+                elem.on('dragleave', event => {
+                    elem.removeClass('drop-hover');
+                });
+            }
+        }
+    }
 
     angular
         /**
@@ -44,37 +77,4 @@
          * dragged element.
          */
         .directive('dropOnMe', dropOnMe);
-        
-        dropOnMe.$inject = ['$timeout'];
-
-        function dropOnMe($timeout) {
-            return {
-                restrict: 'A',
-                scope: {
-                    dropId: '<',
-                    onDrop: '&'
-                },
-                link: function(scope, elem) {
-                    elem.on('dragover', event => {
-                        if (_.includes(event.dataTransfer.types, scope.dropId)) {
-                            event.preventDefault();
-                            elem.addClass('drop-hover');
-                        }
-                    });
-                    elem.on('drop', event => {
-                        var data = event.dataTransfer.getData(scope.dropId);
-                        if (data) {
-                            $timeout(function() {
-                                event.preventDefault();
-                                scope.onDrop({data: JSON.parse(data)});
-                            });
-                        }
-                        elem.removeClass('drop-hover');
-                    });
-                    elem.on('dragleave', event => {
-                        elem.removeClass('drop-hover');
-                    });
-                }
-            }
-        }
 })();

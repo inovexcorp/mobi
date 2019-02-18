@@ -23,6 +23,31 @@
 (function() {
     'use strict';
 
+    pagination.$inject = ['$timeout']
+
+    function pagination($timeout) {
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {},
+            bindToController: {
+                currentPage: '=',
+                getPage: '&',
+                total: '<',
+                limit: '<'
+            },
+            controllerAs: 'dvm',
+            controller: function() {
+                var dvm = this;
+
+                dvm.changePage = function() {
+                    $timeout(() => dvm.getPage());
+                }
+            },
+            templateUrl: 'shared/directives/pagination/pagination.directive.html'
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -53,29 +78,4 @@
          * @param {limit} limit the limit on the number of items per page
          */
         .directive('pagination', pagination);
-
-        pagination.$inject = ['$timeout']
-
-        function pagination($timeout) {
-            return {
-                restrict: 'E',
-                replace: true,
-                scope: {},
-                bindToController: {
-                    currentPage: '=',
-                    getPage: '&',
-                    total: '<',
-                    limit: '<'
-                },
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-
-                    dvm.changePage = function() {
-                        $timeout(() => dvm.getPage());
-                    }
-                },
-                templateUrl: 'shared/directives/pagination/pagination.directive.html'
-            }
-        }
 })();
