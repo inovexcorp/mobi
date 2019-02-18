@@ -37,7 +37,6 @@ var jsFiles = function(prefix) {
         return [
             prefix + 'vendor/manchestersyntax.js',
             prefix + 'shared/services/prefixes.service.js',
-            prefix + 'shared/configs/configurations.js',
             prefix + 'shared/filters/!(*.spec).js',
             prefix + 'shared/services/!(*.spec).js',
             prefix + 'shared/directives/**/!(*.spec).js',
@@ -46,8 +45,7 @@ var jsFiles = function(prefix) {
             prefix + '**/*/services/**/!(*.spec).js',
             prefix + '**/*/components/**/!(*.spec).js',
             prefix + '**/*/directives/**/!(*.spec).js',
-            prefix + '**/!(*.spec).js',
-            prefix + 'login/login.module.js',
+            prefix + '*/**/!(*.spec).js',
             prefix + 'app.module.js',
             prefix + 'route.config.js'
         ]
@@ -93,7 +91,7 @@ var jsFiles = function(prefix) {
             prefix + '**/css/**/*.' + suffix,
             prefix + '**/directives/**/*.' + suffix,
             prefix + '**/components/**/*.' + suffix,
-            prefix + '**/modules/**/*.' + suffix
+            prefix + '*/*.' + suffix
         ]
     },
     nodeStyleFiles = function(prefix) {
