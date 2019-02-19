@@ -26,6 +26,7 @@ describe('Edit IRI Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('shared');
+        mockComponent('shared', 'errorDisplay')
         injectRegexConstant();
 
         inject(function(_$compile_, _$rootScope_) {

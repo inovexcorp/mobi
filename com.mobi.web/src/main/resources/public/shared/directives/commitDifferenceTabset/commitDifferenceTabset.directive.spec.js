@@ -28,6 +28,9 @@ describe('Commit Difference Tabset directive', function() {
         module('shared');
         mockComponent('shared', 'commitChangesDisplay');
         mockComponent('shared', 'commitHistoryTable');
+        mockComponent('shared', 'infoMessage');
+        mockComponent('shared', 'tab');
+        mockComponent('shared', 'tabset');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

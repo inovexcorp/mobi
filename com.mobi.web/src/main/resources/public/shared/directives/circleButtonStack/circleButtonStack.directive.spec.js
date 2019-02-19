@@ -26,6 +26,7 @@ describe('Circle Button Stack directive', function() {
     beforeEach(function() {
         module('templates');
         module('shared');
+        mockComponent('shared', 'circleButton');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

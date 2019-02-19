@@ -26,6 +26,8 @@ describe('Resolve Conflicts Form directive', function() {
     beforeEach(function() {
         module('templates');
         module('shared');
+        mockComponent('shared', 'statementContainer');
+        mockComponent('shared', 'statementDisplay');
         mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_) {

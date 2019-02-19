@@ -26,6 +26,8 @@ describe('Commit Changes Display directive', function() {
     beforeEach(function() {
         module('templates');
         module('shared');
+        mockComponent('shared', 'statementContainer');
+        mockComponent('shared', 'statementDisplay');
         mockUtil();
         mockPrefixes();
         injectSplitIRIFilter();

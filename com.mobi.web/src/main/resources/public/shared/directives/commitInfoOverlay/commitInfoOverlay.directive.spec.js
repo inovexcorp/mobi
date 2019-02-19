@@ -26,6 +26,7 @@ describe('Commit Info Overlay directive', function() {
     beforeEach(function() {
         module('templates');
         module('shared');
+        mockComponent('shared', 'commitChangesDisplay');
         mockUserManager();
         mockUtil();
 
