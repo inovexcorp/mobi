@@ -24,7 +24,7 @@ describe('Camel Case filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('camelCase');
+        module('shared');
 
         inject(function(_$filter_) {
             $filter = _$filter_;

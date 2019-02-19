@@ -25,7 +25,7 @@ describe('Breadcrumbs directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('breadcrumbs');
+        module('shared');
         mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {

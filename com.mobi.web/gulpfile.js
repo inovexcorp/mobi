@@ -36,6 +36,7 @@ var src = './src/main/resources/public/',
 var jsFiles = function(prefix) {
         return [
             prefix + 'vendor/manchestersyntax.js',
+            prefix + 'shared/shared.module.js',
             prefix + 'shared/services/prefixes.service.js',
             prefix + 'shared/filters/!(*.spec).js',
             prefix + 'shared/services/!(*.spec).js',

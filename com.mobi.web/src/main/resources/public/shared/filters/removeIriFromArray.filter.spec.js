@@ -24,7 +24,7 @@ describe('Remove IRI From Array filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('removeIriFromArray');
+        module('shared');
 
         inject(function(_$filter_) {
             $filter = _$filter_;

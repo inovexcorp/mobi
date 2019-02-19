@@ -25,7 +25,7 @@ describe('Branch Select directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('branchSelect');
+        module('shared');
         injectBranchesToDisplayFilter();
         injectTrustedFilter();
         injectHighlightFilter();

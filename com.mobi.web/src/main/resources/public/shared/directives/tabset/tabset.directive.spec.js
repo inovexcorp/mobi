@@ -25,7 +25,7 @@ describe('Tabset directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('tabset');
+        module('shared');
         injectTrustedFilter();
         mockOntologyState();
 

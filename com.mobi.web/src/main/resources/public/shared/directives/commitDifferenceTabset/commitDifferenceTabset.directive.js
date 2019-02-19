@@ -57,8 +57,8 @@
          * @description
          * `commitDifferenceTabset` is a directive which creates a div containing a
          * {@link tabset.directive:tabset} with tabs for the
-         * {@link commitChangesDisplay.directive:commitChangesDisplay changes} and
-         * {@link commitHistoryTable.directive:commitHistoryTable commits} between two branches.
+         * {@link shared.directive:commitChangesDisplay changes} and
+         * {@link shared.directive:commitHistoryTable commits} between two branches.
          * The directive is replaced by the contents of its template.
          *
          * @param {string} recordId The IRI of the VersionedRDFRecord that the Commits belong to

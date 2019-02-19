@@ -25,7 +25,7 @@ describe('Block directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('block');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

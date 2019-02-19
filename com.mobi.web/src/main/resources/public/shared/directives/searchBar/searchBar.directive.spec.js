@@ -25,7 +25,7 @@ describe('Search Bar directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('searchBar');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;

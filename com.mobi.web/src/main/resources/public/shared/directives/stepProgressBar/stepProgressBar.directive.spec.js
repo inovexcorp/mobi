@@ -25,7 +25,7 @@ describe('Step Progress Bar directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('stepProgressBar');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

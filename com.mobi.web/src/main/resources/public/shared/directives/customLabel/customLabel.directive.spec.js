@@ -25,7 +25,7 @@ describe('Custom Label directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('customLabel');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

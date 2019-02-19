@@ -25,7 +25,7 @@ describe('Material Tab directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('materialTab');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

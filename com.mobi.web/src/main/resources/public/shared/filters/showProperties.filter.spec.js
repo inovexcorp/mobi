@@ -24,7 +24,7 @@ describe('Show Properties filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('showProperties');
+        module('shared');
 
         inject(function(_$filter_) {
             $filter = _$filter_;

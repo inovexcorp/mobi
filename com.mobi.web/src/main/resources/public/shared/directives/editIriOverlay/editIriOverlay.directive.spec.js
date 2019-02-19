@@ -25,7 +25,7 @@ describe('Edit IRI Overlay directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('editIriOverlay');
+        module('shared');
         injectRegexConstant();
 
         inject(function(_$compile_, _$rootScope_) {

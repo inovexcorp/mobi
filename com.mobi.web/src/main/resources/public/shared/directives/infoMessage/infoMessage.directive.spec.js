@@ -25,7 +25,7 @@ describe('Info Message directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('infoMessage');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

@@ -25,7 +25,7 @@ describe('Value Display directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('valueDisplay');
+        module('shared');
         injectPrefixationFilter();
         injectTrustedFilter();
         injectHighlightFilter();

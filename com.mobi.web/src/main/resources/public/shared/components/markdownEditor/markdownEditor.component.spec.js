@@ -25,7 +25,7 @@ describe('Markdown Editor component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('markdownEditor');
+        module('shared');
         injectShowdownConstant();
         injectTrustedFilter();
 

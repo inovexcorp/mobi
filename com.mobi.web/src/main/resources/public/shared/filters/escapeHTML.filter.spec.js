@@ -24,7 +24,7 @@ describe('Escape HTML filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('escapeHTML');
+        module('shared');
 
         inject(function(_$filter_) {
             $filter = _$filter_;

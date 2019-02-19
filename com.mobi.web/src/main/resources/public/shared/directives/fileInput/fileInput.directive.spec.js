@@ -24,7 +24,7 @@ describe('File Input directive', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('fileInput');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

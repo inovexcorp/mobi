@@ -25,7 +25,7 @@ describe('Tab directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('tab');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

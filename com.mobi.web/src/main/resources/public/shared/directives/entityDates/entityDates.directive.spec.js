@@ -25,7 +25,7 @@ describe('Entity Dates directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('entityDates');
+        module('shared');
         mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_, _$filter_) {

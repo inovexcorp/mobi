@@ -24,7 +24,7 @@ describe('Unique Value directive', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('uniqueValue');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

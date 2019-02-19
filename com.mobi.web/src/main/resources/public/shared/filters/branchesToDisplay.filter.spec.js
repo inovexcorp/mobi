@@ -24,7 +24,7 @@ describe('Branches To Display Filter', function() {
     var $filter, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('branchesToDisplay');
+        module('shared');
         mockLoginManager();
         mockCatalogManager();
         mockUtil();

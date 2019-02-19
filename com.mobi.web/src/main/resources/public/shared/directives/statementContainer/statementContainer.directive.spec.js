@@ -25,7 +25,7 @@ describe('Statement Container directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('statementContainer');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

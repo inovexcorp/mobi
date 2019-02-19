@@ -25,7 +25,7 @@ describe('Paging Details directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('pagingDetails');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

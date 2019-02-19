@@ -25,7 +25,7 @@ describe('Block content directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('blockContent');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

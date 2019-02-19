@@ -24,7 +24,7 @@ describe('Beautify filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('beautify');
+        module('shared');
 
         // To test out a filter, you need to inject $filter and save it to use
         // like you would normally

@@ -25,7 +25,7 @@ describe('Confirm Modal directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('confirmModal');
+        module('shared');
         injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_) {
