@@ -277,7 +277,7 @@ gulp.task('move-node-css', function() {
 
 // Moves all custom js files to build folder
 gulp.task('move-custom-js', function() {
-    return gulp.src(src + '**/!(*Spec).js')
+    return gulp.src(src + '**/!(*.spec).js')
         .pipe(babel({
             presets: ['es2015']
         }))
