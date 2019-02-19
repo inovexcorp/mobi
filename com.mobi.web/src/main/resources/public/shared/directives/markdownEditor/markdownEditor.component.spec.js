@@ -39,9 +39,10 @@ describe('Markdown Editor component', function() {
         scope.isFocusMe = true;
         scope.buttonText = '';
         scope.allowBlankValue = false;
+        scope.startRows = '5';
         scope.clickEvent = jasmine.createSpy('clickEvent');
         scope.cancelEvent = jasmine.createSpy('cancelEvent');
-        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder" button-text="buttonText" allow-blank-value="allowBlankValue" click-event="clickEvent()" cancel-event="cancelEvent()"></markdown-editor>'))(scope);
+        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder" button-text="buttonText" allow-blank-value="allowBlankValue" start-rows="startRows" click-event="clickEvent()" cancel-event="cancelEvent()"></markdown-editor>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('markdownEditor');
     });
@@ -77,6 +78,11 @@ describe('Markdown Editor component', function() {
             this.controller.allowBlankValue = true;
             scope.$digest();
             expect(scope.allowBlankValue).toEqual(false);
+        });
+        it('startRows should be one way bound', function() {
+            this.controller.startRows = '';
+            scope.$digest();
+            expect(scope.startRows).toEqual('5');
         });
         it('clickEvent should be called in the parent scope', function() {
             this.controller.clickEvent();
