@@ -24,7 +24,7 @@ describe('Delimited Manager service', function() {
     var delimitedManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
-        module('delimitedManager');
+        module('shared');
         mockUtil();
         injectRestPathConstant();
 

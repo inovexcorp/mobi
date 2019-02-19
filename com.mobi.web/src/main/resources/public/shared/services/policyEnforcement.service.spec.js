@@ -24,7 +24,7 @@ describe('Policy Enforcement service', function() {
     var policyEnforcementSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
-        module('policyEnforcement');
+        module('shared');
         mockUtil();
         injectRestPathConstant();
         mockPrefixes();

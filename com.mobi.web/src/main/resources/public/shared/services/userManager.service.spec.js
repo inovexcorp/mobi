@@ -24,7 +24,7 @@ describe('User Manager service', function() {
     var userManagerSvc, $q, $httpBackend, scope, $httpParamSerializer, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('userManager');
+        module('shared');
         mockUtil();
         mockPrefixes();
         injectRestPathConstant();

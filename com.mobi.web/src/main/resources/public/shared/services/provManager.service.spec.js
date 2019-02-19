@@ -24,7 +24,7 @@ describe('Prov Manager service', function() {
     var $httpBackend, $httpParamSerializer, scope, provManagerSvc, $q, utilSvc, httpSvc;
 
     beforeEach(function() {
-        module('provManager');
+        module('shared');
         mockUtil();
         mockPrefixes();
         injectRestPathConstant();

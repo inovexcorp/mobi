@@ -24,7 +24,7 @@ describe('Merge Request Manager service', function() {
     var mergeRequestManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {
-        module('mergeRequestManager');
+        module('shared');
         mockPrefixes();
         mockUtil();
         mockPrefixes();

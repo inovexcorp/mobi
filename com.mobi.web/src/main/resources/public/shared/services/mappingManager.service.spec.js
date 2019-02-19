@@ -24,7 +24,7 @@ describe('Mapping Manager service', function() {
     var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {
-        module('mappingManager');
+        module('shared');
         mockPrefixes();
         injectCamelCaseFilter();
         injectSplitIRIFilter();

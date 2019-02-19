@@ -24,7 +24,7 @@ describe('Dataset State service', function() {
     var datasetStateSvc, $q, $timeout, datasetManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('datasetState');
+        module('shared');
         mockDatasetManager();
         mockUtil();
         mockPrefixes();

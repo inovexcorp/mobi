@@ -23,27 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name discoverState
-         *
-         * @description
-         * The `discoverState` module only provides the `discoverStateService` service which
-         * contains various variables to hold the state of the discover module along with some
-         * utility functions for those variables.
-         */
-        .module('discoverState', [])
-        /**
-         * @ngdoc service
-         * @name discoverState.service:discoverStateService
-         *
-         * @description
-         * `discoverStateService` is a service which contains various variables to hold the
-         * state of the discover module along with some utility functions for those variables.
-         */
-        .service('discoverStateService', discoverStateService);
-
     function discoverStateService() {
         var self = this;
 
@@ -293,4 +272,16 @@
             };
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name discoverState.service:discoverStateService
+         *
+         * @description
+         * `discoverStateService` is a service which contains various variables to hold the
+         * state of the discover module along with some utility functions for those variables.
+         */
+        .service('discoverStateService', discoverStateService);
 })();

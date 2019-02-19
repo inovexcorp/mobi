@@ -24,7 +24,7 @@ describe('SPARQL Manager service', function() {
     var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {
-        module('sparqlManager');
+        module('shared');
         mockUtil();
         mockHttpService();
         injectRestPathConstant();

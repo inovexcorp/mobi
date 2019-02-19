@@ -23,29 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name httpService
-         *
-         * @description
-         * The `httpService` module only provides the `httpService` service which
-         * wraps Angular's native $http service.
-         */
-        .module('httpService', [])
-        /**
-         * @ngdoc service
-         * @name httpService.service:httpService
-         * @requires $q
-         * @requires $http
-         *
-         * @description
-         * `httpService` is a service that wraps Angular's native $http service and
-         * provides a way to determine if a call is still in progress. You can also
-         * cancel any pending request.
-         */
-        .service('httpService', httpService);
-
     httpService.$inject = ['$q', '$http'];
 
     function httpService($q, $http) {
@@ -152,4 +129,19 @@
             return _.merge({}, config, {timeout: canceller.promise});
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name httpService.service:httpService
+         * @requires $q
+         * @requires $http
+         *
+         * @description
+         * `httpService` is a service that wraps Angular's native $http service and
+         * provides a way to determine if a call is still in progress. You can also
+         * cancel any pending request.
+         */
+        .service('httpService', httpService);
 })();

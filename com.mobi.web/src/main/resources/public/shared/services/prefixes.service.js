@@ -23,25 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name prefixes
-         *
-         * @description
-         * The `prefixes` module only provides the `prefixes` service which
-         * simply provides standard strings for common IRIs.
-         */
-        .module('prefixes', [])
-        /**
-         * @ngdoc service
-         * @name prefixes.service:prefixes
-         *
-         * @description
-         * `prefixes` is a service that simply provides a series of common IRI strings.
-         */
-        .service('prefixes', prefixes);
-
     function prefixes() {
         var self = this;
         self.rdfs = 'http://www.w3.org/2000/01/rdf-schema#';
@@ -67,4 +48,15 @@
         self.user = 'http://mobi.com/ontologies/user/management#';
         self.roles = 'http://mobi.com/roles/';
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name prefixes.service:prefixes
+         *
+         * @description
+         * `prefixes` is a service that simply provides a series of common IRI strings.
+         */
+        .service('prefixes', prefixes);
 })();

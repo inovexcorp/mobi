@@ -24,7 +24,7 @@ describe('Http service', function() {
     var httpSvc, $http, $q;
 
     beforeEach(function() {
-        module('httpService');
+        module('shared');
 
         inject(function(httpService, _$http_, _$q_) {
             httpSvc = httpService;

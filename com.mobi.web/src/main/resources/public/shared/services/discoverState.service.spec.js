@@ -24,7 +24,7 @@ describe('Discover State Service', function() {
     var discoverStateSvc;
 
     beforeEach(function() {
-        module('discoverState');
+        module('shared');
 
         inject(function(discoverStateService) {
             discoverStateSvc = discoverStateService;

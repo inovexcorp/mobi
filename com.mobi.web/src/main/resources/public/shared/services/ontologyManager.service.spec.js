@@ -24,7 +24,7 @@ describe('Ontology Manager service', function() {
     var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, util, paramSerializer, httpSvc;
 
     beforeEach(function() {
-        module('ontologyManager');
+        module('shared');
         mockPrefixes();
         mockCatalogManager();
         mockUtil();

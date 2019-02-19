@@ -26,7 +26,7 @@ describe('Dataset Manager service', function() {
     var $httpBackend, $httpParamSerializer, $q, scope, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, discoverStateSvc, httpSvc;
 
     beforeEach(function() {
-        module('datasetManager');
+        module('shared');
         mockUtil();
         mockPrefixes();
         mockDiscoverState();

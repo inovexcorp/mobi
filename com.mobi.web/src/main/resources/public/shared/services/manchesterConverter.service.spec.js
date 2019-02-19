@@ -24,7 +24,7 @@ describe('Manchester Converter service', function() {
     var manchesterConverterSvc, ontologyManagerSvc, prefixes, utilSvc, splitIRIFilter, antlr;
 
     beforeEach(function() {
-        module('manchesterConverter');
+        module('shared');
         mockPrefixes();
         mockOntologyManager();
         mockUtil();

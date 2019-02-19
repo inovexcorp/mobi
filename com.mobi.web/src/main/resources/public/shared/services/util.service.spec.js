@@ -24,7 +24,7 @@ describe('Util service', function() {
     var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc, windowSvc;
 
     beforeEach(function() {
-        module('util');
+        module('shared');
         mockPrefixes();
         mockToastr();
         mockHttpService();

@@ -24,7 +24,7 @@ describe('Record Permissions service', function() {
     var recordPermissionsSvc, utilSvc, scope, $httpBackend, $httpParamSerializer, $q;
 
     beforeEach(function() {
-        module('recordPermissionsManager');
+        module('shared');
         mockUtil();
         injectRestPathConstant();
         mockPrefixes();

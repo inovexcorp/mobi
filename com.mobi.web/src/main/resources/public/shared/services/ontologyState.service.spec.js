@@ -25,7 +25,7 @@ describe('Ontology State Service', function() {
     var listItem;
 
     beforeEach(function() {
-        module('ontologyState');
+        module('shared');
         mockPropertyManager();
         mockOntologyManager();
         mockUpdateRefs();

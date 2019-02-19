@@ -24,7 +24,7 @@ describe('Property Manager service', function() {
     var propertyManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('propertyManager');
+        module('shared');
         mockPrefixes();
 
         inject(function(propertyManagerService, _prefixes_) {

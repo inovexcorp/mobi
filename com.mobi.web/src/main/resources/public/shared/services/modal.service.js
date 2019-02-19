@@ -23,27 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name modal
-         *
-         * @description
-         * The `modalService` module only provides the `modalService` service which provides helper methods for
-         * instantiating and opening modals.
-         */
-        .module('modal', [])
-        /**
-         * @ngdoc service
-         * @name modal.service:modalService
-         * @requires $uibModal
-         *
-         * @description
-         * `modalService` is a service that provides functionality to open modals based on the name of the directive.
-         * It uses the $uibModal service to create modals.
-         */
-        .service('modalService', modalService);
-
     modalService.$inject = ['$uibModal'];
 
     function modalService($uibModal) {
@@ -113,4 +92,17 @@
             $uibModal.open(configObj);
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name modal.service:modalService
+         * @requires $uibModal
+         *
+         * @description
+         * `modalService` is a service that provides functionality to open modals based on the name of the directive.
+         * It uses the $uibModal service to create modals.
+         */
+        .service('modalService', modalService);
 })();

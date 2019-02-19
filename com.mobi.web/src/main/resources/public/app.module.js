@@ -51,39 +51,7 @@
             'ontology-editor',
             'settings',
             'shared',
-            'user-management',
-
-            /* Custom Services */
-            'catalogManager',
-            'catalogState',
-            'datasetManager',
-            'datasetState',
-            'delimitedManager',
-            'discoverState',
-            'd3Transformer',
-            'httpService',
-            'loginManager',
-            'manchesterConverter',
-            'mapperState',
-            'mappingManager',
-            'mergeRequestManager',
-            'mergeRequestsState',
-            'modal',
-            'ontologyManager',
-            'ontologyState',
-            'policyEnforcement',
-            'policyManager',
-            'prefixes',
-            'propertyManager',
-            'provManager',
-            'recordPermissionsManager',
-            'settingsManager',
-            'sparqlManager',
-            'stateManager',
-            'updateRefs',
-            'userManager',
-            'userState',
-            'util'
+            'user-management'
         ])
         .constant('chroma', window.chroma)
         .constant('Snap', window.Snap)

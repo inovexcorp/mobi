@@ -24,7 +24,7 @@ describe('Update Refs service', function() {
     var updateRefsSvc;
 
     beforeEach(function() {
-        module('updateRefs');
+        module('shared');
 
         module(function($provide) {
             $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {

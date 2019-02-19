@@ -24,7 +24,7 @@ describe('Settings Manager service', function() {
     var settingsManagerSvc, $window, $cookies;
 
     beforeEach(function() {
-        module('settingsManager');
+        module('shared');
         mockPrefixes();
 
         module(function($provide) {

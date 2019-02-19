@@ -24,7 +24,7 @@ describe('Policy Manager service', function() {
     var policyManagerSvc, $q, $httpBackend, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {
-        module('policyManager');
+        module('shared');
         mockUtil();
         injectRestPathConstant();
         mockPrefixes();

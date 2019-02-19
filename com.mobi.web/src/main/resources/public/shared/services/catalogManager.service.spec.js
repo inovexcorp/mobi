@@ -24,7 +24,7 @@ describe('Catalog Manager service', function() {
     var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, httpSvc, $httpParamSerializer;
 
     beforeEach(function() {
-        module('catalogManager');
+        module('shared');
         mockPrefixes();
         mockUtil();
         mockHttpService();

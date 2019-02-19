@@ -24,7 +24,7 @@ describe('State Manager service', function() {
     var $httpBackend, stateManagerSvc, $q, scope, $httpParamSerializer, util;
 
     beforeEach(function() {
-        module('stateManager');
+        module('shared');
         mockUtil();
         injectRestPathConstant();
 

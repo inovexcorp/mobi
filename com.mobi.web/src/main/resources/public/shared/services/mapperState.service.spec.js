@@ -24,7 +24,7 @@ describe('Mapper State service', function() {
     var mapperStateSvc, $q, scope, prefixes, ontologyManagerSvc, mappingManagerSvc, delimitedManagerSvc, utilSvc, catalogManagerSvc;
 
     beforeEach(function() {
-        module('mapperState');
+        module('shared');
         mockPrefixes();
         mockMappingManager();
         mockOntologyManager();

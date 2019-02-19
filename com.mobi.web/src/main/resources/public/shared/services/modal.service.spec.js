@@ -24,7 +24,7 @@ describe('Modal service', function() {
     var modalSvc, $uibModal, scope;
 
     beforeEach(function() {
-        module('modal');
+        module('shared');
 
         module(function($provide) {
             $provide.service('$uibModal', function($q) {

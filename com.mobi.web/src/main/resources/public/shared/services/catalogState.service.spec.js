@@ -24,7 +24,7 @@ describe('Catalog State service', function() {
     var catalogStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('catalogState');
+        module('shared');
         mockCatalogManager();
         mockPrefixes();
 
