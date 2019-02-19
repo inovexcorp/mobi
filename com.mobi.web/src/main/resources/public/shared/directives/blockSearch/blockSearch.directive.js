@@ -38,15 +38,10 @@
     }
     
     angular
-        /**
-         * @ngdoc overview
-         * @name blockSearch
-         *
-         */
-        .module('blockSearch', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name blockSearch.directive:blockSearch
+         * @name shared.directive:blockSearch
          * @scope
          * @restrict E
          *

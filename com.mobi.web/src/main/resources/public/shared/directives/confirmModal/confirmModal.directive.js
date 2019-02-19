@@ -49,18 +49,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name confirmModal
-         *
-         * @description
-         * The `confirmModal` module only provides the `confirmModal` directive which creates content
-         * for a modal to confirm or deny an action.
-         */
-        .module('confirmModal', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name confirmModal.directive:confirmModal
+         * @name shared.directive:confirmModal
          * @scope
          * @restrict E
          *

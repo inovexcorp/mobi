@@ -41,7 +41,7 @@
     }
 
     angular
-        .module('keywordSelect', [])
+        .module('shared')
         .directive('keywordSelect', keywordSelect);
 
 })();

@@ -40,23 +40,16 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name textArea
-         *
-         * @description
-         * The `textArea` module only provides the `textArea` directive which creates a labeled textarea input.
-         */
-        .module('textArea', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name textArea.directive:textArea
+         * @name shared.directive:textArea
          * @scope
          * @restrict E
          *
          * @description
          * `textArea` is a directive which creates a Bootstrap "form-group" div with a textarea element and a
-         * {@link customLabel.directive:customLabel}. The `customLabel` uses the provided `displayText` and `mutedText`
+         * {@link shared.directive:customLabel}. The `customLabel` uses the provided `displayText` and `mutedText`
          * for display. The textarea is bound to the passed in `bindModel` variable. It can also have a custom on change
          * function. The name of the textarea input is configurable along with whether it is required. The textarea can
          * optionally be focused on rendering as well.

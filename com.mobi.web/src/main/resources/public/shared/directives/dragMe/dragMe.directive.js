@@ -38,17 +38,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name dragMe
-         *
-         * @description
-         * The `dragMe` module provides the `dragMe` directive which provides a way to drag an element.
-         */
-        .module('dragMe', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name dragMe.directive:dragMe
+         * @name shared.directive:dragMe
          * @restrict A
          *
          * @description

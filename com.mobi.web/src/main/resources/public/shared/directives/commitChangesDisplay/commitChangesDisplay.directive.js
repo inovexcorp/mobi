@@ -78,18 +78,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name commitChangesDisplay
-         *
-         * @description
-         * The `commitChangesDisplay` module only provides the `commitChangesDisplay` directive which creates
-         * a display of all the changes from a commit separated by subject.
-         */
-        .module('commitChangesDisplay', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name commitChangesDisplay.directive:commitChangesDisplay
+         * @name shared.directive:commitChangesDisplay
          * @scope
          * @restrict E
          * @requires util.service:utilService

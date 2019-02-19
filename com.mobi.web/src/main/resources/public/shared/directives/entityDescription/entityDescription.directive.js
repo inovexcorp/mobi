@@ -58,18 +58,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name entityDescription
-         *
-         * @description
-         * The `entityDescription` module only provides the `entityDescription` directive which creates
-         * a div with an optionally expandable display of the dcterms:description of an entity.
-         */
-        .module('entityDescription', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name entityDescription.directive:entityDescription
+         * @name shared.directive:entityDescription
          * @scope
          * @restrict E
          * @requires $filter

@@ -39,15 +39,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name statementContainer
-         *
-         */
-        .module('statementContainer', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name statementContainer.directive:statementContainer
+         * @name shared.directive:statementContainer
          * @scope
          * @restrict E
          *

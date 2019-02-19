@@ -56,19 +56,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name languageSelect
-         *
-         * @description
-         * The `languageSelect` module provides the `languageSelect` directive which provides options for a formatted
-         * ui-select for picking language tags.
-         *
-         */
-        .module('languageSelect', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name languageSelect.directive:languageSelect
+         * @name shared.directive:languageSelect
          * @restrict E
          * @requires propertyManager.service:propertyManagerService
          *

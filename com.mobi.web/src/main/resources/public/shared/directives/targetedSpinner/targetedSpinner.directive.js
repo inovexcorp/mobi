@@ -50,24 +50,16 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name targetedSpinner
-         *
-         * @description
-         * The `targetedSpinner` module only provides the `targetedSpinner` directive which provides a way to
-         * inject a loading spinner into a particular element and tie it to a particular REST call.
-         */
-        .module('targetedSpinner', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name targetedSpinner.directive:targetedSpinner
+         * @name shared.directive:targetedSpinner
          * @restrict A
          * @requires $compile
          * @requires httpService
          *
          * @description
-         * `targetedSpinner` is a directive that injects a {@link spinner.directive:spinner spinner} into the
+         * `targetedSpinner` is a directive that injects a {@link shared.directive:spinner spinner} into the
          * parent element. Can specify whether a matched in progress HTTP call should be
          * canceled when the parent scope is destroyed.
          *

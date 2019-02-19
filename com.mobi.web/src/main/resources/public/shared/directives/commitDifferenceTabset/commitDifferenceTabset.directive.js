@@ -47,19 +47,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name commitDifferenceTabset
-         *
-         * @description
-         * The `commitDifferenceTabset` module only provides the `commitDifferenceTabset` directive
-         * which creates a {@link tabset.directive:tabset} with tabs related to the difference between
-         * two commits.
-         */
-        .module('commitDifferenceTabset', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name commitDifferenceTabset.directive:commitDifferenceTabset
+         * @name shared.directive:commitDifferenceTabset
          * @scope
          * @restrict E
          *

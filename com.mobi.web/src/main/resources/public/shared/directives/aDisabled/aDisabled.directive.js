@@ -38,6 +38,6 @@
     }
 
     angular
-        .module('aDisabled', [])
+        .module('shared')
         .directive('aDisabled', aDisabled);
 })();

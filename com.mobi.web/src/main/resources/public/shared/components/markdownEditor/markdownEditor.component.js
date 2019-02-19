@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name markdownEditor.component:markdownEditor
+     * @name shared.component:markdownEditor
      *
      * @description
      * `markdownEditor` is a component which creates a Bootstrap `.form-group` containing a textarea with a header
@@ -92,14 +92,6 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name markdownEditor
-         *
-         * @description
-         * The `markdownEditor` module only provides the `markdownEditor` component which creates a Bootstrap
-         * `.form-group` with a textarea for writing Markdown and a button to submit it.
-         */
-        .module('markdownEditor', [])
+        .module('shared')
         .component('markdownEditor', markdownEditorComponent);
 })();

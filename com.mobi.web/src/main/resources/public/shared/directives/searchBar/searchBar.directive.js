@@ -47,18 +47,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name searchBar
-         *
-         * @description
-         * The `searchBar` module only provides the `searchBar` directive which creates an `.input-group` with a search
-         * input.
-         */
-        .module('searchBar', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name searchBar.directive:searchBar
+         * @name shared.directive:searchBar
          * @scope
          * @restrict E
          *

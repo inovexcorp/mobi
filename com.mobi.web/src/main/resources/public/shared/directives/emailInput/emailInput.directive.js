@@ -51,19 +51,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name emailInput
-         *
-         * @description
-         * The `emailInput` module provides the `emailInput` directive, which creates a email input
-         * field with a {@link customLabel.directive:customLabel customLabel} and several optional
-         * custoization variables.
-         */
-        .module('emailInput', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name emailInput.directive:emailInput
+         * @name shared.directive:emailInput
          * @scope
          * @restrict E
          *

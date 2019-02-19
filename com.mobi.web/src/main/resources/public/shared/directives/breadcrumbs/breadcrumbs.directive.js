@@ -36,18 +36,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name breadcrumbs
-         *
-         * @description
-         * The `breadcrumbs` module only provides the `breadcrumbs` directive which creates
-         * the breadcrumb trail for the page you are currently viewing.
-         */
-        .module('breadcrumbs', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name breadcrumbs.directive:breadcrumbs
+         * @name shared.directive:breadcrumbs
          * @scope
          * @restrict E
          *

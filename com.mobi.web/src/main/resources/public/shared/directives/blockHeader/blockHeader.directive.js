@@ -35,15 +35,10 @@
     }
     
     angular
-        /**
-         * @ngdoc overview
-         * @name blockHeader
-         *
-         */
-        .module('blockHeader', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name blockHeader.directive:blockHeader
+         * @name shared.directive:blockHeader
          * @scope
          * @restrict E
          *

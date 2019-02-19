@@ -70,19 +70,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name clickAnywhereButHere
-         *
-         * @description
-         * The `clickAnywhereButHere` module provides the `clickAnywhereButHereService` factory and the
-         * `clickAnywhereButHere` directive which together provide a way to call a function when a user
-         * clicks off of an element.
-         */
-        .module('clickAnywhereButHere', [])
+        .module('shared')
         /**
          * @ngdoc service
-         * @name clickAnywhereButHereService.service:clickAnywhereButHereService
+         * @name shared.service:clickAnywhereButHereService
          * @requires $document
          *
          * @description
@@ -96,9 +87,9 @@
         .factory('clickAnywhereButHereService', clickAnywhereButHereService)
         /**
          * @ngdoc directive
-         * @name clickAnywhereButHere.directive:clickAnywhereButHere
+         * @name shared.directive:clickAnywhereButHere
          * @restrict A
-         * @requires clickAnywhereButHereService.service:clickAnywhereButHereService
+         * @requires shared.service:clickAnywhereButHereService
          *
          * @description
          * `clickAnywhereButHere` is a directive that creates a click handler for the parent element such

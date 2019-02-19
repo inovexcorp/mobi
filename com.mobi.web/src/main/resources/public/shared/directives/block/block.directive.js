@@ -34,15 +34,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name block
-         *
-         */
-        .module('block', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name block.directive:block
+         * @name shared.directive:block
          * @scope
          * @restrict E
          *

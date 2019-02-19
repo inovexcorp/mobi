@@ -37,18 +37,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name circleButton
-         * 
-         * @description
-         * The `circleButton` module only provides the `circleButton` directive which
-         * creates a circular button with a Font Awesome icon.
-         */
-        .module('circleButton', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name circleButton.directive:circleButton
+         * @name shared.directive:circleButton
          * @scope
          * @restrict E
          *

@@ -171,17 +171,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name userAccessControls
-         * @description
-         * The `userAccessControls` module only provides the `userAccessControls` directive which which creates
-         * selectors for viewing and updating permissions of the application.
-         */
-        .module('userAccessControls', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name userAccessControls.directive:userAccessControls
+         * @name shared.directive:userAccessControls
          * @scope
          * @restrict E
          * @requires policyManager.service:policyManagerService
@@ -197,7 +190,7 @@
         .directive('userAccessControls', userAccessControls)
         /**
          * @ngdoc directive
-         * @name userAccessControls.directive:hideLabel
+         * @name shared.directive:hideLabel
          * @restrict A
          *
          * @description

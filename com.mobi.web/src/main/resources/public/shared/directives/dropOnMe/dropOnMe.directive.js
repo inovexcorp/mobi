@@ -57,17 +57,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name dropOnMe
-         *
-         * @description
-         * The `dropOnMe` module provides the `dropOnMe` directive which provides a way to drop an element on this element.
-         */
-        .module('dropOnMe', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name dropOnMe.directive:dropOnMe
+         * @name shared.directive:dropOnMe
          * @restrict A
          *
          * @description

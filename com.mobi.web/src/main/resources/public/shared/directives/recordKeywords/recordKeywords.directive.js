@@ -45,19 +45,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name recordKeywords
-         * @requires catalogManager
-         *
-         * @description
-         * The `recordKeywords` module only provides the `recordKeywords` directive which creates a div with
-         * a display of all the keywords in the passed record JSON-LD object.
-         */
-        .module('recordKeywords', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name recordKeywords.directive:recordKeywords
+         * @name shared.directive:recordKeywords
          * @scope
          * @restrict E
          * @requires prefixes.service:prefixes
