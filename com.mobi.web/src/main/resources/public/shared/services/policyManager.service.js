@@ -48,7 +48,7 @@
         /**
          * @ngdoc method
          * @name getPolicies
-         * @methodOf policyManager.service:policyManagerService
+         * @methodOf shared.service:policyManagerService
          *
          * @description
          * Calls the GET /mobirest/policies endpoint with the passed filter values for
@@ -76,7 +76,7 @@
         /**
          * @ngdoc method
          * @name getPolicy
-         * @methodOf policyManager.service:policyManagerService
+         * @methodOf shared.service:policyManagerService
          *
          * @description
          * Calls the GET /mobirest/policies/{policyId} endpoint to get the Policy for the provided ID.
@@ -93,7 +93,7 @@
         /**
          * @ngdoc method
          * @name updatePolicy
-         * @methodOf policyManager.service:policyManagerService
+         * @methodOf shared.service:policyManagerService
          *
          * @description
          * Calls the PUT /mobirest/policies/{policyId} endpoint with the provided new Policy object and updates
@@ -113,10 +113,10 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name policyManager.service:policyManagerService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires httpService.service:httpService
+         * @name shared.service:policyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:httpService
          *
          * @description
          * `policyManagerService` is a service that provides access to the Mobi policy REST

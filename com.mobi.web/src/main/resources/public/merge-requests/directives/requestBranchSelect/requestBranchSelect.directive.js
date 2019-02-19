@@ -38,10 +38,10 @@
          * @name requestBranchSelect.directive:requestBranchSelect
          * @scope
          * @restrict E
-         * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestsStateService
+         * @requires shared.service:mergeRequestManagerService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `requestBranchSelect` is a directive which creates a div containing a form with ui-selects

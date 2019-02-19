@@ -26,7 +26,7 @@
     /**
      * @ngdoc component
      * @name catalog.component:catalogRecordKeywords
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:prefixes
      *
      * @description
      * `catalogRecordKeywords` is a component which creates a div with Bootstrap `badge` spans for the keywords on the

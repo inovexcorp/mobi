@@ -36,16 +36,16 @@
         /**
          * @ngdoc service
          * @name search.service:searchService
-         * @requires discoverState.service:discoverStateService
-         * @requires httpService.service:httpService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:httpService
          * @requires sparqlManager.service:sparqlManager
-         * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `searchService` is a service that provides methods to create search query strings
-         * and submit them to the {@link sparqlManager.service:sparqlManagerService SPARQL query endpoints}.
+         * and submit them to the {@link shared.service:sparqlManagerService SPARQL query endpoints}.
          */
         .service('searchService', searchService);
 

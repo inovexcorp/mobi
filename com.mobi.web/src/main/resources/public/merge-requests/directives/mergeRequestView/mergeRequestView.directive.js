@@ -38,17 +38,17 @@
          * @name mergeRequestView.directive:mergeRequestView
          * @scope
          * @restrict E
-         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires shared.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyState.service:ontologytateService
          *
          * @description
          * `mergeRequestView` is a directive which creates a div containing a {@link block.directive:block}
          * which displays metadata about the
-         * {@link mergeRequestsState.service:mergeRequestsStateService selected MergeRequest} including a
+         * {@link shared.service:mergeRequestsStateService selected MergeRequest} including a
          * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
          * between the source and target branch of the MergeRequest. The block also contains buttons to delete
          * the MergeRequest, accept the MergeRequest, and go back to the

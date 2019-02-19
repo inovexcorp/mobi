@@ -59,7 +59,7 @@
         /**
          * @ngdoc method
          * @name getKeywords
-         * @methodOf manchesterConverter.service:manchesterConverterService
+         * @methodOf shared.service:manchesterConverterService
          *
          * @description
          * Returns the full list of supported Manchester Syntax keywords.
@@ -72,7 +72,7 @@
         /**
          * @ngdoc method
          * @name manchesterToJsonld
-         * @methodOf manchesterConverter.service:manchesterConverterService
+         * @methodOf shared.service:manchesterConverterService
          *
          * @description
          * Converts a Manchester Syntax string into an array of blank nodes using an ANTLR4 grammer parser and
@@ -108,7 +108,7 @@
         /**
          * @ngdoc method
          * @name jsonldToManchester
-         * @methodOf manchesterConverter.service:manchesterConverterService
+         * @methodOf shared.service:manchesterConverterService
          *
          * @description
          * Converts a blank node identified by the passed id and included in the passed JSON-LD array into a
@@ -255,10 +255,10 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name manchesterConverter.service:manchesterConverterService
+         * @name shared.service:manchesterConverterService
          * @requires $filter
-         * @requires prefixes.service:prefixes
-         * @requires propertyManager.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyManagerService
          *
          * @description
          * `manchesterConverterService` is a service that provides utility functions for converting JSON-LD

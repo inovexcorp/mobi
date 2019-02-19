@@ -38,15 +38,15 @@
          * @name relationshipsBlock.directive:relationshipsBlock
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:modalService
+         * @requires shared.service:prefixes
          *
          * @description
          * `relationshipsBlock` is a directive that creates a section that displays the SKOS relationships on the
-         * {@link ontologyState.service:ontologyStateService selected concept or concept scheme} using
+         * {@link shared.service:ontologyStateService selected concept or concept scheme} using
          * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the section header
          * contains a button to {@link relationshipOverlay.directive:relationshipOverlay add a relationship}. If the
          * selected entity is a concept scheme, the section header contains a button to

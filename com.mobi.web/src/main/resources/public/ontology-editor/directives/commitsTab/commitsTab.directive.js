@@ -38,13 +38,13 @@
          * @name commitsTab.directive:commitsTab
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `commitsTab` is a directive that creates a page containing the
          * {@link commitHistoryTable.directive:commitHistoryTable} for the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} with a graph. It also creates a table
+         * {@link shared.service:ontologyStateService selected ontology} with a graph. It also creates a table
          * with buttons for viewing the ontology at each commit. The directive is replaced by the contents of its
          * template.
          */

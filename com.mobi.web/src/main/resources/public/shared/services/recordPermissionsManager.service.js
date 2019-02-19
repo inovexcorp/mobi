@@ -33,7 +33,7 @@
         /**
          * @ngdoc method
          * @name getRecordPolicy
-         * @methodOf recordPermissionsManager.service:recordPermissionsManagerService
+         * @methodOf shared.service:recordPermissionsManagerService
          *
          * @description
          * Calls the GET /mobirest/record-permissions/{recordId} endpoint to get the Record Policy JSON
@@ -52,7 +52,7 @@
         /**
          * @ngdoc method
          * @name updateRecordPolicy
-         * @methodOf recordPermissionsManager.service:recordPermissionsManagerService
+         * @methodOf shared.service:recordPermissionsManagerService
          *
          * @description
          * Calls the PUT /mobirest/record-permissions/{recordId} endpoint with the provided new Policy object and updates
@@ -73,8 +73,8 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name recordPermissionsManager.service:recordPermissionsManagerService
-         * @requires httpService.service:httpService
+         * @name shared.service:recordPermissionsManagerService
+         * @requires shared.service:httpService
          *
          * @description
          * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST

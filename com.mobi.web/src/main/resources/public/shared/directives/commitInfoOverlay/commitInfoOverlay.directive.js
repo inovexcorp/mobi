@@ -53,8 +53,8 @@
          * @name commitInfoOverlay.directive:commitInfoOverlay
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires userManager.service:userManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:userManagerService
          *
          * @description
          * `commitInfoOverlay` is a directive that creates content for a modal displaying information about the passed

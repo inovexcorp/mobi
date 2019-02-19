@@ -32,7 +32,7 @@
         /**
          * @ngdoc property
          * @name totalRecordSize
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {number}
          *
          * @description
@@ -43,7 +43,7 @@
         /**
          * @ngdoc property
          * @name currentRecordPage
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {number}
          *
          * @description
@@ -54,7 +54,7 @@
         /**
          * @ngdoc property
          * @name recordLimit
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {number}
          *
          * @description
@@ -65,19 +65,19 @@
         /**
          * @ngdoc property
          * @name recordSortOption
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {Object}
          *
          * @description
          * `recordSortOption` holds one of the options from the `sortOptions` in the
-         * {@link catalogManager.service:catalogManagerService} to be used when sorting the catalog Records in the
+         * {@link shared.service:catalogManagerService} to be used when sorting the catalog Records in the
          * {@link catalog.component:recordsView}.
          */
         self.recordSortOption = undefined;
         /**
          * @ngdoc property
          * @name recordFilterType
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {string}
          *
          * @description
@@ -88,7 +88,7 @@
         /**
          * @ngdoc property
          * @name recordSearchText
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {string}
          *
          * @description
@@ -99,7 +99,7 @@
         /**
          * @ngdoc property
          * @name selectedRecord
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {Object}
          *
          * @description
@@ -110,7 +110,7 @@
         /**
          * @ngdoc property
          * @name recordIcons
-         * @propertyOf catalogState.service:catalogStateService
+         * @propertyOf shared.service:catalogStateService
          * @type {Object}
          *
          * @description
@@ -127,11 +127,11 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf catalogState.service:catalogStateService
+         * @methodOf shared.service:catalogStateService
          *
          * @description
          * Initializes state variables for the {@link catalog.component:catalogPage} using information retrieved
-         * from {@link catalogManager.service:catalogManagerService catalogManagerService}.
+         * from {@link shared.service:catalogManagerService catalogManagerService}.
          */
         self.initialize = function() {
             self.initializeRecordSortOption();
@@ -139,7 +139,7 @@
         /**
          * @ngdoc method
          * @name getRecordIcon
-         * @methodOf catalogState.service:catalogStateService
+         * @methodOf shared.service:catalogStateService
          *
          * @description
          * Returns a Font Awesome icon class representing the type of the provided catalog Record object. If the
@@ -154,7 +154,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf catalogState.service:catalogStateService
+         * @methodOf shared.service:catalogStateService
          *
          * @description
          * Resets all state variables for the {@link catalog.component:catalogPage}.
@@ -170,11 +170,11 @@
         /**
          * @ngdoc method
          * @name initializeRecordSortOption
-         * @methodOf catalogState.service:catalogStateService
+         * @methodOf shared.service:catalogStateService
          *
          * @description
          * Initializes the `recordSortOption` to a certain sort option from the
-         * {@link catalogManager.service:catalogManagerService catalogManagerService}.
+         * {@link shared.service:catalogManagerService catalogManagerService}.
          */
         self.initializeRecordSortOption = function() {
             self.recordSortOption = _.find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
@@ -185,9 +185,9 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name catalogState.service:catalogStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires prefixes.service:prefixes
+         * @name shared.service:catalogStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:prefixes
          *
          * @description
          * `catalogStateService` is a service which contains various variables to hold the state of the

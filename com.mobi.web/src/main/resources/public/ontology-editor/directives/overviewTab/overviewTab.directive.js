@@ -38,15 +38,15 @@
          * @name overviewTab.directive:overviewTab
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `overviewTab` is a directive that creates a page containing the
          * {@link associationBlock.directive:associationBlock class and property list} of the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} and information about a
+         * {@link shared.service:ontologyStateService selected ontology} and information about a
          * selected item from that list. The selected entity display includes a
          * {@link selectedDetails.directive:selectedDetails}, a button to delete the entity, an
          * {@link annotationBlock.directive:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, and a

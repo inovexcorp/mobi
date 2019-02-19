@@ -39,16 +39,16 @@
          * @name permissionsPage.directive:permissionsPage
          * @scope
          * @restrict E
-         * @requires policyManager.service:policyManagerService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
-         * @requires userManager.service:userManagerService
+         * @requires shared.service:policyManagerService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:userManagerService
          *
          * @description
          * `permissionsPage` is a directive that creates a Bootstrap `row` div with a single column
          * containing a {@link block.directive:block block} for viewing and updating overall permissions
-         * from policies retrieved through the {@link policyManager.service:policyManagerService}.
+         * from policies retrieved through the {@link shared.service:policyManagerService}.
          * The list is refreshed everytime this directive is rendered for the first time so any changes
          * made to the policies will reset when navigating away and back. Currently, the only policies
          * displayed are those for restrictions on record creation. The directive is replaced by the

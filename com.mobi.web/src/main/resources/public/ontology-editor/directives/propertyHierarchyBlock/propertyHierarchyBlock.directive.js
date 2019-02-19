@@ -38,13 +38,13 @@
          * @name propertyHierarchyBlock.directive:propertyHierarchyBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          *
          * @description
          * `propertyHierarchyBlock` is a directive that creates a section that displays a manual hierarchy tree of the
          * data, object, and annotation properties in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} within separate "folders".The directive
+         * {@link shared.service:ontologyStateService selected ontology} within separate "folders".The directive
          * is replaced by the contents of its template.
          */
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);

@@ -39,10 +39,10 @@
          * @scope
          * @restrict E
          * @requires search.service:searchService
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * HTML contents in the search form within the Search page for entering a keyword search combined

@@ -37,7 +37,7 @@
         /**
          * @ngdoc method
          * @name evaluateRequest
-         * @methodOf policyEnforcement.service:policyEnforcementService
+         * @methodOf shared.service:policyEnforcementService
          *
          * @description
          * Calls the POST /mobirest/pep endpoint with the passed XACML parameters to be evaluated.
@@ -65,10 +65,10 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name policyEnforcement.service:policyEnforcementService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires httpService.service:httpService
+         * @name shared.service:policyEnforcementService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:httpService
          *
          * @description
          * `policyEnforcementService` is a service that provides access to the Mobi policy enforcement REST

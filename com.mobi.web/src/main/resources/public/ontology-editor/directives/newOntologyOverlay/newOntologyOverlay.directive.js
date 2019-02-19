@@ -38,9 +38,9 @@
          * @name newOntologyOverlay.directive:newOntologyOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description

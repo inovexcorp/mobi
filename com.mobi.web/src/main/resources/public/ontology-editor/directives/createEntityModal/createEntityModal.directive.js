@@ -38,12 +38,12 @@
          * @name createEntityModal.directive:createEntityModal
          * @scope
          * @restrict E
-         * @requires modal.service:modalService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:modalService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `createEntityModal` is a directive that creates content for a modal that provides buttons to create different
-         * types of entities in the current {@link ontologyState.service:ontologyStateService selected ontology}. The
+         * types of entities in the current {@link shared.service:ontologyStateService selected ontology}. The
          * options are {@link createClassOverlay.directive:createClassOverlay classes},
          * {@link createDataPropertyOverlay.directive:createDataPropertyOverlay data properties},
          * {@link createObjectPropertyOverlay.directive:createObjectPropertyOverlay object properties},

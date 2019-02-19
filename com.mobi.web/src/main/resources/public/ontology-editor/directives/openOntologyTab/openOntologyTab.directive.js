@@ -38,16 +38,16 @@
          * @name openOntologyTab.directive:openOntologyTab
          * @scope
          * @restrict E
-         * @requires httpService.service:httpService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires mapperState.service:mapperStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires modal.service:modalService
-         * @requires policyEnforcement.service:policyEnforcementService
-         * @requires policyManager.service:policyManagerService
+         * @requires shared.service:httpService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:modalService
+         * @requires shared.service:policyEnforcementService
+         * @requires shared.service:policyManagerService
          *
          * @description
          * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a

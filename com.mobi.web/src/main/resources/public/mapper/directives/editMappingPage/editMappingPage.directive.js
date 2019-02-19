@@ -31,7 +31,7 @@
          * @description
          * The `editMappingPage` module only provides the `editMappingPage` directive which creates a Bootstrap `row`
          * with {@link block.directive:block blocks} for editing the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * {@link shared.service:mapperStateService#mapping mapping}.
          */
         .module('editMappingPage', [])
         /**
@@ -39,15 +39,15 @@
          * @name editMappingPage.directive:editMappingPage
          * @scope
          * @restrict E
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires mappingManager.service:mappingManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `editMappingPage` is a directive that creates a Bootstrap `row` div with two columns containing
          * {@link block.directive:block blocks} for editing the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}. The left column contains either a block for
+         * {@link shared.service:mapperStateService#mapping mapping}. The left column contains either a block for
          * {@link editMappingForm.directive:editMappingForm editing} the mapping or a block for
          * {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current state of the
          * mapping. The right column contains a {@link previewDataGrid.directive:previewDataGrid preview} of the loaded

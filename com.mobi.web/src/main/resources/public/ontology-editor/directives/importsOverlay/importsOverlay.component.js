@@ -26,16 +26,16 @@
     /**
      * @ngdoc component
      * @name importsOverlay.component:importsOverlay
-     * @requires httpService.service:httpService
-     * @requires ontologyState.service:ontologyStateService
-     * @requires util.service:utilService
-     * @requires prefixes.service:prefixes
-     * @requires propertyManager.service:propertyManagerService
-     * @requires catalogManager.service:catalogManagerService
+     * @requires shared.service:httpService
+     * @requires shared.service:ontologyStateService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     * @requires shared.service:propertyManagerService
+     * @requires shared.service:catalogManagerService
      *
      * @description
      * `importsOverlay` is a component that creates content for a modal that adds an imported ontology to the
-     * current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains
+     * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
      * a {@link tabset.directive:tabset} to choose between a URL import or an ontology within the Mobi instance. The
      * "Server" tab contains a searchable selectable list of ontologies. Only 100 will be shown at a time. Selected
      * ontologies can be removed from the list by either unchecking the checkbox in the list or clicking the x button

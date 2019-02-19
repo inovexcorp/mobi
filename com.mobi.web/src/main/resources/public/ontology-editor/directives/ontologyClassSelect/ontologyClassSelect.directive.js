@@ -38,13 +38,13 @@
          * @name ontologyClassSelect.directive:ontologyClassSelect
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `ontologyClassSelect` is a directive that creates a Bootstrap `form-group` with a `ui-select` of the IRIs of
-         * all the classes in the current {@link ontologyState.service:ontologyStateService selected ontology} and its
+         * all the classes in the current {@link shared.service:ontologyStateService selected ontology} and its
          * imports. The directive is replaced by the contents of its template.
          *
          * @param {string[]} values The selected IRIs from the `ui-select`

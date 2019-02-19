@@ -35,7 +35,7 @@
         /**
          * @ngdoc property
          * @name ontologyRecords
-         * @propertyOf ontologyManager.service:ontologyManagerService
+         * @propertyOf shared.service:ontologyManagerService
          * @type {Object[]}
          *
          * @description
@@ -46,7 +46,7 @@
         /**
          * @ngdoc property
          * @name entityNameProps
-         * @propertyOf ontologyManager.service:ontologyManagerService
+         * @propertyOf shared.service:ontologyManagerService
          * @type {Object[]}
          *
          * @description
@@ -57,7 +57,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Resets all state variables.
@@ -68,7 +68,7 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Initializes the `catalogId` variable.
@@ -79,7 +79,7 @@
         /**
          * @ngdoc method
          * @name uploadFile
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
@@ -113,7 +113,7 @@
         /**
          * @ngdoc method
          * @name uploadFile
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the PUT /mobirest/ontologies/{recordId} endpoint which will return a new in-progress commit
@@ -146,7 +146,7 @@
         /**
          * @ngdoc method
          * @name uploadJson
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
@@ -180,7 +180,7 @@
         /**
          * @ngdoc method
          * @name getOntology
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId} endpoint which retrieves an ontology in the provided
@@ -217,7 +217,7 @@
         /**
          * @ngdoc method
          * @name deleteOntology
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/ontologies/{recordId} endpoint which deletes the ontology.
@@ -232,7 +232,7 @@
         /**
          * @ngdoc method
          * @name downloadOntology
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId} endpoint using the `window.location` variable which will
@@ -256,7 +256,7 @@
         /**
          * @ngdoc method
          * @name deleteOntologyBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/ontologies/{recordId}/branches/{branchId} endpoint which deletes the provided
@@ -274,7 +274,7 @@
         /**
          * @ngdoc method
          * @name getVocabularyStuff
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/vocabulary-stuff endpoint and retrieves an object with keys
@@ -297,7 +297,7 @@
         /**
          * @ngdoc method
          * @name getOntologyStuff
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
@@ -318,7 +318,7 @@
         /**
          * @ngdoc method
          * @name getIris
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/iris endpoint and retrieves an object with all the IRIs
@@ -338,7 +338,7 @@
         /**
          * @ngdoc method
          * @name getImportedIris
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of objects
@@ -358,7 +358,7 @@
         /**
          * @ngdoc method
          * @name getClassHierarchies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/class-hierarchies endpoint and retrieves an object with the
@@ -378,7 +378,7 @@
         /**
          * @ngdoc method
          * @name getOntologyClasses
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/classes endpoint and retrieves an array of the classes
@@ -399,7 +399,7 @@
         /**
          * @ngdoc method
          * @name getDataProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/data-properties endpoint and retrieves an array of data properties
@@ -418,7 +418,7 @@
         /**
          * @ngdoc method
          * @name getObjProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/object-properties endpoint and retrieves an array of object properties
@@ -437,7 +437,7 @@
         /**
          * @ngdoc method
          * @name getClassesWithIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/classes-with-individuals endpoint and retrieves an object
@@ -458,7 +458,7 @@
         /**
          * @ngdoc method
          * @name getDataPropertyHierarchies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves an object
@@ -479,7 +479,7 @@
         /**
          * @ngdoc method
          * @name getObjectPropertyHierarchies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves an object
@@ -500,7 +500,7 @@
         /**
          * @ngdoc method
          * @name getAnnotationPropertyHierarchies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
@@ -521,7 +521,7 @@
         /**
          * @ngdoc method
          * @name createAnnotation
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the POST /mobirest/ontologies/{recordId}/annotations endpoint and creates a new AnnotationProperty
@@ -557,7 +557,7 @@
         /**
          * @ngdoc method
          * @name getConceptHierarchies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
@@ -578,7 +578,7 @@
         /**
          * @ngdoc method
          * @name getConceptSchemeHierarchies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
@@ -599,7 +599,7 @@
         /**
          * @ngdoc method
          * @name getImportedOntologies
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
@@ -626,7 +626,7 @@
         /**
          * @ngdoc method
          * @name getEntityUsages
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Calls the GET /mobirest/ontologies/{recordId}/entity-usages/{entityIRI} endpoint which gets the
@@ -653,7 +653,7 @@
         /**
          * @ngdoc method
          * @name getSearchResults
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the search results for literals that contain the requested search text.
@@ -682,7 +682,7 @@
         /**
          * @ngdoc method
          * @name getFailedImports
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets a list of imported ontology IRIs that failed to resolve.
@@ -700,7 +700,7 @@
         /**
          * @ngdoc method
          * @name isDeprecated
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.
@@ -715,7 +715,7 @@
         /**
          * @ngdoc method
          * @name isOntology
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:Ontology entity. Returns a boolean.
@@ -729,7 +729,7 @@
         /**
          * @ngdoc method
          * @name hasOntologyEntity
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontology contains an ontology entity. Returns a boolean.
@@ -744,7 +744,7 @@
         /**
          * @ngdoc method
          * @name getOntologyEntity
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the ontology entity from the provided ontology. Returns an Object.
@@ -758,7 +758,7 @@
         /**
          * @ngdoc method
          * @name getOntologyIRI
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the ontology entity IRI from the provided ontology. Returns a string representing the ontology IRI.
@@ -773,7 +773,7 @@
         /**
          * @ngdoc method
          * @name isDatatype
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          *Checks if the provided entity is an rdfs:Datatype. Returns a booelan.
@@ -787,7 +787,7 @@
         /**
          * @ngdoc method
          * @name isClass
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:Class entity. Returns a boolean.
@@ -801,7 +801,7 @@
         /**
          * @ngdoc method
          * @name hasClasses
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies contain any owl:Class entities. Returns a boolean.
@@ -816,7 +816,7 @@
         /**
          * @ngdoc method
          * @name getClasses
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:Class entities within the provided ontologies that are not blank nodes. Returns
@@ -831,7 +831,7 @@
         /**
          * @ngdoc method
          * @name getClassIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:Class entity IRIs within the provided ontologies that are not blank nodes.
@@ -846,7 +846,7 @@
         /**
          * @ngdoc method
          * @name hasClassProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks to see if the class within the provided ontologies has any properties associated it via the
@@ -862,7 +862,7 @@
         /**
          * @ngdoc method
          * @name getClassProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the properties associated with the class within the provided ontologies by the rdfs:domain axiom.
@@ -878,7 +878,7 @@
         /**
          * @ngdoc method
          * @name getClassProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the property IRIs associated with the class within the provided ontologies by the rdfs:domain axiom.
@@ -894,7 +894,7 @@
         /**
          * @ngdoc method
          * @name isObjectProperty
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:ObjectProperty entity. Returns a boolean.
@@ -908,7 +908,7 @@
         /**
          * @ngdoc method
          * @name hasObjectProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies contain any owl:ObjectProperty entities. Returns a boolean.
@@ -923,7 +923,7 @@
         /**
          * @ngdoc method
          * @name getObjectProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:ObjectProperty entities within the provided ontologies that are not blank nodes.
@@ -938,7 +938,7 @@
         /**
          * @ngdoc method
          * @name getObjectPropertyIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:ObjectProperty entity IRIs within the provided ontologies that are not blank
@@ -953,7 +953,7 @@
         /**
          * @ngdoc method
          * @name isDataTypeProperty
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:DatatypeProperty entity. Returns a boolean.
@@ -969,7 +969,7 @@
         /**
          * @ngdoc method
          * @name hasDataTypeProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies contain any owl:DatatypeProperty entities. Returns a boolean.
@@ -984,7 +984,7 @@
         /**
          * @ngdoc method
          * @name getDataTypeProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:DatatypeProperty entities within the provided ontologies that are not blank
@@ -999,7 +999,7 @@
         /**
          * @ngdoc method
          * @name getDataTypePropertyIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:DatatypeProperty entity IRIs within the provided ontologies that are not blank
@@ -1014,7 +1014,7 @@
         /**
          * @ngdoc method
          * @name isProperty
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:DatatypeProperty or owl:ObjectProperty entity. Returns a boolean.
@@ -1029,7 +1029,7 @@
         /**
          * @ngdoc method
          * @name hasNoDomainProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies have any properties that are not associated with a class by the
@@ -1046,7 +1046,7 @@
         /**
          * @ngdoc method
          * @name getNoDomainProperties
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of properties that are not associated with a class by the rdfs:domain axiom. Returns an
@@ -1061,7 +1061,7 @@
         /**
          * @ngdoc method
          * @name getNoDomainPropertyIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of property IRIs that are not associated with a class by the rdfs:domain axiom. Returns an
@@ -1076,7 +1076,7 @@
         /**
          * @ngdoc method
          * @name isAnnotation
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:AnnotationProperty entity. Returns a boolean.
@@ -1090,7 +1090,7 @@
         /**
          * @ngdoc method
          * @name hasAnnotations
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies contain any owl:AnnotationProperty entities. Returns a boolean.
@@ -1106,7 +1106,7 @@
         /**
          * @ngdoc method
          * @name getAnnotations
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:AnnotationProperty entities within the provided ontologies. Returns an Object[].
@@ -1120,7 +1120,7 @@
         /**
          * @ngdoc method
          * @name getAnnotationIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:AnnotationProperty entity IRIs within the provided ontologies that are not blank
@@ -1135,7 +1135,7 @@
         /**
          * @ngdoc method
          * @name isIndividual
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:NamedIndividual entity. Returns a boolean.
@@ -1149,7 +1149,7 @@
         /**
          * @ngdoc method
          * @name hasIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks to see if the ontologies have individuals. Returns a boolean indicating the existence of those
@@ -1164,7 +1164,7 @@
         /**
          * @ngdoc method
          * @name getIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:NamedIndividual entities within the provided ontologies. Returns an Object[].
@@ -1178,7 +1178,7 @@
         /**
          * @ngdoc method
          * @name hasNoTypeIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks to see if the ontologies have individuals with no other type. Returns a boolean indicating the
@@ -1194,7 +1194,7 @@
         /**
          * @ngdoc method
          * @name getNoTypeIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:NamedIndividual entities within the provided ontologies that have no other type.
@@ -1209,7 +1209,7 @@
         /**
          * @ngdoc method
          * @name hasClassIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks to see if the class within the provided ontologies have individuals with that type. Returns a
@@ -1225,7 +1225,7 @@
         /**
          * @ngdoc method
          * @name getClassIndividuals
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the individuals associated with the class within the provided ontologies by the type. Returns an
@@ -1241,7 +1241,7 @@
         /**
          * @ngdoc method
          * @name isRestriction
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an owl:Restriction. Returns a boolean.
@@ -1255,7 +1255,7 @@
         /**
          * @ngdoc method
          * @name getRestrictions
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all owl:Restriction entities within the provided ontologies. Returns an Object[].
@@ -1269,7 +1269,7 @@
         /**
          * @ngdoc method
          * @name isBlankNode
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is blank node. Returns a boolean.
@@ -1283,7 +1283,7 @@
         /**
          * @ngdoc method
          * @name isBlankNodeId
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity id is a blank node id. Returns a boolean.
@@ -1297,7 +1297,7 @@
         /**
          * @ngdoc method
          * @name getBlankNodes
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all entities within the provided ontologies that are blank nodes. Returns an Object[].
@@ -1311,7 +1311,7 @@
         /**
          * @ngdoc method
          * @name getEntity
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets entity with the provided IRI from the provided ontologies in the Mobi repository. Returns the
@@ -1334,7 +1334,7 @@
         /**
          * @ngdoc method
          * @name getEntityName
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the provided entity's name. This name is either the `rdfs:label`, `dcterms:title`, or `dc:title`.
@@ -1358,7 +1358,7 @@
         /**
          * @ngdoc method
          * @name getEntityDescription
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the provided entity's description. This description is either the `rdfs:comment`,
@@ -1375,7 +1375,7 @@
         /**
          * @ngdoc method
          * @name isConcept
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an skos:Concept entity. Returns a boolean.
@@ -1391,7 +1391,7 @@
         /**
          * @ngdoc method
          * @name hasConcepts
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies contain any skos:Concept entities. Returns a boolean.
@@ -1408,7 +1408,7 @@
         /**
          * @ngdoc method
          * @name getConcepts
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all skos:Concept entities within the provided ontologies that are not blank nodes.
@@ -1424,7 +1424,7 @@
         /**
          * @ngdoc method
          * @name getConceptIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all skos:Concept entity IRIs within the provided ontologies that are not blank nodes.
@@ -1440,7 +1440,7 @@
         /**
          * @ngdoc method
          * @name isConceptScheme
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided entity is an skos:ConceptScheme entity. Returns a boolean.
@@ -1456,7 +1456,7 @@
         /**
          * @ngdoc method
          * @name hasConceptSchemes
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Checks if the provided ontologies contain any skos:ConceptScheme entities. Returns a boolean.
@@ -1473,7 +1473,7 @@
         /**
          * @ngdoc method
          * @name getConceptSchemes
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all skos:ConceptScheme entities within the provided ontologies that are not blank nodes.
@@ -1489,7 +1489,7 @@
         /**
          * @ngdoc method
          * @name getConceptSchemeIRIs
-         * @methodOf ontologyManager.service:ontologyManagerService
+         * @methodOf shared.service:ontologyManagerService
          *
          * @description
          * Gets the list of all skos:ConceptScheme entity IRIs within the provided ontologies that are not blank
@@ -1520,11 +1520,11 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name ontologyManager.service:ontologyManagerService
-         * @requires prefixes.service:prefixes
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires httpService.service:httpService
+         * @name shared.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:httpService
          *
          * @description
          * `ontologyManagerService` is a service that provides access to the Mobi ontology REST

@@ -38,17 +38,17 @@
          * @name datasetsList.directive:datasetsList
          * @scope
          * @restrict E
-         * @requires datasetState.service:datasetStateService
-         * @requires datasetManager.service:datasetManagerService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
-         * @requires modal.service:modalService
+         * @requires shared.service:datasetStateService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:modalService
          *
          * @description
          * `datasetsList` is a directive which creates a Bootstrap row containing a {@link block.directive:block block}
          * with a {@link pagination.directive:pagination paginated} list of
-         * {@link datasetState.service:datasetStateService#results Dataset Records} and
+         * {@link shared.service:datasetStateService#results Dataset Records} and
          * {@link confirmationOverlay.directive:confirmationOverlay confirmation overlays} for deleting and clearing
          * datasets. Each dataset only displays its title, dataset IRI, and a portion of its description until it is
          * opened. Only one dataset can be open at a time. The directive is replaced by the contents of its template.

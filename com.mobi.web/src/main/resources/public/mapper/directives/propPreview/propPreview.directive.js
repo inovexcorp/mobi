@@ -39,10 +39,10 @@
          * @scope
          * @restrict E
          * @requires $filter
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `propPreview` is a directive that creates a div with a brief description of the passed

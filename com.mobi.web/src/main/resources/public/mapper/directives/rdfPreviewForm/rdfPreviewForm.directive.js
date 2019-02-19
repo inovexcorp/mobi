@@ -31,8 +31,8 @@
          * @description
          * The `rdfPreviewForm` module only provides the `rdfPreviewForm` directive which creates
          * a form for creating a preview of the loaded
-         * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} with the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * {@link shared.service:delimitedManagerService#dataRows delimited data} with the current
+         * {@link shared.service:mapperStateService#mapping mapping}.
          */
         .module('rdfPreviewForm', [])
         /**
@@ -40,15 +40,15 @@
          * @name rdfPreviewForm.directive:rdfPreviewForm
          * @scope
          * @restrict E
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires mappingManager.service:mappingManagerService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:mappingManagerService
          *
          * @description
          * `rdfPreviewForm` is a directive that creates a form with controls to select an RDF
          * {@link mapperSerializationSelect.directive:mapperSerializationSelect serialization}
          * and a `code-mirror` to view a preview of the loaded
-         * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} mapped by the
-         * current {@link mapperState.service:mapperStateService#mapping mapping}. The directive is
+         * {@link shared.service:delimitedManagerService#dataRows delimited data} mapped by the
+         * current {@link shared.service:mapperStateService#mapping mapping}. The directive is
          * replaced by the contents of its template.
          */
         .directive('rdfPreviewForm', rdfPreviewForm);

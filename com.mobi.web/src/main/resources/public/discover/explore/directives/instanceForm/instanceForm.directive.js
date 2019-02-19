@@ -38,16 +38,16 @@
          * @name instanceForm.directive:instanceForm
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
-         * @requires util.service:utilService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:utilService
          * @requires explore.service:exploreService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:prefixes
          * @requires exploreUtils.service:exploreUtilsService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `instanceForm` is a directive that creates a form with the complete list of properites associated with the
-         * {@link discoverState.service:discoverStateService selected instance} in an editable format. Also provides a
+         * {@link shared.service:discoverStateService selected instance} in an editable format. Also provides a
          * way to {@link editIriOverlay.directive:editIriOverlay edit the instance IRI} after acknowledging the danger.
          * If there are requierd properties not set on the instance, the provided `isValid` variable is set to false.
          * The directive is replaced by the contents of its template.

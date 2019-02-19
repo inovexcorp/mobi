@@ -38,9 +38,9 @@
          * @name classMappingSelect.directive:classMappingSelect
          * @scope
          * @restrict E
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires util.service:utilService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `classMappingSelect` is a directive that creates a div with `ui-select` containing all the ClassMappings

@@ -51,7 +51,7 @@
          * @name shared.directive:recordKeywords
          * @scope
          * @restrict E
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:prefixes
          *
          * @description
          * `recordKeywords` is a directive that creates a div containing a display of all the keyword property

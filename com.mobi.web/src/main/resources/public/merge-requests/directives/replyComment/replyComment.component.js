@@ -36,8 +36,8 @@
         /**
          * @ngdoc component
          * @name replyComment.component:replyComment
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `replyComment` is a component which creates a div containing a box indicating a reply can be made. Once that

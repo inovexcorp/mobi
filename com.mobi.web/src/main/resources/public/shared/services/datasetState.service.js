@@ -33,7 +33,7 @@
         /**
          * @ngdoc property
          * @name paginationConfig
-         * @propertyOf datasetState.service:datasetStateService
+         * @propertyOf shared.service:datasetStateService
          * @type {Object}
          *
          * @description
@@ -53,7 +53,7 @@
         /**
          * @ngdoc property
          * @name links
-         * @propertyOf datasetState.service:datasetStateService
+         * @propertyOf shared.service:datasetStateService
          * @type {Object}
          *
          * @description
@@ -67,7 +67,7 @@
         /**
          * @ngdoc property
          * @name totalSize
-         * @propertyOf datasetState.service:datasetStateService
+         * @propertyOf shared.service:datasetStateService
          * @type {number}
          *
          * @description
@@ -78,7 +78,7 @@
         /**
          * @ngdoc property
          * @name results
-         * @propertyOf datasetState.service:datasetStateService
+         * @propertyOf shared.service:datasetStateService
          * @type {Object[]}
          *
          * @description
@@ -89,7 +89,7 @@
         /**
          * @ngdoc property
          * @name openedDatasetId
-         * @propertyOf datasetState.service:datasetStateService
+         * @propertyOf shared.service:datasetStateService
          * @type {string}
          *
          * @description
@@ -100,7 +100,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf datasetState.service:datasetStateService
+         * @methodOf shared.service:datasetStateService
          *
          * @description
          * Resets all state variables.
@@ -111,10 +111,10 @@
         /**
          * @ngdoc method
          * @name setResults
-         * @methodOf datasetState.service:datasetStateService
+         * @methodOf shared.service:datasetStateService
          *
          * @description
-         * Calls the appropriate {@link datasetManager.service:datasetManagerService datasetManagerService}
+         * Calls the appropriate {@link shared.service:datasetManagerService datasetManagerService}
          * method to retrieve results of a Dataset Records query depending on whether or not a URL is passed
          * in. The passed URL is assumed to be from the `links` of a previous query.
          *
@@ -127,7 +127,7 @@
         /**
          * @ngdoc method
          * @name resetPagination
-         * @methodOf datasetState.service:datasetStateService
+         * @methodOf shared.service:datasetStateService
          *
          * @description
          * Resets all the pagination related variables.
@@ -144,7 +144,7 @@
         /**
          * @ngdoc method
          * @name setPagination
-         * @methodOf datasetState.service:datasetStateService
+         * @methodOf shared.service:datasetStateService
          *
          * @description
          * Sets the pagination state variables based on the information in the passed response from
@@ -167,10 +167,10 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name datasetState.service:datasetStateService
-         * @requires datasetManager.service:datasetManagerService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @name shared.service:datasetStateService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `datasetStateService` is a service which contains various variables to hold the

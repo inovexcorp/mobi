@@ -60,7 +60,7 @@
          * @name shared.directive:branchSelect
          * @scope
          * @restrict E
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `branchSelect` is a directive which creates a Bootstrap form-group div containing a ui-select

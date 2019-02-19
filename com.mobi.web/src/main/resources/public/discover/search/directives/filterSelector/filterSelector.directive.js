@@ -38,8 +38,8 @@
          * @name filterSelector.directive:filterSelector
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * HTML contents for the filter selector which provides the users with the options to select filter options

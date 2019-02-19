@@ -61,7 +61,7 @@
          * @ngdoc directive
          * @name shared.directive:languageSelect
          * @restrict E
-         * @requires propertyManager.service:propertyManagerService
+         * @requires shared.service:propertyManagerService
          *
          * @description
          * `languageSelect` is a directive which provides options for a formatted ui-select for picking language tags.

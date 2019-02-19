@@ -38,15 +38,15 @@
          * @name propertiesTab.directive:propertiesTab
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `propertiesTab` is a directive that creates a page containing the
          * {@link propertyHierarchyBlock.directive:propertyHierarchyBlock} of the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} and information about a selected
+         * {@link shared.service:ontologyStateService selected ontology} and information about a selected
          * property from that list. The selected property display includes a
          * {@link selectedDetails.directive:selectedDetails}, a button to delete the property, an
          * {@link annotationBlock.directive:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, a

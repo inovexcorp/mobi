@@ -38,13 +38,13 @@
          * @name mergeBlock.directive:mergeBlock
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires catalogManager.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:catalogManagerService
          *
          * @description
          * `mergeBlock` is a directive that creates a form for merging the current branch of the opened
-         * {@link ontologyState.service:ontologyStateService ontology} into another branch. The form contains a
+         * {@link shared.service:ontologyStateService ontology} into another branch. The form contains a
          * {@link branchSelect.directive:branchSelect} for the target branch, a {@link checkbox.directive:checkbox}
          * for indicating whether the source branch should be removed after the merge, a button to submit the merge,
          * and a button to cancel the merge. Once a target is selected, a

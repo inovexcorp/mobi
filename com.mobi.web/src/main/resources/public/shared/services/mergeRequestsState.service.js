@@ -37,7 +37,7 @@
         /**
          * @ngdoc property
          * @name selected
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          * @type {Object}
          *
          * @description
@@ -58,7 +58,7 @@
         /**
          * @ngdoc property
          * @name createRequest
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          * @type {boolean}
          *
          * @description
@@ -69,7 +69,7 @@
         /**
          * @ngdoc property
          * @name createRequestStep
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          * @type {number}
          *
          * @description
@@ -80,7 +80,7 @@
         /**
          * @ngdoc property
          * @name requestConfig
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          * @type {Object}
          *
          * @description
@@ -109,7 +109,7 @@
         /**
          * @ngdoc property
          * @name requests
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          * @type {Object[]}
          *
          * @description
@@ -131,7 +131,7 @@
         /**
          * @ngdoc method
          * @name startCreate
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Starts the Create Merge Request process by setting the appropriate state variables.
@@ -151,11 +151,11 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Initializes the service by retrieving the
-         * {@link catalogManager.service:catalogManagerService local catalog} id.
+         * {@link shared.service:catalogManagerService local catalog} id.
          */
         self.initialize = function() {
             catalogId = _.get(cm.localCatalog, '@id', '');
@@ -163,7 +163,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Resets important state variables.
@@ -184,10 +184,10 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
-         * Sets `requests` using the {@link mergeRequestManager.service:mergeRequestManagerService}
+         * Sets `requests` using the {@link shared.service:mergeRequestManagerService}
          * and retrieving any needed metadata about the related VersionedRDFRecord and Branches.
          *
          * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
@@ -212,11 +212,11 @@
         /**
          * @ngdoc method
          * @name setRequestDetails
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Adds more metadata on the provided object that represents a merge request using the
-         * {@link catalogManager.service:catalogManagerService}. This metadata includes the source and target
+         * {@link shared.service:catalogManagerService}. This metadata includes the source and target
          * branch with their titles, source and target commits, and the difference between the two commits.
          *
          * @param {Object} request An item from the `requests` array that represents the request to select
@@ -276,7 +276,7 @@
         /**
          * @ngdoc method
          * @name resolveRequestConflicts
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Resolves the conflicts for the provided Merge Request by making a merge from the request's target into
@@ -298,7 +298,7 @@
         /**
          * @ngdoc method
          * @name removeSource
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Checks if the JSON-LD for a Merge Request has the removeSource property set to true. Returns boolean result.
@@ -312,7 +312,7 @@
         /**
          * @ngdoc method
          * @name deleteRequest
-         * @propertyOf mergeRequestsState.service:mergeRequestsStateService
+         * @propertyOf shared.service:mergeRequestsStateService
          *
          * @description
          * Deletes the provided Merge Request from the application. If successful, unselects the current `selected`
@@ -357,12 +357,12 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name mergeRequestsState.service:mergeRequestsStateService
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires userManager.service:userManagerService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @name shared.service:mergeRequestsStateService
+         * @requires shared.service:mergeRequestManagerService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `mergeRequestsStateService` is a service which contains various variables to hold the

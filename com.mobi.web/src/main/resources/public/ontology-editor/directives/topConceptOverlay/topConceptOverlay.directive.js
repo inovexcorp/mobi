@@ -38,17 +38,17 @@
          * @name topConceptOverlay.directive:topConceptOverlay
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
          *
          * @description
          * `topConceptOverlay` is a directive that creates content for a modal that adds skos:hasTopConcept(s) to the
-         * {@link ontologyState.service:ontologyStateService selected concept scheme}. The form in the modal
+         * {@link shared.service:ontologyStateService selected concept scheme}. The form in the modal
          * contains a `ui-select` with all the concepts in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. Meant to be used in conjunction with
+         * {@link shared.service:ontologyStateService selected ontology}. Meant to be used in conjunction with
          * the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

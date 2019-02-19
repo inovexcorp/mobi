@@ -39,9 +39,9 @@
          * @scope
          * @restrict E
          * @requires $q
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
-         * @requires loginManager.service:loginManagerService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
+         * @requires shared.service:loginManagerService
          *
          * @description
          * `memberTable` is a directive that creates a table of the passed members and provides functionality for adding

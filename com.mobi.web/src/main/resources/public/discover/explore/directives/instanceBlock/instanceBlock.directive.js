@@ -41,9 +41,9 @@
          * @restrict E
          * @requires $http
          * @requires $filter
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          * @requires uuid
          *
          * @description

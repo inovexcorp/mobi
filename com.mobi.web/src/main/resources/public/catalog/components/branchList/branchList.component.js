@@ -26,9 +26,9 @@
     /**
      * @ngdoc component
      * @name catalog.component:branchList
-     * @requires catalogManager.service:catalogManagerService
+     * @requires shared.service:catalogManagerService
      * @requires utilService.service:utilService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:prefixes
      *
      * @description
      * `branchList` is a component which creates a list of expansion panels for all the Branches in the provided catalog

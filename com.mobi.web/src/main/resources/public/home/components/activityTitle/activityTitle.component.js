@@ -25,16 +25,16 @@
     /**
      * @ngdoc component
      * @name home.component:activityTitle
-     * @requires provManager.service:provManagerService
-     * @requires util.service:utilService
-     * @requires userManager.service:userManagerService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:provManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:userManagerService
+     * @requires shared.service:prefixes
      *
      * @description
      * `activityTitle` is a component which creates a `div` containing a title for the provided `Activity` using
      * the username of the associated user, the word associated with the type of Activity, and the titles of the
      * main associated `Entities`. The word and the predicate to retrieve `Entities` with are collected from the
-     * {@link provManager.service:provManagerService provManagerService}.
+     * {@link shared.service:provManagerService provManagerService}.
      *
      * @param {Object} activity A JSON-LD object of an `Activity`
      * @param {Object[]} entities An array of JSON-LD objects of `Entities`

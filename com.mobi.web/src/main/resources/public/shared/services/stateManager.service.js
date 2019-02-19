@@ -33,7 +33,7 @@
         /**
          * @ngdoc property
          * @name states
-         * @propertyOf stateManager.service:stateManagerService
+         * @propertyOf shared.service:stateManagerService
          * @type {Object[]}
          *
          * @description
@@ -50,7 +50,7 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Initializes the `states` variable using the `getStates` method. If the states cannot be retrieved,
@@ -65,7 +65,7 @@
         /**
          * @ngdoc method
          * @name getStates
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Calls the GET /mobirest/states endpoint with the provided parameters and returns the array of state
@@ -82,7 +82,7 @@
         /**
          * @ngdoc method
          * @name createState
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Calls the POST /mobirest/states endpoint with the provided state JSON-LD and a string identifying the
@@ -109,7 +109,7 @@
         /**
          * @ngdoc method
          * @name getState
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Calls the GET /mobirest/states/{stateId} endpoint with the provided state IRI string to retrieve a
@@ -126,7 +126,7 @@
         /**
          * @ngdoc method
          * @name updateState
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Calls the PUT /mobirest/states/{stateId} endpoint and updates the identified state with the provided IRI
@@ -149,7 +149,7 @@
         /**
          * @ngdoc method
          * @name deleteState
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Calls the DELETE /mobirest/states/{stateId} endpoint to remove the identified state object with the
@@ -169,8 +169,8 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name stateManager.service:stateManagerService
-         * @requires util.service:utilService
+         * @name shared.service:stateManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `stateManagerService` is a service that provides access to the Mobi state REST endpoints and the `states`

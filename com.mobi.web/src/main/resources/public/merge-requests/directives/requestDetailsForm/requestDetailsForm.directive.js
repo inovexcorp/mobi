@@ -38,8 +38,8 @@
          * @name requestDetailsForm.directive:requestDetailsForm
          * @scope
          * @restrict E
-         * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestsStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `requestDetailsForm` is a directive which creates a div containing a form with inputs for

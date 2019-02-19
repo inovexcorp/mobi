@@ -34,7 +34,7 @@
         /**
          * @ngdoc property
          * @name groups
-         * @propertyOf userManager.service:userManagerService
+         * @propertyOf shared.service:userManagerService
          * @type {object[]}
          *
          * @description
@@ -54,7 +54,7 @@
         /**
          * @ngdoc property
          * @name users
-         * @propertyOf userManager.service:userManagerService
+         * @propertyOf shared.service:userManagerService
          * @type {object[]}
          *
          * @description
@@ -77,7 +77,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Resets all state variables.
@@ -89,11 +89,11 @@
         /**
          * @ngdoc method
          * @name setUsers
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
-         * Initializes the {@link userManager.service:userManagerService#users users} and
-         * {@link userManager.service:userManagerService#groups groups} lists. Uses
+         * Initializes the {@link shared.service:userManagerService#users users} and
+         * {@link shared.service:userManagerService#groups groups} lists. Uses
          * the results of the GET /mobirest/users and the results of the GET /mobirest/groups endpoints to retrieve
          * the user and group lists, respectively. If an error occurs in either of the HTTP calls,
          * logs the error on the console. Returns a promise.
@@ -113,7 +113,7 @@
         /**
          * @ngdoc method
          * @name getUsers
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the GET /mobirest/users endpoint which retrieves a list of Users without their passwords.
@@ -127,7 +127,7 @@
         /**
          * @ngdoc method
          * @name getGroups
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the GET /mobirest/groups endpoint which retrieves a list of Groups.
@@ -141,12 +141,12 @@
         /**
          * @ngdoc method
          * @name getUsername
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Finds the username of the user associated with the passed IRI. If it has not been found before,
          * calls the GET /mobirest/users/username endpoint and saves the result in the
-         * {@link userManager.service:userManagerService#users users} list. If it has been found before,
+         * {@link shared.service:userManagerService#users users} list. If it has been found before,
          * grabs the username from the users list. Returns a Promise that resolves with the username and rejects
          * if the endpoint fails.
          *
@@ -171,12 +171,12 @@
         /**
          * @ngdoc method
          * @name addUser
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the POST /mobirest/users endpoint to add the passed user to Mobi. Returns a Promise
          * that resolves if the addition was successful and rejects with an error message if it was not.
-         * Updates the {@link userManager.service:userManagerService#users users} list appropriately.
+         * Updates the {@link shared.service:userManagerService#users users} list appropriately.
          *
          * @param {Object} newUser the new user to add
          * @param {string} newUser.username The required username for the user
@@ -220,7 +220,7 @@
         /**
          * @ngdoc method
          * @name getUser
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the GET /mobirest/users/{username} endpoint to retrieve a Mobi user
@@ -238,18 +238,18 @@
         /**
          * @ngdoc method
          * @name updateUser
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/users/{username} endpoint to update a Mobi user specified
          * by the passed username with the passed new user. Returns a Promise that resolves if it
          * was successful and rejects with an error message if it was not. Updates the
-         * {@link userManager.service:userManagerService#users users} list appropriately.
+         * {@link shared.service:userManagerService#users users} list appropriately.
          *
          * @param {string} username the username of the user to retrieve
          * @param {Object} newUser an object containing all the new user information to
          * save. The structure of the object should be the same as the structure of the user
-         * objects in the {@link userManager.service:userManagerService#users users list}
+         * objects in the {@link shared.service:userManagerService#users users list}
          * @return {Promise} A Promise that resolves if the request was successful; rejects
          * with an error message otherwise
          */
@@ -262,7 +262,7 @@
         /**
          * @ngdoc method
          * @name changePassword
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the POST /mobirest/users/{username}/password endpoint to change the password of
@@ -289,7 +289,7 @@
         /**
          * @ngdoc method
          * @name resetPassword
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/users/{username}/password endpoint to reset the password of
@@ -310,13 +310,13 @@
         /**
          * @ngdoc method
          * @name deleteUser
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the DELETE /mobirest/users/{username} endpoint to remove the Mobi user
          * with passed username. Returns a Promise that resolves if the deletion was successful
          * and rejects with an error message if it was not. Updates the
-         * {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} username the username of the user to remove
          * @return {Promise} A Promise that resolves if the request was successful; rejects with
@@ -332,13 +332,13 @@
         /**
          * @ngdoc method
          * @name addUserRole
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/users/{username}/roles endpoint to add the passed
          * roles to the Mobi user specified by the passed username. Returns a Promise
          * that resolves if the addition was successful and rejects with an error message
-         * if not. Updates the {@link userManager.service:userManagerService#users users}
+         * if not. Updates the {@link shared.service:userManagerService#users users}
          * list appropriately.
          *
          * @param {string} username the username of the user to add a role to
@@ -357,13 +357,13 @@
         /**
          * @ngdoc method
          * @name deleteUserRole
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the DELETE /mobirest/users/{username}/roles endpoint to remove the passed
          * role from the Mobi user specified by the passed username. Returns a Promise
          * that resolves if the deletion was successful and rejects with an error message
-         * if not. Updates the {@link userManager.service:userManagerService#users users}
+         * if not. Updates the {@link shared.service:userManagerService#users users}
          * list appropriately.
          *
          * @param {string} username the username of the user to remove a role from
@@ -381,13 +381,13 @@
         /**
          * @ngdoc method
          * @name addUserGroup
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/users/{username}/groups endpoint to add the Mobi user specified
          * by the passed username to the group specified by the passed group title. Returns a Promise
          * that resolves if the addition was successful and rejects with an error message if not.
-         * Updates the {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * Updates the {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} username the username of the user to add to the group
          * @param {string} groupTitle the title of the group to add the user to
@@ -409,14 +409,14 @@
         /**
          * @ngdoc method
          * @name deleteUserGroup
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the DELETE /mobirest/users/{username}/groups endpoint to remove the Mobi
          * user specified by the passed username from the group specified by the passed group
          * title. Returns a Promise that resolves if the deletion was successful and rejects
          * with an error message if not. Updates the
-         * {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} username the username of the user to remove from the group
          * @param {string} groupTitle the title of the group to remove the user from
@@ -437,12 +437,12 @@
         /**
          * @ngdoc method
          * @name addGroup
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the POST /mobirest/groups endpoint to add the passed group to Mobi. Returns
          * a Promise that resolves if the addition was successful and rejects with an error message
-         * if it was not. Updates the {@link userManager.service:userManagerService#groups groups}
+         * if it was not. Updates the {@link shared.service:userManagerService#groups groups}
          * list appropriately.
          *
          * @param {Object} newGroup the new group to add
@@ -481,7 +481,7 @@
         /**
          * @ngdoc method
          * @name getGroup
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the GET /mobirest/groups/{groupTitle} endpoint to retrieve a Mobi group
@@ -499,18 +499,18 @@
         /**
          * @ngdoc method
          * @name updateGroup
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/groups/{groupTitle} endpoint to update a Mobi group specified
          * by the passed title with the passed new group. Returns a Promise that resolves if it
          * was successful and rejects with an error message if it was not. Updates the
-         * {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} groupTitle the title of the group to update
          * @param {Object} newGroup an object containing all the new group information to
          * save. The structure of the object should be the same as the structure of the group
-         * objects in the {@link userManager.service:userManagerService#groups groups list}
+         * objects in the {@link shared.service:userManagerService#groups groups list}
          * @return {Promise} A Promise that resolves if the request was successful; rejects
          * with an error message otherwise
          */
@@ -523,13 +523,13 @@
         /**
          * @ngdoc method
          * @name deleteGroup
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the DELETE /mobirest/groups/{groupTitle} endpoint to remove the Mobi group
          * with passed title. Returns a Promise that resolves if the deletion was successful
          * and rejects with an error message if it was not. Updates the
-         * {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} groupTitle the title of the group to remove
          * @return {Promise} A Promise that resolves if the request was successful; rejects with
@@ -544,13 +544,13 @@
         /**
          * @ngdoc method
          * @name addGroupRole
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/groups/{groupTitle}/roles endpoint to add the passed
          * roles to the Mobi group specified by the passed title. Returns a Promise
          * that resolves if the addition was successful and rejects with an error message
-         * if not. Updates the {@link userManager.service:userManagerService#groups groups}
+         * if not. Updates the {@link shared.service:userManagerService#groups groups}
          * list appropriately.
          *
          * @param {string} groupTitle the title of the group to add a role to
@@ -569,13 +569,13 @@
         /**
          * @ngdoc method
          * @name deleteGroupRole
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the DELETE /mobirest/groups/{groupTitle}/roles endpoint to remove the passed
          * role from the Mobi group specified by the passed title. Returns a Promise
          * that resolves if the deletion was successful and rejects with an error message
-         * if not. Updates the {@link userManager.service:userManagerService#groups groups}
+         * if not. Updates the {@link shared.service:userManagerService#groups groups}
          * list appropriately.
          *
          * @param {string} groupTitle the title of the group to remove a role from
@@ -593,7 +593,7 @@
         /**
          * @ngdoc method
          * @name getGroupUsers
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the GET /mobirest/groups/{groupTitle}/users endpoint to retrieve the list of
@@ -612,14 +612,14 @@
         /**
          * @ngdoc method
          * @name addGroupUsers
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the PUT /mobirest/groups/{groupTitle}/users endpoint to add the Mobi
          * users specified by the passed array of usernames to the group specified by the
          * passed group title. Returns a Promise that resolves if the addition was successful
          * and rejects with an error message if not. Updates the
-         * {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} groupTitle the title of the group to add users to
          * @param {string[]} users an array of usernames of users to add to the group
@@ -637,14 +637,14 @@
         /**
          * @ngdoc method
          * @name deleteGroupUser
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Calls the DELETE /mobirest/groups/{groupTitle}/users endpoint to remove the Mobi
          * user specified by the passed username from the group specified by the passed group
          * title. Returns a Promise that resolves if the deletion was successful and rejects
          * with an error message if not. Updates the
-         * {@link userManager.service:userManagerService#groups groups} list appropriately.
+         * {@link shared.service:userManagerService#groups groups} list appropriately.
          *
          * @param {string} groupTitle the title of the group to remove the user from
          * @param {string} username the username of the user to remove from the group
@@ -665,7 +665,7 @@
         /**
          * @ngdoc method
          * @name isAdmin
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Tests whether the user with the passed username is an admin or not by checking the
@@ -688,7 +688,7 @@
         /**
          * @ngdoc method
          * @name getUserDisplay
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Returns a human readable form of a user. It will default to the "firstName lastName". If both of those
@@ -704,7 +704,7 @@
         /**
          * @ngdoc method
          * @name getUserObj
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Returns a user object from the provided JSON-LD. User object has a format of
@@ -736,7 +736,7 @@
         /**
          * @ngdoc method
          * @name getGroupObj
-         * @methodOf userManager.service:userManagerService
+         * @methodOf shared.service:userManagerService
          *
          * @description
          * Returns a group object from the provided JSON-LD. Group object has a format of
@@ -788,11 +788,11 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name userManager.service:userManagerService
+         * @name shared.service:userManagerService
          * @requires $http
          * @requires $q
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `userManagerService` is a service that provides access to the Mobi users and

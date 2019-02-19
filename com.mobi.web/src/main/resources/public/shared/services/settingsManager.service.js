@@ -45,7 +45,7 @@
         /**
          * @ngdoc method
          * @name getSettings
-         * @methodOf settingsManager.service:settingsManagerService
+         * @methodOf shared.service:settingsManagerService
          * 
          * @description 
          * Returns a copy of the saved settings object.
@@ -59,7 +59,7 @@
         /**
          * @ngdoc method
          * @name setSettings
-         * @methodOf settingsManager.service:settingsManagerService
+         * @methodOf shared.service:settingsManagerService
          *
          * @description 
          * Replaces the saved settings object and cookie with a new settings object.
@@ -78,7 +78,7 @@
         /**
          * @ngdoc method
          * @name getTreeDisplay
-         * @methodOf settingsManager.service:settingsManagerService
+         * @methodOf shared.service:settingsManagerService
          * 
          * @description 
          * Returns the string setting value of the tree display in the Ontology Editor.
@@ -92,7 +92,7 @@
         /**
          * @ngdoc method
          * @name getTooltipDisplay
-         * @methodOf settingsManager.service:settingsManagerService
+         * @methodOf shared.service:settingsManagerService
          * 
          * @description 
          * Returns the string setting value of the tooltip display in the Ontology Editor
@@ -110,10 +110,10 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name settingsManager.service:settingsManagerService
+         * @name shared.service:settingsManagerService
          * @requires $window
          * @requires $cookies
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:prefixes
          *
          * @description 
          * `settingsManagerService` is a service that provides utlities for saving user settings

@@ -39,7 +39,7 @@
          * @name userManagementTabset.directive:userManagementTabset
          * @scope
          * @restrict E
-         * @requires userState.service:userStateService
+         * @requires shared.service:userStateService
          *
          * @description
          * `userManagementTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with different

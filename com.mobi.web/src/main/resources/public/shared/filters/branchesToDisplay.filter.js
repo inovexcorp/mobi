@@ -51,10 +51,10 @@
          * @ngdoc filter
          * @name shared.filter:branchesToDisplay
          * @kind function
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires loginManager.service:loginManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:loginManagerService
+         * @requires shared.service:prefixes
          *
          * @description
          * Takes an array of branch objects and filters that array to to display the correct branches for the currently

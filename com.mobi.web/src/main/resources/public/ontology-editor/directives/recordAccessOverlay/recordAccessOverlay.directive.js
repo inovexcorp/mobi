@@ -38,9 +38,9 @@
          * @name recordAccessOverlay.directive:recordAccessOverlay
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires userManager.service:userManagerService
-         * @requires recordPermissionsManager.service:recordPermissionsManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:recordPermissionsManagerService
          *
          * @description
          * `recordAccessOverlay` is a directive that creates a form to contain a `userAccessControls` module that will

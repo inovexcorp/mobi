@@ -38,10 +38,10 @@
          * @name requestRecordSelect.directive:requestRecordSelect
          * @scope
          * @restrict E
-         * @requires catalogManager.service:catalogManagerService
-         * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:mergeRequestsStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `requestRecordSelect` is a directive which creates a div containing a search form, a list

@@ -38,11 +38,11 @@
          * @name ontologyCloseOverlay.directive:ontologyCloseOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `ontologyCloseOverlay` is a directive that creates content for a modal that will close the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The modal provides buttons to Cancel
+         * {@link shared.service:ontologyStateService selected ontology}. The modal provides buttons to Cancel
          * the close, close without saving, or save and then close. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

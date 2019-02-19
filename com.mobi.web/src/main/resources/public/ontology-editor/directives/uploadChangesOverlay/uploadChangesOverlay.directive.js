@@ -38,11 +38,11 @@
          * @name uploadChangesOverlay.directive:uploadChangesOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `uploadChangesOverlay` is a directive that creates content for a modal that uploads an RDF file of an updated
-         * version of the current {@link ontologyState.service:ontologyStateService selected ontology} to be compared
+         * version of the current {@link shared.service:ontologyStateService selected ontology} to be compared
          * and the differences added to the InProgressCommit. The form in the modal contains
          * {@link fileInput.directive:fileInput} that accepts an RDF file. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.

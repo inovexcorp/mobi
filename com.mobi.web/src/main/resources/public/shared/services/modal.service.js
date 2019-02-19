@@ -31,7 +31,7 @@
         /**
          * @ngdoc method
          * @name openModal
-         * @methodOf modal.service:modalService
+         * @methodOf shared.service:modalService
          *
          * @description
          * Opens a specific modal directive with the provided configuration. The contents of the specified directive
@@ -64,7 +64,7 @@
         /**
          * @ngdoc method
          * @name openConfirmModal
-         * @methodOf modal.service:modalService
+         * @methodOf shared.service:modalService
          *
          * @description
          * Opens a {@link confirmModal.directive:confirmModal} with the provided configuration. The body of the
@@ -97,7 +97,7 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name modal.service:modalService
+         * @name shared.service:modalService
          * @requires $uibModal
          *
          * @description

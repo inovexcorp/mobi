@@ -39,8 +39,8 @@
          * @scope
          * @restrict E
          * @requires $q
-         * @requires discoverState.service:discoverStateService
-         * @requires util.service:utilService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:utilService
          * @requires explore.service:exploreService
          * @requires exploreUtils.service:exploreUtilsService
          *

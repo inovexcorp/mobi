@@ -49,7 +49,7 @@
         /**
          * @ngdoc property
          * @name currentUser
-         * @propertyOf loginManager.service:loginManagerService
+         * @propertyOf shared.service:loginManagerService
          * @type {string}
          *
          * @description
@@ -60,7 +60,7 @@
         /**
          * @ngdoc property
          * @name currentUserIRI
-         * @propertyOf loginManager.service:loginManagerService
+         * @propertyOf shared.service:loginManagerService
          * @type {string}
          *
          * @description
@@ -71,7 +71,7 @@
         /**
          * @ngdoc method
          * @name loginManager.loginManagerService#login
-         * @methodOf loginManager.service:loginManagerService
+         * @methodOf shared.service:loginManagerService
          *
          * @description
          * Makes a call to GET /mobirest/user/login to attempt to log into Mobi using the
@@ -118,7 +118,7 @@
         /**
          * @ngdoc method
          * @name loginManager.loginManagerService#logout
-         * @methodOf loginManager.service:loginManagerService
+         * @methodOf shared.service:loginManagerService
          *
          * @description
          * Makes a call to GET /mobirest/user/logout to log out of which ever user account
@@ -147,18 +147,18 @@
         /**
          * @ngdoc method
          * @name loginManager.loginManagerService#isAuthenticated
-         * @methodOf loginManager.service:loginManagerService
+         * @methodOf shared.service:loginManagerService
          *
          * @description
          * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-         * is logged in, intitializes the {@link catalogManager.service:catalogManagerService},
-         * {@link catalogState.service:catalogStateService},
-         * {@link mergeRequestsState.service:mergeRequestsStateService},
-         * {@link ontologyManager.service:ontologyManagerService},
-         * {@link ontologyState.service:ontologyStateService},
-         * {@link datasetManager.service:datasetManagerService},
-         * {@link stateManager.service:stateManagerService},
-         * and the {@link userManager.service:userManagerService}. Returns
+         * is logged in, intitializes the {@link shared.service:catalogManagerService},
+         * {@link shared.service:catalogStateService},
+         * {@link shared.service:mergeRequestsStateService},
+         * {@link shared.service:ontologyManagerService},
+         * {@link shared.service:ontologyStateService},
+         * {@link shared.service:datasetManagerService},
+         * {@link shared.service:stateManagerService},
+         * and the {@link shared.service:userManagerService}. Returns
          * a Promise with whether or not a user is logged in.
          *
          * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
@@ -204,7 +204,7 @@
         /**
          * @ngdoc method
          * @name loginManager.loginManagerService#getCurrentLogin
-         * @methodOf loginManager.service:loginManagerService
+         * @methodOf shared.service:loginManagerService
          *
          * @description
          * Makes a call to GET /mobirest/user/current to retrieve the user that is currently logged
@@ -232,24 +232,24 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name loginManager.service:loginManagerService
+         * @name shared.service:loginManagerService
          * @requires $http
          * @requires $q
          * @requires $state
-         * @requires catalogManager.service:catalogManagerService
-         * @requires catalogState.service:catalogStateService
-         * @requires datasetManager.service:datasetManagerService
-         * @requires datasetState.service:datasetStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:catalogStateService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:datasetStateService
          * @requires delimitedManager.service:delimitedManangerService
-         * @requires discoverState.service:discoverStateService
-         * @requires mapperState.service:mapperStateService
-         * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires sparqlManager.service:sparqlManagerService
-         * @requires stateManager.service:stateManagerService
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:mergeRequestsStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:sparqlManagerService
+         * @requires shared.service:stateManagerService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
          *
          * @description
          * `loginManagerService` is a service that provides access to the Mobi login REST

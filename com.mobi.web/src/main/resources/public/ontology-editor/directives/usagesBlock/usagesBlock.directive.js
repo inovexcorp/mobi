@@ -38,13 +38,13 @@
          * @name usagesBlock.directive:usagesBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `usagesBlock` is a directive that creates a section that displays the usages of the
-         * {@link ontologyState.service:ontologyStateService selected entity} using
+         * {@link shared.service:ontologyStateService selected entity} using
          * {@link propertyValues.directive:propertyValues}. The usages are only shown 100 at a time to save rendering
          * time with a link at the bottom to load more. The directive is replaced by the contents of its template.
          */

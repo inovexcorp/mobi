@@ -38,14 +38,14 @@
          * @name characteristicsBlock.directive:characteristicsBlock
          * @scope
          * @restrict E
-         * @requires prefixes.service:prefixes
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `characteristicsBlock` is a directive that creates a section that displays the appropriate characteristics
-         * on the {@link ontologyState.service:ontologyStateService selected property} based on its type.
+         * on the {@link shared.service:ontologyStateService selected property} based on its type.
          * Characteristics are displayed as {@link checkbox.directive:checkbox checkboxes}. The directive is replaced
          * by the contents of its template.
          */

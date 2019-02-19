@@ -37,8 +37,8 @@
          * @ngdoc component
          * @name createUserOverlay.component:createUserOverlay
          * @requires $q
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
          *
          * @description
          * `createUserOverlay` is a component that creates content for a modal with a form to add a user to Mobi. The

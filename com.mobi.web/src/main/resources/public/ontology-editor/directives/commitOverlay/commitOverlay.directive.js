@@ -38,13 +38,13 @@
          * @name commitOverlay.directive:commitOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `commitOverlay` is a directive that creates content for a modal to commit the changes to the
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains a
+         * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
          * {@link textArea.directive:textArea} for the commit message. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

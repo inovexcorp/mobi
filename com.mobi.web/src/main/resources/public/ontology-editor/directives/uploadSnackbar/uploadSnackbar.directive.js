@@ -38,8 +38,8 @@
          * @name uploadSnackbar.directive:uploadSnackbar
          * @scope
          * @restrict E
-         * @requires httpService.service:httpService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:httpService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `uploadSnackbar` is a directive that creates a custom Material Design `snackbar` on the right of the screen

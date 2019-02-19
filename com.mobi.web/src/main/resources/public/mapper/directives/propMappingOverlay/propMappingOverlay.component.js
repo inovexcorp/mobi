@@ -36,15 +36,15 @@
         /**
          * @ngdoc component
          * @name propMappingOverlay.component:propMappingOverlay
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires mappingManager.service:mappingManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:mappingManagerService
          *
          * @description
          * `propMappingOverlay` is a component that creates content an overlay that creates or edits a PropertyMapping
-         * in the current {@link mapperState.service:mapperStateService#mapping mapping}. If the selected property in the
+         * in the current {@link shared.service:mapperStateService#mapping mapping}. If the selected property in the
          * {@link propSelect.directive:propSelect propSelect} is a data property, a
          * {@link columnSelect.directive:columnSelect columnSelect} will appear to select the linked column index for
          * the DataMapping being created/edited. If the selected property is an object property, a select for

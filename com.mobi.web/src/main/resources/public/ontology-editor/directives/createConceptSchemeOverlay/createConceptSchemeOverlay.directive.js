@@ -38,15 +38,15 @@
          * @name createConceptSchemeOverlay.directive:createConceptSchemeOverlay
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `createConceptSchemeOverlay` is a directive that creates content for a modal that creates a concept scheme
-         * in the current {@link ontologyState.service:ontologyStateService selected ontology/vocabulary}. The form in
+         * in the current {@link shared.service:ontologyStateService selected ontology/vocabulary}. The form in
          * the modal contains a text input for the concept scheme name (which populates the
          * {@link staticIri.directive:staticIri IRI}),
          * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the top concepts.

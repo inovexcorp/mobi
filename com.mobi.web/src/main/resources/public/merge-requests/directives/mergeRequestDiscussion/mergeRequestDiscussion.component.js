@@ -37,8 +37,8 @@
         /**
          * @ngdoc component
          * @name mergeRequestDiscussion.component:mergeRequestDiscussion
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `mergeRequestDiscussion` is a component which creates a div containing

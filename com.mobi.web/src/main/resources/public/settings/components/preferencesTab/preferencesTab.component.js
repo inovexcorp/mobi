@@ -25,7 +25,7 @@
     /**
      * @ngdoc component
      * @name settings.component:preferencesTab
-     * @requires settingsManager.service:settingsManagerService
+     * @requires shared.service:settingsManagerService
      *
      * @description
      * `preferencesTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} containing

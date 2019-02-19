@@ -33,7 +33,7 @@
         /**
          * @ngdoc property
          * @name activityTypes
-         * @propertyOf provManager.service:provManagerService
+         * @propertyOf shared.service:provManagerService
          * @type {Object[]}
          *
          * @description
@@ -67,7 +67,7 @@
         /**
          * @ngdoc method
          * @name getActivities
-         * @methodOf provManager.service:provManagerService
+         * @methodOf shared.service:provManagerService
          *
          * @description
          * Makes a call to GET /mobirest/provenance-data to get a paginated list of `Activities` and their associated
@@ -95,12 +95,12 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name provManager.service:provManagerService
+         * @name shared.service:provManagerService
          * @requires $http
          * @requires $q
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
-         * @requires httpService.service:httpService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:httpService
          *
          * @description
          * `provManagerService` is a service that provides access to the Mobi Provenance REST endpoints and variables

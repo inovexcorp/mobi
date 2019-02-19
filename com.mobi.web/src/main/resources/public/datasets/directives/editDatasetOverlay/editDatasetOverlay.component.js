@@ -26,11 +26,11 @@
     /**
      * @ngdoc component
      * @name editDatasetOverlay.component:editDatasetOverlay
-     * @requires datasetState.service:datasetStateService
-     * @requires datasetManager.service:datasetManagerService
-     * @requires catalogManager.service:catalogManagerService
-     * @requires util.service:utilService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:datasetStateService
+     * @requires shared.service:datasetManagerService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
      *
      * @description
      * `editDatasetOverlay` is a component that creates content for a modal with a form containing fields for

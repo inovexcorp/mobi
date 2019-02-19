@@ -30,7 +30,7 @@
          *
          * @description
          * The `usersList` module only provides the `usersList` directive which creates
-         * an interactable list of all {@link userManager.service:userManagerService#users users}.
+         * an interactable list of all {@link shared.service:userManagerService#users users}.
          */
         .module('usersList', [])
         /**
@@ -38,13 +38,13 @@
          * @name usersList.directive:usersList
          * @scope
          * @restrict E
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
-         * @requires loginManager.service:loginManagerService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
+         * @requires shared.service:loginManagerService
          *
          * @description
          * `usersList` is a directive that creates a <ul> containing the
-         * {@link userManager.service:userManagerService#users users} list. Users can only be edited
+         * {@link shared.service:userManagerService#users users} list. Users can only be edited
          * by admin users. The directive is replaced by the contents of its template.
          */
         .directive('usersList', usersList);

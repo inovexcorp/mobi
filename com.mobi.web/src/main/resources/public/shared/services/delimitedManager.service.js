@@ -33,7 +33,7 @@
         /**
          * @ngdoc property
          * @name dataRows
-         * @propertyOf delimitedManager.service:delimitedManagerService
+         * @propertyOf shared.service:delimitedManagerService
          * @type {string[]}
          *
          * @description
@@ -44,7 +44,7 @@
         /**
          * @ngdoc property
          * @name fileName
-         * @propertyOf delimitedManager.service:delimitedManagerService
+         * @propertyOf shared.service:delimitedManagerService
          * @type {string}
          *
          * @description
@@ -56,7 +56,7 @@
         /**
          * @ngdoc property
          * @name separator
-         * @propertyOf delimitedManager.service:delimitedManagerService
+         * @propertyOf shared.service:delimitedManagerService
          * @type {string}
          *
          * @description
@@ -70,7 +70,7 @@
         /**
          * @ngdoc property
          * @name containsHeaders
-         * @propertyOf delimitedManager.service:delimitedManagerService
+         * @propertyOf shared.service:delimitedManagerService
          * @type {boolean}
          *
          * @description
@@ -84,7 +84,7 @@
         /**
          * @ngdoc property
          * @name preview
-         * @propertyOf delimitedManager.service:delimitedManagerService
+         * @propertyOf shared.service:delimitedManagerService
          * @type {string/Object}
          *
          * @description
@@ -95,7 +95,7 @@
         /**
          * @ngdoc property
          * @name serializeFormat
-         * @propertyOf delimitedManager.service:delimitedManagerService
+         * @propertyOf shared.service:delimitedManagerService
          * @type {string}
          *
          * @description
@@ -107,7 +107,7 @@
         /**
          * @ngdoc method
          * @name upload
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Makes a call to POST /mobirest/delimited-files to upload the passed File object to the repository.
@@ -134,7 +134,7 @@
         /**
          * @ngdoc method
          * @name previewFile
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Makes a call to GET /mobirest/delimited-files/{fileName} to retrieve the passed in number of rows
@@ -174,7 +174,7 @@
         /**
          * @ngdoc method
          * @name previewMap
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Makes a call to POST /mobirest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of
@@ -211,7 +211,7 @@
         /**
          * @ngdoc method
          * @name mapAndDownload
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Calls the GET /mobirest/delimited-files/{fileName}/map endpoint using the `window.location` variable
@@ -241,7 +241,7 @@
         /**
          * @ngdoc method
          * @name mapAndUpload
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Calls the POST /mobirest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
@@ -268,7 +268,7 @@
         /**
          * @ngdoc method
          * @name mapAndCommit
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Calls the POST /mobirest/delimited-files/{fileName}/map-to-ontology to commit the data of an uploaded delimited file
@@ -299,12 +299,12 @@
         /**
          * @ngdoc method
          * @name getHeader
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Retrieves the header name of a column based on its index. If
-         * {@link delimitedManager.service:delimitedManagerService#dataRows data rows} have been
-         * set and {@link delimitedManager.service:delimitedManagerService#containsHeaders contain headers},
+         * {@link shared.service:delimitedManagerService#dataRows data rows} have been
+         * set and {@link shared.service:delimitedManagerService#containsHeaders contain headers},
          * collects the header name from the first row. Otherwise, generates a name using the index.
          *
          * @param {number/string} index The index number of the column to retrieve the header name from
@@ -317,7 +317,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf delimitedManager.service:delimitedManagerService
+         * @methodOf shared.service:delimitedManagerService
          *
          * @description
          * Resets the values of {@link delimitedManager.delimitedManager#dataRows dataRows}
@@ -340,8 +340,8 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name delimitedManager.service:delimitedManagerService
-         * @requires util.service:utilService
+         * @name shared.service:delimitedManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `delimitedManagerService` is a service that provides access to the Mobi CSV REST

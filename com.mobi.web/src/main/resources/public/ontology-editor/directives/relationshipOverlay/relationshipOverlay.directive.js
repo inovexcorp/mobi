@@ -38,15 +38,15 @@
          * @name relationshipOverlay.directive:relationshipOverlay
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires propertyManager.service:propertyManagerService
+         * @requires shared.service:propertyManagerService
          *
          * @description
          * `axiomOverlay` is a directive that creates content for a modal that adds a SKOS relationship to the
-         * {@link ontologyState.service:ontologyStateService selected concept}. The form in the modal contains a
+         * {@link shared.service:ontologyStateService selected concept}. The form in the modal contains a
          * `ui-select` of the provided relationships and a `ui-select` of the appropriate values for the selected
          * relationship (concepts or concept schemes). Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.

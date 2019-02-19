@@ -26,9 +26,9 @@
     /**
      * @ngdoc component
      * @name newDatasetOverlay.component:newDatasetOverlay
-     * @requires datasetManager.service:datasetManagerService
-     * @requires datasetState.service:datasetStateService
-     * @requires util.service:utilService
+     * @requires shared.service:datasetManagerService
+     * @requires shared.service:datasetStateService
+     * @requires shared.service:utilService
      *
      * @description
      * `newDatasetOverlay` is a component that creates content for a modal with a form containing fields for

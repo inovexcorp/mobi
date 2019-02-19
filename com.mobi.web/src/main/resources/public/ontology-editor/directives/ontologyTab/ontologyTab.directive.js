@@ -30,10 +30,10 @@
          * @name ontologyTab.directive:ontologyTab
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `ontologyTab` is a directive that creates a `div` containing all the directives necessary for

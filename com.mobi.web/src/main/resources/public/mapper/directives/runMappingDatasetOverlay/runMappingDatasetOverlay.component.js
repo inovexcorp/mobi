@@ -36,15 +36,15 @@
         /**
          * @ngdoc component
          * @name runMappingDatasetOverlay.component:runMappingDatasetOverlay
-         * @requires mapperState.service:mapperStateService
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires datasetManager.service:datasetManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `runMappingDatasetOverlay` is a component that creates content for a modal that contains a configuration
-         * settings for running the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
-         * against the uploaded {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
+         * settings for running the currently selected {@link shared.service:mapperStateService#mapping mapping}
+         * against the uploaded {@link shared.service:delimitedManagerService#dataRows delimited data}.
          * This includes a `ui-select` to determine which dataset to upload the results of a mapping into. Meant to be
          * used in conjunction with the {@link modalService.directive:modalService}.
          *

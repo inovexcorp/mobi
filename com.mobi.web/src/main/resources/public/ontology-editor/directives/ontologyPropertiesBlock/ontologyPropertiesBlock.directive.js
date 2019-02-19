@@ -38,14 +38,14 @@
          * @name ontologyPropertiesBlock.directive:ontologyPropertiesBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires propertyManager.service:propertyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:propertyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `ontologyPropertiesBlock` is a directive that creates a section that displays the ontology properties (and
-         * annotations) on the current {@link ontologyState.service:ontologyStateService selected ontology} using
+         * annotations) on the current {@link shared.service:ontologyStateService selected ontology} using
          * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a property.
          * The directive houses the methods for opening the modal for
          * {@link ontologyPropertyOverlay.directive:ontologyPropertyOverlay editing, adding}, and removing

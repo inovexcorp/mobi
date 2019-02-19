@@ -25,8 +25,8 @@
     /**
      * @ngdoc component
      * @name settings.component:passwordTab
-     * @requires userManager.service:userManagerService
-     * @requires loginManager.service:loginManagerService
+     * @requires shared.service:userManagerService
+     * @requires shared.service:loginManagerService
      *
      * @description
      * `passwordTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} containing a

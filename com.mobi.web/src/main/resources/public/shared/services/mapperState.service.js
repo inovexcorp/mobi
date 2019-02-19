@@ -41,7 +41,7 @@
         /**
          * @ngdoc property
          * @name mapping
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {Object}
          *
          * @description
@@ -65,7 +65,7 @@
         /**
          * @ngdoc property
          * @name sourceOntologies
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {Object[]}
          *
          * @description
@@ -77,7 +77,7 @@
         /**
          * @ngdoc property
          * @name editMapping
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {boolean}
          *
          * @description
@@ -88,7 +88,7 @@
         /**
          * @ngdoc property
          * @name newMapping
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {boolean}
          *
          * @description
@@ -99,7 +99,7 @@
         /**
          * @ngdoc property
          * @name step
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {number}
          *
          * @description
@@ -110,7 +110,7 @@
         /**
          * @ngdoc property
          * @name editTabs
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {Object}
          *
          * @description
@@ -124,14 +124,14 @@
         /**
          * @ngdoc property
          * @name invalidProps
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {Object[]}
          *
          * @description
          * `invalidProps` holds an array of objects representing property mappings in the
-         * current {@link mapperState.service:mapperStateService#mapping mapping}
+         * current {@link shared.service:mapperStateService#mapping mapping}
          * that are mapped to non-existent column indexes in the currently loaded
-         * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}.
+         * {@link shared.service:delimitedManagerService#dataRows delimited data}.
          * The format of the objects is:
          * ```
          * {
@@ -144,7 +144,7 @@
         /**
          * @ngdoc property
          * @name availableClasses
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {Object[]}
          *
          * @description
@@ -161,19 +161,19 @@
         /**
          * @ngdoc property
          * @name propsByClass
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {Object}
          *
          * @description
          * `propsByClass` holds a object with keys for classes in the imports closure of the currently selected
-         * {@link mapperState.service:mapperStateService mapping} and values of all properties that can be
+         * {@link shared.service:mapperStateService mapping} and values of all properties that can be
          * set for the class.
          */
         self.propsByClass = {};
         /**
          * @ngdoc property
          * @name selectedClassMappingId
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {string}
          *
          * @description
@@ -184,7 +184,7 @@
         /**
          * @ngdoc property
          * @name selectedPropMappingId
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {string}
          *
          * @description
@@ -195,7 +195,7 @@
         /**
          * @ngdoc property
          * @name newProp
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {boolean}
          *
          * @description
@@ -205,7 +205,7 @@
         /**
          * @ngdoc property
          * @name highlightIndexes
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {string[]}
          *
          * @description
@@ -216,7 +216,7 @@
         /**
          * @ngdoc property
          * @name highlmappingSearchStringightIndex
-         * @propertyOf mapperState.service:mapperStateService
+         * @propertyOf shared.service:mapperStateService
          * @type {string}
          *
          * @description
@@ -228,12 +228,12 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Sets the main state variables back to their default values and resets the values of
-         * {@link mapperState.service:mapperStateService mapping} and
-         * {@link mapperState.service:mapperStateService sourceOntologies}.
+         * {@link shared.service:mapperStateService mapping} and
+         * {@link shared.service:mapperStateService sourceOntologies}.
          */
         self.initialize = function() {
             self.editMapping = false;
@@ -252,7 +252,7 @@
         /**
          * @ngdoc method
          * @name resetEdit
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Sets the edit related state variables back to their default values.
@@ -266,11 +266,11 @@
         /**
          * @ngdoc method
          * @name createMapping
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Sets the state variables and
-         * {@link mapperState.service:mapperStateService sourceOntologies} to indicate creating a new mapping.
+         * {@link shared.service:mapperStateService sourceOntologies} to indicate creating a new mapping.
          * Returns a new mapping object.
          */
         self.createMapping = function() {
@@ -292,7 +292,7 @@
         /**
          * @ngdoc method
          * @name isMappingChanged
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Tests whether changes have been made to the opened mapping.
@@ -305,7 +305,7 @@
         /**
          * @ngdoc method
          * @name saveMapping
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Saves the current mapping appropriately depending on whether it is a new mapping or an existing mapping.
@@ -328,7 +328,7 @@
         /**
          * @ngdoc method
          * @name setMasterBranch
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Retrieves and saves the master branch of the current mapping for use on the
@@ -342,12 +342,12 @@
         /**
          * @ngdoc method
          * @name setInvalidProps
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
-         * Validates the current {@link mapperState.service:mapperStateService mapping} against the currently loaded
-         * {@link delimitedManager.service:delimitedManagerService delimited data} and sets
-         * {@link mapperState.service:mapperStateService} to the list of data properties in the mapping that link to
+         * Validates the current {@link shared.service:mapperStateService mapping} against the currently loaded
+         * {@link shared.service:delimitedManagerService delimited data} and sets
+         * {@link shared.service:mapperStateService} to the list of data properties in the mapping that link to
          * columns that don't exist in the delimited data.
          */
         self.setInvalidProps = function() {
@@ -361,11 +361,11 @@
         /**
          * @ngdoc method
          * @name getMappedColumns
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Finds all of the column indexes that have been mapped to data mappings in the currently selected
-         * {@link mapperState.service:mapperStateService mapping}.
+         * {@link shared.service:mapperStateService mapping}.
          *
          * @return {string[]} an array of strings of column indexes that have been mapped
          */
@@ -375,7 +375,7 @@
         /**
          * @ngdoc method
          * @name hasProps
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Returns the boolean indicating whether a class has properties to map.
@@ -389,7 +389,7 @@
         /**
          * @ngdoc method
          * @name hasPropsByClassMappingId
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Returns the boolean indicating whether the class of a class mapping has properties to map.
@@ -403,7 +403,7 @@
         /**
          * @ngdoc method
          * @name hasPropsSet
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Returns the boolean indicating whether the properties for a class have been retrieved.
@@ -417,7 +417,7 @@
         /**
          * @ngdoc method
          * @name hasPropsSetByClassMappingId
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Returns the boolean indicating whether the properties for a class mapping's class have been retrieved.
@@ -432,7 +432,7 @@
         /**
          * @ngdoc method
          * @name removeProps
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Removes a key-value pair from `propsByClass` using the passed class id.
@@ -445,7 +445,7 @@
         /**
          * @ngdoc method
          * @name removePropsByClassMappingId
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Removes a key-value pair from `propsByClass` using the passed class mapping id.
@@ -458,7 +458,7 @@
         /**
          * @ngdoc method
          * @name setProps
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Sets the value for a class in `propsByClass` to an array of objects representing properties that can be
@@ -473,7 +473,7 @@
         /**
          * @ngdoc method
          * @name setPropsByClassMappingId
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Sets the value for the class of a class mapping in `propsByClass` to an array of objects representing
@@ -487,7 +487,7 @@
         /**
          * @ngdoc method
          * @name getProps
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Retrieves an array of property objects representing the properties that can be set for the class with
@@ -502,7 +502,7 @@
         /**
          * @ngdoc method
          * @name getPropsByClassMappingId
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Retrieves an array of property objects representing the properties that can be set for the class mapping
@@ -517,11 +517,11 @@
         /**
          * @ngdoc method
          * @name getClassProps
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Collects a list of objects representing the properties that can be mapped for a class from
-         * a list of ontologies created by the {@link mappingManager.service:mappingManagerService mappingManagerService}.
+         * a list of ontologies created by the {@link shared.service:mappingManagerService mappingManagerService}.
          *
          * @param {Object[]} ontologies A list of ontology objects to collect properties from
          * @param {string} classId The id of the class to collect properties for
@@ -539,11 +539,11 @@
         /**
          * @ngdoc method
          * @name getClasses
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Collects a list of objects representing all the classes from a list of ontologies created by the
-         * {@link mappingManager.service:mappingManagerService mappingManagerService}
+         * {@link shared.service:mappingManagerService mappingManagerService}
          *
          * @param {Object[]} ontologies A list of ontology objects to collect properties from
          * @return {Object[]} An array of objects with the class object and parent ontology id of classes
@@ -558,7 +558,7 @@
         /**
          * @ngdoc method
          * @name changeProp
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Updates the additions and deletions of the current mapping appropriately when a single property
@@ -606,7 +606,7 @@
         /**
          * @ngdoc method
          * @name addClassMapping
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Adds a ClassMapping for the class identified by the passed class ID object and updates the additions
@@ -640,7 +640,7 @@
         /**
          * @ngdoc method
          * @name addDataMapping
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Adds a DataMapping for the data property identified by the passed property ID object and updates the
@@ -661,7 +661,7 @@
         /**
          * @ngdoc method
          * @name addObjectMapping
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Adds a ObjectMapping for the data property identified by the passed property ID object and updates the
@@ -680,7 +680,7 @@
         /**
          * @ngdoc method
          * @name deleteEntity
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Updates the additions and deletions of the current mapping appropriately when an entity is deleted.
@@ -703,7 +703,7 @@
         /**
          * @ngdoc method
          * @name deleteClass
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Deletes a ClassMapping with the provided id from the current mapping, updating the additions and
@@ -740,7 +740,7 @@
         /**
          * @ngdoc method
          * @name deleteProp
-         * @methodOf mapperState.service:mapperStateService
+         * @methodOf shared.service:mapperStateService
          *
          * @description
          * Deletes a PropertyMapping with the provided id from the current mapping, updating the additions and
@@ -816,11 +816,11 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name mapperState.service:mapperStateService
-         * @requires prefixes.service:prefixes
-         * @requires mappingManager.service:mappingManagerService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires delimitedManager.service:delimitedManagerService
+         * @name shared.service:mapperStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:delimitedManagerService
          *
          * @description
          * `mapperStateService` is a service which contains various variables to hold the

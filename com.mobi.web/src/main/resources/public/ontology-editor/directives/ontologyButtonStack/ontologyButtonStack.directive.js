@@ -38,13 +38,13 @@
          * @name ontologyButtonStack.directive:ontologyButtonStack
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires modal.service:modalService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:modalService
          *
          * @description
          * `ontologyButtonStack` is a directive that creates a {@link circleButtonStack.directive:circleButtonStack}
          * for actions in the Ontology Editor against the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. These actions are uploading a file of
+         * {@link shared.service:ontologyStateService selected ontology}. These actions are uploading a file of
          * changes, creating a branch, merging branches, and commiting changes. The directive houses the methods for
          * opening modals for {@link uploadChangesOverlay.directive:uploadChangesOverlay uploading changes},
          * {@link createBranchOverlay.directive:createBranchOverlay creating branches},

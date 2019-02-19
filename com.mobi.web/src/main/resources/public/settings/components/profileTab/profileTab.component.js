@@ -25,9 +25,9 @@
     /**
      * @ngdoc component
      * @name settings.component:profileTab
-     * @requires userManager.service:userManagerService
-     * @requires loginManager.service:loginManagerService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:userManagerService
+     * @requires shared.service:loginManagerService
+     * @requires shared.service:prefixes
      *
      * @description
      * `profileTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} that contains a

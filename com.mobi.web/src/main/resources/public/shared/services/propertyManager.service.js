@@ -33,7 +33,7 @@
         /**
          * @ngdoc property
          * @name defaultAnnotations
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -43,7 +43,7 @@
         /**
          * @ngdoc property
          * @name owlAnnotations
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -53,7 +53,7 @@
         /**
          * @ngdoc property
          * @name skosAnnotations
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -66,7 +66,7 @@
         /**
          * @ngdoc property
          * @name defaultDatatypes
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -76,7 +76,7 @@
         /**
          * @ngdoc property
          * @name ontologyProperties
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -87,7 +87,7 @@
         /**
          * @ngdoc property
          * @name ontologyProperties
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -98,7 +98,7 @@
         /**
          * @ngdoc property
          * @name conceptRelationshipList
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -109,7 +109,7 @@
         /**
          * @ngdoc property
          * @name schemeRelationshipList
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {string[]}
          *
          * @description
@@ -120,12 +120,12 @@
         /**
          * @ngdoc property
          * @name classAxiomList
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {Object[]}
          *
          * @description
          * `classAxiomList` holds an array of objects representing supported axioms on owl:Classes with the
-         * key name for the list of values from a {@link ontologyState.service:ontologyStateService list item}.
+         * key name for the list of values from a {@link shared.service:ontologyStateService list item}.
          */
         self.classAxiomList = [
             {iri: prefixes.rdfs + 'subClassOf', valuesKey: 'classes'},
@@ -135,13 +135,13 @@
         /**
          * @ngdoc property
          * @name datatypeAxiomList
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {Object[]}
          *
          * @description
          * `datatypeAxiomList` holds an array of objects representing supported axioms on owl:DatatypeProperties
          * with the key name for the list of values from a
-         * {@link ontologyState.service:ontologyStateService list item}.
+         * {@link shared.service:ontologyStateService list item}.
          */
         self.datatypeAxiomList = [
             {iri: prefixes.rdfs + 'domain', valuesKey: 'classes'},
@@ -153,13 +153,13 @@
         /**
          * @ngdoc property
          * @name objectAxiomList
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {Object[]}
          *
          * @description
          * `objectAxiomList` holds an array of objects representing supported axioms on owl:ObjectProperties
          * with the key name for the list of values from a
-         * {@link ontologyState.service:ontologyStateService list item}.
+         * {@link shared.service:ontologyStateService list item}.
          */
         self.objectAxiomList = [
             {iri: prefixes.rdfs + 'domain', valuesKey: 'classes'},
@@ -172,7 +172,7 @@
         /**
          * @ngdoc property
          * @name languageList
-         * @propertyOf propertyManager.service:propertyManagerService
+         * @propertyOf shared.service:propertyManagerService
          * @type {Object[]}
          *
          * @description
@@ -197,7 +197,7 @@
         /**
          * @ngdoc method
          * @name remove
-         * @methodOf propertyManager.service:propertyManagerService
+         * @methodOf shared.service:propertyManagerService
          *
          * @description
          * Removes the the value at the specified index for the specified property on the provided entity.
@@ -215,7 +215,7 @@
         /**
          * @ngdoc method
          * @name addValue
-         * @methodOf propertyManager.service:propertyManagerService
+         * @methodOf shared.service:propertyManagerService
          *
          * @description
          * Adds the provided value of the provided property to the provided entity with a type and language
@@ -246,7 +246,7 @@
         /**
          * @ngdoc method
          * @name addId
-         * @methodOf propertyManager.service:propertyManagerService
+         * @methodOf shared.service:propertyManagerService
          *
          * @description
          * Adds the provided ID value of the provided property to the provided entity. Will not add the property
@@ -275,7 +275,7 @@
         /**
          * @ngdoc method
          * @name editValue
-         * @methodOf propertyManager.service:propertyManagerService
+         * @methodOf shared.service:propertyManagerService
          *
          * @description
          * Edits the value at the specified index of the specified property on the provided entity to the
@@ -331,7 +331,7 @@
         /**
          * @ngdoc method
          * @name editValue
-         * @methodOf propertyManager.service:propertyManagerService
+         * @methodOf shared.service:propertyManagerService
          *
          * @description
          * Creates a value object for JSON-LD with the provided value. Includes a type and language if provided.
@@ -354,7 +354,7 @@
         /**
          * @ngdoc method
          * @name getDatatypeMap
-         * @methodOf propertyManager.service:propertyManagerService
+         * @methodOf shared.service:propertyManagerService
          *
          * @description
          * Creates a map of datatypes to their prefix

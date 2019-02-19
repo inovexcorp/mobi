@@ -34,7 +34,7 @@
         /**
          * @ngdoc property
          * @name annotationProperties
-         * @propertyOf mappingManager.service:mappingManagerService
+         * @propertyOf shared.service:mappingManagerService
          * @type {string[]}
          *
          * @description
@@ -47,7 +47,7 @@
         /**
          * @ngdoc method
          * @name getMappingRecords
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Calls the GET /mobirest/mappings endpoint which retrieves a paginated list of MappingRecords
@@ -64,7 +64,7 @@
         /**
          * @ngdoc method
          * @name upload
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Calls the POST /mobirest/mappings endpoint which uploads a mapping to the Mobi
@@ -94,7 +94,7 @@
         /**
          * @ngdoc method
          * @name getMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Calls the GET /mobirest/mappings/{mappingName} endpoint which returns the JSONL-LD
@@ -110,7 +110,7 @@
         /**
          * @ngdoc method
          * @name downloadMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Calls the GET /mobirest/mappings/{mappingName} endpoint using the `window.location` function
@@ -125,7 +125,7 @@
         /**
          * @ngdoc method
          * @name deleteMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Calls the DELETE /mobirest/mappings/{mappingName} endpoint which deleted the specified
@@ -143,7 +143,7 @@
         /**
          * @ngdoc method
          * @name getMappingId
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Creates a mapping id from the display (local) name of a mapping.
@@ -157,7 +157,7 @@
         /**
          * @ngdoc method
          * @name createNewMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Creates a new mapping array with only the mapping entity defined with the passed IRI.
@@ -177,7 +177,7 @@
         /**
          * @ngdoc method
          * @name setSourceOntology
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Sets the `sourceOntology` property to a mapping's `Mapping` entity.
@@ -196,7 +196,7 @@
         /**
          * @ngdoc method
          * @name copyMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Creates a copy of a mapping using the passed new id, updating all ids to use the new
@@ -229,7 +229,7 @@
         /**
          * @ngdoc method
          * @name addClass
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Adds a class mapping to a mapping based on the given class id. The class must be present
@@ -263,7 +263,7 @@
         /**
          * @ngdoc method
          * @name editIriTemplate
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `hasPrefix`
@@ -286,7 +286,7 @@
         /**
          * @ngdoc method
          * @name addDataProp
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Adds a data property mapping to a mapping for the specified class mapping. The class mapping
@@ -335,7 +335,7 @@
         /**
          * @ngdoc method
          * @name addObjectProp
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Adds a object property mapping to a mapping for the specified class mapping. The class mapping
@@ -376,7 +376,7 @@
         /**
          * @ngdoc method
          * @name removeProp
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Removes a property mapping from a mapping from the specified class mapping. The class mapping and
@@ -404,7 +404,7 @@
         /**
          * @ngdoc method
          * @name removeClass
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Removes a class mapping from a mapping. The class mapping must already be in the mapping.
@@ -446,7 +446,7 @@
         /**
          * @ngdoc method
          * @name  getOntology
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Retrieves an ontology and structures it for the mappingManagerService with its id and the list of
@@ -476,7 +476,7 @@
         /**
          * @ngdoc method
          * @name getSourceOntologies
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Gets the list of source ontologies from the imports closure of the ontology with the passed
@@ -513,7 +513,7 @@
         /**
          * @ngdoc method
          * @name getSourceOntologyInfo
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects all the source ontology information from the passed mapping. This includes the
@@ -534,7 +534,7 @@
         /**
          * @ngdoc method
          * @name findSourceOntologyWithClass
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Finds the ontology in the passed list of structured ontologies that contains the class
@@ -550,7 +550,7 @@
         /**
          * @ngdoc method
          * @name findSourceOntologyWithProp
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Finds the ontology in the passed list of structured ontologies that contains the property
@@ -569,7 +569,7 @@
         /**
          * @ngdoc method
          * @name areCompatible
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Tests whether a mapping is compatible with the passed listed of structured ontologies. A mapping is
@@ -587,7 +587,7 @@
         /**
          * @ngdoc method
          * @name findIncompatibleMappings
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
@@ -659,7 +659,7 @@
         /**
          * @ngdoc method
          * @name getClassIdByMappingId
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects the id of the class being mapped by a class mapping specified by id.
@@ -674,7 +674,7 @@
         /**
          * @ngdoc method
          * @name getClassIdByMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects the id of the class being mapped by the passed class mapping.
@@ -688,7 +688,7 @@
         /**
          * @ngdoc method
          * @name getPropIdByMappingId
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects the id of the property being mapped by a property mapping specified by id.
@@ -704,7 +704,7 @@
         /**
          * @ngdoc method
          * @name getPropIdByMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects the id of the property being mapped by the passed property mapping.
@@ -718,7 +718,7 @@
         /**
          * @ngdoc method
          * @name getAllClassMappings
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Retrieves all class mapping in the passed mapping array.
@@ -732,7 +732,7 @@
         /**
          * @ngdoc method
          * @name getAllDataMappings
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Retrieves all data property mapping in the passed mapping array.
@@ -746,7 +746,7 @@
         /**
          * @ngdoc method
          * @name getAllObjectMappings
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Retrieves all object property mapping in the passed mapping array.
@@ -760,7 +760,7 @@
         /**
          * @ngdoc method
          * @name getAllObjectMappings
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Retrieves all property mappings for the specified class mapping in the passed mapping.
@@ -779,7 +779,7 @@
         /**
          * @ngdoc method
          * @name isClassMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Tests whether the passed mapping entity is a class mapping.
@@ -793,7 +793,7 @@
         /**
          * @ngdoc method
          * @name isPropertyMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Tests whether the passed mapping entity is a property mapping.
@@ -807,7 +807,7 @@
         /**
          * @ngdoc method
          * @name isObjectMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Tests whether the passed mapping entity is an object property mapping.
@@ -821,7 +821,7 @@
         /**
          * @ngdoc method
          * @name isDataMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Tests whether the passed mapping entity is a data property mapping.
@@ -835,7 +835,7 @@
         /**
          * @ngdoc method
          * @name findClassWithDataMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Finds the class mapping which contains the specified data property mapping.
@@ -850,7 +850,7 @@
         /**
          * @ngdoc method
          * @name findClassWithObjectMapping
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Finds the class mapping which contains the specified object property mapping.
@@ -865,7 +865,7 @@
         /**
          * @ngdoc method
          * @name getPropsLinkingToClass
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Finds all property mappings that link to the class mapping with the specified id.
@@ -883,7 +883,7 @@
         /**
          * @ngdoc method
          * @name getPropMappingTitle
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Creates a title for a property mapping using the passed class and property names.
@@ -898,7 +898,7 @@
         /**
          * @ngdoc method
          * @name getClassMappingsByClassId
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects all class mappings in the passed mapping that map to the passed class IRI.
@@ -913,7 +913,7 @@
         /**
          * @ngdoc method
          * @name getPropMappingsByPropId
-         * @methodOf mappingManager.service:mappingManagerService
+         * @methodOf shared.service:mappingManagerService
          *
          * @description
          * Collects all property mappings in the passed mapping that map to the passed property IRI.
@@ -966,9 +966,9 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name mappingManager.service:mappingManagerService
-         * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
+         * @name shared.service:mappingManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyManagerService
          * @requires uuid
          *
          * @description

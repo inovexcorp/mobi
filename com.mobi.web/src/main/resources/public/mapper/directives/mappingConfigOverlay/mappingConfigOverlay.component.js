@@ -27,16 +27,16 @@
      * @ngdoc component
      * @name mappingConfigOverlay.component:mappingConfigOverlay
      * @requires $q
-     * @requires util.service:utilService
-     * @requires ontologyManager.service:ontologyManagerService
-     * @requires mapperState.service:mapperStateService
-     * @requires mappingManager.service:mappingManagerService
-     * @requires catalogManager.service:catalogManagerService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:utilService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:mapperStateService
+     * @requires shared.service:mappingManagerService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:prefixes
      *
      * @description
      * `mappingConfigOverlay` is a component that creates content for a modal with functionality to edit the
-     * configuration of the current {@link mapperState.service:mapperStateService#mapping mapping}.
+     * configuration of the current {@link shared.service:mapperStateService#mapping mapping}.
      * The configuration consists of the source ontology record, the ontology record version, and the base type
      * class. If editing a mapping that already has those data points set, a new mapping will be created with the
      * new settings and will remove any invalid entity mappings within the mapping. The list of ontologies is searchable

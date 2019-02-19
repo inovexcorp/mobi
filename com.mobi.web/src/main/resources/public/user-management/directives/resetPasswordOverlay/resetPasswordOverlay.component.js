@@ -36,12 +36,12 @@
         /**
          * @ngdoc component
          * @name resetPasswordOverlay.component:resetPasswordOverlay
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
          *
          * @description
          * `resetPasswordOverlay` is a component that creates content for a modal with a form to reset the
-         * {@link userState.service:userStateService#selectedUser selected user's} password in Mobi. The form uses a
+         * {@link shared.service:userStateService#selectedUser selected user's} password in Mobi. The form uses a
          * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} to confirm the new password.
          * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *

@@ -38,13 +38,13 @@
          * @name createBranchOverlay.directive:createBranchOverlay
          * @scope
          * @restrict E
-         * @requires catalogManager.service:catalogManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          *
          * @description
          * `createBranchOverlay` is a directive that creates content for a modal that creates a branch in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains a
+         * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
          * {@link textInput.directive:textInput} for the branch title and a {@link textArea.directive:textArea} for the
          * branch description. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *

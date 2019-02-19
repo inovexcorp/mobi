@@ -34,7 +34,7 @@
         /**
          * @ngdoc method
          * @name update
-         * @methodOf updateRefs.service:updateRefsService
+         * @methodOf shared.service:updateRefsService
          *
          * @description
          * Changes every instance of a specific key in an object from
@@ -85,7 +85,7 @@
         /**
          * @ngdoc method
          * @name remove
-         * @methodOf updateRefs.service:updateRefsService
+         * @methodOf shared.service:updateRefsService
          *
          * @description
          * Removes every instance of a specific key in an object from
@@ -128,7 +128,7 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name updateRefs.service:updateRefsService
+         * @name shared.service:updateRefsService
          * @requires $filter
          *
          * @description

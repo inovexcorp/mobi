@@ -36,12 +36,12 @@
         /**
          * @ngdoc component
          * @name createTagModal.component:createTagModal
-         * @requires catalogManager.service:catalogManagerService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `createTagModal` is a component that creates content for a modal that creates a tag on the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} on the commit that is currently being
+         * {@link shared.service:ontologyStateService selected ontology} on the commit that is currently being
          * viewed. The form in the modal contains two {@link textInput.directive:textInput}s for the tag IRI and the
          * title of the tag. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *

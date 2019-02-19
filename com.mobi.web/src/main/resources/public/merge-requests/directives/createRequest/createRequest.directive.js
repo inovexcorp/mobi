@@ -38,7 +38,7 @@
          * @name createRequest.directive:createRequest
          * @scope
          * @restrict E
-         * @requires mergeRequestsState.service:mergeRequestsStateService
+         * @requires shared.service:mergeRequestsStateService
          *
          * @description
          * `createRequest` is a directive which creates a div containing a

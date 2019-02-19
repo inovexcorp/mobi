@@ -38,8 +38,8 @@
          * @name classPreview.directive:classPreview
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires mapperState.service:mapperStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:mapperStateService
          *
          * @description
          * `classPreview` is a directive that creates a div with a brief description of the passed

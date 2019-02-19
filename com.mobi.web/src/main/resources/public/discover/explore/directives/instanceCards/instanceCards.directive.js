@@ -39,10 +39,10 @@
          * @scope
          * @restrict E
          * @requires $q
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `instanceCards` is a directive that creates a div which contains a 3 column grid used to display the

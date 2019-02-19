@@ -53,7 +53,7 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name prefixes.service:prefixes
+         * @name shared.service:prefixes
          *
          * @description
          * `prefixes` is a service that simply provides a series of common IRI strings.

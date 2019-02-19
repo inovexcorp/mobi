@@ -26,11 +26,11 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordIcon
-     * @requires catalogState.service:catalogStateService
+     * @requires shared.service:catalogStateService
      *
      * @description
      * `recordIcon` is a component that creates a Font Awesome Icon stack for the provided catalog Record using the
-     * {@link catalogState.service:catalogStateService}.
+     * {@link shared.service:catalogStateService}.
      *
      * @param {object} Record A catalog Record JSON-LD object
      */

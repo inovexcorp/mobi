@@ -38,9 +38,9 @@
          * @name datasetSelect.directive:datasetSelect
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires datasetManager.service:datasetManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:prefixes
          *
          * @description
          * HTML contents in the dataset select which provides a dropdown select of all datasets.

@@ -38,7 +38,7 @@
          * @name classBlock.directive:classBlock
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          *
          * @description
          * HTML contents in the class block which contains the class details associatd with

@@ -38,17 +38,17 @@
          * @name mappingListBlock.directive:mappingListBlock
          * @scope
          * @restrict E
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires prefixes.service:prefixes
-         * @requires modal.service:modalService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:modalService
          *
          * @description
          * `mappingListBlock` is a directive that creates a div with an unordered list of the all the saved mappings in
          * the repository. Each mapping name is clickable and sets the selected
-         * {@link mapperState.service:mapperStateService#mapping mapping} for the mapping tool. The list will also be
-         * filtered by the {@link mapperState.service:mapperStateService#mappingSearchString mappingSearchString}. Also
+         * {@link shared.service:mapperStateService#mapping mapping} for the mapping tool. The list will also be
+         * filtered by the {@link shared.service:mapperStateService#mappingSearchString mappingSearchString}. Also
          * includes a button for {@link createMappingOverlay.component:createMappingOverlay creating a mapping}. The
          * directive houses the method for opening a modal to confirm deleting a mapping. The directive is replaced by
          * the contents of its template.

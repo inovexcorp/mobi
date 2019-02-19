@@ -37,7 +37,7 @@
         /**
          * @ngdoc property
          * @name datasetRecords
-         * @propertyOf datasetManager.service:datasetManagerService
+         * @propertyOf shared.service:datasetManagerService
          * @type {Object[]}
          *
          * @description
@@ -49,7 +49,7 @@
         /**
          * @ngdoc method
          * @name getDatasetRecords
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls the GET /mobirest/datasets endpoint to collect a list of the DatasetRecords in Mobi.
@@ -80,7 +80,7 @@
         /**
          * @ngdoc method
          * @name getDatasetRecord
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls the GET /mobirest/datasets/{datasetRecordIRI} endpoint to get the DatasetRecord associated
@@ -97,7 +97,7 @@
         /**
          * @ngdoc method
          * @name createDatasetRecord
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls POST /mobirest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
@@ -145,7 +145,7 @@
         /**
          * @ngdoc method
          * @name deleteDatasetRecord
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls the DELETE /mobirest/datasets/{datasetRecordId} endpoint and removes the identified DatasetRecord
@@ -169,7 +169,7 @@
         /**
          * @ngdoc method
          * @name clearDatasetRecord
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls the DELETE /mobirest/datasets/{datasetRecordId}/data endpoint and removes the named graphs of the
@@ -192,7 +192,7 @@
         /**
          * @ngdoc method
          * @name updateDatasetRecord
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls the updateRecord method of the CatalogManager to update the dataset record provided in the JSON-LD.
@@ -215,7 +215,7 @@
         /**
          * @ngdoc method
          * @name clearDatasetRecord
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Calls the POST /mobirest/datasets/{datasetRecordId}/data endpoint and uploads the data contained in the
@@ -244,7 +244,7 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results
@@ -267,7 +267,7 @@
         /**
          * @ngdoc method
          * @name getOntologyIdentifiers
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Gets the list of ontology identifiers for the provided record in the provided JSON-LD array
@@ -283,7 +283,7 @@
         /**
          * @ngdoc method
          * @name getRecordFromArray
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Retrieves the DatasetRecord from the provided JSON-LD array based on whether or not the object has
@@ -299,7 +299,7 @@
         /**
          * @ngdoc method
          * @name splitDatasetArray
-         * @methodOf datasetManager.service:datasetManagerService
+         * @methodOf shared.service:datasetManagerService
          *
          * @description
          * Splits the JSON-LD array into an object with a key for the DatasetRecord and a key for the
@@ -332,12 +332,12 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name datasetManager.service:datasetManagerService
+         * @name shared.service:datasetManagerService
          * @requires $http
          * @requires $q
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:discoverStateService
          *
          * @description
          * `datasetManagerService` is a service that provides access to the Mobi Dataset REST endpoints.

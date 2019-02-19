@@ -38,15 +38,15 @@
          * @name ontologyPropertyOverlay.directive:ontologyPropertyOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:prefixes
          *
          * @description
          * `ontologyPropertyOverlay` is a directive that creates content for a modal that adds or edits an ontology
-         * property on the current {@link ontologyState.service:ontologyStateService selected ontology}. The form in
+         * property on the current {@link shared.service:ontologyStateService selected ontology}. The form in
          * the modal contains a `ui-select` for the ontology property (or annotation). If an ontology property is
          * selected, text input is provided for the value (must be a valid IRI). If an annotation is selected, a
          * {@link textArea.directive:textArea} is provided for the annotation value with a

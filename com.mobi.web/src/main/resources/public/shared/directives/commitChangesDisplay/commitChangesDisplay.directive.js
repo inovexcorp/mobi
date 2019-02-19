@@ -84,7 +84,7 @@
          * @name shared.directive:commitChangesDisplay
          * @scope
          * @restrict E
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `commitChangesDisplay` is a directive that creates a sequence of divs displaying the changes made to

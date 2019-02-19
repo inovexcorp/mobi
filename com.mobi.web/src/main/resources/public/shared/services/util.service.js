@@ -31,7 +31,7 @@
         /**
          * @ngdoc method
          * @name getBeautifulIRI
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the "beautified" IRI representation for the iri passed. Returns the modified IRI.
@@ -49,7 +49,7 @@
         /**
          * @ngdoc method
          * @name getPropertyValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the first value of the specified property from the passed entity. Returns an empty
@@ -65,7 +65,7 @@
         /**
          * @ngdoc method
          * @name setPropertyValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Sets the first or appends to the existing value of the specified property of the passed entity to the
@@ -81,7 +81,7 @@
         /**
          * @ngdoc method
          * @name hasPropertyValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Tests whether or not the passed entity contains the passed value for the passed property.
@@ -97,7 +97,7 @@
         /**
          * @ngdoc method
          * @name removePropertyValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Remove the passed value of the passed property from the passed entity.
@@ -112,7 +112,7 @@
         /**
          * @ngdoc method
          * @name replacePropertyValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Remove the passed valueToRemove value of the property from the passed entity and replace with
@@ -130,7 +130,7 @@
         /**
          * @ngdoc method
          * @name getPropertyId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the first id value of the specified property from the passed entity. Returns an empty
@@ -146,7 +146,7 @@
         /**
          * @ngdoc method
          * @name setPropertyId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Sets the first or appends to the existing id of the specified property of the passed entity to the passed
@@ -162,7 +162,7 @@
         /**
          * @ngdoc method
          * @name hasPropertyId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Tests whether or not the passed entity contains the passed id value for the passed property.
@@ -178,7 +178,7 @@
         /**
          * @ngdoc method
          * @name removePropertyId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Remove the passed id value of the passed property from the passed entity.
@@ -193,7 +193,7 @@
         /**
          * @ngdoc method
          * @name replacePropertyId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Remove the passed idToRemove value of the passed property from the passed entity and replace with
@@ -211,7 +211,7 @@
         /**
          * @ngdoc method
          * @name getDctermsValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the first value of the specified dcterms property from the passed entity. Returns an empty
@@ -227,7 +227,7 @@
         /**
          * @ngdoc method
          * @name removeDctermsValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Remove the passed value of the specified dcterms property from the passed entity.
@@ -242,7 +242,7 @@
         /**
          * @ngdoc method
          * @name setDctermsValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Sets the first value or appends to the values of the specified dcterms property of the passed entity
@@ -258,7 +258,7 @@
         /**
          * @ngdoc method
          * @name updateDctermsValue
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Removes the first value of the specified dcterms property and appends the provided value to the specified
@@ -275,7 +275,7 @@
         /**
          * @ngdoc method
          * @name mergingArrays
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Merges two arrays together using the Lodash isEqual function and returns the merged
@@ -293,7 +293,7 @@
         /**
          * @ngdoc method
          * @name getDctermsId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the first id value of the specified dcterms property from the passed entity. Returns an
@@ -309,7 +309,7 @@
         /**
          * @ngdoc method
          * @name parseLinks
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Parses through the passed "link" header string to retrieve each individual link and its rel label.
@@ -336,7 +336,7 @@
         /**
          * @ngdoc method
          * @name createErrorToast
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Creates an error toast with the passed error text that will disappear after 3 seconds
@@ -349,7 +349,7 @@
         /**
          * @ngdoc method
          * @name createSuccessToast
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Creates a success toast with the passed success text that will disappear after 3 seconds
@@ -362,7 +362,7 @@
         /**
          * @ngdoc method
          * @name createWarningToast
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Creates a warning toast with the passed success text that will disappear after 3 seconds
@@ -376,7 +376,7 @@
         /**
          * @ngdoc method
          * @name getIRINamespace
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the namespace of an IRI string.
@@ -391,7 +391,7 @@
         /**
          * @ngdoc method
          * @name getIRINamespace
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the namespace of an IRI string.
@@ -405,7 +405,7 @@
         /**
          * @ngdoc method
          * @name createJson
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Creates an initial JSON-LD object with the passed id and starting property IRI with initial value
@@ -425,7 +425,7 @@
         /**
          * @ngdoc method
          * @name getDate
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Creates a new Date string in the specified format from the passed date string. Used when converting
@@ -441,7 +441,7 @@
         /**
          * @ngdoc method
          * @name condenseCommitId
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Retrieves a shortened id for from an IRI for a commit.
@@ -455,7 +455,7 @@
         /**
          * @ngdoc method
          * @name paginatedConfigToParams
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Converts a common paginated configuration object into a $http query parameter object with
@@ -489,7 +489,7 @@
         /**
          * @ngdoc method
          * @name getResultsPage
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Calls the passed URL which repesents a call to get paginated results and returns a Promise
@@ -509,7 +509,7 @@
         /**
          * @ngdoc method
          * @name onError
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Rejects the provided deferred promise with the status text of the passed HTTP response object
@@ -525,7 +525,7 @@
         /**
          * @ngdoc method
          * @name rejectError
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Returns a rejected promise with the status text of the passed HTTP response object if present,
@@ -541,7 +541,7 @@
         /**
          * @ngdoc method
          * @name getErrorMessage
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
@@ -558,7 +558,7 @@
         /**
          * @ngdoc method
          * @name getChangesById
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the list of individual statements from the provided array which have a subject matching the provided
@@ -590,7 +590,7 @@
         /**
          * @ngdoc method
          * @name getPredicateLocalName
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the localname for the provided partialStatement Object, {p: predicateIRI}.
@@ -605,7 +605,7 @@
         /**
          * @ngdoc method
          * @name getIdForBlankNode
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Generates a blank node IRI using a random V4 UUID.
@@ -618,7 +618,7 @@
         /**
          * @ngdoc method
          * @name getSkolemizedIRI
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Generates a skolemized IRI using a random V4 UUID.
@@ -631,7 +631,7 @@
         /**
          * @ngdoc method
          * @name getInputType
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the input type associated with the property in the properties list provided.
@@ -660,7 +660,7 @@
         /**
          * @ngdoc method
          * @name getPattern
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Gets the pattern type associated with the property in the properties list provided.
@@ -690,7 +690,7 @@
         /**
          * @ngdoc method
          * @name startDownload
-         * @methodOf util.service:utilService
+         * @methodOf shared.service:utilService
          *
          * @description
          * Starts a download of the resource at the provided URL by setting the `$window.location`.
@@ -726,14 +726,14 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name util.service:utilService
+         * @name shared.service:utilService
          * @requires $filter
          * @requires $http
          * @requires $q
          * @requires uuid
          * @requires toastr
-         * @requires prefixes.service:prefixes
-         * @requires httpService.service:httpService
+         * @requires shared.service:prefixes
+         * @requires shared.service:httpService
          *
          * @description
          * `utilService` is a service that provides various utility methods for use across Mobi.

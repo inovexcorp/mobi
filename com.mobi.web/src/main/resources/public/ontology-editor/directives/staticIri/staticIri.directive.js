@@ -37,14 +37,14 @@
          * @name staticIri.directive:staticIri
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `staticIri` is a directive that creates a `div` with a display of the provided IRI of an entity. If
          * `duplicateCheck` is true, an {@link errorDisplay.directive:errorDisplay} will be displayed if the IRI already
-         * exists in the current {@link ontologyState.service:ontologyStateService selected ontology}. The the IRI if
+         * exists in the current {@link shared.service:ontologyStateService selected ontology}. The the IRI if
          * for an entity that is not imported, an edit button is displayed that will open the
          * {@link editIriOverlay.directive:editIriOverlay}. The directive accepts a method that will be called when an
          * edit of the IRI is completed. The directive is replaced by the contents of its template.

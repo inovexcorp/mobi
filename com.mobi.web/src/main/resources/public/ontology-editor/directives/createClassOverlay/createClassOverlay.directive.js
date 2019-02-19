@@ -38,13 +38,13 @@
          * @name createClassOverlay.directive:createClassOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `createClassOverlay` is a directive that creates content for a modal that creates a class in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains a
+         * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
          * text input for the class name (which populates the {@link staticIri.directive:staticIri IRI}), a
          * {@link textArea.directive:textArea} for the class description, an
          * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a

@@ -38,12 +38,12 @@
          * @name individualHierarchyBlock.directive:individualHierarchyBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `individualHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the individuals in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} underneath their class types. The
+         * {@link shared.service:ontologyStateService selected ontology} underneath their class types. The
          * directive is replaced by the contents of its template.
          */
         .directive('individualHierarchyBlock', individualHierarchyBlock);

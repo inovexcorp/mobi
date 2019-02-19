@@ -26,7 +26,7 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordViewTabset
-     * @requires catalogManager.service:catalogManagerService
+     * @requires shared.service:catalogManagerService
      *
      * @description
      * `recordViewTabset` is a component which creates a {@link materialTabset.directive:materialTabset} with tabs

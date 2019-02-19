@@ -38,14 +38,14 @@
          * @name createDataPropertyOverlay.directive:createDataPropertyOverlay
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `createDataPropertyOverlay` is a directive that creates content for a modal that creates a data property in
-         * the current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal
+         * the current {@link shared.service:ontologyStateService selected ontology}. The form in the modal
          * contains a text input for the property name (which populates the {@link staticIri.directive:staticIri IRI}),
          * a {@link textArea.directive:textArea} for the property description, an
          * {@link advancedLanguageSelect.directive:advancedLanguageSelect},

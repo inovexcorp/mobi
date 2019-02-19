@@ -179,7 +179,7 @@
         /**
          * @ngdoc property
          * @name list
-         * @propertyOf ontologyState.service:ontologyStateService
+         * @propertyOf shared.service:ontologyStateService
          * @type {Object[]}
          *
          * @description
@@ -195,7 +195,7 @@
         /**
          * @ngdoc property
          * @name uploadFiles
-         * @propertyOf ontologyState.service:ontologyStateService
+         * @propertyOf shared.service:ontologyStateService
          * @type {Object[]}
          *
          * @description
@@ -208,7 +208,7 @@
         /**
          * @ngdoc property
          * @name uploadList
-         * @propertyOf ontologyState.service:ontologyStateService
+         * @propertyOf shared.service:ontologyStateService
          * @type {Object[]}
          *
          * @description
@@ -226,7 +226,7 @@
         /**
          * @ngdoc property
          * @name uploadPending
-         * @propertyOf ontologyState.service:ontologyStateService
+         * @propertyOf shared.service:ontologyStateService
          * @type {number}
          *
          * @description
@@ -237,7 +237,7 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Initializes the `catalogId` variable.
@@ -248,7 +248,7 @@
         /**
          * @ngdoc method
          * @name createOntologyState
-         * @methodOf stateManager.service:stateManagerService
+         * @methodOf shared.service:stateManagerService
          *
          * @description
          * Creates a new state for the ontology editor for the user using the IRIs. The Record IRI and Commit IRI
@@ -270,10 +270,10 @@
         /**
          * @ngdoc method
          * @name getOntologyStateByRecordId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
-         * Retrieves an ontology editor state from the {@link stateManager.service:stateManagerService} by the id
+         * Retrieves an ontology editor state from the {@link shared.service:stateManagerService} by the id
          * of the Record it is about.
          *
          * @param {string} recordId A string identifying the Record of a state
@@ -289,14 +289,14 @@
         /**
          * @ngdoc method
          * @name updateOntologyState
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Updates an ontology editor state for the identified Record using the provided objects of IRIs and updates
          * the current state. The Record IRI and Commit IRI are required. The id object can optionally have a Branch
          * IRI or a Tag IRI or neither. If the current state was originally not a Branch state, it is removed. If a
          * Branch IRI is provided and there is already a Branch state for it, updates the Commit on the state to the
-         * provided IRI. Uses the {@link stateManager.service:stateManagerService} to do the update. Returns a
+         * provided IRI. Uses the {@link shared.service:stateManagerService} to do the update. Returns a
          * Promise indicating the success.
          *
          * @param {Object} idObj An object of IRI ids
@@ -355,12 +355,12 @@
         /**
          * @ngdoc method
          * @name deleteOntologyBranchState
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Updates an ontology editor state for the identified Record when the identified Branch is deleted. The
          * Branch state for the Branch is removed from the state array and the Record state object. Calls the
-         * {@link stateManager.service:stateManagerService} to do the update. Returns a Promise indicating the
+         * {@link shared.service:stateManagerService} to do the update. Returns a Promise indicating the
          * success.
          *
          * @param {string} recordId A string identifying the Record of a state
@@ -381,11 +381,11 @@
         /**
          * @ngdoc method
          * @name deleteOntologyState
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Deletes the ontology editor state for the identified Record using the
-         * {@link stateManager.service:stateManagerService}. Returns a Promise indicating the success.
+         * {@link shared.service:stateManagerService}. Returns a Promise indicating the success.
          *
          * @param {string} recordId A string identifying the Record of a state
          * @returns {Promise} A promise that resolves if the deletion was successful or rejects with an error message
@@ -397,7 +397,7 @@
         /**
          * @ngdoc method
          * @name getCurrentStateIdByRecordId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Finds the ID of the current state of the ontology with the provided Record ID. The state refers to the
@@ -412,7 +412,7 @@
         /**
          * @ngdoc method
          * @name getCurrentStateByRecordId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Finds the current state of the ontology with the provided Record ID. The state refers to the object
@@ -429,14 +429,14 @@
         /**
          * @ngdoc method
          * @name getCurrentStateId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Finds the ID of the current state from the provided JSON-LD of an ontology state. The state refers to the
          * object detailing what the user has currently "checked out".
          *
          * @param {Object} state A JSON-LD array of an ontology state from the
-         * {@link stateManager.service:stateManagerService}
+         * {@link shared.service:stateManagerService}
          * @returns {string} The string ID of the current state object
          */
         self.getCurrentStateId = function(state) {
@@ -446,14 +446,14 @@
         /**
          * @ngdoc method
          * @name getCurrentState
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Finds the current state from the provided JSON-LD of an ontology state. The state refers to the object
          * detailing what the user has currently "checked out".
          *
          * @param {Object} state A JSON-LD array of an ontology state from the
-         * {@link stateManager.service:stateManagerService}
+         * {@link shared.service:stateManagerService}
          * @returns {Object} The JSON-LD object representing the current state
          */
         self.getCurrentState = function(state) {
@@ -462,7 +462,7 @@
         /**
          * @ngdoc method
          * @name isStateTag
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Determines whether the provided JSON-LD is a StateTag or not.
@@ -476,7 +476,7 @@
         /**
          * @ngdoc method
          * @name isStateBranch
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Determines whether the provided JSON-LD is a StateBranch or not.
@@ -521,7 +521,7 @@
         /**
          * @ngdoc method
          * @name addErrorToUploadItem
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Adds the error message to the list item with the identified id.
@@ -535,7 +535,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Resets all state variables.
@@ -549,7 +549,7 @@
         /**
          * @ngdoc method
          * @name getOntology
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Retrieves the last visible state of the ontology for the current user in the provided RDF format. If
@@ -607,7 +607,7 @@
         /**
          * @ngdoc method
          * @name getLatestOntology
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Retrieves the latest state of an ontology, being the head commit of the master branch, and returns
@@ -633,7 +633,7 @@
         /**
          * @ngdoc method
          * @name createOntology
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology.
@@ -673,7 +673,7 @@
         /**
          * @ngdoc method
          * @name uploadChanges
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Uploads the provided file as an ontology and uses it as a basis for updating the existing ontology .
@@ -694,7 +694,7 @@
         /**
          * @ngdoc method
          * @name updateOntology
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Used to update an ontology that is already open within the Ontology Editor. It will replace the existing
@@ -735,7 +735,7 @@
         /**
          * @ngdoc method
          * @name updateOntologyWithCommit
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Used to update an ontology that is already open within the Ontology Editor to the specified commit. It
@@ -886,7 +886,7 @@
         /**
          * @ngdoc method
          * @name flattenHierarchy
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Flattens the provided hierarchy into an array that represents the hierarchical structure to be used
@@ -908,7 +908,7 @@
         /**
          * @ngdoc method
          * @name createFlatEverythingTree
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Creates an array which represents the hierarchical structure of the relationship between classes
@@ -975,7 +975,7 @@
         /**
          * @ngdoc method
          * @name createFlatIndividualTree
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Creates an array which represents the hierarchical structure of the relationship between classes
@@ -1004,7 +1004,7 @@
         /**
          * @ngdoc method
          * @name addEntity
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
@@ -1025,7 +1025,7 @@
         /**
          * @ngdoc method
          * @name removeEntity
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the Mobi
@@ -1077,15 +1077,15 @@
         /**
          * @ngdoc method
          * @name getListItemByRecordId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
-         * Gets the associated object from the {@link ontologyState.service:ontologyStateService#list list} that
+         * Gets the associated object from the {@link shared.service:ontologyStateService#list list} that
          * contains the requested record ID. Returns the list item.
          *
          * @param {string} recordId The record ID of the requested ontology.
          * @returns {Object} The associated Object from the
-         * {@link ontologyState.service:ontologyStateService#list list}.
+         * {@link shared.service:ontologyStateService#list list}.
          */
         self.getListItemByRecordId = function(recordId) {
             return _.find(self.list, {ontologyRecord: {recordId}});
@@ -1093,10 +1093,10 @@
         /**
          * @ngdoc method
          * @name getOntologyByRecordId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
-         * Gets the ontology from the {@link ontologyState.service:ontologyStateService#list list} using the
+         * Gets the ontology from the {@link shared.service:ontologyStateService#list list} using the
          * requested recordId ID. Returns the JSON-LD of the ontology.
          *
          * @param {string} recordId The record ID of the requested ontology.
@@ -1108,7 +1108,7 @@
         /**
          * @ngdoc method
          * @name getEntityByRecordId
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Gets entity with the provided IRI from the ontology linked to the provided recordId in the Mobi
@@ -1127,7 +1127,7 @@
         /**
          * @ngdoc method
          * @name getEntityNameByIndex
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Gets the entity's name using the provided entityIRI and listItem to find the entity's label in the index.
@@ -1149,7 +1149,7 @@
         /**
          * @ngdoc method
          * @name saveChanges
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Saves all changes to the ontology with the specified record id by updating the in progress commit.
@@ -1172,11 +1172,11 @@
         /**
          * @ngdoc method
          * @name openOntology
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Used to open an ontology from the Mobi repository. It calls
-         * {@link ontologyState.service:ontologyStateService#getOntology getOntology} to get the specified
+         * {@link shared.service:ontologyStateService#getOntology getOntology} to get the specified
          * ontology from the Mobi repository. Returns a promise.
          *
          * @param {string} recordId The record ID of the requested ontology.
@@ -1199,11 +1199,11 @@
         /**
          * @ngdoc method
          * @name closeOntology
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Used to close an ontology from the Mobi application. It removes the ontology list item from the
-         * {@link ontologyState.service:ontologyStateService#list list}.
+         * {@link shared.service:ontologyStateService#list list}.
          *
          * @param {string} recordId The record ID of the requested ontology.
          */
@@ -1216,7 +1216,7 @@
         /**
          * @ngdoc method
          * @name removeBranch
-         * @methodOf ontologyState.service:ontologyStateService
+         * @methodOf shared.service:ontologyStateService
          *
          * @description
          * Removes the specified branch from the `listItem` for the specified record. Meant to be called after the
@@ -1869,17 +1869,17 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires updateRefs.service:updateRefsService
-         * @requires stateManager.service:stateManagerService
-         * @requires util.service:utilService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires prefixes.service:prefixes
-         * @requires manchesterConverter.service:manchesterConverterService
-         * @requires policyEnforcement.service:policyEnforcementService
-         * @requires policyManager.service:policyManagerService
+         * @name shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:updateRefsService
+         * @requires shared.service:stateManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:manchesterConverterService
+         * @requires shared.service:policyEnforcementService
+         * @requires shared.service:policyManagerService
          * @requires http.service:httpService
          */
         .service('ontologyStateService', ontologyStateService);

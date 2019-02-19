@@ -302,10 +302,10 @@
          * @name shared.directive:commitHistoryTable
          * @scope
          * @restrict E
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires userManager.service:userManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `commitHistoryTable` is a directive that creates a table containing the commit chain of the provided commit.

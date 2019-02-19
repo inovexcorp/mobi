@@ -38,10 +38,10 @@
          * @name mappingPreview.directive:mappingPreview
          * @scope
          * @restrict E
-         * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
          *
          * @description
          * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with

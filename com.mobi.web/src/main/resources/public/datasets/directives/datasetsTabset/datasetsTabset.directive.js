@@ -38,15 +38,15 @@
          * @name datasetsTabset.directive:datasetsTabset
          * @scope
          * @restrict E
-         * @requires datasetState.service:datasetStateService
-         * @requires modal.service:modalService
+         * @requires shared.service:datasetStateService
+         * @requires shared.service:modalService
          *
          * @description
          * `datasetsTabset` is a directive which creates a div containing a blue bar, a white bar, and the rest
          * of the datasets page. This includes a form for submitting a search query to retrieve datasets, a button
          * to open the {@link newDatasetOverlay.directive:newDatasetOverlay newDatasetOverlay}, and a
          * {@link datasetsList.directive:datasetsList datasetsList}. The list of results in
-         * {@link datasetState.service:datasetStateService datasetStateService} is initialized by this directive.
+         * {@link shared.service:datasetStateService datasetStateService} is initialized by this directive.
          * The search text input is submitted on press of the enter key. The directive is replaced by the contents
          * of its template.
          */

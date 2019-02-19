@@ -39,11 +39,11 @@
          * @name fileUploadPage.directive:fileUploadPage
          * @scope
          * @restrict E
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires mappingManager.service:mappingManagerService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `fileUploadPage` is a directive that creates a Bootstrap `row` div with two columns containing

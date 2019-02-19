@@ -76,7 +76,7 @@
          * @ngdoc directive
          * @name shared.directive:iriSelect
          * @restrict E
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `iriSelect` is a directive which provides options for a formatted ui-select that takes in a map of IRI to its

@@ -34,7 +34,7 @@
         /**
          * @ngdoc property
          * @name coreRecordTypes
-         * @propertyOf catalogManager.service:catalogManagerService
+         * @propertyOf shared.service:catalogManagerService
          * @type {string[]}
          *
          * @description
@@ -49,7 +49,7 @@
         /**
          * @ngdoc property
          * @name sortOptions
-         * @propertyOf catalogManager.service:catalogManagerService
+         * @propertyOf shared.service:catalogManagerService
          * @type {Object[]}
          *
          * @description
@@ -68,7 +68,7 @@
         /**
          * @ngdoc property
          * @name recordTypes
-         * @propertyOf catalogManager.service:catalogManagerService
+         * @propertyOf shared.service:catalogManagerService
          * @type {string[]}
          *
          * @description
@@ -79,7 +79,7 @@
         /**
          * @ngdoc property
          * @name localCatalog
-         * @propertyOf catalogManager.service:catalogManagerService
+         * @propertyOf shared.service:catalogManagerService
          * @type {Object}
          *
          * @description
@@ -90,7 +90,7 @@
         /**
          * @ngdoc property
          * @name distributedCatalog
-         * @propertyOf catalogManager.service:catalogManagerService
+         * @propertyOf shared.service:catalogManagerService
          * @type {Object}
          *
          * @description
@@ -102,7 +102,7 @@
         /**
          * @ngdoc method
          * @name initialize
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Initializes the `sortOptions`, `recordTypes`, `localCatalog`, and `distributedCatalog` of the
@@ -145,7 +145,7 @@
         /**
          * @ngdoc method
          * @name getRecordTypes
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/record-types endpoint and returns the
@@ -161,7 +161,7 @@
         /**
          * @ngdoc method
          * @name getSortOptions
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/sort-options endpoint and returns the
@@ -177,7 +177,7 @@
         /**
          * @ngdoc method
          * @name getResultsPage
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls whichever endpoint is in the passed URL and returns the paginated response for that
@@ -196,7 +196,7 @@
         /**
          * @ngdoc method
          * @name getRecords
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records endpoint and returns the paginated
@@ -235,7 +235,7 @@
         /**
          * @ngdoc method
          * @name getRecord
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed
@@ -254,7 +254,7 @@
         /**
          * @ngdoc method
          * @name createRecord
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records endpoint with the passed Catalog id and
@@ -292,7 +292,7 @@
         /**
          * @ngdoc method
          * @name updateRecord
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog and
@@ -311,7 +311,7 @@
         /**
          * @ngdoc method
          * @name deleteRecord
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
@@ -329,7 +329,7 @@
         /**
          * @ngdoc method
          * @name getRecordDistributions
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/distributions endpoint and
@@ -359,7 +359,7 @@
         /**
          * @ngdoc method
          * @name getRecordDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
@@ -379,7 +379,7 @@
         /**
          * @ngdoc method
          * @name createRecordDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/distributions endpoint with the passed
@@ -425,7 +425,7 @@
         /**
          * @ngdoc method
          * @name updateRecordDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint with
@@ -446,7 +446,7 @@
         /**
          * @ngdoc method
          * @name deleteRecordDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
@@ -466,7 +466,7 @@
         /**
          * @ngdoc method
          * @name getRecordVersions
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint and
@@ -496,7 +496,7 @@
         /**
          * @ngdoc method
          * @name getRecordLatestVersion
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/latest
@@ -514,7 +514,7 @@
         /**
          * @ngdoc method
          * @name getRecordVersion
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}
@@ -534,7 +534,7 @@
         /**
          * @ngdoc method
          * @name createRecordVersion
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
@@ -557,7 +557,7 @@
         /**
          * @ngdoc method
          * @name createRecordTag
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
@@ -596,7 +596,7 @@
         /**
          * @ngdoc method
          * @name updateRecordVersion
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint with
@@ -617,7 +617,7 @@
         /**
          * @ngdoc method
          * @name deleteRecordVersion
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
@@ -637,7 +637,7 @@
         /**
          * @ngdoc method
          * @name getVersionCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit endpoint
@@ -659,7 +659,7 @@
         /**
          * @ngdoc method
          * @name getVersionDistributions
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
@@ -690,7 +690,7 @@
         /**
          * @ngdoc method
          * @name getRecordDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
@@ -711,7 +711,7 @@
         /**
          * @ngdoc method
          * @name createVersionDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
@@ -759,7 +759,7 @@
         /**
          * @ngdoc method
          * @name updateVersionDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
@@ -781,7 +781,7 @@
         /**
          * @ngdoc method
          * @name deleteVersionDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
@@ -802,7 +802,7 @@
         /**
          * @ngdoc method
          * @name getRecordBranches
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
@@ -835,7 +835,7 @@
         /**
          * @ngdoc method
          * @name getRecordMasterBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/master endpoint and
@@ -853,7 +853,7 @@
         /**
          * @ngdoc method
          * @name getRecordBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
@@ -872,7 +872,7 @@
         /**
          * @ngdoc method
          * @name createRecordBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
@@ -901,7 +901,7 @@
         /**
          * @ngdoc method
          * @name createRecordBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
@@ -932,7 +932,7 @@
         /**
          * @ngdoc method
          * @name updateRecordBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
@@ -954,7 +954,7 @@
         /**
          * @ngdoc method
          * @name deleteRecordBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
@@ -974,7 +974,7 @@
         /**
          * @ngdoc method
          * @name getCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/commits/{commitId} endpoint with the passed Commit id.
@@ -995,7 +995,7 @@
         /**
          * @ngdoc method
          * @name getCommitHistory
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/commits/{commitId}/history endpoint with the passed Commit id.
@@ -1021,7 +1021,7 @@
         /**
          * @ngdoc method
          * @name getDifference
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/commits/{commitId}/difference endpoint with the passed Commit ids and returns the 
@@ -1044,7 +1044,7 @@
         /**
          * @ngdoc method
          * @name getBranchCommits
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
@@ -1069,7 +1069,7 @@
         /**
          * @ngdoc method
          * @name createBranchCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
@@ -1091,7 +1091,7 @@
         /**
          * @ngdoc method
          * @name getBranchHeadCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
@@ -1112,7 +1112,7 @@
         /**
          * @ngdoc method
          * @name getBranchCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
@@ -1134,7 +1134,7 @@
         /**
          * @ngdoc method
          * @name getBranchDifference
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/difference endpoint
@@ -1158,7 +1158,7 @@
         /**
          * @ngdoc method
          * @name getBranchConflicts
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts endpoint
@@ -1186,7 +1186,7 @@
         /**
          * @ngdoc method
          * @name mergeBranches
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution endpoint
@@ -1221,7 +1221,7 @@
         /**
          * @ngdoc method
          * @name getResource
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
@@ -1254,7 +1254,7 @@
         /**
          * @ngdoc method
          * @name downloadResource
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
@@ -1281,7 +1281,7 @@
         /**
          * @ngdoc method
          * @name createInProgressCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and creates
@@ -1299,7 +1299,7 @@
         /**
          * @ngdoc method
          * @name getInProgressCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
@@ -1317,7 +1317,7 @@
         /**
          * @ngdoc method
          * @name updateInProgressCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
@@ -1352,7 +1352,7 @@
         /**
          * @ngdoc method
          * @name deleteInProgressCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and deletes
@@ -1370,7 +1370,7 @@
         /**
          * @ngdoc method
          * @name getEntityName
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Collects the name of the passed entity or returns an anonymous name if it could not be generated.
@@ -1385,7 +1385,7 @@
         /**
          * @ngdoc method
          * @name isRecord
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a Record or not.
@@ -1400,7 +1400,7 @@
         /**
          * @ngdoc method
          * @name isVersionedRDFRecord
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a VersionedRDFRecord or not.
@@ -1415,7 +1415,7 @@
         /**
          * @ngdoc method
          * @name isDistribution
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a Distribution or not.
@@ -1430,7 +1430,7 @@
         /**
          * @ngdoc method
          * @name isBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a Branch or not.
@@ -1445,7 +1445,7 @@
         /**
          * @ngdoc method
          * @name isUserBranch
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a user branch or not.
@@ -1460,7 +1460,7 @@
         /**
          * @ngdoc method
          * @name isVersion
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a Version or not.
@@ -1475,7 +1475,7 @@
         /**
          * @ngdoc method
          * @name isTag
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a Tag or not.
@@ -1490,7 +1490,7 @@
         /**
          * @ngdoc method
          * @name isCommit
-         * @methodOf catalogManager.service:catalogManagerService
+         * @methodOf shared.service:catalogManagerService
          *
          * @description
          * Tests whether the passed entity is a Commit or not.
@@ -1558,10 +1558,10 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name catalogManager.service:catalogManagerService
-         * @requires httpService.service:httpService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
+         * @name shared.service:catalogManagerService
+         * @requires shared.service:httpService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
          *
          * @description
          * `catalogManagerService` is a service that provides access to the Mobi catalog REST

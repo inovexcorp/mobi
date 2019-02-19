@@ -53,7 +53,7 @@
          * @scope
          * @restrict E
          * @requires $filter
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `entityDates` is a directive which creates a div with displays for a JSON-LD object's

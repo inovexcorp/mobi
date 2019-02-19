@@ -26,8 +26,8 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordsView
-     * @requires catalogState.service:catalogStateService
-     * @requires catalogManager.service:catalogManagerService
+     * @requires shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
      * @requires utilService.service:utilService
      *
      * @description
@@ -36,7 +36,7 @@
      * {@link searchBar.component:searchBar}, and filtered using a {@link catalog.component:recordFilters}. The list is
      * also {@link paging.directive:paging paginated}. Each Record is displayed using a
      * {@link catalog.component:recordCard} that will select the Record it in the
-     * {@link catalogState.service:catalogStateService} when clicked.
+     * {@link shared.service:catalogStateService} when clicked.
      */
     const recordsViewComponent = {
         templateUrl: 'catalog/components/recordsView/recordsView.component.html',

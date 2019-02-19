@@ -33,7 +33,7 @@
         /**
          * @ngdoc method
          * @name getRequests
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the GET /mobirest/merge-requests endpoint with the provided object of query parameters
@@ -54,7 +54,7 @@
         /**
          * @ngdoc method
          * @name createRequest
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the POST /mobirest/merge-requests endpoint with the passed metadata and creates a new
@@ -97,7 +97,7 @@
         /**
          * @ngdoc method
          * @name getRequest
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the GET /mobirest/merge-requests/{requestId} endpoint to retrieve a single Merge Request
@@ -114,7 +114,7 @@
         /**
          * @ngdoc method
          * @name deleteRequest
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the DELETE /mobirest/merge-requests/{requestId} endpoint to remove a single Merge Request
@@ -131,7 +131,7 @@
         /**
          * @ngdoc method
          * @name acceptRequest
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
@@ -148,7 +148,7 @@
         /**
          * @ngdoc method
          * @name getComments
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the GET /mobirest/merge-requests/{requestId}/comments endpoint to retrieve the array of comment
@@ -165,7 +165,7 @@
         /**
          * @ngdoc method
          * @name deleteComment
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the DELETE /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to delete a comment
@@ -182,7 +182,7 @@
         /**
          * @ngdoc method
          * @name createComment
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the POST /mobirest/merge-requests/{requestId}/comments endpoint to create a comment on the Merge
@@ -209,7 +209,7 @@
         /**
          * @ngdoc method
          * @name updateRequest
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request
@@ -228,7 +228,7 @@
         /**
          * @ngdoc method
          * @name isAccepted
-         * @methodOf mergeRequestManager.service:mergeRequestManagerService
+         * @methodOf shared.service:mergeRequestManagerService
          *
          * @description
          * Determines whether the passed request is accepted or not.
@@ -245,7 +245,7 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name mergeRequestManager.service:mergeRequestManagerService
+         * @name shared.service:mergeRequestManagerService
          *
          * @description
          * `mergeRequestManagerService` is a service that provides access to the Mobi merge-requests REST

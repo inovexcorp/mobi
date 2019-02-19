@@ -177,10 +177,10 @@
          * @name shared.directive:userAccessControls
          * @scope
          * @restrict E
-         * @requires policyManager.service:policyManagerService
-         * @requires util.service:utilService
-         * @requires loginManager.service:loginManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:policyManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:loginManagerService
+         * @requires shared.service:prefixes
          *
          * @description
          * `userAccessControls` is a directive that creates a Bootstrap `row` div with a single column

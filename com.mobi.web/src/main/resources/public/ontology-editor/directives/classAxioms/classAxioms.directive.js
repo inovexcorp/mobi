@@ -38,17 +38,17 @@
          * @name classAxioms.directive:classAxioms
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `classAxioms` is a directive that creates a list of
          * {@link propertyValues.directive:propertyValues} of the axioms on the
-         * {@link ontologyState.service:ontologyStateService selected class}.
+         * {@link shared.service:ontologyStateService selected class}.
          * The directive houses the methods for opening the modal for removing class axioms. The
          * directive is replaced by the contents of its template.
          */

@@ -38,11 +38,11 @@
          * @name mapperTabset.directive:mapperTabset
          * @scope
          * @restrict E
-         * @requires  mapperState.service:mapperStateService
+         * @requires  shared.service:mapperStateService
          *
          * @description
          * `mapperTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with different
-         * pages depending on the current {@link mapperState.service:mapperStateService#step step} of the mapping
+         * pages depending on the current {@link shared.service:mapperStateService#step step} of the mapping
          * process. The three pages are {@link mappingSelectPage.directive:mappingSelectPage mappingSelectPage},
          * {@link fileUploadPage.directive:fileUploadPage fileUploadPage}, and the
          * {@link editMappingPage.directive:editMappingPage editMappingPage}. The directive is replaced by the

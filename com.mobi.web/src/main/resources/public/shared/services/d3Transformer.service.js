@@ -29,7 +29,7 @@
         /**
          * @ngdoc method
          * @name buildForceDirectedGraphD3Format
-         * @methodOf d3Transformer.service:d3TransformerService
+         * @methodOf shared.service:d3TransformerService
          *
          * @description
          * Transform provided JSON-LD object to the D3 force directed graph json format
@@ -62,7 +62,7 @@
         /**
          * @ngdoc method
          * @name buildHierarchyD3Format
-         * @methodOf d3Transformer.service:d3TransformerService
+         * @methodOf shared.service:d3TransformerService
          *
          * @description
          * Transform provided JSON-LD object to the D3 hierarchy json format
@@ -120,7 +120,7 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name d3Transformer.service:d3TransformerService
+         * @name shared.service:d3TransformerService
          *
          * @description
          * `d3TransformerService` is a service that provides different transformers to convert json-ld

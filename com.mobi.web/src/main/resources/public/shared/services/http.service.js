@@ -31,7 +31,7 @@
         /**
          * @ngdoc property
          * @name pending
-         * @propertyOf httpService.service:httpService
+         * @propertyOf shared.service:httpService
          * @type {Object[]}
          *
          * @description
@@ -49,7 +49,7 @@
         /**
          * @ngdoc method
          * @name isPending
-         * @methodOf httpService.service:httpService
+         * @methodOf shared.service:httpService
          *
          * @description
          * Checks to see if a request object associated with the provided id exists in the pending array.
@@ -65,7 +65,7 @@
         /**
          * @ngdoc method
          * @name cancel
-         * @methodOf httpService.service:httpService
+         * @methodOf shared.service:httpService
          *
          * @description
          * Cancels the request object associated with the provided id if it exists in the pending array.
@@ -81,7 +81,7 @@
         /**
          * @ngdoc method
          * @name get
-         * @methodOf httpService.service:httpService
+         * @methodOf shared.service:httpService
          *
          * @description
          * Wraps Angular's $http.get method to provide a way to track and cancel the associated request.
@@ -103,7 +103,7 @@
         /**
          * @ngdoc method
          * @name post
-         * @methodOf httpService.service:httpService
+         * @methodOf shared.service:httpService
          *
          * @description
          * Wraps Angular's $http.post method to provide a way to track and cancel the associated request.
@@ -134,7 +134,7 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name httpService.service:httpService
+         * @name shared.service:httpService
          * @requires $q
          * @requires $http
          *

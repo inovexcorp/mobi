@@ -33,7 +33,7 @@
         /**
          * @ngdoc property
          * @name prefixes
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string[]}
          *
          * @description
@@ -44,7 +44,7 @@
         /**
          * @ngdoc property
          * @name queryString
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string}
          *
          * @description
@@ -55,7 +55,7 @@
         /**
          * @ngdoc property
          * @name datasetRecordIRI
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string}
          *
          * @description
@@ -65,17 +65,17 @@
         /**
          * @ngdoc property
          * @name data
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {Object[]}
          *
          * @description
-         * The results from the running the {@link sparqlManager.service:sparqlManagerService#queryString}.
+         * The results from the running the {@link shared.service:sparqlManagerService#queryString}.
          */
         self.data = undefined;
         /**
          * @ngdoc property
          * @name errorMessage
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string}
          *
          * @description
@@ -85,7 +85,7 @@
         /**
          * @ngdoc property
          * @name errorDetails
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string}
          *
          * @description
@@ -95,7 +95,7 @@
         /**
          * @ngdoc property
          * @name infoMessage
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string}
          *
          * @description
@@ -105,24 +105,24 @@
         /**
          * @ngdoc property
          * @name currentPage
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {number}
          *
          * @description
          * The 1 based index that indicates the current page of
-         * {@link sparqlManager.service:sparqlManagerService#data results} to be displayed in the
+         * {@link shared.service:sparqlManagerService#data results} to be displayed in the
          * {@link sparqlResultTable.directive:sparqlResultTable SPARQL result table}.
          */
         self.currentPage = 1;
         /**
          * @ngdoc property
          * @name links
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {Object}
          *
          * @description
          * The URLs for the next and previous page of results from running the
-         * {@link sparqlManager.service:sparqlManagerService#queryString query}.
+         * {@link shared.service:sparqlManagerService#queryString query}.
          */
         self.links = {
             next: '',
@@ -131,7 +131,7 @@
         /**
          * @ngdoc property
          * @name limit
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {number}
          *
          * @description
@@ -142,29 +142,29 @@
         /**
          * @ngdoc property
          * @name totalSize
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {number}
          *
          * @description
-         * The total number of results from running the {@link sparqlManager.service:sparqlManagerService#queryString query}
+         * The total number of results from running the {@link shared.service:sparqlManagerService#queryString query}
          * with {@link sparqlManager.service:sparqlManager#queryRdf queryRdf}.
          */
         self.totalSize = 0;
         /**
          * @ngdoc property
          * @name bindings
-         * @propertyOf sparqlManager.service:sparqlManagerService
+         * @propertyOf shared.service:sparqlManagerService
          * @type {string[]}
          *
          * @description
-         * The binding names in the result of running the {@link sparqlManager.service:sparqlManagerService#queryString query}.
+         * The binding names in the result of running the {@link shared.service:sparqlManagerService#queryString query}.
          */
         self.bindings = [];
 
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf sparqlManager.service:sparqlManagerService
+         * @methodOf shared.service:sparqlManagerService
          *
          * @description
          * Resets all state variables.
@@ -188,7 +188,7 @@
         /**
          * @ngdoc method
          * @name query
-         * @methodOf sparqlManager.service:sparqlManagerService
+         * @methodOf shared.service:sparqlManagerService
          *
          * @description
          * Calls the GET /sparql REST endpoint to conduct a SPARQL query using the provided query
@@ -211,7 +211,7 @@
         /**
          * @ngdoc method
          * @name pagedQuery
-         * @methodOf sparqlManager.service:sparqlManagerService
+         * @methodOf shared.service:sparqlManagerService
          *
          * @description
          * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the provided query and
@@ -246,14 +246,14 @@
         /**
          * @ngdoc method
          * @name downloadResults
-         * @methodOf sparqlManager.service:sparqlManagerService
+         * @methodOf shared.service:sparqlManagerService
          *
          * @description
          * Calls the GET /mobirest/sparql endpoint using the `window.location` variable which
          * will start a download of the results of running the current
-         * {@link sparqlManager.service:sparqlManagerService#queryString query} and
-         * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
-         * the selected {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset},
+         * {@link shared.service:sparqlManagerService#queryString query} and
+         * {@link shared.service:sparqlManagerService#prefixes prefixes}, optionally using
+         * the selected {@link shared.service:sparqlManagerService#datasetRecordIRI dataset},
          * in the specified file type with an optional file name.
          *
          * @param {string} fileType The type of file to download based on file extension
@@ -280,14 +280,14 @@
         /**
          * @ngdoc method
          * @name queryRdf
-         * @methodOf sparqlManager.service:sparqlManagerService
+         * @methodOf shared.service:sparqlManagerService
          *
          * @description
          * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the current
-         * {@link sparqlManager.service:sparqlManagerService#queryString query} and
-         * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
-         * the selected {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset},
-         * and sets the results to {@link sparqlManager.service:sparqlManagerService#data data}.
+         * {@link shared.service:sparqlManagerService#queryString query} and
+         * {@link shared.service:sparqlManagerService#prefixes prefixes}, optionally using
+         * the selected {@link shared.service:sparqlManagerService#datasetRecordIRI dataset},
+         * and sets the results to {@link shared.service:sparqlManagerService#data data}.
          */
         self.queryRdf = function() {
             self.errorMessage = '';
@@ -335,9 +335,9 @@
         .module('shared')
         /**
          * @ngdoc service
-         * @name sparqlManager.service:sparqlManagerService
-         * @requires util.service:utilService
-         * @requires httpService.service:httpService
+         * @name shared.service:sparqlManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:httpService
          *
          * @description
          * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query

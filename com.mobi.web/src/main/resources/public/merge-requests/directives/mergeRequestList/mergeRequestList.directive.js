@@ -38,13 +38,13 @@
          * @name mergeRequestList.directive:mergeRequestList
          * @scope
          * @restrict E
-         * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires modal.service:modalService
+         * @requires shared.service:mergeRequestsStateService
+         * @requires shared.service:modalService
          *
          * @description
          * `mergeRequestList` is a directive which creates a div containing a {@link block.directive:block}
          * with the list of MergeRequests retrieved by the
-         * {@link mergeRequestsState.service:mergeRequestsStateService}. The directive houses the method for opening a
+         * {@link shared.service:mergeRequestsStateService}. The directive houses the method for opening a
          * modal for deleting merge requests. The directive is replaced by the contents of its template.
          */
         .directive('mergeRequestList', mergeRequestList);

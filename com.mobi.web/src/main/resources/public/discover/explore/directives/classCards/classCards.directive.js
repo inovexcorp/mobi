@@ -38,9 +38,9 @@
          * @name classCards.directive:classCards
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `classCards` is a directive that creates a div which contains a 3 column grid used to display the

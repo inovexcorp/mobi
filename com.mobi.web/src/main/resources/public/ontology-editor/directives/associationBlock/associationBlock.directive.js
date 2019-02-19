@@ -38,12 +38,12 @@
          * @name associationBlock.directive:associationBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `associationBlock` is a directive that creates a section that displays the
          * {@link everythingTree.directive:everythingTree} for the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The directive is replaced by the
+         * {@link shared.service:ontologyStateService selected ontology}. The directive is replaced by the
          * contents of its template.
          */
         .directive('associationBlock', associationBlock);

@@ -30,7 +30,7 @@
          *
          * @description
          * The `sparqlResultBlock` module only provides the `sparqlResultBlock` directive which creates
-         * a tabular view of the SPARQL query {@link sparqlManager.service:sparqlManagerService#data results}.
+         * a tabular view of the SPARQL query {@link shared.service:sparqlManagerService#data results}.
          */
         .module('sparqlResultBlock', [])
         /**
@@ -38,13 +38,13 @@
          * @name sparqlResultBlock.directive:sparqlResultBlock
          * @scope
          * @restrict E
-         * @requires sparqlManager.service:sparqlManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:sparqlManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `sparqlResultBlock` is a directive that creates a {@link block.directive:block block} with a
          * {@link sparqlResultTable.directive:sparqlResultTable table} the
-         * {@link sparqlManager.service:sparqlManagerService#data results} of the latest SPARQL query,
+         * {@link shared.service:sparqlManagerService#data results} of the latest SPARQL query,
          * {@link pagination.directive:pagination pagination} buttons for the results,
          * {@link pagingDetails.directive:pagingDetails details} about the current page of results, and a button
          * to {@link downloadQueryOverlay.directive:downloadQueryOverlay download} the full results. The directive

@@ -38,16 +38,16 @@
          * @name savedChangesTab.directive:savedChangesTab
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires util.service:utilService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:prefixes
          *
          * @description
          * `savedChangesTab` is a directive that creates a page that displays all the current users's saved changes
          * (aka inProgressCommit) of the current
-         * {@link ontologyState.service:ontologyStateService selected ontology and branch}. The changes are grouped by
+         * {@link shared.service:ontologyStateService selected ontology and branch}. The changes are grouped by
          * subject. The display will include a button to remove all the saved changes if there are any. If there are
          * no changes, an {@link infoMessage.directive:infoMessage} is shown stating as such. If the current branch is
          * not up to date and there are changes, an {@link errorDisplay.directive:errorDisplay} is shown. If there are

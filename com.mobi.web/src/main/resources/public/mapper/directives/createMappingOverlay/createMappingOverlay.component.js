@@ -36,8 +36,8 @@
         /**
          * @ngdoc component
          * @name createMappingOverlay.directive:createMappingOverlay
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
          *
          * @description
          * `createMappingOverlay` is a component that creates content for a modal with three inputs for metadata about a

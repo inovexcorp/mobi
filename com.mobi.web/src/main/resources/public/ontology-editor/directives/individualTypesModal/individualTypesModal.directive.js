@@ -38,13 +38,13 @@
          * @name individualTypesModal.directive:individualTypesModal
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `individualTypesModal` is a directive that creates content for a modal that edits the types of the selected
-         * individual in the current {@link ontologyState.service:ontologyStateService selected ontology}. The form in
+         * individual in the current {@link shared.service:ontologyStateService selected ontology}. The form in
          * the modal contains a 'ui-select' for the classes this individual will be an instance of. Meant to be used in
          * conjunction with the {@link modalService.directive:modalService}.
          *

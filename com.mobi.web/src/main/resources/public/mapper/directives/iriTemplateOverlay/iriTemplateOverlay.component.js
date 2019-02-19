@@ -36,15 +36,15 @@
         /**
          * @ngdoc component
          * @name iriTemplateOverlay.component:iriTemplateOverlay
-         * @requires prefixes.service:prefixes
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:prefixes
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `iriTemplateOverlay` is a component that creates content for a modal that changes the IRI template of the
-         * {@link mapperState.service:mapperStateService selected class mapping}. The modal splits the IRI template
+         * {@link shared.service:mapperStateService selected class mapping}. The modal splits the IRI template
          * into the beginning of the namespace, the delimiter between the namespace and local name, and the dynamically
          * created local name. The local name can either be a UUID or a column header. Meant to be used in conjunction
          * with the {@link modalService.directive:modalService}.

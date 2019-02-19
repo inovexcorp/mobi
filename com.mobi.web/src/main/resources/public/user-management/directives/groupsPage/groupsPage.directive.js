@@ -39,17 +39,17 @@
          * @name groupsPage.directive:groupsPage
          * @scope
          * @restrict E
-         * @requires userState.service:userStateService
-         * @requires userManager.service:userManagerService
-         * @requires loginManager.service:loginManagerService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:userStateService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:loginManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `groupsPage` is a directive that creates a Bootstrap `row` div with two columns containing
          * {@link block.directive:block blocks} for selecting and editing a group. The left column contains a
          * {@link groupsList.directive:groupsList groupsList} block for selecting the current
-         * {@link userState.service:userStateService#selectedGroup group} and buttons for creating, deleting, and
+         * {@link shared.service:userStateService#selectedGroup group} and buttons for creating, deleting, and
          * searching for a group. The right column contains a block for previewing and editing a group's description, a
          * block for editing the group's {@link permissionsInput.directive:permissionsInput permission}, and a block for
          * viewing and editing the {@link memberTable.directive:memberTable members} of the group. The directive houses

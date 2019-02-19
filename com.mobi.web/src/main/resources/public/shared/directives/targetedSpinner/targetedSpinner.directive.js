@@ -63,7 +63,7 @@
          * parent element. Can specify whether a matched in progress HTTP call should be
          * canceled when the parent scope is destroyed.
          *
-         * @param {string} targetSpinner The string identifier used by the {@link httpService.service:httpService httpService}
+         * @param {string} targetSpinner The string identifier used by the {@link shared.service:httpService httpService}
          * for the call that this spinner is associated with
          * @param {boolean} cancelOnDestroy Whether or not matched in progress HTTP calls should be canceled
          * when the parent scope is destroyed

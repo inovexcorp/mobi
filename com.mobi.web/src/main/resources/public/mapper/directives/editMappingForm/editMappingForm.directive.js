@@ -30,7 +30,7 @@
          *
          * @description
          * The `editMappingForm` module only provides the `editMappingForm` directive which creates a form with
-         * different sections for editing the current {@link mapperState.service:mapperStateService#mapping mapping}.
+         * different sections for editing the current {@link shared.service:mapperStateService#mapping mapping}.
          */
         .module('editMappingForm', [])
         /**
@@ -38,13 +38,13 @@
          * @name editMappingForm.directive:editMappingForm
          * @scope
          * @restrict E
-         * @requires mapperState.service:mapperStateService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `editMappingForm` is a directive that creates a div with a section to view and edit the current
-         * {@link mapperState.service:mapperStateService#mapping mapping} configuration, a section to
+         * {@link shared.service:mapperStateService#mapping mapping} configuration, a section to
          * {@link classMappingSelect.directive:classMappingSelect select a class mapping} and delete the selected class
          * mapping, a button to {@link classMappingOverlay.component:classMappingOverlay add a new class mapping}, and
          * {@link classMappingDetails.directive:classMappingDetails class mapping details}. The directive houses the
