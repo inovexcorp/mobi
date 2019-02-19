@@ -95,11 +95,7 @@
             };
             pep.evaluateRequest(request)
                 .then(response => {
-                    if (response === pep.permit) {
-                        dvm.canEdit = true;
-                    } else {
-                        dvm.canEdit = false;
-                    }
+                    dvm.canEdit = response !== pep.deny;
                 }, () => {
                     util.createWarningToast('Could not retrieve record permissions');
                     dvm.canEdit = false;
