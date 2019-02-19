@@ -92,7 +92,11 @@
                         _.forEach(deletions, (values, prop) => {
                             _.forEach(values, value => { value.del = true });
                         });
-                        _.mergeWith(dvm.resource, deletions, (objValue, srcValue) => objValue.concat(srcValue));
+                        _.mergeWith(dvm.resource, deletions, (objValue, srcValue) => {
+                            if (_.isArray(objValue)) {
+                                return objValue.concat(srcValue);
+                            }
+                        });
                         dvm.error = '';
                     }, errorMessage => {
                         dvm.error = errorMessage;

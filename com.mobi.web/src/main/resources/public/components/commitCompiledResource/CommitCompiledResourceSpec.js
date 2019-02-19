@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Commit Compiled Resource component', function() {
-    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyUtilsManagerSvc;
+    var $compile, scope, $q, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,14 +33,12 @@ describe('Commit Compiled Resource component', function() {
         mockOntologyUtilsManager();
         mockHttpService();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _httpService_, _catalogManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _httpService_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             httpSrc = _httpService_;
             catalogManagerSvc = _catalogManagerService_;
-            ontologyStateSvc = _ontologyStateService_;
-            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
         this.error = 'error';
@@ -65,8 +63,6 @@ describe('Commit Compiled Resource component', function() {
         scope = null;
         $q = null;
         catalogManagerSvc = null;
-        ontologyStateSvc = null;
-        ontologyUtilsManagerSvc = null;
         this.element.remove();
     });
 
@@ -114,7 +110,7 @@ describe('Commit Compiled Resource component', function() {
             expect(this.element.querySelectorAll('.value-display-wrapper').length).toBe(1);
             expect(this.element.querySelectorAll('.prop-header').length).toBe(1);
             expect(this.element.querySelectorAll('.value-signs').length).toBe(1);
-            expect(this.element.querySelectorAll('.value-display').length).toBe(2);
+            expect(this.element.querySelectorAll('.value-display').length).toBe(1);
         });
         it('depending on whether there is a error', function() {
             this.controller.error = undefined;
