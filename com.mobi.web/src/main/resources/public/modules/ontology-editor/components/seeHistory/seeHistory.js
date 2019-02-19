@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name seeHistory.component:seeHistory
+     * @name ontologyEditor.module:seeHistory
      * @requires $filter
      * @requires catalogManager.service:catalogManagerService
      * @requires manchesterConverter.service:manchesterConverterService

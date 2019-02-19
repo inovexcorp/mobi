@@ -108,12 +108,15 @@ describe('Commit History Table directive', function() {
             this.controller.error = this.error;
             scope.$apply();
             expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('info-message').length).toBe(0);
         });
         it('depending on whether there are commits', function() {
             expect(this.element.find('info-message').length).toBe(0);
             this.controller.commits = [];
+            this.controller.error = undefined;
             scope.$apply();
             expect(this.element.find('info-message').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(0);
         });
     });
     describe('controller bound variable', function() {
@@ -134,6 +137,12 @@ describe('Commit History Table directive', function() {
             this.controller.targetId = 'new';
             scope.$digest();
             expect(scope.targetId).toEqual(original);
+        });
+        it('entityId should be one way bound', function() {
+            var original = scope.entityId;
+            this.controller.entityId = 'new';
+            scope.$digest();
+            expect(scope.entityId).toEqual(original);
         });
         it('commitData should be two way bound', function() {
             this.controller.commitData = [{}];

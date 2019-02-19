@@ -26,7 +26,7 @@
     </div>
     <div class="see-history-header d-flex flex-column remove-min-width col">
         <div class="row">
-            <h2 class="see-history-title break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
+            <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
             <static-iri class="align-self-end" read-only=true iri="dvm.os.listItem.selected['@id']"></static-iri>
         </div>
         <div class="row">
@@ -38,7 +38,7 @@
         <div class="row flex-1 remove-min-height">
             <div class="col-xl-6 d-flex flex-column">
                 <div class="form-inline">
-                    <div class="right-buffer">
+                    <div class="mr-2">
                         <span>View entity at</span>
                     </div>
                     <div class="form-group">
@@ -60,7 +60,7 @@
                     <commit-compiled-resource commit-id="dvm.os.listItem.selectedCommit.id" entity-id="dvm.os.listItem.selected['@id']"></commit-compiled-resource>
                 </div>
             </div>
-            <div class="top-buffer col remove-min-width">
+            <div class="col remove-min-width">
                 <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" commit-data="dvm.commits"></commit-history-table>
             </div>
         </div>

@@ -37,7 +37,7 @@ describe('Commit Compiled Resource component', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
-            httpSrc = _httpService_;
+            httpSvc = _httpService_;
             catalogManagerSvc = _catalogManagerService_;
         });
 
@@ -45,8 +45,6 @@ describe('Commit Compiled Resource component', function() {
         this.commitId = 'commit';
         this.entityId = 'entity';
         this.resource = 'resource';
-        this.additions = 'addition';
-        this.deletions = 'deletion';
 
         catalogManagerSvc.getCompiledResource.and.returnValue($q.when([this.resource]));
         catalogManagerSvc.getCommit.and.returnValue($q.when([this.commitId]));
@@ -62,6 +60,7 @@ describe('Commit Compiled Resource component', function() {
         $compile = null;
         scope = null;
         $q = null;
+        httpSvc = null;
         catalogManagerSvc = null;
         this.element.remove();
     });
@@ -74,23 +73,46 @@ describe('Commit Compiled Resource component', function() {
             expect(scope.entityId).toEqual([ {'id': this.entityId} ]);
         });
     });
-    describe('controller methods', function() {
+    describe('controller method setResource', function() {
         beforeEach(function() {
             this.controller.commitId = this.commitId;
             this.controller.entityId = this.entityId;
         });
         it('should get compiled resource and the commit', function() {
+            catalogManagerSvc.getCompiledResource.and.returnValue($q.when(this.resource))
             this.controller.setResource();
             scope.$apply();
+            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
             expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
             expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-            expect(this.controller.resource).toBeDefined();
+            expect(this.controller.resource[0]).toEqual(this.resource[0]);
         });
-        it('should set additions', function() {
-            expect(this.controller.additions).toBeDefined();
+        it('with no commitId, should not be called', function() {
+            this.controller.commitId = null;
+            this.controller.setResource();
+            scope.$apply();
+            expect(httpSvc.cancel).not.toHaveBeenCalled();
+            expect(catalogManagerSvc.getCompiledResource).not.toHaveBeenCalled();
+            expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+            expect(this.controller.resource).toBeUndefined();
         });
-        it('should set deletions', function() {
-            expect(this.controller.deletions).toBeDefined();
+        it('with commitId, but rejection on getting compiled resource in setResource', function() {
+            catalogManagerSvc.getCompiledResource.and.returnValue($q.reject('Error Message'))
+            this.controller.setResource();
+            scope.$apply();
+            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
+            expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
+            expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+            expect(this.controller.error).toEqual('Error Message');
+        });
+        it('with commitId, but rejection on getting the commit in setResource', function() {
+            catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'))
+            this.controller.setResource();
+            scope.$apply();
+            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
+            expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
+            expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+            expect(this.controller.error).toEqual('Error Message');
         });
     });
     describe('contains the correct html', function() {
@@ -110,7 +132,6 @@ describe('Commit Compiled Resource component', function() {
             expect(this.element.querySelectorAll('.value-display-wrapper').length).toBe(1);
             expect(this.element.querySelectorAll('.prop-header').length).toBe(1);
             expect(this.element.querySelectorAll('.value-signs').length).toBe(1);
-            expect(this.element.querySelectorAll('.value-display').length).toBe(1);
         });
         it('depending on whether there is a error', function() {
             this.controller.error = undefined;

@@ -60,8 +60,6 @@
         dvm.os = ontologyStateService;
 
         dvm.error = '';
-        dvm.additions = [];
-        dvm.deletions = [];
         dvm.resource = undefined;
         dvm.id = 'commit-compiled-resource';
 
