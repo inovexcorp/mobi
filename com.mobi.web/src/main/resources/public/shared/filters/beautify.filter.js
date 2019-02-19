@@ -23,31 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name beautify
-         *
-         * @description
-         * The `beautify` module only provides the `beautify` filter which takes a string
-         * and capitalizes the first letter and adds space before every capital letter.
-         */
-        .module('beautify', [])
-        /**
-         * @ngdoc filter
-         * @name beautify.filter:beautify
-         * @kind function
-         *
-         * @description 
-         * Takes a string, capitalizes the first letter, and adds space before every capital
-         * letter. If the passed in value is falsey or an object, returns an empty string.
-         *
-         * @param {string} value The string to beautify
-         * @returns {string} Either an empty string if the value is not a string or a beautified
-         * version of the value if it is a string.
-         */
-        .filter('beautify', beautify);
-
     function beautify() {
         return function(value) {
             if (value && typeof value !== 'object') {
@@ -66,4 +41,21 @@
             return '';
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc filter
+         * @name shared.filter:beautify
+         * @kind function
+         *
+         * @description 
+         * Takes a string, capitalizes the first letter, and adds space before every capital
+         * letter. If the passed in value is falsey or an object, returns an empty string.
+         *
+         * @param {string} value The string to beautify
+         * @returns {string} Either an empty string if the value is not a string or a beautified
+         * version of the value if it is a string.
+         */
+        .filter('beautify', beautify);
 })();

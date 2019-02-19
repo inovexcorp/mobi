@@ -40,20 +40,6 @@
             'ui.router',
             'ui.select',
 
-            /* Custom Filters */
-            'beautify',
-            'branchesToDisplay',
-            'camelCase',
-            'escapeHTML',
-            'inArray',
-            'prefixation',
-            'removeIriFromArray',
-            'removeMobi',
-            'showProperties',
-            'splitIRI',
-            'trusted',
-            'uniqueKey',
-
             /* Custom Modules */
             'catalog',
             'datasets',

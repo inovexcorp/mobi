@@ -23,16 +23,20 @@
 (function() {
     'use strict';
 
+    trusted.$inject = ['$sce'];
+
+    function trusted($sce) {
+        return function(text) {
+            if(text && typeof text !== 'object') {
+                return $sce.trustAsHtml(text);
+            } else {
+                return;
+            }
+        }
+    }
+
     angular
-        /**
-         * @ngdoc overview
-         * @name trusted
-         *
-         * @description 
-         * The `trusted` module only provides the `trusted` filter which returns 
-         * the HTML representation of a string
-         */
-        .module('trusted', [])
+        .module('shared')
         /**
          * @ngdoc filter
          * @name trusted.filter:trusted
@@ -49,16 +53,4 @@
          * the HTML generated from the text string
          */
         .filter('trusted', trusted);
-
-    trusted.$inject = ['$sce'];
-
-    function trusted($sce) {
-        return function(text) {
-            if(text && typeof text !== 'object') {
-                return $sce.trustAsHtml(text);
-            } else {
-                return;
-            }
-        }
-    }
 })();

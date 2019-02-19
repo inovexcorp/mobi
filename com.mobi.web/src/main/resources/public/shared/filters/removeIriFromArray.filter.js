@@ -23,16 +23,27 @@
 (function() {
     'use strict';
 
+    function removeIriFromArray() {
+        function hasId(id, arr) {
+            return _.some(arr, obj => id === _.get(obj, '@id'));
+        }
+
+        return function(arr, toRemove) {
+            var result = [];
+
+            if (_.isArray(arr) && arr.length && toRemove) {
+                var removeIsArray = _.isArray(toRemove);
+                result = _.filter(arr, iri => (removeIsArray && !hasId(iri, toRemove)) || (!removeIsArray && toRemove !== iri));
+            } else if (!toRemove) {
+                result = result.concat(arr);
+            }
+
+            return result;
+        }
+    }
+
     angular
-        /**
-         * @ngdoc overview
-         * @name removeIriFromArray
-         *
-         * @description
-         * The `removeIriFromArray` module only provides the `removeIriFromArray` filter
-         * which removes a specific id from an array of strings.
-         */
-        .module('removeIriFromArray', [])
+        .module('shared')
         /**
          * @ngdoc filter
          * @name removeIriFromArray.filter:removeIriFromArray
@@ -52,23 +63,4 @@
          * ids based on the passed in toRemove.
          */
         .filter('removeIriFromArray', removeIriFromArray);
-
-    function removeIriFromArray() {
-        function hasId(id, arr) {
-            return _.some(arr, obj => id === _.get(obj, '@id'));
-        }
-
-        return function(arr, toRemove) {
-            var result = [];
-
-            if (_.isArray(arr) && arr.length && toRemove) {
-                var removeIsArray = _.isArray(toRemove);
-                result = _.filter(arr, iri => (removeIsArray && !hasId(iri, toRemove)) || (!removeIsArray && toRemove !== iri));
-            } else if (!toRemove) {
-                result = result.concat(arr);
-            }
-
-            return result;
-        }
-    }
 })();

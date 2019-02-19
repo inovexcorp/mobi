@@ -23,16 +23,31 @@
 (function() {
     'use strict';
 
+    function splitIRI() {
+        return function(iri) {
+            if(iri && typeof iri !== 'object') {
+                var hash = iri.indexOf('#');
+                var slash = iri.lastIndexOf('/');
+                var colon = iri.lastIndexOf(':');
+                var index = _.max([hash, slash, colon]);
+
+                return {
+                    begin: iri.substring(0, index),
+                    then: iri[index],
+                    end: iri.substring(index + 1)
+                }
+            } else {
+                return {
+                    begin: '',
+                    then: '',
+                    end: ''
+                };
+            }
+        }
+    }
+
     angular
-        /**
-         * @ngdoc overview
-         * @name splitIRI
-         *
-         * @description
-         * The `splitIRI` module only provides the `splitIri` directive which splits
-         * an IRI string based on the last valid delimiter it finds.
-         */
-        .module('splitIRI', [])
+        .module('shared')
         /**
          * @ngdoc filter
          * @name splitIRI.filter:splitIRI
@@ -57,27 +72,4 @@
          * of the IRI string.
          */
         .filter('splitIRI', splitIRI);
-
-    function splitIRI() {
-        return function(iri) {
-            if(iri && typeof iri !== 'object') {
-                var hash = iri.indexOf('#');
-                var slash = iri.lastIndexOf('/');
-                var colon = iri.lastIndexOf(':');
-                var index = _.max([hash, slash, colon]);
-
-                return {
-                    begin: iri.substring(0, index),
-                    then: iri[index],
-                    end: iri.substring(index + 1)
-                }
-            } else {
-                return {
-                    begin: '',
-                    then: '',
-                    end: ''
-                };
-            }
-        }
-    }
 })();
