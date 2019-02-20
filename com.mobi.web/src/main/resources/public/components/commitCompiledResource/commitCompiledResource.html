@@ -23,13 +23,15 @@
 <div class="commit-compiled-resource vertical-scroll h-100" targeted-spinner="dvm.id">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
     <info-message ng-if="!dvm.resource && !dvm.error">No entity to display</info-message>
-    <div class="wrapper" ng-if="dvm.types">
-        <div class="prop-header d-flex align-items-center clearfix">
+    <div class="wrapper mb-2 mt-1" ng-if="dvm.types">
+        <div class="prop-header d-flex clearfix">
             <span class="type-label">Type(s):</span>
-            <div ng-repeat="value in dvm.types">
-                <span class="ml-1 flex-1 text-muted text-truncate" ng-class="{'text-success': dvm.modifiedType(value) === 'addition', 'text-danger': dvm.modifiedType(value) === 'deletion'}">
-                    {{value}}
-                </span>
+            <div class="wrapper">
+                <div ng-repeat="value in dvm.types">
+                    <span class="ml-1 text-muted text-truncate" ng-class="{'text-success': dvm.modifiedType(value) === 'addition', 'text-danger': dvm.modifiedType(value) === 'deletion'}">
+                        {{value}}
+                    </span>
+                </div>
             </div>
         </div>
     </div>

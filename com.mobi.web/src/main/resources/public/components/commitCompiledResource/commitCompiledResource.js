@@ -83,6 +83,9 @@
                     .then(response => {
                         dvm.typeAdditions = _.get(_.find(response.additions, {'@id': dvm.entityId}), '@type');
                         dvm.typeDeletions = _.get(_.find(response.deletions, {'@id': dvm.entityId}), '@type');
+                        if (dvm.typeDeletions) {
+                            dvm.types = dvm.types.concat(dvm.typeDeletions);
+                        }
                         var additions = _.omit(_.find(response.additions, {'@id': dvm.entityId}), ['@id', '@type']);
                         var deletions = _.omit(_.find(response.deletions, {'@id': dvm.entityId}), ['@id', '@type']);
                         _.forEach(additions, (values, prop) => {
@@ -117,9 +120,9 @@
             }
         }
         dvm.modifiedType = function(value) {
-            if (_.find(dvm.typeAdditions, value)) {
+            if (_.includes(dvm.typeAdditions, value)) {
                 return "addition";
-            } else if (_.find(dvm.typeDeletions, value)) {
+            } else if (_.includes(dvm.typeDeletions, value)) {
                 return "deletion";
             }
         }
