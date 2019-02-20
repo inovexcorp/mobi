@@ -1,0 +1,42 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<form name="dvm.form" class="sparql-editor">
+    <div class="top-section">
+        <div class="form-group">
+            <custom-label>Prefixes:</custom-label>
+            <ui-select multiple ng-model="dvm.sparql.prefixes">
+                <ui-select-match placeholder="Select prefix(es)">{{$item}}</ui-select-match>
+                <ui-select-choices repeat="prefix in dvm.prefixList | filter:$select.search">
+                    <div ng-bind-html="prefix | escapeHTML | highlight:$select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <dataset-form-group ng-model="dvm.sparql.datasetRecordIRI"></dataset-form-group>
+        <div class="btn-container">
+            <button class="btn btn-primary" ng-click="dvm.sparql.initialQueryRdf()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
+        </div>
+    </div>
+    <div class="codemirror-wrapper">
+        <ui-codemirror ng-model="dvm.sparql.queryString" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
+    </div>
+</form>
