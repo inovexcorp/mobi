@@ -1,0 +1,65 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="mapping-select-page row">
+    <mapping-list-block></mapping-list-block>
+    <div class="col-8 h-100">
+        <block>
+            <block-header>
+                <div class="mapping-preview-header" ng-class="{'invisible': !dvm.state.mapping}">
+                    <span>{{dvm.state.mapping.record.title}}</span>
+                    <div uib-dropdown class="float-right">
+                        <button uib-dropdown-toggle title="Actions" class="btn btn-xs">
+                            <i class="fa fa-fw fa-ellipsis-h"></i>
+                        </button>
+                        <ul uib-dropdown-menu class="dropdown-menu-right">
+                            <a class="dropdown-item run-btn" ng-click="dvm.run()" a-disabled="!dvm.state.mapping.ontology">
+                                <i class="fa fa-play-circle-o"></i>Run
+                            </a>
+                            <a class="dropdown-item edit-btn" ng-click="dvm.edit()" a-disabled="!dvm.state.mapping.ontology">
+                                <i class="fa fa-pencil"></i>Edit
+                            </a>
+                            <a class="dropdown-item duplicate-btn" ng-click="dvm.duplicate()" a-disabled="!dvm.state.mapping.ontology">
+                                <i class="fa fa-files-o"></i>Duplicate
+                            </a>
+                            <a class="dropdown-item download-btn" ng-click="dvm.download()">
+                                <i class="fa fa-download"></i>Download
+                            </a>
+                        </ul>
+                    </div>
+                </div>
+            </block-header>
+            <block-content class="padding">
+                <div ng-if="!dvm.state.mapping">
+                    <p class="lead">Welcome to the Mapping Tool!</p>
+                    <p>If this is your first time here, you may want to check the <a href="https://mobi.inovexcorp.com/docs/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
+                </div>
+                <div class="preview" ng-if="dvm.state.mapping">
+                    <p>{{dvm.state.mapping.record.description}}</p>
+                    <h3>Source Ontology</h3>
+                    <p class="source-ontology" ng-class="{'text-danger': !dvm.state.mapping.ontology}">{{dvm.util.getDctermsValue(dvm.state.mapping.ontology, 'title')}} <span ng-if="!dvm.state.mapping.ontology" class="text-muted">(This ontology could not be found)</span></p>
+                    <mapping-preview></mapping-preview>
+                </div>
+            </block-content>
+        </block>
+    </div>
+</div>
