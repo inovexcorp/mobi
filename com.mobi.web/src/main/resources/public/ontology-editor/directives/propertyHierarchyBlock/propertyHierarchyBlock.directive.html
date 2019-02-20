@@ -21,21 +21,6 @@
   #L%
   -->
 <div class="property-hierarchy-block py-1">
-    <info-message ng-if="!dvm.flatPropertyTree.length">(No properties defined)</info-message>
-    <div ng-if="dvm.flatPropertyTree.length" class="tree hierarchy-tree h-100 p-0 w-100">
-        <md-virtual-repeat-container class="h-100 repeater-container w-100" >
-            <div md-virtual-repeat="node in dvm.flatPropertyTree | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
-                <div ng-if="!node.entityIRI" class="tree-item">
-                    <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
-                        <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{node.title}}</span>
-                    </a>
-                </div>
-                <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"
-                           is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
-                           current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
-                           on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
-                           path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
-            </div>
-        </md-virtual-repeat-container>
-    </div>
+    <info-message ng-if="!dvm.os.listItem.dataProperties.flat.length && !dvm.os.listItem.objectProperties.flat.length && !dvm.os.listItem.annotations.flat.length">(No properties defined)</info-message>
+    <property-tree ng-if="dvm.os.listItem.dataProperties.flat.length || dvm.os.listItem.objectProperties.flat.length || dvm.os.listItem.annotations.flat.length" data-props="dvm.os.listItem.dataProperties.flat" object-props="dvm.os.listItem.objectProperties.flat" annotation-props="dvm.os.listItem.annotations.flat" update-search="dvm.updateSearch"></property-tree>
 </div>
