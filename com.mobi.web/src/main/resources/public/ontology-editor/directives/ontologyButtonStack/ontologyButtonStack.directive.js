@@ -30,7 +30,7 @@
          *
          * @description
          * The `ontologyButtonStack` module only provides the `ontologyButtonStack` directive which creates a
-         * {@link circleButtonStack.directive:circleButtonStack} for actions in the Ontology Editor.
+         * {@link shared.directive:circleButtonStack} for actions in the Ontology Editor.
          */
         .module('ontologyButtonStack', [])
         /**
@@ -42,7 +42,7 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `ontologyButtonStack` is a directive that creates a {@link circleButtonStack.directive:circleButtonStack}
+         * `ontologyButtonStack` is a directive that creates a {@link shared.directive:circleButtonStack}
          * for actions in the Ontology Editor against the current
          * {@link shared.service:ontologyStateService selected ontology}. These actions are uploading a file of
          * changes, creating a branch, merging branches, and commiting changes. The directive houses the methods for

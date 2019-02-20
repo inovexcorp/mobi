@@ -46,7 +46,7 @@
          * @description
          * `objectPropertyOverlay` is a directive that creates content for a modal that adds an object property value to
          * the {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a
-         * `ui-select` of all the object properties in the ontology and an {@link iriSelect.directive:iriSelect} of all
+         * `ui-select` of all the object properties in the ontology and an {@link shared.directive:iriSelect} of all
          * the valid individuals for the object property value based on the range of the selected property. Meant to
          * be used in conjunction with the {@link modalService.directive:modalService}.
          *

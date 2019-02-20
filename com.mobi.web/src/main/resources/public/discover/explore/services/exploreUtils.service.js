@@ -38,7 +38,7 @@
          * @name exploreUtils.service:exploreUtilsService
          * @requires shared.service:prefixes
          * @requires shared.service:sparqlManagerService
-         * @requires utilService.service:utilService
+         * @requires shared.service:utilService
          * @requires shared.service:datasetManagerService
          * @requires shared.service:ontologyManagerService
          *

@@ -65,7 +65,7 @@
          * @scope
          * @restrict E
          * @requires $filter
-         * @requires utilService.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `entityDescription` is a directive which creates a div with a display of a JSON-LD object's

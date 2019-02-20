@@ -46,7 +46,7 @@
         .module('shared')
         /**
          * @ngdoc directive
-         * @name textInput.directive:textInput
+         * @name shared.directive:textInput
          * @scope
          * @restrict E
          *

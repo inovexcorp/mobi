@@ -49,7 +49,7 @@
          * @description
          * `axiomOverlay` is a directive that creates content for a modal that adds an axiom to the
          * {@link shared.service:ontologyStateService selected entity}. The form in the modal contains a
-         * `ui-select` of the provided axioms for the property and a {@link tabset.directive:tabset} to choose between
+         * `ui-select` of the provided axioms for the property and a {@link shared.directive:tabset} to choose between
          * using simple values or restriction via a manchester string as the value of the axiom. Meant to be used in
          * conjunction with the {@link modalService.directive:modalService}.
          *

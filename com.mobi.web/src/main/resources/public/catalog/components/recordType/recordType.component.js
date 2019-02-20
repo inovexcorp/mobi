@@ -27,7 +27,7 @@
      * @ngdoc component
      * @name catalog.component:recordType
      * @requires shared.service:catalogManagerService
-     * @requires utilService.service:utilService
+     * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description

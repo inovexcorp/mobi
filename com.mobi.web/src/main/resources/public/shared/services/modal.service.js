@@ -67,7 +67,7 @@
          * @methodOf shared.service:modalService
          *
          * @description
-         * Opens a {@link confirmModal.directive:confirmModal} with the provided configuration. The body of the
+         * Opens a {@link shared.directive:confirmModal} with the provided configuration. The body of the
          * `confirmModal` is provided as a string. Custom implementation for the confirm and deny actions are provided
          * as the `yes` and `no` functions respectively.
          *

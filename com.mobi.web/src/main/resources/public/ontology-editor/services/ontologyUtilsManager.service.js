@@ -424,7 +424,7 @@
              * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
              *
              * @description
-             * Creates an HTML string of the body of a {@link confirmModal.directive:confirmModal} for confirming the
+             * Creates an HTML string of the body of a {@link shared.directive:confirmModal} for confirming the
              * deletion of the specified property value on the current
              * {@link shared.service:ontologyStateService selected entity}.
              *

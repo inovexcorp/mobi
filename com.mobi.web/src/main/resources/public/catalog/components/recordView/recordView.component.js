@@ -26,10 +26,10 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordView
-     * @requires catalogState.service:cataStateService
+     * @requires shared.service:catalogStateService
      * @requires shared.service:catalogManagerService
      * @requires shared.service:policyEnforcementService
-     * @requires utilService.service:utilService
+     * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description

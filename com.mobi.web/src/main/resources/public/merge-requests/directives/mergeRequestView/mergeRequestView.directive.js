@@ -30,7 +30,7 @@
          *
          * @description
          * The `mergeRequestView` module only provides the `mergeRequestView` directive which creates a
-         * {@link block.directive:block} with a display of a selected MergeRequest.
+         * {@link shared.directive:block} with a display of a selected MergeRequest.
          */
         .module('mergeRequestView', [])
         /**
@@ -46,10 +46,10 @@
          * @requires ontologyState.service:ontologytateService
          *
          * @description
-         * `mergeRequestView` is a directive which creates a div containing a {@link block.directive:block}
+         * `mergeRequestView` is a directive which creates a div containing a {@link shared.directive:block}
          * which displays metadata about the
          * {@link shared.service:mergeRequestsStateService selected MergeRequest} including a
-         * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and commits
+         * {@link shared.directive:commitDifferenceTabset} to display the changes and commits
          * between the source and target branch of the MergeRequest. The block also contains buttons to delete
          * the MergeRequest, accept the MergeRequest, and go back to the
          * {@link mergeRequestList.directive:mergeRequestList}. This directive houses the method for opening a

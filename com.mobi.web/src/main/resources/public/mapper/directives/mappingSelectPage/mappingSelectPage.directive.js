@@ -30,7 +30,7 @@
          *
          * @description
          * The `mappingSelectPage` module only provides the `mappingSelectPage` directive which creates a Bootstrap
-         * `row` with {@link block.directive:block blocks} for editing the selecting and previewing a mapping.
+         * `row` with {@link shared.directive:block blocks} for editing the selecting and previewing a mapping.
          */
         .module('mappingSelectPage', [])
         /**

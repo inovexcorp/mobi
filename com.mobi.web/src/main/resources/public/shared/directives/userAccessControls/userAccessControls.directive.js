@@ -184,7 +184,7 @@
          *
          * @description
          * `userAccessControls` is a directive that creates a Bootstrap `row` div with a single column
-         * containing a {@link block.directive:block block} for viewing and updating overall permissions
+         * containing a {@link shared.directive:block block} for viewing and updating overall permissions
          * from policies. The directive is replaced by the contents of its template.
          */
         .directive('userAccessControls', userAccessControls)

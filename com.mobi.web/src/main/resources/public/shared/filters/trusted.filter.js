@@ -39,7 +39,7 @@
         .module('shared')
         /**
          * @ngdoc filter
-         * @name trusted.filter:trusted
+         * @name shared.filter:trusted
          * @kind function
          * @requires $sce
          *

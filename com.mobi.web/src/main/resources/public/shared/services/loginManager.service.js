@@ -240,7 +240,7 @@
          * @requires shared.service:catalogStateService
          * @requires shared.service:datasetManagerService
          * @requires shared.service:datasetStateService
-         * @requires delimitedManager.service:delimitedManangerService
+         * @requires shared.service:delimitedManangerService
          * @requires shared.service:discoverStateService
          * @requires shared.service:mapperStateService
          * @requires shared.service:mergeRequestsStateService

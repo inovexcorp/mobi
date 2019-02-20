@@ -46,7 +46,7 @@
          * @description
          * `characteristicsBlock` is a directive that creates a section that displays the appropriate characteristics
          * on the {@link shared.service:ontologyStateService selected property} based on its type.
-         * Characteristics are displayed as {@link checkbox.directive:checkbox checkboxes}. The directive is replaced
+         * Characteristics are displayed as {@link shared.directive:checkbox checkboxes}. The directive is replaced
          * by the contents of its template.
          */
         .directive('characteristicsBlock', characteristicsBlock);

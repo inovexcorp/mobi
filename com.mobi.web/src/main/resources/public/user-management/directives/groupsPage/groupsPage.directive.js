@@ -30,7 +30,7 @@
          *
          * @description
          * The `groupsPage` module only provides the `groupsPage` directive which which creates a Bootstrap `row` with
-         * {@link block.directive:block blocks} for selecting and editing a group in the
+         * {@link shared.directive:block blocks} for selecting and editing a group in the
          * {@link userManager.service:userManagerServiec#groups groups list}.
          */
         .module('groupsPage', [])
@@ -47,7 +47,7 @@
          *
          * @description
          * `groupsPage` is a directive that creates a Bootstrap `row` div with two columns containing
-         * {@link block.directive:block blocks} for selecting and editing a group. The left column contains a
+         * {@link shared.directive:block blocks} for selecting and editing a group. The left column contains a
          * {@link groupsList.directive:groupsList groupsList} block for selecting the current
          * {@link shared.service:userStateService#selectedGroup group} and buttons for creating, deleting, and
          * searching for a group. The right column contains a block for previewing and editing a group's description, a

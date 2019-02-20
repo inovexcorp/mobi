@@ -40,7 +40,7 @@
         .module('shared')
         /**
          * @ngdoc directive
-         * @name actionMenu.directive:actionMenu
+         * @name shared.directive:actionMenu
          * @scope
          * @restrict E
          *

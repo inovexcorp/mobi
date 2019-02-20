@@ -30,7 +30,7 @@
          *
          * @description
          * The `permissionsPage` module only provides the `permissionsPage` directive which which creates
-         * a Bootstrap `row` with a {@link block.directive:block block} for viewing and updating overall
+         * a Bootstrap `row` with a {@link shared.directive:block block} for viewing and updating overall
          * permissions of the application.
          */
         .module('permissionsPage', [])
@@ -47,7 +47,7 @@
          *
          * @description
          * `permissionsPage` is a directive that creates a Bootstrap `row` div with a single column
-         * containing a {@link block.directive:block block} for viewing and updating overall permissions
+         * containing a {@link shared.directive:block block} for viewing and updating overall permissions
          * from policies retrieved through the {@link shared.service:policyManagerService}.
          * The list is refreshed everytime this directive is rendered for the first time so any changes
          * made to the policies will reset when navigating away and back. Currently, the only policies

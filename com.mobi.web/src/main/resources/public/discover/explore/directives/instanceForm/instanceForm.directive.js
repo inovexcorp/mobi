@@ -48,7 +48,7 @@
          * @description
          * `instanceForm` is a directive that creates a form with the complete list of properites associated with the
          * {@link shared.service:discoverStateService selected instance} in an editable format. Also provides a
-         * way to {@link editIriOverlay.directive:editIriOverlay edit the instance IRI} after acknowledging the danger.
+         * way to {@link shared.directive:editIriOverlay edit the instance IRI} after acknowledging the danger.
          * If there are requierd properties not set on the instance, the provided `isValid` variable is set to false.
          * The directive is replaced by the contents of its template.
          *

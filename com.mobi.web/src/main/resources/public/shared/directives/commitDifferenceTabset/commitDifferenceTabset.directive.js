@@ -56,7 +56,7 @@
          *
          * @description
          * `commitDifferenceTabset` is a directive which creates a div containing a
-         * {@link tabset.directive:tabset} with tabs for the
+         * {@link shared.directive:tabset} with tabs for the
          * {@link shared.directive:commitChangesDisplay changes} and
          * {@link shared.directive:commitHistoryTable commits} between two branches.
          * The directive is replaced by the contents of its template.

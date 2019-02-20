@@ -48,7 +48,7 @@
         .module('shared')
         /**
          * @ngdoc filter
-         * @name uniqueKey.filter:uniqueKey
+         * @name shared.filter:uniqueKey
          * @kind function
          *
          * @description 
