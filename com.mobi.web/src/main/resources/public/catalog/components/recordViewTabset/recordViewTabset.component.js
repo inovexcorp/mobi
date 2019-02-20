@@ -29,7 +29,7 @@
      * @requires shared.service:catalogManagerService
      *
      * @description
-     * `recordViewTabset` is a component which creates a {@link materialTabset.directive:materialTabset} with tabs
+     * `recordViewTabset` is a component which creates a {@link shared.directive:materialTabset} with tabs
      * displaying information about the provided catalog Record. These tabs contain a
      * {@link catalog.component.recordMarkdown} and a {@link catalog.component:branchList} if the Record is a 
      * `VersionedRDFRecord`.

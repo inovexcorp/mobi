@@ -41,8 +41,8 @@
          *
          * @description
          * `createMappingOverlay` is a component that creates content for a modal with three inputs for metadata about a
-         * new MappingRecord: a text input for the title, a {@link textArea.directive:textArea} for the description,
-         * and a {@link keywordSelect.directive:keywordSelect}. Meant to be used in conjunction with the
+         * new MappingRecord: a text input for the title, a {@link shared.directive:textArea} for the description,
+         * and a {@link shared.directive:keywordSelect}. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

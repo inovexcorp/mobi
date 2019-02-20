@@ -30,7 +30,7 @@
          *
          * @description
          * The `usersPage` module only provides the `usersPage` directive which creates a Bootstrap `row` with
-         * {@link block.directive:block blocks} for selecting and editing a user in the
+         * {@link shared.directive:block blocks} for selecting and editing a user in the
          * {@link shared.service:userManagerService#users users list}.
          */
         .module('usersPage', [])
@@ -47,7 +47,7 @@
          *
          * @description
          * `usersPage` is a directive that creates a Bootstrap `row` div with three columns
-         * containing {@link block.directive:block blocks} for selecting and editing a user.
+         * containing {@link shared.directive:block blocks} for selecting and editing a user.
          * The left column contains a {@link usersList.directive:usersList usersList} block
          * for selecting the current {@link shared.service:userStateService#selectedUser user}
          * and buttons for creating, deleting, and searching for a user. The center column contains

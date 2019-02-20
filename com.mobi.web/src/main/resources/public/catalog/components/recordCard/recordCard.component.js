@@ -26,7 +26,7 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordCard
-     * @requires utilService.service:utilService
+     * @requires shared.service:utilService
      *
      * @description
      * `recordCard` is a component which creates a Material `card` div with information about the provided catalog

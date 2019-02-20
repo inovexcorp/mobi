@@ -27,7 +27,7 @@
      * @ngdoc component
      * @name catalog.component:entityPublisher
      * @requires shared.service:userManagerService
-     * @requires utilService.service:utilService
+     * @requires shared.service:utilService
      *
      * @description
      * `entityPublisher` is a component which creates a span with a display of a JSON-LD object's dcterms:publisher

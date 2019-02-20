@@ -30,7 +30,7 @@
      * @requires shared.service:prefixes
      *
      * @description
-     * `profileTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} that contains a
+     * `profileTab` is a component that creates a Bootstrap `row` with a {@link shared.directive:block block} that contains a
      * form allowing the current user to change their profile information. This information includes their first name, last
      * name, and email address.
      */

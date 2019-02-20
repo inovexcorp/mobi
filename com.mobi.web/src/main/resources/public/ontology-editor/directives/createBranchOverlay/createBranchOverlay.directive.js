@@ -45,7 +45,7 @@
          * @description
          * `createBranchOverlay` is a directive that creates content for a modal that creates a branch in the current
          * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
-         * {@link textInput.directive:textInput} for the branch title and a {@link textArea.directive:textArea} for the
+         * {@link shared.directive:textInput} for the branch title and a {@link shared.directive:textArea} for the
          * branch description. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

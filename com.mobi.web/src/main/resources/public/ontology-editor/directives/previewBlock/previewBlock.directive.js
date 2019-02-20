@@ -30,7 +30,7 @@
          *
          * @description
          * The `previewBlock` module only provides the `previewBlock` directive which creates a
-         * {@link block.directive:block} for displaying a preview of an ontology in RDF.
+         * {@link shared.directive:block} for displaying a preview of an ontology in RDF.
          */
         .module('previewBlock', [])
         /**
@@ -43,7 +43,7 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `previewBlock` is a directive that creates a {@link block.directive:block} that displays a `codemirror` with
+         * `previewBlock` is a directive that creates a {@link shared.directive:block} that displays a `codemirror` with
          * the current {@link shared.service:ontologyStateService selected ontology} in a specified RDF format.
          * The `block` contains a {@link serializationSelect.directive:serializationSelect}, button to refresh the
          * preview, and a button for {@link ontologyDownloadOverlay.directive:ontologyDownloadOverlay downloading}

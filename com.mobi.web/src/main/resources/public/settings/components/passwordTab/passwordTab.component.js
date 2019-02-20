@@ -29,10 +29,10 @@
      * @requires shared.service:loginManagerService
      *
      * @description
-     * `passwordTab` is a component that creates a Bootstrap `row` with a {@link block.directive:block block} containing a
+     * `passwordTab` is a component that creates a Bootstrap `row` with a {@link shared.directive:block block} containing a
      * form allowing the current user to change their password. The user must enter their current password in order to make
      * a change. The new password is confirmed within a
-     * {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput}.
+     * {@link shared.directive:passwordConfirmInput passwordConfirmInput}.
      */
     const passwordTabComponent = {
         templateUrl: 'settings/components/passwordTab/passwordTab.component.html',

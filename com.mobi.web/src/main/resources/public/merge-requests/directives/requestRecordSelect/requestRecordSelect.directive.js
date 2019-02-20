@@ -45,7 +45,7 @@
          *
          * @description
          * `requestRecordSelect` is a directive which creates a div containing a search form, a list
-         * of VersionedRDFRecords and a {@link pagination.directive:pagination} container to select
+         * of VersionedRDFRecords and a {@link shared.directive:pagination} container to select
          * the VersionedRDFRecord for a new MergeRequest. The directive is replaced by the contents of
          * its template.
          */

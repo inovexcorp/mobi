@@ -1880,7 +1880,7 @@
          * @requires shared.service:manchesterConverterService
          * @requires shared.service:policyEnforcementService
          * @requires shared.service:policyManagerService
-         * @requires http.service:httpService
+         * @requires shared.service:httpService
          */
         .service('ontologyStateService', ontologyStateService);
 })();

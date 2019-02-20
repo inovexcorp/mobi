@@ -50,7 +50,7 @@
         .module('shared')
         /**
          * @ngdoc filter
-         * @name splitIRI.filter:splitIRI
+         * @name shared.filter:splitIRI
          * @kind function
          *
          * @description

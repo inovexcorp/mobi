@@ -49,8 +49,8 @@
          * (aka inProgressCommit) of the current
          * {@link shared.service:ontologyStateService selected ontology and branch}. The changes are grouped by
          * subject. The display will include a button to remove all the saved changes if there are any. If there are
-         * no changes, an {@link infoMessage.directive:infoMessage} is shown stating as such. If the current branch is
-         * not up to date and there are changes, an {@link errorDisplay.directive:errorDisplay} is shown. If there are
+         * no changes, an {@link shared.directive:infoMessage} is shown stating as such. If the current branch is
+         * not up to date and there are changes, an {@link shared.directive:errorDisplay} is shown. If there are
          * no changes and the current branch is not up to date, an `errorDisplay` is shown with a link to pull in the
          * latest changes. If there are no changes and the user is on a UserBranch then an `errorDisplay` is shown with
          * a lin to "pull changes" which will perform a merge of the UserBranch into the parent branch. If there are

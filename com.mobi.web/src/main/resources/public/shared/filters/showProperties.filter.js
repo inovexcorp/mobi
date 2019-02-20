@@ -37,7 +37,7 @@
         .module('shared')
         /**
          * @ngdoc filter
-         * @name showProperties.filter:showProperties
+         * @name shared.filter:showProperties
          * @kind function
          *
          * @description

@@ -42,11 +42,11 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `sparqlResultBlock` is a directive that creates a {@link block.directive:block block} with a
+         * `sparqlResultBlock` is a directive that creates a {@link shared.directive:block block} with a
          * {@link sparqlResultTable.directive:sparqlResultTable table} the
          * {@link shared.service:sparqlManagerService#data results} of the latest SPARQL query,
-         * {@link pagination.directive:pagination pagination} buttons for the results,
-         * {@link pagingDetails.directive:pagingDetails details} about the current page of results, and a button
+         * {@link shared.directive:pagination pagination} buttons for the results,
+         * {@link shared.directive:pagingDetails details} about the current page of results, and a button
          * to {@link downloadQueryOverlay.directive:downloadQueryOverlay download} the full results. The directive
          * is replaced by the contents of its template.
          */

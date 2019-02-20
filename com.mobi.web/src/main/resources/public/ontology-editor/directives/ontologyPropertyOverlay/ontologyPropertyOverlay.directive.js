@@ -49,9 +49,9 @@
          * property on the current {@link shared.service:ontologyStateService selected ontology}. The form in
          * the modal contains a `ui-select` for the ontology property (or annotation). If an ontology property is
          * selected, text input is provided for the value (must be a valid IRI). If an annotation is selected, a
-         * {@link textArea.directive:textArea} is provided for the annotation value with a
-         * {@link languageSelect.directive:languageSelect}, unless the annotation is owl:deprecated in which case the
-         * `textArea` and `languageSelect` are replaced by {@link radioButton.directive:radioButton radio buttons} for
+         * {@link shared.directive:textArea} is provided for the annotation value with a
+         * {@link shared.directive:languageSelect}, unless the annotation is owl:deprecated in which case the
+         * `textArea` and `languageSelect` are replaced by {@link shared.directive:radiobutton radio buttons} for
          * the boolean value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

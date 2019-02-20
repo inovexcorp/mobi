@@ -36,7 +36,7 @@
         /**
          * @ngdoc component
          * @name newInstanceClassOverlay.component:newInstanceClassOverlay
-         * @requires splitIRI.filter:splitIRIFilter
+         * @requires shared.filter:splitIRIFilter
          * @requires uuid
          * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService

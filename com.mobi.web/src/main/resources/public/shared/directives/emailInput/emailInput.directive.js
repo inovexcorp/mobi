@@ -60,7 +60,7 @@
          *
          * @description
          * `emailInput` is a directive that create an email input field with a
-         * {@link customLabel.directive:customLabel customLabel}. The input field is bound to the
+         * {@link shared.directive:customLabel customLabel}. The input field is bound to the
          * passed bindModel variable and has several optional customization variables. The directive
          * is replaced by the contents of its template.
          *

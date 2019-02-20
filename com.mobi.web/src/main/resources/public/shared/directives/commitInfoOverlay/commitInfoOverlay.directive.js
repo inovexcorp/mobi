@@ -50,7 +50,7 @@
         .module('shared')
         /**
          * @ngdoc directive
-         * @name commitInfoOverlay.directive:commitInfoOverlay
+         * @name shared.directive:commitInfoOverlay
          * @scope
          * @restrict E
          * @requires shared.service:utilService

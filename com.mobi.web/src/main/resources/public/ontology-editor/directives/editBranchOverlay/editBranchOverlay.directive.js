@@ -46,7 +46,7 @@
          * @description
          * `editBranchOverlay` is a directive that creates content for a modal that edits the provided branch in the
          * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
-         * a {@link textInput.directive:textInput} for the branch title and a {@link textArea.directive:textArea} for
+         * a {@link shared.directive:textInput} for the branch title and a {@link shared.directive:textArea} for
          * the branch description. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Object} resolve Information provided to the modal

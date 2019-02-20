@@ -46,7 +46,7 @@
         .module('shared')
         /**
          * @ngdoc filter
-         * @name removeIriFromArray.filter:removeIriFromArray
+         * @name shared.filter:removeIriFromArray
          * @kind function
          *
          * @description

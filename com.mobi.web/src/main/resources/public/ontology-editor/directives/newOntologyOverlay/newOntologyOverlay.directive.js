@@ -45,10 +45,10 @@
          *
          * @description
          * `newOntologyOverlay` is a directive that creates content for a modal that creates a new ontology. The form
-         * in the modal contains a {@link textInput.directive:textInput} for the name, a field for the IRI, a
-         * {@link textArea.directive:textArea} for the description, an
+         * in the modal contains a {@link shared.directive:textInput} for the name, a field for the IRI, a
+         * {@link shared.directive:textArea} for the description, an
          * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
-         * {@link keywordSelect.directive:keywordSelect}. The value of the name field will populate the IRI field
+         * {@link shared.directive:keywordSelect}. The value of the name field will populate the IRI field
          * unless the IRI value is manually changed.  Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          */
