@@ -1,0 +1,81 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.tab {
+    height: 100%;
+
+    .actions {
+        background: white;
+        box-shadow: 5px 5px 5px 0px var(--light-dark);
+        height: 52px;
+        text-align: center;
+
+        a,
+        .header {
+            border-bottom: 2px solid transparent;
+            color: var(--light-dark);
+            display: inline-block;
+            font-size: 1.125em;
+            padding: 15px 15px 13px;
+
+            &.active {
+                border-color: var(--primary);
+                color: var(--body);
+            }
+        }
+    }
+
+    > .row {
+        height: 100%;
+        margin: 0;
+        padding: 15px 0;
+        width: 100%;
+    }
+
+    .row > * {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        > .row {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .vertical-half {
+            flex: 1;
+            min-height: 0;
+            padding: 15px 0;
+
+            &:first-child {
+                padding-top: 0;
+            }
+
+            &:last-child {
+                padding-bottom: 0;
+            }
+        }
+    }
+}

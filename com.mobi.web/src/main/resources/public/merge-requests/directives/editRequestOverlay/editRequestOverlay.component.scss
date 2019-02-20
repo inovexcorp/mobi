@@ -1,0 +1,59 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+edit-request-overlay {
+    .edit-target-branch {
+        flex-direction: row;
+        justify-items: center;
+        align-items: baseline;
+
+        .form-control-static {
+            padding: 0;
+            flex-grow: unset;
+        }
+        .ui-select-toggle {
+            width: 100%;
+        }
+        input.ui-select-search {
+            width: 100% !important;
+
+            &.ng-hide {
+                display: block !important;
+                visibility: hidden;
+                height: 0;
+                border: 0;
+                padding: 0;
+            }
+        }
+        .select-branch {
+            margin: 0 25px 0px 5px;
+            box-sizing: content-box;
+        }
+    }
+    .commit-difference-tabset {
+        flex: 1;
+        margin-top: 20px;
+    }
+}

@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="upload-snackbar snackbar snackbar-right flex-column p-0" ng-class="{'show': dvm.showSnackbar}">
+    <div class="snackbar-header w-100 text-white">
+        <span>{{dvm.getTitle()}}</span>
+        <button class="btn btn-outline-light material-icons remove-min-width float-right p-0" ng-click="dvm.attemptClose()">close</button>
+        <button class="btn btn-outline-light material-icons remove-min-width float-right p-0 mr-2 collapse-button" ng-click="dvm.collapse = !dvm.collapse">{{dvm.collapse ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</button>
+    </div>
+    <div class="snackbar-body w-100 vertical-scroll flex-1" ng-hide="dvm.collapse">
+        <div ng-repeat="item in dvm.state.uploadList | orderBy:'-'" class="uploaded-ontology d-flex align-items-baseline py-2" ng-class="{'last': $last}">
+            <div class="item-indicator pr-2">
+                <md-progress-circular ng-if="dvm.isPending(item)" md-diameter="18"></md-progress-circular>
+                <div ng-if="!dvm.isPending(item)" class="item-completed">
+                    <i ng-class="{'fa-check text-success': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times text-danger': item.error}" class="fa fa-fw"></i>
+                </div>
+            </div>
+            <div class="item-details flex-1 remove-min-width">
+                <h3 class="m-0 text-truncate">{{item.title}}</h3>
+                <p ng-if="item.error" class="text-danger m-0"><small>{{item.error}}</small></p>
+            </div>
+        </div>
+    </div>
+</div>

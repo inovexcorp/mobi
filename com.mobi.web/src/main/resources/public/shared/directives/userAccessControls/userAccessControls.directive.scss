@@ -1,0 +1,66 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.user-access-controls {
+    width: 100%;
+    .selected-items {
+        width: 100%;
+        border: 1px solid lightgray;
+        border-radius: 5px;
+        height: 200px;
+        overflow-y: auto;
+
+        .selected-item {
+            padding: 5px;
+
+            a {
+                float: right;
+                cursor: pointer;
+                margin-left: auto;
+            }
+        }
+    }
+    md-autocomplete[hide-label] label {
+        display: none;
+    }
+    md-autocomplete-wrap {
+        height: 40px !important;
+    }
+    md-switch {
+        margin-left: 0;
+        margin-top: 0;
+    }
+    .save-container {
+        height: auto;
+        bottom: 25px;
+        position: absolute;
+        right: 25px;
+        z-index: 5001;
+    }
+
+    .selector-container {
+        z-index: 5001;
+    }
+}
