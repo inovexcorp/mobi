@@ -1,0 +1,94 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.merge-request-view {
+    display: flex;
+    flex-direction: column;
+
+    h2 {
+        display: inline-block;
+    }
+
+    .alert {
+        margin-top: 20px;
+    }
+    .block-footer button {
+        margin-left: 10px;
+    }
+    .merge-request-tabset {
+        margin-top: 20px;
+        flex: 1;
+    }
+    .assignees {
+        display: inline-block;
+
+        li {
+            display: inline;
+
+            &:after {
+                content: ', ';
+            }
+            &.last:after {
+                content: '';
+            }
+        }
+    }
+    .resolve-conflicts {
+        border-top: 1px solid var(--light-dark);
+    }
+    .details.row {
+        margin: 0px 0px 0px 0px;
+        align-items: center;
+        justify-items: center;
+        word-break: break-all;
+        -webkit-transition: background-color ease-in-out 0.1s;
+        transition: background-color ease-in-out 0.1s;
+
+        .edit-button-container {
+            -webkit-transition: opacity ease-in-out 0.1s;
+            transition: opacity ease-in-out 0.1s;
+            opacity: 0;
+
+            button {
+                text-decoration: none;
+                &:hover {
+                    color: inherit;
+                }
+            }
+        }
+
+        &:hover {
+            background-color: var(--light);
+
+            .edit-button-container {
+                opacity: 1;
+            }
+        }
+
+        .description {
+            padding-bottom: 10px;
+        }
+    }
+}

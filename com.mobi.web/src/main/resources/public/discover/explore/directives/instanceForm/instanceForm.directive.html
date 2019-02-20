@@ -1,0 +1,55 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="instance-form row">
+    <div class="col-8 offset-2">
+        <h2>{{header}}</h2>
+        <div ng-repeat="missing in dvm.missingProperties track by $index">
+            <error-display>{{missing}}</error-display>
+        </div>
+        <div class="instance-iri">
+            <strong class="text-muted" click-to-copy="dvm.instance['@id']">{{dvm.instance['@id']}}</strong>
+            <a ng-click="dvm.showIriConfirm()"><i class="fa fa-pencil"></i></a>
+        </div>
+        <form name="dvm.form" autocomplete="off">
+            <div class="form-group" ng-repeat="(key, value) in dvm.instance track by $index" ng-if="key !== '@id' && key !== '@type'">
+                <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
+                <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
+                    <md-checkbox ng-model="dvm.instance[key][0]" ng-true-value="{{dvm.eu.createValueObj('1', key, dvm.properties)}}" ng-false-value="{{dvm.eu.createValueObj('0', key, dvm.properties)}}" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
+                </div>
+                <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createValueObj($chip, key, dvm.properties)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)" md-add-on-blur>
+                    <input type="{{dvm.eu.getInputType(key, dvm.properties)}}" ng-pattern="dvm.eu.getPattern(key, dvm.properties)" placeholder="Enter value...">
+                    <md-chip-template ng-click="dvm.onSelect($chip['@value'], key, $index)">{{$chip['@value']}}</md-chip-template>
+                </md-chips>
+                <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.transformChip($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
+                    <md-autocomplete md-items="item in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0" md-item-text="item.title">
+                        <span md-highlight-text="dvm.searchText[key]">{{item.title}} :: {{item.instanceIRI}}</span>
+                    </md-autocomplete>
+                    <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{dvm.ds.explore.instance.objectMap[$chip['@id']] || $chip['@id']}}</md-chip-template>
+                </md-chips>
+            </div>
+        </form>
+        <div class="btn-container clearfix">
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.newInstanceProperty()" class="btn btn-link float-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+        </div>
+    </div>
+</div>

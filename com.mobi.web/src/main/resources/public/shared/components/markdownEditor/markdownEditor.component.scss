@@ -1,0 +1,57 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.markdown-editor {
+    .fa {
+        font-size: 1rem;
+    }
+    .fa-info:hover {
+        color: var(--body) !important;
+    }
+    .markdown-editor-header {
+        border: 1px solid rgba(1, 1, 1, 0.42);
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+
+        .preview-button {
+            &:hover {
+                cursor: pointer;
+                background-color: var(--light);
+            }
+        }
+    }
+    textarea {
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+    }
+    .markdown-preview {
+        border: 1px solid rgba(1, 1, 1, 0.42);
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+        min-height: 3.5rem;
+        resize: vertical;
+        overflow: auto;
+    }
+}
