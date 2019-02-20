@@ -29,12 +29,6 @@
             <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
             <static-iri class="align-self-end" read-only=true iri="dvm.os.listItem.selected['@id']"></static-iri>
         </div>
-        <div class="row">
-            <div class="type-wrapper align-self-end" ng-if="dvm.os.listItem.selected['@type'].length">
-                <span class="type-label">Type(s):</span>
-                <span class="types text-muted">{{dvm.getTypes()}}</span>
-            </div>
-        </div>
         <div class="row flex-1 remove-min-height">
             <div class="col-xl-6 d-flex flex-column">
                 <div class="form-inline">

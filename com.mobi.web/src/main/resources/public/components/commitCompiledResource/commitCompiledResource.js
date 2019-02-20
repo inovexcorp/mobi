@@ -61,6 +61,9 @@
 
         dvm.error = '';
         dvm.resource = undefined;
+        dvm.typeAdditions = undefined;
+        dvm.typeDeletions = undefined;
+        dvm.types = undefined;
         dvm.id = 'commit-compiled-resource';
 
         dvm.$onChanges = function(changes) {
@@ -74,9 +77,12 @@
                 cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
                     .then(resources => {
                         dvm.resource = _.omit(resources[0], ['@id', '@type']);
+                        dvm.types = _.get(resources[0], '@type');
                         return cm.getCommit(dvm.commitId);
                     }, $q.reject)
                     .then(response => {
+                        dvm.typeAdditions = _.get(_.find(response.additions, {'@id': dvm.entityId}), '@type');
+                        dvm.typeDeletions = _.get(_.find(response.deletions, {'@id': dvm.entityId}), '@type');
                         var additions = _.omit(_.find(response.additions, {'@id': dvm.entityId}), ['@id', '@type']);
                         var deletions = _.omit(_.find(response.deletions, {'@id': dvm.entityId}), ['@id', '@type']);
                         _.forEach(additions, (values, prop) => {
@@ -99,9 +105,22 @@
                     }, errorMessage => {
                         dvm.error = errorMessage;
                         dvm.resource = undefined;
+                        dvm.typeAdditions = undefined;
+                        dvm.typeDeletions = undefined;
+                        dvm.types = undefined;
                     });
             } else {
                 dvm.resource = undefined;
+                dvm.typeAdditions = undefined;
+                dvm.typeDeletions = undefined;
+                dvm.types = undefined;
+            }
+        }
+        dvm.modifiedType = function(value) {
+            if (_.find(dvm.typeAdditions, value)) {
+                return "addition";
+            } else if (_.find(dvm.typeDeletions, value)) {
+                return "deletion";
             }
         }
     }

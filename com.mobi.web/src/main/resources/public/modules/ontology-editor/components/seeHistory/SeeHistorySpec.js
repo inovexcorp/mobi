@@ -75,23 +75,6 @@ describe('See History component', function() {
         });
     });
     describe('controller methods', function() {
-        describe('getTypes functions properly', function() {
-            it('when @type is empty', function() {
-                ontologyStateSvc.listItem.selected = {};
-                expect(this.controller.getTypes()).toEqual('');
-            });
-            it('when @type has items', function() {
-                var expected = 'test, test2';
-                ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
-                expect(this.controller.getTypes()).toEqual(expected);
-            });
-            it('when @type has blank node items', function() {
-                ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-                ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
-                this.controller.getTypes();
-                expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.ontology);
-            });
-        });
         it('should go to prev', function() {
             this.controller.commits = [this.commits];
             ontologyStateSvc.listItem.selectedCommit = this.controller.commits[1];

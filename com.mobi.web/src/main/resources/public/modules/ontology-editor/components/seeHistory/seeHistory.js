@@ -69,17 +69,6 @@
             var index = dvm.commits.indexOf(dvm.os.listItem.selectedCommit);
             dvm.os.listItem.selectedCommit = dvm.commits[index - 1];
         }
-        dvm.getTypes = function() {
-            return _.join(_.orderBy(
-                    _.map(_.get(dvm.os.listItem.selected, '@type', []), t => {
-                        if (dvm.om.isBlankNodeId(t)) {
-                            return mc.jsonldToManchester(t, dvm.os.listItem.ontology);
-                        } else {
-                            return $filter('prefixation')(t);
-                        }
-                    })
-            ), ', ');
-        }
     }
     angular.module('ontology-editor')
         .component('seeHistory', seeHistoryComponent);
