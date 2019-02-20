@@ -22,5 +22,5 @@
   -->
 <div class="association-block py-1">
     <info-message ng-if="!dvm.os.listItem.flatEverythingTree.length">(No entities defined)</info-message>
-    <everything-tree ng-if="dvm.os.listItem.flatEverythingTree.length"></everything-tree>
+    <everything-tree ng-if="dvm.os.listItem.flatEverythingTree.length" hierarchy="dvm.os.listItem.flatEverythingTree" update-search="dvm.updateSearch"></everything-tree>
 </div>

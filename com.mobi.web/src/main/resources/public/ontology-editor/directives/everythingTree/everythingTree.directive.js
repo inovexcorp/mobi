@@ -35,15 +35,89 @@
                 replace: true,
                 templateUrl: 'ontology-editor/directives/everythingTree/everythingTree.directive.html',
                 scope: {},
+                bindToController: {
+                    updateSearch: '<',
+                    hierarchy: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.indent = INDENT;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
-                    
-                    dvm.isShown = function(entity) {
-                        return !_.has(entity, '@id') || (_.has(entity, 'get') && entity.get(dvm.os.listItem.ontologyRecord.recordId)) || (!_.has(entity, 'get') && entity.indent > 0 && dvm.os.areParentsOpen(entity)) || (entity.indent === 0 && _.get(entity, 'path', []).length === 2);
+                    dvm.searchText = '';
+                    dvm.filterText = '';
+
+                    dvm.$onInit = function() {
+                        update();
+                    }
+                    dvm.$onChanges = function() {
+                        update();
+                    }
+                    dvm.onKeyup = function () {
+                        dvm.filterText = dvm.searchText;
+                        update();
+                    }
+                    dvm.searchFilter = function (node) {
+                        delete node.underline;
+                        delete node.parentNoMatch;
+                        delete node.displayNode;
+                        if (dvm.filterText) {
+                            if (node['title']) {
+                                node.set(dvm.os.listItem.ontologyRecord.recordId, true);
+                                return true;
+                            } else {
+                                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node['@id']);
+                                var searchValues = _.pick(entity, dvm.om.entityNameProps);
+                                var match = false;
+                                _.forEach(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
+                                    if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+                                        match = true;
+                                }));
+                                if (match) {
+                                    var path = node.path[0];
+                                    for (var i = 1; i < node.path.length - 1; i++) {
+                                        var iri = node.path[i];
+                                        path = path + '.' + iri;
+                                        dvm.os.setOpened(path, true);
+
+                                        var parentNode = _.find(dvm.hierarchy, {'@id': iri});
+                                        parentNode.displayNode = true;
+                                    }
+                                    node.underline = true;
+                                }
+                                if (!match && node.hasChildren) {
+                                    node.parentNoMatch = true;
+                                    return true;
+                                }
+                                return match;
+                            }
+                        } else {
+                            return true;
+                        }
+                    }
+                    dvm.isShown = function(node) {
+                        var displayNode = !_.has(node, '@id') || (_.has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!_.has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                        if (dvm.filterText && node['title']) {
+                            var position = _.findIndex(dvm.filteredHierarchy, 'title');
+                            if (position === dvm.filteredHierarchy.length - 1) {
+                                node.set(dvm.os.listItem.ontologyRecord.recordId, false);
+                                return false;
+                            }
+                        }
+                        if (dvm.filterText && node.parentNoMatch) {
+                            if (node.displayNode === undefined) {
+                                return false;
+                            } else {
+                                return displayNode && node.displayNode;
+                            }
+                        }
+                        return displayNode;
+                    }
+
+                    function update() {
+                        dvm.updateSearch(dvm.filterText);
+                        dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
                     }
                 }
             }

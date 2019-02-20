@@ -42,7 +42,7 @@ describe('Everything Tree directive', function() {
         ontologyManagerSvc.hasNoDomainProperties.and.returnValue(true);
         ontologyStateSvc.getOpened.and.returnValue(true);
         ontologyStateSvc.getNoDomainsOpened.and.returnValue(true);
-        ontologyStateSvc.listItem.flatEverythingTree = [{
+        scope.hierarchy = [{
             '@id': 'class1',
             hasChildren: true,
             indent: 0,
@@ -62,8 +62,8 @@ describe('Everything Tree directive', function() {
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened
         }];
-
-        this.element = $compile(angular.element('<everything-tree></everything-tree>'))(scope);
+        scope.updateSearch = jasmine.createSpy('updateSearch');
+        this.element = $compile(angular.element('<everything-tree hierarchy="hierarchy" update-search="updateSearch"></everything-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('everythingTree');
     });
@@ -76,6 +76,36 @@ describe('Everything Tree directive', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('hierarchy should be one way bound', function() {
+            this.controller.hierarchy = [];
+            scope.$digest();
+            expect(angular.copy(scope.hierarchy)).toEqual([{
+                '@id': 'class1',
+                hasChildren: true,
+                indent: 0,
+                path: ['recordId']
+            }, {
+                '@id': 'property1',
+                hasChildren: false,
+                indent: 1,
+                path: ['recordId', 'class1']
+            }, {
+                title: 'Properties',
+                get: jasmine.any(Function),
+                set: jasmine.any(Function)
+            }, {
+                '@id': 'property1',
+                hasChildren: false,
+                indent: 1,
+                get: ontologyStateSvc.getNoDomainsOpened
+            }]);
+        });
+        it('updateSearch is one way bound', function() {
+            this.controller.updateSearch('value');
+            expect(scope.updateSearch).toHaveBeenCalledWith('value');
+        });
+    });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
