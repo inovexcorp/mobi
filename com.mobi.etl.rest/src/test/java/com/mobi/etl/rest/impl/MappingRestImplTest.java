@@ -24,56 +24,41 @@ package com.mobi.etl.rest.impl;
  */
 
 import static com.mobi.persistence.utils.ResourceUtils.encode;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
-import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.etl.api.delimited.record.config.MappingRecordCreateSettings;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
-import com.mobi.etl.api.ontologies.delimited.MappingRecordFactory;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.core.utils.Values;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -108,19 +93,12 @@ public class MappingRestImplTest extends MobiRestTestNg {
     private static final String ERROR_IRI = "http://test.org/error";
     private String mappingJsonld;
     private ValueFactory vf;
-    private ModelFactory mf;
-    private ValueConverterRegistry vcr;
-    private MappingRecordFactory mappingRecordFactory;
-    private BranchFactory branchFactory;
-    private UserFactory userFactory;
-    private CreateActivityFactory createActivityFactory;
-    private DeleteActivityFactory deleteActivityFactory;
+    private OrmFactory<MappingRecord> mappingRecordFactory;
     private Model fakeModel;
     private User user;
-    private CreateActivity createActivity;
-    private DeleteActivity deleteActivity;
     private MappingRecord record;
-    private Branch branch;
+    private IRI catalogId;
+    private IRI recordId;
 
     @Mock
     private MappingManager manager;
@@ -141,79 +119,40 @@ public class MappingRestImplTest extends MobiRestTestNg {
     private EngineManager engineManager;
 
     @Mock
-    private VersioningManager versioningManager;
-
-    @Mock
-    private CatalogProvUtils provUtils;
+    private SesameTransformer sesameTransformer;
 
     @Override
     protected Application configureApp() throws Exception {
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
+        vf = getValueFactory();
+        ModelFactory mf = getModelFactory();
+        catalogId = vf.createIRI(CATALOG_IRI);
+        recordId = vf.createIRI(MAPPING_RECORD_IRI);
+        IRI branchId = vf.createIRI(BRANCH_IRI);
 
-        mappingRecordFactory = new MappingRecordFactory();
-        mappingRecordFactory.setValueFactory(vf);
-        mappingRecordFactory.setModelFactory(mf);
-        mappingRecordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(mappingRecordFactory);
-
-        branchFactory = new BranchFactory();
-        branchFactory.setValueFactory(vf);
-        branchFactory.setModelFactory(mf);
-        branchFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(branchFactory);
-
-        userFactory = new UserFactory();
-        userFactory.setValueFactory(vf);
-        userFactory.setModelFactory(mf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
-        createActivityFactory = new CreateActivityFactory();
-        createActivityFactory.setValueFactory(vf);
-        createActivityFactory.setModelFactory(mf);
-        createActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(createActivityFactory);
-
-        deleteActivityFactory = new DeleteActivityFactory();
-        deleteActivityFactory.setValueFactory(vf);
-        deleteActivityFactory.setModelFactory(mf);
-        deleteActivityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(deleteActivityFactory);
-
-        vcr.registerValueConverter(new ResourceValueConverter());
-        vcr.registerValueConverter(new IRIValueConverter());
-        vcr.registerValueConverter(new DoubleValueConverter());
-        vcr.registerValueConverter(new IntegerValueConverter());
-        vcr.registerValueConverter(new FloatValueConverter());
-        vcr.registerValueConverter(new ShortValueConverter());
-        vcr.registerValueConverter(new StringValueConverter());
-        vcr.registerValueConverter(new ValueValueConverter());
-        vcr.registerValueConverter(new LiteralValueConverter());
+        mappingRecordFactory = getRequiredOrmFactory(MappingRecord.class);
+        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
 
         fakeModel = mf.createModel();
         fakeModel.add(vf.createIRI(MAPPING_IRI), vf.createIRI("http://test.org/isTest"), vf.createLiteral(true));
-        branch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
-        record = mappingRecordFactory.createNew(vf.createIRI(MAPPING_RECORD_IRI));
-        record.setMasterBranch(branch);
+        record = mappingRecordFactory.createNew(recordId);
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
-        createActivity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
-        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://test.org/activity/delete"));
 
         MockitoAnnotations.initMocks(this);
 
-        when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
+
+        when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+        when(sesameTransformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
+        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
         rest = new MappingRestImpl();
         rest.setManager(manager);
         rest.setVf(vf);
-        rest.setTransformer(new SimpleSesameTransformer());
+        rest.setTransformer(sesameTransformer);
         rest.setEngineManager(engineManager);
         rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
-        rest.setVersioningManager(versioningManager);
-        rest.setProvUtils(provUtils);
 
         mappingJsonld = IOUtils.toString(getClass().getResourceAsStream("/mapping.jsonld"));
 
@@ -230,38 +169,21 @@ public class MappingRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() throws Exception {
-        reset(mappingId, mappingWrapper, manager, provUtils, catalogManager, versioningManager);
+        reset(mappingId, mappingWrapper, manager, catalogManager);
+
+        when(catalogManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class))).thenReturn(record);
+        when(catalogManager.removeRecord(catalogId, recordId, mappingRecordFactory)).thenReturn(record);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
         when(mappingId.getMappingIdentifier()).thenReturn(vf.createIRI(MAPPING_IRI));
         when(mappingWrapper.getModel()).thenReturn(fakeModel);
         when(mappingWrapper.getId()).thenReturn(mappingId);
-        when(manager.createMappingRecord(any(MappingRecordConfig.class))).thenReturn(record);
         when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
         when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
         when(manager.retrieveMapping(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
         when(manager.retrieveMapping(vf.createIRI(MAPPING_IRI))).thenReturn(Optional.of(mappingWrapper));
-        when(manager.deleteMapping(record.getResource())).thenReturn(record);
-        when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
-            @Override
-            public Optional<IRI> getMappingIRI() {
-                return null;
-            }
-
-            @Override
-            public Optional<IRI> getVersionIRI() {
-                return null;
-            }
-
-            @Override
-            public Resource getMappingIdentifier() {
-                return vf.createIRI(i.getArguments()[0].toString());
-            }
-        });
-
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+        when(manager.deleteMapping(recordId)).thenReturn(record);
     }
 
     @Test
@@ -274,11 +196,11 @@ public class MappingRestImplTest extends MobiRestTestNg {
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
+        verify(catalogManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class));
 
         response = target().path("mappings").request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(0)).startCreateActivity(user);
+        verify(catalogManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class));
     }
 
     @Test
@@ -292,21 +214,19 @@ public class MappingRestImplTest extends MobiRestTestNg {
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
         assertEquals(response.getStatus(), 201);
         assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
-        verify(manager).createMapping(any(InputStream.class), eq(RDFFormat.JSONLD));
-        ArgumentCaptor<MappingRecordConfig> config = ArgumentCaptor.forClass(MappingRecordConfig.class);
-        verify(manager).createMappingRecord(config.capture());
-        assertEquals("Title", config.getValue().getTitle());
-        assertEquals("Description", config.getValue().getDescription());
-        assertEquals("#Markdown", config.getValue().getMarkdown());
-        assertNull(config.getValue().getIdentifier());
-        assertEquals(Collections.singleton("keyword"), config.getValue().getKeywords());
-        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
-        verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
-        verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, vf.createIRI(MAPPING_RECORD_IRI));
+        ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
+        verify(catalogManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class));
+        assertEquals("Title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
+        assertEquals("Description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
+        assertEquals("#Markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
+        assertEquals(Collections.singleton("keyword"), config.getValue().get(RecordCreateSettings.RECORD_KEYWORDS));
+        assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
+        assertNotNull(config.getValue().get(MappingRecordCreateSettings.INPUT_STREAM));
+        assertNotNull(config.getValue().get(MappingRecordCreateSettings.RDF_FORMAT));
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 
     @Test
@@ -320,19 +240,15 @@ public class MappingRestImplTest extends MobiRestTestNg {
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
-        verify(manager).createMapping(mappingJsonld);
-        ArgumentCaptor<MappingRecordConfig> config = ArgumentCaptor.forClass(MappingRecordConfig.class);
-        verify(manager).createMappingRecord(config.capture());
-        assertEquals("Title", config.getValue().getTitle());
-        assertEquals("Description", config.getValue().getDescription());
-        assertEquals("#Markdown", config.getValue().getMarkdown());
-        assertNull(config.getValue().getIdentifier());
-        assertEquals(Collections.singleton("keyword"), config.getValue().getKeywords());
-        assertEquals(Collections.singleton(user), config.getValue().getPublishers());
-        verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
-        verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
-        verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(createActivity, vf.createIRI(MAPPING_RECORD_IRI));
+        ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
+        verify(catalogManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class));
+        assertEquals("Title", config.getValue().get(RecordCreateSettings.RECORD_TITLE));
+        assertEquals("Description", config.getValue().get(RecordCreateSettings.RECORD_DESCRIPTION));
+        assertEquals("#Markdown", config.getValue().get(RecordCreateSettings.RECORD_MARKDOWN));
+        assertEquals(Collections.singleton("keyword"), config.getValue().get(RecordCreateSettings.RECORD_KEYWORDS));
+        assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
+        assertNotNull(config.getValue().get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA));
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 
     @Test
@@ -377,9 +293,7 @@ public class MappingRestImplTest extends MobiRestTestNg {
         Response response = target().path("mappings/" + encode(MAPPING_RECORD_IRI)).request().delete();
         assertEquals(response.getStatus(), 200);
 
-        IRI mrIri = vf.createIRI(MAPPING_RECORD_IRI);
-        verify(manager).deleteMapping(mrIri);
-        verify(provUtils).startDeleteActivity(user, mrIri);
-        verify(provUtils).endDeleteActivity(deleteActivity, record);
+        verify(catalogManager).deleteRecord(user, recordId, MappingRecord.class);
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 }

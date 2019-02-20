@@ -1,12 +1,12 @@
-package com.mobi.ontology.core.api.record.config;
+package com.mobi.etl.api.delimited.record.config;
 
 /*-
  * #%L
- * com.mobi.ontology.core.api
+ * com.mobi.etl.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2018 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,18 +25,21 @@ package com.mobi.ontology.core.api.record.config;
 
 import com.mobi.catalog.api.record.config.OperationSetting;
 import com.mobi.catalog.api.record.config.OperationSettingImpl;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.InputStream;
 
-public class OntologyRecordCreateSettings {
+public class MappingRecordCreateSettings {
 
     public static OperationSetting<InputStream> INPUT_STREAM;
+    public static OperationSetting<RDFFormat> RDF_FORMAT;
 
-    public OntologyRecordCreateSettings() {
-    }
+    public MappingRecordCreateSettings() {}
 
     static {
-        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.ontology.inputstream"),
-                "The input stream file for the ontology", null);
+        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.mapping.inputstream"),
+                "The input stream file for the mapping", null);
+        RDF_FORMAT = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.mapping.rdfformat"),
+                "The RDF format of the input stream file for the mapping", null);
     }
 }

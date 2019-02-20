@@ -25,41 +25,32 @@ package com.mobi.etl.rest.impl;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.PaginatedSearchResults;
-import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.etl.api.delimited.record.config.MappingRecordCreateSettings;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
-import com.mobi.etl.api.pagination.MappingPaginatedSearchParams;
 import com.mobi.etl.rest.MappingRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
-import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.LinksUtils;
-import com.mobi.rest.util.RestUtils;
-import com.mobi.rest.util.jaxb.Links;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -68,31 +59,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class MappingRestImpl implements MappingRest {
 
+    private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
+
     private MappingManager manager;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
-    private VersioningManager versioningManager;
     private ValueFactory vf;
-    private ModelFactory mf;
     private EngineManager engineManager;
-    private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
     private SesameTransformer transformer;
-    private CatalogProvUtils provUtils;
 
     @Reference
     void setManager(MappingManager manager) {
@@ -110,18 +98,8 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
-    @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setMf(ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference
@@ -134,42 +112,6 @@ public class MappingRestImpl implements MappingRest {
         this.transformer = transformer;
     }
 
-    @Reference
-    void setProvUtils(CatalogProvUtils provUtils) {
-        this.provUtils = provUtils;
-    }
-
-    @Override
-    public Response getMappings(UriInfo uriInfo, int offset, int limit, String sort, boolean asc, String searchText) {
-        LinksUtils.validateParams(limit, offset);
-        MappingPaginatedSearchParams params = new MappingPaginatedSearchParams(vf).setOffset(offset)
-                .setAscending(asc);
-        if (limit > 0) {
-            params.setLimit(limit);
-        }
-        if (sort != null && !sort.isEmpty()) {
-            params.setSortBy(vf.createIRI(sort));
-        }
-        if (searchText != null && !searchText.isEmpty()) {
-            params.setSearchText(searchText);
-        }
-        PaginatedSearchResults<MappingRecord> results = manager.getMappingRecords(params);
-        JSONArray array = JSONArray.fromObject(results.getPage().stream()
-                .map(record -> removeContext(record.getModel()))
-                .map(model -> modelToJsonld(model, transformer))
-                .map(RestUtils::getObjectFromJsonld)
-                .collect(Collectors.toList()));
-        Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
-        Response.ResponseBuilder response = Response.ok(array).header("X-Total-Count", results.getTotalSize());
-        if (links.getNext() != null) {
-            response = response.link(links.getBase() + links.getNext(), "next");
-        }
-        if (links.getPrev() != null) {
-            response = response.link(links.getBase() + links.getPrev(), "prev");
-        }
-        return response.build();
-    }
-
     @Override
     public Response upload(ContainerRequestContext context, String title, String description, String markdown,
                            List<FormDataBodyPart> keywords, InputStream fileInputStream,
@@ -180,48 +122,34 @@ public class MappingRestImpl implements MappingRest {
         checkStringParam(title, "Title is required");
         User user = getActiveUser(context, engineManager);
         CreateActivity createActivity = null;
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        RecordOperationConfig config = new OperationConfig();
+        Resource catalogId = configProvider.getLocalCatalogIRI();
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(RecordCreateSettings.RECORD_TITLE, title);
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
+        config.set(RecordCreateSettings.RECORD_MARKDOWN, markdown);
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords.stream()
+                .map(FormDataBodyPart::getValue)
+                .collect(Collectors.toSet()));
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        MappingRecord record;
         try {
-            createActivity = provUtils.startCreateActivity(user);
-            MappingWrapper mapping;
             if (fileInputStream != null) {
                 RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName()).orElseThrow(() ->
                         new IllegalArgumentException("File is not in a valid RDF format"));
-                mapping = manager.createMapping(fileInputStream, format);
+                config.set(MappingRecordCreateSettings.INPUT_STREAM, fileInputStream);
+                config.set(MappingRecordCreateSettings.RDF_FORMAT, format);
             } else {
-                mapping = manager.createMapping(jsonld);
+                config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonldToModel(jsonld, transformer));
             }
-            MappingRecordConfig.MappingRecordBuilder builder = new MappingRecordConfig.MappingRecordBuilder(title,
-                    Collections.singleton(user));
-            if (StringUtils.isNotEmpty(description)) {
-                builder.description(description);
-            }
-            if (StringUtils.isNotEmpty(markdown)) {
-                builder.markdown(markdown);
-            }
-            if (keywords != null) {
-                builder.keywords(keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
-            }
-            IRI catalogId = configProvider.getLocalCatalogIRI();
-            MappingRecord record = manager.createMappingRecord(builder.build());
-            catalogManager.addRecord(catalogId, record);
-            Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
-                    ErrorUtils.sendError("Master Branch was not set on MappingRecord",
-                            Response.Status.INTERNAL_SERVER_ERROR));
-            versioningManager.commit(catalogId, record.getResource(), branchId, user, "The initial commit.",
-                    mapping.getModel(), null);
-
-            logger.info("Mapping Uploaded: " + record.getResource());
-            provUtils.endCreateActivity(createActivity, record.getResource());
+            record = catalogManager.createRecord(user, config, MappingRecord.class);
             return Response.status(201).entity(record.getResource().stringValue()).build();
-        } catch (IOException | IllegalArgumentException ex) {
-            provUtils.removeActivity(createActivity);
+        } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
-            provUtils.removeActivity(createActivity);
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (Exception ex) {
-            provUtils.removeActivity(createActivity);
-            throw ex;
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -250,7 +178,7 @@ public class MappingRestImpl implements MappingRest {
             String mappingJsonld = groupedModelToString(mapping.getModel(), rdfFormat, transformer);
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(format.equalsIgnoreCase("jsonld") ? getJsonObject(mappingJsonld).toString() :
+                writer.write(format.equalsIgnoreCase("jsonld") ? getObjectFromJsonld(mappingJsonld).toString() :
                         mappingJsonld);
                 writer.flush();
                 writer.close();
@@ -269,39 +197,14 @@ public class MappingRestImpl implements MappingRest {
 
     @Override
     public Response deleteMapping(ContainerRequestContext context, String recordId) {
-        User activeUser = getActiveUser(context, engineManager);
-        IRI recordIri = vf.createIRI(recordId);
-        DeleteActivity deleteActivity = null;
         try {
-            logger.info("Deleting mapping: " + recordId);
-            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
-            MappingRecord record = manager.deleteMapping(recordIri);
-            provUtils.endDeleteActivity(deleteActivity, record);
-            return Response.ok().build();
-        } catch (IllegalArgumentException e) {
-            provUtils.removeActivity(deleteActivity);
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordId),
+                    MappingRecord.class);
         } catch (MobiException e) {
-            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
-    }
-
-    /**
-     * Retrieves the actual JSON-LD of a mapping. Removes the wrapping JSON array from
-     * around the result of using Rio to parse the mapping model into JSON-LD
-     *
-     * @param jsonld a mapping serialized as JSON-LD with a wrapping JSON array
-     * @return a JSONObject with a mapping serialized as JSON-LD
-     */
-    private JSONObject getJsonObject(String jsonld) {
-        JSONArray arr = JSONArray.fromObject(jsonld);
-        return arr.getJSONObject(0);
-    }
-
-    private Model removeContext(Model model) {
-        Model result = mf.createModel();
-        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-        return result;
+        return Response.ok().build();
     }
 }

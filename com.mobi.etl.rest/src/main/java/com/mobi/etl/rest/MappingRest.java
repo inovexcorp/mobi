@@ -45,29 +45,11 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 
 @Path("/mappings")
 @Api( value = "/mappings" )
 public interface MappingRest {
-    /**
-     * If passed an id list, produces a JSON array of all the mapping with matching ids
-     * in the data store. Otherwise just produces a JSON array of all mapping ids.
-     *
-     * @return a response with a JSON array of all the mapping ids
-     */
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Retrieve list of all saved mappings")
-    Response getMappings(@Context UriInfo uriInfo,
-                         @QueryParam("offset") int offset,
-                         @QueryParam("limit") int limit,
-                         @QueryParam("sort") String sort,
-                         @DefaultValue("true") @QueryParam("ascending") boolean asc,
-                         @QueryParam("searchText") String searchText);
-
     /**
      * Uploads a mapping sent as form data or a JSON-LD string into a data store with a UUID local name and creates
      * a new MappingRecord in the catalog.
