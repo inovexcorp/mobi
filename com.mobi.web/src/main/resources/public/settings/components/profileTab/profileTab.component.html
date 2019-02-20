@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="profile-tab row h-100 py-2">
+    <div class="col-6 offset-3">
+        <block class="h-100">
+            <block-content class="padding">
+                <h1>{{dvm.currentUser.username}}</h1>
+                <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+                <p ng-if="dvm.success && dvm.form.$pristine" class="text-success">
+                    <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
+                </p>
+                <form name="dvm.form">
+                    <text-input ng-model="dvm.currentUser.firstName" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" is-valid="dvm.form.firstName.$dirty && dvm.form.firstName.$valid" is-invalid="dvm.form.firstName.$dirty && dvm.form.firstName.$invalid"></text-input>
+                    <text-input ng-model="dvm.currentUser.lastName" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" is-valid="dvm.form.lastName.$dirty && dvm.form.lastName.$valid" is-invalid="dvm.form.lastName.$dirty && dvm.form.lastName.$invalid"></text-input>
+                    <email-input ng-model="dvm.currentUser.email" input-name="'email'" is-valid="dvm.form.email.$dirty && dvm.form.email.$valid" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'"></email-input>
+                </form>
+            </block-content>
+            <block-footer>
+                <button class="btn btn-primary" ng-click="dvm.save()" ng-disabled="dvm.form.$pristine || dvm.form.$invalid">Save</button>
+            </block-footer>
+        </block>
+    </div>
+</div>
