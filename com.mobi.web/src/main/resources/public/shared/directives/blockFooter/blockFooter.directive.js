@@ -35,15 +35,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name blockFooter
-         *
-         */
-        .module('blockFooter', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name blockFooter.directive:blockFooter
+         * @name shared.directive:blockFooter
          * @scope
          * @restrict E
          *

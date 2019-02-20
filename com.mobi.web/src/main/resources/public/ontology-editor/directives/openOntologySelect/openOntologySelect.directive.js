@@ -36,19 +36,19 @@
         /**
          * @ngdoc component
          * @name openOntologySelect.component:openOntologySelect
-         * @requires catalogManager.service:catalogManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `openOntologySelect` is a component that creates a `ui-select` containing the branches and tags of the
-         * provided {@link ontologyState.service:ontologyStateService listItem} and depending on the provided state, the
+         * provided {@link shared.service:ontologyStateService listItem} and depending on the provided state, the
          * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
-         * branch which will open a {@link confirmModal.directive:confirmModal}. Each tag in the `ui-select` has a
-         * button for deleting the tag which will open a {@link confirmModal.directive:confirmModal}. The component also
+         * branch which will open a {@link shared.directive:confirmModal}. Each tag in the `ui-select` has a
+         * button for deleting the tag which will open a {@link shared.directive:confirmModal}. The component also
          * houses the method for opening a modal for
          * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
          *

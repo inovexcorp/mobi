@@ -25,8 +25,8 @@
     /**
      * @ngdoc component
      * @name settings.component:groupTab
-     * @requires userManager.service:userManagerService
-     * @requires loginManager.service:loginManagerService
+     * @requires shared.service:userManagerService
+     * @requires shared.service:loginManagerService
      *
      * @description
      * `groupTab` is a component which creates a Bootstrap list of groups a user is in.

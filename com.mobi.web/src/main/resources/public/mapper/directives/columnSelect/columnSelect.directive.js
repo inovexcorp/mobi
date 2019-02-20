@@ -38,7 +38,7 @@
          * @name columnSelect.directive:columnSelect
          * @scope
          * @restrict E
-         * @requires delimitedManager.service:delimitedManagerService
+         * @requires shared.service:delimitedManagerService
          *
          * @description
          * `columnSelect` is a directive which creates a `ui-select` with the passed column list and

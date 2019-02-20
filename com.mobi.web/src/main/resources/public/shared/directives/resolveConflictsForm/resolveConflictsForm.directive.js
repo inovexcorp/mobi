@@ -71,6 +71,6 @@
     }
 
     angular
-        .module('resolveConflictsForm', [])
+        .module('shared')
         .directive('resolveConflictsForm', resolveConflictsForm);
 })();

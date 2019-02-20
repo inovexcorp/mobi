@@ -36,15 +36,15 @@
         /**
          * @ngdoc component
          * @name uploadDataOverlay.component:uploadDataOverlay
-         * @requires datasetManager.service:datasetManagerService
-         * @requires datasetState.service:datasetStateService
-         * @requires util.service:utilService
-         * @requires http.service:httpService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:datasetStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:httpService
          *
          * @description
          * `uploadDataOverlay` is a component that creates content for a modal with a form to select an RDF file to
-         * import into the {@link datasetState.service:datasetStateService selected dataset}. Meant to be used in
-         * conjunction with the {@link modalService.directive:modalService}.
+         * import into the {@link shared.service:datasetStateService selected dataset}. Meant to be used in
+         * conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

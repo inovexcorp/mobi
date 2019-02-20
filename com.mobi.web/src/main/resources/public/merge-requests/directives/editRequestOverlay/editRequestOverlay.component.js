@@ -36,10 +36,10 @@
         /**
          * @ngdoc component
          * @name editRequestOverlay.component:editRequestOverlay
-         * @requires mergeRequestManager.service:mergeRequestManagerService
+         * @requires shared.service:mergeRequestManagerService
          * @requires mergeRequestState.service:mergeRequestStateService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `editRequestOverlay` is a component that creates content for a modal that edits a merge request on the

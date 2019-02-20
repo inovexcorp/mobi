@@ -34,6 +34,6 @@
     }
 
     angular
-        .module('errorDisplay', [])
+        .module('shared')
         .directive('errorDisplay', errorDisplay);
 })();

@@ -41,7 +41,7 @@
          *
          * @description
          * `projectTab` is a directive that creates a page containing information about the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The display includes a
+         * {@link shared.service:ontologyStateService selected ontology}. The display includes a
          * {@link selectedDetails.directive:selectedDetails}, an
          * {@link ontologyPropertiesBlock.directive:ontologyPropertiesBlock}, an
          * {@link importsBlock.directive:importsBlock}, and a {@link previewBlock.directive:previewBlock}. The

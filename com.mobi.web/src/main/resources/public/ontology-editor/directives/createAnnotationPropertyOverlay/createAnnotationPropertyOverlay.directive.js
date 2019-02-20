@@ -38,16 +38,16 @@
          * @name createAnnotationPropertyOverlay.directive:createAnnotationPropertyOverlay
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `createAnnotationPropertyOverlay` is a directive that creates content for a modal that creates an annotation
-         * property in the current {@link ontologyState.service:ontologyStateService selected ontology}.
+         * property in the current {@link shared.service:ontologyStateService selected ontology}.
          * The form in the modal contains a text input for the property name (which populates the
-         * {@link staticIri.directive:staticIri IRI}), a {@link textArea.directive:textArea} for the property
+         * {@link staticIri.directive:staticIri IRI}), a {@link shared.directive:textArea} for the property
          * description, and an {@link advancedLanguageSelect.directive:advancedLanguageSelect}. Meant to be used in
          * conjunction with the {@link modalService.directive:modalService}.
          *

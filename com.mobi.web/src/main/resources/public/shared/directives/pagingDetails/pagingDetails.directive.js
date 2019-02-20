@@ -40,18 +40,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name pagingDetails
-         *
-         * @description
-         * The `pagingDetails` module only provides the `pagingDetails` directive which creates a div element
-         * with description of a page of results.
-         */
-        .module('pagingDetails', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name pagingDetails.directive:pagingDetails
+         * @name shared.directive:pagingDetails
          * @scope
          * @restrict E
          *

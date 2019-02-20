@@ -25,7 +25,12 @@ describe('Commit Difference Tabset directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('commitDifferenceTabset');
+        module('shared');
+        mockComponent('shared', 'commitChangesDisplay');
+        mockComponent('shared', 'commitHistoryTable');
+        mockComponent('shared', 'infoMessage');
+        mockComponent('shared', 'tab');
+        mockComponent('shared', 'tabset');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

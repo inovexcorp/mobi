@@ -36,18 +36,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name customLabel
-         *
-         * @description
-         * The `customLabel` module only provides the `customLabel` directive which creates
-         * a label element with transcluded content and optional muted text.
-         */
-        .module('customLabel', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name customLabel.directive:customLabel
+         * @name shared.directive:customLabel
          * @scope
          * @restrict E
          *

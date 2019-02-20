@@ -34,6 +34,6 @@
     }
 
     angular
-        .module('circleButtonStack', [])
+        .module('shared')
         .directive('circleButtonStack', circleButtonStack);
 })();

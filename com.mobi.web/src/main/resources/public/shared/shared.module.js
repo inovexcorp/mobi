@@ -23,6 +23,12 @@
 (function() {
     'use strict';
 
-    angular
-        .module('shared', []);
+    /**
+     * @ngdoc overview
+     * @name shared
+     *
+     * @description
+     * The `shared` module provides common components, directives, filters, and services that make up the Shared module in the Mobi application.
+     */
+    angular.module('shared', []);
 })();

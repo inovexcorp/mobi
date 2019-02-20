@@ -38,19 +38,19 @@
          * @name createObjectPropertyOverlay.directive:createObjectPropertyOverlay
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `createObjectPropertyOverlay` is a directive that creates content for a modal that creates an object property
-         * in the current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal
+         * in the current {@link shared.service:ontologyStateService selected ontology}. The form in the modal
          * contains a text input for the property name (which populates the {@link staticIri.directive:staticIri IRI}),
-         * a {@link textArea.directive:textArea} for the property description,
+         * a {@link shared.directive:textArea} for the property description,
          * {@link advancedLanguageSelect.directive:advancedLanguageSelect},
-         * {@link checkbox.directive:checkbox checkboxes} for the property characteristics, an
-         * {@link iriSelect.directive:iriSelect} for the domain, an {@link iriSelect.directive:iriSelect} for the range,
+         * {@link shared.directive:checkbox checkboxes} for the property characteristics, an
+         * {@link shared.directive:iriSelect} for the domain, an {@link shared.directive:iriSelect} for the range,
          * and a {@link superPropertySelect.directive:superPropertySelect}. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

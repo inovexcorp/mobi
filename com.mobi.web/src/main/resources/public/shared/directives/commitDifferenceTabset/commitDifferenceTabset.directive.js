@@ -47,27 +47,18 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name commitDifferenceTabset
-         *
-         * @description
-         * The `commitDifferenceTabset` module only provides the `commitDifferenceTabset` directive
-         * which creates a {@link tabset.directive:tabset} with tabs related to the difference between
-         * two commits.
-         */
-        .module('commitDifferenceTabset', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name commitDifferenceTabset.directive:commitDifferenceTabset
+         * @name shared.directive:commitDifferenceTabset
          * @scope
          * @restrict E
          *
          * @description
          * `commitDifferenceTabset` is a directive which creates a div containing a
-         * {@link tabset.directive:tabset} with tabs for the
-         * {@link commitChangesDisplay.directive:commitChangesDisplay changes} and
-         * {@link commitHistoryTable.directive:commitHistoryTable commits} between two branches.
+         * {@link shared.directive:tabset} with tabs for the
+         * {@link shared.directive:commitChangesDisplay changes} and
+         * {@link shared.directive:commitHistoryTable commits} between two branches.
          * The directive is replaced by the contents of its template.
          *
          * @param {string} recordId The IRI of the VersionedRDFRecord that the Commits belong to

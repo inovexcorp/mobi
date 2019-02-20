@@ -36,12 +36,12 @@
         /**
          * @ngdoc directive
          * @name classMappingOverlay.component:classMappingOverlay
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
          *
          * @description
          * `classMappingOverlay` is a component that creates content for a modal that creates a ClassMapping in the
-         * current {@link mapperState.service:mapperStateService#mapping mapping} and a preview of
+         * current {@link shared.service:mapperStateService#mapping mapping} and a preview of
          * the selected class. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

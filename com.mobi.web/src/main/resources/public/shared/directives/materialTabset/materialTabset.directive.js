@@ -60,24 +60,16 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name materialTabset
-         *
-         * @description
-         * The `materialTabset` module provides the `materialTabset` directive which creates a container for
-         * {@link materialTab.directive:materialTab tabs} and headers about the tabs.
-         */
-        .module('materialTabset', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name materialTabset.directive:materialTabset
+         * @name shared.directive:materialTabset
          * @scope
          * @restrict E
          *
          * @description
          * `materialTabset` is a directive that creates a `div` containing
-         * {@link materialTab.directive:materialTab tabs} and headers about the tabs displayed as `.nav-tabs`. The
+         * {@link shared.directive:materialTab tabs} and headers about the tabs displayed as `.nav-tabs`. The
          * tabs are transcluded into this directive and headers are generated for them. The directive is replaced
          * by the contents of its template.
          */

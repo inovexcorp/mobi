@@ -38,13 +38,13 @@
          * @name ontologyEditorPage.directive:ontologyEditorPage
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `ontologyEditorPage` is a directive that creates a `div` containing the main components of the Ontology
          * Editor. These components are {@link ontologySidebar.directive:ontologySidebar},
          * {@link ontologyTab.directive:ontologyTab} with the
-         * {@link ontologyState.service:ontologyStateService currently selected open ontology}, and
+         * {@link shared.service:ontologyStateService currently selected open ontology}, and
          * {@link openOntologyTab.directive:openOntologyTab}. The directive is replaced by the contents of
          * its template.
          */

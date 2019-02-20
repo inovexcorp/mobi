@@ -38,18 +38,18 @@
          * @name annotationOverlay.directive:annotationOverlay
          * @scope
          * @restrict E
-         * @requires propertyManager.service:propertyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires util.service:utilService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:prefixes
          *
          * @description
          * `annotationOverlay` is a directive that creates content for a modal that adds or edits an annotation on the
-         * {@link ontologyState.service:ontologyStateService selected entity}. The form in the modal contains a
-         * `ui-select` for the annotation property, a {@link textArea.directive:textArea} for the annotation value, and
-         * a {@link languageSelect.directive:languageSelect}. If the annotation is owl:deprecated, the `textArea` and
-         * `languageSelect` are replaced by {@link radioButton.directive:radioButton radio buttons} for the boolean
+         * {@link shared.service:ontologyStateService selected entity}. The form in the modal contains a
+         * `ui-select` for the annotation property, a {@link shared.directive:textArea} for the annotation value, and
+         * a {@link shared.directive:languageSelect}. If the annotation is owl:deprecated, the `textArea` and
+         * `languageSelect` are replaced by {@link shared.directive:radiobutton radio buttons} for the boolean
          * value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

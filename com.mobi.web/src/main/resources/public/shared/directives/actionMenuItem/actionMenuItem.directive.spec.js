@@ -25,7 +25,7 @@ describe('Action Menu Item directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('actionMenuItem');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

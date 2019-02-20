@@ -38,12 +38,12 @@
          * @name classHierarchyBlock.directive:classHierarchyBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `classHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the clases in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The directive is replaced by the
+         * {@link shared.service:ontologyStateService selected ontology}. The directive is replaced by the
          * contents of its template.
          */
         .directive('classHierarchyBlock', classHierarchyBlock);

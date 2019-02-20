@@ -30,7 +30,7 @@
          *
          * @description 
          * The `previewDataGrid` module only provides the `previewDataGrid` directive which creates
-         * a HandsonTable for the {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}
+         * a HandsonTable for the {@link shared.service:delimitedManagerService#dataRows delimited data}
          * loaded into Mobi.
          */
         .module('previewDataGrid', [])
@@ -39,16 +39,16 @@
          * @name previewDataGrid.directive:previewDataGrid
          * @scope
          * @restrict E
-         * @requires mapperState.service:mapperStateService
-         * @requires delimitedManager.service:delimitedManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:delimitedManagerService
          * @requires hotRegisterer
          *
          * @description 
          * `previewDataGrid` is a directive that creates a HandsonTable (`hot-table`) with the 
-         * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} loaded into
+         * {@link shared.service:delimitedManagerService#dataRows delimited data} loaded into
          * Mobi. The `hot-table` will automatically update whenever new data is loaded, the 
-         * {@link mapperState.service:mapperStateService#highlightIndex highlighted column} changes, and
-         * when whether or not the data {@link delimitedManager.service:delimitedManagerService#containsHeaders contains headers}
+         * {@link shared.service:mapperStateService#highlightIndex highlighted column} changes, and
+         * when whether or not the data {@link shared.service:delimitedManagerService#containsHeaders contains headers}
          * changes. The `hot-table` is uneditable and the user cannot select a cell within it. The directive 
          * is replaced by the contents of its template.
          */

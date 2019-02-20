@@ -71,21 +71,12 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name iriSelect
-         *
-         * @description
-         * The `iriSelect` module provides the `iriSelect` directive which provides options for a formatted ui-select
-         * that takes in a map of IRI to its parent IRI. iriSelect then will group and sort IRIs based on the parent
-         * IRI.
-         */
-        .module('iriSelect', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name iriSelect.directive:iriSelect
+         * @name shared.directive:iriSelect
          * @restrict E
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `iriSelect` is a directive which provides options for a formatted ui-select that takes in a map of IRI to its

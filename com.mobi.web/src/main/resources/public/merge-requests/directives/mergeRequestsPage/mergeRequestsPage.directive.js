@@ -38,7 +38,7 @@
          * @name mergeRequestsPage.directive:mergeRequestsPage
          * @scope
          * @restrict E
-         * @requires mergeRequestsState.service:mergeRequestsStateService
+         * @requires shared.service:mergeRequestsStateService
          *
          * @description
          * `mergeRequestsPage` is a directive which creates a div containing the main parts of the Merge Requests

@@ -25,7 +25,7 @@ describe('Password Confirm Input directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('passwordConfirmInput');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

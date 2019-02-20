@@ -25,7 +25,9 @@ describe('Commit History Table directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('commitHistoryTable');
+        module('shared');
+        mockComponent('shared', 'errorDisplay');
+        mockComponent('shared', 'infoMessage');
         injectChromaConstant();
         mockOntologyState();
         mockCatalogManager();

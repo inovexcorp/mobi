@@ -23,19 +23,24 @@
 (function() {
     'use strict';
 
+    function escapeHTML() {
+        return function(text) {
+            if(text) {
+                var node = document.createTextNode(text);
+                var div = document.createElement('div');
+                div.appendChild(node);
+                return div.innerHTML;
+            } else {
+                return '';
+            }
+        }
+    }
+
     angular
-        /**
-         * @ngdoc overview
-         * @name escapeHTML
-         *
-         * @description 
-         * The `escapeHTML` module only provides the `escapeHTML` filter which
-         * converts any any special characters in a string into escaped characters.
-         */
-        .module('escapeHTML', [])
+        .module('shared')
         /**
          * @ngdoc filter
-         * @name escapeHTML.filter:escapeHTML
+         * @name shared.filter:escapeHTML
          * @kind function
          *
          * @description 
@@ -49,17 +54,4 @@
          * a copy of the value with escaped characters 
          */
         .filter('escapeHTML', escapeHTML);
-
-    function escapeHTML() {
-        return function(text) {
-            if(text) {
-                var node = document.createTextNode(text);
-                var div = document.createElement('div');
-                div.appendChild(node);
-                return div.innerHTML;
-            } else {
-                return '';
-            }
-        }
-    }
 })();

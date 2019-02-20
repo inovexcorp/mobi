@@ -30,7 +30,7 @@
          *
          * @description
          * The `mappingSelectPage` module only provides the `mappingSelectPage` directive which creates a Bootstrap
-         * `row` with {@link block.directive:block blocks} for editing the selecting and previewing a mapping.
+         * `row` with {@link shared.directive:block blocks} for editing the selecting and previewing a mapping.
          */
         .module('mappingSelectPage', [])
         /**
@@ -38,16 +38,16 @@
          * @name mappingSelectPage.directive:mappingSelectPage
          * @scope
          * @restrict E
-         * @requires mapperState.service:mapperStateService
-         * @requires mappingManager.service:mappingManagerService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns for selecting
          * and previewing a mapping. The left column contains
          * a {@link mappingListBlock.directive:mappingListBlock mappingListBlock} for selecting the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}. The right column contains a
+         * {@link shared.service:mapperStateService#mapping mapping}. The right column contains a
          * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons
          * for editing running, duplicating, and downloading the mapping. The directive is replaced by the
          * contents of its template.

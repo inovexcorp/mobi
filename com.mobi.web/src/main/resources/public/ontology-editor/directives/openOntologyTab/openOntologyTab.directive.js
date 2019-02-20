@@ -38,21 +38,21 @@
          * @name openOntologyTab.directive:openOntologyTab
          * @scope
          * @restrict E
-         * @requires httpService.service:httpService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires mapperState.service:mapperStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires modal.service:modalService
-         * @requires policyEnforcement.service:policyEnforcementService
-         * @requires policyManager.service:policyManagerService
+         * @requires shared.service:httpService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:modalService
+         * @requires shared.service:policyEnforcementService
+         * @requires shared.service:policyManagerService
          *
          * @description
          * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a
-         * {@link searchBar.directive:searchBar} and a paginated list of ontologies with
-         * {@link actionMenu.directive:actionMenu action menus} to manage and delete. In addition, the page includes
+         * {@link shared.directive:searchBar} and a paginated list of ontologies with
+         * {@link shared.directive:actionMenu action menus} to manage and delete. In addition, the page includes
          * buttons for {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
          * {@link uploadOntologyTab.directive:uploadOntologyTab uploading ontologies}. The directive houses a method
          * for opening the modal deleting an ontology. The directive is replaced by the contents of its template.

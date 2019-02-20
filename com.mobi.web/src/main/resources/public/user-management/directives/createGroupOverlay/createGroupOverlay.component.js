@@ -36,9 +36,9 @@
         /**
          * @ngdoc component
          * @name createGroupOverlay.component:createGroupOverlay
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
-         * @requires loginManager.service:loginManagerService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
+         * @requires shared.service:loginManagerService
          *
          * @description
          * `createGroupOverlay` is a component that creates content for a modal with a form to add a group to Mobi. The

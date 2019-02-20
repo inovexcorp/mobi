@@ -23,19 +23,17 @@
 (function() {
     'use strict';
 
+    function inArray() {
+        return function(list, arrayFilter) {
+            return _.isArray(list) && _.isArray(arrayFilter) ? _.intersection(list, arrayFilter) : [];
+        }
+    }
+
     angular
-        /**
-         * @ngdoc overview
-         * @name inArray
-         *
-         * @description
-         * The `inArray` module only provides the `inArray` filter which filters an array by the
-         * intersection with another array.
-         */
-        .module('inArray', [])
+        .module('shared')
         /**
          * @ngdoc filter
-         * @name inArray.filter:inArray
+         * @name shared.filter:inArray
          * @kind function
          *
          * @description
@@ -48,10 +46,4 @@
          * array or the intersection of the two arrays.
          */
         .filter('inArray', inArray);
-
-    function inArray() {
-        return function(list, arrayFilter) {
-            return _.isArray(list) && _.isArray(arrayFilter) ? _.intersection(list, arrayFilter) : [];
-        }
-    }
 })();

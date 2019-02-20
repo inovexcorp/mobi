@@ -38,11 +38,11 @@
          * @name classBlockHeader.directive:classBlockHeader
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService
          * @requires exploreUtils.service:exploreUtilsService
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * HTML contents in the class block header which provides a dropdown select to allow users to

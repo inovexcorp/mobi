@@ -23,10 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        .module('prefixation', [])
-        .filter('prefixation', prefixation);
-
     prefixation.$inject = ['prefixes'];
 
     function prefixation(prefixes) {
@@ -43,4 +39,8 @@
             return result;
         }
     }
+
+    angular
+        .module('shared')
+        .filter('prefixation', prefixation);
 })();

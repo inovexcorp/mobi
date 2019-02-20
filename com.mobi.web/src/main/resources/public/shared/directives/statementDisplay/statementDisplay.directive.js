@@ -61,15 +61,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name statementDisplay
-         *
-         */
-        .module('statementDisplay', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name statementDisplay.directive:statementDisplay
+         * @name shared.directive:statementDisplay
          * @scope
          * @restrict E
          *

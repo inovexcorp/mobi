@@ -36,7 +36,7 @@
         /**
          * @ngdoc component
          * @name newInstancePropertyOverlay.component:newInstancePropertyOverlay
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          * @requires exploreUtils.service:exploreUtilsService
          *
          * @description

@@ -25,7 +25,7 @@ describe('Material Tabset directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('materialTabset');
+        module('shared');
         injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {

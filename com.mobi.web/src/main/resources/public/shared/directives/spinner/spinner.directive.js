@@ -34,18 +34,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name spinner
-         *
-         * @description
-         * The `spinner` module only provides the `spinner` directive which creates a spinning icon with
-         * a transparent background that fills the containing element.
-         */
-        .module('spinner', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name spinner.directive:spinner
+         * @name shared.directive:spinner
          * @restrict E
          *
          * @description

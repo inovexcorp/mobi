@@ -23,30 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name uniqueKey
-         *
-         * @description 
-         * The `uniqueKey` module only provides the `uniqueKey` filter
-         * which filters out duplicate keys.
-         */
-        .module('uniqueKey', [])
-        /**
-         * @ngdoc filter
-         * @name uniqueKey.filter:uniqueKey
-         * @kind function
-         *
-         * @description 
-         * Takes an array of items and returns an array without duplicates based on a given key
-         *
-         * @param {Object[]} collection The array from which to remove duplicates
-         * @param {string} keyField The value on which to match
-         * @returns {Object[]} The original array minus any duplicate entries
-         */
-        .filter('uniqueKey', uniqueKey);
-
     function uniqueKey() {
         return function(collection, keyField) {
             var results = [];
@@ -67,4 +43,20 @@
             return results;
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc filter
+         * @name shared.filter:uniqueKey
+         * @kind function
+         *
+         * @description 
+         * Takes an array of items and returns an array without duplicates based on a given key
+         *
+         * @param {Object[]} collection The array from which to remove duplicates
+         * @param {string} keyField The value on which to match
+         * @returns {Object[]} The original array minus any duplicate entries
+         */
+        .filter('uniqueKey', uniqueKey);
 })();

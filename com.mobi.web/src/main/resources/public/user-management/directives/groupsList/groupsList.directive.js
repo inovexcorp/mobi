@@ -30,9 +30,9 @@
          *
          * @description
          * The `groupsList` module provides the `groupsList` directive which creates an interactable
-         * list of all {@link userManager.service:userManagerService#groups groups}, and the
+         * list of all {@link shared.service:userManagerService#groups groups}, and the
          * `filterGroups` filter which filters a list of groups based on a
-         * {@link userState.service:userStateService#filteredGroupList state variable}.
+         * {@link shared.service:userStateService#filteredGroupList state variable}.
          */
         .module('groupsList', [])
         /**
@@ -40,13 +40,13 @@
          * @name groupsList.directive:groupsList
          * @scope
          * @restrict E
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
-         * @requires loginManager.service:loginManagerService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
+         * @requires shared.service:loginManagerService
          *
          * @description
          * `groupsList` is a directive that creates a <ul> containing different subsets of the
-         * {@link userManager.service:userManagerService#groups groups} list depending on whether
+         * {@link shared.service:userManagerService#groups groups} list depending on whether
          * the list should be filtered. Groups can only be edited by admin users. The directive is
          * replaced by the contents of its template.
          */
@@ -58,11 +58,11 @@
          *
          * @description
          * Takes an array of group Objects from the
-         * {@link userManager.service:userManagerService userManagerService} and if the state
+         * {@link shared.service:userManagerService userManagerService} and if the state
          * says that the
-         * {@link userState.service:userStateService#filteredGroupList list should be filtered},
+         * {@link shared.service:userStateService#filteredGroupList list should be filtered},
          * filters the list of groups to only those that the
-         * {@link loginManager.service:loginManagerService#currentUser current User} is a member
+         * {@link shared.service:loginManagerService#currentUser current User} is a member
          * of.
          *
          * @param {Object[]} groupList The array of group Objects

@@ -38,16 +38,16 @@
          * @name axiomBlock.directive:axiomBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires modal.service:modalService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:modalService
+         * @requires shared.service:prefixes
          *
          * @description
          * `axiomBlock` is a directive that creates a section that displays the appropriate axioms on the
-         * {@link ontologyState.service:ontologyStateService selected entity} based on its type. The directives
+         * {@link shared.service:ontologyStateService selected entity} based on its type. The directives
          * used for display are {@link classAxioms.directive:classAxioms},
          * {@link objectPropertyAxioms.directive:objectPropertyAxioms}, and
          * {@link datatypePropertyAxioms.directive:datatypePropertyAxioms}. The section header contains a button for

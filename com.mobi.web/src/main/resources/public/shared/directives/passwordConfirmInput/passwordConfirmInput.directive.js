@@ -68,19 +68,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name passwordConfirmInput
-         *
-         * @description
-         * The `passwordConfirmInput` module provides the `passwordConfirmInput` directive, which
-         * creates two password inputs whose values much match, and the `samePassword` directive,
-         * which is used for testing whether the values of the two password inputs match.
-         */
-        .module('passwordConfirmInput', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name passwordConfirmInput.directive:passwordConfirmInput
+         * @name shared.directive:passwordConfirmInput
          * @scope
          * @restrict E
          *
@@ -97,7 +88,7 @@
         .directive('passwordConfirmInput', passwordConfirmInput)
         /**
          * @ngdoc directive
-         * @name passwordConfirmInput.directive:samePassword
+         * @name shared.directive:samePassword
          * @restrict A
          *
          * @description

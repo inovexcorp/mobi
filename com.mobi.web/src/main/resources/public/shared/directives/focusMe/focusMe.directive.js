@@ -35,18 +35,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name focusMe
-         *
-         * @description
-         * The `focusMe` module provides the `focusMe` directive which provides a way to focus an element when it
-         * becomes visible.
-         */
-        .module('focusMe', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name focusMe.directive:focusMe
+         * @name shared.directive:focusMe
          * @restrict A
          *
          * @description

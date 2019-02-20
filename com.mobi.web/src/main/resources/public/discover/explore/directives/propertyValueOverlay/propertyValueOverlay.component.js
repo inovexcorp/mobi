@@ -36,16 +36,16 @@
         /**
          * @ngdoc component
          * @name propertyValueOverlay.component:propertyValueOverlay
-         * @requires discoverState.service:discoverStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:prefixes
          * @requires uuid.service:uuid
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          * @requires exploreUtilsService.service:exploreUtilsService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `propertyValueOverlay` is a component that creates content for a modal to view the value of the provided
-         * property on the {@link discoverState.service:discoverStateService selected instance}. The modal allows you to
+         * property on the {@link shared.service:discoverStateService selected instance}. The modal allows you to
          * view all reified statements associated with the value and add new ones from the provided list using a
          * {@link newInstancePropertyOverlay.component:newInstancePropertyOverlay}. Meant to be used in conjunction with
          * the {@link modalService.directive:modalService}.

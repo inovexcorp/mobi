@@ -36,11 +36,11 @@
         /**
          * @ngdoc component
          * @name downloadQueryOverlay.component:downloadQueryOverlay
-         * @requires sparqlManager.service:sparqlManagerService
+         * @requires shared.service:sparqlManagerService
          *
          * @description
          * `downloadQueryOverlay` is a component that creates content for a modal with a form to download the results
-         * of a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query}. The form includes
+         * of a {@link shared.service:sparqlManagerService#queryString SPARQL query}. The form includes
          * a selector for the file type and the file name. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

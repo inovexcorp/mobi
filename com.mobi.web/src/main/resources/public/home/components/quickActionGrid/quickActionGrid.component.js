@@ -25,8 +25,8 @@
     /**
      * @ngdoc component
      * @name home.component:quickActionGrid
-     * @requires ontologyState.service:ontologyStateService
-     * @requires discoverState.service:discoverStateService
+     * @requires shared.service:ontologyStateService
+     * @requires shared.service:discoverStateService
      *
      * @description
      * `quickActionGrid` is a component which creates a Bootstrap `.card` containing a grid of links to perform

@@ -25,7 +25,7 @@ describe('Paging directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('paging');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;

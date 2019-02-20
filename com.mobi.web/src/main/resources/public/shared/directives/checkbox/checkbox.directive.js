@@ -52,14 +52,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name checkbox
-         */
-        .module('checkbox', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name checkbox.directive:checkbox
+         * @name shared.directive:checkbox
          * @scope
          * @restrict E
          * @requires $timeout

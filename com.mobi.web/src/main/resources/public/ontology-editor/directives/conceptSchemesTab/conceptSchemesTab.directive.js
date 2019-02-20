@@ -38,16 +38,16 @@
          * @name conceptSchemesTab.directive:conceptSchemesTab
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `conceptSchemesTab` is a directive that creates a page containing the
          * {@link conceptSchemeHierarchyBlock.directive:conceptSchemeHierarchyBlock} of the current
-         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary} and information about a
+         * {@link shared.service:ontologyStateService selected ontology/vocabulary} and information about a
          * selected entity from that list. The selected entity display includes a
          * {@link selectedDetails.directive:selectedDetails}, a button to delete the entity, an
          * {@link annotationBlock.directive:annotationBlock}, a

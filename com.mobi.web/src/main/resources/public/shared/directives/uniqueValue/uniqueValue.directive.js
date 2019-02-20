@@ -40,18 +40,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name uniqueValue
-         *
-         * @description
-         * The `uniqueValue` module only provides the `uniqueValue` directive which tests whether a value
-         * is already used in the provided array.
-         */
-        .module('uniqueValue', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name uniqueValue.directive:uniqueValue
+         * @name shared.directive:uniqueValue
          * @restrict A
          *
          * @description

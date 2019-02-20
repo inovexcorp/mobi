@@ -38,8 +38,8 @@
          * @name explore.service:exploreService
          * @requires $http
          * @requires $q
-         * @requires util.service:utilService
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:discoverStateService
          *
          * @description
          * `exploreService` is a service that provides access to the Mobi explorable-datasets REST

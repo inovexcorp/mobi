@@ -38,16 +38,16 @@
          * @name classMappingDetails.directive:classMappingDetails
          * @scope
          * @restrict E
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires modal.service:modalService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:modalService
          *
          * @description
          * `classMappingDetails` is a directive that creates a div with sections to view and edit information
-         * about the {@link mapperState.service:mapperStateService#selectedClassMappingId selected class mapping}.
+         * about the {@link shared.service:mapperStateService#selectedClassMappingId selected class mapping}.
          * One section is for viewing and editing the
          * {@link iriTemplateOverlay.component:iriTemplateOverlay IRI template} of the class mapping. Another section is
          * for viewing the list of property mappings associated with the class mapping, adding to that list, editing

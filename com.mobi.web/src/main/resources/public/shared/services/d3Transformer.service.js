@@ -23,33 +23,13 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name d3Transformer
-         *
-         * @description
-         * The `d3Transformer` module only provides the `d3TransformerService` service which
-         * provides various transformers tools to convrt json-ld to d3 json format
-         */
-        .module('d3Transformer', [])
-        /**
-         * @ngdoc service
-         * @name d3Transformer.service:d3TransformerService
-         *
-         * @description
-         * `d3TransformerService` is a service that provides different transformers to convert json-ld
-         *  to json objects used by the d3 library.
-         */
-        .service('d3TransformerService', d3TransformerService);
-
     function d3TransformerService() {
         var self = this;
 
         /**
          * @ngdoc method
          * @name buildForceDirectedGraphD3Format
-         * @methodOf d3Transformer.service:d3TransformerService
+         * @methodOf shared.service:d3TransformerService
          *
          * @description
          * Transform provided JSON-LD object to the D3 force directed graph json format
@@ -82,7 +62,7 @@
         /**
          * @ngdoc method
          * @name buildHierarchyD3Format
-         * @methodOf d3Transformer.service:d3TransformerService
+         * @methodOf shared.service:d3TransformerService
          *
          * @description
          * Transform provided JSON-LD object to the D3 hierarchy json format
@@ -135,4 +115,16 @@
             }
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name shared.service:d3TransformerService
+         *
+         * @description
+         * `d3TransformerService` is a service that provides different transformers to convert json-ld
+         *  to json objects used by the d3 library.
+         */
+        .service('d3TransformerService', d3TransformerService);
 })();

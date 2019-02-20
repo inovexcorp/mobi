@@ -46,22 +46,14 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name entityDates
-         *
-         * @description
-         * The `entityDates` module only provides the `entityDates` directive which creates a div
-         * with displays for an entity's dcterms:issued and dcterms:modified date property values.
-         */
-        .module('entityDates', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name entityDates.directive:entityDates
+         * @name shared.directive:entityDates
          * @scope
          * @restrict E
          * @requires $filter
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `entityDates` is a directive which creates a div with displays for a JSON-LD object's

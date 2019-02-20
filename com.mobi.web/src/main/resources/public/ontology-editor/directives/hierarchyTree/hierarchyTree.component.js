@@ -26,15 +26,15 @@
     /**
      * @ngdoc component
      * @name ontology-editor.component:hierarchyTree
-     * @requires ontologyManager.service:ontologyManagerService
-     * @requires ontologyState.service:ontologyStateService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:ontologyStateService
      * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:prefixes
      *
      * @description
-     * `hierarchyTree` is a component which creates a `div` containing a {@link searchBar.directive:searchBar}
+     * `hierarchyTree` is a component which creates a `div` containing a {@link shared.directive:searchBar}
      * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
-     * is shown based on value matches with predicates in the {@link ontologyManager.service:ontologyManagerService entityNameProps}.
+     * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
      *
      * @param {Object[]} hierarchy An array which represents a flattened hierarchy
      * @param {Function} updateSearch A function to update the state variable used to track the search filter text

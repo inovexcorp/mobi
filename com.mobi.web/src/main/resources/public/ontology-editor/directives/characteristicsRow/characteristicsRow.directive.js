@@ -38,15 +38,15 @@
          * @name characteristicsRow.directive:characteristicsRow
          * @scope
          * @restrict E
-         * @requires prefixes.service:prefixes
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `characteristicsRow` is a directive that creates a Bootstrap `.row` that displays the
          * {@link characteristicsBlock.directive:characteristicsBlock} depending on whether the
-         * {@link ontologyState.service:ontologyStateService selected entity} is a object or data property.
+         * {@link shared.service:ontologyStateService selected entity} is a object or data property.
          * The directive is replaced by the contents of its template.
          */
         .directive('characteristicsRow', characteristicsRow);

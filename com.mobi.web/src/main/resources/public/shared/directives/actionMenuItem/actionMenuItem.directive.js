@@ -37,24 +37,16 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name actionMenu
-         *
-         * @description
-         * The `actionMenu` module only provides the `actionMenu` directive which creates a link element for an
-         * {@link actionMenu.directive:actionMenu}.
-         */
-        .module('actionMenuItem', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name actionMenu.directive:actionMenu
+         * @name shared.directive:actionMenu
          * @scope
          * @restrict E
          *
          * @description
          * `actionMenu` is a directive that creates a link element to be used within an
-         * {@link actionMenu.directive:actionMenu}. The directive expects text to be used for the link display along
+         * {@link shared.directive:actionMenu}. The directive expects text to be used for the link display along
          * with a Font Awesome class name for an icon display as well. The directive is replaced by the content of the
          * template.
          *

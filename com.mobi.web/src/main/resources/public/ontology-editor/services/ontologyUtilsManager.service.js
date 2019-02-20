@@ -36,12 +36,12 @@
         /**
          * @ngdoc service
          * @name ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
-         * @requires updateRefs.service:updateRefsService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:updateRefsService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
          *
          * @description
          * `ontologyUtilsManagerService` is a service which contains various utility methods used throughout the Ontology
@@ -424,9 +424,9 @@
              * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
              *
              * @description
-             * Creates an HTML string of the body of a {@link confirmModal.directive:confirmModal} for confirming the
+             * Creates an HTML string of the body of a {@link shared.directive:confirmModal} for confirming the
              * deletion of the specified property value on the current
-             * {@link ontologyState.service:ontologyStateService selected entity}.
+             * {@link shared.service:ontologyStateService selected entity}.
              *
              * @param {string} key The IRI of a property on the current entity
              * @param {number} index The index of the specific property value being deleted
@@ -442,7 +442,7 @@
              *
              * @description
              * Creates a display of the specified property value on the current
-             * {@link ontologyState.service:ontologyStateService selected entity} based on whether it is a
+             * {@link shared.service:ontologyStateService selected entity} based on whether it is a
              * data property value, object property value, or blank node.
              *
              * @param {string} key The IRI of a property on the current entity
@@ -461,7 +461,7 @@
              *
              * @description
              * Removes the specified property value on the current
-             * {@link ontologyState.service:ontologyStateService selected entity}, updating the InProgressCommit,
+             * {@link shared.service:ontologyStateService selected entity}, updating the InProgressCommit,
              * everything hierarchy, and property hierarchy.
              *
              * @param {string} key The IRI of a property on the current entity

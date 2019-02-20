@@ -66,6 +66,6 @@
     }
 
     angular
-        .module('tabset', [])
+        .module('shared')
         .directive('tabset', tabset);
 })();

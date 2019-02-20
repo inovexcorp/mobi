@@ -36,17 +36,17 @@
         /**
          * @ngdoc component
          * @name newInstanceClassOverlay.component:newInstanceClassOverlay
-         * @requires splitIRI.filter:splitIRIFilter
+         * @requires shared.filter:splitIRIFilter
          * @requires uuid
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          * @requires explore.service:exploreService
          * @requires exploreUtils.service:exploreUtilsService
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `newInstanceClassOverlay` is a component that creates contents for a modal that adds an instance of a class
          * selected from the provided list to the currently
-         * {@link discoverState.service:discoverStateService selected dataset}. The modal contains a dropdown list of
+         * {@link shared.service:discoverStateService selected dataset}. The modal contains a dropdown list of
          * the classes that is searchable. For creation, an IRI is generated with a random UUID and the new instance is
          * added to the breadcrumbs to be edited.
          *

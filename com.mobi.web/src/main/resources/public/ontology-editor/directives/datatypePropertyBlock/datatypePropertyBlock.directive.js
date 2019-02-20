@@ -38,14 +38,14 @@
          * @name datatypePropertyBlock.directive:datatypePropertyBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `datatypePropertyBlock` is a directive that creates a section that displays the data properties on the
-         * {@link ontologyState.service:ontologyStateService selected individual} using
+         * {@link shared.service:ontologyStateService selected individual} using
          * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a data
          * property. The directive houses the methods for opening the modal for
          * {@link datatypePropertyOverlay.directive:datatypePropertyOverlay editing, adding}, and removing data property

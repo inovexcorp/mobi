@@ -39,15 +39,15 @@
          * @scope
          * @restrict E
          * @requires $q
-         * @requires delimitedManager.service:delimitedManagerService
-         * @requires mapperState.service:mapperStateService
+         * @requires shared.service:delimitedManagerService
+         * @requires shared.service:mapperStateService
          *
          * @description
          * `fileUploadForm` is a directive that creates a form for uploaded delimited data into Mobi
-         * using the {@link delimitedManager.service:delimitedManagerService delimitedManagerService}.
+         * using the {@link shared.service:delimitedManagerService delimitedManagerService}.
          * If the chosen file is a SV file, the user must select a separator for the columns and selecting
          * a new value will automatically upload the file again. Tests whether the selected file is
-         * compatiable with the current {@link mapperState.service:mapperStateService#mapping mapping}
+         * compatiable with the current {@link shared.service:mapperStateService#mapping mapping}
          * and outputs a list of any invalid data property mappings. The directive is replaced by the contents
          * of its template.
          */

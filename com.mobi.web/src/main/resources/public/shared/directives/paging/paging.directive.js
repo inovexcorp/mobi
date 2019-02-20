@@ -52,18 +52,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name paging
-         *
-         * @description
-         * The `paging` module only provides the `paging` directive which creates a div element with pagination buttons
-         * and details about which page a user is currently on.
-         */
-        .module('paging', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name paging.directive:paging
+         * @name shared.directive:paging
          * @scope
          * @restrict E
          *

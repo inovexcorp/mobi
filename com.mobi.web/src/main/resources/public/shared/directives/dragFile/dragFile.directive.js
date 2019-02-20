@@ -82,18 +82,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name dragFile
-         *
-         * @description
-         * The `dragFile` module only provides the `dragFile` directive which creates the draggable
-         * file section.
-         */
-        .module('dragFile', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name dragFile.directive:dragFile
+         * @name shared.directive:dragFile
          * @scope
          * @restrict E
          * @requires $window

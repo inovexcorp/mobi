@@ -38,16 +38,16 @@
          * @name conceptsTab.directive:conceptsTab
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `conceptsTab` is a directive that creates a page containing the
          * {@link conceptHierarchyBlock.directive:conceptHierarchyBlock} of the current
-         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary} and information about a
+         * {@link shared.service:ontologyStateService selected ontology/vocabulary} and information about a
          * selected concept from that list. The selected concept display includes a
          * {@link selectedDetails.directive:selectedDetails}, a button to delete the concept, an
          * {@link annotationBlock.directive:annotationBlock}, a

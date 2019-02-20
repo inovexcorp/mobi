@@ -26,17 +26,17 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordsView
-     * @requires catalogState.service:catalogStateService
-     * @requires catalogManager.service:catalogManagerService
-     * @requires utilService.service:utilService
+     * @requires shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
      *
      * @description
      * `recordsView` is a component which creates a div with a Bootstrap `row` containing a list of Records in the Mobi
      * instance. The list can be sorted using a {@link catalog.component:sortOptions}, searched using a
      * {@link searchBar.component:searchBar}, and filtered using a {@link catalog.component:recordFilters}. The list is
-     * also {@link paging.directive:paging paginated}. Each Record is displayed using a
+     * also {@link shared.directive:paging paginated}. Each Record is displayed using a
      * {@link catalog.component:recordCard} that will select the Record it in the
-     * {@link catalogState.service:catalogStateService} when clicked.
+     * {@link shared.service:catalogStateService} when clicked.
      */
     const recordsViewComponent = {
         templateUrl: 'catalog/components/recordsView/recordsView.component.html',

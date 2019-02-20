@@ -39,7 +39,7 @@
          * @name propSelect.directive:propSelect
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyManagerService
          * @requires $filter
          *
          * @description
@@ -49,7 +49,7 @@
          * its template.
          *
          * @param {object[]} props an array of property objects from the
-         * {@link ontologyManager.service:ontologyManagerService ontologyManagerService}
+         * {@link shared.service:ontologyManagerService ontologyManagerService}
          * @param {boolean} isDisabledWhen whether or not the select should be disabled
          * @param {function} [onChange=undefined] an optional function to be called on change
          * of the selected property

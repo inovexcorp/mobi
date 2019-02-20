@@ -36,11 +36,11 @@
         /**
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService
-         * @requires prefixes.service:prefixes
-         * @requires sparqlManager.service:sparqlManagerService
-         * @requires utilService.service:utilService
-         * @requires datasetManager.service:datasetManagerService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:sparqlManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:datasetManagerService
+         * @requires shared.service:ontologyManagerService
          *
          * @description
          * `exploreUtilsService` is a service that provides utility functions for the explore sub module.

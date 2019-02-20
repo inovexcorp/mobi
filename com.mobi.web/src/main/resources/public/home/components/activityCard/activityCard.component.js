@@ -25,10 +25,10 @@
     /**
      * @ngdoc component
      * @name home.component:activityCard
-     * @requires provManager.service:provManagerService
-     * @requires util.service:utilService
-     * @requires prefixes.service:prefixes
-     * @requires http.service:httpService
+     * @requires shared.service:provManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     * @requires shared.service:httpService
      *
      * @description
      * `activityCard` is a component which creates a Bootstrap `.card` containing a infinite scrolled list of the

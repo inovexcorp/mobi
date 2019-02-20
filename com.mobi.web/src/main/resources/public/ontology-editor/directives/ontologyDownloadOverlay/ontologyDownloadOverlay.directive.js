@@ -38,12 +38,12 @@
          * @name ontologyDownloadOverlay.directive:ontologyDownloadOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          *
          * @description
          * `ontologyDownloadOverlay` is a directive that creates content for a modal that downloads the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} as an RDF file. The form in the modal
+         * {@link shared.service:ontologyStateService selected ontology} as an RDF file. The form in the modal
          * contains a {@link serializationSelect.directive:serializationSelect} and text input for the file name. Meant
          * to be used in conjunction with the {@link modalService.directive:modalService}.
          *

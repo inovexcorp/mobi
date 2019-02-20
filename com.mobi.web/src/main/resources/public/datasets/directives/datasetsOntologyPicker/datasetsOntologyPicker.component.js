@@ -26,9 +26,9 @@
     /**
      * @ngdoc component
      * @name datasetsTabset.component:datasetsOntologyPicker
-     * @requires catalogManager.service:catalogManagerService
-     * @requires util.service:utilService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
      *
      * @description
      * `datasetsOntologyPicker` is a component which creates a searchable list for selecting ontologies along with an

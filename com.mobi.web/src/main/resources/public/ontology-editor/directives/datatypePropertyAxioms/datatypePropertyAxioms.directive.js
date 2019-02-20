@@ -38,17 +38,17 @@
          * @name datatypePropertyAxioms.directive:datatypePropertyAxioms
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `datatypePropertyAxioms` is a directive that creates a list of
          * {@link propertyValues.directive:propertyValues} of the axioms on the
-         * {@link ontologyState.service:ontologyStateService selected data property}.
+         * {@link shared.service:ontologyStateService selected data property}.
          * The directive houses the methods for opening the modal for removing property axioms. The
          * directive is replaced by the contents of its template.
          */

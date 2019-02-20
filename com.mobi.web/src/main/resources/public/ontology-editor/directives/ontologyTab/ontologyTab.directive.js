@@ -30,16 +30,16 @@
          * @name ontologyTab.directive:ontologyTab
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * `ontologyTab` is a directive that creates a `div` containing all the directives necessary for
          * displaying an ontology. This includes a {@link mergeTab.directive:mergeTab},
          * {@link ontologyButtonStack.directive:ontologyButtonStack}, and
-         * {@link materialTabset.directive:materialTabset}. The `materialTabset` contains tabs for the
+         * {@link shared.directive:materialTabset}. The `materialTabset` contains tabs for the
          * {@link projectTab.directive:projectTab}, {@link overviewTab.directive:overviewTab},
          * {@link classesTab.directive:classesTab}, {@link propertiesTab.directive:propertiesTab},
          * {@link individualsTab.directive:individualsTab}, {@link conceptSchemesTab.directive:conceptSchemesTab},

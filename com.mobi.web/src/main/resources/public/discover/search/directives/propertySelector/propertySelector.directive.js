@@ -38,10 +38,10 @@
          * @name propertySelector.directive:propertySelector
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
-         * @requires ontologyManager.service:ontologyManagerService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
          *
          * @description
          * HTML contents for the property selector which provides the users an option to select a property and range

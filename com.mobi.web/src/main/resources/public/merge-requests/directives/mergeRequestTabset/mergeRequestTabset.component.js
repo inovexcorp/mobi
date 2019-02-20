@@ -30,7 +30,7 @@
          *
          * @description
          * The `mergeRequestTabset` module only provides the `mergeRequestTabset` component
-         * which creates a {@link materialTabset.directive:materialTabset} with tabs related to the discussion and
+         * which creates a {@link shared.directive:materialTabset} with tabs related to the discussion and
          * difference of a Merge Request.
          */
         .module('mergeRequestTabset', [])
@@ -40,10 +40,10 @@
          *
          * @description
          * `mergeRequestTabset` is a component which creates a div containing a
-         * {@link materialTabset.directive:materialTabset tabset} with tabs for the
+         * {@link shared.directive:materialTabset tabset} with tabs for the
          * {@link mergeRequestDiscussion.directive:mergeRequestDiscussion},
-         * {@link commitChangesDisplay.directive:commitChangesDisplay changes}, and
-         * {@link commitHistoryTable.directive:commitHistoryTable commits} of the provided Merge Request.
+         * {@link shared.directive:commitChangesDisplay changes}, and
+         * {@link shared.directive:commitHistoryTable commits} of the provided Merge Request.
          *
          * @param {Object} request An object representing a Merge Request
          */

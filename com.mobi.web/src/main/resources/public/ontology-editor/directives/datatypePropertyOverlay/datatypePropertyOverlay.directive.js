@@ -38,18 +38,18 @@
          * @name datatypePropertyOverlay.directive:datatypePropertyOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires propertyManager.service:propertyManagerService
+         * @requires shared.service:propertyManagerService
          *
          * @description
          * `datatypePropertyOverlay` is a directive that creates content for a modal that adds a data property value to
-         * the {@link ontologyState.service:ontologyStateService selected individual}. The form in the modal contains a
-         * `ui-select` of all the data properties in the ontology, a {@link textArea.directive:textArea} for the data
-         * property value, an {@link iriSelect.directive:iriSelect} for the datatype, and a
-         * {@link languageSelect.directive:languageSelect}. Meant to be used in conjunction with the
+         * the {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a
+         * `ui-select` of all the data properties in the ontology, a {@link shared.directive:textArea} for the data
+         * property value, an {@link shared.directive:iriSelect} for the datatype, and a
+         * {@link shared.directive:languageSelect}. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

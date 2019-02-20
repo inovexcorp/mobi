@@ -30,8 +30,8 @@
          *
          * @description
          * The `mappingCommitsPage` module only provides the `mappingCommitsPage` directive which creates
-         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * a Bootstrap `row` with {@link shared.directive:block blocks} for editing the current
+         * {@link shared.service:mapperStateService#mapping mapping}.
          */
         .module('mappingCommitsPage', [])
         /**
@@ -39,9 +39,9 @@
          * @name mappingCommitsPage.directive:mappingCommitsPage
          * @scope
          * @restrict E
-         * @requires mapperState.service:mapperStateService
-         * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:mapperStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:prefixes
          *
          * @description
          * 

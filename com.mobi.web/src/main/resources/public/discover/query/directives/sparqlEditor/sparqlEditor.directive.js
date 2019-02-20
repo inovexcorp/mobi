@@ -38,14 +38,14 @@
          * @name sparqlEditor.directive:sparqlEditor
          * @scope
          * @restrict E
-         * @requires sparqlManager.service:sparqlManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:sparqlManagerService
+         * @requires shared.service:prefixes
          *
          * @description
-         * `sparqlEditor` is a directive that creates a {@link block.directive:block block} with a form for creating
-         * a {@link sparqlManager.service:sparqlManagerService#queryString SPARQL query}, selecting
-         * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes} and a
-         * {@link sparqlManager.service:sparqlManagerService#datasetRecordIRI dataset} and submitting it. The directive
+         * `sparqlEditor` is a directive that creates a {@link shared.directive:block block} with a form for creating
+         * a {@link shared.service:sparqlManagerService#queryString SPARQL query}, selecting
+         * {@link shared.service:sparqlManagerService#prefixes prefixes} and a
+         * {@link shared.service:sparqlManagerService#datasetRecordIRI dataset} and submitting it. The directive
          * is replaced by the contents of its template.
          */
         .directive('sparqlEditor', sparqlEditor);

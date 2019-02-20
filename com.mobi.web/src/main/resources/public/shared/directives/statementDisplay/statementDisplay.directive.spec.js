@@ -25,7 +25,7 @@ describe('Statement Display directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('statementDisplay');
+        module('shared');
         injectSplitIRIFilter();
         injectPrefixationFilter();
 

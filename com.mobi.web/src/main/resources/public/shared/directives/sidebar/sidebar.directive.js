@@ -59,6 +59,6 @@
     }
 
     angular
-        .module('sidebar', [])
+        .module('shared')
         .directive('sidebar', sidebar);
 })();

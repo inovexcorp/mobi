@@ -60,18 +60,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name editIriOverlay
-         *
-         * @description
-         * The `editIriOverlay` module only provides the `editIriOverlay` directive which creates content
-         * for modal to edit an IRI.
-         */
-        .module('editIriOverlay', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name editIriOverlay.directive:editIriOverlay
+         * @name shared.directive:editIriOverlay
          * @scope
          * @restrict E
          * @requires REGEX

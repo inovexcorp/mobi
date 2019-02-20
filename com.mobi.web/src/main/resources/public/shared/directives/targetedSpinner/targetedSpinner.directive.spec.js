@@ -24,7 +24,7 @@ describe('Targeted Spinner directive', function() {
     var $compile, scope, httpSvc;
 
     beforeEach(function() {
-        module('targetedSpinner');
+        module('shared');
         mockHttpService();
 
         inject(function(_$compile_, _$rootScope_, _httpService_) {

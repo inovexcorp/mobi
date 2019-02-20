@@ -45,18 +45,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name clickToCopy
-         *
-         * @description
-         * The `clickToCopy` module provides the `clickToCopy` directive which adds functionality to click
-         * an element to copy specified text.
-         */
-        .module('clickToCopy', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name clickToCopy.directive:clickToCopy
+         * @name shared.directive:clickToCopy
          * @restrict A
          * @requires toastr
          *

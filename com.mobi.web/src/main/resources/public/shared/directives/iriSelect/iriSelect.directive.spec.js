@@ -25,7 +25,8 @@ describe('IRI Select directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('iriSelect');
+        module('shared');
+        mockComponent('shared', 'customLabel');
         mockUtil();
         injectTrustedFilter();
         injectHighlightFilter();

@@ -38,13 +38,13 @@
          * @name requestDetailsForm.directive:requestDetailsForm
          * @scope
          * @restrict E
-         * @requires mergeRequestsState.service:mergeRequestsStateService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestsStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `requestDetailsForm` is a directive which creates a div containing a form with inputs for
          * the title, description, and other metadata about a new MergeRequest. The div also contains
-         * {@link commitDifferenceTabset.directive:commitDifferenceTabset} to display the changes and
+         * {@link shared.directive:commitDifferenceTabset} to display the changes and
          * commits between the previously selected source and target branch of the Merge Request.
          * The directive is replaced by the contents of its template.
          */

@@ -25,7 +25,7 @@ describe('Radio Button directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('radioButton');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;

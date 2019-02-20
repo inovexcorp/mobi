@@ -38,7 +38,7 @@
          * @name discoverTabset.directive:discoverTabset
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
+         * @requires shared.service:discoverStateService
          *
          * @description
          * HTML contents in the discover tabset which contains the explore and query tabs.

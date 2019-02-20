@@ -31,7 +31,7 @@
          * @description
          * The `mappingTitle` module only provides the `mappingTitle` directive
          * which creates a div containing the name of the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * {@link shared.service:mapperStateService#mapping mapping}.
          */
         .module('mappingTitle', [])
         /**
@@ -39,11 +39,11 @@
          * @name mappingTitle.directive:mappingTitle
          * @scope
          * @restrict E
-         * @requires  mapperState.service:mapperStateService
+         * @requires  shared.service:mapperStateService
          *
          * @description
          * `mappingTitle` is a directive which creates a div with the name of the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}.
+         * {@link shared.service:mapperStateService#mapping mapping}.
          */
         .directive('mappingTitle', mappingTitle);
 

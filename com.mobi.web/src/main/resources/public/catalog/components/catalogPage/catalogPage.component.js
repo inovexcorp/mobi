@@ -26,7 +26,7 @@
     /**
      * @ngdoc component
      * @name catalog.component:catalogPage
-     * @requires catalogState.service:catalogStateService
+     * @requires shared.service:catalogStateService
      *
      * @description
      * `catalogPage` is a component which creates the main page of the Catalog module. The component contains different

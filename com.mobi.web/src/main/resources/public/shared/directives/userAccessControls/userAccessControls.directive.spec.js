@@ -25,7 +25,7 @@ describe('User Access Controls directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('userAccessControls');
+        module('shared');
         mockPolicyManager();
         mockUtil();
         mockLoginManager();

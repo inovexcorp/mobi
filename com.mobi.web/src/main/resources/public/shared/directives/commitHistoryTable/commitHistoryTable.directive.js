@@ -296,30 +296,22 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name commitHistoryTable
-         *
-         * @description
-         * The `commitHistoryTable` module only provides the `commitHistoryTable` directive which creates
-         * a table of commits and optionally a graph of the commit network.
-         */
-        .module('commitHistoryTable', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name commitHistoryTable.directive:commitHistoryTable
+         * @name shared.directive:commitHistoryTable
          * @scope
          * @restrict E
-         * @requires catalogManager.service:catalogManagerService
-         * @requires util.service:utilService
-         * @requires userManager.service:userManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:catalogManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `commitHistoryTable` is a directive that creates a table containing the commit chain of the provided commit.
          * Can optionally also display a SVG graph generated using Snap.svg showing the network of the commits along
          * with an optional title for the top commit. Clicking on a commit id or its corresponding circle in the graph
-         * will open up a {@link commitInfoOverlay.directive:commitInfoOverlay commit info overlay}. Can optionally
+         * will open up a {@link shared.directive:commitInfoOverlay commit info overlay}. Can optionally
          * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
          *
          * @param {string} commitId The IRI string of a commit in the local catalog

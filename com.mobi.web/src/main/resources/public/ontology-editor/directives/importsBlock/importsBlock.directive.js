@@ -38,15 +38,15 @@
          * @name importsBlock.directive:importsBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
-         * @requires util.service:utilService
-         * @requires propertyManager.service:propertyManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
+         * @requires shared.service:utilService
+         * @requires shared.service:propertyManagerService
+         * @requires shared.service:modalService
          *
          * @description
          * `importsBlock` is a directive that creates a section that displays the imports on the current
-         * {@link ontologyState.service:ontologyStateService selected ontology}. The section contains buttons for
+         * {@link shared.service:ontologyStateService selected ontology}. The section contains buttons for
          * adding an import and reloading the imports. Each import is displayed as its IRI and with a remove button.
          * The directive houses the methods for opening the modal for
          * {@link importsOverlay.directive:importsOverlay adding} and removing imports. The directive is replaced by the

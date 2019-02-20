@@ -36,13 +36,13 @@
         /**
          * @ngdoc component
          * @name editGroupInfoOverlay.component:editGroupInfoOverlay
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
-         * @requires util.service:utilService
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `editGroupInfoOverlay` is a component that creates content for a modal with a form to change the
-         * {@link userState.service:userStateService#selectedGroup selected group's} information in Mobi. The
+         * {@link shared.service:userStateService#selectedGroup selected group's} information in Mobi. The
          * form contains a field to edit the group's description. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

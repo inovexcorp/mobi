@@ -52,18 +52,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name file-input
-         *
-         * @description
-         * The `fileInput` module only provides the `fileInput` directive which
-         * adds ngModel functionality to the standard input element for files.
-         */
-        .module('fileInput', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name file-input.directive:fileInput
+         * @name shared.directive:fileInput
          * @restrict E
          *
          * @description

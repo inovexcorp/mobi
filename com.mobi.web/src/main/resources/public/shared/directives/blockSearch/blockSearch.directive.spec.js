@@ -25,7 +25,7 @@ describe('Block search directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('blockSearch');
+        module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

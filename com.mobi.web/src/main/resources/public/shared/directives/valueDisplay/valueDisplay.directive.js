@@ -49,22 +49,14 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name valueDisplay
-         *
-         * @description
-         * The `valueDisplay` module only provides the `valueDisplay` directive which creates
-         * a span element which displays a json-ld object in a readable format.
-         */
-        .module('valueDisplay', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name valueDisplay.directive:valueDisplay
+         * @name shared.directive:valueDisplay
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
-         * @requires util.service:utilService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `valueDisplay` is a directive which creates a span element for displaying json-ld values.

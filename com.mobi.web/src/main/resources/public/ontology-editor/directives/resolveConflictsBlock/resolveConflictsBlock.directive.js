@@ -38,14 +38,14 @@
          * @name resolveConflictsBlock.directive:resolveConflictsBlock
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:utilService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `resolveConflictsBlock` is a directive that creates a series of displays for resolving conflicts between the
-         * current branch of the opened {@link ontologyState.service:ontologyStateService ontology} into a target
+         * current branch of the opened {@link shared.service:ontologyStateService ontology} into a target
          * branch. The display includes information about the branches being merged, a
-         * {@link resolveConflictsForm.directive:resolveConflictsForm}, a button to submit the merge, and a button to
+         * {@link shared.directive:resolveConflictsForm}, a button to submit the merge, and a button to
          * cancel the merge. The directive calls the appropriate methods to merge with the selected resolutions from
          * the `resolveConflictsForm`. The directive is replaced by the contents of its template.
          */

@@ -35,18 +35,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name disableAnimate
-         *
-         * @description
-         * The `disableAnimate` module only provides the `disableAnimate` directive which disabled ngAnimate on an
-         * element.
-         */
-        .module('disableAnimate', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name disableAnimate.directive:disableAnimate
+         * @name shared.directive:disableAnimate
          * @restrict A
          * @requires $animate
          *

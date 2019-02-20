@@ -36,11 +36,11 @@
         /**
          * @ngdoc component
          * @name propertyFilterOverlay.component:propertyFilterOverlay
-         * @requires discoverState.service:discoverStateService
-         * @requires util.service:utilService
+         * @requires shared.service:discoverStateService
+         * @requires shared.service:utilService
          * @requires search.service:searchService
-         * @requires prefixes.service:prefixes
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:prefixes
+         * @requires shared.service:ontologyManagerService
          *
          * @description
          * HTML contents for the property filter overlay which provides the users with step by step options for building

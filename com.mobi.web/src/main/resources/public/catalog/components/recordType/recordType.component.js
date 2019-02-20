@@ -26,14 +26,14 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordType
-     * @requires catalogManager.service:catalogManagerService
-     * @requires utilService.service:utilService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
      *
      * @description
      * `recordType` is a directive that creates a span with the main type of the provided catalog Record. This type is
      * determined by removing the core Record types from the full list of Record types supported from the
-     * {@link catalogManager.service:catalogManagerService} and finding the first one of those types that is present on
+     * {@link shared.service:catalogManagerService} and finding the first one of those types that is present on
      * the provided Record JSON-LD object.
      *
      * @param {Object} record A JSON-LD object for a catalog Record

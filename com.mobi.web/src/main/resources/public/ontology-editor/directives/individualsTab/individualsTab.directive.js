@@ -38,14 +38,14 @@
          * @name individualsTab.directive:individualsTab
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-         * @requires modal.service:modalService
+         * @requires shared.service:modalService
          *
          * @description
          * `individualsTab` is a directive that creates a page containing the
          * {@link individualHierarchyBlock.directive:individualHierarchyBlock} of the current
-         * {@link ontologyState.service:ontologyStateService selected ontology} and information about a selected
+         * {@link shared.service:ontologyStateService selected ontology} and information about a selected
          * individual from that list. The selected individual display includes a
          * {@link selectedDetails.directive:selectedDetails}, a button to delete the individual, a
          * {@link datatypePropertyBlock.directive:datatypePropertyBlock}, a

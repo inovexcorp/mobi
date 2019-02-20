@@ -25,7 +25,8 @@ describe('Text Area directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('textArea');
+        module('shared');
+        mockComponent('shared', 'customLabel');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

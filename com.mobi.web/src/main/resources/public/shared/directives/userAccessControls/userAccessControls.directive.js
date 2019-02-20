@@ -171,33 +171,26 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name userAccessControls
-         * @description
-         * The `userAccessControls` module only provides the `userAccessControls` directive which which creates
-         * selectors for viewing and updating permissions of the application.
-         */
-        .module('userAccessControls', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name userAccessControls.directive:userAccessControls
+         * @name shared.directive:userAccessControls
          * @scope
          * @restrict E
-         * @requires policyManager.service:policyManagerService
-         * @requires util.service:utilService
-         * @requires loginManager.service:loginManagerService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:policyManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:loginManagerService
+         * @requires shared.service:prefixes
          *
          * @description
          * `userAccessControls` is a directive that creates a Bootstrap `row` div with a single column
-         * containing a {@link block.directive:block block} for viewing and updating overall permissions
+         * containing a {@link shared.directive:block block} for viewing and updating overall permissions
          * from policies. The directive is replaced by the contents of its template.
          */
         .directive('userAccessControls', userAccessControls)
         /**
          * @ngdoc directive
-         * @name userAccessControls.directive:hideLabel
+         * @name shared.directive:hideLabel
          * @restrict A
          *
          * @description

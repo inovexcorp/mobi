@@ -23,28 +23,6 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name updateRefs
-         *
-         * @description
-         * The `updateRefs` module only provides the `updateRefs` service which changes every
-         * instance of a certain key in an object from
-         * {@link ontologyManager.service:ontologyManager ontologyManager} to a new string.
-         */
-        .module('updateRefs', [])
-        /**
-         * @ngdoc service
-         * @name updateRefs.service:updateRefsService
-         * @requires $filter
-         *
-         * @description
-         * `updateRefsService` is a service that provides functionality to uypdate references
-         * in an object from {@link ontologyManager.service:ontologyManager ontologyManager}.
-         */
-        .service('updateRefsService', updateRefsService);
-
     updateRefsService.$inject = ['$filter'];
 
     function updateRefsService($filter) {
@@ -56,7 +34,7 @@
         /**
          * @ngdoc method
          * @name update
-         * @methodOf updateRefs.service:updateRefsService
+         * @methodOf shared.service:updateRefsService
          *
          * @description
          * Changes every instance of a specific key in an object from
@@ -107,7 +85,7 @@
         /**
          * @ngdoc method
          * @name remove
-         * @methodOf updateRefs.service:updateRefsService
+         * @methodOf shared.service:updateRefsService
          *
          * @description
          * Removes every instance of a specific key in an object from
@@ -145,4 +123,17 @@
             return _.isEmpty(value) || (_.keys(value).length === 1 && _.has(value, '$$hashKey'));
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name shared.service:updateRefsService
+         * @requires $filter
+         *
+         * @description
+         * `updateRefsService` is a service that provides functionality to uypdate references
+         * in an object from {@link ontologyManager.service:ontologyManager ontologyManager}.
+         */
+        .service('updateRefsService', updateRefsService);
 })();

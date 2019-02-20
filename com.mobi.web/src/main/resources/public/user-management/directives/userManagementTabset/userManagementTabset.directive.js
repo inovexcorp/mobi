@@ -30,7 +30,7 @@
          *
          * @description
          * The `userManagementTabset` module only provides the `userManagementTabset` directive
-         * which creates the main {@link tabset.directive:tabset tabset} for the user management
+         * which creates the main {@link shared.directive:tabset tabset} for the user management
          * area.
          */
         .module('userManagementTabset', [])
@@ -39,10 +39,10 @@
          * @name userManagementTabset.directive:userManagementTabset
          * @scope
          * @restrict E
-         * @requires userState.service:userStateService
+         * @requires shared.service:userStateService
          *
          * @description
-         * `userManagementTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with different
+         * `userManagementTabset` is a directive which creates a {@link shared.directive:tabset tabset} with different
          * pages depending on whether the {@link usersPage.directive:usersPage users},
          * {@link groupsPage.directive:groupsPage groups}, or
          * {@link permissionsPage.directive:permissionsPage permissions} of Mobi should be shown. The directive is

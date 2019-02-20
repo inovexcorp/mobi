@@ -36,6 +36,7 @@ var src = './src/main/resources/public/',
 var jsFiles = function(prefix) {
         return [
             prefix + 'vendor/manchestersyntax.js',
+            prefix + 'shared/shared.module.js',
             prefix + 'shared/services/prefixes.service.js',
             prefix + 'shared/filters/!(*.spec).js',
             prefix + 'shared/services/!(*.spec).js',
@@ -277,7 +278,7 @@ gulp.task('move-node-css', function() {
 
 // Moves all custom js files to build folder
 gulp.task('move-custom-js', function() {
-    return gulp.src(src + '**/!(*Spec).js')
+    return gulp.src(src + '**/!(*.spec).js')
         .pipe(babel({
             presets: ['es2015']
         }))

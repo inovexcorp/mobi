@@ -44,6 +44,6 @@
     }
 
     angular
-        .module('stepProgressBar', [])
+        .module('shared')
         .directive('stepProgressBar', stepProgressBar);
 })();

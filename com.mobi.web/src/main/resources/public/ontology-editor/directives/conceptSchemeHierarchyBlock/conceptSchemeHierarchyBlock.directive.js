@@ -38,12 +38,12 @@
          * @name conceptSchemeHierarchyBlock.directive:conceptSchemeHierarchyBlock
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
+         * @requires shared.service:ontologyStateService
          *
          * @description
          * `conceptSchemeHierarchyBlock` is a directive that creates a section that displays a
          * {@link hierarchyTree.directive:hierarchyTree} of the concept schemes and concepts in the current
-         * {@link ontologyState.service:ontologyStateService selected ontology/vocabulary}. The directive is replaced
+         * {@link shared.service:ontologyStateService selected ontology/vocabulary}. The directive is replaced
          * by the contents of its template.
          */
         .directive('conceptSchemeHierarchyBlock', conceptSchemeHierarchyBlock);

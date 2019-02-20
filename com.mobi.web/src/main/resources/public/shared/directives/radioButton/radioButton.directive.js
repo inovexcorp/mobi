@@ -53,19 +53,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name radiobutton
-         *
-         * @description 
-         * The `radioButton` module only provides the `radioButton` directive which creates
-         * a radio input styled with Bootstrap classes, a custom change function, a custom 
-         * disabled condition, and custom label text.
-         */
-        .module('radioButton', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name radioButton.directive:radiobutton
+         * @name shared.directive:radiobutton
          * @scope
          * @restrict E
          * @requires $timeout

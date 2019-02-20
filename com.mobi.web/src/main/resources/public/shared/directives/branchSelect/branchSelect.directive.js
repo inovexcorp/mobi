@@ -54,21 +54,13 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name branchSelect
-         *
-         * @description
-         * The `branchSelect` module only provides the `branchSelect` directive
-         * which creates a ui-select to select a branch from within the provided list of branches.
-         */
-        .module('branchSelect', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name branchSelect.directive:branchSelect
+         * @name shared.directive:branchSelect
          * @scope
          * @restrict E
-         * @requires util.service:utilService
+         * @requires shared.service:utilService
          *
          * @description
          * `branchSelect` is a directive which creates a Bootstrap form-group div containing a ui-select

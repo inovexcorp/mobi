@@ -26,15 +26,15 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordView
-     * @requires catalogState.service:cataStateService
-     * @requires catalogManager.service:catalogManagerService
-     * @requires policyEnforcement.service:policyEnforcementService
-     * @requires utilService.service:utilService
-     * @requires prefixes.service:prefixes
+     * @requires shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:policyEnforcementService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
      *
      * @description
      * `recordView` is a component which creates a div with a Bootstrap `row` containing columns displaying different
-     * information about the currently {@link catalogState.service:catalogStateService selected catalog Record}. The
+     * information about the currently {@link shared.service:catalogStateService selected catalog Record}. The
      * first column just contains a button to go back to the {@link catalog.component:catalogPage}. The second column
      * contains a display of the Record's title, description, and {@link catalog.component:recordIcon icon} along with a
      * {@link catalog.component:recordViewTabset}. The third column contains the Record's

@@ -38,8 +38,8 @@
          * @name superClassSelect.directive:superClassSelect
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires util.service:utilService
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description

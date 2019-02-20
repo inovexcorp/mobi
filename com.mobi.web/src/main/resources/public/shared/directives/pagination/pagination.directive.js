@@ -49,19 +49,10 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name pagination
-         * 
-         * @description
-         * The `pagination` module only provides the `pagination` directive which
-         * creates a div element with a custom Bootstrap 'pagination' ul for 
-         * paginated results returned from HTTP calls.
-         */
-        .module('pagination', [])
+    .module('shared')
         /**
          * @ngdoc directive
-         * @name pagination.directive:pagination
+         * @name shared.directive:pagination
          * @scope
          * @restrict E
          *

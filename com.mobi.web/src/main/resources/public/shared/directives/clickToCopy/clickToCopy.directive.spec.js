@@ -25,7 +25,7 @@ describe('Click to Copy directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('clickToCopy');
+        module('shared');
         mockToastr();
 
         inject(function(_$compile_, _$rootScope_, _toastr_) {

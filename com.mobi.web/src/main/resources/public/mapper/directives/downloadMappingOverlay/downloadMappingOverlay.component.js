@@ -36,12 +36,12 @@
         /**
          * @ngdoc component
          * @name downloadMappingOverlay.directive:downloadMappingOverlay
-         * @requires mappingManager.service:mappingManagerService
-         * @requires mapperState.service:mapperStateService
+         * @requires shared.service:mappingManagerService
+         * @requires shared.service:mapperStateService
          *
          * @description
          * `downloadMappingOverlay` is a component that content for a modal to download the current
-         * {@link mapperState.service:mapperStateService#mapping mapping} in a variety of different formats using a
+         * {@link shared.service:mapperStateService#mapping mapping} in a variety of different formats using a
          * {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}.
          *
          * @param {Function} close A function that closes the modal

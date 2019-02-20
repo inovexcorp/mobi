@@ -26,14 +26,14 @@
     /**
      * @ngdoc component
      * @name newDatasetOverlay.component:newDatasetOverlay
-     * @requires datasetManager.service:datasetManagerService
-     * @requires datasetState.service:datasetStateService
-     * @requires util.service:utilService
+     * @requires shared.service:datasetManagerService
+     * @requires shared.service:datasetStateService
+     * @requires shared.service:utilService
      *
      * @description
      * `newDatasetOverlay` is a component that creates content for a modal with a form containing fields for
      * creating a new Dataset Record. The fields are for the title, repository id, dataset IRI, description,
-     * {@link keywordSelect.directive:keywordSelect keywords}, and
+     * {@link shared.directive:keywordSelect keywords}, and
      * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the new Dataset
      * Record. The repository id is a static field for now. Meant to be used in conjunction with the
      * {@link modalService.directive:modalService}.

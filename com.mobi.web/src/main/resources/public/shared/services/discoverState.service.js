@@ -23,34 +23,13 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name discoverState
-         *
-         * @description
-         * The `discoverState` module only provides the `discoverStateService` service which
-         * contains various variables to hold the state of the discover module along with some
-         * utility functions for those variables.
-         */
-        .module('discoverState', [])
-        /**
-         * @ngdoc service
-         * @name discoverState.service:discoverStateService
-         *
-         * @description
-         * `discoverStateService` is a service which contains various variables to hold the
-         * state of the discover module along with some utility functions for those variables.
-         */
-        .service('discoverStateService', discoverStateService);
-
     function discoverStateService() {
         var self = this;
 
         /**
          * @ngdoc property
          * @name explore
-         * @propertyOf discoverState.service:discoverStateService
+         * @propertyOf shared.service:discoverStateService
          * @type {Object}
          *
          * @description
@@ -89,7 +68,7 @@
         /**
          * @ngdoc property
          * @name search
-         * @propertyOf discoverState.service:discoverStateService
+         * @propertyOf shared.service:discoverStateService
          * @type {Object}
          *
          * @description
@@ -101,7 +80,7 @@
         /**
          * @ngdoc property
          * @name query
-         * @propertyOf discoverState.service:discoverStateService
+         * @propertyOf shared.service:discoverStateService
          * @type {Object}
          *
          * @description
@@ -115,7 +94,7 @@
         /**
          * @ngdoc method
          * @name reset
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Resets all state variables.
@@ -127,7 +106,7 @@
         /**
          * @ngdoc method
          * @name resetPagedInstanceDetails
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Resets the explore properties to be their initial values.
@@ -148,7 +127,7 @@
         /**
          * @ngdoc method
          * @name cleanUpOnDatasetDelete
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Resets the paged details and all data associated with the provided dataset if
@@ -167,7 +146,7 @@
         /**
          * @ngdoc method
          * @name cleanUpOnDatasetDelete
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Resets the paged details and all data associated with the provided dataset if
@@ -185,7 +164,7 @@
         /**
          * @ngdoc method
          * @name clickCrumb
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Removes the proper number of items from the breadcrumbs for the explore UI.
@@ -201,7 +180,7 @@
         /**
          * @ngdoc method
          * @name getInstance
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Gets the instance from the entity variable which contains the instance and reified statements.
@@ -215,7 +194,7 @@
         /**
          * @ngdoc method
          * @name resetSearchQueryConfig
-         * @methodOf discoverState.service:discoverStateService
+         * @methodOf shared.service:discoverStateService
          *
          * @description
          * Resets the search query config to be the default values.
@@ -293,4 +272,16 @@
             };
         }
     }
+
+    angular
+        .module('shared')
+        /**
+         * @ngdoc service
+         * @name shared.service:discoverStateService
+         *
+         * @description
+         * `discoverStateService` is a service which contains various variables to hold the
+         * state of the discover module along with some utility functions for those variables.
+         */
+        .service('discoverStateService', discoverStateService);
 })();

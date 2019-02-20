@@ -39,7 +39,7 @@
          * @name classSelect.directive:classSelect
          * @scope
          * @restrict E
-         * @requires ontologyManager.service:ontologyManagerService
+         * @requires shared.service:ontologyManagerService
          * @requires $filter
          *
          * @description
@@ -49,7 +49,7 @@
          * its template.
          *
          * @param {Object[]} classes an array of class objects from the
-         * {@link mapperState.service:mapperStateService mapperStateService}
+         * {@link shared.service:mapperStateService mapperStateService}
          * @param {Function} [onChange=undefined] an optional function to be called on change
          * of the selected class
          * @param {Object} selectedClass the currently selected class object

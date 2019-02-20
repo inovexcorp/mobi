@@ -30,20 +30,20 @@
          *
          * @description
          * The `mergeRequestDiscussion` module only provides the `mergeRequestDiscussion` component
-         * which creates a {@link materialTabset.directive:materialTabset} with tabs related to the discussion and
+         * which creates a {@link shared.directive:materialTabset} with tabs related to the discussion and
          * difference of a Merge Request.
          */
         .module('mergeRequestDiscussion', [])
         /**
          * @ngdoc component
          * @name mergeRequestDiscussion.component:mergeRequestDiscussion
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `mergeRequestDiscussion` is a component which creates a div containing
          * {@link commentDisplay.component:commentDisplay comment displays} of the comment chains on a merge request
-         * along with a {@link markdownEditor.component:markdownEditor} for making new comments and
+         * along with a {@link shared.component:markdownEditor} for making new comments and
          * {@link replyComment.component:replyComment reply comments} on comment chains. If a request is accepted,
          * no markdown editors are shown since the discussion on the request is now read only.
          *

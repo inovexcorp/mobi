@@ -43,24 +43,16 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name textInput
-         *
-         * @description
-         * The `textInput` module only provides the `textInput` directive which creates a labeled text input field
-         * and several optional customization variables.
-         */
-        .module('textInput', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name textInput.directive:textInput
+         * @name shared.directive:textInput
          * @scope
          * @restrict E
          *
          * @description
          * `textInput` is a directive that creates a Bootstrap "form-group" div with a text input element and a
-         * {@link customLabel.directive:customLabel customLabel}. The `customLabel` uses the provided `displayText` and
+         * {@link shared.directive:customLabel customLabel}. The `customLabel` uses the provided `displayText` and
          * `mutedText` for display. The text input is bound to the passed `bindModel` variable. It can also have a
          * custom on change function. The name of the input is configurable along with whether it is required. The input
          * can optionally be focused on rendering as well. The `isInvalid` and `isValid` parameters provide a way to

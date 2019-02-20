@@ -38,13 +38,13 @@
          * @name editUserProfileOverlay.directive:editUserProfileOverlay
          * @scope
          * @restrict E
-         * @requires userManager.service:userManagerService
-         * @requires userState.service:userStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:userManagerService
+         * @requires shared.service:userStateService
+         * @requires shared.service:prefixes
          *
          * @description
          * `editUserProfileOverlay` is a component that creates content for a modal with a form to change the
-         * {@link userState.service:userStateService#selectedUser selected user's} profile information in Mobi. The
+         * {@link shared.service:userStateService#selectedUser selected user's} profile information in Mobi. The
          * form contains fields to edit the user's first name, last name, and email. Meant to be used in conjunction
          * with the {@link modalService.directive:modalService}.
          *

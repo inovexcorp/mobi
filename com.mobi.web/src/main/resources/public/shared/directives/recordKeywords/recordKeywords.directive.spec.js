@@ -25,7 +25,7 @@ describe('Record Keywords directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('recordKeywords');
+        module('shared');
         mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _prefixes_) {

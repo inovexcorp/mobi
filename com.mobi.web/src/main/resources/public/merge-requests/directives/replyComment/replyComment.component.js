@@ -36,12 +36,12 @@
         /**
          * @ngdoc component
          * @name replyComment.component:replyComment
-         * @requires mergeRequestManager.service:mergeRequestManagerService
-         * @requires util.service:utilService
+         * @requires shared.service:mergeRequestManagerService
+         * @requires shared.service:utilService
          *
          * @description
          * `replyComment` is a component which creates a div containing a box indicating a reply can be made. Once that
-         * box is clicked, it is replaced with a {@link markdownEditor.component:markdownEditor} for submitting a reply
+         * box is clicked, it is replaced with a {@link shared.component:markdownEditor} for submitting a reply
          * to the provided parent comment of the provided request.
          *
          * @param {Object} request An object representing the Merge Request with the parent comment

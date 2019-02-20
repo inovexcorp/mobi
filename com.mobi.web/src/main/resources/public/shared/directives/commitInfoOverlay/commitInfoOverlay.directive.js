@@ -47,26 +47,18 @@
     }
 
     angular
-        /**
-         * @ngdoc overview
-         * @name commitInfoOverlay
-         *
-         * @description
-         * The `commitInfoOverlay` module only provides the `commitInfoOverlay` directive which creates
-         * content for a modal with information about a particular commit.
-         */
-        .module('commitInfoOverlay', [])
+        .module('shared')
         /**
          * @ngdoc directive
-         * @name commitInfoOverlay.directive:commitInfoOverlay
+         * @name shared.directive:commitInfoOverlay
          * @scope
          * @restrict E
-         * @requires util.service:utilService
-         * @requires userManager.service:userManagerService
+         * @requires shared.service:utilService
+         * @requires shared.service:userManagerService
          *
          * @description
          * `commitInfoOverlay` is a directive that creates content for a modal displaying information about the passed
-         * commit object including a {@link commitChangesDisplay.directive:commitChangesDisplay commit changes display}
+         * commit object including a {@link shared.directive:commitChangesDisplay commit changes display}
          * of the passed additions and deletions for the commit. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *

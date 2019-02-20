@@ -26,12 +26,12 @@
     /**
      * @ngdoc component
      * @name catalog.component:recordMarkdown
-     * @requires utilService.service:utilService
+     * @requires shared.service:utilService
      *
      * @description
      * `recordMarkdown` is a component which creates a display for the `dcterms:abstract` of the provided catalog Record
      * as markdown HTML. If the user can edit the record, as determined by the provided `canEdit` boolean, the display
-     * will turn into a {@link markdownEditor.component:markdownEditor}. Saving the edited markdown will call the
+     * will turn into a {@link shared.component:markdownEditor}. Saving the edited markdown will call the
      * provided `updateRecord` method passing the edited Record JSON-LD.
      * 
      * @param {Object} record A JSON-LD object for a catalog Record

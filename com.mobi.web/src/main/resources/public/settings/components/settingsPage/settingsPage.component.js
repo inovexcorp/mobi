@@ -27,8 +27,8 @@
      * @name settings.component:settingsPage
      *
      * @description
-     * `settingsPage` is a component which creates a {@link tabset.directive:tabset tabset} with
-     * {@link tab.directive:tab tabs} for different settings pertaining to the current user. The tabs are
+     * `settingsPage` is a component which creates a {@link shared.directive:tabset tabset} with
+     * {@link shared.directive:tab tabs} for different settings pertaining to the current user. The tabs are
      * {@link settings.component:profileTab profileTab}, {@link settings.component:passwordTab passwordTab}, and the
      * {@link settings.component:preferencesTab preferencesTab}.
      */

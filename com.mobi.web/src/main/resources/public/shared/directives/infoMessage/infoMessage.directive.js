@@ -34,6 +34,6 @@
     }
 
     angular
-        .module('infoMessage', [])
+        .module('shared')
         .directive('infoMessage', infoMessage);
 })();

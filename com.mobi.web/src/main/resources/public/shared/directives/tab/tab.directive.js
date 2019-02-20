@@ -48,6 +48,6 @@
     }
 
     angular
-        .module('tab', [])
+        .module('shared')
         .directive('tab', tab);
 })();

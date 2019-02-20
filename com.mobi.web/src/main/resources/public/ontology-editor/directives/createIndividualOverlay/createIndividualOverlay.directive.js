@@ -38,13 +38,13 @@
          * @name createIndividualOverlay.directive:createIndividualOverlay
          * @scope
          * @restrict E
-         * @requires ontologyState.service:ontologyStateService
-         * @requires prefixes.service:prefixes
+         * @requires shared.service:ontologyStateService
+         * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
          * `createIndividualOverlay` is a directive that creates content for a modal that creates an individual in the
-         * current {@link ontologyState.service:ontologyStateService selected ontology}. The form in the modal contains
+         * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
          * a text input for the indivdiual name (which populates the {@link staticIri.directive:staticIri IRI}) and
          * a {@link classSelect.directive:classSelect} for the classes this individual will be an instance of. Meant to
          * be used in conjunction with the {@link modalService.directive:modalService}.

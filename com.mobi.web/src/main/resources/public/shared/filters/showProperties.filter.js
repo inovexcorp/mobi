@@ -23,19 +23,21 @@
 (function() {
     'use strict';
 
+    function showProperties() {
+        return function(entity, properties) {
+            var arr = [];
+            if (_.isArray(properties)) {
+                arr = _.filter(properties, property => _.has(entity, property));
+            }
+            return arr;
+        }
+    }
+
     angular
-        /**
-         * @ngdoc overview
-         * @name showProperties
-         *
-         * @description
-         * The `showProperties` module only provides the `showProperties` filter which takes an Object and an array of
-         * property strings and returns an array of the properties that the Object has from that array.
-         */
-        .module('showProperties', [])
+        .module('shared')
         /**
          * @ngdoc filter
-         * @name showProperties.filter:showProperties
+         * @name shared.filter:showProperties
          * @kind function
          *
          * @description
@@ -48,14 +50,4 @@
          * has.
          */
         .filter('showProperties', showProperties);
-
-    function showProperties() {
-        return function(entity, properties) {
-            var arr = [];
-            if (_.isArray(properties)) {
-                arr = _.filter(properties, property => _.has(entity, property));
-            }
-            return arr;
-        }
-    }
 })();
