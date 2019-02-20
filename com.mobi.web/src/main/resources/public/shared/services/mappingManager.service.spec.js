@@ -69,35 +69,6 @@ describe('Mapping Manager service', function() {
         scope = null;
     });
 
-    describe('should get a list of mapping records', function() {
-        beforeEach(function() {
-            this.params = $httpParamSerializer({sort: prefixes.dcterms + 'title'});
-        });
-        it('unless an error occors', function() {
-            $httpBackend.expectGET('/mobirest/mappings?' + this.params).respond(400, null, null, 'Error Message');
-            mappingManagerSvc.getMappingRecords()
-                .then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
-            flushAndVerify($httpBackend);
-            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                status: 400,
-                statusText: 'Error Message'
-            }));
-        });
-        it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/mappings?' + this.params).respond(200, []);
-            mappingManagerSvc.getMappingRecords()
-                .then(function(response) {
-                    expect(response).toEqual([]);
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
-            flushAndVerify($httpBackend);
-        });
-    });
     describe('should upload a mapping', function() {
         beforeEach(function () {
             this.title = 'title';

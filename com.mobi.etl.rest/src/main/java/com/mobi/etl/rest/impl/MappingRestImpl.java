@@ -50,7 +50,14 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.security.policy.api.ontologies.policy.Delete;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -113,6 +120,8 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
+    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
+    @ResourceId("http://mobi.com/catalog-local")
     public Response upload(ContainerRequestContext context, String title, String description, String markdown,
                            List<FormDataBodyPart> keywords, InputStream fileInputStream,
                            FormDataContentDisposition fileDetail, String jsonld) {
@@ -127,13 +136,19 @@ public class MappingRestImpl implements MappingRest {
         RecordOperationConfig config = new OperationConfig();
         Resource catalogId = configProvider.getLocalCatalogIRI();
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
-        config.set(RecordCreateSettings.RECORD_TITLE, title);
-        config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
         config.set(RecordCreateSettings.RECORD_MARKDOWN, markdown);
-        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords.stream()
-                .map(FormDataBodyPart::getValue)
-                .collect(Collectors.toSet()));
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        if (StringUtils.isNotEmpty(title)) {
+            config.set(RecordCreateSettings.RECORD_TITLE, title);
+        }
+        if (StringUtils.isNotEmpty(description)) {
+            config.set(RecordCreateSettings.RECORD_DESCRIPTION, description);
+        }
+        if (keywords != null && keywords.size() > 0) {
+            config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords.stream()
+                    .map(FormDataBodyPart::getValue)
+                    .collect(Collectors.toSet()));
+        }
         MappingRecord record;
         try {
             if (fileInputStream != null) {
@@ -154,6 +169,7 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getMapping(String recordId) {
         try {
             logger.info("Getting mapping " + recordId);
@@ -169,6 +185,7 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadMapping(String recordId, String format) {
         try {
             logger.info("Downloading mapping " + recordId);
@@ -196,6 +213,8 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
+    @ActionId(Delete.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteMapping(ContainerRequestContext context, String recordId) {
         try {
             catalogManager.deleteRecord(getActiveUser(context, engineManager), vf.createIRI(recordId),

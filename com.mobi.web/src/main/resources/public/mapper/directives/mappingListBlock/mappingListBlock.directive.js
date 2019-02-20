@@ -23,114 +23,106 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name mappingListBlock
-         *
-         * @description
-         * The `mappingListBlock` module only provides the `mappingListBlock` directive which creates a "boxed" area
-         * with a list of saved mappings in the repository.
-         */
-        .module('mappingListBlock', [])
-        /**
-         * @ngdoc directive
-         * @name mappingListBlock.directive:mappingListBlock
-         * @scope
-         * @restrict E
-         * @requires shared.service:mappingManagerService
-         * @requires shared.service:mapperStateService
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:prefixes
-         * @requires shared.service:modalService
-         *
-         * @description
-         * `mappingListBlock` is a directive that creates a div with an unordered list of the all the saved mappings in
-         * the repository. Each mapping name is clickable and sets the selected
-         * {@link shared.service:mapperStateService#mapping mapping} for the mapping tool. The list will also be
-         * filtered by the {@link shared.service:mapperStateService#mappingSearchString mappingSearchString}. Also
-         * includes a button for {@link createMappingOverlay.component:createMappingOverlay creating a mapping}. The
-         * directive houses the method for opening a modal to confirm deleting a mapping. The directive is replaced by
-         * the contents of its template.
-         */
-        .directive('mappingListBlock', mappingListBlock);
+    /**
+     * @ngdoc component
+     * @name mapper.component:mappingListBlock
+     * @requires shared.service:mappingManagerService
+     * @requires shared.service:mapperStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:prefixes
+     * @requires shared.service:modalService
+     *
+     * @description
+     * `mappingListBlock` is a component that creates a div with an unordered list of the all the saved mappings in
+     * the repository. Each mapping name is clickable and sets the selected
+     * {@link shared.service:mapperStateService#mapping mapping} for the mapping tool. The list will also be
+     * filtered by the {@link shared.service:mapperStateService#mappingSearchString mappingSearchString}. Also
+     * includes a button for {@link createMappingOverlay.component:createMappingOverlay creating a mapping}. The
+     * directive houses the method for opening a modal to confirm deleting a mapping.
+     */
+    const mappingListBlockComponent = {
+        templateUrl: 'mapper/directives/mappingListBlock/mappingListBlock.directive.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: mappingListBlockComponentCtrl
+    };
 
-        mappingListBlock.$inject = ['$q', 'utilService', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes', 'modalService'];
+    mappingListBlockComponentCtrl.$inject = ['$q', 'utilService', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes', 'modalService'];
 
-        function mappingListBlock($q, utilService, mappingManagerService, mapperStateService, catalogManagerService, prefixes, modalService) {
-            return {
-                restrict: 'E',
-                controllerAs: 'dvm',
-                replace: true,
-                scope: {},
-                controller: function() {
-                    var dvm = this;
-                    var openedMappings = [];
-                    dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
-                    dvm.cm = catalogManagerService;
-                    dvm.util = utilService;
-                    dvm.list = [];
+    function mappingListBlockComponentCtrl($q, utilService, mappingManagerService, mapperStateService, catalogManagerService, prefixes, modalService) {
+        var dvm = this;
+        var openedMappings = [];
+        dvm.state = mapperStateService;
+        dvm.mm = mappingManagerService;
+        dvm.cm = catalogManagerService;
+        dvm.util = utilService;
+        dvm.list = [];
 
-                    dvm.confirmDeleteMapping = function() {
-                        modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.state.mapping.record.title + '</strong>?</p>', dvm.deleteMapping);
-                    }
-                    dvm.createMapping = function() {
-                        dvm.state.mapping = undefined;
-                        modalService.openModal('createMappingOverlay');
-                    }
-                    dvm.deleteMapping = function() {
-                        dvm.mm.deleteMapping(dvm.state.mapping.record.id)
-                            .then(() => {
-                                _.remove(openedMappings, {record: {id: dvm.state.mapping.record.id}});
-                                dvm.state.mapping = undefined;
-                                dvm.state.sourceOntologies = [];
-                                setRecords();
-                            }, dvm.util.createErrorToast);
-                    }
-                    dvm.onClick = function(record) {
-                        var openedMapping = _.find(openedMappings, {record: {id: record.id}});
-                        if (openedMapping) {
-                            dvm.state.mapping = openedMapping;
-                        } else {
-                            dvm.mm.getMapping(record.id)
-                                .then(jsonld => {
-                                    var mapping = {
-                                        jsonld,
-                                        record,
-                                        difference: {
-                                            additions: [],
-                                            deletions: []
-                                        }
-                                    };
-                                    dvm.state.mapping = mapping;
-                                    openedMappings.push(mapping);
-                                    return dvm.cm.getRecord(_.get(dvm.mm.getSourceOntologyInfo(jsonld), 'recordId'), dvm.cm.localCatalog['@id']);
-                                }, error => $q.reject('Mapping ' + record.title + ' could not be found'))
-                                .then(ontologyRecord => {
-                                    dvm.state.mapping.ontology = ontologyRecord;
-                                }, errorMessage => dvm.util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
-                        }
-                    }
-
+        dvm.$onInit = function() {
+            setRecords();
+        }
+        dvm.confirmDeleteMapping = function() {
+            modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.state.mapping.record.title + '</strong>?</p>', dvm.deleteMapping);
+        }
+        dvm.createMapping = function() {
+            dvm.state.mapping = undefined;
+            modalService.openModal('createMappingOverlay');
+        }
+        dvm.deleteMapping = function() {
+            dvm.mm.deleteMapping(dvm.state.mapping.record.id)
+                .then(() => {
+                    _.remove(openedMappings, {record: {id: dvm.state.mapping.record.id}});
+                    dvm.state.mapping = undefined;
+                    dvm.state.sourceOntologies = [];
                     setRecords();
-
-                    function setRecords() {
-                        dvm.mm.getMappingRecords()
-                            .then(records => {
-                                dvm.list = _.map(records, record => {
-                                    return {
-                                        id: record['@id'],
-                                        title: dvm.util.getDctermsValue(record, 'title'),
-                                        description: dvm.util.getDctermsValue(record, 'description'),
-                                        keywords: _.map(_.get(record, "['" + prefixes.catalog + "keyword']", []), '@value'),
-                                        branch: dvm.util.getPropertyId(record, prefixes.catalog + 'masterBranch')
-                                    };
-                                });
-                            }, dvm.util.createErrorToast);
-                    }
-                },
-                templateUrl: 'mapper/directives/mappingListBlock/mappingListBlock.directive.html'
+                }, dvm.util.createErrorToast);
+        }
+        dvm.onClick = function(record) {
+            var openedMapping = _.find(openedMappings, {record: {id: record.id}});
+            if (openedMapping) {
+                dvm.state.mapping = openedMapping;
+            } else {
+                dvm.mm.getMapping(record.id)
+                    .then(jsonld => {
+                        var mapping = {
+                            jsonld,
+                            record,
+                            difference: {
+                                additions: [],
+                                deletions: []
+                            }
+                        };
+                        dvm.state.mapping = mapping;
+                        openedMappings.push(mapping);
+                        return dvm.cm.getRecord(_.get(dvm.mm.getSourceOntologyInfo(jsonld), 'recordId'), dvm.cm.localCatalog['@id']);
+                    }, () => $q.reject('Mapping ' + record.title + ' could not be found'))
+                    .then(ontologyRecord => {
+                        dvm.state.mapping.ontology = ontologyRecord;
+                    }, errorMessage => dvm.util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
             }
         }
+
+        function setRecords() {
+            var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
+            var paginatedConfig = {
+                pageIndex: 0,
+                limit: 0,
+                recordType: prefixes.delim + 'MappingRecord',
+                sortOption: _.find(dvm.cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true})
+            };
+            dvm.cm.getRecords(catalogId, paginatedConfig)
+                .then(response => {
+                    dvm.list = _.map(response.data, record => ({
+                        id: record['@id'],
+                        title: dvm.util.getDctermsValue(record, 'title'),
+                        description: dvm.util.getDctermsValue(record, 'description'),
+                        keywords: _.map(_.get(record, "['" + prefixes.catalog + "keyword']", []), '@value'),
+                        branch: dvm.util.getPropertyId(record, prefixes.catalog + 'masterBranch')
+                    }));
+                }, dvm.util.createErrorToast);
+        }
+    }
+
+    angular.module('mapper')
+        .component('mappingListBlock', mappingListBlockComponent);
 })();

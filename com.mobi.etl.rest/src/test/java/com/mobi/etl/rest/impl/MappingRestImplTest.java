@@ -183,7 +183,6 @@ public class MappingRestImplTest extends MobiRestTestNg {
         when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
         when(manager.retrieveMapping(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
         when(manager.retrieveMapping(vf.createIRI(MAPPING_IRI))).thenReturn(Optional.of(mappingWrapper));
-        when(manager.deleteMapping(recordId)).thenReturn(record);
     }
 
     @Test
