@@ -46,7 +46,7 @@
          * @description
          * `characteristicsBlock` is a directive that creates a section that displays the appropriate characteristics
          * on the {@link shared.service:ontologyStateService selected property} based on its type.
-         * Characteristics are displayed as {@link shared.directive:checkbox checkboxes}. The directive is replaced
+         * Characteristics are displayed as {@link shared.component:checkbox checkboxes}. The directive is replaced
          * by the contents of its template.
          */
         .directive('characteristicsBlock', characteristicsBlock);
@@ -83,7 +83,8 @@
                     dvm.filter = function(obj) {
                         return !obj.objectOnly || om.isObjectProperty(dvm.os.listItem.selected);
                     }
-                    dvm.onChange = function(characteristicObj) {
+                    dvm.onChange = function(characteristicObj, value) {
+                        characteristicObj.checked = value;
                         if (characteristicObj.checked) {
                             _.set(dvm.os.listItem.selected, '@type', _.concat(_.get(dvm.os.listItem.selected, '@type', []), characteristicObj.typeIRI));
                             handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions, characteristicObj.typeIRI);

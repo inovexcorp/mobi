@@ -51,7 +51,7 @@
          * selected, text input is provided for the value (must be a valid IRI). If an annotation is selected, a
          * {@link shared.directive:textArea} is provided for the annotation value with a
          * {@link shared.directive:languageSelect}, unless the annotation is owl:deprecated in which case the
-         * `textArea` and `languageSelect` are replaced by {@link shared.directive:radiobutton radio buttons} for
+         * `textArea` and `languageSelect` are replaced by {@link shared.component:radiobutton radio buttons} for
          * the boolean value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal

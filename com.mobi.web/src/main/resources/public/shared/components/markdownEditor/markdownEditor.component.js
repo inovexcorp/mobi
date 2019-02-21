@@ -91,7 +91,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .component('markdownEditor', markdownEditorComponent);
 })();

@@ -27,11 +27,11 @@
         <span class="mx-1"> {{dvm.fileName}}</span>
         <file-input id="open_mapping-file-input" class="hide" ng-model="dvm.fileObj" accept=".csv,.xls,.xlsx,.tsv" on-change="dvm.upload()" required></file-input>
     </div>
-    <checkbox display-text="'Contains headers'" ng-model="dvm.dm.containsHeaders"></checkbox>
+    <checkbox display-text="'Contains headers'" bind-model="dvm.dm.containsHeaders" change-event="dvm.dm.containsHeaders = value"></checkbox>
     <div ng-if="dvm.fileObj && !dvm.isExcel()" class="form-group">
         <custom-label>Separator</custom-label>
-        <radio-button value="','" ng-model="dvm.dm.separator" display-text="'Comma'"></radio-button>
-        <radio-button value="'\t'" ng-model="dvm.dm.separator" display-text="'Tab'"></radio-button>
-        <radio-button value="':'" ng-model="dvm.dm.separator" display-text="'Colon'"></radio-button>
+        <radio-button value="','" bind-model="dvm.dm.separator" change-event="dvm.dm.separator = value" display-text="'Comma'"></radio-button>
+        <radio-button value="'\t'" bind-model="dvm.dm.separator" change-event="dvm.dm.separator = value" display-text="'Tab'"></radio-button>
+        <radio-button value="':'" bind-model="dvm.dm.separator" change-event="dvm.dm.separator = value" display-text="'Colon'"></radio-button>
     </div>
 </form>

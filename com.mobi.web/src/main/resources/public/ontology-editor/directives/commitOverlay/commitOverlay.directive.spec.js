@@ -81,11 +81,11 @@ describe('Commit Overlay directive', function() {
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.form.$invalid = false;
-            scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+            
+            this.controller.form.$invalid = true;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');

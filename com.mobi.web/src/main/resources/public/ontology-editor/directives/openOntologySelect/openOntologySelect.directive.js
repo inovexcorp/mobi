@@ -47,8 +47,8 @@
          * `openOntologySelect` is a component that creates a `ui-select` containing the branches and tags of the
          * provided {@link shared.service:ontologyStateService listItem} and depending on the provided state, the
          * currently open commit. Each branch in the `ui-select` has buttons for editing the metadata and deleting the
-         * branch which will open a {@link shared.directive:confirmModal}. Each tag in the `ui-select` has a
-         * button for deleting the tag which will open a {@link shared.directive:confirmModal}. The component also
+         * branch which will open a {@link shared.component:confirmModal}. Each tag in the `ui-select` has a
+         * button for deleting the tag which will open a {@link shared.component:confirmModal}. The component also
          * houses the method for opening a modal for
          * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
          *

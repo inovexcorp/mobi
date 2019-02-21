@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .instance-view {
+    .breadcrumbs {
+        float: left;
+    }
     .block-header {
         .edit-button {
             display: inline-block;

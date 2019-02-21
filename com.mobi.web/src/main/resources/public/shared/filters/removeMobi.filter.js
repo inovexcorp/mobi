@@ -29,7 +29,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .filter('removeMobi', removeMobi);
 })();

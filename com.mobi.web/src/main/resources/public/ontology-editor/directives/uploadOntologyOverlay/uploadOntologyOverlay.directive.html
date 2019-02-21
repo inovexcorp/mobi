@@ -26,8 +26,8 @@
 </div>
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
-        <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'" is-focus-me="true"></text-input>
-        <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-input bind-model="dvm.title" change-event="dvm.title = value" input-name="title" required="true" display-text="'Title'" is-focus-me="true"></text-input>
+        <text-area bind-model="dvm.description" change-event="dvm.description = value" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
     </form>
 </div>

@@ -25,6 +25,21 @@
 
     ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:ontologyStateService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:updateRefsService
+     * @requires shared.service:stateManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:propertyManagerService
+     * @requires shared.service:prefixes
+     * @requires shared.service:manchesterConverterService
+     * @requires shared.service:policyEnforcementService
+     * @requires shared.service:policyManagerService
+     * @requires shared.service:httpService
+     */
     function ontologyStateService($q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
         var self = this;
         var om = ontologyManagerService;
@@ -1865,22 +1880,6 @@
         obj.index = hierarchyInfo.index;
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:ontologyStateService
-         * @requires shared.service:ontologyManagerService
-         * @requires shared.service:updateRefsService
-         * @requires shared.service:stateManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:propertyManagerService
-         * @requires shared.service:prefixes
-         * @requires shared.service:manchesterConverterService
-         * @requires shared.service:policyEnforcementService
-         * @requires shared.service:policyManagerService
-         * @requires shared.service:httpService
-         */
+    angular.module('shared')
         .service('ontologyStateService', ontologyStateService);
 })();

@@ -49,7 +49,7 @@
          * `mergeRequestView` is a directive which creates a div containing a {@link shared.directive:block}
          * which displays metadata about the
          * {@link shared.service:mergeRequestsStateService selected MergeRequest} including a
-         * {@link shared.directive:commitDifferenceTabset} to display the changes and commits
+         * {@link shared.component:commitDifferenceTabset} to display the changes and commits
          * between the source and target branch of the MergeRequest. The block also contains buttons to delete
          * the MergeRequest, accept the MergeRequest, and go back to the
          * {@link mergeRequestList.directive:mergeRequestList}. This directive houses the method for opening a

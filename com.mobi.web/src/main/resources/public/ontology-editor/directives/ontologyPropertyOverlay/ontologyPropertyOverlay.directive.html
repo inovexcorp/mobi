@@ -45,12 +45,12 @@
         </div>
         <div ng-if="dvm.isAnnotationProperty()">
             <div ng-if="dvm.os.ontologyProperty !== dvm.prefixes.owl + 'deprecated'">
-                <text-area ng-model="dvm.os.ontologyPropertyValue" display-text="'Value'"></text-area>
+                <text-area bind-model="dvm.os.ontologyPropertyValue" change-event="dvm.os.ontologyPropertyValue = value" display-text="'Value'"></text-area>
                 <language-select ng-model="dvm.os.ontologyPropertyLanguage"></language-select>
             </div>
             <div ng-if="dvm.os.ontologyProperty === dvm.prefixes.owl + 'deprecated'">
-                <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.ontologyPropertyValue"></radio-button>
-                <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.ontologyPropertyValue"></radio-button>
+                <radio-button display-text="'True'" value="'true'" bind-model="dvm.os.ontologyPropertyValue" change-event="dvm.os.ontologyPropertyValue = value"></radio-button>
+                <radio-button display-text="'False'" value="'false'" bind-model="dvm.os.ontologyPropertyValue" change-event="dvm.os.ontologyPropertyValue = value"></radio-button>
             </div>
         </div>
     </form>

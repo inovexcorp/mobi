@@ -38,7 +38,7 @@
         </div>
 
         <!-- value -->
-        <text-area ng-model="dvm.os.propertyValue" display-text="'Value'"></text-area>
+        <text-area bind-model="dvm.os.propertyValue" change-event="dvm.os.propertyValue = value" display-text="'Value'"></text-area>
 
         <!-- datatype -->
         <iri-select-ontology ng-model="dvm.os.propertyType" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange" multi-select="false"></iri-select-ontology>

@@ -45,10 +45,10 @@
          * @description
          * `mergeBlock` is a directive that creates a form for merging the current branch of the opened
          * {@link shared.service:ontologyStateService ontology} into another branch. The form contains a
-         * {@link shared.directive:branchSelect} for the target branch, a {@link shared.directive:checkbox}
+         * {@link shared.directive:branchSelect} for the target branch, a {@link shared.component:checkbox}
          * for indicating whether the source branch should be removed after the merge, a button to submit the merge,
          * and a button to cancel the merge. Once a target is selected, a
-         * {@link shared.directive:commitDifferenceTabset} is displayed. The form calls the appropriate
+         * {@link shared.component:commitDifferenceTabset} is displayed. The form calls the appropriate
          * methods to check for conflicts before performing the merge. The directive is replaced by the contents of its
          * template.
          */

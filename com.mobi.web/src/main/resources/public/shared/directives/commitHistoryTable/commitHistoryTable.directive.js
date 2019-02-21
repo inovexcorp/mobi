@@ -311,7 +311,7 @@
          * `commitHistoryTable` is a directive that creates a table containing the commit chain of the provided commit.
          * Can optionally also display a SVG graph generated using Snap.svg showing the network of the commits along
          * with an optional title for the top commit. Clicking on a commit id or its corresponding circle in the graph
-         * will open up a {@link shared.directive:commitInfoOverlay commit info overlay}. Can optionally
+         * will open up a {@link shared.component:commitInfoOverlay commit info overlay}. Can optionally
          * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
          *
          * @param {string} commitId The IRI string of a commit in the local catalog

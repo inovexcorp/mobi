@@ -378,7 +378,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .service('propertyManagerService', propertyManagerService);
 })();

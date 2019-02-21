@@ -98,11 +98,11 @@ describe('Create Tag Modal component', function() {
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.form.$invalid = false;
-            scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+            
+            this.controller.form.$invalid = true;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
     });
     describe('controller methods', function() {

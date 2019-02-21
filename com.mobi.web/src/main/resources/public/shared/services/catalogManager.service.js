@@ -25,6 +25,18 @@
 
     catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:catalogManagerService
+     * @requires shared.service:httpService
+     * @requires shared.service:prefixes
+     * @requires shared.service:utilService
+     *
+     * @description
+     * `catalogManagerService` is a service that provides access to the Mobi catalog REST
+     * endpoints and utility functions for the record, distribution, version, and branch objects
+     * that are returned.
+     */
     function catalogManagerService($http, $httpParamSerializer, httpService, $q, prefixes, utilService, REST_PREFIX) {
         var self = this,
             util = utilService,
@@ -1554,19 +1566,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:catalogManagerService
-         * @requires shared.service:httpService
-         * @requires shared.service:prefixes
-         * @requires shared.service:utilService
-         *
-         * @description
-         * `catalogManagerService` is a service that provides access to the Mobi catalog REST
-         * endpoints and utility functions for the record, distribution, version, and branch objects
-         * that are returned.
-         */
+    angular.module('shared')
         .service('catalogManagerService', catalogManagerService);
 })();

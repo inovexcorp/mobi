@@ -85,7 +85,10 @@
                     }
                     $scope.$watch('dvm.dm.separator', (newValue, oldValue) => {
                         if (newValue !== oldValue && !dvm.isExcel()) {
-                            dvm.dm.previewFile(50).then(() => dvm.state.setInvalidProps(), onError);
+                            dvm.dm.previewFile(50).then(() => {
+                                dvm.errorMessage = '';
+                                dvm.state.setInvalidProps();
+                            }, onError);
                         }
                     });
                     function onError(errorMessage) {

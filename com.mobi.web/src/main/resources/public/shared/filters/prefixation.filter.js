@@ -40,7 +40,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .filter('prefixation', prefixation);
 })();

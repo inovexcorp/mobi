@@ -33,12 +33,13 @@
             <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                    ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
         </div>
-        <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
+        <text-area bind-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
+                   change-event="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
                    display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <advanced-language-select ng-model="dvm.language"></advanced-language-select>
         <div class="mt-2">
             <p class="identifier"><strong>Characteristics</strong></p>
-            <checkbox ng-repeat="obj in dvm.characteristics track by obj.typeIRI" ng-model="obj.checked" display-text="obj.displayText"></checkbox>
+            <checkbox ng-repeat="obj in dvm.characteristics track by obj.typeIRI" bind-model="obj.checked" change-event="obj.checked = value" display-text="obj.displayText"></checkbox>
         </div>
         <iri-select-ontology ng-model="dvm.domains" display-text="'Domain'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></iri-select-ontology>
         <iri-select-ontology ng-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange"></iri-select-ontology>

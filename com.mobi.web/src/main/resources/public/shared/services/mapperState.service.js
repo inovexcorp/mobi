@@ -25,6 +25,18 @@
 
     mapperStateService.$inject = ['$q', 'prefixes', 'mappingManagerService', 'ontologyManagerService', 'catalogManagerService', 'delimitedManagerService', 'utilService'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:mapperStateService
+     * @requires shared.service:prefixes
+     * @requires shared.service:mappingManagerService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:delimitedManagerService
+     *
+     * @description
+     * `mapperStateService` is a service which contains various variables to hold the
+     * state of the mapping tool page and utility functions to update those variables.
+     */
     function mapperStateService($q, prefixes, mappingManagerService, ontologyManagerService, catalogManagerService, delimitedManagerService, utilService) {
         var self = this;
         var mm = mappingManagerService,
@@ -812,19 +824,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:mapperStateService
-         * @requires shared.service:prefixes
-         * @requires shared.service:mappingManagerService
-         * @requires shared.service:ontologyManagerService
-         * @requires shared.service:delimitedManagerService
-         *
-         * @description
-         * `mapperStateService` is a service which contains various variables to hold the
-         * state of the mapping tool page and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('mapperStateService', mapperStateService);
 })();

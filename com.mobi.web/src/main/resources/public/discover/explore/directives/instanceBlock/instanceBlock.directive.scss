@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .instance-block {
+    .breadcrumbs {
+        float: left;
+    }
     .create-button {
         display: inline-block;
         line-height: 33px;

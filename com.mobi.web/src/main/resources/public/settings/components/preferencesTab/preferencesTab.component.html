@@ -26,13 +26,13 @@
             <block-content class="padding">
                 <preferences-container header="'Ontology Editor'">
                     <custom-preference header="'Drop Down Tooltip Display'" question="'What do you want displayed when you hover over the items in the dropdown?'">
-                        <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'Full IRI'" value="'@id'"></radio-button>
-                        <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Label/DC Title'" value="'label'"></radio-button>
-                        <radio-button ng-model="vm.settings.tooltipDisplay" display-text="'RDFS Comment/DC Description'" value="'comment'"></radio-button>
+                        <radio-button bind-model="vm.settings.tooltipDisplay" change-event="vm.settings.tooltipDisplay = value" display-text="'Full IRI'" value="'@id'"></radio-button>
+                        <radio-button bind-model="vm.settings.tooltipDisplay" change-event="vm.settings.tooltipDisplay = value" display-text="'RDFS Label/DC Title'" value="'label'"></radio-button>
+                        <radio-button bind-model="vm.settings.tooltipDisplay" change-event="vm.settings.tooltipDisplay = value" display-text="'RDFS Comment/DC Description'" value="'comment'"></radio-button>
                     </custom-preference>
                     <custom-preference header="'Tree Item Display'" question="'What do you want displayed in the tree?'">
-                        <radio-button ng-model="vm.settings.treeDisplay" display-text="'Pretty Print'" value="'pretty'"></radio-button>
-                        <radio-button ng-model="vm.settings.treeDisplay" display-text="'Full IRI'" value="'@id'"></radio-button>
+                        <radio-button bind-model="vm.settings.treeDisplay" change-event="vm.settings.treeDisplay = value" display-text="'Pretty Print'" value="'pretty'"></radio-button>
+                        <radio-button bind-model="vm.settings.treeDisplay" change-event="vm.settings.treeDisplay = value" display-text="'Full IRI'" value="'@id'"></radio-button>
                     </custom-preference>
                 </preferences-container>
             </block-content>

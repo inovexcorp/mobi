@@ -23,6 +23,14 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc service
+     * @name shared.service:d3TransformerService
+     *
+     * @description
+     * `d3TransformerService` is a service that provides different transformers to convert json-ld
+     *  to json objects used by the d3 library.
+     */
     function d3TransformerService() {
         var self = this;
 
@@ -116,15 +124,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:d3TransformerService
-         *
-         * @description
-         * `d3TransformerService` is a service that provides different transformers to convert json-ld
-         *  to json objects used by the d3 library.
-         */
+    angular.module('shared')
         .service('d3TransformerService', d3TransformerService);
 })();

@@ -223,7 +223,7 @@ describe('Create Mapping Overlay component', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            this.controller.newMapping.record.title = '';
+            this.controller.form.$invalid = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });

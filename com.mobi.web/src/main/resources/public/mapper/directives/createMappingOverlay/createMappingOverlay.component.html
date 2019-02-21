@@ -27,8 +27,8 @@
 <div class="modal-body">
     <form name="dvm.form">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <text-input display-text="'Title'" input-name="'title'" ng-model="dvm.newMapping.record.title" required="true" is-focus-me="true"></text-input>
-        <text-area ng-model="dvm.newMapping.record.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-input display-text="'Title'" input-name="'title'" bind-model="dvm.newMapping.record.title" change-event="dvm.newMapping.record.title = value" required="true" is-focus-me="true"></text-input>
+        <text-area bind-model="dvm.newMapping.record.description" change-event="dvm.newMapping.record.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.newMapping.record.keywords"></keyword-select>
     </form>
 </div>

@@ -29,8 +29,8 @@
                 <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong>
             </div>
             <form>
-                <text-input ng-model="dvm.state.requestConfig.title" display-text="'Title'" required="true"></text-input>
-                <text-area ng-model="dvm.state.requestConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+                <text-input bind-model="dvm.state.requestConfig.title" change-event="dvm.state.requestConfig.title = value" display-text="'Title'" required="true"></text-input>
+                <text-area bind-model="dvm.state.requestConfig.description" change-event="dvm.state.requestConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
                 <div class="form-group">
                     <custom-label muted-text="'(Optional)'">Assignee(s)</custom-label>
                     <ui-select multiple ng-model="dvm.state.requestConfig.assignees">
@@ -42,7 +42,7 @@
                         </ui-select-choices>
                     </ui-select>
                 </div>
-                <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') !== 'MASTER'" ng-model="dvm.state.requestConfig.removeSource" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') + ' after merge.'"></checkbox>
+                <checkbox ng-if="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') !== 'MASTER'" bind-model="dvm.state.requestConfig.removeSource" change-event="dvm.state.requestConfig.removeSource = value" display-text="'Remove ' + dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title') + ' after merge.'"></checkbox>
             </form>
         </div>
     </div>

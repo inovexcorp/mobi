@@ -25,6 +25,16 @@
 
     catalogStateService.$inject = ['catalogManagerService', 'prefixes'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * `catalogStateService` is a service which contains various variables to hold the state of the
+     * {@link catalog.component:catalogPage} and utility functions to update those variables.
+     */
     function catalogStateService(catalogManagerService, prefixes) {
         var self = this;
         var cm = catalogManagerService;
@@ -181,17 +191,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:catalogStateService
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:prefixes
-         *
-         * @description
-         * `catalogStateService` is a service which contains various variables to hold the state of the
-         * {@link catalog.component:catalogPage} and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('catalogStateService', catalogStateService);
 })();

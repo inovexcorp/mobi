@@ -23,7 +23,7 @@
 <div class="instance-block">
     <block>
         <block-header>
-            <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <breadcrumbs items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
             <button ng-disabled="dvm.ds.explore.classDeprecated" class="btn btn-link float-right create-button" ng-click="dvm.create()"><i class="fa fa-plus"></i>Create {{dvm.getClassName()}}{{dvm.ds.explore.classDeprecated ? ' [Deprecated]' : ''}}</button>
         </block-header>
         <block-content>

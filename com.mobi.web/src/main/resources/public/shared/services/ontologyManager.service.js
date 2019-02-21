@@ -25,6 +25,19 @@
 
     ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:ontologyManagerService
+     * @requires shared.service:prefixes
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `ontologyManagerService` is a service that provides access to the Mobi ontology REST
+     * endpoints and utility functions for editing/creating ontologies and accessing
+     * various entities within the ontology.
+     */
     function ontologyManagerService($http, $q, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX) {
         var self = this;
         var prefix = REST_PREFIX + 'ontologies';
@@ -1516,20 +1529,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:ontologyManagerService
-         * @requires shared.service:prefixes
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `ontologyManagerService` is a service that provides access to the Mobi ontology REST
-         * endpoints and utility functions for editing/creating ontologies and accessing
-         * various entities within the ontology.
-         */
+    angular.module('shared')
         .service('ontologyManagerService', ontologyManagerService);
 })();

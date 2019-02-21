@@ -23,6 +23,13 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc service
+     * @name shared.service:prefixes
+     *
+     * @description
+     * `prefixes` is a service that simply provides a series of common IRI strings.
+     */
     function prefixes() {
         var self = this;
         self.rdfs = 'http://www.w3.org/2000/01/rdf-schema#';
@@ -49,14 +56,6 @@
         self.roles = 'http://mobi.com/roles/';
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:prefixes
-         *
-         * @description
-         * `prefixes` is a service that simply provides a series of common IRI strings.
-         */
+    angular.module('shared')
         .service('prefixes', prefixes);
 })();

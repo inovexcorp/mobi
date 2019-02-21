@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .instance-creator {
+    .breadcrumbs {
+        float: left;
+    }
     .breadcrumb > .active {
         font-style: italic;
     }

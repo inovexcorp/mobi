@@ -25,6 +25,16 @@
 
     delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', 'utilService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:delimitedManagerService
+     * @requires shared.service:utilService
+     *
+     * @description
+     * `delimitedManagerService` is a service that provides access to the Mobi CSV REST
+     * endpoints and various variables to hold data pertaining to the parameters
+     * passed to the endpoints and the results of the endpoints.
+     */
     function delimitedManagerService($http, $httpParamSerializer, $q, utilService, REST_PREFIX) {
         var self = this,
             util = utilService,
@@ -336,17 +346,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:delimitedManagerService
-         * @requires shared.service:utilService
-         *
-         * @description
-         * `delimitedManagerService` is a service that provides access to the Mobi CSV REST
-         * endpoints and various variables to hold data pertaining to the parameters
-         * passed to the endpoints and the results of the endpoints.
-         */
+    angular.module('shared')
         .service('delimitedManagerService', delimitedManagerService);
 })();

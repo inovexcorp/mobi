@@ -27,10 +27,10 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input display-text="'Title'" input-name="'title'" ng-model="dvm.recordConfig.title" required="true" is-focus-me="true"></text-input>
-        <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
+        <text-input display-text="'Title'" input-name="'title'" bind-model="dvm.recordConfig.title" change-event="dvm.recordConfig.title = value" required="true" is-focus-me="true"></text-input>
+        <text-input bind-model="dvm.recordConfig.datasetIRI" change-event="dvm.recordConfig.datasetIRI = value" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
         <small class="form-text">System will create a default IRI if not provided.</small>
-        <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-area bind-model="dvm.recordConfig.description" change-event="dvm.recordConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
         <div class="form-group">
             <custom-label>Repository ID</custom-label>
