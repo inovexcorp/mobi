@@ -47,7 +47,8 @@ describe('Selected Details directive', function() {
 
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.readOnly = false;
-        this.element = $compile(angular.element('<selected-details read-only="readOnly"></selected-details>'))(scope);
+        scope.highlightText = '';
+        this.element = $compile(angular.element('<selected-details read-only="readOnly" highlight-text="highlightText"></selected-details>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('selectedDetails');
     });
@@ -70,6 +71,11 @@ describe('Selected Details directive', function() {
             this.controller.readOnly = true;
             scope.$digest();
             expect(scope.readOnly).toEqual(false);
+        });
+        it('highlightText is one way bound', function() {
+            this.controller.highlightText = 'new text';
+            scope.$digest();
+            expect(scope.highlightText).toEqual('');
         });
     });
     describe('replaces the element with the correct html', function() {

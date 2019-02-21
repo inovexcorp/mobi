@@ -32,6 +32,7 @@ describe('Hierarchy Tree component', function() {
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockUtil();
         injectUniqueKeyFilter();
         injectIndentConstant();
 

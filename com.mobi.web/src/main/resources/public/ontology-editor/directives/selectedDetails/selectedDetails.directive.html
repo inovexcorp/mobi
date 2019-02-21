@@ -23,7 +23,7 @@
 <div class="selected-details">
     <div ng-if="dvm.os.listItem.selected">
         <span class="entity-name">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</span>
-        <static-iri class="editable-iri" read-only="dvm.readOnly" iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+        <static-iri class="editable-iri" read-only="dvm.readOnly" iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" highlight-text="dvm.highlightText"></static-iri>
     </div>
     <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper">
         <span class="type-label">Type(s):</span>
