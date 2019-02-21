@@ -96,7 +96,7 @@
                                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node['@id']);
                                 var searchValues = _.pick(entity, dvm.om.entityNameProps);
                                 var match = false;
-                                _.some(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
+                                _.some(_.keys(searchValues), key => _.some(searchValues[key], value => {
                                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                         match = true;
                                 }));
