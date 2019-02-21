@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Everything Tree directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, prefixes;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -34,11 +34,12 @@ describe('Everything Tree directive', function() {
         injectUniqueKeyFilter();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
 
@@ -76,6 +77,7 @@ describe('Everything Tree directive', function() {
         scope = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
+        utilSvc = null;
         prefixes = null;
         this.element.remove();
     });
@@ -160,22 +162,29 @@ describe('Everything Tree directive', function() {
             });
             describe('has filter text', function() {
                 describe('and the node has matching search properties', function() {
-                    it('that have at least one matching text value', function() {
+                    it('that have at least one matching text value', function () {
                         expect(this.controller.searchFilter(this.filterNode)).toBe(true);
                         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
                     });
-                    describe('that do not have a matching text value', function() {
-                        beforeEach(function() {
+                    describe('that do not have a matching text value', function () {
+                        beforeEach(function () {
                             var noMatchEntity = {
-                                '@id': 'urn:id',
+                                '@id': 'urn:title',
                             };
                             ontologyStateSvc.getEntityByRecordId.and.returnValue(noMatchEntity);
+                            utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
-                        it('and the node has no children', function() {
-                            expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                        describe('and does not have a matching entity local name', function () {
+                            it('and the node has no children', function () {
+                                expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                            });
+                            it('and the node has children', function () {
+                                this.filterNode.hasChildren = true;
+                                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                            });
                         });
-                        it('and the node has children', function() {
-                            this.filterNode.hasChildren = true;
+                        it('and does have a matching entity local name', function() {
+                            utilSvc.getBeautifulIRI.and.returnValue('title');
                             expect(this.controller.searchFilter(this.filterNode)).toBe(true);
                         });
                     });

@@ -22,7 +22,7 @@
  */
 
 describe('Hierarchy Tree component', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, ontologyUtils, prefixes;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, ontologyUtils, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -36,12 +36,13 @@ describe('Hierarchy Tree component', function() {
         injectUniqueKeyFilter();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyUtils = _ontologyUtilsManagerService_;
+            utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
 
@@ -69,6 +70,7 @@ describe('Hierarchy Tree component', function() {
         scope = null;
         ontologyStateSvc = null;
         ontologyUtils = null;
+        utilSvc = null;
         prefixes = null;
         this.element.remove();
     });
@@ -144,18 +146,25 @@ describe('Hierarchy Tree component', function() {
                         expect(this.controller.searchFilter(this.filterNode)).toBe(true);
                         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
                     });
-                    describe('that do not have a matching text value', function() {
-                        beforeEach(function() {
+                    describe('that do not have a matching text value', function () {
+                        beforeEach(function () {
                             var noMatchEntity = {
-                                '@id': 'urn:id',
+                                '@id': 'urn:title',
                             };
                             ontologyStateSvc.getEntityByRecordId.and.returnValue(noMatchEntity);
+                            utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
-                        it('and the entity has no children', function() {
-                            expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                        describe('and does not have a matching entity local name', function () {
+                            it('and the node has no children', function () {
+                                expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                            });
+                            it('and the node has children', function () {
+                                this.filterNode.hasChildren = true;
+                                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                            });
                         });
-                        it('and the entity has children', function() {
-                            this.filterNode.hasChildren = true;
+                        it('and does have a matching entity local name', function() {
+                            utilSvc.getBeautifulIRI.and.returnValue('title');
                             expect(this.controller.searchFilter(this.filterNode)).toBe(true);
                         });
                     });
