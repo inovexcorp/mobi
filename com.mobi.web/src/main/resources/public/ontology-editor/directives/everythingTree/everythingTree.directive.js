@@ -24,7 +24,31 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name everythingTree
+         *
+         * @description
+         * The `everythingTree` module only provides the `everythingTree` directive which creates a hierarchy of classes,
+         * concepts, schemes, and properties.
+         */
         .module('everythingTree', [])
+        /**
+         * @ngdoc directive
+         * @name everythingTree.directive:everythingTree
+         * @scope
+         * @restrict E
+         * @requires shared.service:ontologyManagerService
+         * @requires shared.service:ontologyStateService
+         *
+         * @description
+         * `everythingTree` is a directive that creates a a `div` containing a {@link shared.directive:searchBar}
+         * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
+         * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
+         *
+         * @param {Object[]} hierarchy An array which represents a flattened everything hierarchy
+         * @param {Function} updateSearch A function to update the state variable used to track the search filter text
+         */
         .directive('everythingTree', everythingTree);
 
         everythingTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'INDENT'];
@@ -36,7 +60,7 @@
                 templateUrl: 'ontology-editor/directives/everythingTree/everythingTree.directive.html',
                 scope: {},
                 bindToController: {
-                    updateSearch: '<',
+                    updateSearch: '&',
                     hierarchy: '<'
                 },
                 controllerAs: 'dvm',
@@ -70,7 +94,7 @@
                                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node['@id']);
                                 var searchValues = _.pick(entity, dvm.om.entityNameProps);
                                 var match = false;
-                                _.forEach(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
+                                _.some(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
                                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                         match = true;
                                 }));
@@ -116,7 +140,7 @@
                     }
 
                     function update() {
-                        dvm.updateSearch(dvm.filterText);
+                        dvm.updateSearch({value: dvm.filterText});
                         dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
                     }
                 }
