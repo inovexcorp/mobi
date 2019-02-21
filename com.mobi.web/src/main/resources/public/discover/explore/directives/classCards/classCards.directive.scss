@@ -1,0 +1,86 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.class-cards {
+    .rows-container {
+        overflow-y: auto;
+
+        .row {
+            margin: 0;
+            padding-left: 7.5px;
+            padding-right: 7.5px;
+
+            .card-container {
+                height: auto;
+                padding: 15px 7.5px;
+
+                .card {
+                    height: auto;
+                    margin: 0;
+
+                    .card-header {
+                        display: flex;
+
+                        .text {
+                            flex: 1;
+                            @include textOverflow;
+                            width: 0;
+                        }
+                        .badge {
+                            font-size: 16px;
+                        }
+                    }
+                    .overview {
+                        display: -webkit-box;
+                        height: 60px;
+                        line-height: 20px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        -webkit-box-orient: vertical;
+                        -webkit-line-clamp: 3;
+                    }
+                    p {
+                        margin-bottom: 5px;
+                    }
+                    em {
+                        display: block;
+
+                        .example {
+                            &:after {
+                                content: ', ';
+                            }
+                            &:last-child:after {
+                                content: '';
+                            }
+                        }
+                    }
+                    .text-muted {
+                        @include textOverflow;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,83 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.merge-request-list {
+    display: flex;
+    flex-direction: column;
+
+    .search-container {
+        text-align: center;
+        padding-bottom: 15px;
+
+        button {
+            display: inline-block;
+        }
+    }
+    block {
+        flex: 1;
+    }
+
+    .request {
+        border-bottom: 1px solid var(--light);
+        display: flex;
+        flex-direction: row;
+        cursor: pointer;
+
+        h3 {
+            margin: 0;
+            @include textOverflow;
+        }
+        .details {
+            flex: 1;
+            min-width: 0;
+        }
+        .action-container {
+            display: flex;
+            align-items: center;
+
+            .action {
+                text-decoration: none;
+
+                &:hover {
+                    color: var(--grey) !important;
+                }
+            }
+        }
+        .request-assignees {
+            .assignees {
+                li {
+                    display: inline;
+
+                    &:after {
+                        content: ', ';
+                    }
+                    &.last:after {
+                        content: '';
+                    }
+                }
+            }
+        }
+    }
+}
