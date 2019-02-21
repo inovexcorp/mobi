@@ -31,7 +31,6 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
@@ -59,7 +58,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -111,11 +109,6 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public MappingRecord createMappingRecord(MappingRecordConfig config) {
-        return catalogManager.createRecord(config, mappingRecordFactory);
-    }
-
-    @Override
     public MappingId createMappingId(Resource id) {
         return new SimpleMappingId.Builder(vf).id(id).build();
     }
@@ -131,18 +124,6 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public MappingWrapper createMapping(MappingId id) {
-        Resource mappingResource = id.getMappingIRI().isPresent() ? id.getMappingIRI().get() :
-                id.getMappingIdentifier();
-        Mapping mapping = mappingFactory.createNew(mappingResource);
-
-        Optional<IRI> versionIRI = id.getVersionIRI();
-        versionIRI.ifPresent(mapping::setVersionIRI);
-
-        return new SimpleMappingWrapper(id, mapping, Collections.emptySet(), mapping.getModel());
-    }
-
-    @Override
     public MappingWrapper createMapping(File mapping) throws IOException {
         RDFFormat mapFormat = Rio.getParserFormatForFileName(mapping.getName()).orElseThrow(() ->
                 new IllegalArgumentException("File is not in a valid RDF format"));
@@ -155,8 +136,13 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
+    public MappingWrapper createMapping(Model model) {
+        return getWrapperFromModel(model);
+    }
+
+    @Override
     public MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException {
-        return getWrapperFromModel(transformer.mobiModel(Rio.parse(in, "", format)));
+        return createMapping(transformer.mobiModel(Rio.parse(in, "", format)));
     }
 
     @Override
@@ -183,11 +169,6 @@ public class SimpleMappingManager implements MappingManager {
             @Nonnull Resource commitId) {
 
         return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(recordId, branchId, commitId)));
-    }
-
-    @Override
-    public MappingRecord deleteMapping(@Nonnull Resource recordId) throws MobiException {
-        return catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), recordId, mappingRecordFactory);
     }
 
     private Resource getHeadOfBranch(Branch branch) {
