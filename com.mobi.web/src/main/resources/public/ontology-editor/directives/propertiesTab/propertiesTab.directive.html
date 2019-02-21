@@ -24,7 +24,7 @@
     <property-hierarchy-block class="col-3 h-100"></property-hierarchy-block>
     <div class="selected-property col-9 h-100 d-flex flex-column pt-2" ng-if="dvm.os.listItem.selected">
         <div class="selected-header d-flex">
-            <selected-details class="flex-1"></selected-details>
+            <selected-details class="flex-1" highlight-text="dvm.os.listItem.editorTabStates.properties.searchText"></selected-details>
             <div>
                 <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled=" dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()">Delete</button>
             </div>
