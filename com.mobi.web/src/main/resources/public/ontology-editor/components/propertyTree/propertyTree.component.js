@@ -147,29 +147,29 @@
         }
         function constructFlatPropertyTree() {
             var result = [];
-            if (dvm.os.listItem.dataProperties.flat.length) {
+            if (dvm.dataProps.length) {
                 result.push({
                     title: 'Data Properties',
                     get: dvm.os.getDataPropertiesOpened,
                     set: dvm.os.setDataPropertiesOpened
                 });
-                result = _.concat(result, addGetToArrayItems(dvm.os.listItem.dataProperties.flat, dvm.os.getDataPropertiesOpened));
+                result = _.concat(result, addGetToArrayItems(dvm.dataProps, dvm.os.getDataPropertiesOpened));
             }
-            if (dvm.os.listItem.objectProperties.flat.length) {
+            if (dvm.objectProps.length) {
                 result.push({
                     title: 'Object Properties',
                     get: dvm.os.getObjectPropertiesOpened,
                     set: dvm.os.setObjectPropertiesOpened
                 });
-                result = _.concat(result, addGetToArrayItems(dvm.os.listItem.objectProperties.flat, dvm.os.getObjectPropertiesOpened));
+                result = _.concat(result, addGetToArrayItems(dvm.objectProps, dvm.os.getObjectPropertiesOpened));
             }
-            if (dvm.os.listItem.annotations.flat.length) {
+            if (dvm.annotationProps.length) {
                 result.push({
                     title: 'Annotation Properties',
                     get: dvm.os.getAnnotationPropertiesOpened,
                     set: dvm.os.setAnnotationPropertiesOpened
                 });
-                result = _.concat(result, addGetToArrayItems(dvm.os.listItem.annotations.flat, dvm.os.getAnnotationPropertiesOpened));
+                result = _.concat(result, addGetToArrayItems(dvm.annotationProps, dvm.os.getAnnotationPropertiesOpened));
             }
             return result;
         }

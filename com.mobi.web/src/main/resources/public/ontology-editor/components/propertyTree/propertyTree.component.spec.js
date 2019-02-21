@@ -1,4 +1,3 @@
-
 /*-
  * #%L
  * com.mobi.web
@@ -21,56 +20,214 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Property Hierarchy Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
+
+describe('Property Tree component', function() {
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, ontologyUtils, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('propertyHierarchyBlock');
-        mockOntologyState();
+        module('ontology-editor');
+        mockComponent('shared', 'searchBar');
+        mockComponent('treeItem', 'treeItem');
+        mockPrefixes();
         mockOntologyManager();
+        mockOntologyState();
+        mockOntologyUtilsManager();
+        mockUtil();
+        injectUniqueKeyFilter();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
+            ontologyUtils = _ontologyUtilsManagerService_;
+            utilSvc = _utilService_;
+            prefixes = _prefixes_;
         });
 
-        this.element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
+        scope.dataProps =[{
+            entityIRI: 'dataProp1',
+            hasChildren: true,
+            indent: 1,
+            get: ontologyStateSvc.getNoDomainsOpened
+        }, {
+            entityIRI: 'dataProp2',
+            hasChildren: false,
+            indent: 2,
+            get: ontologyStateSvc.getNoDomainsOpened
+        }];
+        scope.objectProps =[{
+            entityIRI: 'objectProp1',
+            hasChildren: false,
+            indent: 1,
+            get: ontologyStateSvc.getNoDomainsOpened
+        }];
+        scope.annotationProps =[{
+            entityIRI: 'annotationProp1',
+            hasChildren: false,
+            indent: 1,
+            get: ontologyStateSvc.getNoDomainsOpened
+        }];
+        scope.updateSearch = jasmine.createSpy('updateSearch');
+        this.element = $compile(angular.element('<property-tree data-props="dataProps" object-props="objectProps" annotation-props="annotationProps" update-search="updateSearch(value)"></property-tree>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('propertyHierarchyBlock');
+        this.controller = this.element.controller('propertyTree');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyManagerSvc = null;
+        ontologyUtils = null;
+        utilSvc = null;
+        prefixes = null;
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('dataProps should be one way bound', function() {
+            this.controller.dataProps = [];
+            scope.$digest();
+            expect(angular.copy(scope.dataProps)).toEqual([{
+                entityIRI: 'dataProp1',
+                hasChildren: true,
+                indent: 1,
+                get: ontologyStateSvc.getNoDomainsOpened
+            }, {
+                entityIRI: 'dataProp2',
+                hasChildren: false,
+                indent: 2,
+                get: ontologyStateSvc.getNoDomainsOpened
+            }]);
+        });
+        it('dataProps should be one way bound', function() {
+            this.controller.objectProps = [];
+            scope.$digest();
+            expect(angular.copy(scope.objectProps)).toEqual([{
+                entityIRI: 'objectProp1',
+                hasChildren: false,
+                indent: 1,
+                get: ontologyStateSvc.getNoDomainsOpened
+            }]);
+        });
+        it('annotationProps should be one way bound', function() {
+            this.controller.annotationProps = [];
+            scope.$digest();
+            expect(angular.copy(scope.annotationProps)).toEqual([{
+                entityIRI: 'annotationProp1',
+                hasChildren: false,
+                indent: 1,
+                get: ontologyStateSvc.getNoDomainsOpened
+            }]);
+        });
+        it('updateSearch is one way bound', function() {
+            this.controller.updateSearch({value: 'value'});
+            expect(scope.updateSearch).toHaveBeenCalledWith('value');
+        });
+    });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
+            scope.$apply();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('property-hierarchy-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('PROPERTY-TREE');
         });
-        it('depending on whether the flat property tree is empty', function() {
-            expect(this.element.find('info-message').length).toEqual(1);
-            expect(this.element.querySelectorAll('.tree').length).toBe(0);
-
-            this.controller.flatPropertyTree = [{}];
-            scope.$digest();
-            expect(this.element.find('info-message').length).toEqual(0);
-            expect(this.element.querySelectorAll('.tree').length).toBe(1);
+        it('based on .repeater-container', function() {
+            expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
+        });
+        it('based on .tree-item-wrapper', function() {
+            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        describe('isShown returns', function() {
+        it('$onInit initializes flatPropertyTree correctly', function() {
+            this.controller.dataProps = [{prop: 'data'}];
+            this.controller.objectProps = [{prop: 'object'}];
+            this.controller.annotationProps = [{prop: 'annotation'}];
+            this.controller.$onInit();
+            var copy = angular.copy(this.controller.flatPropertyTree);
+            expect(copy).toContain({title: 'Data Properties', get: ontologyStateSvc.getDataPropertiesOpened, set: ontologyStateSvc.setDataPropertiesOpened});
+            expect(copy).toContain({title: 'Object Properties', get: ontologyStateSvc.getObjectPropertiesOpened, set: ontologyStateSvc.setObjectPropertiesOpened});
+            expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateSvc.getAnnotationPropertiesOpened, set: ontologyStateSvc.setAnnotationPropertiesOpened});
+            expect(copy).toContain({get: ontologyStateSvc.getDataPropertiesOpened, prop: 'data'});
+            expect(copy).toContain({get: ontologyStateSvc.getObjectPropertiesOpened, prop: 'object'});
+            expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation'});
+        });
+        describe('searchFilter', function() {
+            beforeEach(function() {
+                this.filterNode = {
+                    indent: 1,
+                    entityIRI: 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'iri']
+                };
+                this.filterNodeParent = {
+                    indent: 0,
+                    entityIRI: 'otherIri',
+                    hasChildren: true,
+                    path: ['recordId', 'otherIri']
+                };
+                this.filterNodeFolder = {
+                    title: 'Data Properties',
+                    get: jasmine.createSpy('get').and.returnValue(true),
+                    set: jasmine.createSpy('set')
+                };
+                this.controller.flatPropertyTree = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
+                this.controller.filterText = 'ti';
+                this.filterEntity = {
+                    '@id': 'urn:id',
+                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
+                };
+                ontologyStateSvc.getEntityByRecordId.and.returnValue(this.filterEntity);
+                ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
+            });
+            describe('has filter text', function() {
+                describe('and the entity has matching search properties', function() {
+                    it('that have at least one matching text value', function() {
+                        expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                        expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
+                    });
+                    describe('that do not have a matching text value', function () {
+                        beforeEach(function () {
+                            var noMatchEntity = {
+                                '@id': 'urn:title',
+                            };
+                            ontologyStateSvc.getEntityByRecordId.and.returnValue(noMatchEntity);
+                            utilSvc.getBeautifulIRI.and.returnValue('id');
+                        });
+                        describe('and does not have a matching entity local name', function () {
+                            it('and the node has no children', function () {
+                                expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                            });
+                            it('and the node has children', function () {
+                                this.filterNode.hasChildren = true;
+                                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                            });
+                        });
+                        it('and does have a matching entity local name', function() {
+                            utilSvc.getBeautifulIRI.and.returnValue('title');
+                            expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                        });
+                    });
+                });
+                it('and the entity does not have matching search properties', function() {
+                    ontologyManagerSvc.entityNameProps = [];
+                    expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                });
+                it('and the node is a folder', function() {
+                    expect(this.controller.searchFilter(this.filterNodeFolder)).toBe(true);
+                })
+            });
+            it('does not have filter text', function() {
+                this.controller.filterText = '';
+                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+            });
+        });
+
+        describe('isShown filter', function() {
             beforeEach(function() {
                 this.get = jasmine.createSpy('get').and.returnValue(true);
                 this.node = {
@@ -79,47 +236,114 @@ describe('Property Hierarchy Block directive', function() {
                     get: this.get
                 };
             });
-            describe('true when', function() {
+
+            describe('node does not have an entityIRI property', function() {
                 beforeEach(function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
                 });
-                it('node does not have an entityIRI property', function() {
-                    expect(this.controller.isShown(this.node)).toBe(true);
+                describe('and filterText is set and node is parent node without a text match', function() {
+                    beforeEach(function() {
+                        this.controller.filterText = 'text';
+                        this.node.parentNoMatch = true;
+                        ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                    });
+                    it('and has a child that has a text match', function() {
+                        this.node.displayNode = true;
+                        expect(this.controller.isShown(this.node)).toBe(true);
+                    });
+                    it('and does not have a child with a text match', function() {
+                        expect(this.controller.isShown(this.node)).toBe(false);
+                    });
                 });
-                it('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
-                    this.node.entityIRI = 'iri';
+                it('and filterText is not set and is not a parent node without a text match', function() {
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
                     expect(this.controller.isShown(this.node)).toBe(true);
-                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
+            describe('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
+                beforeEach(function() {
+                    this.node.entityIRI = 'iri';
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                });
+                describe('and filterText is set and node is parent node without a text match', function() {
+                    beforeEach(function() {
+                        this.controller.filterText = 'text';
+                        this.node.parentNoMatch = true;
+                        ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                    });
+                    it('and has a child that has a text match', function() {
+                        this.node.displayNode = true;
+                        expect(this.controller.isShown(this.node)).toBe(true);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
+                    });
+                    it('and does not have a child with a text match', function() {
+                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
+                    });
+                });
+                it('and filterText is not set and is not a parent node without a text match', function() {
+                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                    expect(this.controller.isShown(this.node)).toBe(true);
+                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
+                });
+            });
+
             describe('false when node does have an entityIRI and', function() {
                 beforeEach(function() {
                     this.node.entityIRI = 'iri';
                 });
-                it('areParentsOpen is false', function() {
-                    ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                    expect(this.controller.isShown(this.node)).toBe(false);
+                describe('areParentsOpen is false', function() {
+                    beforeEach(function() {
+                        ontologyStateSvc.areParentsOpen.and.returnValue(false);
+                    });
+                    describe('and filterText is set and node is parent node without a text match', function() {
+                        beforeEach(function() {
+                            this.controller.filterText = 'text';
+                            this.node.parentNoMatch = true;
+                            expect(this.controller.isShown(this.node)).toBe(false);
+                        });
+                        it('and has a child that has a text match', function() {
+                            this.node.displayNode = true;
+                            expect(this.controller.isShown(this.node)).toBe(false);
+                        });
+                        it('and does not have a child with a text match', function() {
+                            expect(this.controller.isShown(this.node)).toBe(false);
+                        });
+                    });
+                    it('and filterText is not set and is not a parent node without a text match', function() {
+                        expect(this.controller.isShown(this.node)).toBe(false);
+                    });
                 });
-                it('node.get is false', function() {
-                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    this.get.and.returnValue(false);
-                    expect(this.controller.isShown(this.node)).toBe(false);
-                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                describe('node.get is false', function() {
+                    beforeEach(function() {
+                        ontologyStateSvc.areParentsOpen.and.returnValue(true);
+                        this.get.and.returnValue(false);
+                    });
+                    describe('and filterText is set and node is parent node without a text match', function() {
+                        beforeEach(function() {
+                            this.controller.filterText = 'text';
+                            this.node.parentNoMatch = true;
+                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        });
+                        it('and has a child that has a text match', function() {
+                            this.node.displayNode = true;
+                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        });
+                        it('and does not have a child with a text match', function() {
+                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                        });
+                    });
+                    it('and filterText is not set and is not a parent node without a text match', function() {
+                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    });
                 });
-            });
-            it('make sure flatPropertyTree is populated correctly and $watch is working correctly', function() {
-                expect(this.controller.flatPropertyTree).toEqual([]);
-                ontologyStateSvc.listItem.dataProperties.flat = [{prop: 'data'}];
-                ontologyStateSvc.listItem.objectProperties.flat = [{prop: 'object'}];
-                ontologyStateSvc.listItem.annotations.flat = [{prop: 'annotation'}];
-                scope.$digest();
-                var copy = angular.copy(this.controller.flatPropertyTree);
-                expect(copy).toContain({title: 'Data Properties', get: ontologyStateSvc.getDataPropertiesOpened, set: ontologyStateSvc.setDataPropertiesOpened});
-                expect(copy).toContain({title: 'Object Properties', get: ontologyStateSvc.getObjectPropertiesOpened, set: ontologyStateSvc.setObjectPropertiesOpened});
-                expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateSvc.getAnnotationPropertiesOpened, set: ontologyStateSvc.setAnnotationPropertiesOpened});
-                expect(copy).toContain({get: ontologyStateSvc.getDataPropertiesOpened, prop: 'data'});
-                expect(copy).toContain({get: ontologyStateSvc.getObjectPropertiesOpened, prop: 'object'});
-                expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation'});
             });
         });
     });
