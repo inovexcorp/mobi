@@ -29,8 +29,8 @@
          * @name everythingTree
          *
          * @description
-         * The `everythingTree` module only provides the `everythingTree` directive which creates a hierarchy of classes,
-         * concepts, schemes, and properties.
+         * The `everythingTree` module only provides the `everythingTree` directive which creates a hierarchy of classes
+         * and properties.
          */
         .module('everythingTree', [])
         /**
@@ -40,6 +40,7 @@
          * @restrict E
          * @requires shared.service:ontologyManagerService
          * @requires shared.service:ontologyStateService
+         * @requires shared.service:utilService
          *
          * @description
          * `everythingTree` is a directive that creates a a `div` containing a {@link shared.directive:searchBar}
@@ -51,9 +52,9 @@
          */
         .directive('everythingTree', everythingTree);
 
-        everythingTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'INDENT'];
+        everythingTree.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'INDENT'];
 
-        function everythingTree(ontologyManagerService, ontologyStateService, INDENT) {
+        function everythingTree(ontologyManagerService, ontologyStateService, utilService, INDENT) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -66,6 +67,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var util = utilService
                     dvm.indent = INDENT;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
@@ -98,6 +100,9 @@
                                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                         match = true;
                                 }));
+                                if (util.getBeautifulIRI(entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                                    match = true;
+                                }
                                 if (match) {
                                     var path = node.path[0];
                                     for (var i = 1; i < node.path.length - 1; i++) {

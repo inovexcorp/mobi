@@ -29,6 +29,7 @@ describe('Everything Tree directive', function() {
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockUtil();
         mockPrefixes();
         injectUniqueKeyFilter();
         injectIndentConstant();

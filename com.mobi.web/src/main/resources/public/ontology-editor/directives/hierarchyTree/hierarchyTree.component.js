@@ -29,6 +29,7 @@
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
      * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description
@@ -49,11 +50,12 @@
         controller: hierarchyTreeComponentCtrl
     };
 
-    hierarchyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'INDENT'];
+    hierarchyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService', 'prefixes', 'INDENT'];
 
-    function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, INDENT) {
+    function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService, prefixes, INDENT) {
         var dvm = this;
         var om = ontologyManagerService;
+        var util = utilService;
         dvm.indent = INDENT;
         dvm.os = ontologyStateService;
         dvm.ou = ontologyUtilsManagerService;
@@ -78,10 +80,13 @@
                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
                 var searchValues = _.pick(entity, om.entityNameProps);
                 var match = false;
-                _.some(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
+                _.some(_.keys(searchValues), key => _.some(searchValues[key], value => {
                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                         match = true;
                 }));
+                if (util.getBeautifulIRI(entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                    match = true;
+                }
                 if (match) {
                     var path = node.path[0];
                     for (var i = 1; i < node.path.length - 1; i++) {
