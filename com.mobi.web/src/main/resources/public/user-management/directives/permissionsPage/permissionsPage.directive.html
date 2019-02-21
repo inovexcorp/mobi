@@ -22,9 +22,9 @@
   -->
 <div class="permissions-page row">
     <div class="col">
-        <block>
+        <block class="h-100">
             <block-content>
-                <div class="policy row" ng-repeat="item in dvm.policies track by item.id">
+                <div class="policy row padding" ng-repeat="item in dvm.policies track by item.id">
                     <div class="col-6 offset-3">
                         <user-access-controls item="item" rule-title="dvm.getTitle(item)"></user-access-controls>
                     </div>

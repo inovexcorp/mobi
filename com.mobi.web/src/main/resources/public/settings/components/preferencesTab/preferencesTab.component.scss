@@ -20,32 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Block directive', function() {
-    var $compile, scope;
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    beforeEach(function() {
-        module('templates');
-        module('shared');
-
-        inject(function(_$compile_, _$rootScope_) {
-            $compile = _$compile_;
-            scope = _$rootScope_;
-        });
-
-        this.element = $compile(angular.element('<block></block>'))(scope);
-        scope.$digest();
-    });
-
-    afterEach(function() {
-        $compile = null;
-        scope = null;
-        this.element.remove();
-    });
-
-    describe('replaces the element with the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('block')).toBe(true);
-        });
-    });
-});
+.preferences-tab {
+    .block-content {
+        padding: 10px;
+    }
+}

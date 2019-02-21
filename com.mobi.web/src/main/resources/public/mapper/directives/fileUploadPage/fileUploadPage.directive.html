@@ -21,13 +21,13 @@
   #L%
   -->
 <div class="file-upload-page row">
-    <div class="col-5 form-block h-100">
+    <div class="col-5 form-block h-100 d-flex flex-column">
         <mapping-title></mapping-title>
-        <block>
+        <block class="flex-1 remove-min-height">
             <block-header>
                 <span>Upload File</span>
             </block-header>
-            <block-content class="padding">
+            <block-content>
                 <file-upload-form></file-upload-form>
                 <mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
                 <div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">

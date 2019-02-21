@@ -21,17 +21,19 @@
   #L%
   -->
 <div class="sparql-result-block">
-    <block>
+    <block class="h-100">
         <block-content>
             <sparql-result-table ng-if="dvm.sparql.data" bindings="dvm.sparql.bindings" data="dvm.sparql.data"></sparql-result-table>
             <error-display ng-if="dvm.sparql.errorMessage" class="message">{{dvm.sparql.errorMessage}}</error-display>
             <pre ng-if="dvm.sparql.errorMessage">{{dvm.sparql.errorDetails}}</pre>
             <info-message ng-if="dvm.sparql.infoMessage" class="message">{{dvm.sparql.infoMessage}}</info-message>
         </block-content>
-        <block-footer ng-if="dvm.sparql.data" class="footer-relative">
-            <button class="btn download-button remove-min-width" ng-click="dvm.downloadQuery()"><i class="fa fa-download"></i></button>
-            <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage - 1" limit="dvm.sparql.limit"></paging-details>
-            <pagination total="dvm.sparql.totalSize" limit="dvm.sparql.limit" current-page="dvm.sparql.currentPage" get-page="dvm.sparql.queryRdf()"></pagination>
+        <block-footer ng-if="dvm.sparql.data">
+            <div class="footer-relative">
+                <button class="btn download-button remove-min-width" ng-click="dvm.downloadQuery()"><i class="fa fa-download"></i></button>
+                <paging-details total-size="dvm.sparql.totalSize" page-index="dvm.sparql.currentPage - 1" limit="dvm.sparql.limit"></paging-details>
+                <pagination total="dvm.sparql.totalSize" limit="dvm.sparql.limit" current-page="dvm.sparql.currentPage" get-page="dvm.sparql.queryRdf()"></pagination>
+            </div>
         </block-footer>
     </block>
 </div>

@@ -42,7 +42,7 @@
          *
          * @description
          * `createRequest` is a directive which creates a div containing a
-         * {@link shared.directive:block} with the workflow steps of creating a MergeRequest. These steps are
+         * {@link shared.component:block} with the workflow steps of creating a MergeRequest. These steps are
          * {@link requestRecordSelect.directive:requestRecordSelect},
          * {@link requestBranchSelect.directive:requestBranchSelect}, and
          * {@link requestDetailsForm.directive:requestDetailsForm}. The directive is replaced by the contents

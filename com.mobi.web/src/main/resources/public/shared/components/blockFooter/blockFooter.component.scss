@@ -20,28 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    function blockHeader() {
-        return {
-            require: '^^block',
-            replace: true,
-            restrict: 'E',
-            transclude: true,
-            scope: {},
-            templateUrl: 'shared/directives/blockHeader/blockHeader.directive.html'
+.block block-footer {
+    &.centered {
+        text-align: center;
+    }
+    .block-footer {
+        border-top: 1px solid var(--light-dark);
+        clear: both;
+        overflow: hidden;
+
+        button.btn-link {
+            padding: 0;
+            outline: none;
         }
     }
-    
-    angular
-        .module('shared')
-        /**
-         * @ngdoc directive
-         * @name shared.directive:blockHeader
-         * @scope
-         * @restrict E
-         *
-         */
-        .directive('blockHeader', blockHeader);
-})();
+}

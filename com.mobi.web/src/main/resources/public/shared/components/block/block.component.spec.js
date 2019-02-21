@@ -20,14 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "./src/main/resources/public/css/variables";
+describe('Block component', function() {
+    var $compile, scope;
 
-.block {
-    .block-content {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        position: relative;
-    }
-}
+    beforeEach(function() {
+        module('templates');
+        module('shared');
+
+        inject(function(_$compile_, _$rootScope_) {
+            $compile = _$compile_;
+            scope = _$rootScope_;
+        });
+
+        this.element = $compile(angular.element('<block></block>'))(scope);
+        scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toEqual('BLOCK');
+            expect(this.element.querySelectorAll('.block').length).toEqual(1);
+        });
+    });
+});

@@ -23,24 +23,24 @@
 (function() {
     'use strict';
 
-    function block() {
-        return {
-            restrict: 'E',
-            replace: true,
-            transclude: true,
-            scope: {},
-            templateUrl: 'shared/directives/block/block.directive.html'
-        }
-    }
+    /**
+     * @ngdoc component
+     * @name shared.component:blockHeader
+     *
+     * @description
+     * 
+     */
+    const blockHeaderComponent = {
+        templateUrl: 'shared/components/blockHeader/blockHeader.component.html',
+        transclude: true,
+        require: '^^block',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: blockHeaderComponentCtrl
+    };
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc directive
-         * @name shared.directive:block
-         * @scope
-         * @restrict E
-         *
-         */
-        .directive('block', block);
+    function blockHeaderComponentCtrl() {}
+    
+    angular.module('shared')
+        .component('blockHeader', blockHeaderComponent);
 })();

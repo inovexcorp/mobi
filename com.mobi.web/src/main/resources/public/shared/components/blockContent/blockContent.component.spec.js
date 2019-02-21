@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Block header directive', function() {
+describe('Block content component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -34,7 +34,7 @@ describe('Block header directive', function() {
 
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        this.element = angular.element('<block-header></block-header>');
+        this.element = angular.element('<block-content></block-content>');
         parent.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
@@ -46,10 +46,10 @@ describe('Block header directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('block-header')).toBe(true);
+    describe('contains the correct html', function() {
+        it('for wraping containers', function() {
+            expect(this.element.prop('tagName')).toEqual('BLOCK-CONTENT');
+            expect(this.element.querySelectorAll('.block-content').length).toEqual(1);
         });
     });
 });

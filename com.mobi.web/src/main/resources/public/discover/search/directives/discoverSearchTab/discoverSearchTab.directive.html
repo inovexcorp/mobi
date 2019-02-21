@@ -23,7 +23,7 @@
 <div class="discover-search-tab row">
     <search-form class="col-3"></search-form>
     <div class="col-9">
-        <block>
+        <block class="h-100">
             <block-content targeted-spinner="dvm.ds.search.targetedId">
                 <info-message ng-if="!dvm.ds.search.results">Submit a search using the form to the left</info-message>
                 <sparql-result-table bindings="dvm.ds.search.results.head.vars" data="dvm.ds.search.results.results.bindings" headers="dvm.ds.search.queryConfig.variables"></sparql-result-table>

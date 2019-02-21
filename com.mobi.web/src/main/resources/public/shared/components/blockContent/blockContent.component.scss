@@ -23,14 +23,14 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.block .block-footer {
-    border-top: 1px solid var(--light-dark);
+.block {
+    block-content {
+        flex: 1;
+        min-height: 0;
 
-    &.centered {
-        text-align: center;
-    }
-    button.btn-link {
-    	padding: 0;
-    	outline: none;
+        .block-content {
+            overflow-y: auto;
+            position: relative;
+        }
     }
 }

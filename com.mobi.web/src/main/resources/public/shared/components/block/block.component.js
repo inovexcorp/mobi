@@ -20,17 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "./src/main/resources/public/css/variables";
+(function() {
+    'use strict';
 
-.mapping-select-page {
-    .mapping-preview-header button {
-        min-width: 0;
-    }
-    .dropdown-toggle::after {
-        display: none;
-    }
-    .col-8 .block-content {
-        padding: 10px;
-    }
-}
+    /**
+     * @ngdoc component
+     * @name shared.component:block
+     *
+     * @description
+     * 
+     */
+    const blockComponent = {
+        templateUrl: 'shared/components/block/block.component.html',
+        transclude: true,
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: blockComponentCtrl
+    };
+
+    function blockComponentCtrl() {}
+
+    angular.module('shared')
+        .component('block', blockComponent);
+})();

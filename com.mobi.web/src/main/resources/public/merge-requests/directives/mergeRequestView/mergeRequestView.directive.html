@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-request-view">
-    <block>
-        <block-content class="padding">
+<div class="merge-request-view d-flex flex-column">
+    <block class="h-100">
+        <block-content>
             <div class="main-details">
                 <span class="open-indicator badge badge-pill float-right" ng-class="dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'badge-success' : 'badge-primary'">{{dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'Accepted' : 'Open'}}</span>
                 <div class="title">

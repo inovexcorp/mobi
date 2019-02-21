@@ -22,14 +22,14 @@
   -->
 <div class="groups-page row">
     <div class="col-4">
-        <block>
+        <block class="h-100">
             <block-header>
                 <span>Groups</span>
                 <button class="btn btn-link float-right" ng-click="dvm.createGroup()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
                     <i class="fa fa-plus"></i>Create Group
                 </button>
             </block-header>
-            <block-search ng-model="dvm.state.groupSearchString" clear-event="dvm.state.groupSearchString = ''"></block-search>
+            <block-search bind-model="dvm.state.groupSearchString" change-event="dvm.state.groupSearchString = value" clear-event="dvm.state.groupSearchString = ''"></block-search>
             <block-content>
                 <groups-list></groups-list>
             </block-content>
@@ -48,32 +48,34 @@
             <div class="col">
                 <div class="row vertical-half">
                     <div class="col-6">
-                        <block>
+                        <block class="h-100">
                             <block-header>
                                 <span>Description</span>
                                 <button class="btn btn-link float-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
                                     <i class="fa fa-pencil"></i>Edit
                                 </button>
                             </block-header>
-                            <block-content class="padding">
-                                <p ng-if="dvm.state.selectedGroup" class="group-description">{{dvm.state.selectedGroup.description || 'No description'}}</p>
+                            <block-content>
+                                <p ng-if="dvm.state.selectedGroup" class="group-description padding break-word">{{dvm.state.selectedGroup.description || 'No description'}}</p>
                             </block-content>
                         </block>
                     </div>
                     <div class="col-6">
-                        <block>
+                        <block class="h-100">
                             <block-header>
                                 <span>Permissions</span>
                             </block-header>
-                            <block-content class="padding">
-                                <permissions-input ng-if="dvm.state.selectedGroup" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser)" on-change="dvm.changeRoles()"></permissions-input>
+                            <block-content>
+                                <div class="padding">
+                                    <permissions-input ng-if="dvm.state.selectedGroup" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser)" on-change="dvm.changeRoles()"></permissions-input>
+                                </div>
                             </block-content>
                         </block>
                     </div>
                 </div>
                 <div class="row vertical-half member-block-row">
                     <div class="col">
-                        <block>
+                        <block class="h-100">
                             <block-header>
                                 <span>Members</span>
                             </block-header>

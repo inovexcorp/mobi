@@ -24,15 +24,14 @@
 @import "./src/main/resources/public/css/variables";
 
 .merge-request-view {
-    display: flex;
-    flex-direction: column;
-
     h2 {
         display: inline-block;
     }
-
     .alert {
         margin-top: 20px;
+    }
+    .block-content {
+        padding: 10px;
     }
     .block-footer button {
         margin-left: 10px;

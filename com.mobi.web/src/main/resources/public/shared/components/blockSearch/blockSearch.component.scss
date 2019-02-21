@@ -20,31 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    function blockSearch() {
-        return {
-            restrict: 'E',
-            replace: true,
-            require: '^^block',
-            scope: {
-                bindModel: '=ngModel',
-                keyupEvent: '&',
-                clearEvent: '&'
-            },
-            templateUrl: 'shared/directives/blockSearch/blockSearch.directive.html'
+.block .search {
+    position: relative;
+
+    .fa-search,
+    .fa-times-circle {
+        position: absolute;
+        font-size: 1.25em;
+        top: 12px;
+    }
+    .fa-search {
+        left: 10px;
+    }
+    .fa-times-circle {
+        right: 10px;
+        text-decoration: none;
+
+        &:hover {
+            color: var(--body) !important;
         }
     }
-    
-    angular
-        .module('shared')
-        /**
-         * @ngdoc directive
-         * @name shared.directive:blockSearch
-         * @scope
-         * @restrict E
-         *
-         */
-        .directive('blockSearch', blockSearch);
-})();
+    input {
+        border: 0;
+        border-bottom: 1px solid var(--light-dark);
+        display: inline-block;
+        padding: 10px 35px;
+        outline: 0;
+        width: 100%;
+    }
+}

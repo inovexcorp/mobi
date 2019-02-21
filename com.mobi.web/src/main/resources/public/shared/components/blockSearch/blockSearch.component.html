@@ -22,6 +22,6 @@
   -->
 <div class="search">
     <i class="fa fa-search"></i>
-    <input ng-model="bindModel" ng-keyup="keyupEvent({'$event': $event})" type="text" placeholder="Search" />
-    <a class="fa fa-times-circle text-muted" ng-click="clearEvent()"></a>
+    <input ng-model="dvm.bindModel" ng-change="dvm.changeEvent({value: dvm.bindModel})" type="text" placeholder="Search" />
+    <a class="fa fa-times-circle text-muted" ng-click="dvm.clearEvent()"></a>
 </div>

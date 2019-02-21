@@ -46,7 +46,7 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `datasetsList` is a directive which creates a Bootstrap row containing a {@link shared.directive:block block}
+         * `datasetsList` is a directive which creates a Bootstrap row containing a {@link shared.component:block block}
          * with a {@link shared.directive:pagination paginated} list of
          * {@link shared.service:datasetStateService#results Dataset Records} and
          * {@link confirmationOverlay.directive:confirmationOverlay confirmation overlays} for deleting and clearing

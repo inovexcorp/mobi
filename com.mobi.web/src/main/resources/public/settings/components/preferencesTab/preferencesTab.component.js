@@ -28,7 +28,7 @@
      * @requires shared.service:settingsManagerService
      *
      * @description
-     * `preferencesTab` is a component that creates a Bootstrap `row` with a {@link shared.directive:block block} containing
+     * `preferencesTab` is a component that creates a Bootstrap `row` with a {@link shared.component:block block} containing
      * a form allowing the current user to change their display preferences. The preferences are displayed using a
      * {@link settings.component:preferencesContainer preferencesContainer} and several
      * {@link settings.component:customPreference customPreference}.

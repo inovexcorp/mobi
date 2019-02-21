@@ -23,35 +23,12 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.block .search {
-    position: relative;
+.profile-tab {
+    .block {
+        height: 100%;
 
-    .fa-search,
-    .fa-times-circle {
-        position: absolute;
-        font-size: 1.25em;
-        top: 12px;
-    }
-
-    .fa-search {
-        left: 10px;
-    }
-
-    .fa-times-circle {
-        right: 10px;
-        text-decoration: none;
-
-        &:hover {
-            color: var(--body) !important;
+        .block-content {
+            padding: 10px;
         }
-    }
-
-    input {
-        border: 0;
-        border-bottom: 1px solid var(--light-dark);
-        display: inline-block;
-        padding: 10px 35px;
-        outline: 0;
-        width: 100%;
     }
 }

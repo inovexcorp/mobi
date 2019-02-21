@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Block footer directive', function() {
+describe('Block Footer component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -46,10 +46,10 @@ describe('Block footer directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('block-footer')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('BLOCK-FOOTER');
+            expect(this.element.querySelectorAll('.block-footer').length).toEqual(1);
         });
     });
 });

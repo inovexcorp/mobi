@@ -175,10 +175,7 @@ describe('Mapping List Block directive', function() {
             expect(this.element.find('block-search').length).toEqual(1);
         });
         it('with a block-content', function() {
-            var blockContent = this.element.find('block-content');
-            expect(blockContent.length).toEqual(1);
-            expect(blockContent.hasClass('tree')).toEqual(true);
-            expect(blockContent.hasClass('scroll-without-buttons')).toEqual(true);
+            expect(this.element.find('block-content').length).toEqual(1);
         });
         it('with a block-footer', function() {
             expect(this.element.find('block-content').length).toEqual(1);

@@ -26,7 +26,7 @@
         <tabset class="edit-tabs">
             <tab heading="'Edit'" active="dvm.tabs.edit">
                 <block>
-                    <block-content class="padding">
+                    <block-content>
                         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
                         <edit-mapping-form></edit-mapping-form>
                     </block-content>
@@ -48,7 +48,7 @@
             </tab>
             <tab heading="'Preview'" active="dvm.tabs.preview">
                 <block>
-                    <block-content class="padding">
+                    <block-content>
                         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
                         <rdf-preview-form></rdf-preview-form>
                     </block-content>
@@ -71,7 +71,7 @@
         </tabset>
     </div>
     <div class="col-7">
-        <block>
+        <block class="h-100">
             <block-content>
                 <preview-data-grid></preview-data-grid>
             </block-content>
