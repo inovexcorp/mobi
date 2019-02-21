@@ -47,7 +47,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
 
-public abstract class AbstractMappingRecordService<T extends MappingRecord> extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
+public abstract class AbstractMappingRecordService<T extends MappingRecord>
+        extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
     protected MappingManager manager;
 

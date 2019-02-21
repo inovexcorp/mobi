@@ -38,10 +38,10 @@
      * {@link shared.service:mapperStateService#mapping mapping} for the mapping tool. The list will also be
      * filtered by the {@link shared.service:mapperStateService#mappingSearchString mappingSearchString}. Also
      * includes a button for {@link createMappingOverlay.component:createMappingOverlay creating a mapping}. The
-     * directive houses the method for opening a modal to confirm deleting a mapping.
+     * component houses the method for opening a modal to confirm deleting a mapping.
      */
     const mappingListBlockComponent = {
-        templateUrl: 'mapper/directives/mappingListBlock/mappingListBlock.directive.html',
+        templateUrl: 'mapper/components/mappingListBlock/mappingListBlock.component.html',
         bindings: {},
         controllerAs: 'dvm',
         controller: mappingListBlockComponentCtrl

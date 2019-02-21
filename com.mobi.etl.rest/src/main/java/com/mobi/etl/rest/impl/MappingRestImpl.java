@@ -47,7 +47,6 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.security.annotations.ActionAttributes;
@@ -130,7 +129,6 @@ public class MappingRestImpl implements MappingRest {
         }
         checkStringParam(title, "Title is required");
         User user = getActiveUser(context, engineManager);
-        CreateActivity createActivity = null;
         Set<User> users = new LinkedHashSet<>();
         users.add(user);
         RecordOperationConfig config = new OperationConfig();
