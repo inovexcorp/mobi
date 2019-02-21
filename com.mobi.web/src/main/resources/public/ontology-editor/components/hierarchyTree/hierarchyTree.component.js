@@ -43,7 +43,7 @@
         templateUrl: 'ontology-editor/components/hierarchyTree/hierarchyTree.component.html',
         bindings: {
             hierarchy: '<',
-            updateSearch: '<'
+            updateSearch: '&'
         },
         controllerAs: 'dvm',
         controller: hierarchyTreeComponentCtrl
@@ -78,7 +78,7 @@
                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
                 var searchValues = _.pick(entity, om.entityNameProps);
                 var match = false;
-                _.forEach(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
+                _.some(_.keys(searchValues), key => _.forEach(searchValues[key], value => {
                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                         match = true;
                 }));
@@ -116,7 +116,7 @@
         }
 
         function update() {
-            dvm.updateSearch(dvm.filterText);
+            dvm.updateSearch({value: dvm.filterText});
             dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
         }
     }
