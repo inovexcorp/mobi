@@ -47,7 +47,7 @@
             dataProps: '<',
             objectProps: '<',
             annotationProps: '<',
-            updateSearch: '<'
+            updateSearch: '&'
         },
         controllerAs: 'dvm',
         controller: propertyTreeComponentCtrl
@@ -134,7 +134,7 @@
         }
 
         function update() {
-            dvm.updateSearch(dvm.filterText);
+            dvm.updateSearch({value: dvm.filterText});
             dvm.filteredHierarchy = _.filter(dvm.flatPropertyTree, dvm.searchFilter);
         }
         function addGetToArrayItems(array, get) {
