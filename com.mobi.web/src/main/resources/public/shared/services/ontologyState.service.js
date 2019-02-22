@@ -46,7 +46,8 @@
                 active: true
             },
             overview: {
-                active: false
+                active: false,
+                searchText: ''
             },
             classes: {
                 active: false,

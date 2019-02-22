@@ -30,6 +30,8 @@ describe('Static IRI directive', function() {
         mockOntologyUtilsManager();
         mockModal();
         injectSplitIRIFilter();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
@@ -44,7 +46,8 @@ describe('Static IRI directive', function() {
         scope.iri = 'iri';
         scope.readOnly = true;
         scope.duplicateCheck = true;
-        this.element = $compile(angular.element('<static-iri on-edit="onEdit()" iri="iri" read-only="readOnly" duplicate-check="duplicateCheck"></static-iri>'))(scope);
+        scope.highlightText = '';
+        this.element = $compile(angular.element('<static-iri on-edit="onEdit()" iri="iri" read-only="readOnly" duplicate-check="duplicateCheck" highlight-text="highlightText"></static-iri>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('staticIri');
@@ -65,6 +68,11 @@ describe('Static IRI directive', function() {
             this.isolatedScope.onEdit();
             scope.$digest();
             expect(scope.onEdit).toHaveBeenCalled();
+        });
+        it('highlightText is one way bound', function() {
+            this.controller.highlightText = 'new text';
+            scope.$digest();
+            expect(scope.highlightText).toEqual('');
         });
     });
     describe('controller bound variable', function() {
