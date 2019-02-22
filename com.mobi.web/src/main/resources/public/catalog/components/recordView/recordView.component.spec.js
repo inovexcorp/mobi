@@ -152,6 +152,14 @@ describe('Record View component', function() {
                     expect(this.controller.canEdit).toEqual(true);
                     expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
                 });
+                it('with Indeterminate', function() {
+                    policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.indeterminate));
+                    this.controller.setCanEdit();
+                    scope.$apply();
+                    expect(policyEnforcementSvc.evaluateRequest).toHaveBeenCalledWith({resourceId: this.recordId, actionId: prefixes.policy + 'Update'});
+                    expect(this.controller.canEdit).toEqual(true);
+                    expect(utilSvc.createWarningToast).not.toHaveBeenCalled();
+                });
                 it('with Deny', function() {
                     policyEnforcementSvc.evaluateRequest.and.returnValue($q.when(policyEnforcementSvc.deny));
                     this.controller.setCanEdit();

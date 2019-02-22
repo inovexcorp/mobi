@@ -43,7 +43,6 @@
             'mapperTabset',
             'mappingCommitsPage',
             'mappingConfigOverlay',
-            'mappingListBlock',
             'mappingPreview',
             'mappingSelectPage',
             'mappingTitle',
