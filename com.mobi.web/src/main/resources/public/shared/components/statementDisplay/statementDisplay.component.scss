@@ -23,15 +23,20 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.statement-container {
-    margin: 10px;
-
-    p {
-        font-size: 14px;
-        margin: 0;
+.statement-display {
+    &:hover {
+        background-color: var(--light);
     }
+    .statement-cell {
+        display: inline-block;
+        word-break: break-word;
+        vertical-align: top;
 
-    table {
-        width: 100%;
+        &.predicate {
+            width: 20%;
+        }
+        &.object {
+            width: 80%;
+        }
     }
 }

@@ -27,15 +27,15 @@
             <small class="text-muted ml-1 text-truncate flex-1">&lt;{{key}}&gt;</small>
         </div>
         <div class="prop-value-container ml-3 mt-1 p-1">
-            <statement-container ng-if="value.additions.length" additions class="m-0">
+            <statement-container ng-if="value.additions.length" additions>
                 <statement-display
                         ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
-                        predicate="addition.p" object="addition.o" addition></statement-display>
+                        predicate="addition.p" object="addition.o"></statement-display>
             </statement-container>
-            <statement-container ng-if="value.deletions.length" deletions class="m-0">
+            <statement-container ng-if="value.deletions.length" deletions>
                 <statement-display
                         ng-repeat="deletion in value.deletions | orderBy:dvm.util.getPredicateLocalName"
-                        predicate="deletion.p" object="deletion.o" deletion></statement-display>
+                        predicate="deletion.p" object="deletion.o"></statement-display>
             </statement-container>
         </div>
     </div>

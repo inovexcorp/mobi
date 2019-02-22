@@ -20,33 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    function statementContainer() {
-        return {
-            restrict: 'E',
-            replace: true,
-            transclude: true,
-            scope: {},
-            templateUrl: 'shared/directives/statementContainer/statementContainer.directive.html',
-            controller: angular.noop,
-            link: function(scope, element, attrs) {
-                scope.hasAdditions = 'additions' in attrs;
-                scope.hasDeletions = 'deletions' in attrs;
-            }
-        }
+.statement-container {
+    &.additions .statement-display {
+        color: var(--success);
     }
-
-    angular
-        .module('shared')
-        /**
-         * @ngdoc directive
-         * @name shared.directive:statementContainer
-         * @scope
-         * @restrict E
-         *
-         */
-        .directive('statementContainer', statementContainer);
-
-})();
+    &.deletions .statement-display {
+        color: var(--danger);
+    }
+}

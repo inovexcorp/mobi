@@ -43,15 +43,15 @@
                         </div>
                         <div class="property-values mt-3">
                             <div class="prop-value-container p-1">
-                                <statement-container ng-if="dvm.changes.left.additions.length" additions class="m-0">
+                                <statement-container ng-if="dvm.changes.left.additions.length" additions>
                                     <statement-display
                                             ng-repeat="addition in dvm.changes.left.additions | orderBy:dvm.util.getPredicateLocalName"
-                                            predicate="addition.p" object="addition.o" addition></statement-display>
+                                            predicate="addition.p" object="addition.o"></statement-display>
                                 </statement-container>
-                                <statement-container ng-if="dvm.changes.left.deletions.length" deletions class="m-0">
+                                <statement-container ng-if="dvm.changes.left.deletions.length" deletions>
                                     <statement-display
                                             ng-repeat="deletion in dvm.changes.left.deletions | orderBy:dvm.util.getPredicateLocalName"
-                                            predicate="deletion.p" object="deletion.o" deletion></statement-display>
+                                            predicate="deletion.p" object="deletion.o"></statement-display>
                                 </statement-container>
                             </div>
                         </div>
@@ -67,15 +67,15 @@
                         </div>
                         <div class="property-values mt-3">
                             <div class="prop-value-container p-1">
-                                <statement-container ng-if="dvm.changes.right.additions.length" additions class="m-0">
+                                <statement-container ng-if="dvm.changes.right.additions.length" additions>
                                     <statement-display
                                             ng-repeat="addition in dvm.changes.right.additions | orderBy:dvm.util.getPredicateLocalName"
-                                            predicate="addition.p" object="addition.o" addition></statement-display>
+                                            predicate="addition.p" object="addition.o"></statement-display>
                                 </statement-container>
-                                <statement-container ng-if="dvm.changes.right.deletions.length" deletions class="m-0">
+                                <statement-container ng-if="dvm.changes.right.deletions.length" deletions>
                                     <statement-display
                                             ng-repeat="deletion in dvm.changes.right.deletions | orderBy:dvm.util.getPredicateLocalName"
-                                            predicate="deletion.p" object="deletion.o" deletion></statement-display>
+                                            predicate="deletion.p" object="deletion.o"></statement-display>
                                 </statement-container>
                             </div>
                         </div>

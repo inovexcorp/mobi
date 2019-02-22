@@ -20,10 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="statement-container">
-    <p ng-if="hasAdditions">Added Statements:</p>
-    <p ng-if="hasDeletions">Deleted Statements:</p>
-    <table>
-        <tbody ng-transclude></tbody>
-    </table>
+<div class="statement-display p-1">
+    <div title="{{dvm.predicate}}" class="predicate statement-cell">{{(dvm.predicate | splitIRI).end}}</div><div title="{{dvm.fullObject}}" class="statement-cell object">{{dvm.o}}</div>
 </div>
