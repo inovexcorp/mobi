@@ -47,7 +47,7 @@
          * `createDataPropertyOverlay` is a directive that creates content for a modal that creates a data property in
          * the current {@link shared.service:ontologyStateService selected ontology}. The form in the modal
          * contains a text input for the property name (which populates the {@link staticIri.directive:staticIri IRI}),
-         * a {@link shared.directive:textArea} for the property description, an
+         * a {@link shared.component:textArea} for the property description, an
          * {@link advancedLanguageSelect.directive:advancedLanguageSelect},
          * {@link shared.component:checkbox checkboxes} for the property characteristics, an
          * {@link shared.directive:iriSelect} for the domain, an {@link shared.directive:iriSelect} for the range,

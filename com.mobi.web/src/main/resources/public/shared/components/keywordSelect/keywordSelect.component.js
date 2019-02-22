@@ -23,25 +23,33 @@
 (function() {
     'use strict';
 
-    function keywordSelect() {
-        return {
-            restrict: 'E',
-            replace: true,
-            templateUrl: 'shared/directives/keywordSelect/keywordSelect.directive.html',
-            scope: {},
-            bindToController: {
-                bindModel: '=ngModel'
-            },
-            controllerAs: 'dvm',
-            controller: function() {
-                var dvm = this;
-                dvm.keywordList = [];
-            }
+    /**
+     * @ngdoc component
+     * @name shared.component:keywordSelect
+     * 
+     * @description
+     * 
+     */
+    const keywordSelectComponent = {
+        templateUrl: 'shared/components/keywordSelect/keywordSelect.component.html',
+        bindings: {
+            bindModel: '<',
+            changeEvent: '&'
+        },
+        controllerAs: 'dvm',
+        controller: keywordSelectComponentCtrl
+    };
+
+    function keywordSelectComponentCtrl() {
+        var dvm = this;
+        dvm.keywordList = [];
+
+        dvm.onChange = function() {
+            dvm.changeEvent({value: dvm.bindModel});
         }
     }
 
-    angular
-        .module('shared')
-        .directive('keywordSelect', keywordSelect);
+    angular.module('shared')
+        .component('keywordSelect', keywordSelectComponent);
 
 })();

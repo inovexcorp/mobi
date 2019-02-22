@@ -31,7 +31,7 @@
         <text-input bind-model="dvm.recordConfig.datasetIRI" change-event="dvm.recordConfig.datasetIRI = value" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
         <small class="form-text">System will create a default IRI if not provided.</small>
         <text-area bind-model="dvm.recordConfig.description" change-event="dvm.recordConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <keyword-select ng-model="dvm.keywords"></keyword-select>
+        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value"></keyword-select>
         <div class="form-group">
             <custom-label>Repository ID</custom-label>
             <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>

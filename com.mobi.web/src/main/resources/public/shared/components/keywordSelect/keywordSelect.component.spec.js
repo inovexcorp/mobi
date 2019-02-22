@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Keyword Select directive', function() {
+describe('Keyword Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -34,7 +34,8 @@ describe('Keyword Select directive', function() {
         });
 
         scope.bindModel = '';
-        this.element = $compile(angular.element('<keyword-select ng-model="bindModel"></keyword-select>'))(scope);
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        this.element = $compile(angular.element('<keyword-select bind-model="bindModel" change-event="changeEvent(value)"></keyword-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('keywordSelect');
     });
@@ -46,22 +47,25 @@ describe('Keyword Select directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('bindModel is two way bound', function() {
+        it('bindModel is one way bound', function() {
             this.controller.bindModel = 'test';
             scope.$digest();
-            expect(scope.bindModel).toBe('test');
+            expect(scope.bindModel).toEqual('');
+        });
+        it('changeEvent is called in the parent scope', function() {
+            this.controller.changeEvent({value: 'Test'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('Test');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('keyword-select')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('KEYWORD-SELECT');
+            expect(this.element.querySelectorAll('.keyword-select').length).toEqual(1);
         });
-        it('with a custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(1);
-        });
-        it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+        ['custom-label', 'ui-select'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toEqual(1);
+            });
         });
     });
 });
