@@ -47,7 +47,7 @@ describe('Property Tree component', function() {
             prefixes = _prefixes_;
         });
 
-        scope.dataProps =[{
+        scope.datatypeProps =[{
             entityIRI: 'dataProp1',
             hasChildren: true,
             indent: 1,
@@ -71,7 +71,7 @@ describe('Property Tree component', function() {
             get: ontologyStateSvc.getNoDomainsOpened
         }];
         scope.updateSearch = jasmine.createSpy('updateSearch');
-        this.element = $compile(angular.element('<property-tree data-props="dataProps" object-props="objectProps" annotation-props="annotationProps" update-search="updateSearch(value)"></property-tree>'))(scope);
+        this.element = $compile(angular.element('<property-tree datatype-props="datatypeProps" object-props="objectProps" annotation-props="annotationProps" update-search="updateSearch(value)"></property-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('propertyTree');
     });
@@ -87,29 +87,29 @@ describe('Property Tree component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('dataProps should be one way bound', function() {
-            this.controller.dataProps = [];
+        it('datatypeProps should be one way bound', function() {
+            this.controller.datatypeProps = [];
             scope.$digest();
-            expect(angular.copy(scope.dataProps)).toEqual([{
+            expect(angular.copy(scope.datatypeProps)).toEqual([{
                 entityIRI: 'dataProp1',
                 hasChildren: true,
                 indent: 1,
-                get: ontologyStateSvc.getNoDomainsOpened
+                get: jasmine.any(Function)
             }, {
                 entityIRI: 'dataProp2',
                 hasChildren: false,
                 indent: 2,
-                get: ontologyStateSvc.getNoDomainsOpened
+                get: jasmine.any(Function)
             }]);
         });
-        it('dataProps should be one way bound', function() {
+        it('objectProps should be one way bound', function() {
             this.controller.objectProps = [];
             scope.$digest();
             expect(angular.copy(scope.objectProps)).toEqual([{
                 entityIRI: 'objectProp1',
                 hasChildren: false,
                 indent: 1,
-                get: ontologyStateSvc.getNoDomainsOpened
+                get: jasmine.any(Function)
             }]);
         });
         it('annotationProps should be one way bound', function() {
@@ -119,7 +119,7 @@ describe('Property Tree component', function() {
                 entityIRI: 'annotationProp1',
                 hasChildren: false,
                 indent: 1,
-                get: ontologyStateSvc.getNoDomainsOpened
+                get: jasmine.any(Function)
             }]);
         });
         it('updateSearch is one way bound', function() {
@@ -144,7 +144,7 @@ describe('Property Tree component', function() {
     });
     describe('controller methods', function() {
         it('$onInit initializes flatPropertyTree correctly', function() {
-            this.controller.dataProps = [{prop: 'data'}];
+            this.controller.datatypeProps = [{prop: 'data'}];
             this.controller.objectProps = [{prop: 'object'}];
             this.controller.annotationProps = [{prop: 'annotation'}];
             this.controller.$onInit();
@@ -179,6 +179,7 @@ describe('Property Tree component', function() {
                 this.controller.filterText = 'ti';
                 this.filterEntity = {
                     '@id': 'urn:id',
+                    '@type': [prefixes.owl + 'DatatypeProperty'],
                     [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
                 };
                 ontologyStateSvc.getEntityByRecordId.and.returnValue(this.filterEntity);
@@ -194,6 +195,7 @@ describe('Property Tree component', function() {
                         beforeEach(function () {
                             var noMatchEntity = {
                                 '@id': 'urn:title',
+                                '@type': [prefixes.owl + 'DatatypeProperty']
                             };
                             ontologyStateSvc.getEntityByRecordId.and.returnValue(noMatchEntity);
                             utilSvc.getBeautifulIRI.and.returnValue('id');
