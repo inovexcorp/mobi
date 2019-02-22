@@ -48,20 +48,22 @@ describe('Statement Container component', function() {
             expect(this.element.prop('tagName')).toEqual('STATEMENT-CONTAINER');
             expect(this.element.querySelectorAll('.statement-container').length).toEqual(1);
         });
-        it('without a p', function() {
-            expect(this.element.find('p').length).toEqual(0);
+        it('without a h5', function() {
+            expect(this.element.find('h5').length).toEqual(0);
         });
-        it('with a p when additions attribute is set', function() {
+        it('with a h5 when additions attribute is set', function() {
             this.element = $compile(angular.element('<statement-container additions></statement-container>'))(scope);
             scope.$digest();
-            expect(this.element.find('p').length).toEqual(1);
-            expect(angular.element(this.element.find('p')[0]).text()).toEqual('Added Statements');
+            expect(this.element.querySelectorAll('.additions').length).toEqual(1);
+            expect(this.element.find('h5').length).toEqual(1);
+            expect(angular.element(this.element.find('h5')[0]).text()).toEqual('Added Statements');
         });
-        it('with a p when deletions attribute is set', function() {
+        it('with a h5 when deletions attribute is set', function() {
             this.element = $compile(angular.element('<statement-container deletions></statement-container>'))(scope);
             scope.$digest();
-            expect(this.element.find('p').length).toEqual(1);
-            expect(angular.element(this.element.find('p')[0]).text()).toEqual('Deleted Statements');
+            expect(this.element.querySelectorAll('.deletions').length).toEqual(1);
+            expect(this.element.find('h5').length).toEqual(1);
+            expect(angular.element(this.element.find('h5')[0]).text()).toEqual('Deleted Statements');
         });
     });
 });

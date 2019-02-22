@@ -24,7 +24,7 @@
     <div class="row justify-content-center">
         <form name="dvm.form" novalidate autocomplete="off">
             <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
-            <branch-select ng-model="dvm.os.listItem.merge.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
+            <branch-select bind-model="dvm.os.listItem.merge.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget(value)" branches="dvm.branches"></branch-select>
             <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" bind-model="dvm.os.listItem.merge.checkbox" change-event="dvm.os.listItem.merge.checkbox = value" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
         </form>
     </div>

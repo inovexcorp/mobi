@@ -83,7 +83,8 @@
                         dvm.branches = [];
                     });
 
-                dvm.changeSource = function() {
+                dvm.changeSource = function(value) {
+                    dvm.state.requestConfig.sourceBranch = value;
                     if (dvm.state.requestConfig.sourceBranch) {
                         dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
                         if (dvm.state.requestConfig.targetBranch) {
@@ -95,7 +96,8 @@
                         dvm.state.requestConfig.difference = undefined;
                     }
                 }
-                dvm.changeTarget = function() {
+                dvm.changeTarget = function(value) {
+                    dvm.state.requestConfig.targetBranch = value;
                     if (dvm.state.requestConfig.targetBranch) {
                         dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
                         if (dvm.state.requestConfig.sourceBranch) {

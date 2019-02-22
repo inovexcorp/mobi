@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Branch Select directive', function() {
+describe('Branch Select component', function() {
     var $compile, $timeout, scope;
 
     beforeEach(function() {
@@ -37,14 +37,13 @@ describe('Branch Select directive', function() {
             scope = _$rootScope_;
         });
 
-        scope.ngModel = undefined;
+        scope.bindModel = undefined;
+        scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.branches = [];
         scope.required = true;
         scope.isDisabledWhen = false;
-        scope.changeEvent = jasmine.createSpy('changeEvent');
-        this.element = $compile(angular.element('<branch-select ng-model="ngModel" branches="branches" is-disabled-when="isDisabledWhen" required="required" change-event="changeEvent()"></branch-select>'))(scope);
+        this.element = $compile(angular.element('<branch-select bind-model="ngModel" change-event="changeEvent(value)" branches="branches" is-disabled-when="isDisabledWhen" required="required"></branch-select>'))(scope);
         scope.$digest();
-        this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('branchSelect');
     });
 
@@ -55,48 +54,47 @@ describe('Branch Select directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
+    describe('controller bound variable', function() {
+        it('bindModel should be one way bound', function() {
+            this.controller.bindModel = {};
+            scope.$digest();
+            expect(scope.bindModel).toEqual(undefined);
+        });
+        it('changeEvent should be called in parent scope', function() {
+            this.controller.changeEvent({value: {}});
+            expect(scope.changeEvent).toHaveBeenCalledWith({});
+        });
         it('branches should be one way bound', function() {
-            this.isolatedScope.branches = [{}];
+            this.controller.branches = [{}];
             scope.$digest();
             expect(scope.branches).toEqual([]);
         });
         it('required should be one way bound', function() {
-            this.isolatedScope.required = false;
+            this.controller.required = false;
             scope.$digest();
             expect(scope.required).toEqual(true);
         });
         it('isDisabledWhen should be one way bound', function() {
-            this.isolatedScope.isDisabledWhen = true;
+            this.controller.isDisabledWhen = true;
             scope.$digest();
             expect(scope.isDisabledWhen).toEqual(false);
-        });
-        it('changeEvent should be called in parent scope when invoked', function() {
-            this.isolatedScope.changeEvent();
-            expect(scope.changeEvent).toHaveBeenCalled();
-        });
-    });
-    describe('controller bound variable', function() {
-        it('bindModel should be two way bound', function() {
-            this.controller.bindModel = {};
-            scope.$digest();
-            expect(scope.ngModel).toEqual({});
         });
     });
     describe('controller methods', function() {
         it('should call changeEvent', function() {
             this.controller.onChange();
             $timeout.flush();
-            expect(scope.changeEvent).toHaveBeenCalled();
+            expect(scope.changeEvent).toHaveBeenCalledWith(undefined);
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('branch-select')).toBe(true);
-            expect(this.element.hasClass('form-group')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('BRANCH-SELECT');
+            expect(this.element.querySelectorAll('.branch-select').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         })
         it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toEqual(1);
         });
     });
 });

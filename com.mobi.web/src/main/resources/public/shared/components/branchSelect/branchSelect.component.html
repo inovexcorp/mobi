@@ -21,11 +21,11 @@
   #L%
   -->
 <div class="branch-select form-group">
-    <ui-select ng-model="dvm.bindModel" ng-required="required" ng-change="dvm.onChange()" ng-disabled="isDisabledWhen">
+    <ui-select ng-model="dvm.bindModel" ng-required="dvm.required" ng-change="dvm.onChange()" ng-disabled="dvm.isDisabledWhen">
         <ui-select-match placeholder="Select a Branch">
             <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
         </ui-select-match>
-        <ui-select-choices repeat="branch in branches | branchesToDisplay | filter:$select.search">
+        <ui-select-choices repeat="branch in dvm.branches | branchesToDisplay | filter:$select.search">
             <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
         </ui-select-choices>
     </ui-select>
