@@ -24,7 +24,7 @@
     <association-block class="col-3 h-100"></association-block>
     <div class="selected-entity col-9 h-100 d-flex flex-column pt-2" ng-if="dvm.os.listItem.selected">
         <div class="selected-header d-flex">
-            <selected-details class="flex-1"></selected-details>
+            <selected-details class="flex-1" highlight-text="dvm.os.listItem.editorTabStates.overview.searchText"></selected-details>
             <div>
                 <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()">Delete</button>
             </div>
@@ -32,7 +32,7 @@
         <div class="row flex-1 remove-min-height">
             <div class="col-7 vertical-scroll h-100">
                 <div class="row py-2">
-                    <annotation-block class="col"></annotation-block>
+                    <annotation-block class="col" highlight-iris="dvm.om.entityNameProps" highlight-text="dvm.os.listItem.editorTabStates.overview.searchText"></annotation-block>
                 </div>
                 <div class="row py-2">
                     <axiom-block class="col"></axiom-block>

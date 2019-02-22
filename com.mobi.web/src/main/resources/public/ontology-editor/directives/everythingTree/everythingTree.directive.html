@@ -20,9 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree everything-tree hierarchy-tree h-100 w-100 p-0">
-    <md-virtual-repeat-container class="h-100 repeater-container w-100">
-        <div md-virtual-repeat="entity in dvm.os.listItem.flatEverythingTree | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
+<div class="tree everything-tree hierarchy-tree h-100 w-100 p-0  d-flex flex-column">
+    <div class="search pb-1">
+        <search-bar ng-model="dvm.searchText" submit-event="dvm.onKeyup()"></search-bar>
+    </div>
+    <md-virtual-repeat-container class="h-100 repeater-container w-100 flex-1">
+        <div md-virtual-repeat="entity in dvm.filteredHierarchy | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
             <div ng-if="!entity['@id']" class="tree-item">
                 <a ng-click="entity.set(dvm.os.listItem.ontologyRecord.recordId, !entity.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
                     <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{entity.title}}</span>
@@ -31,7 +34,8 @@
             <tree-item ng-if="entity['@id']" ng-style="{'padding-left': (dvm.indent * entity.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === entity['@id']" current-entity="entity"
                        on-click="dvm.os.selectItem(entity['@id'])" has-children="entity.hasChildren"
-                       path="entity.path" is-opened="dvm.os.getOpened(dvm.os.joinPath(entity.path))"></tree-item>
+                       path="entity.path" is-opened="dvm.os.getOpened(dvm.os.joinPath(entity.path))"
+                       underline="entity.underline"></tree-item>
         </div>
     </md-virtual-repeat-container>
 </div>
