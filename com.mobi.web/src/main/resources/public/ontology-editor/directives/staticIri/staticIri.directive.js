@@ -69,7 +69,8 @@
                 bindToController: {
                     iri: '=',
                     readOnly: '<',
-                    duplicateCheck: '<'
+                    duplicateCheck: '<',
+                    highlightText: '<'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {

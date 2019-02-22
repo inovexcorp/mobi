@@ -36,7 +36,8 @@
                 templateUrl: 'ontology-editor/directives/selectedDetails/selectedDetails.directive.html',
                 scope: {},
                 bindToController: {
-                    readOnly: '<'
+                    readOnly: '<',
+                    highlightText: '<'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
