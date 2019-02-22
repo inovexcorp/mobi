@@ -44,11 +44,10 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns for selecting
-         * and previewing a mapping. The left column contains
-         * a {@link mappingListBlock.directive:mappingListBlock mappingListBlock} for selecting the current
-         * {@link shared.service:mapperStateService#mapping mapping}. The right column contains a
-         * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons
+         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns for selecting and
+         * previewing a mapping. The left column contains a {@link mapper.component:mappingListBlock mappingListBlock}
+         * for selecting the current {@link shared.service:mapperStateService#mapping mapping}. The right column
+         * contains a {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons
          * for editing running, duplicating, and downloading the mapping. The directive is replaced by the
          * contents of its template.
          */

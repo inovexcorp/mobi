@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping List Block directive', function() {
+describe('Mapping List Block component', function() {
     var $compile, scope, $q, utilSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('mappingListBlock');
+        module('mapper');
         mockPrefixes();
         mockUtil();
         mockMappingManager();
@@ -48,8 +48,10 @@ describe('Mapping List Block directive', function() {
             modalSvc = _modalService_;
         });
 
-        var catalogId = 'catalog';
-        catalogManagerSvc.localCatalog = {'@id': catalogId};
+        this.catalogId = 'catalog';
+        catalogManagerSvc.localCatalog = {'@id': this.catalogId};
+        this.sortOption = {field: 'http://purl.org/dc/terms/title', asc: true};
+        catalogManagerSvc.sortOptions = [this.sortOption];
         this.element = $compile(angular.element('<mapping-list-block></mapping-list-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mappingListBlock');
@@ -69,7 +71,7 @@ describe('Mapping List Block directive', function() {
     });
 
     it('should initialize the list of mapping records', function() {
-        expect(mappingManagerSvc.getMappingRecords).toHaveBeenCalled();
+        expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
     });
     describe('controller methods', function() {
         it('should open the create mapping overlay', function() {
@@ -99,25 +101,27 @@ describe('Mapping List Block directive', function() {
             });
             describe('and retrieve records again', function() {
                 it('unless an error occurs', function() {
-                    mappingManagerSvc.getMappingRecords.and.returnValue($q.reject('Error message'));
+                    catalogManagerSvc.getRecords.and.returnValue($q.reject('Error message'));
                     this.controller.deleteMapping();
                     scope.$apply();
                     expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(this.mapping.record.id);
                     expect(mapperStateSvc.mapping).toBeUndefined();
                     expect(mapperStateSvc.sourceOntologies).toEqual([]);
-                    expect(mappingManagerSvc.getMappingRecords).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, {pageIndex: 0, limit: 0, recordType: prefixes.delim + 'MappingRecord', sortOption: this.sortOption});
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
                 });
                 it('successfully', function() {
-                    var record = {'@id': 'record'};
-                    record[prefixes.catalog + 'keyword'] = [{'@value': 'keyword'}];
-                    mappingManagerSvc.getMappingRecords.and.returnValue($q.when([record]));
+                    var record = {
+                        '@id': 'record',
+                        [prefixes.catalog + 'keyword']: [{'@value': 'keyword'}]
+                    };
+                    catalogManagerSvc.getRecords.and.returnValue($q.when({data: [record]}));
                     this.controller.deleteMapping();
                     scope.$apply();
                     expect(mappingManagerSvc.deleteMapping).toHaveBeenCalledWith(this.mapping.record.id);
                     expect(mapperStateSvc.mapping).toBeUndefined();
                     expect(mapperStateSvc.sourceOntologies).toEqual([]);
-                    expect(mappingManagerSvc.getMappingRecords).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(this.catalogId, {pageIndex: 0, limit: 0, recordType: prefixes.delim + 'MappingRecord', sortOption: this.sortOption});
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                     expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(record, 'title');
                     expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(record, 'description');
@@ -161,24 +165,14 @@ describe('Mapping List Block directive', function() {
             });
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('mapping-list-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('MAPPING-LIST-BLOCK');
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toEqual(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toEqual(1);
-        });
-        it('with a block-search', function() {
-            expect(this.element.find('block-search').length).toEqual(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toEqual(1);
-        });
-        it('with a block-footer', function() {
-            expect(this.element.find('block-content').length).toEqual(1);
+        ['block', 'block-header', 'block-search', 'block-content', 'block-footer'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toEqual(1);
+            });
         });
         it('with the correct number of mapping list items', function() {
             this.controller.list = [{id: 'record', title: ''}];

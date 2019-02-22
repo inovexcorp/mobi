@@ -36,8 +36,10 @@
      *
      * @param {*} bindModel The variable to bind the value of the text area to
      * @param {string} placeHolder A placeholder string for the text area
-     * @param {boolean} isFocusMe Whether or not the text area should be focused
+     * @param {boolean} [isFocusMe=false] An optional boolean for whether the text area should be focused on render
      * @param {string} buttonText The text for the button for submitting the markdown
+     * @param {boolean} allowBlankValue Whether the input should allow a blank value to be "submitted"
+     * @param {string} startRows An optional value for the "rows" attribute on the `textarea`
      * @param {Function} clickEvent A function to call when the "submit" button is clicked
      * @param {Function} cancelEvent A function to call when the "cancel" button is clicked
      */
@@ -49,6 +51,7 @@
             isFocusMe: '<?',
             buttonText: '<',
             allowBlankValue: '<',
+            startRows: '<?',
             clickEvent: '&',
             cancelEvent: '&?'
         },
