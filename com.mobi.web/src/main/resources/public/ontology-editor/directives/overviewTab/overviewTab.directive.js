@@ -66,19 +66,19 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var om = ontologyManagerService;
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.showDeleteConfirmation = function() {
                         modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', dvm.deleteEntity);
                     }
                     dvm.deleteEntity = function() {
-                        if (om.isClass(dvm.os.listItem.selected)) {
+                        if (dvm.om.isClass(dvm.os.listItem.selected)) {
                             ontoUtils.deleteClass();
-                        } else if (om.isObjectProperty(dvm.os.listItem.selected)) {
+                        } else if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
                             ontoUtils.deleteObjectProperty();
-                        } else if (om.isDataTypeProperty(dvm.os.listItem.selected)) {
+                        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
                             ontoUtils.deleteDataTypeProperty();
                         }
                     }
