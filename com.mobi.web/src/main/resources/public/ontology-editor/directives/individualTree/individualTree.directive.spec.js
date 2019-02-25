@@ -97,42 +97,10 @@ describe('Individual Tree directive', function() {
 
     describe('controller bound variable', function() {
         it('hierarchy should be one way bound', function() {
+            var copy = angular.copy(scope.hierarchy);
             this.controller.hierarchy = [];
             scope.$digest();
-            expect(angular.copy(scope.hierarchy)).toEqual([{
-                entityIRI: 'Class A',
-                hasChildren: false,
-                path: ['recordId', 'Class A'],
-                indent: 0,
-                isClass: true
-            }, {
-                entityIRI: 'Individual A1',
-                hasChildren: false,
-                path: ['recordId', 'Class A', 'Individual A1'],
-                indent: 1
-            }, {
-                entityIRI: 'Individual A2',
-                hasChildren: false,
-                path: ['recordId', 'Class A', 'Individual A2'],
-                indent: 1
-            }, {
-                entityIRI: 'Class B',
-                hasChildren: true,
-                path: ['recordId', 'Class B'],
-                indent: 0,
-                isClass: true
-            }, {
-                entityIRI: 'Class B1',
-                hasChildren: false,
-                path: ['recordId', 'Class B', 'Class B1'],
-                indent: 1,
-                isClass: true
-            }, {
-                entityIRI: 'Individual B1',
-                hasChildren: false,
-                path: ['recordId', 'Class B', 'Class B1', 'Individual B1'],
-                indent: 2
-            }]);
+            expect(angular.copy(scope.hierarchy)).toEqual(copy);
         });
         it('updateSearch is one way bound', function() {
             this.controller.updateSearch({value: 'value'});
@@ -144,18 +112,18 @@ describe('Individual Tree directive', function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
             scope.$apply();
         });
-        it('for wrapping containers', function() {
+        it('contains the correct html', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('tree')).toBe(true);
             expect(this.element.hasClass('individual-tree')).toBe(true);
         });
-        it('based on .repeater-container', function() {
+        it('with a .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
-        it('based on tree-items', function() {
+        it('with a tree-items', function() {
             expect(this.element.find('tree-item').length).toBe(1);
         });
-        it('based on .tree-item-wrapper', function() {
+        it('with a .tree-item-wrapper', function() {
             expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
         });
     });
