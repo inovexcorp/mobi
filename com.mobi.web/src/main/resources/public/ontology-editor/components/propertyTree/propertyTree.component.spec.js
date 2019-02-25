@@ -27,7 +27,6 @@ describe('Property Tree component', function() {
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('shared', 'searchBar');
         mockComponent('treeItem', 'treeItem');
         mockPrefixes();
         mockOntologyManager();
@@ -88,46 +87,30 @@ describe('Property Tree component', function() {
 
     describe('controller bound variable', function() {
         it('datatypeProps should be one way bound', function() {
+            var copy = angular.copy(scope.datatypeProps);
             this.controller.datatypeProps = [];
             scope.$digest();
-            expect(angular.copy(scope.datatypeProps)).toEqual([{
-                entityIRI: 'dataProp1',
-                hasChildren: true,
-                indent: 1,
-                get: jasmine.any(Function)
-            }, {
-                entityIRI: 'dataProp2',
-                hasChildren: false,
-                indent: 2,
-                get: jasmine.any(Function)
-            }]);
+            expect(angular.copy(scope.datatypeProps)).toEqual(copy);
+
         });
         it('objectProps should be one way bound', function() {
+            var copy = angular.copy(scope.objectProps);
             this.controller.objectProps = [];
             scope.$digest();
-            expect(angular.copy(scope.objectProps)).toEqual([{
-                entityIRI: 'objectProp1',
-                hasChildren: false,
-                indent: 1,
-                get: jasmine.any(Function)
-            }]);
+            expect(angular.copy(scope.objectProps)).toEqual(copy);
         });
         it('annotationProps should be one way bound', function() {
+            var copy = angular.copy(scope.annotationProps);
             this.controller.annotationProps = [];
             scope.$digest();
-            expect(angular.copy(scope.annotationProps)).toEqual([{
-                entityIRI: 'annotationProp1',
-                hasChildren: false,
-                indent: 1,
-                get: jasmine.any(Function)
-            }]);
+            expect(angular.copy(scope.annotationProps)).toEqual(copy);
         });
         it('updateSearch is one way bound', function() {
             this.controller.updateSearch({value: 'value'});
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
             scope.$apply();
@@ -135,10 +118,10 @@ describe('Property Tree component', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('PROPERTY-TREE');
         });
-        it('based on .repeater-container', function() {
+        it('with a .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
-        it('based on .tree-item-wrapper', function() {
+        it('with a .tree-item-wrapper', function() {
             expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
         });
     });
@@ -228,7 +211,6 @@ describe('Property Tree component', function() {
                 expect(this.controller.searchFilter(this.filterNode)).toBe(true);
             });
         });
-
         describe('isShown filter', function() {
             beforeEach(function() {
                 this.get = jasmine.createSpy('get').and.returnValue(true);
@@ -238,7 +220,6 @@ describe('Property Tree component', function() {
                     get: this.get
                 };
             });
-
             describe('node does not have an entityIRI property', function() {
                 beforeEach(function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
@@ -292,7 +273,6 @@ describe('Property Tree component', function() {
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                 });
             });
-
             describe('false when node does have an entityIRI and', function() {
                 beforeEach(function() {
                     this.node.entityIRI = 'iri';

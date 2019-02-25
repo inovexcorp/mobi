@@ -70,11 +70,9 @@
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
         }
-        dvm.$onChanges = function(changesObj) {
-            if (!changesObj.datatypeProps.isFirstChange() && !changesObj.objectProps.isFirstChange() && !changesObj.annotationProps.isFirstChange()) {
-                dvm.flatPropertyTree = constructFlatPropertyTree();
-                update();
-            }
+        dvm.$onChanges = function() {
+            dvm.flatPropertyTree = constructFlatPropertyTree();
+            update();
         }
         dvm.onKeyup = function () {
             dvm.filterText = dvm.searchText;
