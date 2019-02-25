@@ -250,7 +250,7 @@
             {label: 'Icelandic', value: 'is'},
             {label: 'Ido', value: 'io'},
             {label: 'Igbo', value: 'ig'},
-            {label: 'Indonesian', value: 'id, in'},
+            {label: 'Indonesian', value: 'id'},
             {label: 'Interlingua', value: 'ia'},
             {label: 'Interlingue', value: 'ie'},
             {label: 'Inuktitut', value: 'iu'},
@@ -367,7 +367,7 @@
             {label: 'Wolof', value: 'wo'},
             {label: 'Western Frisian', value: 'fy'},
             {label: 'Xhosa', value: 'xh'},
-            {label: 'Yiddish', value: 'yi, ji'},
+            {label: 'Yiddish', value: 'yi'},
             {label: 'Yoruba', value: 'yo'},
             {label: 'Zhuang, Chuang', value: 'za'},
             {label: 'Zulu', value: 'zu'}
