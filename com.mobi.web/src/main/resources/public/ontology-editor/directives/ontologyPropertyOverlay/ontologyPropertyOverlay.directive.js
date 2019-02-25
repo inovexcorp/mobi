@@ -50,7 +50,7 @@
          * the modal contains a `ui-select` for the ontology property (or annotation). If an ontology property is
          * selected, text input is provided for the value (must be a valid IRI). If an annotation is selected, a
          * {@link shared.component:textArea} is provided for the annotation value with a
-         * {@link shared.directive:languageSelect}, unless the annotation is owl:deprecated in which case the
+         * {@link shared.component:languageSelect}, unless the annotation is owl:deprecated in which case the
          * `textArea` and `languageSelect` are replaced by {@link shared.component:radiobutton radio buttons} for
          * the boolean value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
          *

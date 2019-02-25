@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Language Select directive', function() {
+describe('Language Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -37,12 +37,14 @@ describe('Language Select directive', function() {
         });
 
         scope.bindModel = 'test';
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.disableClear = false;
     });
 
     beforeEach(function compile() {
         this.compile = function(html) {
             if (!html) {
-                html = '<language-select ng-model="bindModel"></language-select>';
+                html = '<language-select bind-model="bindModel" change-event="changeEvent(value)" disable-clear="disableClear"></language-select>';
             }
             this.element = $compile(angular.element(html))(scope);
             scope.$digest();
@@ -61,26 +63,34 @@ describe('Language Select directive', function() {
         beforeEach(function() {
             this.compile();
         });
-        it('bindModel should be two way bound', function() {
+        it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'different';
             scope.$apply();
-            expect(scope.bindModel).toEqual('different');
+            expect(scope.bindModel).toEqual('test');
+        });
+        it('disableClear should be one way bound', function() {
+            this.controller.disableClear = true;
+            scope.$apply();
+            expect(scope.disableClear).toEqual(false);
+        });
+        it('changeEvent should be one way bound', function() {
+            this.controller.changeEvent({value: 'test'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('test');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             this.compile();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('language-select')).toBe(true);
-            expect(this.element.hasClass('form-group')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('LANGUAGE-SELECT');
+            expect(this.element.querySelectorAll('.language-select').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
-        it('with a custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(1);
-        });
-        it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+        ['custom-label', 'ui-select'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toEqual(1);
+            });
         });
     });
     describe('controller methods', function() {
@@ -90,17 +100,17 @@ describe('Language Select directive', function() {
         it('clear properly sets the variable', function() {
             this.controller.clear();
             scope.$apply();
-            expect(scope.bindModel).toBeUndefined();
+            expect(scope.changeEvent).toHaveBeenCalledWith(undefined);
         });
     });
     describe('check required attribute', function() {
         it('when present', function() {
-            this.compile('<language-select ng-model="bindModel" required></language-select>');
-            expect(this.isolatedScope.required).toBe(true);
+            this.compile('<language-select bind-model="bindModel" change-event="changeEvent(value)" disable-clear="disableClear" required></language-select>');
+            expect(this.controller.isRequired).toEqual(true);
         });
         it('when missing', function() {
             this.compile();
-            expect(this.isolatedScope.required).toBe(false);
+            expect(this.controller.isRequired).toEqual(false);
         });
     });
 });

@@ -44,7 +44,7 @@
         <iri-select-ontology ng-model="dvm.os.propertyType" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange" multi-select="false"></iri-select-ontology>
 
         <!-- language -->
-        <language-select ng-if="dvm.isLangString()" ng-model="dvm.os.propertyLanguage" required></language-select>
+        <language-select ng-if="dvm.isLangString()" bind-model="dvm.os.propertyLanguage" chnage-event="dvm.os.propertyLanguage = value" required></language-select>
     </form>
 </div>
 <div class="modal-footer">

@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="language-select-container" ng-if="dvm.isLangString() && dvm.showDatatypeSelect">
-            <language-select ng-model="dvm.language" disable-clear="true"></language-select>
+            <language-select bind-model="dvm.language" change-event="dvm.language = value" disable-clear="true"></language-select>
         </div>
     </form>
 </div>

@@ -24,7 +24,7 @@
     <custom-label>Language</custom-label>
     <div class="flex-container">
         <div class="select-container">
-            <ui-select ng-model="dvm.bindModel" ng-required="required">
+            <ui-select ng-model="dvm.bindModel" ng-required="dvm.isRequired" ng-change="dvm.changeEvent({value: dvm.bindModel})">
                 <ui-select-match placeholder="Select Language">
                     <span>{{$select.selected.label}} <small class="text-muted">@{{$select.selected.value}}</small></span>
                 </ui-select-match>

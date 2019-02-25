@@ -37,7 +37,7 @@
         </div>
         <div ng-if="dvm.os.annotationSelect !== dvm.prefixes.owl + 'deprecated'">
             <text-area bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value" display-text="'Value'"></text-area>
-            <language-select ng-model="dvm.os.annotationLanguage"></language-select>
+            <language-select bind-model="dvm.os.annotationLanguage" change-event="dvm.os.annotationLanguage = value"></language-select>
         </div>
         <div ng-if="dvm.os.annotationSelect === dvm.prefixes.owl + 'deprecated'">
             <radio-button display-text="'True'" value="'true'" bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value"></radio-button>

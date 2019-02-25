@@ -49,7 +49,7 @@
          * the {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a
          * `ui-select` of all the data properties in the ontology, a {@link shared.component:textArea} for the data
          * property value, an {@link shared.directive:iriSelect} for the datatype, and a
-         * {@link shared.directive:languageSelect}. Meant to be used in conjunction with the
+         * {@link shared.component:languageSelect}. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal
