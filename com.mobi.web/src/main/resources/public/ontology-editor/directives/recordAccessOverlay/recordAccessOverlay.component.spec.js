@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Access Overlay directive', function() {
+describe('Record Access Overlay component', function() {
     var $compile, scope, $q, utilSvc, userManagerSvc, recordPermissionsManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('recordAccessOverlay');
+        module('ontology-editor');
         mockUserManager();
         mockRecordPermissionsManager();
         mockUtil();
@@ -53,7 +53,6 @@ describe('Record Access Overlay directive', function() {
         scope.dismiss = jasmine.createSpy('dismiss');
         this.element = $compile(angular.element('<record-access-overlay resolve="resolve" close="close()" dismiss="dismiss()"></record-access-overlay>'))(scope);
         scope.$digest();
-        this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('recordAccessOverlay');
     });
 
@@ -204,21 +203,17 @@ describe('Record Access Overlay directive', function() {
             expect(scope.dismiss).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('RECORD-ACCESS-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
             expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
-        it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
-        });
-        it('with a h3', function() {
-            expect(this.element.find('h3').length).toBe(1);
-        });
-        it('with a user-access-controls', function() {
-            expect(this.element.find('user-access-controls').length).toBe(1);
+        ['form', 'h3', 'user-access-controls'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');

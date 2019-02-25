@@ -26,10 +26,10 @@
 </div>
 <div class="modal-body">
     <form class="content" name="dvm.form">
-        <user-access-controls item="dvm.policy" rule-title="dvm.ruleTitle" rule-id="resolve.ruleId"></user-access-controls>
+        <user-access-controls item="dvm.policy" rule-title="dvm.ruleTitle" rule-id="dvm.resolve.ruleId" update-item="dvm.updatePolicy(item)"></user-access-controls>
     </form>
 </div>
 <div class="modal-footer">
     <button class="btn float-right" ng-click="dvm.cancel()">Cancel</button>
-    <button class="btn btn-primary float-right" ng-click="dvm.save(resolve.resource)">Submit</button>
+    <button class="btn btn-primary float-right" ng-click="dvm.save(dvm.resolve.resource)">Submit</button>
 </div>

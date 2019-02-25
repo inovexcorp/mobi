@@ -211,6 +211,11 @@ describe('Permissions Page directive', function() {
                 policy: this.policy
             };
         });
+        it('should update the specified policy object', function() {
+            this.controller.policies = [{id: 1}, {id: 2}];
+            this.controller.updatePolicy({id: 1, test: true}, 0);
+            expect(this.controller.policies[0]).toEqual({id: 1, test: true, changed: true});
+        });
         describe('should save changes to the policies', function() {
             beforeEach(function() {
                 this.item.changed = true;

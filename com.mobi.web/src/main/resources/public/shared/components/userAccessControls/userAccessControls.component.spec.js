@@ -20,23 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Access Controls directive', function() {
-    var $compile, scope, $q, policyManagerSvc, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
+describe('User Access Controls component', function() {
+    var $compile, scope, policyManagerSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('shared');
         mockPolicyManager();
-        mockUtil();
         mockLoginManager();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _policyManagerService_, _utilService_, _loginManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _policyManagerService_, _loginManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
             policyManagerSvc = _policyManagerService_;
-            utilSvc = _utilService_;
             loginManagerSvc = _loginManagerService_;
             prefixes = _prefixes_;
         });
@@ -89,7 +86,10 @@ describe('User Access Controls directive', function() {
         this.groups = [{iri: 'group1', title: 'group1'}, {iri: 'group2', title: 'group2'}];
         this.scopeItem = {selectedUsers: [this.users[0]], selectedGroups: [this.groups[0]], users: [], groups: []};
         scope.item = this.scopeItem;
-        this.element = $compile(angular.element('<user-access-controls item="item"></user-access-controls>'))(scope);
+        scope.updateItem = jasmine.createSpy('updateItem');
+        scope.ruleTitle = '';
+        scope.ruleId = '';
+        this.element = $compile(angular.element('<user-access-controls item="item" update-item="updateItem(item)" rule-title="ruleTitle" rule-id="ruleId"></user-access-controls>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('userAccessControls');
         this.scope = this.element.isolateScope();
@@ -98,13 +98,32 @@ describe('User Access Controls directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         policyManagerSvc = null;
-        catalogManagerSvc = null;
-        utilSvc = null;
         loginManagerSvc = null;
         prefixes = null;
         this.element.remove();
+    });
+
+    describe('controller bound variable', function() {
+        it('item should be one way bound', function() {
+            this.controller.item = {};
+            scope.$digest();
+            expect(scope.item).toEqual(this.scopeItem);
+        });
+        it('ruleTitle should be one way bound', function() {
+            this.controller.ruleTitle = 'test';
+            scope.$digest();
+            expect(scope.ruleTitle).toEqual('');
+        });
+        it('ruleId should be one way bound', function() {
+            this.controller.ruleId = 'test';
+            scope.$digest();
+            expect(scope.ruleId).toEqual('');
+        });
+        it('updateItem should be called in the parent scope', function() {
+            this.controller.updateItem({item: this.scopeItem});
+            expect(scope.updateItem).toHaveBeenCalledWith(this.scopeItem);
+        });
     });
     describe('controller methods', function() {
         beforeEach(function() {
@@ -112,7 +131,6 @@ describe('User Access Controls directive', function() {
                 Rule: [{Target: {AnyOf: [{AllOf: []}]}}]
             };
             this.controller.item = {
-                changed: false,
                 users: this.users,
                 groups: this.groups,
                 selectedUsers: [],
@@ -134,11 +152,11 @@ describe('User Access Controls directive', function() {
                 var user = this.users[0];
                 var newMatch = _.set(angular.copy(this.userMatch), 'AttributeValue.content[0]', user.iri);
                 this.controller.addUser(user);
-                expect(this.controller.item.changed).toEqual(true);
                 expect(this.controller.item.userSearchText).toEqual('');
                 expect(this.controller.item.selectedUser).toBeUndefined();
                 expect(this.controller.item.selectedUsers).toEqual([user]);
                 expect(this.controller.item.users).toEqual(_.reject(this.users, user));
+                expect(scope.updateItem).toHaveBeenCalledWith(this.controller.item);
                 expect(this.scope.$$childTail).toEqual({userSearchText: '', selectedUser: undefined});
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [newMatch]}]);
             });
@@ -147,6 +165,7 @@ describe('User Access Controls directive', function() {
                 var copyChildTail = angular.copy(this.scope.$$childTail);
                 this.controller.addUser(undefined);
                 expect(this.controller.item).toEqual(copyItem);
+                expect(scope.updateItem).not.toHaveBeenCalled();
                 expect(this.scope.$$childTail).toEqual(copyChildTail);
             });
         });
@@ -157,9 +176,9 @@ describe('User Access Controls directive', function() {
             this.controller.item.users = _.reject(this.users, user);
             this.controller.item.selectedUsers = [user];
             this.controller.removeUser(user);
-            expect(this.controller.item.changed).toEqual(true);
             expect(this.controller.item.selectedUsers).toEqual([]);
             expect(this.controller.item.users).toEqual(this.users);
+            expect(scope.updateItem).toHaveBeenCalledWith(this.controller.item);
             expect(this.policy).toEqual(blankPolicy);
         });
         describe('should add a group to a policy', function() {
@@ -175,11 +194,11 @@ describe('User Access Controls directive', function() {
                 var group = this.groups[0];
                 var newMatch = _.set(angular.copy(this.groupMatch), 'AttributeValue.content[0]', group.iri);
                 this.controller.addGroup(group, this.controller.item);
-                expect(this.controller.item.changed).toEqual(true);
                 expect(this.controller.item.groupSearchText).toEqual('');
                 expect(this.controller.item.selectedGroup).toBeUndefined();
                 expect(this.controller.item.selectedGroups).toEqual([group]);
                 expect(this.controller.item.groups).toEqual(_.reject(this.groups, group));
+                expect(scope.updateItem).toHaveBeenCalledWith(this.controller.item);
                 expect(this.scope.$$childTail).toEqual({groupSearchText: '', selectedGroup: undefined});
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [newMatch]}]);
             });
@@ -188,6 +207,7 @@ describe('User Access Controls directive', function() {
                 var copyChildTail = angular.copy(this.scope.$$childTail);
                 this.controller.addGroup(undefined, this.controller.item);
                 expect(this.controller.item).toEqual(copyItem);
+                expect(scope.updateItem).not.toHaveBeenCalled();
                 expect(this.scope.$$childTail).toEqual(copyChildTail);
             });
         });
@@ -198,9 +218,9 @@ describe('User Access Controls directive', function() {
             this.controller.item.groups = _.reject(this.groups, group);
             this.controller.item.selectedGroups = [group];
             this.controller.removeGroup(group, this.controller.item);
-            expect(this.controller.item.changed).toEqual(true);
             expect(this.controller.item.selectedGroups).toEqual([]);
             expect(this.controller.item.groups).toEqual(this.groups);
+            expect(scope.updateItem).toHaveBeenCalledWith(this.controller.item);
             expect(this.policy).toEqual(blankPolicy);
         });
         describe('should properly toggle everyone to', function() {
@@ -214,17 +234,21 @@ describe('User Access Controls directive', function() {
                 this.controller.item.selectedGroups = [group];
                 this.controller.item.everyone = true;
                 this.controller.toggleEveryone();
-                expect(this.controller.item.changed).toEqual(true);
                 expect(this.controller.item.users).toEqual(this.users);
                 expect(this.controller.item.selectedUsers).toEqual([]);
                 expect(this.controller.item.groups).toEqual(this.groups);
                 expect(this.controller.item.selectedGroups).toEqual([]);
+                expect(scope.updateItem).toHaveBeenCalledWith(this.controller.item);
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([{Match: [this.everyoneMatch]}]);
             });
             it('false', function() {
+                loginManagerSvc.currentUserIRI = 'test';
+                this.controller.item.users = [{iri: 'test'}];
                 this.policy.Rule[0].Target.AnyOf[0].AllOf = [{Match: [angular.copy(this.everyoneMatch)]}];
+                spyOn(this.controller, 'addUser');
                 this.controller.toggleEveryone();
-                expect(this.controller.item.changed).toEqual(true);
+                expect(scope.updateItem).toHaveBeenCalledWith(this.controller.item);
+                expect(this.controller.addUser).toHaveBeenCalledWith({iri: 'test'});
                 expect(this.policy.Rule[0].Target.AnyOf[0].AllOf).toEqual([]);
             });
         });
@@ -239,7 +263,6 @@ describe('User Access Controls directive', function() {
     it('should call removeGroup when the link is clicked', function() {
         scope.$digest();
         spyOn(this.controller, 'removeGroup');
-
         var link = angular.element(this.element.querySelectorAll('.row .selected-items .selected-item a')[1]);
         link.triggerHandler('click');
         expect(this.controller.removeGroup).toHaveBeenCalledWith(this.groups[0],);

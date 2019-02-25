@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="user-access-controls">
+<div class="user-access-controls" ng-if="dvm.item">
     <h4>{{dvm.ruleTitle}}</h4>
     <md-switch ng-model="dvm.item.everyone" ng-change="dvm.toggleEveryone()" aria-label="Everyone">Everyone</md-switch>
     <div class="row">

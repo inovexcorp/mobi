@@ -25,6 +25,7 @@
 
 .user-access-controls {
     width: 100%;
+
     .selected-items {
         width: 100%;
         border: 1px solid lightgray;
@@ -59,7 +60,6 @@
         right: 25px;
         z-index: 5001;
     }
-
     .selector-container {
         z-index: 5001;
     }

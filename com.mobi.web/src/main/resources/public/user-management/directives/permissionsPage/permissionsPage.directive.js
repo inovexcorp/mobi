@@ -76,6 +76,13 @@
 
                 dvm.policies = [];
 
+                dvm.$onInit = function() {
+                    setPolicies();
+                }
+                dvm.updatePolicy = function(item, policyIndex) {
+                    item.changed = true;
+                    dvm.policies[policyIndex] = item;
+                }
                 dvm.getTitle = function(item) {
                     return util.getBeautifulIRI(item.type);
                 }
@@ -90,8 +97,6 @@
                 dvm.hasChanges = function() {
                     return _.some(dvm.policies, 'changed');
                 }
-
-                setPolicies();
 
                 function setPolicies() {
                     dvm.policies = [];

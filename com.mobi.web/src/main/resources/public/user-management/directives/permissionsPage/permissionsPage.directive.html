@@ -24,9 +24,9 @@
     <div class="col">
         <block class="h-100">
             <block-content>
-                <div class="policy row padding" ng-repeat="item in dvm.policies track by item.id">
+                <div class="policy row padding" ng-repeat="policy in dvm.policies track by policy.id">
                     <div class="col-6 offset-3">
-                        <user-access-controls item="item" rule-title="dvm.getTitle(item)"></user-access-controls>
+                        <user-access-controls item="policy" rule-title="dvm.getTitle(policy)" update-item="dvm.updatePolicy(item, $index)"></user-access-controls>
                     </div>
                 </div>
             </block-content>
