@@ -39,79 +39,32 @@
          * @scope
          * @restrict E
          * @requires shared.service:ontologyStateService
-         * @requires shared.service:ontologyManagerService
          *
          * @description
-         * `propertyHierarchyBlock` is a directive that creates a section that displays a manual hierarchy tree of the
-         * data, object, and annotation properties in the current
-         * {@link shared.service:ontologyStateService selected ontology} within separate "folders".The directive
-         * is replaced by the contents of its template.
+         * `propertyHierarchyBlock` is a directive that creates a section that displays a
+         * {@link propertyTree.component:hierarchyTree} of the classes in the current
+         * {@link shared.service:ontologyStateService selected ontology}. The directive is replaced by the
+         * contents of its template.
          */
         .directive('propertyHierarchyBlock', propertyHierarchyBlock);
 
-        propertyHierarchyBlock.$inject = ['ontologyStateService', 'ontologyManagerService', 'INDENT'];
+        propertyHierarchyBlock.$inject = ['ontologyStateService'];
 
-        function propertyHierarchyBlock(ontologyStateService, ontologyManagerService, INDENT) {
+        function propertyHierarchyBlock(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'ontology-editor/directives/propertyHierarchyBlock/propertyHierarchyBlock.directive.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
-                    dvm.indent = INDENT;
                     dvm.os = ontologyStateService;
-                    dvm.om = ontologyManagerService;
 
-                    dvm.isShown = function(node) {
-                        return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
+                    dvm.updateSearch = function(value) {
+                        dvm.os.listItem.editorTabStates.properties.searchText = value;
                     }
-
-                    dvm.flatPropertyTree = constructFlatPropertyTree();
-
-                    function addGetToArrayItems(array, get) {
-                        return _.map(array, item => _.merge(item, {get}));
-                    }
-                    function constructFlatPropertyTree() {
-                        var result = [];
-                        if (dvm.os.listItem.dataProperties.flat.length) {
-                            result.push({
-                                title: 'Data Properties',
-                                get: dvm.os.getDataPropertiesOpened,
-                                set: dvm.os.setDataPropertiesOpened
-                            });
-                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.dataProperties.flat, dvm.os.getDataPropertiesOpened));
-                        }
-                        if (dvm.os.listItem.objectProperties.flat.length) {
-                            result.push({
-                                title: 'Object Properties',
-                                get: dvm.os.getObjectPropertiesOpened,
-                                set: dvm.os.setObjectPropertiesOpened
-                            });
-                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.objectProperties.flat, dvm.os.getObjectPropertiesOpened));
-                        }
-                        if (dvm.os.listItem.annotations.flat.length) {
-                            result.push({
-                                title: 'Annotation Properties',
-                                get: dvm.os.getAnnotationPropertiesOpened,
-                                set: dvm.os.setAnnotationPropertiesOpened
-                            });
-                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.annotations.flat, dvm.os.getAnnotationPropertiesOpened));
-                        }
-                        return result;
-                    }
-
-                    $scope.$watch('dvm.os.listItem.dataProperties.flat', () => {
-                        dvm.flatPropertyTree = constructFlatPropertyTree();
-                    });
-                    $scope.$watch('dvm.os.listItem.objectProperties.flat', () => {
-                        dvm.flatPropertyTree = constructFlatPropertyTree();
-                    });
-                    $scope.$watch('dvm.os.listItem.annotations.flat', () => {
-                        dvm.flatPropertyTree = constructFlatPropertyTree();
-                    });
-                }]
+                }
             }
         }
 })();
