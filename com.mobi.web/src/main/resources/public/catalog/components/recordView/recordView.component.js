@@ -88,6 +88,11 @@
                     return $q.reject();
                 });
         }
+        dvm.updateTitle = function(newTitle) {
+            util.updateDctermsValue(dvm.record, 'title', newTitle);
+            dvm.title = util.getDctermsValue(dvm.record, 'title');
+            return dvm.updateRecord(dvm.record);
+        }
         dvm.setCanEdit = function() {
             var request = {
                 resourceId: dvm.record['@id'],

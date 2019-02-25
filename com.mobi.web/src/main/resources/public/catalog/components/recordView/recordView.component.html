@@ -26,9 +26,8 @@
     </div>
     <div class="col record-body h-100 vertical-scroll">
         <div class="record-header">
-            <h2 class="record-title break-word">
-                <record-icon record="dvm.record"></record-icon>
-                {{dvm.title}}
+            <h2 class="record-title">
+                <record-icon record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="break-word"></inline-edit>
             </h2>
             <p class="lead text-muted">
                 <limit-description description="dvm.description" limit="400"></limit-description>

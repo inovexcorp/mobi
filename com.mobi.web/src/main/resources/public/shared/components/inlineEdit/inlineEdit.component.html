@@ -1,0 +1,27 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="inline-edit d-inline-block">
+    <input ng-if="dvm.canEdit && dvm.edit" ng-blur="dvm.onBlur()" ng-model="dvm.text" type="text" ng-keyup="dvm.onKeyUp($event)" focus-me="true">
+    <a ng-if="dvm.canEdit && dvm.edit" ng-mousedown="dvm.saveChanges()" class="fa fa-save"></a>
+    <div ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" class="hover-area d-inline-block" ng-class="{'hover': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">{{dvm.text}}</div>
+</div>
