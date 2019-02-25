@@ -34,7 +34,7 @@
             <file-input id="upload-data-file-input" class="hide" ng-model="dvm.fileObj" accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt" on-change="dvm.update()" required></file-input>
         </div>
         <div ng-if="dvm.importing" class="importing-indicator">
-            <span targeted-spinner="dvm.uploadId" small></span> <span class="text-muted">Importing Data</span>
+            <span targeted-spinner="dvm.uploadId" diameter="18"></span> <span class="text-muted">Importing Data</span>
         </div>
     </form>
 </div>

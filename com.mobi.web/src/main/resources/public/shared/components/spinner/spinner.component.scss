@@ -25,12 +25,12 @@
 
 .spinner {
     background: #fff;
+    opacity: .4;
     height: 100%;
-    left: 0;
-    opacity: .5;
-    position: absolute;
-    top: 0;
     width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
     z-index: 9001;
 
     /* spinner icon styles */
@@ -38,7 +38,6 @@
         left: 50%;
         position: absolute;
         top: 50%;
-
         -webkit-transform: translate(-50%, -50%);
            -moz-transform: translate(-50%, -50%);
             -ms-transform: translate(-50%, -50%);
