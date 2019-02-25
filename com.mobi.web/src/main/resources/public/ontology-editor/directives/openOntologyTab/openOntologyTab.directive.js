@@ -86,6 +86,9 @@
                     dvm.filteredList = [];
                     dvm.id = "openOntologyTabTargetedSpinner";
 
+                    dvm.$onInit = function() {
+                        dvm.getPageOntologyRecords(1);
+                    }
                     dvm.showUploadOntologyOverlay = function() {
                         modalService.openModal('uploadOntologyOverlay');
                     }
@@ -136,17 +139,16 @@
                                 if (!_.isEmpty(state)) {
                                     dvm.os.deleteOntologyState(dvm.recordId);
                                 }
-                                dvm.currentPage = 1;
-                                dvm.getPageOntologyRecords();
+                                dvm.getPageOntologyRecords(1);
                             }, dvm.util.createErrorToast);
                     }
-                    dvm.getPageOntologyRecords = function() {
-                        var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+                    dvm.getPageOntologyRecords = function(page) {
+                        dvm.currentPage = page;
                         var catalogId = _.get(cm.localCatalog, '@id', '');
                         var paginatedConfig = {
                             pageIndex: dvm.currentPage - 1,
                             limit: dvm.limit,
-                            recordType: ontologyRecordType,
+                            recordType: prefixes.ontologyEditor + 'OntologyRecord',
                             sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
                             searchText: dvm.filterText
                         };
@@ -160,8 +162,7 @@
                         });
                     }
                     dvm.search = function(event) {
-                        dvm.currentPage = 1;
-                        dvm.getPageOntologyRecords();
+                        dvm.getPageOntologyRecords(1);
                     }
                     dvm.manageRecords = function() {
                         _.forEach(dvm.filteredList, record => {
@@ -181,7 +182,7 @@
 
                     $scope.$watch(() => dvm.os.list.length, (newValue, oldValue) => {
                         if (newValue !== oldValue) {
-                            dvm.getPageOntologyRecords();
+                            dvm.getPageOntologyRecords(this.currentPage);
                         }
                     });
                     $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
@@ -196,8 +197,6 @@
                             }
                         }
                     });
-
-                    dvm.getPageOntologyRecords();
                 }]
             }
         }

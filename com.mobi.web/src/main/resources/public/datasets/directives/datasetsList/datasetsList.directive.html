@@ -60,10 +60,7 @@
                 <info-message ng-if="!dvm.state.results.length && !dvm.state.submittedSearch" class="no-results">No datasets are available.</info-message>
             </block-content>
             <block-footer>
-                <div class="paging-container clearfix">
-                    <paging-details total-size="dvm.state.totalSize" page-index="dvm.state.paginationConfig.pageIndex" limit="dvm.state.paginationConfig.limit"></paging-details>
-                    <pagination total="dvm.state.totalSize" limit="dvm.state.paginationConfig.limit" current-page="dvm.currentPage" get-page="dvm.getPage(direction)"></pagination>
-                </div>
+                <paging current-page="dvm.currentPage" limit="dvm.state.paginationConfig.limit" total="dvm.state.totalSize" change-event="dvm.getPage(page)"></paging>
             </block-footer>
         </block>
     </div>

@@ -77,7 +77,7 @@
             <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
             <info-message ng-if="!dvm.filteredList.length && !dvm.filterText">Create or upload an ontology to get started.</info-message>
         </div>
-        <paging total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" change-event="dvm.getPageOntologyRecords()"></paging>
+        <paging total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" change-event="dvm.getPageOntologyRecords(page)"></paging>
     </div>
     <upload-snackbar show-snackbar="dvm.showSnackbar"></upload-snackbar>
 </div>

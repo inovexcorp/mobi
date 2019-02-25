@@ -44,7 +44,7 @@
                     <record-card ng-repeat="record in dvm.records track by record['@id']" record="record" click-card="dvm.openRecord(record)"></record-card>
                 </div>
                 <div>
-                    <paging current-page="dvm.state.currentRecordPage" limit="dvm.state.recordLimit" total="dvm.state.totalRecordSize" change-event="dvm.getRecordPage()"></paging>
+                    <paging current-page="dvm.state.currentRecordPage" limit="dvm.state.recordLimit" total="dvm.state.totalRecordSize" change-event="dvm.getRecordPage(page)"></paging>
                 </div>
             </div>
         </div>

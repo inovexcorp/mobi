@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Paging directive', function() {
+describe('Paging component', function() {
     var $compile, scope, $timeout;
 
     beforeEach(function() {
@@ -37,7 +37,7 @@ describe('Paging directive', function() {
         scope.total = 10;
         scope.limit = 1;
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        this.element = $compile(angular.element('<paging total="total" limit="limit" current-page="currentPage" change-event="changeEvent()"></paging>'))(scope);
+        this.element = $compile(angular.element('<paging total="total" limit="limit" current-page="currentPage" change-event="changeEvent(page)"></paging>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('paging');
     });
@@ -60,26 +60,26 @@ describe('Paging directive', function() {
             scope.$digest();
             expect(scope.limit).toEqual(1);
         });
-        it('currentPage should be two way bound', function() {
+        it('currentPage should be one way bound', function() {
             this.controller.currentPage = 2;
             scope.$digest();
-            expect(scope.currentPage).toBe(2);
+            expect(scope.currentPage).toEqual(1);
         });
-        it('changeEvent should be called in parent scope when invoked', function() {
-            this.controller.changeEvent();
-            expect(scope.changeEvent).toHaveBeenCalled();
+        it('changeEvent should be called in parent scope', function() {
+            this.controller.changeEvent({page: 1});
+            expect(scope.changeEvent).toHaveBeenCalledWith(1);
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('paging')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('PAGING');
+            expect(this.element.querySelectorAll('.paging').length).toEqual(1);
         });
         it('with a .paging-details', function() {
-            expect(this.element.querySelectorAll('.paging-details').length).toBe(1);
+            expect(this.element.querySelectorAll('.paging-details').length).toEqual(1);
         });
         it('with a ul[uib-pagination]', function() {
-            expect(this.element.querySelectorAll('ul[uib-pagination]').length).toBe(1);
+            expect(this.element.querySelectorAll('ul[uib-pagination]').length).toEqual(1);
         });
         _.forEach([
             {
@@ -124,7 +124,7 @@ describe('Paging directive', function() {
                 scope.limit = test.limit;
                 scope.total = test.total;
                 scope.$digest();
-                expect(this.element.find('p').text()).toBe(test.result);
+                expect(this.element.find('p').text()).toEqual(test.result);
             });
         });
     });
@@ -132,7 +132,7 @@ describe('Paging directive', function() {
         it('should change the page', function() {
             this.controller.onChange();
             $timeout.flush();
-            expect(scope.changeEvent).toHaveBeenCalled();
+            expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.currentPage);
         });
     });
 });

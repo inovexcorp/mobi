@@ -68,7 +68,8 @@
                     var util = utilService;
                     dvm.ds = discoverStateService;
 
-                    dvm.setPage = function() {
+                    dvm.setPage = function(page) {
+                        dvm.ds.explore.instanceDetails.currentPage = page;
                         var pagingObj = {
                             limit: dvm.ds.explore.instanceDetails.limit,
                             offset: (dvm.ds.explore.instanceDetails.currentPage - 1) * dvm.ds.explore.instanceDetails.limit

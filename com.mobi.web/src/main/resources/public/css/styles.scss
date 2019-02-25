@@ -511,30 +511,6 @@ ul {
     }
 }
 
-/* Pagination styles */
-.pagination-wrapper {
-    .paging-details {
-        float: left;
-
-        p {
-            line-height: 34px;
-            margin: 0;
-        }
-    }
-    .page-nav {
-        float: right;
-
-        .pagination {
-            margin: 0;
-            vertical-align: bottom;
-        }
-    }
-}
-.page-nav {
-    display: block;
-    text-align: center;
-}
-
 body {
     .main-page {
         height: 100%;
@@ -544,11 +520,6 @@ body {
     }
 }
 
-.paging-container {
-    .paging-details {
-        padding-top: 15px;
-    }
-}
 .modal-header h3 {
     margin-bottom: 0;
 }

@@ -41,7 +41,7 @@
                 </div>
             </block-content>
             <block-footer>
-                <button class="btn float-left" ng-click="dvm.cancel()">Cancel</button>
+                <button class="btn" ng-click="dvm.cancel()">Cancel</button>
                 <button ng-if="dvm.state.editMapping" class="btn btn-primary float-right continue-btn" ng-click="dvm.edit()" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">Continue</button>
                 <div ng-if="!dvm.state.editMapping" class="btn-group dropup float-right">
                     <button type="button" class="btn btn-primary dropdown-toggle run-btn" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Run Mapping</button>

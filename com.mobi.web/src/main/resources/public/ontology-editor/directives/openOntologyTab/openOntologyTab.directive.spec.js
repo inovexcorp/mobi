@@ -214,6 +214,7 @@ describe('Open Ontology Tab directive', function() {
                 this.recordId = 'recordA';
                 this.controller.recordId = this.recordId;
                 ontologyStateSvc.getOntologyStateByRecordId.and.returnValue({id: 'state'});
+                spyOn(this.controller, 'getPageOntologyRecords');
             });
             it('unless an error occurs', function() {
                 ontologyManagerSvc.deleteOntology.and.returnValue($q.reject('Error message'));
@@ -224,6 +225,7 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.records.data).toContain(jasmine.objectContaining({'@id': this.recordId}));
                 expect(ontologyStateSvc.getOntologyStateByRecordId).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.deleteOntologyState).not.toHaveBeenCalled();
+                expect(this.controller.getPageOntologyRecords).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
             it('successfully', function() {
@@ -234,32 +236,33 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.records).not.toContain(jasmine.objectContaining({'@id': this.recordId}));
                 expect(ontologyStateSvc.getOntologyStateByRecordId).toHaveBeenCalledWith(this.recordId);
                 expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
+                expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
-        it('should get the list of ontology records', function() {
+        it('should get the list of ontology records at the specified page', function() {
             var catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
             var sortOption = {field: 'http://purl.org/dc/terms/title', asc: true};
             catalogManagerSvc.sortOptions = [sortOption];
-            var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+            var page = 2;
             var paginatedConfig = {
-                pageIndex: 0,
+                pageIndex: page - 1,
                 limit: 10,
-                recordType: ontologyRecordType,
+                recordType: prefixes.ontologyEditor + 'OntologyRecord',
                 sortOption,
                 searchText: undefined
             };
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
-            this.controller.getPageOntologyRecords();
+            this.controller.getPageOntologyRecords(page);
             scope.$apply();
+            expect(this.controller.currentPage).toEqual(page);
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
-            expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordA'}));
+            expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordK'}));
         });
         it('should perform a search', function() {
             spyOn(this.controller, 'getPageOntologyRecords');
             this.controller.search();
-            expect(this.controller.currentPage).toEqual(1);
-            expect(this.controller.getPageOntologyRecords).toHaveBeenCalled();
+            expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1);
         });
         it('should show a record access overlay', function() {
             this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule');
