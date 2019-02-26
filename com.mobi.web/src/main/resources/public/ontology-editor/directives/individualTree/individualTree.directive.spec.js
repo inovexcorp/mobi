@@ -107,12 +107,12 @@ describe('Individual Tree directive', function() {
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
             scope.$apply();
         });
-        it('contains the correct html', function() {
+        it('with wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('tree')).toBe(true);
             expect(this.element.hasClass('individual-tree')).toBe(true);
@@ -120,7 +120,7 @@ describe('Individual Tree directive', function() {
         it('with a .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
-        it('with a tree-items', function() {
+        it('with a tree-item', function() {
             expect(this.element.find('tree-item').length).toBe(1);
         });
         it('with a .tree-item-wrapper', function() {

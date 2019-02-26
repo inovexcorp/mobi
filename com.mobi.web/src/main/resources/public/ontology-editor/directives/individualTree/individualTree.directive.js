@@ -29,7 +29,7 @@
          * @name individualTree
          *
          * @description
-         * The `individualTree` module only provides the `everythingTree` directive which creates a hierarchy of individuals
+         * The `individualTree` module only provides the `individualTree` directive which creates a hierarchy of individuals
          * and the classes they are related to.
          */
         .module('individualTree', [])
@@ -44,9 +44,10 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * `individualTree` is a directive that creates a a `div` containing a {@link shared.directive:searchBar}
-         * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
-         * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
+         * `individualTree` is a directive that creates a `div` containing a {@link shared.directive:searchBar}
+         * and hierarchy of {@link treeItem.directive:treeItem}s of individuals. When search text is provided, the
+         * hierarchy filters what is shown based on value matches with predicates in the
+         * {@link shared.service:ontologyManagerService entityNameProps}.
          *
          * @param {Object[]} hierarchy An array which represents a flattened individual hierarchy
          * @param {Function} updateSearch A function to update the state variable used to track the search filter text
