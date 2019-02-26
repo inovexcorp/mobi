@@ -115,7 +115,7 @@
         function setInfo(record) {
             dvm.record = angular.copy(record);
             dvm.title = util.getDctermsValue(dvm.record, 'title');
-            dvm.description = util.getDctermsValue(dvm.record, 'description') || '(No description)';
+            dvm.description = util.getDctermsValue(dvm.record, 'description');
             dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
             dvm.issued = util.getDate(util.getDctermsValue(dvm.record, 'issued'), 'short');
         }

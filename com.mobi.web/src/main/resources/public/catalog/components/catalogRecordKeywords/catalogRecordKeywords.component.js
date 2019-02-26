@@ -26,6 +26,9 @@
     /**
      * @ngdoc component
      * @name catalog.component:catalogRecordKeywords
+     * @requires shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description
@@ -37,23 +40,49 @@
     const catalogRecordKeywordsComponent = {
         templateUrl: 'catalog/components/catalogRecordKeywords/catalogRecordKeywords.component.html',
         bindings: {
-            record: '<'
+            record: '<',
+            canEdit: '<',
+            saveEvent: '&'
         },
         controllerAs: 'dvm',
         controller: catalogRecordKeywordsComponentCtrl
     };
 
-    catalogRecordKeywordsComponentCtrl.$inject = ['prefixes'];
+    catalogRecordKeywordsComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-    function catalogRecordKeywordsComponentCtrl(prefixes) {
+    function catalogRecordKeywordsComponentCtrl($q, catalogStateService, catalogManagerService, utilService, prefixes) {
         var dvm = this;
+        var state = catalogStateService;
+        var cm = catalogManagerService;
+        var util = utilService;
         dvm.keywords = [];
 
         dvm.$onInit = function() {
             dvm.keywords = getKeywords();
+            dvm.initialKeywords = dvm.keywords;
         }
         dvm.$onChanges = function() {
             dvm.keywords = getKeywords();
+            dvm.initialKeywords = dvm.keywords;
+        }
+        dvm.saveChanges = function() {
+            dvm.edit = false;
+            dvm.initialKeywords = dvm.keywords;
+            dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, keyword => {
+                return {'@value': keyword}
+            });
+            return cm.updateRecord(dvm.record['@id'], util.getPropertyId(dvm.record, prefixes.catalog + 'catalog'), dvm.record)
+                .then(() => {
+                    util.createSuccessToast('Successfully updated the record');
+                    state.selectedRecord = dvm.record;
+                }, errorMessage => {
+                    util.createErrorToast(errorMessage);
+                    return $q.reject();
+                });
+        }
+        dvm.cancelChanges = function() {
+            dvm.keywords = dvm.initialKeywords;
+            dvm.edit = false;
         }
 
         function getKeywords() {

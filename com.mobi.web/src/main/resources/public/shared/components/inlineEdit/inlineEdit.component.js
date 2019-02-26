@@ -41,6 +41,7 @@
             canEdit: '<',
             area: '<',
             required: '<',
+            placeholder: '<',
             saveEvent: '&'
         },
         controllerAs: 'dvm',

@@ -30,12 +30,18 @@
             templateUrl: 'shared/directives/keywordSelect/keywordSelect.directive.html',
             scope: {},
             bindToController: {
-                bindModel: '=ngModel'
+                bindModel: '=ngModel',
+                hideLabel: '<',
+                focusMe: '<'
             },
             controllerAs: 'dvm',
             controller: function() {
                 var dvm = this;
                 dvm.keywordList = [];
+
+                dvm.$onInit = function() {
+                    dvm.autoFocus = dvm.focusMe ? true : false;
+                }
             }
         }
     }

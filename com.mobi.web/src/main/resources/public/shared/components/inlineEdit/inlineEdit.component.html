@@ -26,5 +26,6 @@
         <textarea ng-if="dvm.area" ng-blur="dvm.onBlur()" ng-model="dvm.text" type="text" ng-keyup="dvm.onKeyUp($event)" focus-me="true" class="flex-grow-1" ng-attr-rows="5"></textarea>
         <a ng-mousedown="dvm.saveChanges()" class="fa fa-save"></a>
     </div>
-    <div ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">{{dvm.text}}</div>
+    <div ng-if="(!dvm.canEdit || !dvm.edit) && dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">{{dvm.text}}</div>
+    <div ng-if="(!dvm.canEdit || !dvm.edit) && !dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">{{dvm.placeholder}}</div>
 </div>
