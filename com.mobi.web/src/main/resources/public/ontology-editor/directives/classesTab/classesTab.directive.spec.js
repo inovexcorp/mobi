@@ -77,10 +77,10 @@ describe('Classes Tab directive', function() {
         it('with a button to delete a class if the user can modify', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(2);
-            expect(angular.element(button[0]).text()).toContain('See History');
-            expect(angular.element(button[1]).text()).toContain('Delete');
+            var buttons = this.element.querySelectorAll('button');
+            expect(buttons.length).toEqual(2);
+            expect(['See History', 'Delete'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['See History', 'Delete'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
         it('with no button to delete a class if the user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);

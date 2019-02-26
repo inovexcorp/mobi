@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Commit Compiled Resource component', function() {
-    var $compile, scope, $q, catalogManagerSvc;
+    var $compile, scope, $q, httpSvc, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -69,11 +69,14 @@ describe('Commit Compiled Resource component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('scope is one way bound', function() {
+        it('scope commitId is one way bound', function() {
             this.controller.commitId = 'Test';
-            this.controller.entityId = 'Test';
             scope.$digest();
             expect(scope.commitId).toEqual('');
+        });
+        it('scope entityId is one way bound', function() {
+            this.controller.entityId = 'Test';
+            scope.$digest();
             expect(scope.entityId).toEqual('');
         });
     });

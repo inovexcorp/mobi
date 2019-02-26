@@ -25,12 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name commitCompiledResource.component:commitCompiledResource
-     * @requires $q
-     * @requires http.service:httpService
-     * @requires catalogManager.service:catalogManagerService
-     * @requires ontologyState.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @name shared.component:commitCompiledResource
      *
      * @description
      * `commitCompiledResource` is a component that returns a compiled resource containing the commit chain of the

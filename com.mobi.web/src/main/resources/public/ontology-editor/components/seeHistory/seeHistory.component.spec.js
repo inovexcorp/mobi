@@ -68,12 +68,6 @@ describe('See History component', function() {
         this.element.remove();
     });
 
-    describe('should initialize', function() {
-        it('if the ontology state seeHistory is set to true', function() {
-            ontologyStateSvc.listItem.seeHistory = true;
-            scope.$digest();
-        });
-    });
     describe('controller methods', function() {
         it('should go to prev', function() {
             this.controller.commits = [this.commits];
@@ -105,8 +99,12 @@ describe('See History component', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
         it('components used', function() {
-            expect(this.element.find('commit-compiled-resource').length).toBe(1);
-            expect(this.element.find('commit-history-table').length).toBe(1);
+            ['commit-compiled-resource', 'commit-history-table'].forEach(test => {
+                it('with a ' + test, function() {
+                    expect(this.element.find(test).length).toEqual(1);
+                });
+            });
+
         });
     });
 });
