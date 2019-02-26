@@ -31,11 +31,13 @@
      *
      * @description
      * `commitInfoOverlay` is a component that creates content for a modal displaying information about the passed
-     * commit object including a {@link shared.directive:commitChangesDisplay commit changes display}
-     * of the passed additions and deletions for the commit. Meant to be used in conjunction with the
+     * commit object including a {@link shared.component:commitChangesDisplay commit changes display} of the passed
+     * additions and deletions for the commit. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *
      * @param {Object} resolve Information provided to the modal
+     * @param {Function} resolve.entityNameFunc An optional function to pass to `commitChangesDisplay` to control the
+     * display of each entity's name
      * @param {Object} resolve.commit The commit to display information about
      * @param {string} resolve.commit.id The IRI string identifying the commit
      * @param {string} resolve.commit.message The message associated with the commit

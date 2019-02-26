@@ -24,11 +24,11 @@
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
     <info-message ng-if="!dvm.commits.length">No commits to display</info-message>
     <div class="wrapper">
-        <svg class="commit-graph" ng-style="{'height': (graph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0) + 'px', 'width': (graph ? dvm.deltaX + 10 : 0) + 'px'}"></svg>
+        <svg class="commit-graph" ng-style="{'height': (dvm.showGraph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0) + 'px', 'width': (dvm.showGraph ? dvm.deltaX + 10 : 0) + 'px'}"></svg>
         <table class="table table-hover" ng-if="dvm.commits.length">
             <thead class="thead-default">
                 <tr>
-                    <th class="graph-column" ng-if="graph" ng-style="{'width': dvm.deltaX + 10 + 'px'}"></th>
+                    <th class="graph-column" ng-if="dvm.showGraph" ng-style="{'width': dvm.deltaX + 10 + 'px'}"></th>
                     <th class="fit">Creator</th>
                     <th class="fit">Commit</th>
                     <th>Message</th>
@@ -37,7 +37,7 @@
             </thead>
             <tbody>
                 <tr ng-repeat="commit in dvm.commits track by commit.id">
-                    <td class="graph-column" ng-if="graph"></td>
+                    <td class="graph-column" ng-if="dvm.showGraph"></td>
                     <td class="fit" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
                     <td class="fit commit-id" title="{{commit.id}}"><a ng-click="dvm.openCommitOverlay(commit.id)">{{dvm.util.condenseCommitId(commit.id)}}</a></td>
                     <td title="{{commit.message}}" class="commit-message"><div><span>{{commit.message}}</span></div></td>

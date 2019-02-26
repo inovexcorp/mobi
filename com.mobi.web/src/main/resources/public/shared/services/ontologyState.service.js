@@ -1152,7 +1152,7 @@
          * @param {Object} entity The entity you want the name of.
          * @returns {string} The beautified IRI string.
          */
-        self.getEntityNameByIndex = function(entityIRI, listItem) {
+        self.getEntityNameByIndex = function(entityIRI, listItem = self.listItem) {
             return getEntityNameByIndex(entityIRI, getIndices(listItem));
         }
         function getEntityNameByIndex(entityIRI, indices) {

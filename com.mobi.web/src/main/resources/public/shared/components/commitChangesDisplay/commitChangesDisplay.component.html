@@ -21,9 +21,9 @@
   #L%
   -->
 <div class="commit-changes-display">
-    <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+    <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results">
         <div class="clearfix prop-header d-flex align-items-center">
-            <p class="text text-truncate m-0" title="{{key}}">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
+            <p class="text text-truncate m-0" title="{{key}}">{{!!dvm.entityNameFunc ? dvm.entityNameFunc(key) : dvm.util.getBeautifulIRI(key)}}</p>
             <small class="text-muted ml-1 text-truncate flex-1">&lt;{{key}}&gt;</small>
         </div>
         <div class="prop-value-container ml-3 mt-1 p-1">

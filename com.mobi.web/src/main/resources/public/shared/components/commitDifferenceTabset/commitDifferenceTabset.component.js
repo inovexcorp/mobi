@@ -29,13 +29,15 @@
      *
      * @description
      * `commitDifferenceTabset` is a directive which creates a div containing a {@link shared.directive:tabset} with
-     * tabs for the {@link shared.directive:commitChangesDisplay changes} and
-     * {@link shared.directive:commitHistoryTable commits} between two branches.
+     * tabs for the {@link shared.component:commitChangesDisplay changes} and
+     * {@link shared.component:commitHistoryTable commits} between two branches.
      *
      * @param {string} recordId The IRI of the VersionedRDFRecord that the Commits belong to
      * @param {Object} sourceBranch The JSON-LD of the source branch of the difference
      * @param {string} targetBranchId The IRI of the target branch of the difference
      * @param {Object} difference The object representing the difference between the two Commits
+     * @param {Function} entityNameFunc An optional function to pass to `commitChangesDisplay` to control the display of
+     * each entity's name
      */
     const commitDifferenceTabsetComponent = {
         templateUrl: 'shared/components/commitDifferenceTabset/commitDifferenceTabset.component.html',
@@ -43,7 +45,8 @@
             branchTitle: '<',
             commitId: '<',
             targetId: '<',
-            difference: '<'
+            difference: '<',
+            entityNameFunc: '<?'
         },
         controllerAs: 'dvm',
         controller: commitDifferenceTabsetComponentCtrl

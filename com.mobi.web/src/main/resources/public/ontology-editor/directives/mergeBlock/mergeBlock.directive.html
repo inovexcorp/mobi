@@ -30,7 +30,7 @@
     </div>
     <div class="flex-1 vertical-scroll p-2">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <commit-difference-tabset ng-if="dvm.os.listItem.merge.target" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference"></commit-difference-tabset>
+        <commit-difference-tabset ng-if="dvm.os.listItem.merge.target" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference" entity-name-func="dvm.os.getEntityNameByIndex"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">
         <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="!dvm.os.listItem.merge.target || !dvm.os.listItem.upToDate">Submit</button>

@@ -41,7 +41,8 @@ describe('Commit Difference Tabset component', function() {
         scope.commitId = '';
         scope.targetId = '';
         scope.difference = {};
-        this.element = $compile(angular.element('<commit-difference-tabset commit-id="commitId" branch-title="branchTitle" target-id="targetId" difference="difference"></commit-difference-tabset>'))(scope);
+        scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
+        this.element = $compile(angular.element('<commit-difference-tabset commit-id="commitId" branch-title="branchTitle" target-id="targetId" difference="difference" entity-name-func="entityNameFunc"></commit-difference-tabset>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitDifferenceTabset');
     });
@@ -72,6 +73,11 @@ describe('Commit Difference Tabset component', function() {
             this.controller.difference = {test: true};
             scope.$digest();
             expect(scope.difference).toEqual({});
+        });
+        it('entityNameFunc should be one way bound', function() {
+            this.controller.entityNameFunc = undefined;
+            scope.$digest();
+            expect(scope.entityNameFunc).toBeDefined();
         });
     });
     describe('contains the correct html', function() {

@@ -33,8 +33,8 @@
      * @description
      * `branchList` is a component which creates a list of expansion panels for all the Branches in the provided catalog
      * Record. If the provided Record is not a VersionedRDFRecord, no branches will be shown. The panel for each Branch
-     * shows the title, description, and {@link shared.directive:commitHistoryTable}. Only one panel can be
-     * open at a time.
+     * shows the title, description, and {@link shared.component:commitHistoryTable}. Only one panel can be open at a
+     * time.
      * 
      * @param {Object} record A JSON-LD object for a catalog Record
      */
