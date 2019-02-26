@@ -20,9 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree individual-tree hierarchy-tree h-100 p-0 w-100">
-    <md-virtual-repeat-container class="h-100 repeater-container w-100">
-        <div md-virtual-repeat="node in dvm.os.listItem.individuals.flat | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
+<div class="tree individual-tree hierarchy-tree h-100 p-0 w-100 d-flex flex-column">
+    <div class="search pb-1">
+        <search-bar ng-model="dvm.searchText" submit-event="dvm.onKeyup()"></search-bar>
+    </div>
+    <md-virtual-repeat-container class="flex-1 repeater-container w-100 remove-min-height">
+        <div md-virtual-repeat="node in dvm.filteredHierarchy | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
             <div ng-if="node.isClass" class="tree-item" ng-class="{'imported': dvm.isImported(node.entityIRI)}" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}">
                 <a ng-click="dvm.os.setOpened(dvm.os.joinPath(node.path), !dvm.os.getOpened(dvm.os.joinPath(node.path))); $event.stopPropagation()">
                     <i class="fa fa-fw" ng-class="{'fa-folder-open-o': dvm.os.getOpened(dvm.os.joinPath(node.path)), 'fa-folder-o': !dvm.os.getOpened(dvm.os.joinPath(node.path))}"></i><span>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}</span>
@@ -32,7 +35,8 @@
                        is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
                        current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
                        on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
-                       path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"></tree-item>
+                       path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getOpened(dvm.os.joinPath(node.path))"
+                       underline="node.underline"></tree-item>
         </div>
     </md-virtual-repeat-container>
 </div>

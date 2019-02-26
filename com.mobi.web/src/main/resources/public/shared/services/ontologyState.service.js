@@ -58,7 +58,8 @@
                 searchText: ''
             },
             individuals: {
-                active: false
+                active: false,
+                searchText: ''
             },
             concepts: {
                 active: false,
