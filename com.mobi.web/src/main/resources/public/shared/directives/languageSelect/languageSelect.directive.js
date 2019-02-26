@@ -41,12 +41,13 @@
                 var pm = propertyManagerService;
                 dvm.languages = pm.languageList;
 
+                dvm.$onInit = function() {
+                    if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
+                        dvm.bindModel = 'en';
+                    }
+                }
                 dvm.clear = function() {
                     dvm.bindModel = undefined;
-                }
-
-                if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
-                    dvm.bindModel = 'en';
                 }
             },
             link: function(scope, element, attrs) {

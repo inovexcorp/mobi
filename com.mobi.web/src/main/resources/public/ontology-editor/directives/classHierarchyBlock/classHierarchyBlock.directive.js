@@ -42,7 +42,7 @@
          *
          * @description
          * `classHierarchyBlock` is a directive that creates a section that displays a
-         * {@link hierarchyTree.directive:hierarchyTree} of the clases in the current
+         * {@link hierarchyTree.component:hierarchyTree} of the classes in the current
          * {@link shared.service:ontologyStateService selected ontology}. The directive is replaced by the
          * contents of its template.
          */

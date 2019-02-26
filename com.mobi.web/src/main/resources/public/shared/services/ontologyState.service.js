@@ -54,7 +54,8 @@
                 searchText: ''
             },
             properties: {
-                active: false
+                active: false,
+                searchText: ''
             },
             individuals: {
                 active: false
