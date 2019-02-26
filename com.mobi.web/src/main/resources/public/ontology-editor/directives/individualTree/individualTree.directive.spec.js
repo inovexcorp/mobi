@@ -107,7 +107,7 @@ describe('Individual Tree directive', function() {
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
         });
     });
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
             scope.$apply();
