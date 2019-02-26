@@ -43,9 +43,10 @@
          * @requires shared.service:utilService
          *
          * @description
-         * `everythingTree` is a directive that creates a a `div` containing a {@link shared.directive:searchBar}
-         * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
-         * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
+         * `everythingTree` is a directive that creates a a `div` containing a {@link shared.component:searchBar} and
+         * hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what is
+         * shown based on value matches with predicates in the
+         * {@link shared.service:ontologyManagerService entityNameProps}.
          *
          * @param {Object[]} hierarchy An array which represents a flattened everything hierarchy
          * @param {Function} updateSearch A function to update the state variable used to track the search filter text

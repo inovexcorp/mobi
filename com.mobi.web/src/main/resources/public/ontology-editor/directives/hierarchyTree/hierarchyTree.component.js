@@ -33,9 +33,9 @@
      * @requires shared.service:prefixes
      *
      * @description
-     * `hierarchyTree` is a component which creates a `div` containing a {@link shared.directive:searchBar}
-     * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
-     * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
+     * `hierarchyTree` is a component which creates a `div` containing a {@link shared.component:searchBar} and
+     * hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what is
+     * shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
      *
      * @param {Object[]} hierarchy An array which represents a flattened hierarchy
      * @param {Function} updateSearch A function to update the state variable used to track the search filter text

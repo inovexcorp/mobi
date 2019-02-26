@@ -20,22 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Search Bar directive', function() {
-    var $compile, scope, $timeout;
+describe('Search Bar component', function() {
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
         module('shared');
 
-        inject(function(_$compile_, _$rootScope_, _$timeout_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $timeout = _$timeout_;
         });
 
-        scope.bindModal = '';
+        scope.bindModel = '';
+        scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.submitEvent = jasmine.createSpy('submitEvent');
-        this.element = $compile(angular.element('<search-bar ng-model="bindModel" submit-event="submitEvent()"></search-bar>'))(scope);
+        this.element = $compile(angular.element('<search-bar bind-model="bindModel" change-event="changeEvent(value)" submit-event="submitEvent()"></search-bar>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('searchBar');
     });
@@ -48,27 +48,31 @@ describe('Search Bar directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('bindModel should be two way bound', function() {
+        it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'test';
             scope.$digest();
-            expect(scope.bindModel).toBe('test');
+            expect(scope.bindModel).toEqual('');
         });
-        it('submitEvent should be called in parent scope when invoked', function() {
+        it('changeEvent should be called in parent scope', function() {
+            this.controller.changeEvent({value: 'Test'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('Test');
+        });
+        it('submitEvent should be called in parent scope', function() {
             this.controller.submitEvent();
             expect(scope.submitEvent).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('search-bar')).toBe(true);
-            expect(this.element.hasClass('input-group')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('SEARCH-BAR');
+            expect(this.element.querySelectorAll('.search-bar').length).toEqual(1);
+            expect(this.element.querySelectorAll('.input-group').length).toEqual(1);
         });
         it('with an input', function() {
-            expect(this.element.find('input').length).toBe(1);
+            expect(this.element.find('input').length).toEqual(1);
         });
         it('with a .input-group-icon', function() {
-            expect(this.element.querySelectorAll('.input-group-icon').length).toBe(1);
+            expect(this.element.querySelectorAll('.input-group-icon').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
@@ -79,5 +83,10 @@ describe('Search Bar directive', function() {
             this.controller.onKeyUp({keyCode: 13});
             expect(scope.submitEvent).toHaveBeenCalled();
         });
+    });
+    it('should call changeEvent when the text in the input changes', function() {
+        var input = this.element.find('input');
+        input.val('Test').triggerHandler('input');
+        expect(scope.changeEvent).toHaveBeenCalledWith('Test');
     });
 });

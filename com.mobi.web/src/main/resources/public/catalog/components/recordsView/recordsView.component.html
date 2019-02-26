@@ -30,7 +30,7 @@
                 <form name="dvm.form">
                     <div class="form-row">
                         <div class="col">
-                            <search-bar ng-model="dvm.state.recordSearchText" submit-event="dvm.searchRecords()"></search-bar>
+                            <search-bar bind-model="dvm.state.recordSearchText" change-event="dvm.state.recordSearchText = value" submit-event="dvm.searchRecords()"></search-bar>
                         </div>
                         <div class="col-auto">
                             <sort-options sort-option="dvm.state.recordSortOption" change-sort="dvm.changeSort(sortOption)"></sort-options>

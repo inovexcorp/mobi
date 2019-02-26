@@ -33,7 +33,7 @@
                 <div class="col-6 ontology-select-container">
                     <div class="form-group">
                         <custom-label>Ontology</custom-label>
-                        <search-bar ng-model="dvm.recordsConfig.searchText" submit-event="dvm.setOntologies()"></search-bar>
+                        <search-bar bind-model="dvm.recordsConfig.searchText" change-event="dvm.recordsConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
                         <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
                             <info-message ng-if="dvm.ontologies.length === 0">No ontologies are available</info-message>
                             <md-list>
