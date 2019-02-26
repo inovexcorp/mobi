@@ -48,7 +48,7 @@
          * {@link shared.service:ontologyStateService selected individual} using
          * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a data
          * property. The directive houses the methods for opening the modal for
-         * {@link datatypePropertyOverlay.directive:datatypePropertyOverlay editing, adding}, and removing data property
+         * {@link datatypePropertyOverlay.component:datatypePropertyOverlay editing, adding}, and removing data property
          * values. The directive is replaced by the contents of its template.
          */
         .directive('datatypePropertyBlock', datatypePropertyBlock);

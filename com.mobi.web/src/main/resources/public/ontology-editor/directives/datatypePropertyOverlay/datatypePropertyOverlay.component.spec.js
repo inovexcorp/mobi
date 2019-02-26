@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Datatype Property Overlay directive', function() {
+describe('Datatype Property Overlay component', function() {
     var $compile, scope, ontologyStateSvc, prefixes, ontoUtils, propertyManagerSvc, util;
 
     beforeEach(function() {

@@ -65,7 +65,7 @@
             dvm.isRequired = dvm.required !== undefined;
 
             if (dvm.disableClear && typeof dvm.bindModel === 'undefined') {
-                dvm.bindModel = 'en';
+                dvm.changeEvent({value: 'en'});
             }
         }
         dvm.clear = function() {

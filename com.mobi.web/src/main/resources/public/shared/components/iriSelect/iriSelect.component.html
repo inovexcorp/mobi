@@ -23,7 +23,7 @@
 <div class="iri-select form-group">
     <custom-label muted-text="dvm.mutedText">{{dvm.displayText}}</custom-label>
     <!-- Multi Select -->
-    <ui-select ng-if="dvm.multiSelect" multiple ng-model="dvm.bindModel" on-select="dvm.onChange()" on-remove="dvm.onChange()" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
+    <ui-select ng-if="dvm.isMultiSelect" multiple ng-model="dvm.bindModel" on-select="dvm.changeEvent({value: dvm.bindModel})" on-remove="dvm.changeEvent({value: dvm.bindModel})" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
         <ui-select-match placeholder="{{'Select ' + displayText}}">
             <span title="{{$item}}">{{dvm.util.getBeautifulIRI($item)}}</span>
         </ui-select-match>
@@ -32,7 +32,7 @@
         </ui-select-choices>
     </ui-select>
     <!-- Single Select -->
-    <ui-select ng-if="!dvm.multiSelect" ng-model="dvm.bindModel" on-select="dvm.onChange()" on-remove="dvm.onChange()" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
+    <ui-select ng-if="!dvm.isMultiSelect" ng-model="dvm.bindModel" on-select="dvm.changeEvent({value: dvm.bindModel})" on-remove="dvm.changeEvent({value: dvm.bindModel})" ng-disabled="dvm.isDisabledWhen" ng-required="dvm.isRequiredWhen">
         <ui-select-match placeholder="{{'Select ' + displayText}}">
             <span title="{{$select.selected}}">{{dvm.util.getBeautifulIRI($select.selected)}}</span>
         </ui-select-match>

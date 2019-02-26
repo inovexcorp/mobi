@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Object Property Overlay directive', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
+describe('Create Object Property Overlay component', function() {
+    var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -34,10 +34,9 @@ describe('Create Object Property Overlay directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
@@ -58,7 +57,6 @@ describe('Create Object Property Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontologyManagerSvc = null;
         ontologyStateSvc = null;
         prefixes = null;
         ontoUtils = null;
