@@ -20,11 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="catalog-record-keywords">
+<div class="catalog-record-keywords" click-anywhere-but-here="dvm.cancelChanges()">
     <div ng-if="dvm.canEdit && dvm.edit" class="d-flex">
-        <keyword-select ng-model="dvm.keywords" hide-label="true" blur-event="dvm.onBlur()" focus-me="true" class="flex-1"></keyword-select>
+        <keyword-select ng-model="dvm.keywords" hide-label="true" focus-me="true" class="flex-1"></keyword-select>
         <a ng-mousedown="dvm.saveChanges()" class="fa fa-save fa-2x"></a>
-        <a ng-mousedown="dvm.cancelChanges()" class="fa fa-times fa-2x ml-1"></a>
     </div>
     <div ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">
         <span ng-if="dvm.keywords.length === 0">(No keywords specified)</span>
