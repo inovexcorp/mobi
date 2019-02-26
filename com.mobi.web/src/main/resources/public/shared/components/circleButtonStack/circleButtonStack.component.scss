@@ -20,20 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    function circleButtonStack() {
-        return {
-            restrict: 'E',
-            replace: true,
-            transclude: true,
-            scope: {},
-            templateUrl: 'shared/directives/circleButtonStack/circleButtonStack.directive.html'
+.circle-button-stack {
+    width: 3.5rem;
+
+    button {
+        margin-top: 0.5rem;
+    }
+    .hidden-buttons {
+        display: none;
+        text-align: center;
+    }
+    &:hover {
+        .base-btn {
+            display: none;
+        }
+        .hidden-buttons {
+            display: block;
         }
     }
-
-    angular
-        .module('shared')
-        .directive('circleButtonStack', circleButtonStack);
-})();
+}

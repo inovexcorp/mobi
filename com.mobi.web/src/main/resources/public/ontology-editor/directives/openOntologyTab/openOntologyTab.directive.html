@@ -45,8 +45,8 @@
                         </div>
                         <div>
                             <action-menu>
-                                <action-menu-item icon="'fa-lock'" display-text="'Manage'" ng-show="record.userCanManage" ng-click="record.showAccessControls = !record.showAccessControls"></action-menu-item>
-                                <action-menu-item icon="'fa-trash-o'" display-text="'Delete'" ng-click="dvm.showDeleteConfirmationOverlay(record)"></action-menu-item>
+                                <a class="dropdown-item" ng-show="record.userCanManage" ng-click="record.showAccessControls = !record.showAccessControls"><i class="fa fa-fw fa-lock"></i> Manage</a>
+                                <a class="dropdown-item delete-record" ng-click="dvm.showDeleteConfirmationOverlay(record)"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
                             </action-menu>
                         </div>
                     </div>

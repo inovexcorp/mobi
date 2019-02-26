@@ -52,7 +52,7 @@
          * @description
          * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a
          * {@link shared.directive:searchBar} and a paginated list of ontologies with
-         * {@link shared.directive:actionMenu action menus} to manage and delete. In addition, the page includes
+         * {@link shared.component:actionMenu action menus} to manage and delete. In addition, the page includes
          * buttons for {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
          * {@link uploadOntologyTab.directive:uploadOntologyTab uploading ontologies}. The directive houses a method
          * for opening the modal deleting an ontology. The directive is replaced by the contents of its template.

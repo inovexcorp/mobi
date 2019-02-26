@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Action Menu directive', function() {
+describe('Circle Button Stack component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -32,7 +32,7 @@ describe('Action Menu directive', function() {
             scope = _$rootScope_;
         });
 
-        this.element = $compile(angular.element('<action-menu></action-menu>'))(scope);
+        this.element = $compile(angular.element('<circle-button-stack><span>Test</span></circle-button-stack>'))(scope);
         scope.$digest();
     });
 
@@ -42,18 +42,18 @@ describe('Action Menu directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('action-menu')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('CIRCLE-BUTTON-STACK');
         });
-        it('with a button', function() {
-            var button = this.element.find('button');
-            expect(button.length).toEqual(1);
-            expect(button.hasClass('dropdown-toggle')).toEqual(true);
+        it('with a .hidden-buttons', function() {
+            expect(this.element.querySelectorAll('.hidden-buttons').length).toBe(1);
         });
-        it('with a .dropdown-menu', function() {
-            expect(this.element.querySelectorAll('.dropdown-menu').length).toEqual(1);
+        it('with a button.btn-float', function() {
+            expect(this.element.querySelectorAll('button.btn-float').length).toBe(1);
+        });
+        it('with transcluded content', function() {
+            expect(angular.element(this.element.querySelectorAll('.hidden-buttons')[0]).children().length).toEqual(1);
         });
     });
 });

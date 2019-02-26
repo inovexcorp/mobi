@@ -140,7 +140,7 @@ describe('Open Ontology Tab directive', function() {
         it('depending if a user has access to manage a record', function() {
             this.controller.filteredList = [{userCanManage: true}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item').length).toBe(2);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu a').length).toBe(2);
         });
         it('with a hidden file-input', function() {
             expect(this.element.querySelectorAll('file-input.hide').length).toEqual(1);
@@ -283,7 +283,7 @@ describe('Open Ontology Tab directive', function() {
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
-        var link = angular.element(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item')[1]);
+        var link = angular.element(this.element.querySelectorAll('.ontologies .list-group-item action-menu a.delete-record')[0]);
         link.triggerHandler('click');
         expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
     });

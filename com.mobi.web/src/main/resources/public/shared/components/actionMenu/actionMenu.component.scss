@@ -23,29 +23,16 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.circle-button-stack {
-    width: $circle-button-width;
+.action-menu {
+    .dropdown-toggle {
+        min-width: unset;
 
-    .btn-circle {
-        margin-top: 15px;
-        min-width: 0;
-    }
-
-    .hidden-buttons {
-        display: none;
-
-        .btn.small {
-            margin-left: 4px;
-        }
-    }
-
-    &:hover {
-        .base-btn {
+        &::after,
+        &::before {
             display: none;
         }
-
-        .hidden-buttons {
-            display: block;
-        }
+    }
+    .dropdown-item {
+        color: var(--body) !important;
     }
 }

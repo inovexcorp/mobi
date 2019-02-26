@@ -20,20 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Circle Button Stack directive', function() {
+describe('Action Menu component', function() {
     var $compile, scope;
 
     beforeEach(function() {
         module('templates');
         module('shared');
-        mockComponent('shared', 'circleButton');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
 
-        this.element = $compile(angular.element('<circle-button-stack></circle-button-stack>'))(scope);
+        this.element = $compile(angular.element('<action-menu></action-menu>'))(scope);
         scope.$digest();
     });
 
@@ -43,15 +42,18 @@ describe('Circle Button Stack directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.prop('tagName')).toEqual('ACTION-MENU');
+            expect(this.element.querySelectorAll('.action-menu').length).toEqual(1);
         });
-        it('with a .hidden-buttons', function() {
-            expect(this.element.querySelectorAll('.hidden-buttons').length).toBe(1);
+        it('with a button', function() {
+            var button = this.element.find('button');
+            expect(button.length).toEqual(1);
+            expect(button.hasClass('dropdown-toggle')).toEqual(true);
         });
-        it('with a circle-button', function() {
-            expect(this.element.find('circle-button').length).toBe(1);
+        it('with a .dropdown-menu', function() {
+            expect(this.element.querySelectorAll('.dropdown-menu').length).toEqual(1);
         });
     });
 });
