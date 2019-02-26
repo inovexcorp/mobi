@@ -26,6 +26,7 @@
     /**
      * @ngdoc component
      * @name shared.component:inlineEdit
+     * @requires shared.service:utilService
      *
      * @description
      * `inlineEdit` is a component which creates TODO
@@ -38,17 +39,20 @@
         bindings: {
             text: '<',
             canEdit: '<',
+            area: '<',
+            required: '<',
             saveEvent: '&'
         },
         controllerAs: 'dvm',
         controller: inlineEditComponentCtrl,
     }
 
-    inlineEditComponentCtrl.$inject = [];
+    inlineEditComponentCtrl.$inject = ['utilService'];
 
-    function inlineEditComponentCtrl() {
+    function inlineEditComponentCtrl(utilService) {
         var dvm = this;
         dvm.edit = false;
+        var util = utilService;
 
         dvm.$onInit = function() {
             dvm.initialText = dvm.text;
@@ -58,14 +62,19 @@
         }
         dvm.saveChanges = function() {
             dvm.edit = false;
-            dvm.saveEvent({text: dvm.text});
+            if (dvm.required && dvm.text === '') {
+                dvm.onBlur();
+                util.createWarningToast('Text input must not be empty')
+            } else {
+                dvm.saveEvent({text: dvm.text});
+            }
         }
         dvm.onBlur = function() {
             dvm.text = dvm.initialText;
             dvm.edit = false;
         }
         dvm.onKeyUp = function(event) {
-            if (event.keyCode === 13) {
+            if (event.keyCode === 13 && !event.shiftKey) {
                 dvm.saveChanges();
             }
         }

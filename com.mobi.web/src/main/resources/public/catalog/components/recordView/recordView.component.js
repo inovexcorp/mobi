@@ -93,6 +93,11 @@
             dvm.title = util.getDctermsValue(dvm.record, 'title');
             return dvm.updateRecord(dvm.record);
         }
+        dvm.updateDescription = function(newDescription) {
+            util.updateDctermsValue(dvm.record, 'description', newDescription);
+            dvm.description = util.getDctermsValue(dvm.record, 'description');
+            return dvm.updateRecord(dvm.record);
+        }
         dvm.setCanEdit = function() {
             var request = {
                 resourceId: dvm.record['@id'],
