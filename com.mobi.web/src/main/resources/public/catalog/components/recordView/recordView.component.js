@@ -28,6 +28,7 @@
      * @name catalog.component:recordView
      * @requires shared.service:catalogStateService
      * @requires shared.service:catalogManagerService
+     * @requires shared.service:ontologyStateService
      * @requires shared.service:policyEnforcementService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
@@ -49,13 +50,14 @@
         controller: recordViewComponentCtrl
     };
 
-    recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'policyEnforcementService', 'utilService', 'prefixes'];
+    recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'ontologyStateService', 'policyEnforcementService', 'utilService', 'prefixes'];
 
-    function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, policyEnforcementService, utilService, prefixes) {
+    function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, ontologyStateService, policyEnforcementService, utilService, prefixes) {
         var dvm = this;
         var state = catalogStateService;
         var cm = catalogManagerService;
         var pep = policyEnforcementService;
+        var os = ontologyStateService;
         var util = utilService;
         dvm.record = undefined;
         dvm.title = '';
@@ -89,6 +91,8 @@
                 });
         }
         dvm.updateTitle = function(newTitle) {
+            console.log(dvm.title);
+            // if (_.find(dvm.os.list, item => item.ontologyRecord.title ===))
             util.updateDctermsValue(dvm.record, 'title', newTitle);
             dvm.title = util.getDctermsValue(dvm.record, 'title');
             return dvm.updateRecord(dvm.record);

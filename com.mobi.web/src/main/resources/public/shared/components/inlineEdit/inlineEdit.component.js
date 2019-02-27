@@ -36,6 +36,7 @@
      */
     const inlineEditComponent = {
         templateUrl: 'shared/components/inlineEdit/inlineEdit.component.html',
+        transclude: true,
         bindings: {
             text: '<',
             canEdit: '<',

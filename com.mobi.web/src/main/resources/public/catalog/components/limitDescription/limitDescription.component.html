@@ -23,5 +23,5 @@
 <span class="no-description" ng-if="dvm.description.length === 0">(None Specified)</span>
 <span class="description word-break" ng-if="dvm.description.length > 0">
     {{dvm.display}} 
-    <a ng-if="dvm.description.length > dvm.descriptionLimit" ng-click="dvm.toggleFull()">Show {{dvm.full ? 'less' : 'more'}}</a>
+    <a ng-if="dvm.description.length > dvm.descriptionLimit" ng-click="dvm.toggleFull($event)">Show {{dvm.full ? 'less' : 'more'}}</a>
 </span>

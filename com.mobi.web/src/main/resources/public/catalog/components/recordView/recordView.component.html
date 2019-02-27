@@ -27,11 +27,10 @@
     <div class="col record-body h-100 vertical-scroll">
         <div class="record-header">
             <h2 class="record-title d-flex align-items-center">
-                <record-icon record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" required="true" class="break-word flex-grow-1"></inline-edit>
+                <record-icon record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" required="true" class="break-word flex-grow-1">{{dvm.title}}</inline-edit>
             </h2>
             <p class="lead text-muted">
-                <inline-edit text="dvm.description" can-edit="dvm.canEdit" placeholder="'(No description)'" save-event="dvm.updateDescription(text)" area="true" class="break-word"></inline-edit>
-                <!--<limit-description description="dvm.description" limit="400"></limit-description> TODO!!!!-->
+                <inline-edit text="dvm.description" can-edit="dvm.canEdit" placeholder="'(No description)'" save-event="dvm.updateDescription(text)" area="true" class="break-word"><limit-description description="dvm.description" limit="400"></limit-description></inline-edit>
             </p>
         </div>
         <record-view-tabset record="dvm.record" update-record="dvm.updateRecord(record)" can-edit="dvm.canEdit"></record-view-tabset>
