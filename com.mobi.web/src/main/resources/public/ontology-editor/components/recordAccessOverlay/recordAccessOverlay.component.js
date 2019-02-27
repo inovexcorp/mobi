@@ -35,7 +35,7 @@
      * control the access controls for a record policy.
      */
     const recordAccessOverlayComponent = {
-        templateUrl: 'ontology-editor/directives/recordAccessOverlay/recordAccessOverlay.component.html',
+        templateUrl: 'ontology-editor/components/recordAccessOverlay/recordAccessOverlay.component.html',
         bindings: {
             resolve: '<',
             close: '&',

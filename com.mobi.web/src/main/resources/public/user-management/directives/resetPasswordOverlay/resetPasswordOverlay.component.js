@@ -23,6 +23,50 @@
 (function () {
     'use strict';
 
+    /**
+     * @ngdoc component
+     * @name resetPasswordOverlay.component:resetPasswordOverlay
+     * @requires shared.service:userManagerService
+     * @requires shared.service:userStateService
+     *
+     * @description
+     * `resetPasswordOverlay` is a component that creates content for a modal with a form to reset the
+     * {@link shared.service:userStateService#selectedUser selected user's} password in Mobi. The form uses a
+     * {@link shared.component:passwordConfirmInput passwordConfirmInput} to confirm the new password.
+     * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+     *
+     * @param {Function} close A function that closes the modal
+     * @param {Function} dismiss A function that dismisses the modal
+     */
+    const resetPasswordOverlayComponent = {
+        templateUrl: 'user-management/directives/resetPasswordOverlay/resetPasswordOverlay.component.html',
+        bindings: {
+            close: '&',
+            dismiss: '&'
+        },
+        controllerAs: 'dvm',
+        controller: resetPasswordOverlayComponentCtrl,
+    };
+
+    resetPasswordOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService'];
+
+    function resetPasswordOverlayComponentCtrl(userStateService, userManagerService) {
+        var dvm = this;
+        dvm.state = userStateService;
+        dvm.um = userManagerService;
+
+        dvm.set = function() {
+            dvm.um.resetPassword(dvm.state.selectedUser.username, dvm.password)
+                .then(response => {
+                    dvm.errorMessage = '';
+                    dvm.close();
+                }, error => dvm.errorMessage = error);
+        }
+        dvm.cancel = function() {
+            dvm.dismiss();
+        }
+    }
+
     angular
         /**
          * @ngdoc overview
@@ -33,44 +77,5 @@
          * for a modal to reset a user's password in Mobi.
          */
         .module('resetPasswordOverlay', [])
-        /**
-         * @ngdoc component
-         * @name resetPasswordOverlay.component:resetPasswordOverlay
-         * @requires shared.service:userManagerService
-         * @requires shared.service:userStateService
-         *
-         * @description
-         * `resetPasswordOverlay` is a component that creates content for a modal with a form to reset the
-         * {@link shared.service:userStateService#selectedUser selected user's} password in Mobi. The form uses a
-         * {@link shared.directive:passwordConfirmInput passwordConfirmInput} to confirm the new password.
-         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
-         *
-         * @param {Function} close A function that closes the modal
-         * @param {Function} dismiss A function that dismisses the modal
-         */
-        .component('resetPasswordOverlay', {
-            bindings: {
-                close: '&',
-                dismiss: '&'
-            },
-            controllerAs: 'dvm',
-            controller: ['userStateService', 'userManagerService', ResetPasswordOverlayController],
-            templateUrl: 'user-management/directives/resetPasswordOverlay/resetPasswordOverlay.component.html'
-        });
-
-    function ResetPasswordOverlayController(userStateService, userManagerService) {
-        var dvm = this;
-        dvm.state = userStateService;
-        dvm.um = userManagerService;
-
-        dvm.set = function() {
-            dvm.um.resetPassword(dvm.state.selectedUser.username, dvm.password).then(response => {
-                dvm.errorMessage = '';
-                dvm.close();
-            }, error => dvm.errorMessage = error);
-        }
-        dvm.cancel = function() {
-            dvm.dismiss();
-        }
-    }
+        .component('resetPasswordOverlay', resetPasswordOverlayComponent);
 })();

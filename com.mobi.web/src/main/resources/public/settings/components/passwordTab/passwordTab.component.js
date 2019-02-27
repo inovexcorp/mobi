@@ -32,7 +32,7 @@
      * `passwordTab` is a component that creates a Bootstrap `row` with a {@link shared.component:block block} containing a
      * form allowing the current user to change their password. The user must enter their current password in order to make
      * a change. The new password is confirmed within a
-     * {@link shared.directive:passwordConfirmInput passwordConfirmInput}.
+     * {@link shared.component:passwordConfirmInput passwordConfirmInput}.
      */
     const passwordTabComponent = {
         templateUrl: 'settings/components/passwordTab/passwordTab.component.html',
@@ -50,14 +50,18 @@
         dvm.lm = loginManagerService;
 
         dvm.save = function() {
-            dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password).then(response => {
-                dvm.errorMessage = '';
-                util.createSuccessToast('Password successfully saved');
-                dvm.currentPassword = '';
-                dvm.password = '';
-                dvm.confirmedPassword = '';
-                dvm.form.$setPristine();
-            }, error => dvm.errorMessage = error);
+            dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password)
+                .then(response => {
+                    dvm.errorMessage = '';
+                    util.createSuccessToast('Password successfully saved');
+                    dvm.currentPassword = '';
+                    dvm.password = '';
+                    dvm.confirmedPassword = '';
+                    // dvm.form.currentPassword = undefined;
+                    // dvm.form.password = undefined;
+                    // dvm.form.confirmedPassword = undefined;
+                    dvm.form.$setPristine();
+                }, error => dvm.errorMessage = error);
         }
     }
     angular.module('settings')

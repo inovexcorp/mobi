@@ -25,17 +25,17 @@
 
     /**
      * @ngdoc component
-     * @name createDataPropertyOverlay.component:createDataPropertyOverlay
+     * @name createObjectPropertyOverlay.component:createObjectPropertyOverlay
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
      * @requires shared.service:prefixes
      * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
      *
      * @description
-     * `createDataPropertyOverlay` is a component that creates content for a modal that creates a data property in the
-     * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a text
+     * `createObjectPropertyOverlay` is a component that creates content for a modal that creates an object property in
+     * the current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a text
      * input for the property name (which populates the {@link staticIri.directive:staticIri IRI}), a
-     * {@link shared.component:textArea} for the property description, an
+     * {@link shared.component:textArea} for the property description,
      * {@link advancedLanguageSelect.directive:advancedLanguageSelect},
      * {@link shared.component:checkbox checkboxes} for the property characteristics, an
      * {@link iriSelectOntology.directive:iriSelectOntology} for the domain, an
@@ -46,25 +46,30 @@
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal
      */
-    const createDataPropertyOverlayComponent = {
-        templateUrl: 'ontology-editor/directives/createDataPropertyOverlay/createDataPropertyOverlay.component.html',
+    const createObjectPropertyOverlayComponent = {
+        templateUrl: 'ontology-editor/components/createObjectPropertyOverlay/createObjectPropertyOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'
         },
         controllerAs: 'dvm',
-        controller: createDataPropertyOverlayComponentCtrl
-    }
+        controller: createObjectPropertyOverlayComponentCtrl
+    };
 
-    createDataPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+    createObjectPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-    function createDataPropertyOverlayComponentCtrl($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+    function createObjectPropertyOverlayComponentCtrl($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
         var dvm = this;
         dvm.characteristics = [
             {
                 checked: false,
                 typeIRI: prefixes.owl + 'FunctionalProperty',
                 displayText: 'Functional Property',
+            },
+            {
+                checked: false,
+                typeIRI: prefixes.owl + 'AsymmetricProperty',
+                displayText: 'Asymmetric Property',
             }
         ];
         dvm.prefixes = prefixes;
@@ -75,7 +80,7 @@
         dvm.values = [];
         dvm.property = {
             '@id': dvm.prefix,
-            '@type': [dvm.prefixes.owl + 'DatatypeProperty'],
+            '@type': [dvm.prefixes.owl + 'ObjectProperty'],
             [prefixes.dcterms + 'title']: [{
                 '@value': ''
             }],
@@ -130,13 +135,16 @@
         }
 
         function updateLists() {
-            dvm.os.listItem.dataProperties.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
+            dvm.os.listItem.objectProperties.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
             if (dvm.values.length) {
                 dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
-                dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), 'dataProperties');
+                dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), 'objectProperties');
+                if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, '@id'))) {
+                    dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
+                }
             } else {
-                dvm.os.listItem.dataProperties.hierarchy.push({'entityIRI': dvm.property['@id']});
-                dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                dvm.os.listItem.objectProperties.hierarchy.push({'entityIRI': dvm.property['@id']});
+                dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
             }
         }
     }
@@ -144,12 +152,12 @@
     angular
         /**
          * @ngdoc overview
-         * @name createDataPropertyOverlay
+         * @name createObjectPropertyOverlay
          *
          * @description
-         * The `createDataPropertyOverlay` module only provides the `createDataPropertyOverlay` directive which creates
-         * content for a modal to add a data property to an ontology.
+         * The `createObjectPropertyOverlay` module only provides the `createObjectPropertyOverlay` directive which
+         * creates content for a modal to add an object property to an ontology.
          */
-        .module('createDataPropertyOverlay', [])
-        .component('createDataPropertyOverlay', createDataPropertyOverlayComponent);
+        .module('createObjectPropertyOverlay', [])
+        .component('createObjectPropertyOverlay', createObjectPropertyOverlayComponent);
 })();

@@ -35,7 +35,7 @@
                 <ng-message when="pattern">Invalid username</ng-message>
             </p>
         </div>
-        <password-confirm-input password="dvm.password" label="'Password'" required></password-confirm-input>
+        <password-confirm-input password="dvm.password" change-event="dvm.password = value" label="'Password'" required></password-confirm-input>
         <text-input bind-model="dvm.newUser.firstName" change-event="dvm.newUser.firstName = value" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'"></text-input>
         <text-input bind-model="dvm.newUser.lastName" change-event="dvm.newUser.lastName = value" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'"></text-input>
         <email-input bind-model="dvm.newUser.email" change-event="dvm.newUser.email = value" input-name="'email'" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'"></email-input>

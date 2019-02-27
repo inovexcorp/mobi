@@ -44,7 +44,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const datatypePropertyOverlayComponent = {
-        templateUrl: 'ontology-editor/directives/datatypePropertyOverlay/datatypePropertyOverlay.component.html',
+        templateUrl: 'ontology-editor/components/datatypePropertyOverlay/datatypePropertyOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'

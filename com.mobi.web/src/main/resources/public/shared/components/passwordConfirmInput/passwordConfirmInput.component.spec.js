@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Password Confirm Input directive', function() {
+describe('Password Confirm Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -33,14 +33,14 @@ describe('Password Confirm Input directive', function() {
         });
 
         scope.password = '';
-        scope.confirmedPassword = '';
         scope.label = '';
+        scope.changeEvent = jasmine.createSpy('changeEvent');
         var form = $compile('<form></form>')(scope);
-        this.element = angular.element('<password-confirm-input password="password" confirmed-password="confirmedPassword" label="label"></password-confirm-input>');
+        this.element = angular.element('<password-confirm-input password="password" change-event="changeEvent(value)" label="label"></password-confirm-input>');
         form.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
-        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('passwordConfirmInput');
     });
 
     afterEach(function() {
@@ -49,48 +49,48 @@ describe('Password Confirm Input directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        it('password should be two way bound', function() {
-            this.isolatedScope.password = 'test';
+    describe('controller bound variable', function() {
+        it('password should be one way bound', function() {
+            this.controller.password = 'test';
             scope.$digest();
-            expect(scope.password).toBe('test');
+            expect(scope.password).toEqual('');
         });
-        it('confirmedPassword should be two way bound', function() {
-            this.isolatedScope.confirmedPassword = 'test';
-            scope.$digest();
-            expect(scope.confirmedPassword).toBe('test');
-        })
         it('label should be one way bound', function() {
-            this.isolatedScope.label = 'test';
+            this.controller.label = 'test';
             scope.$digest();
-            expect(scope.label).toBe('');
+            expect(scope.label).toEqual('');
+        });
+        it('changeEvent should be called in the parent scope', function() {
+            this.controller.changeEvent({value: 'Test'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('Test');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('password-confirm-input')).toBe(true);
-            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
+            expect(this.element.prop('tagName')).toEqual('PASSWORD-CONFIRM-INPUT');
+            expect(this.element.querySelectorAll('.password-confirm-input').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(2);
         });
         it('with the correct classes based on the password field validity', function() {
             var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
-            expect(passwordInput.hasClass('is-invalid')).toBe(false);
+            expect(passwordInput.hasClass('is-invalid')).toEqual(false);
 
-            this.isolatedScope.form.password.$setDirty();
-            this.isolatedScope.required = true;
+            this.controller.form.password.$setDirty();
+            this.controller.isRequired = true;
             scope.$digest();
-            expect(passwordInput.hasClass('is-invalid')).toBe(true);
+            expect(passwordInput.hasClass('is-invalid')).toEqual(true);
         });
         it('with the correct classes based on the confirm password field validity', function() {
             var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
             var confirmInput = angular.element(this.element.querySelectorAll('.confirm-password input')[0]);
-            expect(passwordInput.hasClass('is-invalid')).toBe(false);
-            expect(confirmInput.hasClass('is-invalid')).toBe(false);
+            expect(passwordInput.hasClass('is-invalid')).toEqual(false);
+            expect(confirmInput.hasClass('is-invalid')).toEqual(false);
 
-            this.isolatedScope.form.confirmPassword.$setDirty();
-            this.isolatedScope.required = true;
+            this.controller.form.confirmPassword.$setDirty();
+            this.controller.isRequired = true;
             scope.$digest();
-            expect(passwordInput.hasClass('is-invalid')).toBe(true);
-            expect(confirmInput.hasClass('is-invalid')).toBe(true);
+            expect(passwordInput.hasClass('is-invalid')).toEqual(true);
+            expect(confirmInput.hasClass('is-invalid')).toEqual(true);
         });
         it('depending on the required value', function() {
             var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
@@ -98,7 +98,7 @@ describe('Password Confirm Input directive', function() {
             expect(passwordInput.attr('required')).toBeFalsy();
             expect(confirmInput.attr('required')).toBeFalsy();
 
-            this.isolatedScope.required = true;
+            this.controller.isRequired = true;
             scope.$digest();
             expect(passwordInput.attr('required')).toBeTruthy();
             expect(confirmInput.attr('required')).toBeTruthy();
@@ -107,19 +107,24 @@ describe('Password Confirm Input directive', function() {
             var confirmInput = angular.element(this.element.querySelectorAll('.confirm-password input')[0]);
             expect(confirmInput.attr('required')).toBeFalsy();
 
-            scope.password = 'test';
+            this.controller.password = 'test';
             scope.$digest();
             expect(confirmInput.attr('required')).toBeTruthy();
         });
     });
-    it('should show an error depending on if passwords match', function() {
-        scope.password = 'test';
-        scope.confirmedPassword = scope.password;
+    it('should validate whether the passwords match', function() {
+        this.controller.password = 'test';
+        this.controller.confirmedPassword = this.controller.password;
         scope.$digest();
-        expect(this.isolatedScope.form.$valid).toBe(true);
+        expect(this.controller.form.$valid).toEqual(true);
 
-        scope.confirmedPassword = 'tester';
+        this.controller.confirmedPassword = 'tester';
         scope.$digest();
-        expect(this.isolatedScope.form.$valid).toBe(false);
+        expect(this.controller.form.$valid).toEqual(false);
+    });
+    it('should call changeEvent when the password text in the input changes', function() {
+        var input = angular.element(this.element.querySelectorAll('.password input')[0]);
+        input.val('Test').triggerHandler('input');
+        expect(scope.changeEvent).toHaveBeenCalledWith('Test');
     });
 });
