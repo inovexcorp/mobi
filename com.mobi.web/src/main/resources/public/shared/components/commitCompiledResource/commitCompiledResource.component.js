@@ -26,39 +26,41 @@
     /**
      * @ngdoc component
      * @name shared.component:commitCompiledResource
+     * @requires shared.service:httpService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
      *
      * @description
-     * `commitCompiledResource` is a component that returns a compiled resource containing the commit chain of the
-     * provided commit. This compiled resource can be used to show the additions and deletions in addition to the
-     * previous commit's data of a particular entity at the provided commit.
+     * `commitCompiledResource` is a component that displays the compiled resource of the entity identified by the
+     * provided `commitId` starting at the commit identified by the provided `commitId`. The display will include all
+     * deleted statements from the commit styled to be easily identified. All added statements in the commit will also
+     * be styled to be easily identified.
      *
      * @param {string} commitId The IRI string of a commit in the local catalog
-     * @param {string} [entityId=''] entityId filters the resource with entityId as the
-     *          subject.
+     * @param {string} entityId entityId The IRI string of the entity to display
+     * @param {Function} [entityNameFunc=undefined] An optional function to control how entity names are displayed.
      */
     const commitCompiledResourceComponent = {
         templateUrl: 'shared/components/commitCompiledResource/commitCompiledResource.component.html',
         bindings: {
             commitId: '<',
-            entityId: '<?'
+            entityId: '<',
+            entityNameFunc: '<'
         },
         controllerAs: 'dvm',
         controller: commitCompiledResourceComponentCtrl
     };
 
-    commitCompiledResourceComponentCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
+    commitCompiledResourceComponentCtrl.$inject = ['$q', 'httpService', 'catalogManagerService', 'utilService'];
 
-    function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerService, ontologyStateService, ontologyUtilsManagerService) {
+    function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerService, utilService) {
         var dvm = this;
         var cm = catalogManagerService;
-        dvm.ontoUtils = ontologyUtilsManagerService;
-        dvm.os = ontologyStateService;
+        dvm.util = utilService;
 
         dvm.error = '';
         dvm.resource = undefined;
-        dvm.typeAdditions = undefined;
-        dvm.typeDeletions = undefined;
-        dvm.types = undefined;
+        dvm.types = [];
         dvm.id = 'commit-compiled-resource';
 
         dvm.$onChanges = function(changes) {
@@ -71,18 +73,21 @@
                 httpService.cancel(dvm.id);
                 cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
                     .then(resources => {
-                        dvm.resource = _.omit(resources[0], ['@id', '@type']);
-                        dvm.types = _.get(resources[0], '@type');
+                        var resource = _.head(resources) || {};
+                        dvm.types = _.map(_.get(resource, '@type', []), type => ({type}));
+                        dvm.resource = _.omit(resource, ['@id', '@type']);
                         return cm.getCommit(dvm.commitId);
                     }, $q.reject)
                     .then(response => {
-                        dvm.typeAdditions = _.get(_.find(response.additions, {'@id': dvm.entityId}), '@type');
-                        dvm.typeDeletions = _.get(_.find(response.deletions, {'@id': dvm.entityId}), '@type');
-                        if (dvm.typeDeletions) {
-                            dvm.types = dvm.types.concat(dvm.typeDeletions);
-                        }
-                        var additions = _.omit(_.find(response.additions, {'@id': dvm.entityId}), ['@id', '@type']);
-                        var deletions = _.omit(_.find(response.deletions, {'@id': dvm.entityId}), ['@id', '@type']);
+                        var additionsObj = _.find(response.additions, {'@id': dvm.entityId});
+                        var deletionsObj = _.find(response.deletions, {'@id': dvm.entityId});
+                        _.forEach(_.get(additionsObj, '@type'), addedType => {
+                            var typeObj = _.find(dvm.types, {type: addedType});
+                            typeObj.add = true;
+                        });
+                        dvm.types = dvm.types.concat(_.map(_.get(deletionsObj, '@type', []), type => ({type, del: true})));
+                        var additions = _.omit(additionsObj, ['@id', '@type']);
+                        var deletions = _.omit(deletionsObj, ['@id', '@type']);
                         _.forEach(additions, (values, prop) => {
                             _.forEach(values, value => {
                                 var resourceVal = _.find(dvm.resource[prop], value);
@@ -103,22 +108,11 @@
                     }, errorMessage => {
                         dvm.error = errorMessage;
                         dvm.resource = undefined;
-                        dvm.typeAdditions = undefined;
-                        dvm.typeDeletions = undefined;
-                        dvm.types = undefined;
+                        dvm.types = [];
                     });
             } else {
                 dvm.resource = undefined;
-                dvm.typeAdditions = undefined;
-                dvm.typeDeletions = undefined;
-                dvm.types = undefined;
-            }
-        }
-        dvm.modifiedType = function(value) {
-            if (_.includes(dvm.typeAdditions, value)) {
-                return "addition";
-            } else if (_.includes(dvm.typeDeletions, value)) {
-                return "deletion";
+                dvm.types = [];
             }
         }
     }

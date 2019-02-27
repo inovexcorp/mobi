@@ -26,15 +26,12 @@ describe('Commit Compiled Resource component', function() {
     beforeEach(function() {
         module('templates');
         module('shared');
-        mockComponent('shared', 'valueDisplay');
         mockComponent('shared', 'infoMessage');
         mockComponent('shared', 'errorDisplay');
-        injectChromaConstant();
-        injectTrustedFilter();
         mockCatalogManager();
-        mockOntologyState();
-        mockOntologyUtilsManager();
         mockHttpService();
+        mockUtil();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _httpService_, _catalogManagerService_) {
             $compile = _$compile_;
@@ -47,14 +44,20 @@ describe('Commit Compiled Resource component', function() {
         this.error = 'error';
         this.commitId = 'commit';
         this.entityId = 'entity';
-        this.resource = 'resource';
+        this.resource = {};
+        this.commit = {
+            id: this.commitId,
+            additions: [],
+            deletions: []
+        };
 
         catalogManagerSvc.getCompiledResource.and.returnValue($q.when([this.resource]));
-        catalogManagerSvc.getCommit.and.returnValue($q.when([this.commitId]));
+        catalogManagerSvc.getCommit.and.returnValue($q.when(this.commit));
 
         scope.commitId = '';
         scope.entityId = '';
-        this.element = $compile(angular.element('<commit-compiled-resource commit-id="commitId" entity-id="entityId"></commit-compiled-resource>'))(scope);
+        scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
+        this.element = $compile(angular.element('<commit-compiled-resource commit-id="commitId" entity-id="entityId" entity-name-func="entityNameFunc"></commit-compiled-resource>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitCompiledResource');
     });
@@ -69,56 +72,63 @@ describe('Commit Compiled Resource component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('scope commitId is one way bound', function() {
+        it('commitId is one way bound', function() {
             this.controller.commitId = 'Test';
             scope.$digest();
             expect(scope.commitId).toEqual('');
         });
-        it('scope entityId is one way bound', function() {
+        it('entityId is one way bound', function() {
             this.controller.entityId = 'Test';
             scope.$digest();
             expect(scope.entityId).toEqual('');
         });
+        it('entityId is one way bound', function() {
+            this.controller.entityNameFunc = undefined;
+            scope.$digest();
+            expect(scope.entityNameFunc).toBeDefined();
+        });
     });
-    describe('controller method setResource', function() {
-        beforeEach(function() {
-            this.controller.commitId = this.commitId;
-            this.controller.entityId = this.entityId;
-        });
-        it('should get compiled resource and the commit', function() {
-            this.controller.setResource();
-            scope.$apply();
-            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
-            expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
-            expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-            expect(this.controller.resource[0]).toEqual(this.resource[0]);
-        });
-        it('with no commitId, should not be called', function() {
-            this.controller.commitId = null;
-            this.controller.setResource();
-            scope.$apply();
-            expect(httpSvc.cancel).not.toHaveBeenCalled();
-            expect(catalogManagerSvc.getCompiledResource).not.toHaveBeenCalled();
-            expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
-            expect(this.controller.resource).toBeUndefined();
-        });
-        it('with commitId, but rejection on getting compiled resource in setResource', function() {
-            catalogManagerSvc.getCompiledResource.and.returnValue($q.reject('Error Message'))
-            this.controller.setResource();
-            scope.$apply();
-            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
-            expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
-            expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
-            expect(this.controller.error).toEqual('Error Message');
-        });
-        it('with commitId, but rejection on getting the commit in setResource', function() {
-            catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'))
-            this.controller.setResource();
-            scope.$apply();
-            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
-            expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
-            expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
-            expect(this.controller.error).toEqual('Error Message');
+    describe('controller methods', function() {
+        describe('sets the compiled resource and commit', function() {
+            beforeEach(function() {
+                this.controller.commitId = this.commitId;
+                this.controller.entityId = this.entityId;
+            });
+            it('if a commitId is set', function() {
+                this.controller.setResource();
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
+                expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
+                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(this.controller.resource[0]).toEqual(this.resource[0]);
+            });
+            it('unless a commitId is not set', function() {
+                this.controller.commitId = null;
+                this.controller.setResource();
+                scope.$apply();
+                expect(httpSvc.cancel).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getCompiledResource).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+                expect(this.controller.resource).toBeUndefined();
+            });
+            it('unless getCompiledResource rejects', function() {
+                catalogManagerSvc.getCompiledResource.and.returnValue($q.reject('Error Message'))
+                this.controller.setResource();
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
+                expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, this.controller.id);
+                expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+                expect(this.controller.error).toEqual('Error Message');
+            });
+            it('unless getCommit rejects', function() {
+                catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'))
+                this.controller.setResource();
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
+                expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, this.controller.id);
+                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(this.controller.error).toEqual('Error Message');
+            });
         });
     });
     describe('contains the correct html', function() {
@@ -126,9 +136,7 @@ describe('Commit Compiled Resource component', function() {
             expect(this.element.prop('tagName')).toEqual('COMMIT-COMPILED-RESOURCE');
         });
         it('depending on whether a resource is found', function() {
-            this.controller.resource = [{"@name": [
-                                             "http://www.w3.org/2002/07/owl#Class"
-                                           ]}];
+            this.controller.resource = {prop: [{'@value': 'Test'}]};
             this.controller.commitId = 'commit';
             this.controller.entityId = 'entity';
             scope.$digest();
@@ -140,18 +148,14 @@ describe('Commit Compiled Resource component', function() {
             expect(this.element.querySelectorAll('.value-signs').length).toBe(1);
         });
         it('depending on whether there is a error', function() {
-            this.controller.error = undefined;
-            scope.$digest();
             expect(this.element.find('error-display').length).toBe(0);
             this.controller.error = this.error;
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
         it('depending on whether there is no resource and no error', function() {
-            this.controller.error = undefined;
-            this.controller.resource = [{"@type": [
-                                "http://www.w3.org/2002/07/owl#Class"
-                              ]}];
+            this.controller.error = '';
+            this.controller.resource = {};
             scope.$digest();
             expect(this.element.find('info-message').length).toBe(0);
             this.controller.resource = undefined;

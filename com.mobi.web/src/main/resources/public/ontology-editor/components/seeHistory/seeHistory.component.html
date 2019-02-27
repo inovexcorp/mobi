@@ -46,12 +46,12 @@
                         </ui-select>
                     </div>
                     <div class="form-group">
-                        <button ng-click="dvm.prev()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedCommit) + 1 === dvm.commits.length || !dvm.os.listItem.selectedCommit" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
-                        <button ng-click="dvm.next()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedCommit) === 0 || !dvm.os.listItem.selectedCommit" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
+                        <button ng-click="dvm.prev()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedCommit) + 1 === dvm.commits.length || !dvm.os.listItem.selectedCommit" class="btn btn-flat previous-btn remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+                        <button ng-click="dvm.next()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedCommit) === 0 || !dvm.os.listItem.selectedCommit" class="btn btn-flat next-btn remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
                     </div>
                 </div>
                 <div class="flex-1 remove-min-height">
-                    <commit-compiled-resource commit-id="dvm.os.listItem.selectedCommit.id" entity-id="dvm.os.listItem.selected['@id']"></commit-compiled-resource>
+                    <commit-compiled-resource commit-id="dvm.os.listItem.selectedCommit.id" entity-id="dvm.os.listItem.selected['@id']" entity-name-func="dvm.getEntityNameDisplay"></commit-compiled-resource>
                 </div>
             </div>
             <div class="col remove-min-width">

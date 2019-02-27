@@ -23,22 +23,8 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.commit-compiled-resource {
-    .type-label {
-        font-size: 0.95rem;
-        font-weight: 600;
-    }
-    .value-signs {
-        width: 25px;
-    }
-    .prop-value-container {
-        .value-display-wrapper {
-            .item-type {
-                color: rgba(0, 0, 0, 0.38);
-            }
-            .item-language {
-                color: rgba(0, 0, 0, 0.38);
-            }
-        }
+.see-history {
+    .ui-select-toggle {
+        width: 167px !important;
     }
 }

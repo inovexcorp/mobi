@@ -25,10 +25,8 @@
 
     /**
      * @ngdoc component
-     * @name ontologyEditor.module:seeHistory
-     * @requires $filter
+     * @name seeHistory.component:seeHistory
      * @requires catalogManager.service:catalogManagerService
-     * @requires manchesterConverter.service:manchesterConverterService
      * @requires ontologyManager.service:ontologyManagerService
      * @requires ontologyState.service:ontologyStateService
      * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
@@ -40,36 +38,39 @@
      */
     const seeHistoryComponent = {
         templateUrl: 'ontology-editor/components/seeHistory/seeHistory.component.html',
-        bindings: {
-        },
+        bindings: {},
         controllerAs: 'dvm',
         controller: seeHistoryComponentCtrl
     };
 
-    seeHistoryComponentCtrl.$inject = ['$filter', 'catalogManagerService', 'manchesterConverterService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService'];
+    seeHistoryComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService'];
 
-    function seeHistoryComponentCtrl($filter, catalogManagerService, manchesterConverterService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
+    function seeHistoryComponentCtrl(catalogManagerService, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService) {
         var dvm = this;
-        var ontoUtils = ontologyUtilsManagerService;
-        var mc = manchesterConverterService;
+        dvm.ontoUtils = ontologyUtilsManagerService;
         dvm.cm = catalogManagerService;
         dvm.os = ontologyStateService;
         dvm.om = ontologyManagerService;
         dvm.util = utilService;
+        dvm.commits = [];
 
         dvm.goBack = function() {
             dvm.os.listItem.seeHistory = undefined;
             dvm.os.listItem.selectedCommit = undefined;
         }
         dvm.prev = function() {
-            var index = dvm.commits.indexOf(dvm.os.listItem.selectedCommit);
+            var index = _.findIndex(dvm.commits, dvm.os.listItem.selectedCommit);
             dvm.os.listItem.selectedCommit = dvm.commits[index + 1];
         }
         dvm.next = function() {
             var index = dvm.commits.indexOf(dvm.os.listItem.selectedCommit);
             dvm.os.listItem.selectedCommit = dvm.commits[index - 1];
         }
+        dvm.getEntityNameDisplay = function(iri) {
+            return dvm.om.isBlankNodeId(iri) ? dvm.ontoUtils.getBlankNodeValue(iri) : dvm.ontoUtils.getLabelForIRI(iri);
+        }
     }
+
     angular.module('seeHistory', [])
         .component('seeHistory', seeHistoryComponent);
 })();

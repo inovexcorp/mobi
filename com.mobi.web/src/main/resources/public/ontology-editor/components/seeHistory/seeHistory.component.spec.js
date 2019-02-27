@@ -21,35 +21,27 @@
  * #L%
  */
 describe('See History component', function() {
-    var $compile, scope, $filter, catalogManagerSvc, manchesterConverterSvc, ontologyManagerSvc, ontologyStateSvc, ontologyUtilsManagerSvc, utilSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontology-editor');
-        mockComponent('staticIri', 'staticIri');
+        module('seeHistory');
         injectTrustedFilter();
         injectHighlightFilter();
         injectPrefixationFilter();
         mockCatalogManager();
-        mockManchesterConverter();
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_, _catalogManagerService_, _manchesterConverterService_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $filter = _$filter_;
-            catalogManagerSvc = _catalogManagerService_;
-            manchesterConverterSvc = _manchesterConverterService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
-            utilSvc = _utilService_;
         });
 
-        this.commits = ['commits1', 'commits2'];
+        this.commits = [{id: 'commit1'}, {id: 'commit2'}];
         this.element = $compile(angular.element('<see-history></see-history>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('seeHistory');
@@ -58,30 +50,22 @@ describe('See History component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $filter = null;
-        catalogManagerSvc = null;
-        manchesterConverterSvc = null;
-        ontologyManagerSvc = null;
         ontologyStateSvc = null;
-        ontologyUtilsManagerSvc = null;
-        utilSvc = null;
         this.element.remove();
     });
 
     describe('controller methods', function() {
         it('should go to prev', function() {
-            this.controller.commits = [this.commits];
-            ontologyStateSvc.listItem.selectedCommit = this.controller.commits[1];
-            scope.$digest();
+            this.controller.commits = this.commits;
+            ontologyStateSvc.listItem.selectedCommit = this.controller.commits[0];
             this.controller.prev();
-            expect(ontologyStateSvc.listItem.selectedCommit).toEqual(this.controller.commits[0]);
+            expect(ontologyStateSvc.listItem.selectedCommit).toEqual(this.controller.commits[1]);
         });
         it('should go to next', function() {
-            this.controller.commits = [this.commits];
-            ontologyStateSvc.listItem.selectedCommit = this.controller.commits[0];
-            scope.$digest();
+            this.controller.commits = this.commits;
+            ontologyStateSvc.listItem.selectedCommit = this.controller.commits[1];
             this.controller.next();
-            expect(ontologyStateSvc.listItem.selectedCommit).toEqual(this.controller.commits[1]);
+            expect(ontologyStateSvc.listItem.selectedCommit).toEqual(this.controller.commits[0]);
         });
         it('should go back', function() {
             this.controller.goBack();
@@ -92,19 +76,34 @@ describe('See History component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('SEE-HISTORY');
-        });
-        it('for classes', function() {
             expect(this.element.querySelectorAll('.see-history-header').length).toBe(1);
             expect(this.element.querySelectorAll('.see-history-title').length).toBe(1);
+        });
+        it('with .form-groups', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
-        it('components used', function() {
-            ['commit-compiled-resource', 'commit-history-table'].forEach(test => {
-                it('with a ' + test, function() {
-                    expect(this.element.find(test).length).toEqual(1);
-                });
+        ['static-iri', 'ui-select', 'commit-compiled-resource', 'commit-history-table'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toEqual(1);
             });
-
         });
+    });
+    it('should call goBack when the button is clicked', function() {
+        spyOn(this.controller, 'goBack');
+        var button = angular.element(this.element.querySelectorAll('.back-column button')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.goBack).toHaveBeenCalled();
+    });
+    it('should call prev when the previous button is clicked', function() {
+        spyOn(this.controller, 'prev');
+        var button = angular.element(this.element.querySelectorAll('button.previous-btn')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.prev).toHaveBeenCalled();
+    });
+    it('should call next when the next button is clicked', function() {
+        spyOn(this.controller, 'next');
+        var button = angular.element(this.element.querySelectorAll('button.next-btn')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.next).toHaveBeenCalled();
     });
 });

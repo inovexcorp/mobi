@@ -61,14 +61,10 @@ describe('Properties Tab directive', function() {
             expect(this.element.hasClass('properties-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a property-hierarchy-block', function() {
-            expect(this.element.find('property-hierarchy-block').length).toBe(1);
-        });
-        it('with a selected-details', function() {
-            expect(this.element.find('selected-details').length).toBe(1);
-        });
-        it('with an annotation-block', function() {
-            expect(this.element.find('annotation-block').length).toBe(1);
+        ['property-hierarchy-block', 'selected-details', 'annotation-block', 'characteristics-row', 'usages-block'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with an axiom-block', function() {
             expect(this.element.find('axiom-block').length).toBe(1);
@@ -76,26 +72,22 @@ describe('Properties Tab directive', function() {
             scope.$apply();
             expect(this.element.find('axiom-block').length).toBe(0);
         });
-        it('with a characteristics-row', function() {
-            expect(this.element.find('characteristics-row').length).toBe(1);
-        });
-        it('with a usages-block', function() {
-            expect(this.element.find('usages-block').length).toBe(1);
-        });
-        it('with a button to delete a property if a user can modify and a see history button', function() {
+        it('with a button to delete a property if a user can modify', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(2);
-            expect(angular.element(button[0]).text()).toContain('See History');
-            expect(angular.element(button[1]).text()).toContain('Delete');
+            var button = this.element.querySelectorAll('.selected-header button.btn-danger');
+            expect(button.length).toBe(1);
+            expect(angular.element(button[0]).text()).toContain('Delete');
         });
         it('with no button to delete a property if a user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('See History');
+            expect(this.element.querySelectorAll('.selected-header button.btn-danger').length).toBe(0);
+        });
+        it('with a button to see the property history', function() {
+            var button = this.element.querySelectorAll('.selected-header button.btn-primary');
+            expect(button.length).toEqual(1);
+            expect(angular.element(button[0]).text()).toEqual('See History');
         });
         it('depending on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-property').length).toEqual(1);
@@ -107,18 +99,25 @@ describe('Properties Tab directive', function() {
         it('depending on whether the selected property is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('button')[0]);
-            expect(button.attr('disabled')).toBeFalsy();
+            var historyButton = angular.element(this.element.querySelectorAll('.selected-header button.btn-primary')[0]);
+            var deleteButton = angular.element(this.element.querySelectorAll('.selected-header button.btn-danger')[0]);
+            expect(historyButton.attr('disabled')).toBeFalsy();
+            expect(deleteButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
-            expect(button.attr('disabled')).toBeTruthy();
+            expect(historyButton.attr('disabled')).toBeTruthy();
+            expect(deleteButton.attr('disabled')).toBeTruthy();
         });
     });
     describe('controller methods', function() {
         it('showDeleteConfirmation opens a delete confirmation modal', function() {
             this.controller.showDeleteConfirmation();
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.deleteProperty);
+        });
+        it('should show a class history', function() {
+            this.controller.seeHistory();
+            expect(ontologyStateSvc.listItem.seeHistory).toEqual(true);
         });
         describe('should delete', function() {
             it('an object property', function() {
@@ -150,17 +149,17 @@ describe('Properties Tab directive', function() {
             });
         });
     });
-    it('should set seeHistory to true when the see history properties button is clicked', function() {
-        scope.$digest();
-        var button = angular.element(this.element.querySelectorAll('button')[0]);
+    it('should call seeHistory when the see history button is clicked', function() {
+        spyOn(this.controller, 'seeHistory');
+        var button = angular.element(this.element.querySelectorAll('.selected-header button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(ontologyStateSvc.listItem.seeHistory).toEqual(true);
+        expect(this.controller.seeHistory).toHaveBeenCalled();
     });
-    it('should call showDeleteConfirmation when the delete properties button is clicked', function() {
+    it('should call showDeleteConfirmation when the delete button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
-        var button = angular.element(this.element.querySelectorAll('button')[1]);
+        var button = angular.element(this.element.querySelectorAll('.selected-header button.btn-danger')[0]);
         button.triggerHandler('click');
         expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });
