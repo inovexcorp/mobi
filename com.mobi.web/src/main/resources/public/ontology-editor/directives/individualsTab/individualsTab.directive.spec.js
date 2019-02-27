@@ -27,6 +27,7 @@ describe('Individuals Tab directive', function() {
         module('templates');
         module('individualsTab');
         mockOntologyState();
+        mockOntologyManager();
         mockOntologyUtilsManager();
         mockModal();
 

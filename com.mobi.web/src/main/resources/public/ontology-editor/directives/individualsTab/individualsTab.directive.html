@@ -24,7 +24,7 @@
     <individual-hierarchy-block class="col-3 h-100"></individual-hierarchy-block>
     <div class="selected-individual col-9 h-100 d-flex flex-column pt-2" ng-if="dvm.os.listItem.selected">
         <div class="selected-header d-flex">
-            <selected-details class="flex-1"></selected-details>
+            <selected-details class="flex-1" highlight-text="dvm.os.listItem.editorTabStates.individuals.searchText"></selected-details>
             <div>
                 <button class="btn btn-primary" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.seeHistory()">See History</button>
                 <button ng-if="dvm.os.canModify()" class="btn btn-danger" ng-disabled="dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation()"><span>Delete</span></button>
@@ -39,7 +39,7 @@
                     <object-property-block class="col"></object-property-block>
                 </div>
             </div>
-            <annotation-block class="col-5 pt-2 vertical-scroll h-100"></annotation-block>
+            <annotation-block class="col-5 pt-2 vertical-scroll h-100" highlight-iris="dvm.om.entityNameProps" highlight-text="dvm.os.listItem.editorTabStates.individuals.searchText"></annotation-block>
         </div>
     </div>
 </div>
