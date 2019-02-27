@@ -69,14 +69,14 @@
             </div>
         </block-content>
         <block-footer>
-            <div class="view-buttons" ng-if="!dvm.resolveConflicts">
-                <button class="btn btn-primary float-right" ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-disabled="dvm.state.selected.conflicts.length || !dvm.state.selected.targetTitle" ng-click="dvm.showAccept()">Accept</button>
-                <button class="btn btn-danger float-right" ng-click="dvm.showDelete()">Delete</button>
-                <button class="btn float-right" ng-click="dvm.back()">Back</button>
+            <div class="view-buttons text-right" ng-if="!dvm.resolveConflicts">
+                <button class="btn" ng-click="dvm.back()">Back</button>
+                <button class="btn btn-danger" ng-click="dvm.showDelete()">Delete</button>
+                <button class="btn btn-primary" ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-disabled="dvm.state.selected.conflicts.length || !dvm.state.selected.targetTitle" ng-click="dvm.showAccept()">Accept</button>
             </div>
-            <div class="conflicts-buttons" ng-if="dvm.resolveConflicts">
-                <button class="btn btn-primary float-right" ng-disabled="!dvm.allResolved()" ng-click="dvm.resolve()">Resolve</button>
-                <button class="btn float-right" ng-click="dvm.cancelResolve()">Cancel</button>
+            <div class="conflicts-buttons text-right" ng-if="dvm.resolveConflicts">
+                <button class="btn" ng-click="dvm.cancelResolve()">Cancel</button>
+                <button class="btn btn-primary" ng-disabled="!dvm.allResolved()" ng-click="dvm.resolve()">Resolve</button>
             </div>
         </block-footer>
     </block>

@@ -26,39 +26,43 @@
 </div>
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
-        <tabset class="in-overlay">
-            <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab('url')" class="web-url">
-                <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
-                <div class="form-group">
-                    <custom-label>URL</custom-label>
-                    <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" ng-class="{'is-invalid': dvm.form.url.$error.pattern}" focus-me="true" />
-                    <p ng-messages="dvm.form.url.$error" class="invalid-feedback">
-                        <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
-                    </p>
+        <material-tabset centered>
+            <material-tab heading="'Web URL'" active="dvm.tabs.url" set-active="dvm.tabs.url = value" on-click="dvm.clickTab('url')" class="web-url">
+                <div class="p-3">
+                    <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
+                    <div class="form-group">
+                        <custom-label>URL</custom-label>
+                        <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" ng-class="{'is-invalid': dvm.form.url.$error.pattern}" focus-me="true" />
+                        <p ng-messages="dvm.form.url.$error" class="invalid-feedback">
+                            <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
+                        </p>
+                    </div>
                 </div>
-            </tab>
-            <tab heading="'On Server'" active="dvm.tabs.server" on-click="dvm.clickTab('server')">
-                <error-display ng-if="dvm.serverError">{{dvm.serverError}}</error-display>
-                <search-bar bind-model="dvm.getOntologyConfig.searchText" change-event="dvm.getOntologyConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
-                <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
-                    <info-message ng-if="dvm.ontologies.length === 0">No ontologies are available to import</info-message>
-                    <md-list>
-                        <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
-                            <div class="md-list-item-text">
-                                <h4 class="header" ng-bind-html="ontology.title | highlight:dvm.getOntologyConfig.searchText | trusted"></h4>
-                                <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
-                            </div>
-                            <md-checkbox class="md-primary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
-                        </md-list-item>
-                    </md-list>
+            </material-tab>
+            <material-tab heading="'On Server'" active="dvm.tabs.server" set-active="dvm.tabs.server = value" on-click="dvm.clickTab('server')">
+                <div class="p-3">
+                    <error-display ng-if="dvm.serverError">{{dvm.serverError}}</error-display>
+                    <search-bar bind-model="dvm.getOntologyConfig.searchText" change-event="dvm.getOntologyConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
+                    <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
+                        <info-message ng-if="dvm.ontologies.length === 0">No ontologies are available to import</info-message>
+                        <md-list>
+                            <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
+                                <div class="md-list-item-text">
+                                    <h4 class="header" ng-bind-html="ontology.title | highlight:dvm.getOntologyConfig.searchText | trusted"></h4>
+                                    <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
+                                </div>
+                                <md-checkbox class="md-primary" ng-model="ontology.selected" aria-label="Selected" ng-change="dvm.toggleOntology(ontology)"></md-checkbox>
+                            </md-list-item>
+                        </md-list>
+                    </div>
+                    <div class="selected-ontologies">
+                        <span class="field-name">Selected: </span>
+                        <span class="none-selected" ng-if="dvm.selectedOntologies.length === 0">(None)</span>
+                        <span class="selected-ontology" ng-repeat="ontology in dvm.selectedOntologies track by ontology.recordId">{{ontology.title}} <a ng-click="dvm.unselectOntology(ontology)" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
+                    </div>
                 </div>
-                <div class="selected-ontologies">
-                    <span class="field-name">Selected: </span>
-                    <span class="none-selected" ng-if="dvm.selectedOntologies.length === 0">(None)</span>
-                    <span class="selected-ontology" ng-repeat="ontology in dvm.selectedOntologies track by ontology.recordId">{{ontology.title}} <a ng-click="dvm.unselectOntology(ontology)" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
-                </div>
-            </tab>
-        </tabset>
+            </material-tab>
+        </material-tabset>
     </form>
 </div>
 <div class="modal-footer">

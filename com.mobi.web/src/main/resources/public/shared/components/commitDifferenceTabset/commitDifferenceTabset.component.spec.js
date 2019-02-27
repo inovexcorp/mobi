@@ -29,8 +29,8 @@ describe('Commit Difference Tabset component', function() {
         mockComponent('shared', 'commitChangesDisplay');
         mockComponent('shared', 'commitHistoryTable');
         mockComponent('shared', 'infoMessage');
-        mockComponent('shared', 'tab');
-        mockComponent('shared', 'tabset');
+        mockComponent('shared', 'materialTab');
+        mockComponent('shared', 'materialTabset');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -85,13 +85,13 @@ describe('Commit Difference Tabset component', function() {
             expect(this.element.prop('tagName')).toEqual('COMMIT-DIFFERENCE-TABSET');
             expect(this.element.querySelectorAll('.commit-difference-tabset').length).toEqual(1);
         });
-        ['tabset', 'commit-changes-display', 'commit-history-table'].forEach(test => {
+        ['material-tabset', 'commit-changes-display', 'commit-history-table'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toEqual(1);
             });
         });
-        it('with tabs', function() {
-            expect(this.element.find('tab').length).toEqual(2);
+        it('with material-tabs', function() {
+            expect(this.element.find('material-tab').length).toEqual(2);
         });
         it('depending on whether there are differences', function() {
             expect(this.element.find('info-message').length).toEqual(1);

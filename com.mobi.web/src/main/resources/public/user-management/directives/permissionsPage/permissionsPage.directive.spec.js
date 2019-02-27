@@ -256,7 +256,7 @@ describe('Permissions Page directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('permissions-page')).toEqual(true);
-            expect(this.element.hasClass('row')).toEqual(true);
+            expect(this.element.querySelectorAll('.row').length).toEqual(1);
             expect(this.element.querySelectorAll('.col').length).toEqual(1);
             expect(this.element.querySelectorAll('.save-container').length).toEqual(1);
         });

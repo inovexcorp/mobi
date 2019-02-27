@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Material Tab directive', function() {
+describe('Material Tab component', function() {
     var $compile, scope;
 
     beforeEach(function() {
@@ -36,48 +36,59 @@ describe('Material Tab directive', function() {
         scope.hideTab = false;
         scope.heading = '';
         scope.onClick = jasmine.createSpy('onClick');
-        var parent = angular.element('<div><material-tab active="active" heading="heading" hide-tab="hideTab" on-click="onClick()"></material-tab></div>');
+        scope.setActive = jasmine.createSpy('setActive');
+        var parent = angular.element('<div><material-tab active="active" heading="heading" hide-tab="hideTab" on-click="onClick()" set-active="setActive(value)"></material-tab></div>');
         parent.data('$materialTabsetController', {
             addTab: jasmine.createSpy('addTab'),
             removeTab: jasmine.createSpy('removeTab')
         });
-        this.element = $compile(parent)(scope);
+        this.parentElement = $compile(parent)(scope);
         scope.$digest();
-        this.elementSansWrapper = angular.element(this.element.children()[0]);
-        this.isolatedScope = this.elementSansWrapper.scope();
+        this.element = angular.element(this.parentElement.children()[0]);
+        this.controller = this.element.controller('materialTab');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
-        this.element.remove();
+        this.parentElement.remove();
     });
 
-    describe('in isolated scope', function() {
-        // TODO: Figure out how to do this test at some point
-        /*it('active should be two way bound', function() {
-            this.isolatedScope.active = false;
+    describe('controller bound variable', function() {
+        it('active should be one way bound', function() {
+            this.controller.active = false;
             scope.$digest();
-            expect(scope.active).toEqual(false);
-        });*/
+            expect(scope.active).toEqual(true);
+        });
         it('heading should be one way bound', function() {
-            this.isolatedScope.heading = 'new';
+            this.controller.heading = 'new';
             scope.$digest();
             expect(scope.heading).toEqual('');
         });
         it('hideTab should be one way bound', function() {
-            this.isolatedScope.hideTab = true;
+            this.controller.hideTab = true;
             scope.$digest();
             expect(scope.hideTab).toEqual(false);
         });
-        it('onClick should be called in parent scope when invoked', function() {
-            this.isolatedScope.onClick();
+        it('onClick should be called in parent scope', function() {
+            this.controller.onClick();
             expect(scope.onClick).toHaveBeenCalled();
+        });
+        it('setActive should be called in parent scope', function() {
+            this.controller.setActive({value: true});
+            expect(scope.setActive).toHaveBeenCalledWith(true);
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.elementSansWrapper.hasClass('material-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('MATERIAL-TAB');
+        });
+        it('depending on whether the tab is active', function() {
+            expect(this.element.querySelectorAll('.material-tab').length).toEqual(1);
+            
+            this.controller.active = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.material-tab').length).toEqual(0);
         });
     });
 });

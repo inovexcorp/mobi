@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Material Tabset directive', function() {
+describe('Material Tabset component', function() {
     var $compile, $timeout, scope;
 
     beforeEach(function() {
@@ -46,18 +46,26 @@ describe('Material Tabset directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('material-tabset')).toBe(true);
-            expect(this.element.querySelectorAll('.material-tabset-headings').length).toBe(1);
-            expect(this.element.querySelectorAll('ul.nav-tabs').length).toBe(1);
-            expect(this.element.querySelectorAll('.material-tabset-contents').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('MATERIAL-TABSET');
+            expect(this.element.querySelectorAll('.material-tabset').length).toEqual(1);
+            expect(this.element.querySelectorAll('.material-tabset-headings').length).toEqual(1);
+            expect(this.element.querySelectorAll('ul.nav-tabs').length).toEqual(1);
+            expect(this.element.querySelectorAll('.material-tabset-contents').length).toEqual(1);
+        });
+        it('if the headings should be centered', function() {
+            var tabs = angular.element(this.element.querySelectorAll('ul.nav-tabs'));
+            expect(tabs.hasClass('justify-content-center')).toEqual(false);
+
+            this.controller.isCentered = true;
+            scope.$digest();
+            expect(tabs.hasClass('justify-content-center')).toEqual(true);
         });
         it('depending on the number of tabs', function() {
             this.controller.tabs = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.nav-item').length).toBe(1);
+            expect(this.element.querySelectorAll('.nav-item').length).toEqual(1);
         });
         describe('if tab.hideTab is', function() {
             it('true', function() {
@@ -91,7 +99,7 @@ describe('Material Tabset directive', function() {
     describe('controller methods', function() {
         it('addTab adds an element to the array', function() {
             this.controller.addTab({});
-            expect(this.controller.tabs.length).toBe(1);
+            expect(this.controller.tabs.length).toEqual(1);
         });
         it('removeTab removes an element from the array', function() {
             var tab = {id: 'tab1'};
@@ -99,14 +107,14 @@ describe('Material Tabset directive', function() {
             this.controller.removeTab(tab);
             expect(this.controller.tabs).not.toContain(tab);
         });
-        it('select sets the active property to true for passed in tab and false for the others and calls onClick', function() {
-            var tab1 = {id: 'tab1', active: true, onClick: jasmine.createSpy('onClick')};
-            var tab2 = {id: 'tab2', active: false, onClick: jasmine.createSpy('onClick')};
+        it('select sets the correct tab active and calls onClick', function() {
+            var tab1 = {id: 'tab1', active: true, setActive: jasmine.createSpy('setActive1'), onClick: jasmine.createSpy('onClick1')};
+            var tab2 = {id: 'tab2', active: false, setActive: jasmine.createSpy('setActive2'), onClick: jasmine.createSpy('onClick2')};
             this.controller.tabs = [tab1, tab2];
             this.controller.select(tab2);
             $timeout.flush();
-            expect(_.find(this.controller.tabs, {id: 'tab1'}).active).toBe(false);
-            expect(_.find(this.controller.tabs, {id: 'tab2'}).active).toBe(true);
+            expect(tab1.setActive).toHaveBeenCalledWith({value: false});
+            expect(tab2.setActive).toHaveBeenCalledWith({value: true});
             expect(tab2.onClick).toHaveBeenCalled();
         });
     });

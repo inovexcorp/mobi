@@ -22,7 +22,7 @@
   -->
 <div class="material-tabset h-100 d-flex flex-column">
     <div class="material-tabset-headings clearfix">
-        <ul class="nav nav-tabs d-absolute bg-white">
+        <ul class="nav nav-tabs d-absolute bg-white" ng-class="{'justify-content-center': dvm.isCentered}">
             <li class="nav-item" ng-repeat="tab in dvm.tabs" ng-if="!tab.hideTab">
                 <a class="nav-link" ng-class="{'active': tab.active}" ng-click="dvm.select(tab)">
                     <span ng-bind-html="tab.heading | trusted"></span>

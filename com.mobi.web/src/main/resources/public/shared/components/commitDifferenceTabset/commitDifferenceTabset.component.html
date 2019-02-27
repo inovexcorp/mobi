@@ -21,13 +21,13 @@
   #L%
   -->
 <div class="commit-difference-tabset">
-    <tabset class="in-overlay h-100">
-        <tab heading="'Changes'" active="dvm.tabs.changes">
+    <material-tabset centered>
+        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
             <commit-changes-display additions="dvm.difference.additions" deletions="dvm.difference.deletions" entity-name-func="dvm.entityNameFunc"></commit-changes-display>
             <info-message ng-if="!dvm.difference.additions.length && !dvm.difference.deletions.length">No changes to display</info-message>
-        </tab>
-        <tab heading="'Commits'" active="dvm.tabs.commits">
+        </material-tab>
+        <material-tab heading="'Commits'" active="dvm.tabs.commits" set-active="dvm.tabs.commits = value">
             <commit-history-table head-title="dvm.branchTitle" commit-id="dvm.commitId" target-id="dvm.targetId" entity-name-func="dvm.entityNameFunc"></commit-history-table>
-        </tab>
-    </tabset>
+        </material-tab>
+    </material-tabset>
 </div>

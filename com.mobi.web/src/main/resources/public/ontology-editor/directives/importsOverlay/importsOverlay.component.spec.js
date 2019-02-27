@@ -80,13 +80,13 @@ describe('Imports Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
         });
-        ['h3', 'tabset', 'custom-label', 'search-bar', 'md-list'].forEach(test => {
+        ['h3', 'material-tabset', 'custom-label', 'search-bar', 'md-list'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toBe(1);
             });
         });
-        it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(2);
+        it('with material-tabs', function() {
+            expect(this.element.find('material-tab').length).toBe(2);
         });
         it('depending on whether an error has occured on the URL tab', function() {
             expect(this.element.find('error-display').length).toBe(0);
