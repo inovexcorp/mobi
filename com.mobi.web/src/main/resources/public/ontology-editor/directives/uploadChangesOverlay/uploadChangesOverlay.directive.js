@@ -44,7 +44,7 @@
          * `uploadChangesOverlay` is a directive that creates content for a modal that uploads an RDF file of an updated
          * version of the current {@link shared.service:ontologyStateService selected ontology} to be compared
          * and the differences added to the InProgressCommit. The form in the modal contains
-         * {@link shared.directive:fileInput} that accepts an RDF file. Meant to be used in conjunction with the
+         * {@link shared.component:fileInput} that accepts an RDF file. Meant to be used in conjunction with the
          * {@link modalService.directive:modalService}.
          *
          * @param {Function} close A function that closes the modal
@@ -67,11 +67,10 @@
                     var dvm = this;
                     dvm.error = '';
                     dvm.file = undefined;
-                    dvm.fileName = 'No file selected';
                     dvm.os = ontologyStateService;
 
-                    dvm.update = function() {
-                        dvm.fileName = dvm.file.name;
+                    dvm.update = function(value) {
+                        dvm.file = value;
                     }
                     dvm.submit = function() {
                         if (dvm.os.hasInProgressCommit()) {

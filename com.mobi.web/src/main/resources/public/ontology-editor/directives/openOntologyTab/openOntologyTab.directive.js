@@ -84,10 +84,17 @@
                     dvm.limit = 10;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
-                    dvm.id = "openOntologyTabTargetedSpinner";
+                    dvm.id = 'openOntologyTabTargetedSpinner';
 
                     dvm.$onInit = function() {
                         dvm.getPageOntologyRecords(1);
+                    }
+                    dvm.clickUpload = function(id) {
+                        document.getElementById(id).click();
+                    }
+                    dvm.updateFiles = function(event, files) {
+                        dvm.os.uploadFiles = files;
+                        dvm.showUploadOntologyOverlay();
                     }
                     dvm.showUploadOntologyOverlay = function() {
                         modalService.openModal('uploadOntologyOverlay');

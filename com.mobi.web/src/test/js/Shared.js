@@ -375,6 +375,7 @@ function mockDelimitedManager() {
         $provide.service('delimitedManagerService', function($q) {
             this.dataRows = undefined;
             this.fileName = '';
+            this.fileObj = undefined;
             this.separator = ',';
             this.containsHeaders = true;
             this.preview = '';

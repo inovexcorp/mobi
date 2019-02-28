@@ -142,11 +142,17 @@ describe('Open Ontology Tab directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu a').length).toBe(2);
         });
-        it('with a hidden file-input', function() {
-            expect(this.element.querySelectorAll('file-input.hide').length).toEqual(1);
+        it('with a hidden file input', function() {
+            expect(this.element.querySelectorAll('input[type="file"].hide').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
+        it('should update the uploaded files', function() {
+            spyOn(this.controller, 'showUploadOntologyOverlay');
+            this.controller.updateFiles(undefined, [{}]);
+            expect(ontologyStateSvc.uploadFiles).toEqual([{}]);
+            expect(this.controller.showUploadOntologyOverlay).toHaveBeenCalled();
+        });
         it('should determine whether an ontology is open', function() {
             expect(this.controller.isOpened({'@id': 'id'})).toEqual(false);
             ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
