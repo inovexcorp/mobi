@@ -26,11 +26,13 @@
     /**
      * @ngdoc component
      * @name catalog.component:openRecordButton
-     * @requires shared.service:catalogStateService
      * @requires shared.service:catalogManagerService
+     * @requires shared.service:catalogStateService
      * @requires shared.service:mappingManagerService
      * @requires shared.service:mapperStateService
      * @requires shared.service:ontologyStateService
+     * @requires shared.service:policyEnforcementService
+     * @requires shared.service:policyManagerService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
@@ -50,9 +52,9 @@
         controller: openRecordButtonComponentCtrl
     };
 
-    openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'catalogManagerService', 'mappingManagerService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes'];
+    openRecordButtonComponentCtrl.$inject = ['$state', 'catalogManagerService', 'catalogStateService', 'mappingManagerService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes'];
 
-    function openRecordButtonComponentCtrl($state, catalogStateService, catalogManagerService, mappingManagerService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes) {
+    function openRecordButtonComponentCtrl($state, catalogManagerService, catalogStateService, mappingManagerService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes) {
         var dvm = this;
         var cs = catalogStateService;
         var cm = catalogManagerService;
