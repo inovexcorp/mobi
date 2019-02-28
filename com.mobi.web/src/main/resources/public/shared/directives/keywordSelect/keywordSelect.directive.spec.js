@@ -34,7 +34,9 @@ describe('Keyword Select directive', function() {
         });
 
         scope.bindModel = '';
-        this.element = $compile(angular.element('<keyword-select ng-model="bindModel"></keyword-select>'))(scope);
+        scope.hideLabel = false;
+        scope.focusMe = false;
+        this.element = $compile(angular.element('<keyword-select ng-model="bindModel" hide-label="hideLabel" focus-me="focusMe"></keyword-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('keywordSelect');
     });
@@ -51,6 +53,16 @@ describe('Keyword Select directive', function() {
             scope.$digest();
             expect(scope.bindModel).toBe('test');
         });
+        it('hideLabel is one way bound', function() {
+            this.controller.hideLabel = true;
+            scope.$digest();
+            expect(scope.hideLabel).toBe(false);
+        });
+        it('focusMe is one way bound', function() {
+            this.controller.focusMe = true;
+            scope.$digest();
+            expect(scope.focusMe).toBe(false);
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -59,6 +71,11 @@ describe('Keyword Select directive', function() {
         });
         it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(1);
+        });
+        it('without a custom-label when hideLabel', function () {
+            this.controller.hideLabel = true;
+            scope.$digest();
+            expect(this.element.find('custom-label').length).toBe(0);
         });
         it('with a ui-select', function() {
             expect(this.element.find('ui-select').length).toBe(1);

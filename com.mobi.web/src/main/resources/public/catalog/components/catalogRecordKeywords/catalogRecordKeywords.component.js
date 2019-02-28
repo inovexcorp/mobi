@@ -41,8 +41,7 @@
         templateUrl: 'catalog/components/catalogRecordKeywords/catalogRecordKeywords.component.html',
         bindings: {
             record: '<',
-            canEdit: '<',
-            saveEvent: '&'
+            canEdit: '<'
         },
         controllerAs: 'dvm',
         controller: catalogRecordKeywordsComponentCtrl
@@ -60,6 +59,7 @@
         dvm.$onInit = function() {
             dvm.keywords = getKeywords();
             dvm.initialKeywords = dvm.keywords;
+            dvm.edit = false;
         }
         dvm.$onChanges = function() {
             dvm.keywords = getKeywords();
@@ -67,7 +67,6 @@
         }
         dvm.saveChanges = function() {
             dvm.edit = false;
-            dvm.initialKeywords = dvm.keywords;
             dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, keyword => {
                 return {'@value': keyword}
             });
@@ -75,8 +74,12 @@
                 .then(() => {
                     util.createSuccessToast('Successfully updated the record');
                     state.selectedRecord = dvm.record;
+                    dvm.initialKeywords = dvm.keywords;
                 }, errorMessage => {
                     util.createErrorToast(errorMessage);
+                    dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.initialKeywords, keyword => {
+                        return {'@value': keyword}
+                    });
                     return $q.reject();
                 });
         }

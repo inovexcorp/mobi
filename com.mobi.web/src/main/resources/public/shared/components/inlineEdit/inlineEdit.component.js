@@ -29,9 +29,16 @@
      * @requires shared.service:utilService
      *
      * @description
-     * `inlineEdit` is a component which creates TODO
+     * `inlineEdit` is a component which creates a `div` to display transcluded content. If the user is allowed to edit
+     * the content, upon clicking the area it provides the an `input` or a `textArea` for editing. A save icon is provided
+     * to call the supplied callback. When changes are made to the field and the area is blurred, the display is reset
+     * to the initial state.
      *
-     * @param {*} bindModel The variable to bind the value of the text area to
+     * @param {String} text The text field to edit
+     * @param {boolean} canEdit A boolean indicating if the user can edit the field
+     * @param {boolean} area A boolean indicating if the editable field should be a `textArea`
+     * @param {boolean} required A boolean indicating if the editable field must have a non empty value
+     * @param {String} placeholder Placeholder text to display when the field is empty
      * @param {Function} saveEvent A function to call when the "save" button is clicked
      */
     const inlineEditComponent = {
@@ -63,11 +70,11 @@
             dvm.initialText = dvm.text;
         }
         dvm.saveChanges = function() {
-            dvm.edit = false;
             if (dvm.required && dvm.text === '') {
                 dvm.onBlur();
                 util.createWarningToast('Text input must not be empty')
             } else {
+                dvm.edit = false;
                 dvm.saveEvent({text: dvm.text});
             }
         }

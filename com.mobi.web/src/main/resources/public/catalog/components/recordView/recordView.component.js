@@ -91,8 +91,10 @@
                 });
         }
         dvm.updateTitle = function(newTitle) {
-            console.log(dvm.title);
-            // if (_.find(dvm.os.list, item => item.ontologyRecord.title ===))
+            var openRecord = _.find(os.list, item => item.ontologyRecord.title === dvm.title);
+            if (openRecord) {
+                openRecord.ontologyRecord.title = newTitle;
+            }
             util.updateDctermsValue(dvm.record, 'title', newTitle);
             dvm.title = util.getDctermsValue(dvm.record, 'title');
             return dvm.updateRecord(dvm.record);
