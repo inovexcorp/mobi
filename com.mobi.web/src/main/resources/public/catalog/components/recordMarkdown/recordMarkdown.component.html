@@ -21,11 +21,11 @@
   #L%
   -->
 <div class="record-markdown">
-    <div ng-if="!dvm.edit" class="view-record-markdown break-word p-2" ng-click="dvm.showEdit()" ng-class="{'hover': dvm.canEdit}">
+    <div ng-if="!dvm.edit" class="view-record-markdown break-word p-2" ng-click="dvm.showEdit()" ng-class="{'hover': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">
         <div ng-if="!dvm.markdownHTML" class="text-muted">(No overview)</div>
         <div ng-if="dvm.markdownHTML" class="markdown" ng-bind-html="dvm.markdownHTML | trusted"></div>
     </div>
     <div ng-if="dvm.edit" class="p-2">
-        <markdown-editor ng-model="dvm.editMarkdown" click-event="dvm.saveEdit()" cancel-event="dvm.cancelEdit()" is-focus-me="true" button-text="'Save'" allow-blank-value="true"></markdown-editor>
+        <markdown-editor ng-model="dvm.editMarkdown" click-event="dvm.saveEdit()" cancel-event="dvm.cancelEdit()" is-focus-me="true" button-text="'Save'" allow-blank-value="true" start-rows="'10'"></markdown-editor>
     </div>
 </div>

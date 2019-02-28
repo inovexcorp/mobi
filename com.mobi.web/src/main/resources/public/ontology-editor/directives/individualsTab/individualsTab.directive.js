@@ -39,6 +39,7 @@
          * @scope
          * @restrict E
          * @requires shared.service:ontologyStateService
+         * @requires shared.service:ontologyManagerService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires shared.service:modalService
          *
@@ -55,9 +56,9 @@
          */
         .directive('individualsTab', individualsTab);
 
-        individualsTab.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService']
+        individualsTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService']
 
-        function individualsTab(ontologyStateService, ontologyUtilsManagerService, modalService) {
+        function individualsTab(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -68,6 +69,7 @@
                     var dvm = this;
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.om = ontologyManagerService;
 
                     dvm.showDeleteConfirmation = function() {
                         modalService.openConfirmModal('<p>Are you sure that you want to delete <strong>' + dvm.os.listItem.selected['@id'] + '</strong>?</p>', ontoUtils.deleteIndividual);

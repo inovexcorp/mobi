@@ -1,4 +1,4 @@
-@Version("2.0.2.${build}")
+@Version("3.0.0.${build}")
 
 package com.mobi.etl.api.delimited;
 

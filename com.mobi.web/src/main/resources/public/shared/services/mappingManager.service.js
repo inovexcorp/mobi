@@ -46,23 +46,6 @@
         // REST endpoint calls
         /**
          * @ngdoc method
-         * @name getMappingRecords
-         * @methodOf shared.service:mappingManagerService
-         *
-         * @description
-         * Calls the GET /mobirest/mappings endpoint which retrieves a paginated list of MappingRecords
-         * sorted by dcterms:title.
-         */
-        self.getMappingRecords = function() {
-            var config = {
-                params: {
-                    sort: prefixes.dcterms + 'title'
-                }
-            };
-            return $http.get(prefix, config).then(response => response.data, util.rejectError);
-        }
-        /**
-         * @ngdoc method
          * @name upload
          * @methodOf shared.service:mappingManagerService
          *
