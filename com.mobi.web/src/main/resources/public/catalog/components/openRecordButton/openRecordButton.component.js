@@ -26,34 +26,90 @@
     /**
      * @ngdoc component
      * @name catalog.component:openRecordButton
+     * @requires shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:mappingManagerService
+     * @requires shared.service:mapperStateService
+     * @requires shared.service:ontologyStateService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
      *
      * @description
-     * `openRecordButton` is a component which creates an Open Record button that will open the provided recoord in the
+     * `openRecordButton` is a component which creates an Open Record button that will open the provided record in the
      * appropriate module.
      * 
-     * @param {String} recordIri The recordIri to open
+     * @param {Object} record The record to open
      */
     const openRecordButtonComponent = {
         templateUrl: 'catalog/components/openRecordButton/openRecordButton.component.html',
         bindings: {
-            recordIri: '<',
-            stopProp: '<'
+            record: '<',
+            stopProp: '@'
         },
         controllerAs: 'dvm',
         controller: openRecordButtonComponentCtrl
     };
 
-    openRecordButtonComponentCtrl.$inject = [];
+    openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'catalogManagerService', 'mappingManagerService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes'];
 
-    function openRecordButtonComponentCtrl() {
+    function openRecordButtonComponentCtrl($state, catalogStateService, catalogManagerService, mappingManagerService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes) {
         var dvm = this;
+        var cs = catalogStateService;
+        var cm = catalogManagerService;
+        var mm = mappingManagerService;
+        var ms = mapperStateService;
+        var os = ontologyStateService;
+        var pe = policyEnforcementService;
+        var pm = policyManagerService;
+        var util = utilService;
+        dvm.record = undefined;
+        dvm.stopPropagation = false;
+        dvm.recordType = '';
+        dvm.showButton = false;
 
         dvm.$onInit = function() {
-            console.log(dvm.stopProp)
+            dvm.stopPropagation = dvm.stopProp !== undefined;
+            dvm.recordType = cs.getRecordType(dvm.record);
+
+            if (dvm.record) {
+                var request = {
+                    resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
+                    actionId: pm.actionRead
+                };
+                pe.evaluateRequest(request).then(decision => {
+                    dvm.showButton = dvm.recordType !== prefixes.catalog + 'Record' && decision !== pe.deny;
+                });
+            }
+        }
+        dvm.$onChanges = function() {
+            dvm.stopPropagation = dvm.stopProp !== undefined;
+            dvm.recordType = cs.getRecordType(dvm.record);
+
+            if (dvm.record) {
+                var request = {
+                    resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
+                    actionId: pm.actionRead
+                };
+                pe.evaluateRequest(request).then(decision => {
+                    dvm.showButton = dvm.recordType !== prefixes.catalog + 'Record' && decision !== pe.deny;
+                });
+            }
         }
         dvm.openRecord = function(event) {
-            if (dvm.stopProp) {
+            if (dvm.stopPropagation) {
                 event.stopPropagation();
+            }
+            switch (dvm.recordType) {
+                case prefixes.ontologyEditor + 'OntologyRecord':
+                    dvm.openOntology();
+                    break;
+                case prefixes.delim + 'MappingRecord':
+                    dvm.openMapping();
+                    break;
+                case prefixes.dataset + 'DatasetRecord':
+                    dvm.openDataset();
+                    break;
+                default:
             }
         }
         dvm.openOntology = function() {
@@ -61,14 +117,44 @@
             if (!_.isEmpty(os.listItem)) {
                 os.listItem.active = false;
             }
-            os.listItem = {};
+            var listItem = _.find(os.list, {ontologyRecord: {recordId: dvm.record['@id']}});
+            if (listItem) {
+                os.listItem = listItem;
+                os.listItem.active = true;
+            } else {
+                os.openOntology(dvm.record['@id'], util.getDctermsValue(dvm.record, 'title'))
+                    .then(_.noop, util.createErrorToast);
+            }
         }
         dvm.openMapping = function() {
             $state.go('root.mapper');
+            mm.getMapping(dvm.record['@id'])
+                .then(jsonld => {
+                    var formattedRecord = {
+                        id: dvm.record['@id'],
+                        title: util.getDctermsValue(dvm.record, 'title'),
+                        description: util.getDctermsValue(dvm.record, 'description'),
+                        keywords: _.map(_.get(dvm.record, "['" + prefixes.catalog + "keyword']", []), '@value'),
+                        branch: util.getPropertyId(dvm.record, prefixes.catalog + 'masterBranch')
+                    };
+                    var mapping = {
+                        jsonld,
+                        record: formattedRecord,
+                        difference: {
+                            additions: [],
+                            deletions: []
+                        }
+                    };
+                    ms.mapping = mapping;
+                    return cm.getRecord(_.get(mm.getSourceOntologyInfo(jsonld), 'recordId'), cm.localCatalog['@id']);
+                }, () => $q.reject('Mapping ' + util.getDctermsValue(dvm.record, 'title') + ' could not be found'))
+                .then(ontologyRecord => {
+                    ms.mapping.ontology = ontologyRecord;
+                }, errorMessage => util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
+            
         }
         dvm.openDataset = function() {
             $state.go('root.datasets');
-
         }
     }
 

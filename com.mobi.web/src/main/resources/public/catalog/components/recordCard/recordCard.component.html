@@ -24,7 +24,7 @@
     <div class="card-body">
         <div class="d-flex">
             <h5 class="card-title flex-1"><span click-to-copy="dvm.record['@id']" ng-click="$event.stopPropagation()" title="Copy Record IRI" tooltip-append-to-body="true">{{dvm.title}}</span></h5>
-            <open-record-button stop-prop="true"></open-record-button>
+            <open-record-button record="dvm.record" stop-prop></open-record-button>
         </div>
         <h6 class="card-subtitle mb-2 text-muted"><record-icon record="dvm.record"></record-icon> <record-type record="dvm.record"></record-type> &bull; Updated {{dvm.modified}}</h6>
         <p class="card-text record-description">{{dvm.description}}</p>
