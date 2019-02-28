@@ -20,13 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree hierarchy-tree h-100 p-0 w-100 d-flex flex-column">
+<div class="tree property-tree hierarchy-tree h-100 w-100 p-0 d-flex flex-column">
     <div class="search pb-1">
         <search-bar ng-model="dvm.searchText" submit-event="dvm.onKeyup()"></search-bar>
     </div>
-    <md-virtual-repeat-container class="flex-1 repeater-container w-100">
-        <div md-virtual-repeat="node in dvm.filteredHierarchy | filter: dvm.isShown" class="tree-item-wrapper" md-item-size="26">
-            <tree-item ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}"
+    <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height">
+        <div md-virtual-repeat="node in dvm.filteredHierarchy | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
+            <div ng-if="!node.entityIRI" class="tree-item">
+                <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': node.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !node.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{node.title}}</span>
+                </a>
+            </div>
+            <tree-item ng-if="node.entityIRI" ng-style="{'padding-left': (dvm.indent * (node.indent + 1)) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
                        current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
                        on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"

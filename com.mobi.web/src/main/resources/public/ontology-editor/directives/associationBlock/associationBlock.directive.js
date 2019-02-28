@@ -59,6 +59,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.os = ontologyStateService;
+
+                    dvm.updateSearch = function(value) {
+                        dvm.os.listItem.editorTabStates.overview.searchText = value;
+                    }
                 },
                 templateUrl: 'ontology-editor/directives/associationBlock/associationBlock.directive.html'
             }

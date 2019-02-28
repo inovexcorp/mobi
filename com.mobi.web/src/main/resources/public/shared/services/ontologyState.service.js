@@ -46,17 +46,20 @@
                 active: true
             },
             overview: {
-                active: false
+                active: false,
+                searchText: ''
             },
             classes: {
                 active: false,
                 searchText: ''
             },
             properties: {
-                active: false
+                active: false,
+                searchText: ''
             },
             individuals: {
-                active: false
+                active: false,
+                searchText: ''
             },
             concepts: {
                 active: false,
