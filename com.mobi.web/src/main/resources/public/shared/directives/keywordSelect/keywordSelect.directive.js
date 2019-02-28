@@ -32,7 +32,7 @@
             bindToController: {
                 bindModel: '=ngModel',
                 hideLabel: '<',
-                focusMe: '<'
+                focusMe: '@'
             },
             controllerAs: 'dvm',
             controller: function() {
@@ -40,7 +40,7 @@
                 dvm.keywordList = [];
 
                 dvm.$onInit = function() {
-                    dvm.autoFocus = dvm.focusMe ? true : false;
+                    dvm.autoFocus = dvm.focusMe !== undefined;
                 }
             }
         }

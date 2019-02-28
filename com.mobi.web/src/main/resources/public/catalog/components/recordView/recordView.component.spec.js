@@ -153,7 +153,6 @@ describe('Record View component', function() {
             this.controller.updateDescription(description);
             expect(this.controller.record[prefixes.dcterms + 'description'][0]['@value']).toEqual(description);
             expect(this.controller.updateRecord).toHaveBeenCalled();
-
         });
         describe('should update the title', function() {
             it('when changed', function() {
@@ -222,7 +221,7 @@ describe('Record View component', function() {
         });
         ['record-view-tabset', 'button', 'record-icon', 'dl', 'entity-publisher', 'catalog-record-keywords', 'limit-description'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
     });
