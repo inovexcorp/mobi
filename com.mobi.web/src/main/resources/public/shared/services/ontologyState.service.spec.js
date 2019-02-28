@@ -134,35 +134,47 @@ describe('Ontology State Service', function() {
         };
 
         this.hierarchy = [{
-            entityIRI: 'node1a',
-            subEntities: [{
-                entityIRI: 'node2a',
-                subEntities: [{
-                    entityIRI: 'node3a'
+            '@id': 'node1a',
+            '@type': ['http://mobi.com/hierarchy#Node'],
+            'http://mobi.com/hierarchy#child': [{
+                '@id': 'node2a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 },
                 {
-                    entityIRI: 'node3c'
+                    '@id': 'node3c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }, {
-                entityIRI: 'node2b',
-                subEntities: [{
-                    entityIRI: 'node3a'
+                '@id': 'node2b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }, {
-                entityIRI: 'node2c',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node2c',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }]
         }, {
-            entityIRI: 'node1b',
-            subEntities: [{
-                entityIRI: 'node3b',
-                subEntities: [{
-                    entityIRI: 'node3a'
+            '@id': 'node1b',
+            '@type': ['http://mobi.com/hierarchy#Node'],
+            'http://mobi.com/hierarchy#child': [{
+                '@id': 'node3b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }]
         }];
@@ -2137,14 +2149,18 @@ describe('Ontology State Service', function() {
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
         spyOn(ontologyStateSvc, 'getEntityNameByIndex').and.callFake(_.identity);
         expect(ontologyStateSvc.flattenHierarchy([{
-            entityIRI: 'Class B',
-            subEntities: [{
-                entityIRI: 'Class B2'
+            '@id': 'Class B',
+            '@type': ['http://mobi.com/hierarchy#Node'],
+            'http://mobi.com/hierarchy#child': [{
+                '@id': 'Class B2',
+                '@type': ['http://mobi.com/hierarchy#Node'],
             }, {
-                entityIRI: 'Class B1'
+                '@id': 'Class B1',
+                '@type': ['http://mobi.com/hierarchy#Node'],
             }]
         }, {
-            entityIRI: 'Class A'
+            '@id': 'Class A',
+            '@type': ['http://mobi.com/hierarchy#Node'],
         }], this.recordId)).toEqual([{
             entityIRI: 'Class A',
             hasChildren: false,
@@ -3348,40 +3364,53 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'flattenHierarchy');
         });
         describe('should add the entity to the single proper location in the tree', function() {
-            it('where the parent entity has subEntities', function() {
+            it('where the parent entity has children', function() {
                 ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node1a');
                 expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node2a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         },
                         {
-                            entityIRI: 'node3c'
+                            '@id': 'node3c',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
+                        '@id': 'node2c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }, {
-                        entityIRI: 'new-node'
+                        '@id': 'new-node',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]);
@@ -3395,40 +3424,53 @@ describe('Ontology State Service', function() {
                     'new-node': ['node1a']
                 });
             });
-            it('where the parent does not have subEntities', function() {
+            it('where the parent does not have children', function() {
                 ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node3c');
                 expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node2a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }, {
-                            entityIRI: 'node3c',
-                            subEntities: [{
-                                entityIRI: 'new-node'
+                            '@id': 'node3c',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'new-node',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
+                        '@id': 'node2c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }]
                 }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]);
@@ -3444,41 +3486,55 @@ describe('Ontology State Service', function() {
             });
         });
         describe('should add the entity to the multiple proper locations in the tree', function() {
-            it('where the parent entity has subEntities', function() {
+            it('where the parent entity has children', function() {
                 ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node3b');
                 expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node2a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }, {
-                            entityIRI: 'node3c'
+                            '@id': 'node3c',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
+                        '@id': 'node2c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }, {
-                                entityIRI: 'new-node'
+                                '@id': 'new-node',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }]
                 }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }, {
-                            entityIRI: 'new-node'
+                            '@id': 'new-node',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]);
@@ -3492,48 +3548,64 @@ describe('Ontology State Service', function() {
                     'new-node': ['node3b']
                 });
             });
-            it('where the parent does not have subEntities', function() {
+            it('where the parent does not have children', function() {
                 ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node3a');
                 expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a',
-                            subEntities: [{
-                                entityIRI: 'new-node'
+                    '@id': 'node1a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node2a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'new-node',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }, {
-                            entityIRI: 'node3c'
+                            '@id': 'node3c',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a',
-                            subEntities: [{
-                                entityIRI: 'new-node'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'new-node',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a',
-                                subEntities: [{
-                                    entityIRI: 'new-node'
+                        '@id': 'node2c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
+                                'http://mobi.com/hierarchy#child': [{
+                                    '@id': 'new-node',
+                                    '@type': ['http://mobi.com/hierarchy#Node'],
                                 }]
                             }]
                         }]
                     }]
                 }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a',
-                            subEntities: [{
-                                entityIRI: 'new-node'
+                    '@id': 'node1b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'new-node',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }]
@@ -3553,39 +3625,53 @@ describe('Ontology State Service', function() {
             it('when not at the root level', function() {
                 ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'node2b', this.indexObject, 'node1b');
                 expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node2a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }, {
-                            entityIRI: 'node3c'
+                            '@id': 'node3c',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
+                        '@id': 'node2c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }]
                 }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]);
@@ -3601,33 +3687,45 @@ describe('Ontology State Service', function() {
             it('when at the root level', function() {
                 ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'node1b', this.indexObject, 'node1a');
                 expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node1a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node2a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }, {
-                            entityIRI: 'node3c'
+                            '@id': 'node3c',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                        '@id': 'node2b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
+                        '@id': 'node2c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }, {
-                        entityIRI: 'node1b',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
+                        '@id': 'node1b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3b',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
+                            'http://mobi.com/hierarchy#child': [{
+                                '@id': 'node3a',
+                                '@type': ['http://mobi.com/hierarchy#Node'],
                             }]
                         }]
                     }]
@@ -3646,38 +3744,51 @@ describe('Ontology State Service', function() {
         it('should add the entity to the end of the hierarchy if the provided parentIRI is not in the hierarchy', function() {
             ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'not-there');
             expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2a',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node2a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }, {
-                        entityIRI: 'node3c'
+                        '@id': 'node3c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                    '@id': 'node2b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node2c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]
             }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }, {
-                entityIRI: 'new-node'
+                '@id': 'new-node',
+                '@type': ['http://mobi.com/hierarchy#Node'],
             }]);
             expect(this.indexObject).toEqual({
                 'node2a': ['node1a'],
@@ -3696,29 +3807,39 @@ describe('Ontology State Service', function() {
         it('should remove the provided entityIRI from the parentIRI', function() {
             ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchy, 'node3a', 'node3b', this.indexObject);
             expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2a',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node2a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }, {
-                        entityIRI: 'node3c'
+                        '@id': 'node3c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                    '@id': 'node2b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b'
+                    '@id': 'node2c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b'
+                '@id': 'node1b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }]);
             expect(this.indexObject).toEqual({
@@ -3730,38 +3851,50 @@ describe('Ontology State Service', function() {
                 'node3c': ['node2a']
             });
         });
-        it('should add any subEntities that are unique to this location', function() {
+        it('should add any children that are unique to this location', function() {
             ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchy, 'node2a', 'node1a', this.indexObject);
             expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node2b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node2c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]
             }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }, {
-                entityIRI: 'node2a',
-                subEntities: [{
-                    entityIRI: 'node3a'
+                '@id': 'node2a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }, {
-                    entityIRI: 'node3c'
+                    '@id': 'node3c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }]);
             expect(this.indexObject).toEqual({
@@ -3780,24 +3913,32 @@ describe('Ontology State Service', function() {
         it('should delete the entity from the hierarchy tree', function() {
             ontologyStateSvc.deleteEntityFromHierarchy(this.hierarchy, 'node3a', this.indexObject);
             expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2a',
-                    subEntities: [{
-                        entityIRI: 'node3c'
+                '@id': 'node1a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node2a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3c',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2b'
+                    '@id': 'node2b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b'
+                    '@id': 'node2c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b'
+                '@id': 'node1b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }]);
             expect(this.indexObject).toEqual({
@@ -3808,37 +3949,47 @@ describe('Ontology State Service', function() {
                 'node3c': ['node2a']
             });
         });
-        it('should move the subEntities if required', function() {
+        it('should move the children if required', function() {
             updateRefsSvc.remove.and.callFake(function(indexObject, entityIRI) {
                 _.unset(indexObject, 'node3c');
             });
             ontologyStateSvc.deleteEntityFromHierarchy(this.hierarchy, 'node2a', this.indexObject);
             expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node2b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
+                    '@id': 'node2c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3b',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
+                        'http://mobi.com/hierarchy#child': [{
+                            '@id': 'node3a',
+                            '@type': ['http://mobi.com/hierarchy#Node'],
                         }]
                     }]
                 }]
             }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node1b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }, {
-                entityIRI: 'node3c'
+                '@id': 'node3c',
+                '@type': ['http://mobi.com/hierarchy#Node'],
             }]);
             expect(updateRefsSvc.remove).toHaveBeenCalledWith(this.indexObject, 'node2a');
             expect(this.indexObject).toEqual({

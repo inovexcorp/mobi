@@ -997,7 +997,7 @@
                         result.push(_.merge({}, node, {isClass: true}));
                         var sortedIndividuals = _.sortBy(_.get(classesWithIndividuals, node.entityIRI), entityIRI => _.lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
                         _.forEach(sortedIndividuals, entityIRI => {
-                            addNodeToResult({entityIRI}, result, node.indent + 1, node.path);
+                            addNodeToResult({'@id': entityIRI}, result, node.indent + 1, node.path);
                         });
                     }
                 });
@@ -1398,22 +1398,22 @@
             return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
         }
         self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
-            var hierarchyItem = {entityIRI};
+            var hierarchyItem = {'@id': entityIRI, '@type': ['http://mobi.com/hierarchy#Node']};
             var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
             if (pathsToEntity.length) {
                 if (pathsToEntity[0].length > 1) {
                     var path = pathsToEntity[0];
-                    hierarchyItem = _.find(hierarchy, {entityIRI: path.shift()});
+                    hierarchyItem = _.find(hierarchy, {'@id': path.shift()});
                     while (path.length > 0) {
-                        hierarchyItem = _.find(hierarchyItem.subEntities, {entityIRI: path.shift()});
+                        hierarchyItem = _.find(hierarchyItem['http://mobi.com/hierarchy#child'], {'@id': path.shift()});
                     }
-                } else if (_.some(hierarchy, {entityIRI})) {
+                } else if (_.some(hierarchy, {'@id': entityIRI})) {
                     hierarchyItem = _.remove(hierarchy, hierarchyItem)[0];
                 }
             }
             if (parentIRI && self.getPathsTo(hierarchy, indexObject, parentIRI).length) {
                 _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent =>
-                    parent.subEntities = _.union(_.get(parent, 'subEntities', []), [hierarchyItem]));
+                    parent['http://mobi.com/hierarchy#child'] = _.union(_.get(parent, 'http://mobi.com/hierarchy#child', []), [hierarchyItem]));
                 indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
             } else {
                 hierarchy.push(hierarchyItem);
@@ -1422,10 +1422,10 @@
         self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
             var deletedEntity;
             _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent => {
-                if (_.has(parent, 'subEntities')) {
-                    deletedEntity = _.remove(parent.subEntities, {entityIRI})[0];
-                    if (!parent.subEntities.length) {
-                        _.unset(parent, 'subEntities');
+                if (_.has(parent, 'http://mobi.com/hierarchy#child')) {
+                    deletedEntity = _.remove(parent['http://mobi.com/hierarchy#child'], {'@id': entityIRI})[0];
+                    if (!parent['http://mobi.com/hierarchy#child'].length) {
+                        _.unset(parent, 'http://mobi.com/hierarchy#child');
                     }
                 }
             });
@@ -1442,25 +1442,25 @@
             var paths = self.getPathsTo(hierarchy, indexObject, entityIRI);
             _.forEach(paths, path => {
                 if (path.length === 1) {
-                    deletedEntity = _.remove(hierarchy, {entityIRI: path.shift()})[0];
+                    deletedEntity = _.remove(hierarchy, {'@id': path.shift()})[0];
                 } else if (path.length > 1) {
-                    var current = _.find(hierarchy, {entityIRI: path.shift()});
+                    var current = _.find(hierarchy, {'@id': path.shift()});
                     while (path.length > 1) {
-                        current = _.find(current.subEntities, {entityIRI: path.shift()});
+                        current = _.find(current['http://mobi.com/hierarchy#child'], {'@id': path.shift()});
                     }
-                    deletedEntity = _.remove(current.subEntities, {entityIRI: path.shift()})[0];
-                    if (!current.subEntities.length) {
-                        _.unset(current, 'subEntities');
+                    deletedEntity = _.remove(current['http://mobi.com/hierarchy#child'], {'@id': path.shift()})[0];
+                    if (!current['http://mobi.com/hierarchy#child'].length) {
+                        _.unset(current, 'http://mobi.com/hierarchy#child');
                     }
                 }
             });
             _.unset(indexObject, entityIRI);
             updateRefsService.remove(indexObject, entityIRI);
-            _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
-                var paths = self.getPathsTo(hierarchy, indexObject, hierarchyItem.entityIRI);
+            _.forEach(_.get(deletedEntity, 'http://mobi.com/hierarchy#child', []), hierarchyItem => {
+                var paths = self.getPathsTo(hierarchy, indexObject, hierarchyItem['@id']);
                 if (paths.length === 0) {
                     hierarchy.push(hierarchyItem);
-                    _.unset(indexObject, hierarchyItem.entityIRI);
+                    _.unset(indexObject, hierarchyItem['@id']);
                 }
             });
         }
@@ -1474,7 +1474,7 @@
                         result.push(path);
                     });
                 });
-            } else if (_.some(hierarchy, {entityIRI})) {
+            } else if (_.some(hierarchy, {'@id': entityIRI})) {
                 result.push([entityIRI]);
             }
             return result;
@@ -1636,9 +1636,9 @@
             var results = [];
             var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
             _.forEach(pathsToEntity, path => {
-                var entity = _.find(hierarchy, {entityIRI: path.shift()});
+                var entity = _.find(hierarchy, {'@id': path.shift()});
                 while (path.length > 0) {
-                    entity = _.find(entity.subEntities, {entityIRI: path.shift()});
+                    entity = _.find(entity['http://mobi.com/hierarchy#child'], {'@id': path.shift()});
                 }
                 results.push(entity);
             });
@@ -1796,22 +1796,22 @@
         }
         function orderHierarchy(hierarchy, listItem) {
             return _.sortBy(hierarchy, node => {
-                if (_.has(node, 'subEntities')) {
-                    node.subEntities = orderHierarchy(node.subEntities, listItem);
+                if (_.has(node, 'http://mobi.com/hierarchy#child')) {
+                    node['http://mobi.com/hierarchy#child'] = orderHierarchy(node['http://mobi.com/hierarchy#child'], listItem);
                 }
-                return _.lowerCase(self.getEntityNameByIndex(node.entityIRI, listItem));
+                return _.lowerCase(self.getEntityNameByIndex(node['@id'], listItem));
             });
         }
         function addNodeToResult(node, result, indent, path) {
-            var newPath = _.concat(path, node.entityIRI);
+            var newPath = _.concat(path, node['@id']);
             var item = {
-                hasChildren: _.has(node, 'subEntities'),
-                entityIRI: node.entityIRI,
+                hasChildren: _.has(node, 'http://mobi.com/hierarchy#child'),
+                entityIRI: node['@id'],
                 indent,
                 path: newPath
             };
             result.push(item);
-            _.forEach(_.get(node, 'subEntities', []), subNode => {
+            _.forEach(_.get(node, 'http://mobi.com/hierarchy#child', []), subNode => {
                 addNodeToResult(subNode, result, indent + 1, newPath);
             });
         }

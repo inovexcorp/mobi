@@ -169,13 +169,15 @@
 
             self.addConcept = function(concept) {
                 var hierarchy = _.get(os.listItem, 'concepts.hierarchy');
-                hierarchy.push({'entityIRI': concept['@id']});
+                // hierarchy.push({'entityIRI': concept['@id']});
+                hierarchy.push({'@id': concept['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                 os.listItem.concepts.flat = os.flattenHierarchy(hierarchy, os.listItem.ontologyRecord.recordId);
             }
 
             self.addConceptScheme = function(scheme) {
                 var hierarchy = _.get(os.listItem, 'conceptSchemes.hierarchy');
-                hierarchy.push({'entityIRI': scheme['@id']});
+                // hierarchy.push({'entityIRI': scheme['@id']});
+                hierarchy.push({'@id': scheme['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                 os.listItem.conceptSchemes.flat = os.flattenHierarchy(hierarchy, os.listItem.ontologyRecord.recordId);
             }
 

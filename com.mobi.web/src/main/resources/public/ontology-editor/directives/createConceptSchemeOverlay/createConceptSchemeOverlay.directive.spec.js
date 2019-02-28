@@ -175,7 +175,7 @@ describe('Create Concept Scheme Overlay directive', function() {
             });
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.scheme, this.controller.language);
-            expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{entityIRI: this.controller.scheme['@id']}]);
+            expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{'@id': this.controller.scheme['@id'], '@type': ['http://mobi.com/hierarchy#Node']}]);
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

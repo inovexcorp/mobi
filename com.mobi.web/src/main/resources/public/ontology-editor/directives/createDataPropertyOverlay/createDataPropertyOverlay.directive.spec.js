@@ -195,7 +195,7 @@ describe('Create Data Property Overlay directive', function() {
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toContain({entityIRI: this.controller.property['@id']});
+                    expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toContain({'@id': this.controller.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
                 it('has values', function() {

@@ -131,7 +131,7 @@
                             // Made into a Concept
                             if (!wasConcept && isConcept) {
                                 var hierarchy = _.get(dvm.os.listItem, 'concepts.hierarchy');
-                                hierarchy.push({'entityIRI': dvm.os.listItem.selected['@id']});
+                                hierarchy.push({'@id': dvm.os.listItem.selected['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                                 dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                                 _.forEach(_.pull(_.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
                                     dvm.ontoUtils.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
@@ -161,7 +161,7 @@
                             // Made into a Concept Scheme
                             if (!wasConceptScheme && isConceptScheme) {
                                 var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
-                                hierarchy.push({'entityIRI': dvm.os.listItem.selected['@id']});
+                                hierarchy.push({'@id': dvm.os.listItem.selected['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                                 dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                                 _.forEach(_.pull(_.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
                                     dvm.ontoUtils.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);

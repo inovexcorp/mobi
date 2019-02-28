@@ -156,7 +156,7 @@
                                 dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
                             }
                         } else {
-                            dvm.os.listItem.objectProperties.hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem.objectProperties.hierarchy.push({'@id': dvm.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                             dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                     }

@@ -129,8 +129,8 @@ describe('Individual Types Modal directive', function() {
                 this.controller.types.push('concept');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'concept']);
-                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([{entityIRI: this.iri}]);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{entityIRI: this.iri}], ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([{'@id': this.iri, '@type': ['http://mobi.com/hierarchy#Node']}]);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{'@id': this.iri, '@type': ['http://mobi.com/hierarchy#Node']}], ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual([this.iri]);
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
@@ -216,8 +216,8 @@ describe('Individual Types Modal directive', function() {
                 this.controller.types.push('scheme');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'scheme']);
-                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{entityIRI: this.iri}]);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{entityIRI: this.iri}], ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{'@id': this.iri, '@type': ['http://mobi.com/hierarchy#Node']}]);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{'@id': this.iri, '@type': ['http://mobi.com/hierarchy#Node']}], ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([this.iri]);
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());

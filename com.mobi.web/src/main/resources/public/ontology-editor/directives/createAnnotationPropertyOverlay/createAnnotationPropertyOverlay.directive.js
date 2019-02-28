@@ -118,7 +118,7 @@
 
                     function updateLists(key) {
                         dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
-                        dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});
+                        dvm.os.listItem[key].hierarchy.push({'@id': dvm.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                         dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                     }
                 }]

@@ -148,7 +148,7 @@
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
                             dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), 'dataProperties');
                         } else {
-                            dvm.os.listItem.dataProperties.hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem.dataProperties.hierarchy.push({'@id': dvm.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                             dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                     }

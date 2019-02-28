@@ -167,7 +167,7 @@ describe('Create Class Overlay directive', function() {
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.classes.flat).toEqual([{prop: 'entity'}]);
-                expect(ontologyStateSvc.listItem.classes.hierarchy).toContain({'entityIRI': 'class-iri'});
+                expect(ontologyStateSvc.listItem.classes.hierarchy).toContain({'@id': 'class-iri', '@type': ['http://mobi.com/hierarchy#Node']});
                 expect(scope.close).toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.setSuperClasses).not.toHaveBeenCalled();

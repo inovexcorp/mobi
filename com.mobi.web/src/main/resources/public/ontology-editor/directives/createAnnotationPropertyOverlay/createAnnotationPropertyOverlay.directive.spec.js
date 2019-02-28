@@ -156,7 +156,7 @@ describe('Create Annotation Overlay directive', function() {
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
                 expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
                 expect(ontologyStateSvc.listItem.annotations.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
-                expect(ontologyStateSvc.listItem.annotations.hierarchy).toContain({entityIRI: this.controller.property['@id']});
+                expect(ontologyStateSvc.listItem.annotations.hierarchy).toContain({'@id': this.controller.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

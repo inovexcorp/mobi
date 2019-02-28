@@ -108,7 +108,7 @@
                         // update relevant lists
                         var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
                         var index = _.get(dvm.os.listItem, 'conceptSchemes.index');
-                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        hierarchy.push({'@id': dvm.scheme['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
                         // Add top concepts to hierarchy if they exist
                         _.forEach(dvm.selectedConcepts, concept => {
                             dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
