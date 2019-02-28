@@ -82,7 +82,7 @@ describe('See History component', function() {
         it('with .form-groups', function() {
             expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
-        ['static-iri', 'ui-select', 'commit-compiled-resource', 'commit-history-table'].forEach(test => {
+        ['static-iri', 'select', 'commit-compiled-resource', 'commit-history-table'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toEqual(1);
             });
