@@ -27,7 +27,6 @@ describe('Inline Edit component', function() {
         module('templates');
         module('shared');
         mockUtil();
-        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;
@@ -87,9 +86,8 @@ describe('Inline Edit component', function() {
                 this.controller.edit = true;
                 this.controller.saveChanges();
                 expect(this.controller.text).toEqual('Text');
-                expect(this.controller.edit).toBe(false);
+                expect(this.controller.edit).toEqual(false);
                 expect(utilSvc.createWarningToast).toHaveBeenCalled();
-
             });
             it('should save changes', function() {
                 this.controller.text = 'New Text';
@@ -103,13 +101,13 @@ describe('Inline Edit component', function() {
             this.controller.edit = true;
             this.controller.onBlur();
             expect(this.controller.text).toEqual('Text');
-            expect(this.controller.edit).toBe(false);
+            expect(this.controller.edit).toEqual(false);
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('INLINE-EDIT');
-            expect(this.element.querySelectorAll('.inline-edit').length).toBe(1);
+            expect(this.element.querySelectorAll('.inline-edit').length).toEqual(1);
         });
         describe('depending if the user can edit', function() {
             beforeEach(function() {
@@ -122,41 +120,41 @@ describe('Inline Edit component', function() {
                 it('and area is set', function() {
                     this.controller.area = true;
                     scope.$digest();
-                    expect(this.element.querySelectorAll('input').length).toBe(0);
-                    expect(this.element.querySelectorAll('textarea').length).toBe(1);
-                    expect(this.element.querySelectorAll('.fa-save').length).toBe(1);
+                    expect(this.element.querySelectorAll('input').length).toEqual(0);
+                    expect(this.element.querySelectorAll('textarea').length).toEqual(1);
+                    expect(this.element.querySelectorAll('.fa-save').length).toEqual(1);
                 });
                 it('and area is not set', function() {
                     this.controller.area = false;
                     scope.$digest();
-                    expect(this.element.querySelectorAll('input').length).toBe(1);
-                    expect(this.element.querySelectorAll('textarea').length).toBe(0);
-                    expect(this.element.querySelectorAll('.fa-save').length).toBe(1);
+                    expect(this.element.querySelectorAll('input').length).toEqual(1);
+                    expect(this.element.querySelectorAll('textarea').length).toEqual(0);
+                    expect(this.element.querySelectorAll('.fa-save').length).toEqual(1);
                 });
             });
             it('and is not in edit mode', function() {
                 this.controller.edit = false;
                 scope.$digest();
-                expect(this.element.querySelectorAll('input').length).toBe(0);
-                expect(this.element.querySelectorAll('textarea').length).toBe(0);
-                expect(this.element.querySelectorAll('.fa-save').length).toBe(0);
+                expect(this.element.querySelectorAll('input').length).toEqual(0);
+                expect(this.element.querySelectorAll('textarea').length).toEqual(0);
+                expect(this.element.querySelectorAll('.fa-save').length).toEqual(0);
             });
         });
         it('depending if the user cannot edit', function() {
             this.controller.canEdit = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('input').length).toBe(0);
-            expect(this.element.querySelectorAll('textarea').length).toBe(0);
-            expect(this.element.querySelectorAll('.fa-save').length).toBe(0);
+            expect(this.element.querySelectorAll('input').length).toEqual(0);
+            expect(this.element.querySelectorAll('textarea').length).toEqual(0);
+            expect(this.element.querySelectorAll('.fa-save').length).toEqual(0);
         });
         it('should set edit to true when clicked', function() {
             this.controller.canEdit = true;
             scope.$digest();
 
-            expect(this.controller.edit).toBe(false);
+            expect(this.controller.edit).toEqual(false);
             var editableArea = angular.element(this.element.querySelectorAll('.hover-area'));
             editableArea.triggerHandler('click');
-            expect(this.controller.edit).toBe(true);
+            expect(this.controller.edit).toEqual(true);
         });
     });
 });

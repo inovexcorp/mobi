@@ -30,7 +30,7 @@
      *
      * @description
      * `inlineEdit` is a component which creates a `div` to display transcluded content. If the user is allowed to edit
-     * the content, upon clicking the area it provides the an `input` or a `textArea` for editing. A save icon is provided
+     * the content, upon clicking the area it provides an `input` or a `textArea` for editing. A save icon is provided
      * to call the supplied callback. When changes are made to the field and the area is blurred, the display is reset
      * to the initial state.
      *
@@ -48,7 +48,7 @@
             text: '<',
             canEdit: '<',
             area: '<',
-            required: '<',
+            required: '@',
             placeholder: '<',
             saveEvent: '&'
         },
@@ -65,12 +65,13 @@
 
         dvm.$onInit = function() {
             dvm.initialText = dvm.text;
+            dvm.isRequired = dvm.required !== undefined;
         }
         dvm.$onChanges = function() {
             dvm.initialText = dvm.text;
         }
         dvm.saveChanges = function() {
-            if (dvm.required && dvm.text === '') {
+            if (dvm.isRequired && dvm.text === '') {
                 dvm.onBlur();
                 util.createWarningToast('Text input must not be empty')
             } else {
@@ -89,7 +90,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .component('inlineEdit', inlineEditComponent);
 })();

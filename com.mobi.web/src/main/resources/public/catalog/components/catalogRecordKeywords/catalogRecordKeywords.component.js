@@ -26,14 +26,14 @@
     /**
      * @ngdoc component
      * @name catalog.component:catalogRecordKeywords
-     * @requires shared.service:catalogStateService
-     * @requires shared.service:catalogManagerService
-     * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description
      * `catalogRecordKeywords` is a component which creates a div with Bootstrap `badge` spans for the keywords on the
-     * provided catalog Record. The keywords will be sorted alphabetically.
+     * provided catalog Record. The keywords will be sorted alphabetically. If the user is allowed to edit
+     * the content, upon clicking the area it provides a {@link shared.directive:keywordSelect}. A save icon is provided
+     * to call the supplied callback. When changes are made to the field and the area is blurred, the display is reset
+     * to the initial state.
      * 
      * @param {Object} record A JSON-LD object for a catalog Record
      */
@@ -41,25 +41,24 @@
         templateUrl: 'catalog/components/catalogRecordKeywords/catalogRecordKeywords.component.html',
         bindings: {
             record: '<',
-            canEdit: '<'
+            canEdit: '<',
+            saveEvent: '&'
         },
         controllerAs: 'dvm',
         controller: catalogRecordKeywordsComponentCtrl
     };
 
-    catalogRecordKeywordsComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+    catalogRecordKeywordsComponentCtrl.$inject = ['prefixes'];
 
-    function catalogRecordKeywordsComponentCtrl($q, catalogStateService, catalogManagerService, utilService, prefixes) {
+    function catalogRecordKeywordsComponentCtrl(prefixes) {
         var dvm = this;
-        var state = catalogStateService;
-        var cm = catalogManagerService;
-        var util = utilService;
         dvm.keywords = [];
+        dvm.initialKeywords = [];
+        dvm.edit = false;
 
         dvm.$onInit = function() {
             dvm.keywords = getKeywords();
             dvm.initialKeywords = dvm.keywords;
-            dvm.edit = false;
         }
         dvm.$onChanges = function() {
             dvm.keywords = getKeywords();
@@ -67,21 +66,8 @@
         }
         dvm.saveChanges = function() {
             dvm.edit = false;
-            dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, keyword => {
-                return {'@value': keyword}
-            });
-            return cm.updateRecord(dvm.record['@id'], util.getPropertyId(dvm.record, prefixes.catalog + 'catalog'), dvm.record)
-                .then(() => {
-                    util.createSuccessToast('Successfully updated the record');
-                    state.selectedRecord = dvm.record;
-                    dvm.initialKeywords = dvm.keywords;
-                }, errorMessage => {
-                    util.createErrorToast(errorMessage);
-                    dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.initialKeywords, keyword => {
-                        return {'@value': keyword}
-                    });
-                    return $q.reject();
-                });
+            dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, keyword => ({'@value': keyword}));
+            dvm.saveEvent(dvm.record);
         }
         dvm.cancelChanges = function() {
             dvm.keywords = dvm.initialKeywords;

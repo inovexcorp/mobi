@@ -55,7 +55,8 @@ describe('Catalog Record Keywords component', function() {
             [prefixes.catalog + 'keyword']: this.keywords
         };
         scope.canEdit = true;
-        this.element = $compile(angular.element('<catalog-record-keywords record="record" canEdit="canEdit"></catalog-record-keywords>'))(scope);
+        scope.saveEvent = jasmine.createSpy('saveEvent');
+        this.element = $compile(angular.element('<catalog-record-keywords record="record" canEdit="canEdit" save-event="saveEvent(record)"></catalog-record-keywords>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('catalogRecordKeywords');
 
@@ -84,6 +85,11 @@ describe('Catalog Record Keywords component', function() {
             scope.$digest();
             expect(scope.canEdit).toEqual(true);
         });
+        it('saveEvent should be called in the parent scope', function() {
+            var copy = angular.copy(scope.record);
+            this.controller.saveEvent({text: copy});
+            expect(scope.saveEvent).toHaveBeenCalledWith(copy);
+        });
     });
     describe('initializes correctly', function() {
         it('with keywords', function() {
@@ -97,35 +103,11 @@ describe('Catalog Record Keywords component', function() {
                 [prefixes.catalog + 'keyword']: [{'@value': 'C'}, {'@value': 'D'}, {'@value': 'E'}]
             };
         });
-        describe('saveChanges should save the edited keywords', function() {
-            it('if updateRecord resolves', function() {
-                this.controller.edit = true;
-                this.controller.keywords = ['C', 'D', 'E'];
-                this.controller.saveChanges()
-                    .then(angular.noop, () => fail('Promise should have resolved'));
-                scope.$apply();
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, this.record);
-                expect(this.controller.record).toEqual(this.record);
-                expect(catalogStateSvc.selectedRecord).toEqual(this.record);
-                expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                expect(this.controller.keywords).toEqual(['C', 'D', 'E']);
-                expect(this.controller.initialKeywords).toEqual(['C', 'D', 'E']);
-                expect(this.controller.edit).toEqual(false);
-            });
-            it('unless updateRecord rejects', function() {
-                catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error message'));
-                this.controller.edit = true;
-                this.controller.keywords = ['C', 'D', 'E'];
-                this.controller.saveChanges()
-                    .then(() => fail('Promise should have rejected'), angular.noop);
-                scope.$apply();
-                expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
-                expect(this.controller.keywords).toEqual(['C', 'D', 'E']);
-                expect(this.controller.initialKeywords).toEqual(['A', 'B']);
-                expect(this.controller.edit).toEqual(false);
-            });
+        it('saveChanges save the edited keywords', function() {
+            this.controller.edit = true;
+            this.controller.keywords = ['C', 'D', 'E'];
+            this.controller.saveChanges();
+            expect(scope.saveEvent).toHaveBeenCalledWith(this.record);
         });
         it('cancelChanges should cancel the keyword edit', function() {
             this.controller.edit = true;
@@ -138,7 +120,7 @@ describe('Catalog Record Keywords component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('CATALOG-RECORD-KEYWORDS');
-            expect(this.element.querySelectorAll('.catalog-record-keywords').length).toBe(1);
+            expect(this.element.querySelectorAll('.catalog-record-keywords').length).toEqual(1);
         });
         it('depending on the number of keywords', function() {
             expect(this.element.querySelectorAll('.keyword').length).toEqual(this.keywords.length);
@@ -151,17 +133,17 @@ describe('Catalog Record Keywords component', function() {
             this.controller.canEdit = true;
             this.controller.edit = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('keyword-select').length).toBe(1);
-            expect(this.element.querySelectorAll('.fa-save').length).toBe(1);
+            expect(this.element.querySelectorAll('keyword-select').length).toEqual(1);
+            expect(this.element.querySelectorAll('.fa-save').length).toEqual(1);
         });
         it('should set edit to true when clicked', function() {
             this.controller.canEdit = true;
             scope.$digest();
 
-            expect(this.controller.edit).toBe(false);
+            expect(this.controller.edit).toEqual(false);
             var editableArea = angular.element(this.element.querySelectorAll('.hover-area'));
             editableArea.triggerHandler('click');
-            expect(this.controller.edit).toBe(true);
+            expect(this.controller.edit).toEqual(true);
         });
     });
 });
