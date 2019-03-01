@@ -64,33 +64,27 @@ describe('Concept Schemes Tab directive', function() {
             expect(this.element.hasClass('concept-schemes-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        it('with a concept-scheme-hierarchy-block', function() {
-            expect(this.element.find('concept-scheme-hierarchy-block').length).toBe(1);
-        });
-        it('with a selected-details', function() {
-            expect(this.element.find('selected-details').length).toBe(1);
-        });
-        it('with a annotation-block', function() {
-            expect(this.element.find('annotation-block').length).toBe(1);
-        });
-        it('with a relationships-block', function() {
-            expect(this.element.find('relationships-block').length).toBe(1);
-        });
-        it('with a usages-block', function() {
-            expect(this.element.find('usages-block').length).toBe(1);
+        ['concept-scheme-hierarchy-block', 'selected-details', 'annotation-block', 'relationships-block', 'usages-block'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with a button to delete a concept scheme if a user can modify', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var button = this.element.querySelectorAll('button');
+            var button = this.element.querySelectorAll('.selected-header button.btn-danger');
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete');
         });
         it('with no button to delete a concept scheme if a user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            var button = this.element.querySelectorAll('button');
-            expect(button.length).toBe(0);
+            expect(this.element.querySelectorAll('.selected-header button.btn-danger').length).toBe(0);
+        });
+        it('with a button to see the entity history', function() {
+            var button = this.element.querySelectorAll('.selected-header button.btn-primary');
+            expect(button.length).toEqual(1);
+            expect(angular.element(button[0]).text()).toEqual('See History');
         });
         it('based on whether something is selected', function() {
             expect(this.element.querySelectorAll('.selected-entity').length).toEqual(1);
@@ -102,18 +96,25 @@ describe('Concept Schemes Tab directive', function() {
         it('depending on whether the selected entity is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('button')[0]);
-            expect(button.attr('disabled')).toBeFalsy();
+            var historyButton = angular.element(this.element.querySelectorAll('.selected-header button.btn-primary')[0]);
+            var deleteButton = angular.element(this.element.querySelectorAll('.selected-header button.btn-danger')[0]);
+            expect(historyButton.attr('disabled')).toBeFalsy();
+            expect(deleteButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
-            expect(button.attr('disabled')).toBeTruthy();
+            expect(historyButton.attr('disabled')).toBeTruthy();
+            expect(deleteButton.attr('disabled')).toBeTruthy();
         });
     });
     describe('controller methods', function() {
         it('should open a delete confirmation modal', function() {
             this.controller.showDeleteConfirmation();
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.any(String), this.controller.deleteEntity);
+        });
+        it('should show a class history', function() {
+            this.controller.seeHistory();
+            expect(ontologyStateSvc.listItem.seeHistory).toEqual(true);
         });
         describe('should delete an entity', function() {
             it('if it is a concept', function() {
@@ -152,11 +153,17 @@ describe('Concept Schemes Tab directive', function() {
             expect(this.controller.relationshipList).toEqual(['relationshipD']);
         });
     });
-    it('should call showDeleteConfirmation when the delete concept scheme button is clicked', function() {
+    it('should call seeHistory when the see history button is clicked', function() {
+        spyOn(this.controller, 'seeHistory');
+        var button = angular.element(this.element.querySelectorAll('.selected-header button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.seeHistory).toHaveBeenCalled();
+    });
+    it('should call showDeleteConfirmation when the delete button is clicked', function() {
         ontologyStateSvc.canModify.and.returnValue(true);
         scope.$digest();
         spyOn(this.controller, 'showDeleteConfirmation');
-        var button = angular.element(this.element.querySelectorAll('button')[0]);
+        var button = angular.element(this.element.querySelectorAll('.selected-header button.btn-danger')[0]);
         button.triggerHandler('click');
         expect(this.controller.showDeleteConfirmation).toHaveBeenCalled();
     });

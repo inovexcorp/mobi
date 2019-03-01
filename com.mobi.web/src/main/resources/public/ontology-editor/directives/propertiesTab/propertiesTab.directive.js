@@ -83,6 +83,9 @@
                             ontoUtils.deleteAnnotationProperty();
                         }
                     }
+                    dvm.seeHistory = function() {
+                        dvm.os.listItem.seeHistory = true;
+                    }
                 }
             }
         }
