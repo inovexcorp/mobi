@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Open Record Button component', function() {
-    var $compile, scope, prefixes;
+fdescribe('Open Record Button component', function() {
+    var $compile, scope, catalogStateSvc, policyEnforcementSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -36,9 +36,11 @@ describe('Open Record Button component', function() {
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _catalogStateService_, _policyEnforcementService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            catalogStateSvc = _catalogStateService_;
+            policyEnforcementSvc = _policyEnforcementService_;
             prefixes = _prefixes_;
         });
 

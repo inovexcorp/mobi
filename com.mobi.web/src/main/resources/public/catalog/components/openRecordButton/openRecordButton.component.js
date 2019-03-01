@@ -67,13 +67,14 @@
         dvm.record = undefined;
         dvm.stopPropagation = false;
         dvm.recordType = '';
-        dvm.showButton = false;
+        dvm.showButton = true;
 
         dvm.$onInit = function() {
+            console.log('here')
             dvm.stopPropagation = dvm.stopProp !== undefined;
             dvm.recordType = cs.getRecordType(dvm.record);
 
-            if (dvm.record) {
+            if (dvm.record && dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
                 var request = {
                     resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
                     actionId: pm.actionRead
@@ -87,7 +88,7 @@
             dvm.stopPropagation = dvm.stopProp !== undefined;
             dvm.recordType = cs.getRecordType(dvm.record);
 
-            if (dvm.record) {
+            if (dvm.record && dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
                 var request = {
                     resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
                     actionId: pm.actionRead
