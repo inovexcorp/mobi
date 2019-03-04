@@ -54,14 +54,16 @@ describe('Commit History Table component', function() {
 
         this.error = 'error';
         this.commitId = 'commit';
+        this.entityId = 'entity';
         this.commits = [{id: this.commitId}];
 
         scope.headTitle = 'title';
-        scope.commitId = 'commit';
-        scope.targetId = 'target';
+        scope.commitId = this.commitId;
+        scope.targetId = this.commitId;
+        scope.entityId = this.entityId;
         scope.receiveCommits = jasmine.createSpy('receiveCommits');
         scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
-        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" head-title="headTitle" target-id="targetId" receive-commits="receiveCommits(commits)" entity-name-func="entityNameFunc"></commit-history-table>'))(scope);
+        this.element = $compile(angular.element('<commit-history-table commit-id="commitId" head-title="headTitle" target-id="targetId" entity-id="entityId" receive-commits="receiveCommits(commits)" entity-name-func="entityNameFunc"></commit-history-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitHistoryTable');
     });
@@ -86,7 +88,7 @@ describe('Commit History Table component', function() {
             expect(this.element.querySelectorAll('.commit-history-table').length).toEqual(1);
             expect(this.element.querySelectorAll('.wrapper').length).toEqual(1);
         });
-        _.forEach(['table', 'thead', 'tbody', 'svg'], function(item) {
+        _.forEach(['table', 'thead', 'tbody', 'svg'], item => {
             it('with a ' + item, function() {
                 expect(this.element.find(item).length).toEqual(1);
             });
@@ -113,6 +115,7 @@ describe('Commit History Table component', function() {
         it('depending on whether there are commits', function() {
             expect(this.element.find('info-message').length).toEqual(0);
             this.controller.commits = [];
+            this.controller.error = undefined;
             scope.$apply();
             expect(this.element.find('info-message').length).toEqual(1);
         });
@@ -135,6 +138,12 @@ describe('Commit History Table component', function() {
             this.controller.targetId = 'new';
             scope.$digest();
             expect(scope.targetId).toEqual(original);
+        });
+        it('entityId should be one way bound', function() {
+            var original = scope.entityId;
+            this.controller.entityId = 'new';
+            scope.$digest();
+            expect(scope.entityId).toEqual(original);
         });
         it('entityNameFunc should be one way bound', function() {
             this.controller.entityNameFunc = undefined;
@@ -183,6 +192,31 @@ describe('Commit History Table component', function() {
             });
             describe('if a commit has been passed', function() {
                 describe('successfully', function() {
+                    describe('for a specific entity id', function() {
+                        beforeEach(function() {
+                            catalogManagerSvc.getCommitHistory.and.returnValue($q.when(this.commits));
+                        });
+                        it('drawing the graph', function() {
+                            this.isolatedScope.graph = true;
+                            this.controller.getCommits();
+                            scope.targetId = undefined;
+                            scope.$apply();
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.entityId, this.controller.id);
+                            expect(this.controller.error).toEqual('');
+                            expect(this.controller.commits).toEqual(this.commits);
+                            expect(this.controller.drawGraph).toHaveBeenCalled();
+                        });
+                        it('without drawing a graph', function() {
+                            this.isolatedScope.graph = false;
+                            this.controller.getCommits();
+                            scope.targetId = undefined;
+                            scope.$apply();
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.entityId, this.controller.id);
+                            expect(this.controller.error).toEqual('');
+                            expect(this.controller.commits).toEqual(this.commits);
+                            expect(this.controller.drawGraph).not.toHaveBeenCalled();
+                        });
+                    });
                     describe('for a specific commit id', function() {
                         beforeEach(function() {
                             catalogManagerSvc.getCommitHistory.and.returnValue($q.when(this.commits));
@@ -191,8 +225,9 @@ describe('Commit History Table component', function() {
                             this.controller.showGraph = true;
                             this.controller.getCommits();
                             scope.targetId = undefined;
+                            scope.entityId = undefined;
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.controller.id);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, this.controller.id);
                             expect(this.controller.error).toEqual('');
                             expect(scope.receiveCommits).toHaveBeenCalledWith(this.commits);
                             expect(this.controller.commits).toEqual(this.commits);
@@ -202,8 +237,9 @@ describe('Commit History Table component', function() {
                             this.controller.showGraph = false;
                             this.controller.getCommits();
                             scope.targetId = undefined;
+                            scope.entityId = undefined;
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.controller.id);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, this.controller.id);
                             expect(this.controller.error).toEqual('');
                             expect(scope.receiveCommits).toHaveBeenCalledWith(this.commits);
                             expect(this.controller.commits).toEqual(this.commits);
@@ -217,8 +253,9 @@ describe('Commit History Table component', function() {
                         it('drawing the graph', function() {
                             this.controller.showGraph = true;
                             this.controller.getCommits();
+                            scope.entityId = undefined;
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.commitId, scope.targetId, this.controller.id);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, this.commitId, undefined, this.controller.id);
                             expect(this.controller.error).toEqual('');
                             expect(scope.receiveCommits).toHaveBeenCalledWith(this.commits);
                             expect(this.controller.commits).toEqual(this.commits);
@@ -227,8 +264,9 @@ describe('Commit History Table component', function() {
                         it('without drawing a graph', function() {
                             this.controller.showGraph = false;
                             this.controller.getCommits();
+                            scope.entityId = undefined;
                             scope.$apply();
-                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(scope.commitId, scope.targetId, this.controller.id);
+                            expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, this.commitId, undefined, this.controller.id);
                             expect(this.controller.error).toEqual('');
                             expect(scope.receiveCommits).toHaveBeenCalledWith(this.commits);
                             expect(this.controller.commits).toEqual(this.commits);
@@ -244,8 +282,9 @@ describe('Commit History Table component', function() {
                         this.controller.showGraph = true;
                         this.controller.getCommits();
                         scope.targetId = undefined;
+                        scope.entityId = undefined;
                         scope.$apply();
-                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.controller.id);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, this.controller.id);
                         expect(this.controller.error).toEqual(this.error);
                         expect(scope.receiveCommits).toHaveBeenCalledWith([]);
                         expect(this.controller.commits).toEqual([]);
@@ -255,8 +294,9 @@ describe('Commit History Table component', function() {
                         this.controller.showGraph = false;
                         this.controller.getCommits();
                         scope.targetId = undefined;
+                        scope.entityId = undefined;
                         scope.$apply();
-                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, this.controller.id);
+                        expect(catalogManagerSvc.getCommitHistory).toHaveBeenCalledWith(this.commitId, undefined, undefined, this.controller.id);
                         expect(this.controller.error).toEqual(this.error);
                         expect(scope.receiveCommits).toHaveBeenCalledWith([]);
                         expect(this.controller.commits).toEqual([]);
@@ -285,6 +325,10 @@ describe('Commit History Table component', function() {
         });
         it('targetId', function() {
             scope.$apply('targetId = "new"');
+            expect(this.controller.getCommits).toHaveBeenCalled();
+        });
+        it('entityId', function() {
+            scope.$apply('entityId = "new"');
             expect(this.controller.getCommits).toHaveBeenCalled();
         });
     });

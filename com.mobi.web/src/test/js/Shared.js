@@ -951,6 +951,7 @@ function mockCatalogManager() {
             this.deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue($q.when());
             this.getCommit = jasmine.createSpy('getCommit').and.returnValue($q.when([]));
             this.getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue($q.when([]));
+            this.getCompiledResource = jasmine.createSpy('getCompiledResource').and.returnValue($q.when([]));
             this.getDifference = jasmine.createSpy('getDifference').and.returnValue($q.when([]));
             this.getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue($q.when([]));
             this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());

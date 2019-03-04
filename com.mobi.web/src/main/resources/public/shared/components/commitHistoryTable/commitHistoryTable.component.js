@@ -55,6 +55,7 @@
             commitId: '<',
             headTitle: '<?',
             targetId: '<?',
+            entityId: '<?',
             entityNameFunc: '<?',
             receiveCommits: '&?',
             graph: '@'
@@ -98,7 +99,7 @@
             dvm.snap = Snap('.commit-graph');
         }
         dvm.$onChanges = function(changesObj) {
-            if (_.has(changesObj, 'headTitle') || _.has(changesObj, 'commitId') || _.has(changesObj, 'targetId')) {
+            if (_.has(changesObj, 'headTitle') || _.has(changesObj, 'commitId') || _.has(changesObj, 'targetId') || _.has(changesObj, 'entityId')) {
                 dvm.getCommits();
             }
         }
@@ -119,7 +120,7 @@
         dvm.getCommits = function() {
             if (dvm.commitId) {
                 httpService.cancel(dvm.id);
-                var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
+                var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.entityId, dvm.id);
                 promise.then(commits => {
                     if (dvm.receiveCommits) {
                         dvm.receiveCommits({commits});

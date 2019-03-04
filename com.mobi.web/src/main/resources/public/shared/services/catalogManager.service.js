@@ -1016,15 +1016,42 @@
          *      history.
          * @param {string} targetId - The commit id of the commit which should be the oldest commit in 
          *      the history.
+         * @param {string} entityId - The commit id of the commit which should be contained in the history's
+         *      commit list.
          * @param {string} [id=''] The identifier for this request
          * @return {Promise} A promise that resolves with the list of Commits or rejects with an error message
          */
-        self.getCommitHistory = function(commitId, targetId, id = '') {
+        self.getCommitHistory = function(commitId, targetId, entityId, id = '') {
             var config = {
-                params: { targetId }
+                params: { targetId, entityId }
             };
 
             var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/history';
+            var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+
+            return promise.then(response => response.data, util.rejectError);
+        }
+
+        /**
+         * @ngdoc method
+         * @name getCompiledResource
+         * @methodOf catalogManager.service:catalogManagerService
+         *
+         * @description
+         * Calls the GET /mobirest/commits/{commitId}/resource endpoint with the passed Commit id.
+         *
+         * @param {string} commitId - The commit id of the commit which should be the most recent commit in
+         *      the history.
+         * @param {string} entityId - The id of the entity which is used to filter the resource list.
+         * @return {Promise} A promise that resolves with the Compiled Resource of a commit or rejects with an error
+         *      message.
+         */
+        self.getCompiledResource = function(commitId, entityId, id = '') {
+            var config = {
+                params: { entityId }
+            };
+
+            var url = commitsPrefix + '/' + encodeURIComponent(commitId) + '/resource';
             var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
 
             return promise.then(response => response.data, util.rejectError);

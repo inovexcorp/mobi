@@ -94,6 +94,7 @@
             'resolveConflictsBlock',
             'savedChangesTab',
             'searchTab',
+            'seeHistory',
             'selectedDetails',
             'serializationSelect',
             'staticIri',
