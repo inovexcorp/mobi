@@ -77,7 +77,26 @@ fdescribe('Open Record Button component', function() {
         });
     });
     describe('controller methods', function() {
-
+        describe('openRecord calls the correct method when record is a', function() {
+            it('OntologyRecord ', function() {
+                this.controller.recordType = prefixes.ontologyEditor + 'OntologyRecord';
+                spyOn(this.controller, 'openOntology');
+                this.controller.openRecord();
+                expect(this.controller.openOntology).toHaveBeenCalled();
+            });
+            it('MappingRecord', function() {
+                this.controller.recordType = prefixes.delim + 'MappingRecord';
+                spyOn(this.controller, 'openMapping');
+                this.controller.openRecord();
+                expect(this.controller.openMapping).toHaveBeenCalled();
+            });
+            it('DatasetRecord', function() {
+                this.controller.recordType = prefixes.dataset + 'DatasetRecord';
+                spyOn(this.controller, 'openDataset');
+                this.controller.openRecord();
+                expect(this.controller.openDataset).toHaveBeenCalled();
+            });
+        });
     });
     describe('contains the correct html', function() {
 

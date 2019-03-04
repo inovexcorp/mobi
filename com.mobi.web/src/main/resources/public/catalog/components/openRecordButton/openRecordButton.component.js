@@ -67,7 +67,7 @@
         dvm.record = undefined;
         dvm.stopPropagation = false;
         dvm.recordType = '';
-        dvm.showButton = true;
+        dvm.showButton = false;
 
         dvm.$onInit = function() {
             console.log('here')
@@ -82,6 +82,8 @@
                 pe.evaluateRequest(request).then(decision => {
                     dvm.showButton = dvm.recordType !== prefixes.catalog + 'Record' && decision !== pe.deny;
                 });
+            } else {
+                dvm.showButton = true;
             }
         }
         dvm.$onChanges = function() {
@@ -96,6 +98,8 @@
                 pe.evaluateRequest(request).then(decision => {
                     dvm.showButton = dvm.recordType !== prefixes.catalog + 'Record' && decision !== pe.deny;
                 });
+            } else {
+                dvm.showButton = true;
             }
         }
         dvm.openRecord = function(event) {
