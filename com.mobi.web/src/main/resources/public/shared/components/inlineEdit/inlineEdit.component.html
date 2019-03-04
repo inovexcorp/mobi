@@ -22,10 +22,10 @@
   -->
 <div class="inline-edit d-inline-block w-100">
     <div ng-if="dvm.canEdit && dvm.edit" class="d-flex">
-        <input ng-if="!dvm.area" ng-blur="dvm.onBlur()" ng-model="dvm.text" type="text" ng-keyup="dvm.onKeyUp($event)" focus-me="true" class="flex-1">
-        <textarea ng-if="dvm.area" ng-blur="dvm.onBlur()" ng-model="dvm.text" type="text" ng-keyup="dvm.onKeyUp($event)" focus-me="true" class="flex-1" rows="5"></textarea>
-        <a ng-mousedown="dvm.saveChanges()" class="fa fa-save"></a>
+        <input ng-if="!dvm.area" ng-blur="dvm.onBlur()" ng-model="dvm.text" type="text" ng-keyup="dvm.onKeyUp($event)" focus-me="true" class="flex-1 break-word p-2">
+        <textarea ng-if="dvm.area" ng-blur="dvm.onBlur()" ng-model="dvm.text" type="text" ng-keyup="dvm.onKeyUp($event)" focus-me="true" class="flex-1 break-word p-2" rows="5"></textarea>
+        <a ng-mousedown="dvm.saveChanges()" class="fa fa-save p-2"></a>
     </div>
-    <div ng-if="(!dvm.canEdit || !dvm.edit) && dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}" ng-transclude></div>
+    <div ng-if="(!dvm.canEdit || !dvm.edit) && dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}" class="break-word p-2" ng-transclude></div>
     <div ng-if="(!dvm.canEdit || !dvm.edit) && !dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">{{dvm.placeholder}}</div>
 </div>

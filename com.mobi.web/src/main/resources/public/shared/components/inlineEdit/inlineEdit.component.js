@@ -86,6 +86,8 @@
         dvm.onKeyUp = function(event) {
             if (event.keyCode === 13 && !event.shiftKey) {
                 dvm.saveChanges();
+            } else if (event.keyCode == 27) {
+                dvm.onBlur();
             }
         }
     }
