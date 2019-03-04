@@ -28,8 +28,6 @@
         <div class="record-header">
             <h2 class="record-title d-flex align-items-center">
                 <record-icon class="align-self-start" record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="flex-1" required>{{dvm.title}}</inline-edit>
-                <record-icon record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="flex-1" required>{{dvm.title}}</inline-edit>
-                <open-record-button record="dvm.record" stop-prop></open-record-button>
             </h2>
             <p class="lead text-muted">
                 <inline-edit text="dvm.description" can-edit="dvm.canEdit" placeholder="'(No description)'" save-event="dvm.updateDescription(text)" area="true"><limit-description description="dvm.description" limit="400"></limit-description></inline-edit>
@@ -51,5 +49,6 @@
                 <catalog-record-keywords record="dvm.record" can-edit="dvm.canEdit" save-event="dvm.updateRecord(record)"></catalog-record-keywords>
             </dd>
         </dl>
+        <open-record-button record="dvm.record"></open-record-button>
     </div>
 </div>

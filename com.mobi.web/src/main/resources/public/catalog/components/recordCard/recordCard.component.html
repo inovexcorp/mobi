@@ -22,15 +22,13 @@
   -->
 <div class="card record-card" ng-click="dvm.clickCard()" ng-class="{'clickable': !!dvm.clickCard}">
     <div class="card-body">
-        <div class="d-flex">
-            <h5 class="card-title flex-1"><span click-to-copy="dvm.record['@id']" ng-click="$event.stopPropagation()" title="Copy Record IRI" tooltip-append-to-body="true">{{dvm.title}}</span></h5>
-            <open-record-button record="dvm.record" stop-prop></open-record-button>
-        </div>
+        <h5 class="card-title"><span click-to-copy="dvm.record['@id']" ng-click="$event.stopPropagation()" title="Copy Record IRI" tooltip-append-to-body="true">{{dvm.title}}</span></h5>
         <h6 class="card-subtitle mb-2 text-muted"><record-icon record="dvm.record"></record-icon> <record-type record="dvm.record"></record-type> &bull; Updated {{dvm.modified}}</h6>
         <p class="card-text record-description">{{dvm.description}}</p>
         <catalog-record-keywords record="dvm.record"></catalog-record-keywords>
     </div>
-    <div class="card-footer">
-        <entity-publisher entity="dvm.record" class="text-muted"></entity-publisher>
+    <div class="card-footer d-flex">
+        <entity-publisher entity="dvm.record" class="text-muted flex-1 align-self-center"></entity-publisher>
+        <open-record-button record="dvm.record" stop-prop flat></open-record-button>
     </div>
 </div>

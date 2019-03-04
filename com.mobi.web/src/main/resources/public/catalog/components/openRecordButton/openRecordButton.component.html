@@ -21,5 +21,5 @@
   #L%
   -->
 <div class="open-record-button">
-    <button ng-if="dvm.showButton" class="btn btn-primary" ng-click="dvm.openRecord($event)">Open Record</button>
+    <button ng-if="dvm.showButton" class="btn" ng-class="{'btn-primary': !dvm.isFlat, 'btn-flat-primary': dvm.isFlat}" ng-click="dvm.openRecord($event)">Open</button>
 </div>

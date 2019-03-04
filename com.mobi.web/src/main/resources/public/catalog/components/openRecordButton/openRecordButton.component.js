@@ -41,11 +41,14 @@
      * appropriate module.
      * 
      * @param {Object} record The record to open
+     * @param {string} flat A string that when defined sets the button to be flat
+     * @param {string} stopProp A string that when defined stops propagation on click event
      */
     const openRecordButtonComponent = {
         templateUrl: 'catalog/components/openRecordButton/openRecordButton.component.html',
         bindings: {
             record: '<',
+            flat: '@',
             stopProp: '@'
         },
         controllerAs: 'dvm',
@@ -67,20 +70,21 @@
         dvm.record = undefined;
         dvm.stopPropagation = false;
         dvm.recordType = '';
+        dvm.isFlat = false;
         dvm.showButton = false;
 
         dvm.$onInit = function() {
-            console.log('here')
+            dvm.isFlat = dvm.flat !== undefined;
             dvm.stopPropagation = dvm.stopProp !== undefined;
             dvm.recordType = cs.getRecordType(dvm.record);
 
-            if (dvm.record && dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
+            if (dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
                 var request = {
                     resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
                     actionId: pm.actionRead
                 };
                 pe.evaluateRequest(request).then(decision => {
-                    dvm.showButton = dvm.recordType !== prefixes.catalog + 'Record' && decision !== pe.deny;
+                    dvm.showButton = decision !== pe.deny;
                 });
             } else {
                 dvm.showButton = true;

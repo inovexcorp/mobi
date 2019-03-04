@@ -66,6 +66,20 @@ describe('Catalog State service', function() {
         expect(catalogStateSvc.recordSearchText).toEqual('');
         expect(catalogStateSvc.selectedRecord).toBeUndefined();
     });
+    describe('should retrieve record type for a record', function() {
+        it('if the record is an OntologyRecord', function() {
+            expect(catalogStateSvc.getRecordType({'@type': [prefixes.ontologyEditor + 'OntologyRecord']})).toEqual(prefixes.ontologyEditor + 'OntologyRecord');
+        });
+        it('if the record is a MappingRecord', function() {
+            expect(catalogStateSvc.getRecordType({'@type': [prefixes.delim + 'MappingRecord']})).toEqual(prefixes.delim + 'MappingRecord');
+        });
+        it('if the record is a DatasetRecord', function() {
+            expect(catalogStateSvc.getRecordType({'@type': [prefixes.dataset + 'DatasetRecord']})).toEqual(prefixes.dataset + 'DatasetRecord');
+        });
+        it('if the record is not a specified type', function() {
+            expect(catalogStateSvc.getRecordType({})).toEqual(prefixes.catalog + 'Record');
+        });
+    });
     describe('should retrieve the icon class for a record', function() {
         it('if the record is an OntologyRecord', function() {
             expect(catalogStateSvc.getRecordIcon({'@type': [prefixes.ontologyEditor + 'OntologyRecord']})).toEqual('fa-sitemap');
@@ -79,5 +93,5 @@ describe('Catalog State service', function() {
         it('if the record is not a specified type', function() {
             expect(catalogStateSvc.getRecordIcon({})).toEqual('fa-book');
         });
-    })
+    });
 });
