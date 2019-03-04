@@ -197,7 +197,7 @@ describe('Commit History Table component', function() {
                             catalogManagerSvc.getCommitHistory.and.returnValue($q.when(this.commits));
                         });
                         it('drawing the graph', function() {
-                            this.isolatedScope.graph = true;
+                            this.controller.showGraph = true;
                             this.controller.getCommits();
                             scope.targetId = undefined;
                             scope.$apply();
@@ -207,7 +207,7 @@ describe('Commit History Table component', function() {
                             expect(this.controller.drawGraph).toHaveBeenCalled();
                         });
                         it('without drawing a graph', function() {
-                            this.isolatedScope.graph = false;
+                            this.controller.showGraph = false;
                             this.controller.getCommits();
                             scope.targetId = undefined;
                             scope.$apply();
