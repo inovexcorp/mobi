@@ -37,13 +37,14 @@
      * 
      * @param {Object} record A JSON-LD object for a catalog Record
      * @param {boolean} canEdit A boolean indicating if the user can edit the keywords
-     * @param {Function} saveEvent A function to call when the save button is pressed
+     * @param {Function} saveEvent A function to call with the current updated record as a parameter when the save button is pressed
      */
     const catalogRecordKeywordsComponent = {
         templateUrl: 'catalog/components/catalogRecordKeywords/catalogRecordKeywords.component.html',
         bindings: {
             record: '<',
             canEdit: '<',
+            setEditing: '&',
             saveEvent: '&'
         },
         controllerAs: 'dvm',
@@ -67,13 +68,17 @@
             dvm.initialKeywords = dvm.keywords;
         }
         dvm.saveChanges = function() {
-            dvm.edit = false;
+            dvm.setEdit(false);
             dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, keyword => ({'@value': keyword}));
             dvm.saveEvent({record: dvm.record});
         }
         dvm.cancelChanges = function() {
             dvm.keywords = dvm.initialKeywords;
-            dvm.edit = false;
+            dvm.setEdit(false);
+        }
+        dvm.setEdit = function(edit) {
+            dvm.edit = edit;
+            dvm.setEditing({editing: dvm.edit});
         }
 
         function getKeywords() {
