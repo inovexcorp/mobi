@@ -25,6 +25,7 @@
 
 .hover-area {
     &:hover {
+        cursor: pointer;
         background-color: var(--light);
     }
 }

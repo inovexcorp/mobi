@@ -27,6 +27,7 @@
     <div class="col record-body h-100 vertical-scroll">
         <div class="record-header">
             <h2 class="record-title d-flex align-items-center">
+                <record-icon class="align-self-start" record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="flex-1" required>{{dvm.title}}</inline-edit>
                 <record-icon record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="flex-1" required>{{dvm.title}}</inline-edit>
                 <open-record-button record="dvm.record" stop-prop></open-record-button>
             </h2>
