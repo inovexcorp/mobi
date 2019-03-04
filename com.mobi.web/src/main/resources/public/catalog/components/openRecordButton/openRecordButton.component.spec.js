@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Open Record Button component', function() {
+describe('Open Record Button component', function() {
     var $compile, $state, $q, scope, catalogManagerSvc, catalogStateSvc, mapperStateSvc, mappingManagerSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {
