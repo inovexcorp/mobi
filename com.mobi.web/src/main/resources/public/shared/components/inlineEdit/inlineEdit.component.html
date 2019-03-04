@@ -27,5 +27,5 @@
         <a ng-mousedown="dvm.saveChanges()" class="fa fa-save p-2"></a>
     </div>
     <div ng-if="(!dvm.canEdit || !dvm.edit) && dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}" class="break-word p-2" ng-transclude></div>
-    <div ng-if="(!dvm.canEdit || !dvm.edit) && !dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">{{dvm.placeholder}}</div>
+    <div ng-if="(!dvm.canEdit || !dvm.edit) && !dvm.text" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}" class="p-2">{{dvm.placeholder}}</div>
 </div>

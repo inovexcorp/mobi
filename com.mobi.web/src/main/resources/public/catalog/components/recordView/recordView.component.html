@@ -45,8 +45,8 @@
             <dt class="text-muted">Issued</dt>
             <dd>{{dvm.issued}}</dd>
             <dt class="text-muted">Keywords</dt>
-            <dd>
-                <catalog-record-keywords record="dvm.record" can-edit="dvm.canEdit" save-event="dvm.updateRecord(record)"></catalog-record-keywords>
+            <dd ng-class="{'hover-area': dvm.canEdit && !dvm.editing}" ng-attr-title="{{dvm.canEdit && !dvm.editing ? 'Click to edit' : undefined}}">
+                <catalog-record-keywords record="dvm.record" can-edit="dvm.canEdit" save-event="dvm.updateRecord(record)" set-editing="dvm.setEditing(editing)"></catalog-record-keywords>
             </dd>
         </dl>
     </div>
