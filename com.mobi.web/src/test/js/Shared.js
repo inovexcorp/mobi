@@ -427,6 +427,7 @@ function mockMapperState() {
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            this.selectMapping = jasmine.createSpy('selectMapping');
             this.isMappingChanged = jasmine.createSpy("isMappingChanged").and.returnValue(false);
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");

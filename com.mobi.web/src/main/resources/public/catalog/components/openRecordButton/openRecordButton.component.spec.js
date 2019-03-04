@@ -21,14 +21,12 @@
  * #L%
  */
 describe('Open Record Button component', function() {
-    var $compile, $state, $q, scope, catalogManagerSvc, catalogStateSvc, mapperStateSvc, mappingManagerSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
+    var $compile, $state, $q, scope, catalogStateSvc, mapperStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('catalog');
-        mockCatalogManager();
         mockCatalogState();
-        mockMappingManager();
         mockMapperState();
         mockOntologyState();
         mockPolicyEnforcement();
@@ -42,15 +40,13 @@ describe('Open Record Button component', function() {
             });
         });
 
-        inject(function(_$compile_, _$rootScope_, _$state_, _$q_, _catalogManagerService_, _catalogStateService_, _mapperStateService_, _mappingManagerService_, _ontologyStateService_, _policyEnforcementService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$state_, _$q_, _catalogStateService_, _mapperStateService_, _ontologyStateService_, _policyEnforcementService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             $state = _$state_;
             $q = _$q_;
             scope = _$rootScope_;
-            catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             mapperStateSvc = _mapperStateService_;
-            mappingManagerSvc = _mappingManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             policyEnforcementSvc = _policyEnforcementService_;
             utilSvc = _utilService_;
@@ -73,10 +69,8 @@ describe('Open Record Button component', function() {
         $state = null;
         $q = null;
         scope = null;
-        catalogManagerSvc = null;
         catalogStateSvc = null;
         mapperStateSvc = null;
-        mappingManagerSvc = null;
         ontologyStateSvc = null;
         policyEnforcementSvc = null;
         utilSvc = null;
@@ -115,6 +109,11 @@ describe('Open Record Button component', function() {
             this.controller.record = {};
             scope.$digest();
             expect(scope.record).toEqual(copy);
+        });
+        it('flat is one way bound', function() {
+            this.controller.flat = undefined;
+            scope.$digest();
+            expect(scope.flat).toEqual('');
         });
         it('stopProp is one way bound', function() {
             this.controller.stopProp = undefined;
@@ -180,38 +179,17 @@ describe('Open Record Button component', function() {
                 });
             });
         });
-        describe('openMapping should navigate to the mapping module and select the mapping', function() {
-            beforeEach(function() {
-                this.record = {
-                    id: 'recordId',
-                    title: '',
-                    description: '',
-                    keywords: [],
-                    branch: ''
-                }
-                catalogManagerSvc.localCatalog = {'@id': this.catalogId};
-            });
-            it('unless an error occurs', function() {
-                mappingManagerSvc.getMapping.and.returnValue($q.reject('Error message'));
-                this.controller.openMapping();
-                scope.$apply();
-                expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
-                expect(mapperStateSvc.mapping).toBeUndefined();
-                expect(utilSvc.createErrorToast).toHaveBeenCalled();
-                expect($state.go).toHaveBeenCalledWith('root.mapper');
-            });
-            it('successfully', function() {
-                var ontology = {'@id': 'recordId'};
-                var mapping = [{}];
-                mappingManagerSvc.getMapping.and.returnValue($q.when(mapping));
-                catalogManagerSvc.getRecord.and.returnValue($q.when(ontology));
-                this.controller.openMapping();
-                scope.$apply();
-                expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
-                expect(catalogManagerSvc.getRecord).toHaveBeenCalled();
-                expect(mapperStateSvc.mapping).toEqual({jsonld: mapping, record: this.record, ontology: ontology, difference: {additions: [], deletions: []}});
-                expect($state.go).toHaveBeenCalledWith('root.mapper');
-            });
+        it('openMapping should navigate to the mapping module and select the mapping', function() {
+            var record = {
+                id: 'recordId',
+                title: '',
+                description: '',
+                keywords: [],
+                branch: ''
+            };
+            this.controller.openMapping();
+            expect($state.go).toHaveBeenCalledWith('root.mapper');
+            expect(mapperStateSvc.selectMapping).toHaveBeenCalledWith(record);
         });
         it('openDataset navigates to the dataset module', function() {
             this.controller.openDataset();
@@ -236,6 +214,25 @@ describe('Open Record Button component', function() {
             flatButton = angular.element(this.element.querySelectorAll('.btn-flat-primary'));
             expect(raisedButton.length).toEqual(1);
             expect(flatButton.length).toEqual(0);
+        });
+        it('depending on showButton being true or false', function() {
+            this.controller.showButton = true;
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.btn'));
+            expect(button.length).toEqual(1);
+
+            this.controller.showButton = false;
+            scope.$digest();
+            button = angular.element(this.element.querySelectorAll('.btn'));
+            expect(button.length).toEqual(0);
+        });
+        it('should call openRecord when clicked', function() {
+            spyOn(this.controller, 'openRecord');
+            scope.$digest();
+
+            var editableArea = angular.element(this.element.querySelectorAll('.btn'));
+            editableArea.triggerHandler('click');
+            expect(this.controller.openRecord).toHaveBeenCalled();
         });
     });
 });

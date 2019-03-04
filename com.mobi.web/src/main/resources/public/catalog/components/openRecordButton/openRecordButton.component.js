@@ -55,13 +55,11 @@
         controller: openRecordButtonComponentCtrl
     };
 
-    openRecordButtonComponentCtrl.$inject = ['$state', 'catalogManagerService', 'catalogStateService', 'mappingManagerService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes'];
+    openRecordButtonComponentCtrl.$inject = ['$state', 'catalogStateService', 'mapperStateService', 'ontologyStateService', 'policyEnforcementService', 'policyManagerService', 'utilService', 'prefixes'];
 
-    function openRecordButtonComponentCtrl($state, catalogManagerService, catalogStateService, mappingManagerService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes) {
+    function openRecordButtonComponentCtrl($state, catalogStateService, mapperStateService, ontologyStateService, policyEnforcementService, policyManagerService, utilService, prefixes) {
         var dvm = this;
         var cs = catalogStateService;
-        var cm = catalogManagerService;
-        var mm = mappingManagerService;
         var ms = mapperStateService;
         var os = ontologyStateService;
         var pe = policyEnforcementService;
@@ -74,37 +72,10 @@
         dvm.showButton = false;
 
         dvm.$onInit = function() {
-            dvm.isFlat = dvm.flat !== undefined;
-            dvm.stopPropagation = dvm.stopProp !== undefined;
-            dvm.recordType = cs.getRecordType(dvm.record);
-
-            if (dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
-                var request = {
-                    resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
-                    actionId: pm.actionRead
-                };
-                pe.evaluateRequest(request).then(decision => {
-                    dvm.showButton = decision !== pe.deny;
-                });
-            } else {
-                dvm.showButton = true;
-            }
+            update();
         }
         dvm.$onChanges = function() {
-            dvm.stopPropagation = dvm.stopProp !== undefined;
-            dvm.recordType = cs.getRecordType(dvm.record);
-
-            if (dvm.record && dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
-                var request = {
-                    resourceId: 'http://mobi.com/policies/record/' + encodeURIComponent(dvm.record['@id']),
-                    actionId: pm.actionRead
-                };
-                pe.evaluateRequest(request).then(decision => {
-                    dvm.showButton = dvm.recordType !== prefixes.catalog + 'Record' && decision !== pe.deny;
-                });
-            } else {
-                dvm.showButton = true;
-            }
+            update();
         }
         dvm.openRecord = function(event) {
             if (dvm.stopPropagation) {
@@ -121,6 +92,7 @@
                     dvm.openDataset();
                     break;
                 default:
+                    util.createWarningToast('No module for record type ' + dvm.recordType);
             }
         }
         dvm.openOntology = function() {
@@ -138,34 +110,36 @@
             }
         }
         dvm.openMapping = function() {
+            var formattedRecord = {
+                id: dvm.record['@id'],
+                title: util.getDctermsValue(dvm.record, 'title'),
+                description: util.getDctermsValue(dvm.record, 'description'),
+                keywords: _.map(_.get(dvm.record, "['" + prefixes.catalog + "keyword']", []), '@value'),
+                branch: util.getPropertyId(dvm.record, prefixes.catalog + 'masterBranch')
+            };
             $state.go('root.mapper');
-            mm.getMapping(dvm.record['@id'])
-                .then(jsonld => {
-                    var formattedRecord = {
-                        id: dvm.record['@id'],
-                        title: util.getDctermsValue(dvm.record, 'title'),
-                        description: util.getDctermsValue(dvm.record, 'description'),
-                        keywords: _.map(_.get(dvm.record, "['" + prefixes.catalog + "keyword']", []), '@value'),
-                        branch: util.getPropertyId(dvm.record, prefixes.catalog + 'masterBranch')
-                    };
-                    var mapping = {
-                        jsonld,
-                        record: formattedRecord,
-                        difference: {
-                            additions: [],
-                            deletions: []
-                        }
-                    };
-                    ms.mapping = mapping;
-                    return cm.getRecord(_.get(mm.getSourceOntologyInfo(jsonld), 'recordId'), cm.localCatalog['@id']);
-                }, () => $q.reject('Mapping ' + util.getDctermsValue(dvm.record, 'title') + ' could not be found'))
-                .then(ontologyRecord => {
-                    ms.mapping.ontology = ontologyRecord;
-                }, errorMessage => util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
-            
+            ms.selectMapping(formattedRecord);
         }
         dvm.openDataset = function() {
             $state.go('root.datasets');
+        }
+
+        function update() {
+            dvm.isFlat = dvm.flat !== undefined;
+            dvm.stopPropagation = dvm.stopProp !== undefined;
+            dvm.recordType = cs.getRecordType(dvm.record);
+
+            if (dvm.recordType === prefixes.ontologyEditor + 'OntologyRecord') {
+                var request = {
+                    resourceId: dvm.record['@id'],
+                    actionId: pm.actionRead
+                };
+                pe.evaluateRequest(request).then(decision => {
+                    dvm.showButton = decision !== pe.deny;
+                });
+            } else {
+                dvm.showButton = true;
+            }
         }
     }
 
