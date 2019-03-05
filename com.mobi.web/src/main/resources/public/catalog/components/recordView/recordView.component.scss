@@ -34,10 +34,13 @@ record-view {
         float: left;
         clear: left;
         width: 100px;
-        padding: 0.5em 0 0.5em 0;
     }
     dd {
         margin: 0 0 0 110px;
-        padding: 0.5em 0 0.5em 0.5em;
+        padding: 0 0 0.5em 0.5em;
+
+        .keyword-description {
+            padding: 0;
+        }
     }
 }
