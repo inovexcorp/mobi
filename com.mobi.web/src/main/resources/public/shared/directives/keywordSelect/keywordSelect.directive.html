@@ -22,7 +22,7 @@
   -->
 <div class="keyword-select form-group">
     <custom-label ng-if="!dvm.hideLabel" muted-text="'(Optional)'">Keywords</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" autofocus="dvm.autoFocus" tagging tagging-label>
+    <ui-select multiple ng-model="dvm.bindModel" ng-attr-autofocus="{{dvm.isFocusMe}}" tagging tagging-label>
         <ui-select-match>{{$item}}</ui-select-match>
         <ui-select-choices repeat="keyword in dvm.keywordList">{{keyword}}</ui-select-choices>
     </ui-select>

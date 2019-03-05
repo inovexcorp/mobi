@@ -32,16 +32,12 @@
             bindToController: {
                 bindModel: '=ngModel',
                 hideLabel: '<',
-                focusMe: '@'
+                isFocusMe: '@'
             },
             controllerAs: 'dvm',
             controller: function() {
                 var dvm = this;
                 dvm.keywordList = [];
-
-                dvm.$onInit = function() {
-                    dvm.autoFocus = dvm.focusMe !== undefined;
-                }
             }
         }
     }
