@@ -38,11 +38,6 @@
             controller: function() {
                 var dvm = this;
                 dvm.keywordList = [];
-                dvm.autoFocus = false;
-
-                dvm.$onInit = function() {
-                    dvm.autoFocus = dvm.isFocusMe !== undefined;
-                }
             }
         }
     }
