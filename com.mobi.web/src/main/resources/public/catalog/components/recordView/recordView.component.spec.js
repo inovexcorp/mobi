@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Record View component', function() {
-    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, policyEnforcementSvc, utilSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -33,16 +33,18 @@ describe('Record View component', function() {
         mockComponent('catalog', 'limit-description');
         mockCatalogManager();
         mockCatalogState();
+        mockOntologyState();
         mockPolicyEnforcement();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _policyEnforcementService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _ontologyStateService_, _policyEnforcementService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
+            ontologyStateSvc = _ontologyStateService_;
             policyEnforcementSvc = _policyEnforcementService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
@@ -59,6 +61,7 @@ describe('Record View component', function() {
         });
         utilSvc.getDctermsValue.and.callFake((obj, prop) => prop);
         utilSvc.getDate.and.returnValue('date');
+        utilSvc.updateDctermsValue.and.callFake((obj, prop, newVal) => obj[prefixes.dcterms + prop] = [{'@value': newVal}]);
         catalogStateSvc.selectedRecord = this.record;
         catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
         this.element = $compile(angular.element('<record-view></record-view>'))(scope);
@@ -72,6 +75,7 @@ describe('Record View component', function() {
         $q = null;
         catalogManagerSvc = null;
         catalogStateSvc = null;
+        ontologyStateSvc = null;
         policyEnforcementSvc = null;
         utilSvc = null;
         prefixes = null;
@@ -142,6 +146,34 @@ describe('Record View component', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
         });
+        it('should update the description', function() {
+            spyOn(this.controller, 'updateRecord');
+            scope.$digest();
+            var description = 'This is a new description';
+            this.controller.updateDescription(description);
+            expect(this.controller.record[prefixes.dcterms + 'description'][0]['@value']).toEqual(description);
+            expect(this.controller.updateRecord).toHaveBeenCalled();
+        });
+        describe('should update the title', function() {
+            it('when changed', function() {
+                spyOn(this.controller, 'updateRecord');
+                scope.$digest();
+                var title = 'This is a new title';
+                this.controller.updateTitle(title);
+                expect(this.controller.record[prefixes.dcterms + 'title'][0]['@value']).toEqual(title);
+                expect(this.controller.updateRecord).toHaveBeenCalled();
+            });
+            it('and update ontology state title if open', function() {
+                ontologyStateSvc.list = [{ontologyRecord: {title: 'title'}}];
+                spyOn(this.controller, 'updateRecord');
+                scope.$digest();
+                var title = 'This is a new title';
+                this.controller.updateTitle(title);
+                expect(this.controller.record[prefixes.dcterms + 'title'][0]['@value']).toEqual(title);
+                expect(this.controller.updateRecord).toHaveBeenCalled();
+                expect(ontologyStateSvc.list[0].ontologyRecord.title).toEqual(title);
+            });
+        });
         describe('should set whether the user can edit the record', function() {
             describe('when evaluateRequest resolves', function() {
                 it('with Permit', function() {
@@ -189,7 +221,7 @@ describe('Record View component', function() {
         });
         ['record-view-tabset', 'button', 'record-icon', 'dl', 'entity-publisher', 'catalog-record-keywords', 'limit-description'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
     });

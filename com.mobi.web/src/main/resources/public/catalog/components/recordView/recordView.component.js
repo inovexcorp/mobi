@@ -28,6 +28,7 @@
      * @name catalog.component:recordView
      * @requires shared.service:catalogStateService
      * @requires shared.service:catalogManagerService
+     * @requires shared.service:ontologyStateService
      * @requires shared.service:policyEnforcementService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
@@ -49,13 +50,14 @@
         controller: recordViewComponentCtrl
     };
 
-    recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'policyEnforcementService', 'utilService', 'prefixes'];
+    recordViewComponentCtrl.$inject = ['$q', 'catalogStateService', 'catalogManagerService', 'ontologyStateService', 'policyEnforcementService', 'utilService', 'prefixes'];
 
-    function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, policyEnforcementService, utilService, prefixes) {
+    function recordViewComponentCtrl($q, catalogStateService, catalogManagerService, ontologyStateService, policyEnforcementService, utilService, prefixes) {
         var dvm = this;
         var state = catalogStateService;
         var cm = catalogManagerService;
         var pep = policyEnforcementService;
+        var os = ontologyStateService;
         var util = utilService;
         dvm.record = undefined;
         dvm.title = '';
@@ -88,6 +90,18 @@
                     return $q.reject();
                 });
         }
+        dvm.updateTitle = function(newTitle) {
+            var openRecord = _.find(os.list, item => item.ontologyRecord.title === dvm.title);
+            if (openRecord) {
+                openRecord.ontologyRecord.title = newTitle;
+            }
+            util.updateDctermsValue(dvm.record, 'title', newTitle);
+            return dvm.updateRecord(dvm.record);
+        }
+        dvm.updateDescription = function(newDescription) {
+            util.updateDctermsValue(dvm.record, 'description', newDescription);
+            return dvm.updateRecord(dvm.record);
+        }
         dvm.setCanEdit = function() {
             var request = {
                 resourceId: dvm.record['@id'],
@@ -105,7 +119,7 @@
         function setInfo(record) {
             dvm.record = angular.copy(record);
             dvm.title = util.getDctermsValue(dvm.record, 'title');
-            dvm.description = util.getDctermsValue(dvm.record, 'description') || '(No description)';
+            dvm.description = util.getDctermsValue(dvm.record, 'description');
             dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
             dvm.issued = util.getDate(util.getDctermsValue(dvm.record, 'issued'), 'short');
         }
