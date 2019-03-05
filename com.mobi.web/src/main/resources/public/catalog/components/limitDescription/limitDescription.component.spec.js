@@ -64,11 +64,14 @@ describe('Limit Description component', function() {
     });
     describe('controller methods', function() {
         it('should toggle whether the full description should be shown', function() {
+            var event = scope.$emit('click');
+            spyOn(event, 'stopPropagation');
             this.controller.full = true;
             this.controller.description = 'AAAAAAAAAAAAAAAAAAAA';
-            this.controller.toggleFull();
+            this.controller.toggleFull(event);
             expect(this.controller.full).toEqual(false);
             expect(this.controller.display).toEqual('AAAAAAA...');
+            expect(event.stopPropagation).toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {
