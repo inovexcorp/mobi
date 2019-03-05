@@ -30,7 +30,9 @@
             templateUrl: 'shared/directives/keywordSelect/keywordSelect.directive.html',
             scope: {},
             bindToController: {
-                bindModel: '=ngModel'
+                bindModel: '=ngModel',
+                hideLabel: '<',
+                isFocusMe: '@'
             },
             controllerAs: 'dvm',
             controller: function() {

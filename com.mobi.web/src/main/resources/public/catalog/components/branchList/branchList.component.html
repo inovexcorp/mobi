@@ -22,7 +22,7 @@
   -->
 <div class="branch-list">
     <div class="branches-list" id="branches_list_{{$id}}" ng-if="dvm.branches.length">
-        <div class="expansion-panel" ng-repeat="branch in dvm.branches">
+        <div class="expansion-panel" ng-repeat="branch in dvm.branches" disable-animate>
             <div ng-click="dvm.showPanel(branch)" aria-controls="branch_collapse_{{$id}}" aria-expanded="false" class="expansion-panel-toggler collapsed" data-target="#branch_collapse_{{$id}}" data-toggle="collapse" id="heading_{{$id}}" role="button">
                 <div>
                     <div>{{dvm.util.getDctermsValue(branch, 'title')}}</div>

@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="ontology-editor-page row flex-nowrap h-100">
-    <ontology-sidebar></ontology-sidebar>
+    <ontology-sidebar list="dvm.os.list"></ontology-sidebar>
     <ontology-tab class="col p-0 remove-min-width" ng-if="!dvm.isOpenTab()" ng-class="{'up-to-date': dvm.os.listItem.upToDate && !dvm.os.listItem.userBranch}"></ontology-tab>
     <div class="col p-0 remove-min-width" ng-if="dvm.isOpenTab()">
         <open-ontology-tab></open-ontology-tab>

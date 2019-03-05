@@ -26,12 +26,11 @@
     </div>
     <div class="col record-body h-100 vertical-scroll">
         <div class="record-header">
-            <h2 class="record-title break-word">
-                <record-icon record="dvm.record"></record-icon>
-                {{dvm.title}}
+            <h2 class="record-title d-flex align-items-center">
+                <record-icon class="align-self-start" record="dvm.record"></record-icon><inline-edit text="dvm.title" can-edit="dvm.canEdit" save-event="dvm.updateTitle(text)" class="flex-1" required>{{dvm.title}}</inline-edit>
             </h2>
             <p class="lead text-muted">
-                <limit-description description="dvm.description" limit="400"></limit-description>
+                <inline-edit text="dvm.description" can-edit="dvm.canEdit" placeholder="'(No description)'" save-event="dvm.updateDescription(text)" area="true"><limit-description description="dvm.description" limit="400"></limit-description></inline-edit>
             </p>
         </div>
         <record-view-tabset record="dvm.record" update-record="dvm.updateRecord(record)" can-edit="dvm.canEdit"></record-view-tabset>
@@ -45,9 +44,9 @@
             <dd>{{dvm.modified}}</dd>
             <dt class="text-muted">Issued</dt>
             <dd>{{dvm.issued}}</dd>
-            <dt class="text-muted">Keywords</dt>
-            <dd>
-                <catalog-record-keywords record="dvm.record"></catalog-record-keywords>
+            <dt class="text-muted pt-2">Keywords</dt>
+            <dd class="keyword-description">
+                <catalog-record-keywords record="dvm.record" can-edit="dvm.canEdit" save-event="dvm.updateRecord(record)"></catalog-record-keywords>
             </dd>
         </dl>
     </div>
