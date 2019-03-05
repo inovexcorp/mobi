@@ -35,8 +35,8 @@ describe('Keyword Select directive', function() {
 
         scope.bindModel = '';
         scope.hideLabel = false;
-        scope.focusMe = false;
-        this.element = $compile(angular.element('<keyword-select ng-model="bindModel" hide-label="hideLabel" focus-me="focusMe"></keyword-select>'))(scope);
+        scope.isFocusMe = false;
+        this.element = $compile(angular.element('<keyword-select ng-model="bindModel" hide-label="hideLabel" is-focus-me="isFocusMe"></keyword-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('keywordSelect');
     });
@@ -58,10 +58,10 @@ describe('Keyword Select directive', function() {
             scope.$digest();
             expect(scope.hideLabel).toBe(false);
         });
-        it('focusMe is one way bound', function() {
-            this.controller.focusMe = true;
+        it('isFocusMe is one way bound', function() {
+            this.controller.isFocusMe = true;
             scope.$digest();
-            expect(scope.focusMe).toBe(false);
+            expect(scope.isFocusMe).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
