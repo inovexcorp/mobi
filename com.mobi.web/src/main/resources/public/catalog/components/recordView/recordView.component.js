@@ -65,7 +65,6 @@
         dvm.modified = '';
         dvm.issued = '';
         dvm.canEdit = false;
-        dvm.editing = false;
 
         dvm.$onInit = function() {
             cm.getRecord(state.selectedRecord['@id'], util.getPropertyId(state.selectedRecord, prefixes.catalog + 'catalog'))
@@ -102,9 +101,6 @@
         dvm.updateDescription = function(newDescription) {
             util.updateDctermsValue(dvm.record, 'description', newDescription);
             return dvm.updateRecord(dvm.record);
-        }
-        dvm.setEditing = function(edit) {
-            dvm.editing = edit;
         }
         dvm.setCanEdit = function() {
             var request = {

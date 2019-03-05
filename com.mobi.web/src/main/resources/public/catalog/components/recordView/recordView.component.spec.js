@@ -210,13 +210,6 @@ describe('Record View component', function() {
                 expect(utilSvc.createWarningToast).toHaveBeenCalled();
             });
         });
-        it('should update the state of editing', function() {
-            this.controller.setEditing(true);
-            expect(this.controller.editing).toEqual(true);
-
-            this.controller.setEditing(false);
-            expect(this.controller.editing).toEqual(false);
-        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
