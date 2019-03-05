@@ -91,12 +91,20 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>mobi-karaf-feature</artifactId>
+            <artifactId>mobi-platform-karaf-feature</artifactId>
             <classifier>features</classifier>
             <version>${project.version}</version>
             <type>xml</type>
             <scope>runtime</scope>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.mobi</groupId>-->
+            <!--<artifactId>mobi-karaf-feature</artifactId>-->
+            <!--<classifier>features</classifier>-->
+            <!--<version>${project.version}</version>-->
+            <!--<type>xml</type>-->
+            <!--<scope>runtime</scope>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>jaas.proxy</artifactId>
@@ -215,10 +223,13 @@
                         <feature>camel</feature>
 
                         <!-- Mobi Features -->
-                        <feature>mobi-deps</feature>
-                        <feature>mobi-core</feature>
-                        <feature>mobi-cli</feature>
-                        <feature>mobi-web</feature>
+                        <feature>mobi-platform-deps</feature>
+                        <feature>mobi-platform-core</feature>
+
+                        <!--<feature>mobi-deps</feature>-->
+                        <!--<feature>mobi-core</feature>-->
+                        <!--<feature>mobi-cli</feature>-->
+                        <!--<feature>mobi-web</feature>-->
                     </bootFeatures>
                 </configuration>
             </plugin>
