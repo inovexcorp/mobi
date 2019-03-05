@@ -25,7 +25,7 @@
         <keyword-select ng-model="dvm.keywords" hide-label="true" class="flex-1" is-focus-me></keyword-select>
         <a ng-mousedown="dvm.saveChanges()" class="fa fa-save fa-2x"></a>
     </div>
-    <div class="static-area" ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.setEdit(true)">
+    <div class="static-area" ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">
         <span ng-if="dvm.keywords.length === 0">(No keywords specified)</span>
         <span class="keyword badge badge-pill badge-dark mr-1 mb-1 text-truncate mw-100" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
     </div>

@@ -44,7 +44,6 @@
         bindings: {
             record: '<',
             canEdit: '<',
-            setEditing: '&',
             saveEvent: '&'
         },
         controllerAs: 'dvm',
@@ -68,17 +67,13 @@
             dvm.initialKeywords = dvm.keywords;
         }
         dvm.saveChanges = function() {
-            dvm.setEdit(false);
+            dvm.edit = false;
             dvm.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, keyword => ({'@value': keyword}));
             dvm.saveEvent({record: dvm.record});
         }
         dvm.cancelChanges = function() {
             dvm.keywords = dvm.initialKeywords;
-            dvm.setEdit(false);
-        }
-        dvm.setEdit = function(edit) {
-            dvm.edit = edit;
-            dvm.setEditing({editing: dvm.edit});
+            dvm.edit = false;
         }
 
         function getKeywords() {
