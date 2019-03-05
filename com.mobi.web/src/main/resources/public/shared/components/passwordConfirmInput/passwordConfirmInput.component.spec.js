@@ -33,10 +33,12 @@ describe('Password Confirm Input component', function() {
         });
 
         scope.password = '';
+        scope.confirmPassword = '';
+        scope.required = '';
         scope.label = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
         var form = $compile('<form></form>')(scope);
-        this.element = angular.element('<password-confirm-input password="password" change-event="changeEvent(value)" label="label"></password-confirm-input>');
+        this.element = angular.element('<password-confirm-input password="password" change-event="changeEvent(value)" label="label" confirm-password="confirmPassword" required="required"></password-confirm-input>');
         form.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
@@ -59,6 +61,16 @@ describe('Password Confirm Input component', function() {
             this.controller.label = 'test';
             scope.$digest();
             expect(scope.label).toEqual('');
+        });
+        it('confirmPassword should be one way bound', function() {
+            this.controller.confirmPassword = 'test';
+            scope.$digest();
+            expect(scope.confirmPassword).toEqual('');
+        });
+        it('required should be one way bound', function() {
+            this.controller.required = undefined;
+            scope.$digest();
+            expect(scope.required).toEqual('');
         });
         it('changeEvent should be called in the parent scope', function() {
             this.controller.changeEvent({value: 'Test'});
@@ -95,18 +107,20 @@ describe('Password Confirm Input component', function() {
         it('depending on the required value', function() {
             var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
             var confirmInput = angular.element(this.element.querySelectorAll('.confirm-password input')[0]);
-            expect(passwordInput.attr('required')).toBeFalsy();
-            expect(confirmInput.attr('required')).toBeFalsy();
-
-            this.controller.isRequired = true;
-            scope.$digest();
             expect(passwordInput.attr('required')).toBeTruthy();
             expect(confirmInput.attr('required')).toBeTruthy();
+            
+            this.controller.isRequired = false;
+            scope.$digest();
+            expect(passwordInput.attr('required')).toBeFalsy();
+            expect(confirmInput.attr('required')).toBeFalsy();
         });
         it('depending on if a value has been entered for the password', function() {
+            this.controller.isRequired = false;
+            scope.$digest();
             var confirmInput = angular.element(this.element.querySelectorAll('.confirm-password input')[0]);
             expect(confirmInput.attr('required')).toBeFalsy();
-
+            
             this.controller.password = 'test';
             scope.$digest();
             expect(confirmInput.attr('required')).toBeTruthy();

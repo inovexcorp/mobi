@@ -47,7 +47,7 @@ describe('Block content component', function() {
     });
 
     describe('contains the correct html', function() {
-        it('for wraping containers', function() {
+        it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('BLOCK-CONTENT');
             expect(this.element.querySelectorAll('.block-content').length).toEqual(1);
         });

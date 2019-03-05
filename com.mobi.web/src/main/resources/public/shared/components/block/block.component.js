@@ -28,7 +28,9 @@
      * @name shared.component:block
      *
      * @description
-     * 
+     * `block` is a component that creates a styled container with a light box shadow. Meant to contain
+     * {@link shared.component:blockContent}, {@link shared.component:blockFooter},
+     * {@link shared.component:blockHeader}, and/or {@link shared.component:blockSearch} components.
      */
     const blockComponent = {
         templateUrl: 'shared/components/block/block.component.html',

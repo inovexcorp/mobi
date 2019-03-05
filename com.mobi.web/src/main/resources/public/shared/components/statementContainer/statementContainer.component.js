@@ -28,7 +28,14 @@
      * @name shared.component:statementContainer
      *
      * @description
+     * `statementContainer` is a component that creates a display of
+     * {@link shared.component:statementDisplay statements}, assumedly from a commit revision. If the component has the
+     * `additions` attribute, the container will have an "Additions" title and the statements will be green. If the
+     * component has the `deletions` attribute, the container will have a "Deletions" title and the statements will be
+     * red.
      * 
+     * @param {string} additions Whether the statements are additions. The presence of the attribute is enough to set it
+     * @param {string} deletions Whether the statements are deletions. The presence of the attribute is enough to set it
      */
     const statementContainerComponent = {
         templateUrl: 'shared/components/statementContainer/statementContainer.component.html',

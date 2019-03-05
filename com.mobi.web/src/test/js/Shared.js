@@ -180,12 +180,6 @@ function injectRemoveIriFromArrayFilter() {
     });
 }
 
-function injectRemoveMobiFilter() {
-    module(function($provide) {
-        $provide.value('removeMobiFilter', jasmine.createSpy('removeMobiFilter').and.callFake(_.identity));
-    });
-}
-
 function injectPrefixationFilter() {
     module(function($provide) {
         $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter').and.callFake(_.identity));

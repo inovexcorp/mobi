@@ -39,18 +39,10 @@ describe('Language Select component', function() {
         scope.bindModel = 'test';
         scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.disableClear = false;
-    });
-
-    beforeEach(function compile() {
-        this.compile = function(html) {
-            if (!html) {
-                html = '<language-select bind-model="bindModel" change-event="changeEvent(value)" disable-clear="disableClear"></language-select>';
-            }
-            this.element = $compile(angular.element(html))(scope);
-            scope.$digest();
-            this.controller = this.element.controller('languageSelect');
-            this.isolatedScope = this.element.isolateScope();
-        };
+        scope.required = '';
+        this.element = $compile(angular.element('<language-select bind-model="bindModel" change-event="changeEvent(value)" disable-clear="disableClear" required="required"></language-select>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('languageSelect');
     });
 
     afterEach(function() {
@@ -60,9 +52,6 @@ describe('Language Select component', function() {
     });
 
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'different';
             scope.$apply();
@@ -77,11 +66,13 @@ describe('Language Select component', function() {
             this.controller.changeEvent({value: 'test'});
             expect(scope.changeEvent).toHaveBeenCalledWith('test');
         });
+        it('required should be one way bound', function() {
+            this.controller.required = undefined;
+            scope.$digest();
+            expect(scope.required).toEqual('');
+        });
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('LANGUAGE-SELECT');
             expect(this.element.querySelectorAll('.language-select').length).toEqual(1);
@@ -94,9 +85,6 @@ describe('Language Select component', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         it('clear properly sets the variable', function() {
             this.controller.clear();
             scope.$apply();
@@ -105,11 +93,13 @@ describe('Language Select component', function() {
     });
     describe('check required attribute', function() {
         it('when present', function() {
-            this.compile('<language-select bind-model="bindModel" change-event="changeEvent(value)" disable-clear="disableClear" required></language-select>');
+            scope.required = '';
+            this.controller.$onInit();
             expect(this.controller.isRequired).toEqual(true);
         });
         it('when missing', function() {
-            this.compile();
+            this.controller.required = undefined;
+            this.controller.$onInit();
             expect(this.controller.isRequired).toEqual(false);
         });
     });

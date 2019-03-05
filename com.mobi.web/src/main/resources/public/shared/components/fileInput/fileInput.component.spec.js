@@ -39,7 +39,10 @@ describe('File Input component', function() {
         scope.helpText = '';
         scope.accept = '';
         scope.inputName = '';
-        this.element = $compile(angular.element('<file-input bind-model="bindModel" display-text="displayText" help-text="helpText" accept="accept" input-name="inputName"></file-input>'))(scope);
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.multiple = '';
+        scope.required = '';
+        this.element = $compile(angular.element('<file-input bind-model="bindModel" display-text="displayText" help-text="helpText" accept="accept" input-name="inputName" change-event="changeEvent(value)" multiple="multiple" required="required"></file-input>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('fileInput');
     });
@@ -76,6 +79,20 @@ describe('File Input component', function() {
             scope.$digest();
             expect(scope.inputName).toEqual('');
         });
+        it('multiple should be one way bound', function() {
+            this.controller.multiple = undefined;
+            scope.$digest();
+            expect(scope.multiple).toEqual('');
+        });
+        it('required should be one way bound', function() {
+            this.controller.required = undefined;
+            scope.$digest();
+            expect(scope.required).toEqual('');
+        });
+        it('changeEvent is called in the parent scope', function() {
+            this.controller.changeEvent({value: []});
+            expect(scope.changeEvent).toHaveBeenCalledWith([]);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping contains', function() {
@@ -97,11 +114,11 @@ describe('File Input component', function() {
             expect(this.element.querySelectorAll('.form-text').length).toEqual(1);
         });
         it('depending on whether the input should accept multiple', function() {
-            expect(this.element.querySelectorAll('input.not-multiple').length).toEqual(1);
-            
-            this.controller.isMultiple = true;
-            scope.$digest();
             expect(this.element.querySelectorAll('input.multiple').length).toEqual(1);
+            
+            this.controller.isMultiple = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('input.not-multiple').length).toEqual(1);
         });
         it('depending on whether file(s) have been selected', function() {
             var fileNameLabel = angular.element(this.element.querySelectorAll('.file-name-label')[0]);
@@ -113,11 +130,11 @@ describe('File Input component', function() {
         });
         it('depending on whether the input should be required', function() {
             var input = this.element.find('input');
-            expect(input.attr('required')).toBeFalsy();
-
-            this.controller.isRequired = true;
-            scope.$digest();
             expect(input.attr('required')).toBeTruthy();
+            
+            this.controller.isRequired = false;
+            scope.$digest();
+            expect(input.attr('required')).toBeFalsy();
         });
     });
     it('should call click when the button is clicked', function() {

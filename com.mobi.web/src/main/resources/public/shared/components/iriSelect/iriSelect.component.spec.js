@@ -44,7 +44,8 @@ describe('IRI Select component', function() {
         scope.mutedText = 'test';
         scope.isDisabledWhen = false;
         scope.isRequiredWhen = false;
-        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select>'))(scope);
+        scope.multiSelect = '';
+        this.element = $compile(angular.element('<iri-select multi-select="multiSelect" change-event="changeEvent(value)" display-text="displayText" select-list="selectList" muted-text="mutedText" bind-model="bindModel" is-disabled-when="isDisabledWhen"></iri-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('iriSelect');
     });
@@ -56,21 +57,7 @@ describe('IRI Select component', function() {
         this.element.remove();
     });
 
-    beforeEach(function compile() {
-        this.compile = function(html) {
-            if (!html) {
-                html = '<iri-select change-event="changeEvent(value)" display-text="displayText" select-list="selectList" muted-text="mutedText" bind-model="bindModel" is-disabled-when="isDisabledWhen"></iri-select>';
-            }
-            this.element = $compile(angular.element(html))(scope);
-            scope.$digest();
-            this.controller = this.element.controller('iriSelect');
-        };
-    });
-
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'new';
             scope.$digest();
@@ -107,9 +94,6 @@ describe('IRI Select component', function() {
         });
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('IRI-SELECT');
             expect(this.element.querySelectorAll('.iri-select').length).toBe(1);
@@ -121,19 +105,18 @@ describe('IRI Select component', function() {
         it('depending on whether it is a multi select', function() {
             var selects = this.element.querySelectorAll('ui-select');
             expect(selects.length).toBe(1);
-            expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
+            expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
 
-            this.compile('<iri-select multi-select></iri-select>');
+            this.controller.isMultiSelect = false;
             scope.$digest();
             selects = this.element.querySelectorAll('ui-select');
             expect(selects.length).toBe(1);
-            expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
+            expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            scope.selectList = {iri: 'new'};
-            this.compile();
+            this.controller.selectList = {iri: 'new'};
         });
         it('getOntologyIri should return the set ontology IRI from the selectList if provided', function() {
             expect(this.controller.getOntologyIri('iri')).toEqual('new');

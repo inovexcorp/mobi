@@ -25,6 +25,22 @@
 
     prefixation.$inject = ['prefixes'];
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:prefixation
+     * @kind function
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * Takes an IRI string and converts it to a prefixed IRI string using the {@link shared.service:prefixes} service
+     * and any provided `extraPrefixes`.
+     *
+     * @param {string} iri An IRI string
+     * @param {Object} extraPrefixes An optional object of extra prefixes to search for namespaces through. The prefixes
+     * should be the keys and the namespaces should be the values.
+     * @returns {string} The prefixed version of the IRI is a prefix was found for the namespace. Otherwise, the same
+     * IRI is returned.
+     */
     function prefixation(prefixes) {
         return function(iri, extraPrefixes={}) {
             var result = angular.copy(iri);

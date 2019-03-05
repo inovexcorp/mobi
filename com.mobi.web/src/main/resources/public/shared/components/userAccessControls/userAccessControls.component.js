@@ -33,9 +33,29 @@
      *
      * @description
      * `userAccessControls` is a component that creates a Bootstrap `row` div with a single column containing a
-     * {@link shared.component:block block} for viewing and updating overall permissions from policies.
+     * {@link shared.component:block block} for viewing and updating permissions on a Rule of a Policy. The Rule is
+     * represented by the provided `item`. A `ruleTitle` can be provided to provide context on the Rule. The IRI of the
+     * Rule is set with `ruleId`. The behavior when the Rule is updated is controlled by the provided `updateItem`
+     * function which is expected to update the value of `item`. The Rule should be in the format:
+     * ```
+     * {
+     *     everyone: false,
+     *     users: [],
+     *     selectedUsers: [],
+     *     userSearchText: '',
+     *     selectedUser: {},
+     *     groups: [],
+     *     selectedGroups: [],
+     *     groupSearchText: '',
+     *     selectedGroup: {}
+     * }
+     * ```
      * 
-     * @param {}
+     * @param {Object} item A representation of a Rule in a Policy
+     * @param {string} ruleTitle A string representing the display title of the Rule
+     * @param {string} ruleId The IRI id of the Rule
+     * @param {Function} updateItem A function to update the Rule. Should update teh value of `item`. Expects an
+     * argument called `item`.
      */
     const userAccessControlsComponent = {
         templateUrl: 'shared/components/userAccessControls/userAccessControls.component.html',

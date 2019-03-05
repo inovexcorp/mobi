@@ -28,7 +28,15 @@
      * @name shared.component:blockSearch
      *
      * @description
+     * `blockSearch` is a component that creates a styled search bar for use in a {@link shared.component:block}. The
+     * search bar contains a text input and a clear button. The search text is bound to `bindModel`, but only one way.
+     * The provided `changeEvent` function is expected to update the value of `bindModel`. The behavior when the clear
+     * button is clicked is controlled by the provided `clearEvent` function.
      * 
+     * @param {string} bindModel The variable bound to the search text input.
+     * @param {Function} changeEvent A function that is called when the value of the text input changes. Should update
+     * the value of `bindModel`. Expects an argument called `value`.
+     * @param {Function} clearEvent A function that is called when the clear button is clicked.
      */
     const blockSearchComponent = {
         templateUrl: 'shared/components/blockSearch/blockSearch.component.html',

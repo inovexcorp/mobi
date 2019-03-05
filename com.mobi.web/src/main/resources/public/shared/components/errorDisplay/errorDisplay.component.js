@@ -28,7 +28,8 @@
      * @name shared.component:errorDisplay
      *
      * @description
-     *
+     * `errorDisplay` is a component that creates a styled message for displaying errors from the transcluded content.
+     * The content will have red colored text and will be next to an error icon.
      */
     const errorDisplayComponent = {
         templateUrl: 'shared/components/errorDisplay/errorDisplay.component.html',

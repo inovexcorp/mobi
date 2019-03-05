@@ -28,7 +28,13 @@
      * @name shared.component:keywordSelect
      * 
      * @description
+     * `keywordSelect` is a component that creates a `ui-select` for editing keywords on an entity in Mobi. The label
+     * for the select shows as Optional. The value of the select is bound to `bindModel`, but only one way. The provided
+     * `changeEvent` function is expected to update the value of `bindModel`.
      * 
+     * @param {string[]} bindModel An array of strings representing keywords that are bound to the `ui-select`
+     * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
+     * update the value of `bindModel`. Expects an argument called `value`.
      */
     const keywordSelectComponent = {
         templateUrl: 'shared/components/keywordSelect/keywordSelect.component.html',

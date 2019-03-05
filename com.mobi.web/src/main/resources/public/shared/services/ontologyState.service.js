@@ -1310,7 +1310,7 @@
         }
         self.onEdit = function(iriBegin, iriThen, iriEnd) {
             var newIRI = iriBegin + iriThen + iriEnd;
-            var oldEntity = $filter('removeMobi')(self.listItem.selected);
+            var oldEntity = _.omit(angular.copy(self.listItem.selected), 'mobi');
             self.getActivePage().entityIRI = newIRI;
             if (_.some(self.listItem.additions, oldEntity)) {
                 _.remove(self.listItem.additions, oldEntity);
@@ -1322,7 +1322,7 @@
             if (self.getActiveKey() !== 'project') {
                 self.setCommonIriParts(iriBegin, iriThen);
             }
-            self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMobi')(self.listItem.selected));
+            self.addToAdditions(self.listItem.ontologyRecord.recordId, _.omit(angular.copy(self.listItem.selected), 'mobi'));
             return om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, oldEntity['@id'], 'construct')
                 .then(statements => {
                     _.forEach(statements, statement => self.addToDeletions(self.listItem.ontologyRecord.recordId, statement));
@@ -1802,7 +1802,7 @@
         function addToInProgress(recordId, json, prop) {
             var listItem = self.getListItemByRecordId(recordId);
             var entity = _.find(listItem[prop], {'@id': json['@id']});
-            var filteredJson = $filter('removeMobi')(json);
+            var filteredJson = _.omit(angular.copy(json), 'mobi');
             if (entity) {
                 _.mergeWith(entity, filteredJson, util.mergingArrays);
             } else  {

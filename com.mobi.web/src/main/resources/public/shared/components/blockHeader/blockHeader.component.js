@@ -28,7 +28,7 @@
      * @name shared.component:blockHeader
      *
      * @description
-     * 
+     * `blockHeader` is a component that creates a styled container at the top of a {@link shared.component:block}.
      */
     const blockHeaderComponent = {
         templateUrl: 'shared/components/blockHeader/blockHeader.component.html',

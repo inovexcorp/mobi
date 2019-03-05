@@ -28,7 +28,29 @@
      * @name shared.component:resolveConflictsForm
      *
      * @description
-     *
+     * `resolveConflictsForm` is a component that creates displays of conflicts from a merge of VersionedRDFRecord
+     * branches and ways to resolve those conflicts. The initial view is a list of the conflicts displayed as the entity
+     * titles and their resolution statuses. Once a conflict is selected, the view changes to a side-by-side display of
+     * the changes from each branch in the conflict. Clicking on one of the displays selects which changes to keep in
+     * the resolution. The conflicts should in the form:
+     * ```
+     * {
+     *     iri: '',
+     *     resolved: '',
+     *     left: {
+     *         additions: [],
+     *         deletions: []
+     *     },
+     *     right: {
+     *         additions: [],
+     *         deletions: []
+     *     }
+     * }
+     * ```
+     * 
+     * @param {Object[]} conflicts The conflicts to be resolved in the form
+     * @param {string} branchTitle The title of the source branch of the merge
+     * @param {string} targetTitle The title of the target branch of the merge
      */
     const resolveConflictsFormComponent = {
         templateUrl: 'shared/components/resolveConflictsForm/resolveConflictsForm.component.html',

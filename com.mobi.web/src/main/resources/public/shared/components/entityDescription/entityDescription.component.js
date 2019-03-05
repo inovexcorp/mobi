@@ -34,7 +34,7 @@
      * property value. Based on the limited variable, will optionally limit the display to the first 200 characters and
      * provide a button to toggle the full display.
      *
-     * @param {boolean} limited Whether or not the display should be limited to the first 200 charaters
+     * @param {boolean} limited Whether or not the display should be limited to the first 200 characters
      * @param {Object} entity A JSON-LD object
      */
     const entityDescriptionComponent = {

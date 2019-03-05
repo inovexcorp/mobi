@@ -28,7 +28,8 @@
      * @name shared.component:infoMessage
      *
      * @description
-     *
+     * `infoMessage` is a component that creates a styled message for displaying informative messages from the
+     * transcluded content. The content will have blue colored text and will be next to an (i) icon.
      */
     const infoMessageComponent = {
         templateUrl: 'shared/components/infoMessage/infoMessage.component.html',
