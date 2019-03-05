@@ -65,7 +65,7 @@
          * @ngdoc property
          * @name openedMappings
          * @propertyOf shared.service:mapperStateService
-         * @type {Object}
+         * @type {Object[]}
          *
          * @description
          * `openedMappings` holds the list of mappings that have been opened.

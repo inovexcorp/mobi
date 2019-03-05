@@ -41,7 +41,7 @@
      * appropriate module.
      * 
      * @param {Object} record The record to open
-     * @param {string} flat A string that when defined sets the button to be flat
+     * @param {string} flat Whether the button should be flat. The presence of the attribute is enough to set it
      * @param {string} stopProp A string that when defined stops propagation on click event
      */
     const openRecordButtonComponent = {
