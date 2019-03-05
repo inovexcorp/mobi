@@ -44,8 +44,8 @@
         <bundle start-level="80">mvn:com.sun.mail/javax.mail/1.5.6</bundle>
     </feature>
     <feature name="mobi-core" description="Mobi Core Platform Bundles" version="${project.version}">
-        <feature prerequisite="true">mobi-platform-core</feature>
         <feature prerequisite="true">mobi-deps</feature>
+        <feature prerequisite="true">mobi-platform-core</feature>
         <bundle start-level="80">mvn:com.mobi/rest.util/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/etl.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/etl.delimited/${project.version}</bundle>
