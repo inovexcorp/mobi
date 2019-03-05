@@ -24,75 +24,6 @@
 
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="mobi-features">
     <feature name="mobi-deps" description="Mobi Dependency Bundles" version="${project.version}">
-        <feature prerequisite="true">eventadmin</feature>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
-        <bundle start-level="80">mvn:org.apache.httpcomponents/httpclient-osgi/4.5.5</bundle>
-        <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4.9</bundle>
-        <bundle start-level="80">mvn:javax.ws.rs/javax.ws.rs-api/2.0.1</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.json-lib/2.4_1</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.module/jackson-module-jaxb-annotations/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.eclipsesource.jaxrs/swagger-all/1.5.7</bundle>
-        <bundle start-level="80">mvn:com.nimbusds/nimbus-jose-jwt/4.11</bundle>
-        <bundle start-level="80">mvn:net.minidev/json-smart/1.3.1</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oro/2.0.8_6</bundle>
-        <bundle start-level="80">mvn:com.github.jsonld-java/jsonld-java/0.12.2</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jcip-annotations/1.0_2</bundle>
-        <bundle start-level="80">mvn:org.mapdb/mapdb/1.0.8</bundle>
-        <bundle start-level="80">mvn:org.antlr/antlr4-runtime/4.6</bundle>
-        <bundle start-level="80">mvn:org.ehcache/ehcache/${ehcache.version}</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-cache-api/1.0.0_1</bundle>
-
-        <!-- Shared Dependencies -->
-        <bundle start-level="80">mvn:biz.aQute.bnd/biz.aQute.bndlib/${bndlib.version}</bundle>
-        <bundle start-level="80">mvn:commons-io/commons-io/${commons-io.version}</bundle>
-        <bundle start-level="80">mvn:commons-codec/commons-codec/${commons-codec.version}</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-lang3/${commons-lang3.version}</bundle>
-        <bundle start-level="80">mvn:commons-lang/commons-lang/${commons-lang.version}</bundle>
-        <bundle start-level="80">mvn:commons-beanutils/commons-beanutils/${commons-beanutils.version}</bundle>
-        <bundle start-level="80">mvn:commons-collections/commons-collections/${commons-collections.version}</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-collections4/4.2</bundle>
-        <bundle start-level="80">mvn:commons-validator/commons-validator/${commons-validator.version}</bundle>
-        <bundle start-level="80">mvn:commons-digester/commons-digester/1.8.1</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-text/1.6</bundle>
-        <bundle start-level="80">mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi/${rdf4j.version}</bundle>
-
-        <!-- RDF4J Dependencies -->
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch/5.6.3_1</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch-client/5.6.3_1</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.dataformat/jackson-dataformat-yaml/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.dataformat/jackson-dataformat-smile/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.dataformat/jackson-dataformat-cbor/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.ning/compress-lzf/1.0.4</bundle>
-        <bundle start-level="80">mvn:org.yaml/snakeyaml/1.23</bundle>
-        <bundle start-level="80">mvn:org.locationtech.jts/jts-core/1.15.1</bundle>
-        <bundle start-level="80">mvn:org.locationtech.spatial4j/spatial4j/0.7</bundle>
-        <bundle start-level="80">mvn:com.carrotsearch/hppc/0.7.3</bundle>
-
-        <!-- ETL Dependencies -->
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.poi/${poi.version}</bundle>
-        <bundle start-level="80">mvn:com.opencsv/opencsv/${opencsv.version}</bundle>
-        <bundle start-level="80">mvn:ch.qos.logback/logback-classic/${logback.version}</bundle>
-        <bundle start-level="80">mvn:ch.qos.logback/logback-core/${logback.version}</bundle>
-        <bundle start-level="80">mvn:org.apache.camel/camel-core-osgi/${camel.version}</bundle>
-
-        <!-- Ontology Dependencies -->
-        <bundle start-level="80">mvn:org.tukaani/xz/1.6</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.version}</bundle>
-        <bundle start-level="80">mvn:com.google.guava/guava/18.0</bundle>
-        <bundle start-level="80">mvn:com.google.guava/guava/22.0</bundle>
-        <bundle start-level="80">mvn:com.github.ben-manes.caffeine/caffeine/2.5.6</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-vfs2/2.1</bundle>
-        <bundle start-level="80">mvn:org.apache.commons/commons-compress/1.9</bundle>
-        <bundle start-level="80">mvn:commons-net/commons-net/3.3</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-httpclient/3.1_7</bundle>
-        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jsch/0.1.51_1</bundle>
-        <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
-        <bundle start-level="80">mvn:com.github.vsonnier/hppcrt/0.7.5</bundle>
-
         <!-- Document Translation -->
         <bundle start-level="80">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-1.1.0/2.9.0</bundle>
         <bundle start-level="80">mvn:org.glassfish/javax.json/1.0.4</bundle>
@@ -113,19 +44,8 @@
         <bundle start-level="80">mvn:com.sun.mail/javax.mail/1.5.6</bundle>
     </feature>
     <feature name="mobi-core" description="Mobi Core Platform Bundles" version="${project.version}">
-        <feature prerequisite="true">jaas</feature>
-        <feature prerequisite="true">http</feature>
-        <feature prerequisite="true">pax-http-whiteboard</feature>
-        <feature prerequisite="true">obr</feature>
-        <feature prerequisite="true">scr</feature>
-        <feature prerequisite="true">jax-rs-connector</feature>
-        <feature prerequisite="true">jax-rs-provider-gson</feature>
-        <feature prerequisite="true">jax-rs-provider-multipart</feature>
-        <feature prerequisite="true">jax-rs-provider-security</feature>
-        <feature prerequisite="true">aries-blueprint</feature>
-        <feature prerequisite="true">camel</feature>
+        <feature prerequisite="true">mobi-platform-core</feature>
         <feature prerequisite="true">mobi-deps</feature>
-        <bundle start-level="80">mvn:com.mobi/api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/rest.util/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/etl.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/etl.delimited/${project.version}</bundle>
@@ -135,19 +55,11 @@
         <bundle start-level="80">mvn:com.mobi/ontology.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.core.impl.owlapi/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.utils/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/persistence.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/persistence.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/rdf.impl.sesame/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/repository.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/repository.impl.sesame/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/catalog.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/catalog.impl/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/jaas/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/jaas.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/rdf.orm/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/rdf.orm.ontologies/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/platform.config.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/platform.config.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/dataset.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/dataset.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/sparql.utils/${project.version}</bundle>

@@ -22,7 +22,7 @@
   #L%
   -->
 
-<features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="mobi-features">
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="mobi-platform-features">
     <feature name="mobi-platform-deps" description="Mobi Platform Dependency Bundles" version="${project.version}">
         <feature prerequisite="true">eventadmin</feature>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
@@ -57,7 +57,7 @@
         <bundle start-level="80">mvn:org.apache.commons/commons-text/1.6</bundle>
         <bundle start-level="80">mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi/${rdf4j.version}</bundle>
 
-        <!--&lt;!&ndash; RDF4J Dependencies &ndash;&gt;-->
+        <!-- RDF4J Dependencies -->
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch/5.6.3_1</bundle>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch-client/5.6.3_1</bundle>
         <bundle start-level="80">mvn:com.fasterxml.jackson.dataformat/jackson-dataformat-yaml/${jackson.version}</bundle>
@@ -92,25 +92,6 @@
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jsch/0.1.51_1</bundle>
         <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
         <bundle start-level="80">mvn:com.github.vsonnier/hppcrt/0.7.5</bundle>
-
-        <!--&lt;!&ndash; Document Translation &ndash;&gt;-->
-        <!--<bundle start-level="80">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-1.1.0/2.9.0</bundle>-->
-        <!--<bundle start-level="80">mvn:org.glassfish/javax.json/1.0.4</bundle>-->
-        <!--<bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-expression/5.0.2.RELEASE_1</bundle>-->
-        <!--<bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.spring-core/5.0.2.RELEASE_1</bundle>-->
-
-        <!--&lt;!&ndash; XACML Security Dependencies &ndash;&gt;-->
-        <!--<bundle start-level="80">mvn:org.wso2.balana/org.wso2.balana/1.1.3</bundle>-->
-        <!--<bundle start-level="80">mvn:org.wso2.balana/org.wso2.balana.utils/1.1.3</bundle>-->
-        <!--<bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xerces/2.9.1_5</bundle>-->
-        <!--<bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.xmlresolver/1.2_5</bundle>-->
-
-        <!--&lt;!&ndash; VFS Dependencies &ndash;&gt;-->
-        <!--<bundle start-level="80">mvn:org.lz4/lz4-java/1.4.1</bundle>-->
-
-        <!--&lt;!&ndash; Email Dependencies &ndash;&gt;-->
-        <!--<bundle start-level="80">mvn:org.apache.commons/commons-email/1.5</bundle>-->
-        <!--<bundle start-level="80">mvn:com.sun.mail/javax.mail/1.5.6</bundle>-->
     </feature>
     <feature name="mobi-platform-core" description="Mobi Platform Core Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
@@ -126,68 +107,13 @@
         <feature prerequisite="true">camel</feature>
         <feature prerequisite="true">mobi-platform-deps</feature>
         <bundle start-level="80">mvn:com.mobi/api/${project.version}</bundle>
-        <!--<bundle start-level="80">mvn:com.mobi/rest.util/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/etl.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/etl.delimited/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/etl.rdf/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/vfs/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/etl.workflows/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/ontology.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/ontology.core.impl.owlapi/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/ontology.utils/${project.version}</bundle>-->
         <bundle start-level="80">mvn:com.mobi/persistence.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/persistence.utils/${project.version}</bundle>
-        <!--<bundle start-level="80">mvn:com.mobi/rdf.impl.sesame/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/repository.impl.core/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/repository.impl.sesame/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/catalog.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/catalog.impl/${project.version}</bundle>-->
         <bundle start-level="80">mvn:com.mobi/jaas/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/jaas.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/rdf.orm/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/rdf.orm.ontologies/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/platform.config.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/platform.config.impl/${project.version}</bundle>
-        <!--<bundle start-level="80">mvn:com.mobi/dataset.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/dataset.impl/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/sparql.utils/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/cache/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/cache.impl.ehcache/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/prov.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/prov.impl/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/document.translator.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/document.translator.json/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/document.translator.xml/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/security.policy.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/security.policy.api.xacml/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/security.policy.impl.core/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/security.policy.impl.xacml/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/security.policy.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/rest.security/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/email.api/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/email.impl/${project.version}</bundle>-->
     </feature>
-    <!--<feature name="mobi-cli" description="Mobi CLI Bundles" version="${project.version}">-->
-        <!--<feature prerequisite="true">mobi-core</feature>-->
-        <!--<bundle start-level="80">mvn:com.mobi/etl.cli/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/persistence.cli/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/sparql.cli/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/document.translator.cli/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/utils.cli/${project.version}</bundle>-->
-    <!--</feature>-->
-    <!--<feature name="mobi-web" description="Mobi Web Bundles" version="${project.version}">-->
-        <!--<feature prerequisite="true">mobi-core</feature>-->
-        <!--<bundle start-level="80">mvn:com.mobi/etl.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/ontology.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/swagger.ui/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/web/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/sparql.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/catalog.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/jaas.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/platform.config.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/dataset.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/web.security/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/explorable.dataset.rest/${project.version}</bundle>-->
-        <!--<bundle start-level="80">mvn:com.mobi/prov.rest/${project.version}</bundle>-->
-    <!--</feature>-->
 </features>
