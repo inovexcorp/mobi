@@ -27,6 +27,7 @@
      * @ngdoc component
      * @name catalog.component:recordFilters
      * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
      *
      * @description
      * `recordFilters` is a component which creates a div with collapsible containers for various filters that can be
@@ -49,11 +50,12 @@
         controller: recordFiltersComponentCtrl
     };
 
-    recordFiltersComponentCtrl.$inject = ['catalogManagerService'];
+    recordFiltersComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
 
-    function recordFiltersComponentCtrl(catalogManagerService) {
+    function recordFiltersComponentCtrl(catalogManagerService, utilService) {
         var dvm = this;
         dvm.cm = catalogManagerService;
+        dvm.util = utilService;
         dvm.hide = false;
         dvm.recordTypes = [];
 
