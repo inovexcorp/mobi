@@ -43,7 +43,7 @@
          * `createTagModal` is a component that creates content for a modal that creates a tag on the current
          * {@link shared.service:ontologyStateService selected ontology} on the commit that is currently being
          * viewed. The form in the modal contains two {@link shared.component:textInput}s for the tag IRI and the
-         * title of the tag. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * title of the tag. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

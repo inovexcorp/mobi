@@ -34,7 +34,7 @@
      * the local name. The parts of the IRI are provided separately. A custom validation function and error message
      * can be provided as well. In addition to the Cancel and Submit buttons, there's also a button to revert the
      * fields to their original state. Meant to be used in conjunction with the
-     * {@link modalService.directive:modalService}.
+     * {@link shared.service:modalService}.
      *
      * @param {Object} resolve Information provided to the modal
      * @param {string} resolve.iriBegin A string containing the beginning/namespace of the IRI

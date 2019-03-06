@@ -37,7 +37,7 @@
      * editing an existing Dataset Record. The form contains fields for the title, description,
      * {@link shared.component:keywordSelect keywords}, and
      * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the Dataset
-     * Record. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+     * Record. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal

@@ -51,7 +51,7 @@
          * {@link createIndividualOverlay.directive:createIndividualOverlay individuals}
          * {@link createConceptOverlay.directive:createConceptOverlay concepts} if ontology is a vocabulary, and
          * {@link createConceptSchemeOverlay.directive:createConceptSchemeOverlay concept schemes} if ontology is a
-         * vocabulary. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * vocabulary. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} dismiss A function that dismisses the modal
          */

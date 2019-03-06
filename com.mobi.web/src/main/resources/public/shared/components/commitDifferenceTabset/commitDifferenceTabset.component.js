@@ -28,7 +28,7 @@
      * @name shared.component:commitDifferenceTabset
      *
      * @description
-     * `commitDifferenceTabset` is a directive which creates a div containing a {@link shared.directive:tabset} with
+     * `commitDifferenceTabset` is a directive which creates a div containing a {@link shared.component:tabset} with
      * tabs for the {@link shared.component:commitChangesDisplay changes} and
      * {@link shared.component:commitHistoryTable commits} between two branches.
      *

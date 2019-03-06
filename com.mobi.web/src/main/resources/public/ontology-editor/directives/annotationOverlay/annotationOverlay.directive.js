@@ -50,7 +50,7 @@
          * `ui-select` for the annotation property, a {@link shared.component:textArea} for the annotation value, and
          * a {@link shared.component:languageSelect}. If the annotation is owl:deprecated, the `textArea` and
          * `languageSelect` are replaced by {@link shared.component:radiobutton radio buttons} for the boolean
-         * value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * value. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

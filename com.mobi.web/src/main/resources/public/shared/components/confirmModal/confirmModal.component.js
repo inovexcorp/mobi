@@ -29,7 +29,7 @@
      *
      * @description
      * `confirmModal` is a component that creates content for a modal that will confirm or deny an action
-     * being taken. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+     * being taken. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *
      * @param {Object} resolve Information provided to the modal
      * @param {string} resolve.body An HTML string to be interpolated into the body of the modal

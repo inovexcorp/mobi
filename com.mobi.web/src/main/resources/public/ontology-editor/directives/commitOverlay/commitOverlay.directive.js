@@ -46,7 +46,7 @@
          * `commitOverlay` is a directive that creates content for a modal to commit the changes to the
          * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
          * {@link shared.component:textArea} for the commit message. Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
+         * {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

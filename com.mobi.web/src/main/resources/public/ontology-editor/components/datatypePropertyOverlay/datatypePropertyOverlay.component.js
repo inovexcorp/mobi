@@ -38,7 +38,7 @@
      * all the data properties in the ontology, a {@link shared.component:textArea} for the data property value, an
      * {@link iriSelectOntology.directive:iriSelectOntology} for the datatype, and a
      * {@link shared.component:languageSelect}. Meant to be used in conjunction with the
-     * {@link modalService.directive:modalService}.
+     * {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal

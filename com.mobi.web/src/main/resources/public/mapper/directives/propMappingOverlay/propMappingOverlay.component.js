@@ -39,7 +39,7 @@
      * {@link columnSelect.directive:columnSelect columnSelect} will appear to select the linked column index for the
      * DataMapping being created/edited. If the selected property is an object property, a select for ClassMappings of
      * the type the property links to will be displayed. Meant to be used in conjunction with the
-     * {@link modalService.directive:modalService}.
+     * {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal

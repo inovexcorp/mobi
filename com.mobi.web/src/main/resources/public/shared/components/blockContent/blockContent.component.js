@@ -28,7 +28,8 @@
      * @name shared.component:blockContent
      *
      * @description
-     * 
+     * `blockContent` is a component that creates a styled container for the body of a {@link shared.component:block}.
+     * The container is styled to take of the remaining height of the `block` and vertically scroll.
      */
     const blockContentComponent = {
         templateUrl: 'shared/components/blockContent/blockContent.component.html',

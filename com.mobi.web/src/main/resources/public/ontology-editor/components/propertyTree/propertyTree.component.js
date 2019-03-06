@@ -33,7 +33,7 @@
      * @requires shared.service:prefixes
      *
      * @description
-     * `propertyTree` is a component which creates a `div` containing a {@link shared.directive:searchBar}
+     * `propertyTree` is a component which creates a `div` containing a {@link shared.component:searchBar}
      * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
      * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
      *

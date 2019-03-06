@@ -36,7 +36,7 @@
      * @description
      * `importsOverlay` is a component that creates content for a modal that adds an imported ontology to the
      * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
-     * a {@link shared.directive:tabset} to choose between a URL import or an ontology within the Mobi instance. The
+     * a {@link shared.component:tabset} to choose between a URL import or an ontology within the Mobi instance. The
      * "Server" tab contains a searchable selectable list of ontologies. Only 100 will be shown at a time. Selected
      * ontologies can be removed from the list by either unchecking the checkbox in the list or clicking the x button
      * on the ontology in the Selected list. Meant to be used in conjunction with the

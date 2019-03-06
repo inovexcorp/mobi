@@ -30,7 +30,7 @@
          *
          * @description
          * The `ontologyButtonStack` module only provides the `ontologyButtonStack` directive which creates a
-         * {@link shared.directive:circleButtonStack} for actions in the Ontology Editor.
+         * {@link shared.component:circleButtonStack} for actions in the Ontology Editor.
          */
         .module('ontologyButtonStack', [])
         /**

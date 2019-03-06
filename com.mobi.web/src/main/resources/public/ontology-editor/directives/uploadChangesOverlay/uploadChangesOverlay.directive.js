@@ -45,7 +45,7 @@
          * version of the current {@link shared.service:ontologyStateService selected ontology} to be compared
          * and the differences added to the InProgressCommit. The form in the modal contains
          * {@link shared.component:fileInput} that accepts an RDF file. Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
+         * {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

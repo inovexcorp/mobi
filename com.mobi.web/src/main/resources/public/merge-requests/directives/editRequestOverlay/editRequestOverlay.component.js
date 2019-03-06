@@ -45,7 +45,7 @@
          * `editRequestOverlay` is a component that creates content for a modal that edits a merge request on the
          * {@link mergeRequestsState.service:mergeRequestsStateSvc selected entity}. Provides fields to edit Merge
          * Request title, description, target branch, assignees, and branch removal. Meant to be used in conjunction
-         * with the {@link modalService.directive:modalService}.
+         * with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

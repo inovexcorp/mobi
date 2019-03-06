@@ -50,7 +50,7 @@
          * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
          * {@link shared.component:keywordSelect}. The value of the name field will populate the IRI field
          * unless the IRI value is manually changed.  Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
+         * {@link shared.service:modalService}.
          */
         .directive('newOntologyOverlay', newOntologyOverlay);
 

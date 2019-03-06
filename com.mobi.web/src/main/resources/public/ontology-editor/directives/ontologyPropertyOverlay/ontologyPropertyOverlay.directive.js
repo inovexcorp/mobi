@@ -52,7 +52,7 @@
          * {@link shared.component:textArea} is provided for the annotation value with a
          * {@link shared.component:languageSelect}, unless the annotation is owl:deprecated in which case the
          * `textArea` and `languageSelect` are replaced by {@link shared.component:radiobutton radio buttons} for
-         * the boolean value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * the boolean value. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

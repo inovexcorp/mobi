@@ -30,7 +30,7 @@
      * @description
      * `stepProgressBar` is a component that creates a Bootstrap stepper for indicating the progress through a series of
      * steps. The number of steps is set by the `stepNumber` attribute the current step (0 based) is indicated by the
-     * `currentStep` attribuete.
+     * `currentStep` attribute.
      * 
      * @param {number} stepNumber The number of steps for this stepper
      * @param {number} currentStep The 0-based index of the current step

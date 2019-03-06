@@ -48,7 +48,7 @@
          * downloading the results. This includes a {@link shared.component:textInput text input} for the file name
          * of the downloaded mapped data and a
          * {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect} for the RDF
-         * format of the mapped data. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * format of the mapped data. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
