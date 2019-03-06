@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>platform.config.api</artifactId>
+            <artifactId>server.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -64,6 +64,14 @@
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
         </dependency>
 
         <!-- Test Dependencies -->

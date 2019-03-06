@@ -1,4 +1,4 @@
-package com.mobi.platform.config.impl.server;
+package com.mobi.server.impl;
 
 /*-
  * #%L
@@ -28,7 +28,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.platform.config.api.server.ServerUtils;
+import com.mobi.server.api.ServerUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;

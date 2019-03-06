@@ -91,7 +91,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>mobi-platform-karaf-feature</artifactId>
+            <artifactId>mobi-server-karaf-feature</artifactId>
             <classifier>features</classifier>
             <version>${project.version}</version>
             <type>xml</type>
@@ -223,8 +223,8 @@
                         <feature>camel</feature>
 
                         <!-- Mobi Features -->
-                        <feature>mobi-platform-deps</feature>
-                        <feature>mobi-platform-core</feature>
+                        <feature>mobi-server-deps</feature>
+                        <feature>mobi-server-core</feature>
                         <feature>mobi-deps</feature>
                         <feature>mobi-core</feature>
                         <feature>mobi-cli</feature>

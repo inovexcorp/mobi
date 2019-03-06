@@ -1,12 +1,12 @@
-package com.mobi.platform.config.api.server;
+package com.mobi.server.api;
 
 /*-
  * #%L
- * com.mobi.platform.config.api
+ * com.mobi.server.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,24 +23,24 @@ package com.mobi.platform.config.api.server;
  * #L%
  */
 
-import java.util.UUID;
+import aQute.bnd.annotation.metatype.Meta;
 
 /**
- * Service interface that describes a core platform service for working with the server.
+ * Service configuration for a {@link Mobi} implementation.  Should only be one in the system.
  */
-public interface Mobi {
+@Meta.OCD
+public interface MobiConfig {
 
     /**
-     *
-     * @return A unique, deterministic ID for this Mobi server.
+     * @return The configured server identifier for the system
      */
-    UUID getServerIdentifier();
+    @Meta.AD(required = false)
+    String serverId();
 
     /**
-     *
-     * @return The configured host name for the server if present. If no host name is configured or if the host name is
-     * not a valid URL with protocol, returns an empty string.
+     * @return The configured host name for the system
      */
-    String getHostName();
+    @Meta.AD(required = false)
+    String hostName();
 
 }

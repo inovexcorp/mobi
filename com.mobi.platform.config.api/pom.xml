@@ -50,11 +50,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>jaas.api</artifactId>
             <version>${project.version}</version>
         </dependency>

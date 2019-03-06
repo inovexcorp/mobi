@@ -71,8 +71,8 @@
         <module>com.mobi.jaas</module>
         <module>com.mobi.web.security</module>
         <module>com.mobi.jaas.rest</module>
-        <module>mobi-platform-karaf-feature</module>
-        <!--<module>mobi-karaf-feature</module>-->
+        <module>mobi-server-karaf-feature</module>
+        <module>mobi-karaf-feature</module>
         <module>com.mobi.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
         <module>com.mobi.jaas.api</module>
@@ -80,6 +80,8 @@
         <module>com.mobi.platform.config.api</module>
         <module>com.mobi.platform.config.rest</module>
         <module>com.mobi.platform.config.impl</module>
+        <module>com.mobi.server.api</module>
+        <module>com.mobi.server.impl</module>
         <module>com.mobi.dataset.api</module>
         <module>com.mobi.dataset.impl</module>
         <module>com.mobi.dataset.rest</module>
