@@ -25,7 +25,8 @@ describe('Object Property Overlay component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('objectPropertyOverlay');
+        module('ontology-editor');
+        mockComponent('iriSelectOntology', 'iriSelectOntology');
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();

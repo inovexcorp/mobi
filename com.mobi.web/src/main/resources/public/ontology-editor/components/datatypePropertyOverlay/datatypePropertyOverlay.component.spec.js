@@ -25,7 +25,8 @@ describe('Datatype Property Overlay component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('datatypePropertyOverlay');
+        module('ontology-editor');
+        mockComponent('iriSelectOntology', 'iriSelectOntology');
         mockOntologyState();
         mockUtil();
         mockPrefixes();

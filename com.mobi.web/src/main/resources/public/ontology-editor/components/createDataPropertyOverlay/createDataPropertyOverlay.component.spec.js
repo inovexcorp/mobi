@@ -25,14 +25,15 @@ describe('Create Data Property Overlay component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('createDataPropertyOverlay');
-        mockOntologyManager();
+        module('ontology-editor');
+        mockComponent('staticIri', 'staticIri');
+        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
+        mockComponent('iriSelectOntology', 'iriSelectOntology');
+        mockComponent('superPropertySelect', 'superPropertySelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
         injectCamelCaseFilter();
-        injectTrustedFilter();
-        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;

@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name datatypePropertyOverlay.component:datatypePropertyOverlay
+     * @name ontology-editor.component:datatypePropertyOverlay
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
@@ -121,15 +121,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name datatypePropertyOverlay
-         *
-         * @description
-         * The `datatypePropertyOverlay` module only provides the `datatypePropertyOverlay` directive which creates
-         * content for a modal to add a data property to an individual.
-         */
-        .module('datatypePropertyOverlay', [])
+    angular.module('ontology-editor')
         .component('datatypePropertyOverlay', datatypePropertyOverlayComponent);
 })();

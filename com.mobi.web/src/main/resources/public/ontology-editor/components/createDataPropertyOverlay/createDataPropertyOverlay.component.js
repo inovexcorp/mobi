@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name createDataPropertyOverlay.component:createDataPropertyOverlay
+     * @name ontology-editor.component:createDataPropertyOverlay
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
      * @requires shared.service:prefixes
@@ -56,9 +56,9 @@
         controller: createDataPropertyOverlayComponentCtrl
     }
 
-    createDataPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+    createDataPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-    function createDataPropertyOverlayComponentCtrl($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+    function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
         var dvm = this;
         dvm.characteristics = [
             {
@@ -68,7 +68,6 @@
             }
         ];
         dvm.prefixes = prefixes;
-        dvm.om = ontologyManagerService;
         dvm.os = ontologyStateService;
         dvm.ontoUtils = ontologyUtilsManagerService;
         dvm.prefix = dvm.os.getDefaultPrefix();
@@ -141,15 +140,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name createDataPropertyOverlay
-         *
-         * @description
-         * The `createDataPropertyOverlay` module only provides the `createDataPropertyOverlay` directive which creates
-         * content for a modal to add a data property to an ontology.
-         */
-        .module('createDataPropertyOverlay', [])
+    angular.module('ontology-editor')
         .component('createDataPropertyOverlay', createDataPropertyOverlayComponent);
 })();

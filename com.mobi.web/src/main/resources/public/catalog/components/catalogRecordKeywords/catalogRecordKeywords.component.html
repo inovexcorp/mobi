@@ -22,7 +22,7 @@
   -->
 <div class="catalog-record-keywords" click-anywhere-but-here="dvm.cancelChanges()">
     <div ng-if="dvm.canEdit && dvm.edit" class="d-flex p-2">
-        <keyword-select ng-model="dvm.keywords" hide-label="true" class="flex-1" is-focus-me></keyword-select>
+        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value" hide-label="true" class="flex-1" is-focus-me></keyword-select>
         <a ng-mousedown="dvm.saveChanges()" class="fa fa-save fa-2x"></a>
     </div>
     <div class="static-area" ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">

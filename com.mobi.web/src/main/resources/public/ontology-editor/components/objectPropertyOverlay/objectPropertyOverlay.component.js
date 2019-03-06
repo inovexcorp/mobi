@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name objectPropertyOverlay.component:objectPropertyOverlay
+     * @name ontology-editor.component:objectPropertyOverlay
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
      * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
@@ -88,15 +88,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name objectPropertyOverlay
-         *
-         * @description
-         * The `objectPropertyOverlay` module only provides the `objectPropertyOverlay` directive which creates
-         * content for a modal to add an object property to an individual.
-         */
-        .module('objectPropertyOverlay', [])
+    angular.module('ontology-editor')
         .component('objectPropertyOverlay', objectPropertyOverlayComponent);
 })();

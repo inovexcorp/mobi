@@ -57,9 +57,6 @@
                     dvm.currentPassword = '';
                     dvm.password = '';
                     dvm.confirmedPassword = '';
-                    // dvm.form.currentPassword = undefined;
-                    // dvm.form.password = undefined;
-                    // dvm.form.confirmedPassword = undefined;
                     dvm.form.$setPristine();
                 }, error => dvm.errorMessage = error);
         }
