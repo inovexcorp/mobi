@@ -85,6 +85,9 @@
                             ontoUtils.deleteConceptScheme();
                         }
                     }
+                    dvm.seeHistory = function() {
+                        dvm.os.listItem.seeHistory = true;
+                    }
 
                     $scope.$watch(() => dvm.os.listItem.selected, function(newValue) {
                         if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {

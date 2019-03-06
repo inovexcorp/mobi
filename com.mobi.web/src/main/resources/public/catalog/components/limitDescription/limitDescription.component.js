@@ -57,7 +57,8 @@
             dvm.full = false;
             dvm.display = getLimitedDescription();
         }
-        dvm.toggleFull = function() {
+        dvm.toggleFull = function(event) {
+            event.stopPropagation();
             dvm.full = !dvm.full;
             dvm.display = dvm.full ? dvm.description : getLimitedDescription();
         }
