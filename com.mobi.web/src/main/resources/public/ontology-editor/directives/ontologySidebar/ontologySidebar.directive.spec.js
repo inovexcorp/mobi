@@ -40,8 +40,8 @@ describe('Ontology Sidebar directive', function() {
 
         this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A'}, active: false};
         this.listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B'}, active: false };
-        ontologyStateSvc.list = [this.listItemA, this.listItemB];
-        this.element = $compile(angular.element('<ontology-sidebar></ontology-sidebar>'))(scope);
+        scope.list = [this.listItemA, this.listItemB];
+        this.element = $compile(angular.element('<ontology-sidebar list="list"></ontology-sidebar>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologySidebar');
     });
@@ -55,6 +55,14 @@ describe('Ontology Sidebar directive', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('list should be one way bound', function() {
+            var copy = angular.copy(scope.list);
+            this.controller.list = [{}];
+            scope.$digest();
+            expect(scope.list).toEqual(copy);
+        });
+    });
     describe('controller methods', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem = this.listItemA;
@@ -106,7 +114,7 @@ describe('Ontology Sidebar directive', function() {
         });
         it('depending on how many ontologies are open', function() {
             var tabs = this.element.querySelectorAll('li.nav-item');
-            expect(tabs.length).toEqual(ontologyStateSvc.list.length);
+            expect(tabs.length).toEqual(this.controller.list.length);
         });
         it('depending on whether an ontology is open', function() {
             this.listItemA.active = true;

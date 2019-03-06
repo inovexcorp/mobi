@@ -21,8 +21,8 @@
   #L%
   -->
 <div class="keyword-select form-group">
-    <custom-label muted-text="'(Optional)'">Keywords</custom-label>
-    <ui-select multiple ng-model="dvm.bindModel" tagging tagging-label ng-change="dvm.onChange()">
+    <custom-label ng-if="!dvm.hideLabel" muted-text="'(Optional)'">Keywords</custom-label>
+    <ui-select multiple ng-model="dvm.bindModel" ng-attr-autofocus="{{dvm.isFocusMe}}" ng-change="dvm.onChange()" tagging tagging-label>
         <ui-select-match>{{$item}}</ui-select-match>
         <ui-select-choices repeat="keyword in dvm.keywordList">{{keyword}}</ui-select-choices>
     </ui-select>

@@ -34,8 +34,10 @@ describe('Keyword Select component', function() {
         });
 
         scope.bindModel = '';
+        scope.hideLabel = false;
+        scope.isFocusMe = false;
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        this.element = $compile(angular.element('<keyword-select bind-model="bindModel" change-event="changeEvent(value)"></keyword-select>'))(scope);
+        this.element = $compile(angular.element('<keyword-select bind-model="bindModel" hide-label="hideLabel" is-focus-me="isFocusMe" change-event="changeEvent(value)"></keyword-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('keywordSelect');
     });
@@ -56,16 +58,29 @@ describe('Keyword Select component', function() {
             this.controller.changeEvent({value: 'Test'});
             expect(scope.changeEvent).toHaveBeenCalledWith('Test');
         });
+        it('hideLabel is one way bound', function() {
+            this.controller.hideLabel = true;
+            scope.$digest();
+            expect(scope.hideLabel).toBe(false);
+        });
+        it('isFocusMe is one way bound', function() {
+            this.controller.isFocusMe = true;
+            scope.$digest();
+            expect(scope.isFocusMe).toBe(false);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('KEYWORD-SELECT');
             expect(this.element.querySelectorAll('.keyword-select').length).toEqual(1);
         });
-        ['custom-label', 'ui-select'].forEach(test => {
-            it('with a ' + test, function() {
-                expect(this.element.find(test).length).toEqual(1);
-            });
+        it('without a custom-label when hideLabel', function () {
+            this.controller.hideLabel = true;
+            scope.$digest();
+            expect(this.element.find('custom-label').length).toBe(0);
+        });
+        it('with a ui-select', function() {
+            expect(this.element.find('ui-select').length).toBe(1);
         });
     });
 });

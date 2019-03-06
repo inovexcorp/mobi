@@ -35,12 +35,17 @@
      * @param {string[]} bindModel An array of strings representing keywords that are bound to the `ui-select`
      * @param {Function} changeEvent A function that will be called when the value of the `ui-select` changes. Should
      * update the value of `bindModel`. Expects an argument called `value`.
+     * @param {boolean} [hideLabel=false] Whether the label should be hidden.
+     * @param {string} isFocusMe Whether the `ui-select` should be focused once rendered. The presence of the attribute
+     * is enough to set it.
      */
     const keywordSelectComponent = {
         templateUrl: 'shared/components/keywordSelect/keywordSelect.component.html',
         bindings: {
             bindModel: '<',
-            changeEvent: '&'
+            changeEvent: '&',
+            hideLabel: '<',
+            isFocusMe: '@'
         },
         controllerAs: 'dvm',
         controller: keywordSelectComponentCtrl
