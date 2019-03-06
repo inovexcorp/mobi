@@ -27,6 +27,7 @@ describe('Record Filters component', function() {
         module('templates');
         module('catalog');
         mockCatalogManager();
+        mockUtil();
         injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {

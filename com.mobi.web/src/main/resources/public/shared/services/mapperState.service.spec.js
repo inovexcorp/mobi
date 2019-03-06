@@ -95,6 +95,39 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });
+    describe('should select a mapping', function() {
+        beforeEach(function() {
+            this.record = {id: 'test1', title: 'Test 1'};
+        });
+        it('if it was already open', function() {
+            mapperStateSvc.selectMapping(this.record);
+            scope.$apply();
+            mappingManagerSvc.getMapping.calls.reset();
+            mapperStateSvc.selectMapping(this.record);
+            expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
+            expect(mapperStateSvc.mapping).toEqual(jasmine.objectContaining({record: this.record}));
+        });
+        describe('if it had not been opened yet', function() {
+            it('unless an error occurs', function() {
+                mappingManagerSvc.getMapping.and.returnValue($q.reject('Error message'));
+                mapperStateSvc.selectMapping(this.record);
+                scope.$apply();
+                expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Mapping ' + this.record.title + ' could not be found');
+            });
+            it('successfully', function() {
+                var ontology = {'@id': 'ontology'};
+                var mapping = [{}];
+                mappingManagerSvc.getMapping.and.returnValue($q.when(mapping));
+                catalogManagerSvc.getRecord.and.returnValue($q.when(ontology));
+                mapperStateSvc.selectMapping(this.record);
+                scope.$apply();
+                expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
+                expect(catalogManagerSvc.getRecord).toHaveBeenCalled();
+                expect(mapperStateSvc.mapping).toEqual({jsonld: mapping, record: this.record, ontology: ontology, difference: {additions: [], deletions: []}});
+            });
+        });
+    });
     it('should test whether the mapping has been changed', function() {
         expect(mapperStateSvc.isMappingChanged()).toEqual(false);
         mapperStateSvc.mapping.difference.additions = [{}];
