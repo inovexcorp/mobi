@@ -26,7 +26,7 @@
     </div>
     <div class="nav-container vertical-scroll pb-2">
         <ul class="nav flex-column">
-            <li class="nav-item w-100" ng-repeat="item in dvm.os.list track by item.ontologyRecord.recordId" ng-class="{'active': item.active}">
+            <li class="nav-item w-100" ng-repeat="item in dvm.list track by item.ontologyRecord.recordId" ng-class="{'active': item.active}">
                 <div class="d-flex">
                     <a class="nav-link text-truncate" ng-click="dvm.onClick(item)">{{item.ontologyRecord.title}}</a><span class="close-icon fa fa-times" ng-click="dvm.onClose(item)"></span>
                 </div>

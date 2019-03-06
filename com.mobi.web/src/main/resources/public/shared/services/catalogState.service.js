@@ -138,6 +138,19 @@
         }
         /**
          * @ngdoc method
+         * @name getRecordType
+         * @methodOf shared.service:catalogStateService
+         *
+         * @description
+         * Returns the type of the provided Record.
+         *
+         * @return {string} The type IRI of the record
+         */
+        self.getRecordType = function(record) {
+            return _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type)) || prefixes.catalog + 'Record';
+        }
+        /**
+         * @ngdoc method
          * @name getRecordIcon
          * @methodOf shared.service:catalogStateService
          *
@@ -148,8 +161,8 @@
          * @return {string} A Font Awesome class string
          */
         self.getRecordIcon = function(record) {
-            var type = _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type));
-            return self.recordIcons[type || 'default'];
+            var type = self.getRecordType(record);
+            return self.recordIcons[type === prefixes.catalog + 'Record' ? 'default' : type];
         }
         /**
          * @ngdoc method

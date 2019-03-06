@@ -61,6 +61,9 @@
                 replace: true,
                 templateUrl: 'ontology-editor/directives/ontologySidebar/ontologySidebar.directive.html',
                 scope: {},
+                bindToController: {
+                    list: '<'
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;

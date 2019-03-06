@@ -35,6 +35,7 @@
                 commitId: '<',
                 headTitle: '<?',
                 targetId: '<?',
+                entityId: '<?',
                 commitData: '=?'
             },
             templateUrl: 'shared/directives/commitHistoryTable/commitHistoryTable.directive.html',
@@ -68,7 +69,7 @@
                 dvm.deltaY = 56;
                 dvm.id = 'commit-history-table';
 
-                $scope.$watchGroup(['dvm.headTitle', 'dvm.commitId', 'dvm.targetId'], () => dvm.getCommits());
+                $scope.$watchGroup(['dvm.headTitle', 'dvm.commitId', 'dvm.entityId', 'dvm.targetId'], () => dvm.getCommits());
 
                 dvm.openCommitOverlay = function(commitId) {
                     cm.getCommit(commitId)
@@ -83,7 +84,7 @@
                 dvm.getCommits = function() {
                     if (dvm.commitId) {
                         httpService.cancel(dvm.id);
-                        var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.id);
+                        var promise = cm.getCommitHistory(dvm.commitId, dvm.targetId, dvm.entityId, dvm.id);
                         promise.then(commits => {
                             dvm.commitData = commits;
                             dvm.commits = commits;
@@ -318,6 +319,8 @@
          * @param {string} headTitle The title to put on the top commit
          * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
          *      commit.
+         * @param {string} [entityId=''] entityId is the commit id of the commit which it should be contained in for the
+         *      history's commit list.
          * @param {Object[]} commitData A variable to bind the retrieved commits to
          */
         .directive('commitHistoryTable', commitHistoryTable);

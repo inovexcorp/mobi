@@ -427,6 +427,7 @@ function mockMapperState() {
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            this.selectMapping = jasmine.createSpy('selectMapping');
             this.isMappingChanged = jasmine.createSpy("isMappingChanged").and.returnValue(false);
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
@@ -952,6 +953,7 @@ function mockCatalogManager() {
             this.deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue($q.when());
             this.getCommit = jasmine.createSpy('getCommit').and.returnValue($q.when([]));
             this.getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue($q.when([]));
+            this.getCompiledResource = jasmine.createSpy('getCompiledResource').and.returnValue($q.when([]));
             this.getDifference = jasmine.createSpy('getDifference').and.returnValue($q.when([]));
             this.getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue($q.when([]));
             this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());
@@ -992,6 +994,7 @@ function mockCatalogState() {
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
+            this.getRecordType = jasmine.createSpy('getRecordType').and.returnValue('');
             this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });

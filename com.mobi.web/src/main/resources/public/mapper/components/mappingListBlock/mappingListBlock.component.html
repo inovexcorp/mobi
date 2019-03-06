@@ -28,11 +28,11 @@
                 <i class="fa fa-plus"></i>Create Mapping
             </button>
         </block-header>
-        <block-search ng-model="dvm.state.mappingSearchString" clear-event="dvm.state.mappingSearchString = ''"></block-search>
-        <block-content class="tree scroll-without-buttons">
-            <ul>
+        <block-search bind-model="dvm.state.mappingSearchString" change-event="dvm.state.mappingSearchString = value" clear-event="dvm.state.mappingSearchString = ''"></block-search>
+        <block-content>
+            <ul class="tree scroll-without-buttons">
                 <li ng-repeat="record in dvm.list | filter:{title: dvm.state.mappingSearchString}">
-                  <a ng-click="dvm.onClick(record)" ng-class="{'active': record.id === dvm.state.mapping.record.id}" ng-bind-html="record.title | highlight:dvm.state.mappingSearchString | trusted"></a>
+                  <a ng-click="dvm.state.selectMapping(record)" ng-class="{'active': record.id === dvm.state.mapping.record.id}" ng-bind-html="record.title | highlight:dvm.state.mappingSearchString | trusted"></a>
                 </li>
             </ul>
         </block-content>
