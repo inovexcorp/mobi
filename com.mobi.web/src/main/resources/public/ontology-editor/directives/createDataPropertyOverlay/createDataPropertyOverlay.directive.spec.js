@@ -21,12 +21,11 @@
  * #L%
  */
 describe('Create Data Property Overlay directive', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
+    var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
         module('createDataPropertyOverlay');
-        mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
@@ -34,10 +33,9 @@ describe('Create Data Property Overlay directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
@@ -57,7 +55,6 @@ describe('Create Data Property Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        ontologyManagerSvc = null;
         ontologyStateSvc = null;
         prefixes = null;
         ontoUtils = null;
@@ -191,12 +188,11 @@ describe('Create Data Property Overlay directive', function() {
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toContain({'@id': this.controller.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties);
                 });
                 it('has values', function() {
                     this.controller.values = [{'@id': 'propertyA'}];
@@ -206,7 +202,7 @@ describe('Create Data Property Overlay directive', function() {
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();

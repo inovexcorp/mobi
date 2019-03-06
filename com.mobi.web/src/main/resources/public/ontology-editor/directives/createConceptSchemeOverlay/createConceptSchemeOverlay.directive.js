@@ -106,14 +106,12 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
-                        var index = _.get(dvm.os.listItem, 'conceptSchemes.index');
-                        hierarchy.push({'@id': dvm.scheme['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
+                        dvm.os.listItem.conceptSchemes.iris[dvm.scheme['@id']] = dvm.os.listItem.ontologyId;
                         // Add top concepts to hierarchy if they exist
                         _.forEach(dvm.selectedConcepts, concept => {
-                            dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
+                            dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes, concept['@id'], dvm.scheme['@id']);
                         });
-                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
                         // Update additions
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
                         // Update individual hierarchy

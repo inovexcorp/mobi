@@ -78,9 +78,11 @@
                     dvm.os = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.util = utilService;
-                    dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
+                    dvm.properties = [];
 
-
+                    dvm.$onInit = function() {
+                        dvm.properties = _.union(pm.ontologyProperties, pm.defaultAnnotations, pm.owlAnnotations, _.keys(dvm.os.listItem.annotations.iris));
+                    }
                     dvm.submit = function() {
                         if (dvm.os.editingOntologyProperty) {
                             dvm.editProperty();

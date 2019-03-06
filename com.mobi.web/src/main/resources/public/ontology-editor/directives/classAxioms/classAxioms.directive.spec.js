@@ -118,8 +118,8 @@ describe('Class Axioms directive', function() {
                 this.controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 this.controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.classes.index);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id']);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes);
                 expect(ontologyStateSvc.listItem.classes.flat).toEqual([{entityIRI: 'new'}]);
                 expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
             });

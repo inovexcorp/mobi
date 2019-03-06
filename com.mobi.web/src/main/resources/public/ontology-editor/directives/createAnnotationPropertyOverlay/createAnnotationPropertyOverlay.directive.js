@@ -56,9 +56,9 @@
          */
         .directive('createAnnotationPropertyOverlay', createAnnotationPropertyOverlay);
 
-        createAnnotationPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createAnnotationPropertyOverlay.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createAnnotationPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createAnnotationPropertyOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'ontology-editor/directives/createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.directive.html',
@@ -70,7 +70,6 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.prefixes = prefixes;
-                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
@@ -104,7 +103,8 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update lists
-                        updateLists('annotations');
+                        dvm.os.listItem.annotations.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
+                        dvm.os.listItem.annotations.flat = dvm.os.flattenHierarchy(dvm.os.listItem.annotations);
                         // Update InProgressCommit
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
                         // Save the changes to the ontology
@@ -114,12 +114,6 @@
                     }
                     dvm.cancel = function() {
                         $scope.dismiss();
-                    }
-
-                    function updateLists(key) {
-                        dvm.os.listItem[key].iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
-                        dvm.os.listItem[key].hierarchy.push({'@id': dvm.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
-                        dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                     }
                 }]
             }

@@ -1,17 +1,10 @@
 {
-  "hierarchy": [
-    {
-      "@id": "https://mobi.com#parent",
-      "@type": ["http://mobi.com/hierarchy#Node"],
-      "http://mobi.com/hierarchy#child": [
-        {
-          "@id": "https://mobi.com#child",
-          "@type": ["http://mobi.com/hierarchy#Node"]
-        }
-      ]
-    }
-  ],
-  "index": {
+  "parentMap": {
+    "https://mobi.com#parent": [
+      "https://mobi.com#child"
+    ]
+  },
+  "childMap": {
     "https://mobi.com#child": [
       "https://mobi.com#parent"
     ]

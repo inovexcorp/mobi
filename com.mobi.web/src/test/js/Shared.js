@@ -621,26 +621,26 @@ function mockOntologyState() {
                 derivedSemanticRelations: [],
                 classes: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 objectProperties: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 dataProperties: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 annotations: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 individuals: {
@@ -648,13 +648,15 @@ function mockOntologyState() {
                     flat: []
                 },
                 concepts: {
-                    hierarchy: [],
-                    index: {},
+                    iris: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 conceptSchemes: {
-                    hierarchy: [],
-                    index: {},
+                    iris: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 blankNodes: {},

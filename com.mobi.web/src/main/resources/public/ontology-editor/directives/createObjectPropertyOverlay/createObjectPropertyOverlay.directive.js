@@ -38,7 +38,6 @@
          * @name createObjectPropertyOverlay.directive:createObjectPropertyOverlay
          * @scope
          * @restrict E
-         * @requires shared.service:ontologyManagerService
          * @requires shared.service:ontologyStateService
          * @requires shared.service:prefixes
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
@@ -59,9 +58,9 @@
          */
         .directive('createObjectPropertyOverlay', createObjectPropertyOverlay);
 
-        createObjectPropertyOverlay.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
+        createObjectPropertyOverlay.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService'];
 
-        function createObjectPropertyOverlay($filter, ontologyManagerService, ontologyStateService, prefixes, ontologyUtilsManagerService) {
+        function createObjectPropertyOverlay($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 templateUrl: 'ontology-editor/directives/createObjectPropertyOverlay/createObjectPropertyOverlay.directive.html',
@@ -86,7 +85,6 @@
                         }
                     ];
                     dvm.prefixes = prefixes;
-                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
@@ -156,8 +154,7 @@
                                 dvm.os.listItem.derivedSemanticRelations.push(dvm.property['@id']);
                             }
                         } else {
-                            dvm.os.listItem.objectProperties.hierarchy.push({'@id': dvm.property['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
-                            dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties);
                         }
                     }
                 }]
