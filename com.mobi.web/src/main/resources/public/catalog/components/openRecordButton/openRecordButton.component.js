@@ -42,7 +42,7 @@
      * 
      * @param {Object} record The record to open
      * @param {string} flat Whether the button should be flat. The presence of the attribute is enough to set it
-     * @param {string} stopProp A string that when defined stops propagation on click event
+     * @param {string} stopProp Whether propagation should be stopped on click event. The presence of the attribute is enough to set it
      */
     const openRecordButtonComponent = {
         templateUrl: 'catalog/components/openRecordButton/openRecordButton.component.html',
