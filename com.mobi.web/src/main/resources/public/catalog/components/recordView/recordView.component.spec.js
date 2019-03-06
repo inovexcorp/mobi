@@ -103,7 +103,7 @@ describe('Record View component', function() {
             expect(this.controller.record).toBeUndefined();
             expect(catalogStateSvc.selectedRecord).toBeUndefined();
             expect(policyEnforcementSvc.evaluateRequest).not.toHaveBeenCalled();
-            expect(utilSvc.createWarningToast).toHaveBeenCalled();
+            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
         });
     });
     describe('controller methods', function() {
