@@ -111,8 +111,8 @@ describe('Object Property Axioms directive', function() {
                 this.controller.key = prefixes.rdfs + 'subPropertyOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 this.controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.hierarchy, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.objectProperties.index);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id']);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties);
                 expect(ontologyStateSvc.listItem.objectProperties.flat).toEqual([{entityIRI: 'new'}]);
                 expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
             });

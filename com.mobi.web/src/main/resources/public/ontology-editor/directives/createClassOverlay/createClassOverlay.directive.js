@@ -113,9 +113,7 @@
                             }
                             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], superClassIds);
                         } else {
-                            var hierarchy = _.get(dvm.os.listItem, 'classes.hierarchy');
-                            hierarchy.push({'@id': dvm.clazz['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
-                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes);
                         }
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
                         // Update InProgressCommit

@@ -130,19 +130,18 @@
 
                             // Made into a Concept
                             if (!wasConcept && isConcept) {
-                                var hierarchy = _.get(dvm.os.listItem, 'concepts.hierarchy');
-                                hierarchy.push({'@id': dvm.os.listItem.selected['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
-                                dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                                dvm.ontoUtils.addConcept(dvm.os.listItem.selected);
                                 _.forEach(_.pull(_.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
                                     dvm.ontoUtils.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
                                 });
                             }
                             // No longer a Concept
                             if (!isConcept && wasConcept) {
-                                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.concepts.hierarchy, dvm.os.listItem.selected['@id'], dvm.os.listItem.concepts.index);
-                                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.selected['@id'], dvm.os.listItem.conceptSchemes.index);
-                                dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(dvm.os.listItem.concepts.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
-                                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                                delete dvm.os.listItem.concepts.iris[dvm.os.listItem.selected['@id']];                                
+                                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.concepts, dvm.os.listItem.selected['@id']);
+                                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes, dvm.os.listItem.selected['@id']);
+                                dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(dvm.os.listItem.concepts);
+                                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
                                 if (dvm.os.listItem.editorTabStates.concepts.entityIRI === dvm.os.listItem.selected['@id']) {
                                     _.unset(dvm.os.listItem.editorTabStates.concepts, 'entityIRI');
                                     _.unset(dvm.os.listItem.editorTabStates.concepts, 'usages');
@@ -160,17 +159,16 @@
                             }
                             // Made into a Concept Scheme
                             if (!wasConceptScheme && isConceptScheme) {
-                                var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
-                                hierarchy.push({'@id': dvm.os.listItem.selected['@id'], '@type': ['http://mobi.com/hierarchy#Node']});
-                                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                                dvm.ontoUtils.addConceptScheme(dvm.os.listItem.selected);
                                 _.forEach(_.pull(_.keys(dvm.os.listItem.selected), '@id', '@type'), key => {
                                     dvm.ontoUtils.updateVocabularyHierarchies(key, dvm.os.listItem.selected[key]);
                                 });
                             }
                             // No longer a Concept Scheme
                             if (!isConceptScheme && wasConceptScheme) {
-                                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.selected['@id'], dvm.os.listItem.conceptSchemes.index);
-                                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                                delete dvm.os.listItem.conceptSchemes.iris[dvm.os.listItem.selected['@id']];                                
+                                dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes, dvm.os.listItem.selected['@id']);
+                                dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
                                 if (dvm.os.listItem.editorTabStates.schemes.entityIRI === dvm.os.listItem.selected['@id']) {
                                     _.unset(dvm.os.listItem.editorTabStates.schemes, 'entityIRI');
                                     _.unset(dvm.os.listItem.editorTabStates.schemes, 'usages');
