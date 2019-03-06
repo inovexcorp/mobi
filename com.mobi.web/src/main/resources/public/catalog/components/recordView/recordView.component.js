@@ -71,8 +71,8 @@
                 .then(response => {
                     setInfo(response);
                     dvm.setCanEdit();
-                }, () => {
-                    util.createWarningToast('The record you were viewing no longer exists');
+                }, (errorMessage) => {
+                    util.createErrorToast(errorMessage);
                     state.selectedRecord = undefined;
                 });
         }

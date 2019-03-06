@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-filters">
+<div class="record-filters w-100">
     <div class="filter-container">
         <h5 class="record-filter-header text-muted d-flex justify-content-between" ng-click="dvm.hide = !dvm.hide" data-toggle="collapse" data-target="#filter_options_{{$id}}" aria-expanded="true" aria-controls="filter_options_{{$id}}">
             <span>Record Type</span>
@@ -30,7 +30,7 @@
             <div class="filter-option my-2" ng-repeat="filter in dvm.recordTypes track by filter.value">
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="filter-checkbox_{{$id}}" ng-model="filter.checked" ng-change="dvm.filter(filter)">
-                    <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{(filter.value | splitIRI).end}}</label>
+                    <label class="custom-control-label" for="filter-checkbox_{{$id}}">{{dvm.util.getBeautifulIRI(filter.value)}}</label>
                 </div>
             </div>
         </div>
