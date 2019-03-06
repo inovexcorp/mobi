@@ -51,7 +51,6 @@
 
     function mappingListBlockComponentCtrl($q, utilService, mappingManagerService, mapperStateService, catalogManagerService, prefixes, modalService) {
         var dvm = this;
-        var openedMappings = [];
         dvm.state = mapperStateService;
         dvm.mm = mappingManagerService;
         dvm.cm = catalogManagerService;
@@ -71,35 +70,11 @@
         dvm.deleteMapping = function() {
             dvm.mm.deleteMapping(dvm.state.mapping.record.id)
                 .then(() => {
-                    _.remove(openedMappings, {record: {id: dvm.state.mapping.record.id}});
+                    _.remove(dvm.state.openedMappings, {record: {id: dvm.state.mapping.record.id}});
                     dvm.state.mapping = undefined;
                     dvm.state.sourceOntologies = [];
                     setRecords();
                 }, dvm.util.createErrorToast);
-        }
-        dvm.onClick = function(record) {
-            var openedMapping = _.find(openedMappings, {record: {id: record.id}});
-            if (openedMapping) {
-                dvm.state.mapping = openedMapping;
-            } else {
-                dvm.mm.getMapping(record.id)
-                    .then(jsonld => {
-                        var mapping = {
-                            jsonld,
-                            record,
-                            difference: {
-                                additions: [],
-                                deletions: []
-                            }
-                        };
-                        dvm.state.mapping = mapping;
-                        openedMappings.push(mapping);
-                        return dvm.cm.getRecord(_.get(dvm.mm.getSourceOntologyInfo(jsonld), 'recordId'), dvm.cm.localCatalog['@id']);
-                    }, () => $q.reject('Mapping ' + record.title + ' could not be found'))
-                    .then(ontologyRecord => {
-                        dvm.state.mapping.ontology = ontologyRecord;
-                    }, errorMessage => dvm.util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
-            }
         }
 
         function setRecords() {

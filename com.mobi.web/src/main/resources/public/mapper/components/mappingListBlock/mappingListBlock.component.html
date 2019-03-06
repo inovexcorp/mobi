@@ -32,7 +32,7 @@
         <block-content>
             <ul class="tree scroll-without-buttons">
                 <li ng-repeat="record in dvm.list | filter:{title: dvm.state.mappingSearchString}">
-                  <a ng-click="dvm.onClick(record)" ng-class="{'active': record.id === dvm.state.mapping.record.id}" ng-bind-html="record.title | highlight:dvm.state.mappingSearchString | trusted"></a>
+                  <a ng-click="dvm.state.selectMapping(record)" ng-class="{'active': record.id === dvm.state.mapping.record.id}" ng-bind-html="record.title | highlight:dvm.state.mappingSearchString | trusted"></a>
                 </li>
             </ul>
         </block-content>

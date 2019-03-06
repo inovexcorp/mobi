@@ -130,40 +130,6 @@ describe('Mapping List Block component', function() {
                 });
             });
         });
-        describe('should open a mapping on click', function() {
-            beforeEach(function() {
-                this.record = {id: 'test1', title: 'Test 1'};
-            });
-            it('if it was already open', function() {
-                this.controller.onClick(this.record);
-                scope.$apply();
-                mappingManagerSvc.getMapping.calls.reset();
-                this.controller.onClick(this.record);
-                expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
-                expect(mapperStateSvc.mapping).toEqual(jasmine.objectContaining({record: this.record}));
-            });
-            describe('if it had not been opened yet', function() {
-                it('unless an error occurs', function() {
-                    mappingManagerSvc.getMapping.and.returnValue($q.reject('Error message'));
-                    this.controller.onClick(this.record);
-                    scope.$apply();
-                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
-                    expect(mapperStateSvc.mapping).toBeUndefined();
-                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Mapping ' + this.record.title + ' could not be found');
-                });
-                it('successfully', function() {
-                    var ontology = {'@id': 'ontology'};
-                    var mapping = [{}]
-                    mappingManagerSvc.getMapping.and.returnValue($q.when(mapping));
-                    catalogManagerSvc.getRecord.and.returnValue($q.when(ontology));
-                    this.controller.onClick(this.record);
-                    scope.$apply();
-                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
-                    expect(catalogManagerSvc.getRecord).toHaveBeenCalled();
-                    expect(mapperStateSvc.mapping).toEqual({jsonld: mapping, record: this.record, ontology: ontology, difference: {additions: [], deletions: []}});
-                });
-            });
-        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -200,12 +166,11 @@ describe('Mapping List Block component', function() {
             expect(this.element.find('li').length).toBe(0);
         });
     });
-    it('should call onClick when a mapping name is clicked', function() {
+    it('should call mapperStateService selectMapping when a mapping name is clicked', function() {
         this.controller.list = [{id: 'record', title: ''}];
-        spyOn(this.controller, 'onClick');
         scope.$digest();
 
         angular.element(this.element.querySelectorAll('li a')[0]).triggerHandler('click');
-        expect(this.controller.onClick).toHaveBeenCalled();
+        expect(mapperStateSvc.selectMapping).toHaveBeenCalled();
     });
 });
