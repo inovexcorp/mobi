@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Groups Page directive', function() {
-    var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
+    var $compile, scope, $q, userStateSvc, userManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,7 +32,7 @@ describe('Groups Page directive', function() {
         mockUtil();
         mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _userStateService_, _userManagerService_, _loginManagerService_, _utilService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _userStateService_, _userManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -54,7 +54,6 @@ describe('Groups Page directive', function() {
         $q = null;
         userStateSvc = null;
         userManagerSvc = null;
-        loginManagerSvc = null;
         utilSvc = null;
         modalSvc = null;
         this.element.remove();
@@ -170,9 +169,11 @@ describe('Groups Page directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('groups-page')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
             expect(this.element.querySelectorAll('.col-4').length).toBe(1);
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
+        });
+        it('with .rows', function() {
+            expect(this.element.querySelectorAll('.row').length).toBe(4);            
         });
         it('with blocks', function() {
             expect(this.element.find('block').length).toBe(4);

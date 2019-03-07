@@ -20,15 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-request-list">
+<div class="merge-request-list d-flex flex-column">
     <form class="search-container form-inline justify-content-center">
         <div class="form-group">
             <select class="form-control" ng-model="dvm.state.acceptedFilter" ng-change="dvm.state.setRequests(dvm.state.acceptedFilter)" ng-options="option.value as option.label for option in dvm.filterOptions"></select>
         </div>
         <button class="btn btn-primary ml-2" ng-click="dvm.state.startCreate()">Create Request</button>
     </form>
-    <block>
-        <block-content class="padding">
+    <block class="flex-1 remove-min-height">
+        <block-content>
             <info-message ng-if="!dvm.state.requests.length">No requests found</info-message>
             <div class="request padding" ng-repeat="request in dvm.state.requests track by request.jsonld['@id']" ng-click="dvm.state.selected = request">
                 <div class="details">

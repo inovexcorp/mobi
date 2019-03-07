@@ -46,8 +46,5 @@
             </div>
         </div>
     </div>
-    <div class="paging-container clearfix">
-        <paging-details class="float-left" total-size="dvm.totalSize" page-index="dvm.config.pageIndex" limit="dvm.config.limit"></paging-details>
-        <pagination total="dvm.totalSize" limit="dvm.config.limit" current-page="dvm.currentPage" get-page="dvm.setRecords()"></pagination>
-    </div>
+    <paging current-page="dvm.currentPage" limit="dvm.config.limit" total="dvm.totalSize" change-event="dvm.setRecords(page)"></paging>
 </div>

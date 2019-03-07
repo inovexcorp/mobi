@@ -25,6 +25,15 @@
 
     propertyManagerService.$inject = ['prefixes'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:propertyManagerService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * `propertyManagerService` is a service that provides variables for commonly used property IRIs, axioms, and
+     * language tags along with utility methods for adding, removing, and editing values on JSON-LD objects.
+     */
     function propertyManagerService(prefixes) {
         var self = this;
 
@@ -557,7 +566,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .service('propertyManagerService', propertyManagerService);
 })();

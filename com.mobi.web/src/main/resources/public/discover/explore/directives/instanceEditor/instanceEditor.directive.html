@@ -21,9 +21,9 @@
   #L%
   -->
 <div class="instance-editor">
-    <block>
+    <block class="h-100">
         <block-header>
-            <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <breadcrumbs items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
             <a class="float-right link" ng-click="dvm.cancel()">Cancel</a>
             <button type="button" ng-disabled="!dvm.isValid" class="float-right link btn btn-link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</button>
         </block-header>

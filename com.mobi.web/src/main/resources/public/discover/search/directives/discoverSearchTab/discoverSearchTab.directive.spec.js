@@ -47,7 +47,7 @@ describe('Discover Search Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('discover-search-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a search-form', function() {
             expect(this.element.find('search-form').length).toEqual(1);

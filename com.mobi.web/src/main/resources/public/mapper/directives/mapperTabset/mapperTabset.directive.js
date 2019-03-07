@@ -30,7 +30,7 @@
          *
          * @description
          * The `mapperTabset` module only provides the `mapperTabset` directive
-         * which creates the main {@link shared.directive:tabset tabset} for the mapping tool.
+         * which creates the main {@link shared.component:tabset tabset} for the mapping tool.
          */
         .module('mapperTabset', [])
         /**
@@ -41,7 +41,7 @@
          * @requires  shared.service:mapperStateService
          *
          * @description
-         * `mapperTabset` is a directive which creates a {@link shared.directive:tabset tabset} with different
+         * `mapperTabset` is a directive which creates a {@link shared.component:tabset tabset} with different
          * pages depending on the current {@link shared.service:mapperStateService#step step} of the mapping
          * process. The three pages are {@link mappingSelectPage.directive:mappingSelectPage mappingSelectPage},
          * {@link fileUploadPage.directive:fileUploadPage fileUploadPage}, and the

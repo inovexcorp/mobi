@@ -36,9 +36,9 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <tabset class="in-overlay">
-            <tab heading="'List'" active="dvm.tabs.list">
-                <div class="form-group">
+        <material-tabset centered>
+            <material-tab heading="'List'" active="dvm.tabs.list" set-active="dvm.tabs.list = value">
+                <div class="form-group pt-3">
                     <custom-label>Values</custom-label>
                     <ui-select multiple ng-model="dvm.values" ng-disabled="!dvm.axiom">
                         <ui-select-match placeholder="Select values">
@@ -49,14 +49,16 @@
                         </ui-select-choices>
                     </ui-select>
                 </div>
-            </tab>
-            <tab heading="'Editor'" active="dvm.tabs.editor">
-                <custom-label>Expression</custom-label>
-                <div class="codemirror-wrapper" ng-class="{'readOnly': dvm.editorOptions.readOnly}">
-                    <ui-codemirror ng-model="dvm.expression" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
+            </material-tab>
+            <material-tab heading="'Editor'" active="dvm.tabs.editor" set-active="dvm.tabs.editor = value">
+                <div class="pt-3">
+                    <custom-label>Expression</custom-label>
+                    <div class="codemirror-wrapper" ng-class="{'readOnly': dvm.editorOptions.readOnly}">
+                        <ui-codemirror ng-model="dvm.expression" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
+                    </div>
                 </div>
-            </tab>
-        </tabset>
+            </material-tab>
+        </material-tabset>
     </form>
 </div>
 <div class="modal-footer">

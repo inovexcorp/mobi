@@ -46,9 +46,9 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `datasetsList` is a directive which creates a Bootstrap row containing a {@link shared.directive:block block}
-         * with a {@link shared.directive:pagination paginated} list of
-         * {@link shared.service:datasetStateService#results Dataset Records} and
+         * `datasetsList` is a directive which creates a Bootstrap row containing a {@link shared.component:block block}
+         * with a {@link shared.component:paging paginated} list of
+         * {@link shared.service:datasetStateService Dataset Records} and
          * {@link confirmationOverlay.directive:confirmationOverlay confirmation overlays} for deleting and clearing
          * datasets. Each dataset only displays its title, dataset IRI, and a portion of its description until it is
          * opened. Only one dataset can be open at a time. The directive is replaced by the contents of its template.
@@ -97,7 +97,8 @@
                                 }, () => dvm.errorMessage = 'Unable to load all Dataset details.');
                         }
                     }
-                    dvm.getPage = function(direction) {
+                    dvm.getPage = function(page) {
+                        dvm.currentPage = page;
                         dvm.state.paginationConfig.pageIndex = dvm.currentPage - 1;
                         dvm.state.setResults();
                     }

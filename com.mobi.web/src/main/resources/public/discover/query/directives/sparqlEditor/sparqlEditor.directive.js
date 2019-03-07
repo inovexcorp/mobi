@@ -42,7 +42,7 @@
          * @requires shared.service:prefixes
          *
          * @description
-         * `sparqlEditor` is a directive that creates a {@link shared.directive:block block} with a form for creating
+         * `sparqlEditor` is a directive that creates a {@link shared.component:block block} with a form for creating
          * a {@link shared.service:sparqlManagerService#queryString SPARQL query}, selecting
          * {@link shared.service:sparqlManagerService#prefixes prefixes} and a
          * {@link shared.service:sparqlManagerService#datasetRecordIRI dataset} and submitting it. The directive

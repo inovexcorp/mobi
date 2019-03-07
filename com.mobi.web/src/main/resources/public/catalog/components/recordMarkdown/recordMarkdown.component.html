@@ -26,6 +26,6 @@
         <div ng-if="dvm.markdownHTML" class="markdown" ng-bind-html="dvm.markdownHTML | trusted"></div>
     </div>
     <div ng-if="dvm.edit" class="p-2">
-        <markdown-editor ng-model="dvm.editMarkdown" click-event="dvm.saveEdit()" cancel-event="dvm.cancelEdit()" is-focus-me="true" button-text="'Save'" allow-blank-value="true" start-rows="'10'"></markdown-editor>
+        <markdown-editor bind-model="dvm.editMarkdown" change-event="dvm.editMarkdown = value" click-event="dvm.saveEdit()" cancel-event="dvm.cancelEdit()" is-focus-me="true" button-text="'Save'" allow-blank-value="true" start-rows="'10'"></markdown-editor>
     </div>
 </div>

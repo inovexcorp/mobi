@@ -42,7 +42,7 @@
          * @description
          * `classMappingOverlay` is a component that creates content for a modal that creates a ClassMapping in the
          * current {@link shared.service:mapperStateService#mapping mapping} and a preview of
-         * the selected class. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * the selected class. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

@@ -26,7 +26,7 @@
 .instance-form.row {
     margin: 0;
 
-    .changed {
+    .changed label {
         color: var(--primary);
 
         &:after {

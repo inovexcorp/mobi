@@ -23,6 +23,20 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:showProperties
+     * @kind function
+     *
+     * @description
+     * Takes an Object and array of property strings, checks whether or not the Object has that property, and
+     * returns an array of the properties it does have.
+     *
+     * @param {Object} entity The Object to check if it has the properties
+     * @param {string[]} properties The array of property strings
+     * @returns {Object[]} Either an empty array or a string array of the properties from that list that the entity
+     * has.
+     */
     function showProperties() {
         return function(entity, properties) {
             var arr = [];
@@ -33,21 +47,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:showProperties
-         * @kind function
-         *
-         * @description
-         * Takes an Object and array of property strings, checks whether or not the Object has that property, and
-         * returns an array of the properties it does have.
-         *
-         * @param {Object} entity The Object to check if it has the properties
-         * @param {string[]} properties The array of property strings
-         * @returns {Object[]} Either an empty array or a string array of the properties from that list that the entity
-         * has.
-         */
+    angular.module('shared')
         .filter('showProperties', showProperties);
 })();

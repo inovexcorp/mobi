@@ -35,6 +35,7 @@ describe('Markdown Editor component', function() {
         });
 
         scope.bindModel = '';
+        scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.placeHolder = '';
         scope.isFocusMe = true;
         scope.buttonText = '';
@@ -42,7 +43,7 @@ describe('Markdown Editor component', function() {
         scope.startRows = '5';
         scope.clickEvent = jasmine.createSpy('clickEvent');
         scope.cancelEvent = jasmine.createSpy('cancelEvent');
-        this.element = $compile(angular.element('<markdown-editor ng-model="bindModel" is-focus-me="isFocusMe" place-holder="placeHolder" button-text="buttonText" allow-blank-value="allowBlankValue" start-rows="startRows" click-event="clickEvent()" cancel-event="cancelEvent()"></markdown-editor>'))(scope);
+        this.element = $compile(angular.element('<markdown-editor bind-model="bindModel" change-event="changeEvent(value)" is-focus-me="isFocusMe" place-holder="placeHolder" button-text="buttonText" allow-blank-value="allowBlankValue" start-rows="startRows" click-event="clickEvent()" cancel-event="cancelEvent()"></markdown-editor>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('markdownEditor');
     });
@@ -54,10 +55,14 @@ describe('Markdown Editor component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('bindModel should be two way bound', function() {
+        it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'Test';
             scope.$digest();
-            expect(scope.bindModel).toEqual('Test');
+            expect(scope.bindModel).toEqual('');
+        });
+        it('changeEvent should be called in the parent scope', function() {
+            this.controller.changeEvent({value: 'Test'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('Test');
         });
         it('placeHolder should be one way bound', function() {
             this.controller.placeHolder = 'Test';

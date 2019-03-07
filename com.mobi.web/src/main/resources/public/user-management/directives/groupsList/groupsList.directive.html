@@ -23,9 +23,9 @@
 <div class="groups-list tree scroll-without-buttons">
     <ul>
         <li ng-repeat="group in dvm.um.groups | filterGroups | filter:{title: dvm.state.groupSearchString} track by group.title">
-            <a ng-click="dvm.onClick(group)" ng-class="{'active': group.title === dvm.state.selectedGroup.title}">
-                {{group.title}}
-                <span class="member-count float-right"><i class="fa fa-users"></i> {{group.members.length}}</span>
+            <a ng-click="dvm.onClick(group)" class="d-flex" ng-class="{'active': group.title === dvm.state.selectedGroup.title}">
+                <span class="text-truncate">{{group.title}}</span>
+                <span class="member-count pl-1"><i class="fa fa-users"></i> {{group.members.length}}</span>
             </a>
         </li>
     </ul>

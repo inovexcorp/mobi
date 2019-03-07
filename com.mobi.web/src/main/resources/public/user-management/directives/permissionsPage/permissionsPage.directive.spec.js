@@ -211,6 +211,11 @@ describe('Permissions Page directive', function() {
                 policy: this.policy
             };
         });
+        it('should update the specified policy object', function() {
+            this.controller.policies = [{id: 1}, {id: 2}];
+            this.controller.updatePolicy({id: 1, test: true}, 0);
+            expect(this.controller.policies[0]).toEqual({id: 1, test: true, changed: true});
+        });
         describe('should save changes to the policies', function() {
             beforeEach(function() {
                 this.item.changed = true;
@@ -251,8 +256,9 @@ describe('Permissions Page directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('permissions-page')).toEqual(true);
-            expect(this.element.hasClass('row')).toEqual(true);
+            expect(this.element.querySelectorAll('.row').length).toEqual(1);
             expect(this.element.querySelectorAll('.col').length).toEqual(1);
+            expect(this.element.querySelectorAll('.save-container').length).toEqual(1);
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toEqual(1);
@@ -260,10 +266,8 @@ describe('Permissions Page directive', function() {
         it('with a block-content', function() {
             expect(this.element.find('block-content').length).toEqual(1);
         });
-        it('with a circle-button', function() {
-            var div = this.element.querySelectorAll('.save-container');
-            expect(div.length).toEqual(1);
-            expect(angular.element(div[0]).find('circle-button').length).toEqual(1);
+        it('with a button.btn-float', function() {
+            expect(this.element.querySelectorAll('button.btn-float').length).toEqual(1);
         });
         it('depending on how many policies there are', function() {
             expect(this.element.querySelectorAll('.policy').length).toEqual(0);

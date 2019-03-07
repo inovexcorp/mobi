@@ -25,6 +25,15 @@
 
     modalService.$inject = ['$uibModal'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:modalService
+     * @requires $uibModal
+     *
+     * @description
+     * `modalService` is a service that provides functionality to open modals based on the name of the directive.
+     * It uses the $uibModal service to create modals.
+     */
     function modalService($uibModal) {
         var self = this;
 
@@ -67,7 +76,7 @@
          * @methodOf shared.service:modalService
          *
          * @description
-         * Opens a {@link shared.directive:confirmModal} with the provided configuration. The body of the
+         * Opens a {@link shared.component:confirmModal} with the provided configuration. The body of the
          * `confirmModal` is provided as a string. Custom implementation for the confirm and deny actions are provided
          * as the `yes` and `no` functions respectively.
          *
@@ -93,16 +102,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:modalService
-         * @requires $uibModal
-         *
-         * @description
-         * `modalService` is a service that provides functionality to open modals based on the name of the directive.
-         * It uses the $uibModal service to create modals.
-         */
+    angular.module('shared')
         .service('modalService', modalService);
 })();

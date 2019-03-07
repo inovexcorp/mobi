@@ -34,7 +34,7 @@
      * `recordsView` is a component which creates a div with a Bootstrap `row` containing a list of Records in the Mobi
      * instance. The list can be sorted using a {@link catalog.component:sortOptions}, searched using a
      * {@link searchBar.component:searchBar}, and filtered using a {@link catalog.component:recordFilters}. The list is
-     * also {@link shared.directive:paging paginated}. Each Record is displayed using a
+     * also {@link shared.component:paging paginated}. Each Record is displayed using a
      * {@link catalog.component:recordCard} that will select the Record it in the
      * {@link shared.service:catalogStateService} when clicked.
      */
@@ -77,7 +77,8 @@
             dvm.state.currentRecordPage = 1;
             dvm.setRecords(searchText, dvm.state.recordFilterType, dvm.state.recordSortOption);
         }
-        dvm.getRecordPage = function() {
+        dvm.getRecordPage = function(page) {
+            dvm.state.currentRecordPage = page;
             dvm.setRecords(dvm.state.recordSearchText, dvm.state.recordFilterType, dvm.state.recordSortOption);
         }
         dvm.setRecords = function(searchText, recordType, sortOption) {

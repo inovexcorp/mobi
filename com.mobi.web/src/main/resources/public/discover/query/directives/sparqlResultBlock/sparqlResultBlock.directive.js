@@ -42,13 +42,12 @@
          * @requires shared.service:modalService
          *
          * @description
-         * `sparqlResultBlock` is a directive that creates a {@link shared.directive:block block} with a
+         * `sparqlResultBlock` is a directive that creates a {@link shared.component:block block} with a
          * {@link sparqlResultTable.directive:sparqlResultTable table} the
          * {@link shared.service:sparqlManagerService#data results} of the latest SPARQL query,
-         * {@link shared.directive:pagination pagination} buttons for the results,
-         * {@link shared.directive:pagingDetails details} about the current page of results, and a button
-         * to {@link downloadQueryOverlay.directive:downloadQueryOverlay download} the full results. The directive
-         * is replaced by the contents of its template.
+         * {@link shared.component:paging paging buttons and details} for the results, and a button to
+         * {@link downloadQueryOverlay.directive:downloadQueryOverlay download} the full results. The directive is
+         * replaced by the contents of its template.
          */
         .directive('sparqlResultBlock', sparqlResultBlock);
 
@@ -67,6 +66,10 @@
 
                     dvm.downloadQuery = function() {
                         modalService.openModal('downloadQueryOverlay', {}, undefined, 'sm');
+                    }
+                    dvm.query = function(page) {
+                        dvm.sparql.currentPage = page;
+                        dvm.sparql.queryRdf();
                     }
                 }
             }

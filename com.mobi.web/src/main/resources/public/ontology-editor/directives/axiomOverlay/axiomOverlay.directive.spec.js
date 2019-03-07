@@ -102,11 +102,11 @@ describe('Axiom Overlay directive', function() {
         it('with custom-labels', function() {
             expect(this.element.find('custom-label').length).toBe(3);
         });
-        it('with a tabset', function() {
-            expect(this.element.find('tabset').length).toBe(1);
+        it('with a material-tabset', function() {
+            expect(this.element.find('material-tabset').length).toBe(1);
         });
-        it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(2);
+        it('with material-tabs', function() {
+            expect(this.element.find('material-tab').length).toBe(2);
         });
         it('with ui-selects', function() {
             expect(this.element.find('ui-select').length).toBe(2);

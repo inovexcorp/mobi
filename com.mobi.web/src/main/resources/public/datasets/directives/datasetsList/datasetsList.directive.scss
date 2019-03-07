@@ -29,6 +29,9 @@
     margin: 0;
     padding: 15px 0;
 
+    .block-content {
+        padding: 10px;
+    }
     .col-8 {
         display: flex;
         flex-direction: column;
@@ -95,26 +98,6 @@
                 text-overflow: clip;
                 white-space: normal;
                 overflow: visible;
-            }
-        }
-    }
-    .paging-container {
-        padding: 0 15px;
-
-        .paging-details {
-            float: left;
-
-            p {
-                line-height: 34px;
-                margin: 0;
-            }
-        }
-        .page-nav {
-            float: right;
-
-            .pagination {
-                margin: 0;
-                vertical-align: bottom;
             }
         }
     }
