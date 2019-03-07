@@ -47,7 +47,7 @@
          * {@link shared.service:ontologyStateService selected individual} using
          * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding an object
          * property. The directive houses the methods for opening the modal for
-         * {@link objectPropertyOverlay.directive:objectPropertyOverlay adding} and removing object property values.
+         * {@link ontology-editor.component:objectPropertyOverlay adding} and removing object property values.
          * The directive is replaced by the contents of its template.
          */
         .directive('objectPropertyBlock', objectPropertyBlock);

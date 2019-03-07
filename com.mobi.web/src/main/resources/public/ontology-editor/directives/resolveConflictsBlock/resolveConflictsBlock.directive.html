@@ -25,7 +25,7 @@
         <p class="text-center">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into <strong>Branch: {{dvm.targetTitle}}</strong></p>
         <p class="text-center" ng-if="dvm.os.listItem.merge.checkbox">Branch: {{dvm.branchTitle}} will be removed after conflicts are resolved.</p>
     </div>
-    <div class="flex-1 vertical-scroll p-2">
+    <div class="flex-1 vertical-scroll p-2 remove-min-height">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <resolve-conflicts-form branch-title="dvm.branchTitle" target-title="dvm.targetTitle" conflicts="dvm.os.listItem.merge.conflicts" resolutions="dvm.os.listItem.merge.resolutions"></resolve-conflicts-form>
     </div>

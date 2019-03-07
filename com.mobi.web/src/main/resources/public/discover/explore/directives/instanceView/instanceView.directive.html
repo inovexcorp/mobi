@@ -21,12 +21,12 @@
   #L%
   -->
 <div class="instance-view">
-    <block>
+    <block class="h-100">
         <block-header>
-            <breadcrumbs class="float-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <breadcrumbs items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
             <a class="float-right edit-button" ng-click="dvm.edit()"><i class="fa fa-pencil-square-o"></i>Edit</a>
         </block-header>
-        <block-content class="padding">
+        <block-content>
             <div class="row">
                 <div class="col-8 offset-2">
                     <h2>{{dvm.ds.explore.instance.metadata.title}} <small class="text-muted">&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>

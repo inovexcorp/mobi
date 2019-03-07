@@ -53,8 +53,8 @@
             </ui-select>
         </div>
         <div class="py-2">
-            <radio-button value="false" ng-model="dvm.update" display-text="'Commit as additions (do not change existing data)'"></radio-button>
-            <radio-button value="true" ng-model="dvm.update" display-text="'Commit as updates (calculate differences with existing data)'"></radio-button>
+            <radio-button value="false" bind-model="dvm.update" change-event="dvm.update = value" display-text="'Commit as additions (do not change existing data)'"></radio-button>
+            <radio-button value="true" bind-model="dvm.update" change-event="dvm.update = value" display-text="'Commit as updates (calculate differences with existing data)'"></radio-button>
         </div>
     </form>
 </div>

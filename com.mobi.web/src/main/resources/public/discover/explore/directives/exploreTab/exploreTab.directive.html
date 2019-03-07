@@ -20,10 +20,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="explore-tab row">
-    <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col"></class-block>
-    <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col"></instance-block>
-    <instance-view ng-if="dvm.ds.explore.breadcrumbs.length === 3 && !dvm.ds.explore.editing && !dvm.ds.explore.creating" class="col"></instance-view>
-    <instance-editor ng-if="dvm.ds.explore.breadcrumbs.length === 3 && dvm.ds.explore.editing" class="col"></instance-editor>
-    <instance-creator ng-if="dvm.ds.explore.breadcrumbs.length === 3 && dvm.ds.explore.creating" class="col"></instance-creator>
+<div class="explore-tab container-fluid h-100 py-2">
+    <div class="row h-100">
+        <class-block ng-if="dvm.ds.explore.breadcrumbs.length === 1" class="col"></class-block>
+        <instance-block ng-if="dvm.ds.explore.breadcrumbs.length === 2" class="col"></instance-block>
+        <instance-view ng-if="dvm.ds.explore.breadcrumbs.length === 3 && !dvm.ds.explore.editing && !dvm.ds.explore.creating" class="col"></instance-view>
+        <instance-editor ng-if="dvm.ds.explore.breadcrumbs.length === 3 && dvm.ds.explore.editing" class="col"></instance-editor>
+        <instance-creator ng-if="dvm.ds.explore.breadcrumbs.length === 3 && dvm.ds.explore.creating" class="col"></instance-creator>
+    </div>
 </div>

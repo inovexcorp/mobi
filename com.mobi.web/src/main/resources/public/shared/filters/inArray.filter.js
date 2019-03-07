@@ -23,27 +23,26 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:inArray
+     * @kind function
+     *
+     * @description
+     * Takes an array and removes any elements are not within the passed in array. If the passed
+     * in array is not actually an array, returns an empty array.
+     *
+     * @param {*[]} list The array to remove elements from
+     * @param {*[]} arrayFilter The array to intersect with the original list
+     * @returns {*[]} Either an empty array if the passed in array is not actually an
+     * array or the intersection of the two arrays.
+     */
     function inArray() {
         return function(list, arrayFilter) {
             return _.isArray(list) && _.isArray(arrayFilter) ? _.intersection(list, arrayFilter) : [];
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:inArray
-         * @kind function
-         *
-         * @description
-         * Takes an array and removes any elements are not within the passed in array. If the passed
-         * in array is not actually an array, returns an empty array.
-         *
-         * @param {*[]} list The array to remove elements from
-         * @param {*[]} arrayFilter The array to intersect with the original list
-         * @returns {*[]} Either an empty array if the passed in array is not actually an
-         * array or the intersection of the two arrays.
-         */
+    angular.module('shared')
         .filter('inArray', inArray);
 })();

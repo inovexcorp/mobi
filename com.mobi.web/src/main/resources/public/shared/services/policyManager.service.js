@@ -25,6 +25,17 @@
 
     policyManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:policyManagerService
+     * @requires shared.service:prefixes
+     * @requires shared.service:utilService
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `policyManagerService` is a service that provides access to the Mobi policy REST
+     * endpoints and variables with common IRIs used in policies.
+     */
     function policyManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var self = this;
         var prefix = REST_PREFIX + 'policies';
@@ -109,18 +120,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:policyManagerService
-         * @requires shared.service:prefixes
-         * @requires shared.service:utilService
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `policyManagerService` is a service that provides access to the Mobi policy REST
-         * endpoints and variables with common IRIs used in policies.
-         */
+    angular.module('shared')
         .service('policyManagerService', policyManagerService);
 })();

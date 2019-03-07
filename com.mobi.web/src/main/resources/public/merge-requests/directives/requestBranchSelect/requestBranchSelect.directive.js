@@ -47,7 +47,7 @@
          * `requestBranchSelect` is a directive which creates a div containing a form with ui-selects
          * to choose the source and target Branch for a new MergeRequest. The Branch list is derived from
          * the previously selected VersionedRDFRecord for the MergeRequest. The div also contains a
-         * {@link shared.directive:commitDifferenceTabset} to display the changes and commits
+         * {@link shared.component:commitDifferenceTabset} to display the changes and commits
          * between the selected branches. The directive is replaced by the contents of its template.
          */
         .directive('requestBranchSelect', requestBranchSelect);
@@ -83,7 +83,8 @@
                         dvm.branches = [];
                     });
 
-                dvm.changeSource = function() {
+                dvm.changeSource = function(value) {
+                    dvm.state.requestConfig.sourceBranch = value;
                     if (dvm.state.requestConfig.sourceBranch) {
                         dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
                         if (dvm.state.requestConfig.targetBranch) {
@@ -95,7 +96,8 @@
                         dvm.state.requestConfig.difference = undefined;
                     }
                 }
-                dvm.changeTarget = function() {
+                dvm.changeTarget = function(value) {
+                    dvm.state.requestConfig.targetBranch = value;
                     if (dvm.state.requestConfig.targetBranch) {
                         dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
                         if (dvm.state.requestConfig.sourceBranch) {

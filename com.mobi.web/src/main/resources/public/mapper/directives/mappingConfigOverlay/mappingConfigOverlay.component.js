@@ -41,7 +41,7 @@
      * class. If editing a mapping that already has those data points set, a new mapping will be created with the
      * new settings and will remove any invalid entity mappings within the mapping. The list of ontologies is searchable
      * and selectable. Only 100 will be shown at a time. Meant to be used in conjunction with the
-     * {@link modalService.directive:modalService}.
+     * {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal

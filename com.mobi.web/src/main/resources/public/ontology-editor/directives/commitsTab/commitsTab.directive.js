@@ -42,10 +42,9 @@
          * @requires shared.service:utilService
          *
          * @description
-         * `commitsTab` is a directive that creates a page containing the
-         * {@link shared.directive:commitHistoryTable} for the current
-         * {@link shared.service:ontologyStateService selected ontology} with a graph. It also creates a table
-         * with buttons for viewing the ontology at each commit. The directive is replaced by the contents of its
+         * `commitsTab` is a directive that creates a page containing the {@link shared.component:commitHistoryTable}
+         * for the current {@link shared.service:ontologyStateService selected ontology} with a graph. It also creates a
+         * table with buttons for viewing the ontology at each commit. The directive is replaced by the contents of its
          * template.
          */
         .directive('commitsTab', commitsTab);

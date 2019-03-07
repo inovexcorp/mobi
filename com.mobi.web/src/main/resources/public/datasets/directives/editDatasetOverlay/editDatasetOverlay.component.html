@@ -31,9 +31,9 @@
             <p><small><custom-label>Repository ID:</custom-label> {{dvm.recordConfig.repositoryId}}</small></p>
         </div>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input display-text="'Title'" ng-model="dvm.recordConfig.title" required="true" is-focus-me="true"></text-input>
-        <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <keyword-select ng-model="dvm.keywords"></keyword-select>
+        <text-input display-text="'Title'" bind-model="dvm.recordConfig.title" change-event="dvm.recordConfig.title = value" required="true" is-focus-me="true"></text-input>
+        <text-area bind-model="dvm.recordConfig.description" change-event="dvm.recordConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value"></keyword-select>
         <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" select-ontology="dvm.selectOntology(ontology)" unselect-ontology="dvm.unselectOntology(ontology)"></datasets-ontology-picker>
     </form>
 </div>

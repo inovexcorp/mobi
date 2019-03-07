@@ -115,7 +115,7 @@ describe('Mapping Select Page directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-select-page')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         it('with a mappingListBlock', function() {

@@ -25,6 +25,15 @@
 
     recordPermissionsManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:recordPermissionsManagerService
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST
+     * endpoints and variables with common IRIs used in policies.
+     */
     function recordPermissionsManagerService($http, $q, REST_PREFIX, utilService) {
         var self = this;
         var prefix = REST_PREFIX + 'record-permissions';
@@ -69,16 +78,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:recordPermissionsManagerService
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `recordPermissionsManagerService` is a service that provides access to the Mobi policy REST
-         * endpoints and variables with common IRIs used in policies.
-         */
+    angular.module('shared')
         .service('recordPermissionsManagerService', recordPermissionsManagerService);
 })();

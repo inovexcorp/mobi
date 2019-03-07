@@ -25,12 +25,12 @@
 
     /**
      * @ngdoc component
-     * @name seeHistory.component:seeHistory
-     * @requires catalogManager.service:catalogManagerService
-     * @requires ontologyManager.service:ontologyManagerService
-     * @requires ontologyState.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
-     * @requires util.service:utilService
+     * @name ontology-editor.component:seeHistory
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:ontologyStateService
+     * @requires shared.service:ontologyUtilsManagerService
+     * @requires shared.service:utilService
      *
      * @description
      * The `seeHistory` component creates a page for viewing the addition and deletion history of commits on a
@@ -71,6 +71,6 @@
         }
     }
 
-    angular.module('seeHistory', [])
+    angular.module('ontology-editor')
         .component('seeHistory', seeHistoryComponent);
 })();

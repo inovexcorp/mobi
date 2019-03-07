@@ -44,7 +44,7 @@
          * `createGroupOverlay` is a component that creates content for a modal with a form to add a group to Mobi. The
          * form includes the group title, a group description, and group
          * {@link memberTable.directive:memberTable members}. Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
+         * {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

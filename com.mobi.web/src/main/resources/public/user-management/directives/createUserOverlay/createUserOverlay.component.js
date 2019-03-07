@@ -23,43 +23,34 @@
 (function () {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name createUserOverlays
-         *
-         * @description
-         * The `createUserOverlay` module only provides the `createUserOverlay` component which creates content for a
-         * modal to add a user to Mobi.
-         */
-        .module('createUserOverlay', [])
-        /**
-         * @ngdoc component
-         * @name createUserOverlay.component:createUserOverlay
-         * @requires $q
-         * @requires shared.service:userManagerService
-         * @requires shared.service:userStateService
-         *
-         * @description
-         * `createUserOverlay` is a component that creates content for a modal with a form to add a user to Mobi. The
-         * form contains fields for the basic information about the user including the username, password, first name,
-         * last name, email, permissions, and roles of the new user. Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
-         *
-         * @param {Function} close A function that closes the modal
-         * @param {Function} dismiss A function that dismisses the modal
-         */
-        .component('createUserOverlay', {
-            bindings: {
-                close: '&',
-                dismiss: '&'
-            },
-            controllerAs: 'dvm',
-            controller: ['$q', 'userStateService', 'userManagerService', 'REGEX', CreateUserOverlayController],
-            templateUrl: 'user-management/directives/createUserOverlay/createUserOverlay.component.html'
-        });
+    /**
+     * @ngdoc component
+     * @name createUserOverlay.component:createUserOverlay
+     * @requires shared.service:userManagerService
+     * @requires shared.service:userStateService
+     *
+     * @description
+     * `createUserOverlay` is a component that creates content for a modal with a form to add a user to Mobi. The
+     * form contains fields for the basic information about the user including the username, password, first name,
+     * last name, email, permissions, and roles of the new user. Meant to be used in conjunction with the
+     * {@link shared.service:modalService}.
+     *
+     * @param {Function} close A function that closes the modal
+     * @param {Function} dismiss A function that dismisses the modal
+     */
+    const createUserOverlayComponent = {
+        templateUrl: 'user-management/directives/createUserOverlay/createUserOverlay.component.html',
+        bindings: {
+            close: '&',
+            dismiss: '&'
+        },
+        controllerAs: 'dvm',
+        controller: createUserOverlayComponentCtrl,
+    };
 
-    function CreateUserOverlayController($q, userStateService, userManagerService, REGEX) {
+    createUserOverlayComponentCtrl.$inject = ['userStateService', 'userManagerService', 'REGEX'];
+
+    function createUserOverlayComponentCtrl(userStateService, userManagerService, REGEX) {
         var dvm = this;
         dvm.state = userStateService;
         dvm.um = userManagerService;
@@ -91,4 +82,16 @@
             dvm.dismiss();
         }
     }
+
+    angular
+        /**
+         * @ngdoc overview
+         * @name createUserOverlay
+         *
+         * @description
+         * The `createUserOverlay` module only provides the `createUserOverlay` component which creates content for a
+         * modal to add a user to Mobi.
+         */
+        .module('createUserOverlay', [])
+        .component('createUserOverlay', createUserOverlayComponent);
 })();

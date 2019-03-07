@@ -30,7 +30,7 @@
          *
          * @description
          * The `permissionsInput` module only provides the `permissionsInput` directive
-         * which creates a collections of {@link shared.directive:checkbox checkboxes} for
+         * which creates a collections of {@link shared.component:checkbox checkboxes} for
          * changing a user or group's permissions and roles.
          */
         .module('permissionsInput', [])
@@ -42,7 +42,7 @@
          *
          * @description
          * `permissionsInput` is a directive that creates an collection of
-         * {@link shared.directive:checkbox checkboxes} for changing a user or group's permissions and roles.
+         * {@link shared.component:checkbox checkboxes} for changing a user or group's permissions and roles.
          * It takes the state of a user or group's roles from the passed roles object whose keys are the roles and
          * whose values are booleans indicating whether the user/group in question has that role. The directive
          * is replaced by the contents of its template.

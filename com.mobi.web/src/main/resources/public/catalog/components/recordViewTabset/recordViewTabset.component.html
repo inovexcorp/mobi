@@ -21,10 +21,10 @@
   #L%
   -->
 <material-tabset>
-    <material-tab heading="'Overview'" active="dvm.tabs.overview">
+    <material-tab heading="'Overview'" active="dvm.tabs.overview" set-active="dvm.tabs.overview = value">
         <record-markdown record="dvm.record" update-record="dvm.updateRecordCall(record)" can-edit="dvm.canEdit"></record-markdown>
     </material-tab>
-    <material-tab hide-tab="!dvm.isVersionedRDFRecord" heading="'Branches'" active="dvm.tabs.branches">
+    <material-tab hide-tab="!dvm.isVersionedRDFRecord" heading="'Branches'" active="dvm.tabs.branches" set-active="dvm.tabs.branches = value">
         <branch-list record="dvm.record"></branch-list>
     </material-tab>
 </material-tabset>

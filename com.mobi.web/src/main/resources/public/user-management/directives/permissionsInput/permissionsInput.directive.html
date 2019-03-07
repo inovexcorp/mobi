@@ -22,5 +22,5 @@
   -->
 <div class="permissions-input form-group">
     <custom-label>Role</custom-label>
-    <checkbox ng-model="roles.admin" display-text="'Admin'" is-disabled="isDisabledWhen" change-event="onChange()"></checkbox>
+    <checkbox bind-model="roles.admin" display-text="'Admin'" is-disabled="isDisabledWhen" change-event="roles.admin = value; onChange()"></checkbox>
 </div>

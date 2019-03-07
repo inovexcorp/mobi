@@ -25,7 +25,8 @@
 
 .file-upload-page {
     .form-block {
-        display: flex;
-        flex-direction: column;
+        .block-content {
+            padding: 10px;
+        }
     }
 }

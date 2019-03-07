@@ -25,6 +25,16 @@
 
     sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:sparqlManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query
+     * REST endpoint and various state variables for the SPARQL Editor.
+     */
     function sparqlManagerService($http, $q, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
         var prefix = REST_PREFIX + 'sparql';
         var self = this;
@@ -331,17 +341,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:sparqlManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query
-         * REST endpoint and various state variables for the SPARQL Editor.
-         */
+    angular.module('shared')
         .service('sparqlManagerService', sparqlManagerService);
 })();

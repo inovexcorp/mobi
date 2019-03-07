@@ -34,7 +34,7 @@
                 <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>
             </p>
         </div>
-        <text-area ng-model="dvm.newGroup.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-area bind-model="dvm.newGroup.description" change-event="dvm.newGroup.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <member-table members="dvm.newGroup.members" remove-member="dvm.removeMember(member)" add-member="dvm.addMember(member)"></member-table>
     </form>
 </div>

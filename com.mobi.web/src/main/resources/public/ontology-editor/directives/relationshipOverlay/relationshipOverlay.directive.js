@@ -49,7 +49,7 @@
          * {@link shared.service:ontologyStateService selected concept}. The form in the modal contains a
          * `ui-select` of the provided relationships and a `ui-select` of the appropriate values for the selected
          * relationship (concepts or concept schemes). Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
+         * {@link shared.service:modalService}.
          *
          * @param {Object} resolve Information provided to the modal
          * @param {Object[]} resolve.relationshipList The list of relationships available to add to the selected concept

@@ -115,19 +115,21 @@ describe('Merge Block directive', function() {
             });
             it('unless the target is empty', function() {
                 this.controller.changeTarget();
+                expect(ontologyStateSvc.listItem.merge.target).toBeUndefined();
                 expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
                 expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
             });
             describe('when target is not empty', function() {
                 beforeEach(function() {
-                    ontologyStateSvc.listItem.merge.target = {'@id': 'target'};
+                    this.branch = {'@id': 'target'};
                 });
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
                     catalogManagerSvc.getDifference.and.returnValue($q.reject('Error'));
-                    this.controller.changeTarget();
+                    this.controller.changeTarget(this.branch);
                     scope.$apply();
+                    expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);
                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalled();
                     expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
                     expect(util.createErrorToast).toHaveBeenCalledWith('Error');
@@ -137,8 +139,9 @@ describe('Merge Block directive', function() {
                     var difference = {additions: [], deletions: []};
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
                     catalogManagerSvc.getDifference.and.returnValue($q.when(difference));
-                    this.controller.changeTarget();
+                    this.controller.changeTarget(this.branch);
                     scope.$apply();
+                    expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);
                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalled();
                     expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
                     expect(util.createErrorToast).not.toHaveBeenCalled();

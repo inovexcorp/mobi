@@ -119,8 +119,9 @@ describe('Datasets List directive', function() {
                 });
             });
         });
-        it('should get a page of dataset records', function() {
-            this.controller.getPage();
+        it('should get the specified page of dataset records', function() {
+            this.controller.getPage(10);
+            expect(this.controller.currentPage).toEqual(10);
             expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.controller.currentPage - 1);
             expect(datasetStateSvc.setResults).toHaveBeenCalled();
         });
@@ -234,20 +235,10 @@ describe('Datasets List directive', function() {
             expect(this.element.hasClass('row')).toBe(true);
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
-        it('with block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with block-footer', function() {
-            expect(this.element.find('block-footer').length).toBe(1);
-        });
-        it('with a paging-details', function() {
-            expect(this.element.find('paging-details').length).toBe(1);
-        });
-        it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toBe(1);
+        ['block', 'block-content', 'block-footer', 'paging'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('depending on how many datasets there are', function() {
             expect(this.element.querySelectorAll('block-content info-message').length).toBe(1);

@@ -65,20 +65,10 @@ describe('SPARQL Result Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('sparql-result-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
-        });
-        it('with a block-footer', function() {
-            expect(this.element.find('block-footer').length).toBe(1);
-        });
-        it('with a sparql-result-table', function() {
-            expect(this.element.find('sparql-result-table').length).toBe(1);
-        });
-        it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toBe(1);
+        ['block', 'block-content', 'block-footer', 'sparql-result-table', 'paging'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with a download button', function() {
             expect(this.element.querySelectorAll('button.download-button').length).toBe(1);
@@ -104,6 +94,11 @@ describe('SPARQL Result Block directive', function() {
         it('should open the downloadQueryOverlay', function() {
             this.controller.downloadQuery();
             expect(modalSvc.openModal).toHaveBeenCalledWith('downloadQueryOverlay', {}, undefined, 'sm');
+        });
+        it('should run query with the specified page', function() {
+            this.controller.query(10);
+            expect(sparqlManagerSvc.currentPage).toEqual(10);
+            expect(sparqlManagerSvc.queryRdf).toHaveBeenCalled();
         });
     });
 });

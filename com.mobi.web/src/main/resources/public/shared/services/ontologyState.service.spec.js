@@ -37,7 +37,6 @@ describe('Ontology State Service', function() {
         mockHttpService();
         mockPolicyEnforcement();
         mockPolicyManager();
-        injectRemoveMobiFilter();
         injectSplitIRIFilter();
 
         module(function($provide) {
