@@ -35,9 +35,8 @@
      * `sidebar` is a component that creates the main sidebar of the application. It contains a display of the currently
      * {@link shared.service:loginManagerService logged in user} that also serves as a button to go to the
      * {@link settings.component:settingsPage}, buttons to navigate to the main modules of the application, an
-     * "Administration" button to go to the
-     * {@link userManagementTabset.directive:userManagementTabset user management page}, a button to get help for the
-     * application, a button to logout, and version information.
+     * "Administration" button to go to the {@link user-management.component:userManagementPage user management page}, a
+     * button to get help for the application, a button to logout, and version information.
      */
     const sidebarComponent = {
         templateUrl: 'shared/components/sidebar/sidebar.component.html',

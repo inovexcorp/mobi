@@ -1,0 +1,93 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="groups-page container-fluid h-100 py-2">
+    <div class="row h-100">
+        <div class="col-4">
+            <block class="h-100">
+                <block-header>
+                    <span>Groups</span>
+                    <button class="btn btn-link float-right" ng-click="dvm.createGroup()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
+                        <i class="fa fa-plus"></i>Create Group
+                    </button>
+                </block-header>
+                <block-search bind-model="dvm.state.groupSearchString" change-event="dvm.state.groupSearchString = value" clear-event="dvm.state.groupSearchString = ''"></block-search>
+                <block-content>
+                    <groups-list groups="dvm.um.groups" selected-group="dvm.state.selectedGroup" click-event="dvm.selectGroup(group)" search-text="dvm.state.groupSearchString"></groups-list>
+                </block-content>
+                <block-footer class="centered">
+                    <button class="btn btn-link" ng-click="dvm.confirmDeleteGroup()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                        <i class="fa fa-trash"></i>Delete Group
+                    </button>
+                </block-footer>
+            </block>
+        </div>
+        <div class="col-8 d-flex flex-column">
+            <div class="group-title">
+                <h3>{{dvm.state.selectedGroup.title}}</h3>
+            </div>
+            <div class="row flex-1 remove-min-height">
+                <div class="col d-flex flex-column">
+                    <div class="row flex-1 remove-min-height pb-3">
+                        <div class="col-6">
+                            <block class="h-100">
+                                <block-header>
+                                    <span>Description</span>
+                                    <button class="btn btn-link float-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                                        <i class="fa fa-pencil"></i>Edit
+                                    </button>
+                                </block-header>
+                                <block-content>
+                                    <p ng-if="dvm.state.selectedGroup" class="group-description padding break-word">{{dvm.state.selectedGroup.description || 'No description'}}</p>
+                                </block-content>
+                            </block>
+                        </div>
+                        <div class="col-6">
+                            <block class="h-100">
+                                <block-header>
+                                    <span>Permissions</span>
+                                </block-header>
+                                <block-content>
+                                    <div class="padding">
+                                        <permissions-input ng-if="dvm.state.selectedGroup" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser)" change-event="dvm.changeRoles(value)"></permissions-input>
+                                    </div>
+                                </block-content>
+                            </block>
+                        </div>
+                    </div>
+                    <div class="row flex-2 remove-min-height member-block-row">
+                        <div class="col">
+                            <block class="h-100">
+                                <block-header>
+                                    <span>Members</span>
+                                </block-header>
+                                <block-content>
+                                    <member-table ng-if="dvm.state.selectedGroup" members="dvm.state.selectedGroup.members" add-member="dvm.addMember(member)" remove-member="dvm.confirmRemoveMember(member)" link-to-user="true"></member-table>
+                                </block-content>
+                            </block>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
