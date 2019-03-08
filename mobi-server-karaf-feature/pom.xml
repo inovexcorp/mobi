@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.15.36-SNAPSHOT</version>
+        <version>1.15.37-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -37,6 +37,11 @@
     <packaging>feature</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>server.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>server.api</artifactId>
