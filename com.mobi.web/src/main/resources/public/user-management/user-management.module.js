@@ -23,24 +23,13 @@
 (function() {
     'use strict';
 
-    angular
-        .module('user-management', [
-            /* Custom directives */
-            'createGroupOverlay',
-            'createUserOverlay',
-            'editGroupInfoOverlay',
-            'editUserProfileOverlay',
-            'groupsList',
-            'groupsPage',
-            'memberTable',
-            'permissionsInput',
-            'permissionsPage',
-            'resetPasswordOverlay',
-            'userManagementTabset',
-            'usersList',
-            'usersPage',
-
-            /* Custom Filters */
-            'usernameSearch'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name user-management
+     *
+     * @description
+     * The `user-management` module provides components that make up the Administration page of Mobi for managing users,
+     * groups, and overall permissions in the application.
+     */
+    angular.module('user-management', []);
 })();

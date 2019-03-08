@@ -20,24 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User State service', function() {
-    var userStateSvc;
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    beforeEach(function() {
-        module('shared');
+.user-management-page {
+    background-color: var(--light);
 
-        inject(function(userStateService) {
-            userStateSvc = userStateService;
-        });
-    });
+    .user-management-container {
+        display: flex;
+        flex-direction: column;
 
-    afterEach(function() {
-        userStateSvc = null;
-    });
-
-    it('should reset variables', function() {
-        userStateSvc.reset();
-        expect(userStateSvc.selectedGroup).toBeUndefined();
-        expect(userStateSvc.selectedUser).toBeUndefined();
-    });
-});
+        .user-management-page-content {
+            flex: 1;
+            min-height: 0;
+        }
+    }
+    .tree a {
+        display: inherit;
+    }
+    .table {
+        tr {
+            &:first-child td {
+                border-top: none;
+            }
+        }
+    }
+}
