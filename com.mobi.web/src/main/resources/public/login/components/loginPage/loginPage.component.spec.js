@@ -41,7 +41,7 @@ describe('Login Page component', function() {
     });
 
     afterEach(function() {
-        $ompile = null;
+        $compile = null;
         scope = null;
         $q = null;
         loginManagerSvc = null;
@@ -81,7 +81,7 @@ describe('Login Page component', function() {
         it('with labels', function() {
             expect(this.element.find('label').length).toEqual(2);
         });
-        it('depending on whether an error occured', function() {
+        it('depending on whether an error occurred', function() {
             expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.errorMessage = 'test';
