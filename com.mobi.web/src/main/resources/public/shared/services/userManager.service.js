@@ -226,7 +226,7 @@
                     return self.getUser(newUser.username);
                 }, $q.reject)
                 .then(user => {
-                    self.users.push(user);
+                    self.users = self.users.concat([user]);
                 }, util.rejectError);
         }
         /**
@@ -487,7 +487,7 @@
                     return self.getGroup(newGroup.title);
                 }, $q.reject)
                 .then(group => {
-                    self.groups.push(group);
+                    self.groups = self.groups.concat([group]);
                 }, util.rejectError);
         }
         /**
