@@ -39,7 +39,7 @@ describe('Users List component', function() {
         scope.users = [];
         scope.searchText = '';
         scope.selectedUser = undefined;
-        scope.clickEvent = jasmine.createSpy('clickEvent')
+        scope.clickEvent = jasmine.createSpy('clickEvent');
         this.element = $compile(angular.element('<users-list users="users" search-text="searchText" selected-user="selectedUser" click-event="clickEvent(user)"></users-list>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('usersList');
@@ -172,7 +172,7 @@ describe('Users List component', function() {
             expect(this.element.querySelectorAll('li .admin').length).toBe(1);
         });
     });
-    it('should call clickEVent when a group is clicked', function() {
+    it('should call clickEvent when a group is clicked', function() {
         var user = {username: 'user'};
         this.controller.filteredUsers = [user];
         scope.$digest();

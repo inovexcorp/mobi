@@ -30,7 +30,7 @@
      *
      * @description
      * `userManagementPage` is a component which creates a {@link shared.component:tabset tabset} with different pages
-     * depending on whether the {@link usersPage.directive:usersPage users},
+     * depending on whether the {@link user-management.component:usersPage users},
      * {@link user-management.component:groupsPage groups}, or
      * {@link user-management.component:permissionsPage permissions} of Mobi should be shown.
      */

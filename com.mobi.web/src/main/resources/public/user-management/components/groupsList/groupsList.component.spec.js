@@ -37,7 +37,7 @@ describe('Groups List component', function() {
         scope.groups = [];
         scope.searchText = '';
         scope.selectedGroup = undefined;
-        scope.clickEvent = jasmine.createSpy('clickEvent')
+        scope.clickEvent = jasmine.createSpy('clickEvent');
         this.element = $compile(angular.element('<groups-list groups="groups" search-text="searchText" selected-group="selectedGroup" click-event="clickEvent(group)"></groups-list>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('groupsList');

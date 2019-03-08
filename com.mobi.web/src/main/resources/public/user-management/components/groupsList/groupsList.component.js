@@ -67,9 +67,9 @@
         function filterGroups() {
             var arr = dvm.groups;
             if (dvm.searchText) {
-                arr = _.filter(arr, group => _.includes(group.title.toLowerCase(), dvm.searchText.toLowerCase()));
+                arr = _.filter(arr, group => group.title.toLowerCase().includes(dvm.searchText.toLowerCase()));
             }
-            return arr;
+            return arr.sort((group1, group2) => group1.title.localeCompare(group2.title));
         }
     }
 

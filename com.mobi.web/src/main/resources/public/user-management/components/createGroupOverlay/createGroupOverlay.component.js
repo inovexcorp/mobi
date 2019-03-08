@@ -46,7 +46,7 @@
             dismiss: '&'
         },
         controllerAs: 'dvm',
-        controller: createGroupOverlayComponentCtrl,
+        controller: createGroupOverlayComponentCtrl
     };
 
     createGroupOverlayComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];

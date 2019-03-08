@@ -75,7 +75,7 @@
          *
          * @description
          * `showUsers` holds a boolean indicating whether the
-         * {@link usersPage.directive:usersPage users page} should be shown.
+         * {@link user-management.component:usersPage users page} should be shown.
          */
         self.showUsers = true;
         /**

@@ -34,7 +34,7 @@
      * `memberTable` is a component that creates a table of the passed members and provides functionality for adding
      * members to the and removing members from list. The exact method of adding and removing is determined by the
      * provided `addMember` and `removeMember` functions. When the "Add Member" link is clicked, a row is added to the
-     * table containins a `ui-select` with the available users to add to the member list. Once a user has been
+     * table contains a `ui-select` with the available users to add to the member list. Once a user has been
      * selected in the `ui-select`, it will be added to the list. If you click off of the `ui-select`, it will be
      * removed.
      *
@@ -44,7 +44,7 @@
      * @param {Function} addMember The method to call when a member is added to the list. Expects an argument called
      * `member`
      * @param {boolean} linkToUser Whether the usernames should be links to viewing the user in the
-     * {@link usersPage.directive:usersPage}
+     * {@link user-management.component:usersPage}
      */
     const memberTableComponent = {
         templateUrl: 'user-management/components/memberTable/memberTable.component.html',

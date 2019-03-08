@@ -81,7 +81,7 @@ describe('Member Table component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should update tehe appropriate lists when the members change', function() {
+        it('should update the appropriate lists when the members change', function() {
             this.controller.$onChanges({members: {}});
             expect(this.controller.memberObjects.length).toEqual(scope.members.length);
             _.forEach(this.controller.memberObjects, (user, idx) => {

@@ -23,7 +23,7 @@
 <div class="users-list tree scroll-without-buttons">
     <ul>
         <li ng-repeat="user in dvm.filteredUsers track by user.username">
-            <a ng-click="dvm.clickEvent({user: user})" class="d-flex" ng-class="{'active': dvm.selectedUser.username === user.username}">
+            <a ng-click="dvm.clickEvent({user: user})" class="d-flex align-items-center" ng-class="{'active': dvm.selectedUser.username === user.username}">
                 <span class="text-truncate" ng-bind-html="(user.firstName || user.lastName) ? (user.firstName + ' ' + user.lastName) : user.username | highlight:dvm.searchText | trusted"></span>
                 <small class="admin pl-1" ng-if="dvm.um.isAdmin(user.username)">(Admin)</small>
             </a>

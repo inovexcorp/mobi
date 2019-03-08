@@ -92,7 +92,7 @@
                         (userObj.lastName + " " + userObj.firstName).toLowerCase(),
                         (userObj.lastName + ", " + userObj.firstName).toLowerCase()
                     ];
-                    return _.some(searchFields, searchField => searchField.match(searchTermLower));
+                    return _.some(searchFields, searchField => searchField.includes(searchTermLower));
                 });
             }
 

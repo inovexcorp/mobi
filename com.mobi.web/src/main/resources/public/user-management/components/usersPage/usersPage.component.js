@@ -24,10 +24,8 @@
     'use strict';
 
     /**
-     * @ngdoc directive
-     * @name usersPage.directive:usersPage
-     * @scope
-     * @restrict E
+     * @ngdoc component
+     * @name user-management.component:usersPage
      * @requires shared.service:userStateService
      * @requires shared.service:userManagerService
      * @requires shared.service:loginManagerService
@@ -35,15 +33,14 @@
      * @requires shared.service:modalService
      *
      * @description
-     * `usersPage` is a directive that creates a Bootstrap `row` div with three columns
-     * containing {@link shared.component:block blocks} for selecting and editing a user.
-     * The left column contains a {@link user-management.component:usersList usersList} block
-     * for selecting the current {@link shared.service:userStateService#selectedUser user}
-     * and buttons for creating, deleting, and searching for a user. The center column contains
-     * a block for previewing and editing a user's profile information and a block for changing
+     * `usersPage` is a component that creates a Bootstrap `row` div with three columns containing
+     * {@link shared.component:block blocks} for selecting and editing a user. The left column contains a
+     * {@link user-management.component:usersList usersList} block for selecting the current
+     * {@link shared.service:userStateService user} and buttons for creating, deleting, and searching for a user. The
+     * center column contains a block for previewing and editing a user's profile information and a block for changing
      * a user's password. The right column contains a block for viewing and changing a user's
-     * {@link user-management.component:permissionsInput permissions} and a block for viewing
-     * the groups a user is a member of. The directive is replaced by the contents of its template.
+     * {@link user-management.component:permissionsInput permissions} and a block for viewing the groups a user is a
+     * member of.
      */
     const usersPageComponent = {
         templateUrl: 'user-management/components/usersPage/usersPage.component.html',
