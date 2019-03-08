@@ -43,7 +43,7 @@
                 url: '/login',
                 views: {
                     container: {
-                        templateUrl: 'login/login.module.html'
+                        template: '<login-page></login-page>'
                     }
                 },
                 data: {
@@ -136,7 +136,7 @@
                 url: '/user-management',
                 views: {
                     'container@': {
-                        templateUrl: 'user-management/user-management.module.html'
+                        template: '<user-management-page></user-management-page>'
                     }
                 },
                 data: {
