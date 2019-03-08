@@ -254,8 +254,9 @@ describe('Delimited Manager service', function() {
     });
     it('should reset important variables', function() {
         delimitedManagerSvc.reset();
-        expect(delimitedManagerSvc.dataRows).toBe(undefined);
+        expect(delimitedManagerSvc.dataRows).toBeUndefined();
         expect(delimitedManagerSvc.fileName).toBe('');
+        expect(delimitedManagerSvc.fileObj).toBeUndefined();
         expect(delimitedManagerSvc.separator).toBe(',');
         expect(delimitedManagerSvc.containsHeaders).toBe(true);
         expect(delimitedManagerSvc.preview).toBe('');

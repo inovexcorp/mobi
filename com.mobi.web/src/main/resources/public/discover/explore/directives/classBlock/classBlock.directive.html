@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="class-block">
-    <block>
+    <block class="h-100">
         <block-header>
             <class-block-header></class-block-header>
         </block-header>
@@ -32,7 +32,7 @@
                     <i class="fa fa-exclamation-circle fa-fw"></i><strong>The selected dataset does not have any data.</strong>
                 </p>
             </div>
-            <div ng-if="dvm.ds.explore.classDetails.length && dvm.ds.explore.recordId" class="h-100">
+            <div ng-if="dvm.ds.explore.classDetails.length && dvm.ds.explore.recordId" class="h-100 class-cards-container">
                 <class-cards></class-cards>
             </div>
         </block-content>

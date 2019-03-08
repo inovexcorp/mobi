@@ -33,9 +33,9 @@
                 <div class="col-6 ontology-select-container">
                     <div class="form-group">
                         <custom-label>Ontology</custom-label>
-                        <search-bar ng-model="dvm.recordsConfig.searchText" submit-event="dvm.setOntologies()"></search-bar>
+                        <search-bar bind-model="dvm.recordsConfig.searchText" change-event="dvm.recordsConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
                         <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
-                            <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available</info-message>
+                            <info-message ng-if="dvm.ontologies.length === 0">No ontologies are available</info-message>
                             <md-list>
                                 <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
                                     <div class="md-list-item-text">
@@ -60,7 +60,7 @@
                     <div class="ontology-record-info" ng-if="dvm.selectedOntology">
                         <h3>{{dvm.selectedOntology.title}}</h3>
                         <entity-dates entity="dvm.selectedOntology.jsonld"></entity-dates>
-                        <entity-description entity="dvm.selectedOntology.jsonld"></entity-description>
+                        <entity-description entity="dvm.selectedOntology.jsonld" limited></entity-description>
                         <record-keywords record="dvm.selectedOntology.jsonld"></record-keywords>
                         <div class="classes-list">
                             <span class="field-name">Classes:</span>

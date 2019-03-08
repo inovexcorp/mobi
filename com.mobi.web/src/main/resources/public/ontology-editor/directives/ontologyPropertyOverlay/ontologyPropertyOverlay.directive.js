@@ -49,10 +49,10 @@
          * property on the current {@link shared.service:ontologyStateService selected ontology}. The form in
          * the modal contains a `ui-select` for the ontology property (or annotation). If an ontology property is
          * selected, text input is provided for the value (must be a valid IRI). If an annotation is selected, a
-         * {@link shared.directive:textArea} is provided for the annotation value with a
-         * {@link shared.directive:languageSelect}, unless the annotation is owl:deprecated in which case the
-         * `textArea` and `languageSelect` are replaced by {@link shared.directive:radiobutton radio buttons} for
-         * the boolean value. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * {@link shared.component:textArea} is provided for the annotation value with a
+         * {@link shared.component:languageSelect}, unless the annotation is owl:deprecated in which case the
+         * `textArea` and `languageSelect` are replaced by {@link shared.component:radiobutton radio buttons} for
+         * the boolean value. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
@@ -78,9 +78,11 @@
                     dvm.os = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.util = utilService;
-                    dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
+                    dvm.properties = [];
 
-
+                    dvm.$onInit = function() {
+                        dvm.properties = _.union(pm.ontologyProperties, pm.defaultAnnotations, pm.owlAnnotations, _.keys(dvm.os.listItem.annotations.iris));
+                    }
                     dvm.submit = function() {
                         if (dvm.os.editingOntologyProperty) {
                             dvm.editProperty();

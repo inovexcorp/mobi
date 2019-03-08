@@ -40,6 +40,31 @@
         'userStateService'
     ];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:loginManagerService
+     * @requires $http
+     * @requires $q
+     * @requires $state
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:catalogStateService
+     * @requires shared.service:datasetManagerService
+     * @requires shared.service:datasetStateService
+     * @requires shared.service:delimitedManangerService
+     * @requires shared.service:discoverStateService
+     * @requires shared.service:mapperStateService
+     * @requires shared.service:mergeRequestsStateService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:ontologyStateService
+     * @requires shared.service:sparqlManagerService
+     * @requires shared.service:stateManagerService
+     * @requires shared.service:userManagerService
+     * @requires shared.service:userStateService
+     *
+     * @description
+     * `loginManagerService` is a service that provides access to the Mobi login REST
+     * endpoints so users can log into and out of Mobi.
+     */
     function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
         var self = this,
             anon = 'self anon',
@@ -228,32 +253,6 @@
         };
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:loginManagerService
-         * @requires $http
-         * @requires $q
-         * @requires $state
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:catalogStateService
-         * @requires shared.service:datasetManagerService
-         * @requires shared.service:datasetStateService
-         * @requires shared.service:delimitedManangerService
-         * @requires shared.service:discoverStateService
-         * @requires shared.service:mapperStateService
-         * @requires shared.service:mergeRequestsStateService
-         * @requires shared.service:ontologyManagerService
-         * @requires shared.service:ontologyStateService
-         * @requires shared.service:sparqlManagerService
-         * @requires shared.service:stateManagerService
-         * @requires shared.service:userManagerService
-         * @requires shared.service:userStateService
-         *
-         * @description
-         * `loginManagerService` is a service that provides access to the Mobi login REST
-         * endpoints so users can log into and out of Mobi.
-         */
+    angular.module('shared')
         .service('loginManagerService', loginManagerService);
 })();

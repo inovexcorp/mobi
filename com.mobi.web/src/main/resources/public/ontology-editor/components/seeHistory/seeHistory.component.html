@@ -1,0 +1,57 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#L%
+  -->
+<div class="see-history row p-4 h-100">
+    <div class="col-auto back-column h-100">
+        <button ng-click="dvm.goBack()" class="btn btn-flat remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+    </div>
+    <div class="see-history-header d-flex flex-column remove-min-width col h-100">
+        <div class="row">
+            <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{dvm.om.getEntityName(dvm.os.listItem.selected)}}</h2>
+            <static-iri class="align-self-end" read-only=true iri="dvm.os.listItem.selected['@id']"></static-iri>
+        </div>
+        <div class="row flex-1 remove-min-height">
+            <div class="col-xl-6 d-flex flex-column h-100 vertical-scroll">
+                <div class="form-inline">
+                    <div class="mr-2">
+                        <span>View entity at</span>
+                    </div>
+                    <div class="form-group">
+                        <select class="form-control" ng-model="dvm.os.listItem.selectedCommit" ng-disabled="dvm.commits.length === 0" ng-options="commit as dvm.util.condenseCommitId(commit.id) for commit in dvm.commits">
+                            <option value="" disabled>- Commit Id -</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button ng-click="dvm.prev()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedCommit) + 1 === dvm.commits.length || !dvm.os.listItem.selectedCommit" class="btn btn-flat previous-btn remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+                        <button ng-click="dvm.next()" ng-disabled="dvm.commits.indexOf(dvm.os.listItem.selectedCommit) === 0 || !dvm.os.listItem.selectedCommit" class="btn btn-flat next-btn remove-min-width"><span class="fa fa-chevron-right fa-2x"></span></button>
+                    </div>
+                </div>
+                <div class="flex-1 remove-min-height">
+                    <commit-compiled-resource commit-id="dvm.os.listItem.selectedCommit.id" entity-id="dvm.os.listItem.selected['@id']" entity-name-func="dvm.getEntityNameDisplay"></commit-compiled-resource>
+                </div>
+            </div>
+            <div class="col remove-min-width h-100 vertical-scroll">
+                <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" receive-commits="dvm.commits = commits" entity-name-func="dvm.getEntityNameDisplay"></commit-history-table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -23,6 +23,29 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:splitIRI
+     * @kind function
+     *
+     * @description
+     * Splits an IRI string based on the last valid delimiter (#, /, or :) it finds
+     * and returns the beginning, delimiter, and ending in a JSON object. The JSON
+     * object looks like this:
+     * ```
+     * {
+     *     begin: 'http://mobi.com/ontologies',
+     *     then: '/',
+     *     end: 'uhtc'
+     * }
+     * ```
+     * If the IRI string is falsey, the JSON object will have empty string values.
+     * Assumes that the IRI is valid.
+     *
+     * @param {string} iri The IRI string to split
+     * @returns {object} An object with keys for the beginning, delimiter, and end
+     * of the IRI string.
+     */
     function splitIRI() {
         return function(iri) {
             if(iri && typeof iri !== 'object') {
@@ -46,30 +69,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:splitIRI
-         * @kind function
-         *
-         * @description
-         * Splits an IRI string based on the last valid delimiter (#, /, or :) it finds
-         * and returns the beginning, delimiter, and ending in a JSON object. The JSON
-         * object looks like this:
-         * ```
-         * {
-         *     begin: 'http://mobi.com/ontologies',
-         *     then: '/',
-         *     end: 'uhtc'
-         * }
-         * ```
-         * If the IRI string is falsey, the JSON object will have empty string values.
-         * Assumes that the IRI is valid.
-         *
-         * @param {string} iri The IRI string to split
-         * @returns {object} An object with keys for the beginning, delimiter, and end
-         * of the IRI string.
-         */
+    angular.module('shared')
         .filter('splitIRI', splitIRI);
 })();

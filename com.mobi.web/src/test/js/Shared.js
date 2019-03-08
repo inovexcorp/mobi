@@ -180,12 +180,6 @@ function injectRemoveIriFromArrayFilter() {
     });
 }
 
-function injectRemoveMobiFilter() {
-    module(function($provide) {
-        $provide.value('removeMobiFilter', jasmine.createSpy('removeMobiFilter').and.callFake(_.identity));
-    });
-}
-
 function injectPrefixationFilter() {
     module(function($provide) {
         $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter').and.callFake(_.identity));
@@ -375,6 +369,7 @@ function mockDelimitedManager() {
         $provide.service('delimitedManagerService', function($q) {
             this.dataRows = undefined;
             this.fileName = '';
+            this.fileObj = undefined;
             this.separator = ',';
             this.containsHeaders = true;
             this.preview = '';
@@ -427,6 +422,7 @@ function mockMapperState() {
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            this.selectMapping = jasmine.createSpy('selectMapping');
             this.isMappingChanged = jasmine.createSpy("isMappingChanged").and.returnValue(false);
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
@@ -621,26 +617,26 @@ function mockOntologyState() {
                 derivedSemanticRelations: [],
                 classes: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 objectProperties: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 dataProperties: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 annotations: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 individuals: {
@@ -648,13 +644,15 @@ function mockOntologyState() {
                     flat: []
                 },
                 concepts: {
-                    hierarchy: [],
-                    index: {},
+                    iris: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 conceptSchemes: {
-                    hierarchy: [],
-                    index: {},
+                    iris: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 blankNodes: {},
@@ -950,6 +948,7 @@ function mockCatalogManager() {
             this.deleteRecordBranch = jasmine.createSpy('deleteRecordBranch').and.returnValue($q.when());
             this.getCommit = jasmine.createSpy('getCommit').and.returnValue($q.when([]));
             this.getCommitHistory = jasmine.createSpy('getCommitHistory').and.returnValue($q.when([]));
+            this.getCompiledResource = jasmine.createSpy('getCompiledResource').and.returnValue($q.when([]));
             this.getDifference = jasmine.createSpy('getDifference').and.returnValue($q.when([]));
             this.getBranchCommits = jasmine.createSpy('getBranchCommits').and.returnValue($q.when([]));
             this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());
@@ -990,6 +989,7 @@ function mockCatalogState() {
             this.recordIcons = {};
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
+            this.getRecordType = jasmine.createSpy('getRecordType').and.returnValue('');
             this.getRecordIcon = jasmine.createSpy('getRecordIcon').and.returnValue('');
         });
     });

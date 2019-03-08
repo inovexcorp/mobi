@@ -25,6 +25,16 @@
 
     catalogStateService.$inject = ['catalogManagerService', 'prefixes'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:catalogStateService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * `catalogStateService` is a service which contains various variables to hold the state of the
+     * {@link catalog.component:catalogPage} and utility functions to update those variables.
+     */
     function catalogStateService(catalogManagerService, prefixes) {
         var self = this;
         var cm = catalogManagerService;
@@ -138,6 +148,19 @@
         }
         /**
          * @ngdoc method
+         * @name getRecordType
+         * @methodOf shared.service:catalogStateService
+         *
+         * @description
+         * Returns the type of the provided Record.
+         *
+         * @return {string} The type IRI of the record
+         */
+        self.getRecordType = function(record) {
+            return _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type)) || prefixes.catalog + 'Record';
+        }
+        /**
+         * @ngdoc method
          * @name getRecordIcon
          * @methodOf shared.service:catalogStateService
          *
@@ -148,8 +171,8 @@
          * @return {string} A Font Awesome class string
          */
         self.getRecordIcon = function(record) {
-            var type = _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type));
-            return self.recordIcons[type || 'default'];
+            var type = self.getRecordType(record);
+            return self.recordIcons[type === prefixes.catalog + 'Record' ? 'default' : type];
         }
         /**
          * @ngdoc method
@@ -181,17 +204,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:catalogStateService
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:prefixes
-         *
-         * @description
-         * `catalogStateService` is a service which contains various variables to hold the state of the
-         * {@link catalog.component:catalogPage} and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('catalogStateService', catalogStateService);
 })();

@@ -22,14 +22,14 @@
   -->
 <div class="merge-request-tabset">
     <material-tabset class="h-100">
-        <material-tab heading="'Discussion'" active="dvm.tabs.discussion">
+        <material-tab heading="'Discussion'" active="dvm.tabs.discussion" set-active="dvm.tabs.discussion = value">
             <merge-request-discussion request="dvm.request"></merge-request-discussion>
         </material-tab>
-        <material-tab heading="'Changes'" active="dvm.tabs.changes">
+        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
             <commit-changes-display additions="dvm.request.difference.additions" deletions="dvm.request.difference.deletions"></commit-changes-display>
             <info-message ng-if="!dvm.request.difference.additions.length && !dvm.request.difference.deletions.length">No changes to display</info-message>
         </material-tab>
-        <material-tab heading="'Commits'" active="dvm.tabs.commits">
+        <material-tab heading="'Commits'" active="dvm.tabs.commits" set-active="dvm.tabs.commits = value">
             <commit-history-table head-title="dvm.request.sourceTitle" commit-id="dvm.request.sourceCommit" target-id="dvm.request.targetCommit"></commit-history-table>
         </material-tab>
     </material-tabset>

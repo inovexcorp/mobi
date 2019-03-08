@@ -23,5 +23,5 @@
 <div class="advanced-language-select">
     <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show language</a>
     <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide language</a>
-    <language-select ng-if="dvm.isShown" ng-model="dvm.bindModel"></language-select>
+    <language-select ng-if="dvm.isShown" bind-model="dvm.bindModel" change-event="dvm.bindModel = value"></language-select>
 </div>

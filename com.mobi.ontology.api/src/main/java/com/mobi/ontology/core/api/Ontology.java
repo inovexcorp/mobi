@@ -225,17 +225,17 @@ public interface Ontology {
      * Searches for all individuals of a particular class or any sub-classes of the provided class.
      *
      * @param classIRI The {@link IRI} of the class of individuals to find.
-     * @return The {@link Set} of {@link Individual}s.
+     * @return The {@link Set} of {@link NamedIndividual}s.
      */
-    Set<Individual> getIndividualsOfType(IRI classIRI);
+    Set<NamedIndividual> getIndividualsOfType(IRI classIRI);
 
     /**
      * Searches for all individuals of a particular class or any sub-classes of the provided class.
      *
      * @param clazz The {@link OClass} of individuals to find.
-     * @return The {@link Set} of {@link Individual}s.
+     * @return The {@link Set} of {@link NamedIndividual}s.
      */
-    Set<Individual> getIndividualsOfType(OClass clazz);
+    Set<NamedIndividual> getIndividualsOfType(OClass clazz);
 
     /**
      * Searches for all cardinality properties associated with a particular class.

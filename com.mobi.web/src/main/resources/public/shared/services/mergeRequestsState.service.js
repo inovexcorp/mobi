@@ -25,6 +25,19 @@
 
     mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', '$q'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:mergeRequestsStateService
+     * @requires shared.service:mergeRequestManagerService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:userManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * `mergeRequestsStateService` is a service which contains various variables to hold the
+     * state of the Merge Requests page and utility functions to update those variables.
+     */
     function mergeRequestsStateService(mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes, $q) {
         var self = this;
         var mm = mergeRequestManagerService;
@@ -353,20 +366,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:mergeRequestsStateService
-         * @requires shared.service:mergeRequestManagerService
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:userManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:prefixes
-         *
-         * @description
-         * `mergeRequestsStateService` is a service which contains various variables to hold the
-         * state of the Merge Requests page and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('mergeRequestsStateService', mergeRequestsStateService);
 })();

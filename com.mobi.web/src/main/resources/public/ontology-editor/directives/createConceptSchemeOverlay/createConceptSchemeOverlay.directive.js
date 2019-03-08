@@ -50,7 +50,7 @@
          * the modal contains a text input for the concept scheme name (which populates the
          * {@link staticIri.directive:staticIri IRI}),
          * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the top concepts.
-         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
@@ -106,14 +106,12 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
-                        var index = _.get(dvm.os.listItem, 'conceptSchemes.index');
-                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        dvm.os.listItem.conceptSchemes.iris[dvm.scheme['@id']] = dvm.os.listItem.ontologyId;
                         // Add top concepts to hierarchy if they exist
                         _.forEach(dvm.selectedConcepts, concept => {
-                            dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
+                            dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes, concept['@id'], dvm.scheme['@id']);
                         });
-                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
                         // Update additions
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
                         // Update individual hierarchy

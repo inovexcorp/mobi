@@ -50,7 +50,7 @@
          * {@link shared.service:ontologyStateService selected ontology/vocabulary}. The form in the modal
          * contains a text input for the concept name (which populates the {@link staticIri.directive:staticIri IRI}),
          * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the concept scheme
-         * the concept is "top" of. Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * the concept is "top" of. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
@@ -105,14 +105,15 @@
                                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, scheme['@id']);
                                 pm.addId(entity, prefixes.skos + 'hasTopConcept', dvm.concept['@id']);
                                 dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.concept['@id'], dvm.os.listItem.conceptSchemes.index, scheme['@id']);
+                                dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes, dvm.concept['@id'], scheme['@id']);
                             });
-                            dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.concept);
                         // update relevant lists
+                        dvm.os.listItem.concepts.iris[dvm.concept['@id']] = dvm.os.listItem.ontologyId;
                         dvm.ontoUtils.addConcept(dvm.concept);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
                         dvm.ontoUtils.addIndividual(dvm.concept);

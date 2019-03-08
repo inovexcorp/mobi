@@ -66,13 +66,12 @@
             var util = utilService;
             dvm.error = '';
             dvm.fileObj = undefined;
-            dvm.fileName = 'No file selected';
             dvm.datasetTitle = util.getDctermsValue(state.selectedDataset.record, 'title');
             dvm.uploadId = 'upload-dataset-data';
             dvm.importing = false;
 
-            dvm.update = function() {
-                dvm.fileName = dvm.fileObj.name;
+            dvm.update = function(value) {
+                dvm.fileObj = value;
             }
             dvm.submit = function() {
                 dvm.importing = true;

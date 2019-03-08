@@ -23,9 +23,9 @@
 <div class="users-list tree scroll-without-buttons">
     <ul>
         <li ng-repeat="user in dvm.um.users | usernameSearch:dvm.state.userSearchString track by user.username">
-            <a ng-click="dvm.onClick(user)" ng-class="{'active': dvm.state.selectedUser.username === user.username}">
-                {{(user.firstName || user.lastName) ? (user.firstName + " " + user.lastName) : user.username}}
-                <small class="admin" ng-if="dvm.um.isAdmin(user.username)">(Admin)</small>
+            <a ng-click="dvm.onClick(user)" class="d-flex" ng-class="{'active': dvm.state.selectedUser.username === user.username}">
+                <span class="text-truncate">{{(user.firstName || user.lastName) ? (user.firstName + " " + user.lastName) : user.username}}</span>
+                <small class="admin pl-1" ng-if="dvm.um.isAdmin(user.username)">(Admin)</small>
             </a>
         </li>
     </ul>

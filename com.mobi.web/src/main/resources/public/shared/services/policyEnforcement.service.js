@@ -25,6 +25,17 @@
 
     policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:policyEnforcementService
+     * @requires shared.service:prefixes
+     * @requires shared.service:utilService
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `policyEnforcementService` is a service that provides access to the Mobi policy enforcement REST
+     * endpoint.
+     */
     function policyEnforcementService($http, $q, REST_PREFIX, utilService) {
         var self = this;
         var prefix = REST_PREFIX + 'pep';
@@ -61,18 +72,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:policyEnforcementService
-         * @requires shared.service:prefixes
-         * @requires shared.service:utilService
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `policyEnforcementService` is a service that provides access to the Mobi policy enforcement REST
-         * endpoint.
-         */
+    angular.module('shared')
         .service('policyEnforcementService', policyEnforcementService);
 })();

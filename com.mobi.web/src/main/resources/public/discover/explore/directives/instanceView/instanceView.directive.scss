@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .instance-view {
+    .breadcrumbs {
+        float: left;
+    }
     .block-header {
         .edit-button {
             display: inline-block;
@@ -32,7 +35,7 @@
         }
     }
     .block-content {
-        padding-bottom: 15px;
+        padding: 10px 10px 15px 10px;
 
         .lead {
             display: -webkit-box;

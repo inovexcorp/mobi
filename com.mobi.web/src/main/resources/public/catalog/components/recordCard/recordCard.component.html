@@ -27,7 +27,8 @@
         <p class="card-text record-description">{{dvm.description}}</p>
         <catalog-record-keywords record="dvm.record"></catalog-record-keywords>
     </div>
-    <div class="card-footer">
-        <entity-publisher entity="dvm.record" class="text-muted"></entity-publisher>
+    <div class="card-footer d-flex">
+        <entity-publisher entity="dvm.record" class="text-muted flex-1 align-self-center"></entity-publisher>
+        <open-record-button record="dvm.record" stop-prop flat></open-record-button>
     </div>
 </div>

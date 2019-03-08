@@ -118,6 +118,9 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLOntologyWriterConfiguration;
 import org.semanticweb.owlapi.model.OWLPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLRuntimeException;
+import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubPropertyAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.Navigation;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
@@ -566,14 +569,14 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public Set<Individual> getIndividualsOfType(IRI classIRI) {
+    public Set<NamedIndividual> getIndividualsOfType(IRI classIRI) {
         return getIndividualsOfType(new SimpleClass(classIRI));
     }
 
     @Override
-    public Set<Individual> getIndividualsOfType(OClass clazz) {
+    public Set<NamedIndividual> getIndividualsOfType(OClass clazz) {
         return owlReasoner.getInstances(SimpleOntologyValues.owlapiClass(clazz)).entities()
-                .map(SimpleOntologyValues::mobiIndividual)
+                .map(SimpleOntologyValues::mobiNamedIndividual)
                 .collect(Collectors.toSet());
     }
 
@@ -620,9 +623,17 @@ public class SimpleOntology implements Ontology {
     }
 
     private Stream<IRI> getSubClassesFor(OWLClass owlClass, boolean direct) {
-        return owlReasoner.getSubClasses(owlClass, direct).entities()
-                .filter(subclass -> !subclass.isBottomEntity())
-                .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()));
+        if (direct) {
+            return owlOntology.axioms(AxiomType.SUBCLASS_OF, Imports.INCLUDED)
+                    .filter(axiom -> axiom.getSuperClass().equals(owlClass))
+                    .map(OWLSubClassOfAxiom::getSubClass)
+                    .filter(subclass -> !subclass.isBottomEntity() && subclass.isOWLClass())
+                    .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.asOWLClass().getIRI()));
+        } else {
+            return owlReasoner.getSubClasses(owlClass, direct).entities()
+                    .filter(subclass -> !subclass.isBottomEntity())
+                    .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()));
+        }
     }
 
     private Stream<OWLClass> getDeclaredClasses() {
@@ -673,9 +684,17 @@ public class SimpleOntology implements Ontology {
     }
 
     private Stream<IRI> getSubDatatypePropertiesFor(OWLDataProperty property, boolean direct) {
-        return owlReasoner.getSubDataProperties(property, direct).entities()
-                .filter(subproperty -> !subproperty.isBottomEntity())
-                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
+        if (direct) {
+            return owlOntology.axioms(AxiomType.SUB_DATA_PROPERTY, Imports.INCLUDED)
+                    .filter(axiom -> axiom.getSuperProperty().equals(property))
+                    .map(OWLSubPropertyAxiom::getSubProperty)
+                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLDataProperty())
+                    .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.asOWLDataProperty().getIRI()));
+        } else {
+            return owlReasoner.getSubDataProperties(property, direct).entities()
+                    .filter(subproperty -> !subproperty.isBottomEntity())
+                    .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
+        }
     }
 
     private Stream<OWLDataProperty> getDeclaredDatatypeProperties() {
@@ -713,9 +732,13 @@ public class SimpleOntology implements Ontology {
 
     // TODO: Implement indirect
     private Stream<IRI> getSubAnnotationPropertiesFor(OWLAnnotationProperty property, boolean direct) {
-        return owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
-                .filter(axiom -> axiom.getSuperProperty().equals(property))
-                .map(axiom -> SimpleOntologyValues.mobiIRI(axiom.getSubProperty().getIRI()));
+//        if (direct) {
+            return owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
+                    .filter(axiom -> axiom.getSuperProperty().equals(property))
+                    .map(OWLSubAnnotationPropertyOfAxiom::getSubProperty)
+                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLAnnotationProperty())
+                    .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
+//        }
     }
 
     @Override
@@ -737,9 +760,17 @@ public class SimpleOntology implements Ontology {
     }
 
     private Stream<IRI> getSubObjectPropertiesFor(OWLObjectProperty property, boolean direct) {
-        return owlReasoner.getSubObjectProperties(property, direct).entities()
-                .filter(subproperty -> !subproperty.isBottomEntity())
-                .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()));
+        if (direct) {
+            return owlOntology.axioms(AxiomType.SUB_OBJECT_PROPERTY, Imports.INCLUDED)
+                    .filter(axiom -> axiom.getSuperProperty().equals(property))
+                    .map(OWLSubPropertyAxiom::getSubProperty)
+                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLObjectProperty())
+                    .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()));
+        } else {
+            return owlReasoner.getSubObjectProperties(property, false).entities()
+                    .filter(subproperty -> !subproperty.isBottomEntity())
+                    .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()));
+        }
     }
 
     private Stream<OWLObjectProperty> getDeclaredObjectProperties() {
@@ -1230,7 +1261,7 @@ public class SimpleOntology implements Ontology {
         }
         annotationProperties = new HashSet<>();
 
-        annotationProperties = owlOntology.annotationPropertiesInSignature()
+        annotationProperties = getDeclaredAnnotationProperties()
                 .map(SimpleOntologyValues::mobiAnnotationProperty)
                 .collect(Collectors.toSet());
     }

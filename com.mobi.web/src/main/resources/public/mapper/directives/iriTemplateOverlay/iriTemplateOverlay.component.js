@@ -47,7 +47,7 @@
          * {@link shared.service:mapperStateService selected class mapping}. The modal splits the IRI template
          * into the beginning of the namespace, the delimiter between the namespace and local name, and the dynamically
          * created local name. The local name can either be a UUID or a column header. Meant to be used in conjunction
-         * with the {@link modalService.directive:modalService}.
+         * with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

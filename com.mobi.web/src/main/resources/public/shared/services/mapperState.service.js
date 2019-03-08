@@ -25,6 +25,18 @@
 
     mapperStateService.$inject = ['$q', 'prefixes', 'mappingManagerService', 'ontologyManagerService', 'catalogManagerService', 'delimitedManagerService', 'utilService'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:mapperStateService
+     * @requires shared.service:prefixes
+     * @requires shared.service:mappingManagerService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:delimitedManagerService
+     *
+     * @description
+     * `mapperStateService` is a service which contains various variables to hold the
+     * state of the mapping tool page and utility functions to update those variables.
+     */
     function mapperStateService($q, prefixes, mappingManagerService, ontologyManagerService, catalogManagerService, delimitedManagerService, utilService) {
         var self = this;
         var mm = mappingManagerService,
@@ -61,7 +73,16 @@
          * ```
          */
         self.mapping = undefined;
-
+        /**
+         * @ngdoc property
+         * @name openedMappings
+         * @propertyOf shared.service:mapperStateService
+         * @type {Object[]}
+         *
+         * @description
+         * `openedMappings` holds the list of mappings that have been opened.
+         */
+        self.openedMappings = [];
         /**
          * @ngdoc property
          * @name sourceOntologies
@@ -288,6 +309,40 @@
                     deletions: []
                 }
             };
+        }
+        /**
+         * @ngdoc method
+         * @name openMapping
+         * @methodOf shared.service:mapperStateService
+         *
+         * @description
+         * Retrieves and selects a mapping to the provided record.
+         *
+         * @param {Object} record the mapping record to select
+         */
+        self.selectMapping = function(record) {
+            var openedMapping = _.find(self.openedMappings, {record: {id: record.id}});
+            if (openedMapping) {
+                self.mapping = openedMapping;
+            } else {
+                mm.getMapping(record.id)
+                    .then(jsonld => {
+                        var mapping = {
+                            jsonld,
+                            record,
+                            difference: {
+                                additions: [],
+                                deletions: []
+                            }
+                        };
+                        self.mapping = mapping;
+                        self.openedMappings.push(mapping);
+                        return cm.getRecord(_.get(mm.getSourceOntologyInfo(jsonld), 'recordId'), cm.localCatalog['@id']);
+                    }, () => $q.reject('Mapping ' + record.title + ' could not be found'))
+                    .then(ontologyRecord => {
+                        self.mapping.ontology = ontologyRecord;
+                    }, errorMessage => util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
+            }
         }
         /**
          * @ngdoc method
@@ -812,19 +867,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:mapperStateService
-         * @requires shared.service:prefixes
-         * @requires shared.service:mappingManagerService
-         * @requires shared.service:ontologyManagerService
-         * @requires shared.service:delimitedManagerService
-         *
-         * @description
-         * `mapperStateService` is a service which contains various variables to hold the
-         * state of the mapping tool page and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('mapperStateService', mapperStateService);
 })();

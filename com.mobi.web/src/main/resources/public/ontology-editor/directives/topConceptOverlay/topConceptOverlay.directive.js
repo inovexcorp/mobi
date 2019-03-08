@@ -49,7 +49,7 @@
          * {@link shared.service:ontologyStateService selected concept scheme}. The form in the modal
          * contains a `ui-select` with all the concepts in the current
          * {@link shared.service:ontologyStateService selected ontology}. Meant to be used in conjunction with
-         * the {@link modalService.directive:modalService}.
+         * the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

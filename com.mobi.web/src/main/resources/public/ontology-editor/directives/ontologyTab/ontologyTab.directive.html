@@ -21,45 +21,56 @@
   #L%
   -->
 <div class="ontology-tab h-100">
+    <see-history ng-if="dvm.os.listItem.seeHistory"></see-history>
     <merge-tab ng-if="dvm.os.listItem.merge.active"></merge-tab>
-    <div class="main-tabs h-100" ng-if="!dvm.os.listItem.merge.active">
+    <div class="main-tabs h-100" ng-if="!dvm.os.listItem.merge.active && !dvm.os.listItem.seeHistory">
         <material-tabset>
             <material-tab heading="'Project'" active="dvm.os.listItem.editorTabStates.project.active"
+                 set-active="dvm.os.listItem.editorTabStates.project.active = value"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.project.entityIRI, false)">
                 <project-tab class="h-100"></project-tab>
             </material-tab>
             <material-tab heading="'Overview'" active="dvm.os.listItem.editorTabStates.overview.active"
+                 set-active="dvm.os.listItem.editorTabStates.overview.active = value"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.overview.entityIRI)">
                 <overview-tab class="h-100"></overview-tab>
             </material-tab>
             <material-tab heading="'Classes'" active="dvm.os.listItem.editorTabStates.classes.active"
+                 set-active="dvm.os.listItem.editorTabStates.classes.active = value"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.classes.entityIRI)">
                 <classes-tab class="h-100"></classes-tab>
             </material-tab>
             <material-tab heading="'Properties'" active="dvm.os.listItem.editorTabStates.properties.active"
+                 set-active="dvm.os.listItem.editorTabStates.properties.active = value"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.properties.entityIRI)">
                 <properties-tab class="h-100"></properties-tab>
             </material-tab>
             <material-tab heading="'Individuals'" active="dvm.os.listItem.editorTabStates.individuals.active"
+                 set-active="dvm.os.listItem.editorTabStates.individuals.active = value"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.individuals.entityIRI, false)">
                 <individuals-tab class="h-100"></individuals-tab>
             </material-tab>
             <material-tab heading="'Schemes'" active="dvm.os.listItem.editorTabStates.schemes.active" hide-tab="!dvm.os.listItem.isVocabulary"
+                 set-active="dvm.os.listItem.editorTabStates.schemes.active = value"
                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.schemes.entityIRI, false)">
                 <concept-schemes-tab class="h-100"></concept-schemes-tab>
             </material-tab>
             <material-tab heading="'Concepts'" active="dvm.os.listItem.editorTabStates.concepts.active" hide-tab="!dvm.os.listItem.isVocabulary"
+                 set-active="dvm.os.listItem.editorTabStates.concepts.active = value"
                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.concepts.entityIRI, false)">
                 <concepts-tab class="h-100"></concepts-tab>
             </material-tab>
             <material-tab heading="'Search'" active="dvm.os.listItem.editorTabStates.search.active"
+                 set-active="dvm.os.listItem.editorTabStates.search.active = value"
                  on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.search.entityIRI, false)">
                 <search-tab></search-tab>
             </material-tab>
-            <material-tab heading="dvm.savedChanges" active="dvm.os.listItem.editorTabStates.savedChanges.active">
+            <material-tab heading="dvm.savedChanges" active="dvm.os.listItem.editorTabStates.savedChanges.active"
+                 set-active="dvm.os.listItem.editorTabStates.savedChanges.active = value">
                 <saved-changes-tab class="h-100"></saved-changes-tab>
             </material-tab>
-            <material-tab heading="'Commits'" active="dvm.os.listItem.editorTabStates.commits.active">
+            <material-tab heading="'Commits'" active="dvm.os.listItem.editorTabStates.commits.active"
+                 set-active="dvm.os.listItem.editorTabStates.commits.active = value">
                 <commits-tab class="h-100"></commits-tab>
             </material-tab>
         </material-tabset>

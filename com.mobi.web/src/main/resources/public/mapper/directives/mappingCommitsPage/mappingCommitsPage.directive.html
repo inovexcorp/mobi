@@ -20,15 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="mapping-commits-page row">
-    <div class="col-8 offset-2">
-        <block>
-            <block-header>
-                <h4>Commits</h4>
-            </block-header>
-            <block-content class="table-container">
-                <commit-history-table commit-id="dvm.util.getPropertyId(dvm.state.mapping.branch, dvm.prefixes.catalog + 'head')" head-title="dvm.util.getDctermsValue(dvm.state.mapping.branch, 'title')" graph></commit-history-table>
-            </block-content>
-        </block>
+<div class="mapping-commits-page container-fluid py-3 h-100">
+    <div class="row h-100">
+        <div class="col-8 offset-2">
+            <block class="h-100">
+                <block-header>
+                    <h4>Commits</h4>
+                </block-header>
+                <block-content>
+                    <div class="padding">
+                        <commit-history-table commit-id="dvm.util.getPropertyId(dvm.state.mapping.branch, dvm.prefixes.catalog + 'head')" head-title="dvm.util.getDctermsValue(dvm.state.mapping.branch, 'title')" graph></commit-history-table>
+                    </div>
+                </block-content>
+            </block>
+        </div>
     </div>
 </div>
