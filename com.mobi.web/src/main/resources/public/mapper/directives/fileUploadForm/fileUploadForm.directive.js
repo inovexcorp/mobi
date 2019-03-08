@@ -66,17 +66,15 @@
                     dvm.state = mapperStateService;
                     dvm.dm = delimitedManagerService;
                     dvm.errorMessage = '';
-                    dvm.fileObj = undefined;
-                    dvm.fileName = 'No file selected'
 
                     dvm.isExcel = function() {
-                        var fileName = _.get(dvm.fileObj, 'name', '');
+                        var fileName = _.get(dvm.dm.fileObj, 'name', '');
                         return _.includes(fileName, 'xls');
                     }
-                    dvm.upload = function() {
-                        if (dvm.fileObj) {
-                            dvm.dm.upload(dvm.fileObj).then(data => {
-                                dvm.fileName = dvm.fileObj.name;
+                    dvm.upload = function(value) {
+                        dvm.dm.fileObj = value;
+                        if (dvm.dm.fileObj) {
+                            dvm.dm.upload(dvm.dm.fileObj).then(data => {
                                 dvm.dm.fileName = data;
                                 dvm.errorMessage = '';
                                 return dvm.dm.previewFile(50);
@@ -85,7 +83,10 @@
                     }
                     $scope.$watch('dvm.dm.separator', (newValue, oldValue) => {
                         if (newValue !== oldValue && !dvm.isExcel()) {
-                            dvm.dm.previewFile(50).then(() => dvm.state.setInvalidProps(), onError);
+                            dvm.dm.previewFile(50).then(() => {
+                                dvm.errorMessage = '';
+                                dvm.state.setInvalidProps();
+                            }, onError);
                         }
                     });
                     function onError(errorMessage) {

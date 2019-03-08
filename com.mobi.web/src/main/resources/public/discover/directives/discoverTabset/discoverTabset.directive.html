@@ -21,15 +21,15 @@
   #L%
   -->
 <div class="discover-tabset">
-    <tabset class="centered">
-        <tab heading="'Explore'" active="dvm.ds.explore.active">
+    <material-tabset centered>
+        <material-tab heading="'Explore'" active="dvm.ds.explore.active" set-active="dvm.ds.explore.active = value">
             <explore-tab></explore-tab>
-        </tab>
-        <tab heading="'Search'" active="dvm.ds.search.active">
+        </material-tab>
+        <material-tab  heading="'Search'" active="dvm.ds.search.active" set-active="dvm.ds.search.active = value">
             <discover-search-tab></discover-search-tab>
-        </tab>
-        <tab heading="'Query'" active="dvm.ds.query.active">
+        </material-tab>
+        <material-tab heading="'Query'" active="dvm.ds.query.active" set-active="dvm.ds.query.active = value">
             <query-tab></query-tab>
-        </tab>
-    </tabset>
+        </material-tab>
+    </material-tabset>
 </div>

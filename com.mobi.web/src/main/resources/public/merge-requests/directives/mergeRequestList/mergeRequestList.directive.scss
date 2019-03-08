@@ -24,9 +24,6 @@
 @import "./src/main/resources/public/css/variables";
 
 .merge-request-list {
-    display: flex;
-    flex-direction: column;
-
     .search-container {
         text-align: center;
         padding-bottom: 15px;
@@ -35,10 +32,11 @@
             display: inline-block;
         }
     }
-    block {
-        flex: 1;
+    .block {
+        .block-content {
+            padding: 10px;
+        }
     }
-
     .request {
         border-bottom: 1px solid var(--light);
         display: flex;

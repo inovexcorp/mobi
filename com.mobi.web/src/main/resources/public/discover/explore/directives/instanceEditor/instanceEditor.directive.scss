@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .instance-editor {
+    .breadcrumbs {
+        float: left;
+    }
     .link {
         display: inline-block;
         line-height: 33px;

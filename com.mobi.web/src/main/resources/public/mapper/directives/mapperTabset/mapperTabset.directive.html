@@ -21,15 +21,14 @@
   #L%
   -->
 <div class="mapper-tabset h-100">
-    <div class="white-bar" ng-if="dvm.state.step !== dvm.state.editMappingStep"></div>
     <mapping-select-page ng-if="dvm.state.step === dvm.state.selectMappingStep"></mapping-select-page>
     <file-upload-page ng-if="dvm.state.step === dvm.state.fileUploadStep"></file-upload-page>
-    <tabset class="centered" ng-if="dvm.state.step === dvm.state.editMappingStep">
-        <tab heading="'Edit'" active="dvm.state.editTabs.edit">
+    <material-tabset ng-if="dvm.state.step === dvm.state.editMappingStep" centered>
+        <material-tab heading="'Edit'" active="dvm.state.editTabs.edit" set-active="dvm.state.editTabs.edit = value">
             <edit-mapping-page></edit-mapping-page>
-        </tab>
-        <tab heading="'Commits'" active="dvm.state.editTabs.commits">
+        </material-tab>
+        <material-tab heading="'Commits'" active="dvm.state.editTabs.commits" set-active="dvm.state.editTabs.commits = value">
             <mapping-commits-page></mapping-commits-page>
-        </tab>
-    </tabset>
+        </material-tab>
+    </material-tabset>
 </div>

@@ -25,6 +25,14 @@
 
     mergeRequestManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:mergeRequestManagerService
+     *
+     * @description
+     * `mergeRequestManagerService` is a service that provides access to the Mobi merge-requests REST
+     * endpoints along with utility methods for working with Merge Requests and their components.
+     */
     function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFIX) {
         var self = this,
             prefix = REST_PREFIX + 'merge-requests';
@@ -241,15 +249,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:mergeRequestManagerService
-         *
-         * @description
-         * `mergeRequestManagerService` is a service that provides access to the Mobi merge-requests REST
-         * endpoints along with utility methods for working with Merge Requests and their components.
-         */
+    angular.module('shared')
         .service('mergeRequestManagerService', mergeRequestManagerService);
 })();

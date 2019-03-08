@@ -25,6 +25,15 @@
 
     delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', 'utilService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:delimitedManagerService
+     * @requires shared.service:utilService
+     *
+     * @description
+     * `delimitedManagerService` is a service that provides access to the Mobi CSV REST endpoints and various variables
+     * to hold data pertaining to the parameters passed to the endpoints and the results of the endpoints.
+     */
     function delimitedManagerService($http, $httpParamSerializer, $q, utilService, REST_PREFIX) {
         var self = this,
             util = utilService,
@@ -37,8 +46,7 @@
          * @type {string[]}
          *
          * @description
-         * `dataRows` holds an array of a preview of delimited data. Set by the
-         * POST /mobirest/delimited-files endpoint
+         * `dataRows` holds an array of a preview of delimited data. Set by the POST /mobirest/delimited-files endpoint.
          */
         self.dataRows = undefined;
         /**
@@ -48,11 +56,21 @@
          * @type {string}
          *
          * @description
-         * `fileName` holds a string with the name of the uploaded delimited file given
-         * back from the POST /mobirest/delimited-files endpoint
-         * endpoint calls.
+         * `fileName` holds a string with the name of the uploaded delimited file given back from the POST
+         * /mobirest/delimited-files endpoint calls.
          */
         self.fileName = '';
+        /**
+         * @ngdoc property
+         * @name fileObj
+         * @propertyOf shared.service:delimitedManagerService
+         * @type {File}
+         *
+         * @description
+         * `fileObj` holds the File object of the original uploaded delimited file that was sent to the POST
+         * /mobirest/delimited-files endpoint call.
+         */
+        self.fileObj = undefined;
         /**
          * @ngdoc property
          * @name separator
@@ -60,11 +78,10 @@
          * @type {string}
          *
          * @description
-         * `separator` holds a string with the character separating columns in the uploaded
-         * delimited file if it is an SV file. It is used in the GET /mobirest/delimited-files/{fileName},
-         * the POST /mobirest/delimited-files/{fileName}/map, and the
-         * GET /mobirest/delimited-files/{fileName}/map
-         * endpoints calls.
+         * `separator` holds a string with the character separating columns in the uploaded delimited file if it is an
+         * SV file. It is used in the GET /mobirest/delimited-files/{fileName}, the POST
+         * /mobirest/delimited-files/{fileName}/map, and the GET /mobirest/delimited-files/{fileName}/map endpoint 
+         * calls.
          */
         self.separator = ',';
         /**
@@ -130,7 +147,6 @@
             return $http.post(prefix, fd, config)
                 .then(response => response.data, util.rejectError);
         }
-
         /**
          * @ngdoc method
          * @name previewFile
@@ -170,7 +186,6 @@
                     return util.rejectError(error);
                 });
         }
-
         /**
          * @ngdoc method
          * @name previewMap
@@ -207,7 +222,6 @@
             return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
                 .then(response => response.data, util.rejectError);
         }
-
         /**
          * @ngdoc method
          * @name mapAndDownload
@@ -237,7 +251,6 @@
             }
             util.startDownload(prefix + '/' + encodeURIComponent(self.fileName) + '/map?' + $httpParamSerializer(params));
         }
-
         /**
          * @ngdoc method
          * @name mapAndUpload
@@ -264,7 +277,6 @@
             return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
                 .then(response => response.data, util.rejectError);
         }
-
         /**
          * @ngdoc method
          * @name mapAndCommit
@@ -295,7 +307,6 @@
             return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-to-ontology', null, config)
                 .then(_.identity, util.rejectError);
         }
-
         /**
          * @ngdoc method
          * @name getHeader
@@ -313,7 +324,6 @@
         self.getHeader = function(index) {
             return self.containsHeaders && self.dataRows ? _.get(self.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
         }
-
         /**
          * @ngdoc method
          * @name reset
@@ -330,23 +340,13 @@
         self.reset = function() {
             self.dataRows = undefined;
             self.fileName = '';
+            self.fileObj = undefined;
             self.separator = ',';
             self.containsHeaders = true;
             self.preview = '';
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:delimitedManagerService
-         * @requires shared.service:utilService
-         *
-         * @description
-         * `delimitedManagerService` is a service that provides access to the Mobi CSV REST
-         * endpoints and various variables to hold data pertaining to the parameters
-         * passed to the endpoints and the results of the endpoints.
-         */
+    angular.module('shared')
         .service('delimitedManagerService', delimitedManagerService);
 })();

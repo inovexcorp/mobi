@@ -56,12 +56,12 @@ describe('File Upload Form directive', function() {
             var result = this.controller.isExcel();
             expect(result).toBe(false);
 
-            this.controller.fileObj = {name: 'test.xls'};
+            delimitedManagerSvc.fileObj = {name: 'test.xls'};
             scope.$digest();
             result = this.controller.isExcel();
             expect(result).toBe(true);
 
-            this.controller.fileObj = {name: 'test.xlsx'};
+            delimitedManagerSvc.fileObj = {name: 'test.xlsx'};
             scope.$digest();
             result = this.controller.isExcel();
             expect(result).toBe(true);
@@ -69,19 +69,20 @@ describe('File Upload Form directive', function() {
         describe('should upload a file', function() {
             it('unless a file has not been selected', function() {
                 this.controller.upload();
+                expect(delimitedManagerSvc.fileObj).toBeUndefined();
                 expect(delimitedManagerSvc.upload).not.toHaveBeenCalled();
             });
             describe('if a file has been selected', function() {
                 beforeEach(function() {
                     this.controller.fileName = 'No file selected';
-                    this.controller.fileObj = {};
+                    this.fileObj = {name: 'File Name'};
                 });
                 it('unless an error occurs', function() {
                     delimitedManagerSvc.upload.and.returnValue($q.reject('Error message'));
-                    this.controller.upload();
+                    this.controller.upload(this.fileObj);
                     scope.$apply();
-                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
-                    expect(this.controller.fileName).toEqual('No file selected');
+                    expect(delimitedManagerSvc.fileObj).toEqual(this.fileObj);
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.fileObj);
                     expect(delimitedManagerSvc.previewFile).not.toHaveBeenCalled();
                     expect(mapperStateSvc.setInvalidProps).not.toHaveBeenCalled();
                     expect(this.controller.errorMessage).toBe('Error message');
@@ -90,12 +91,10 @@ describe('File Upload Form directive', function() {
                 });
                 it('successfully', function() {
                     delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
-                    this.controller.fileObj = {name: 'File Name'};
-                    this.controller.upload();
+                    this.controller.upload(this.fileObj);
                     scope.$apply();
-                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
-                    expect(this.controller.fileName).toEqual('File Name');
-                    expect(delimitedManagerSvc.fileName).not.toBe('');
+                    expect(delimitedManagerSvc.fileObj).toEqual(this.fileObj);
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.fileObj);
                     expect(this.controller.errorMessage).toBe('');
                     expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
                     expect(mapperStateSvc.setInvalidProps).toHaveBeenCalled();
@@ -107,24 +106,17 @@ describe('File Upload Form directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('file-upload-form')).toBe(true);
         });
-        it('with a button', function() {
-            expect(this.element.find('button').length).toBe(1);
-        });
-        it('with a span', function() {
-            expect(this.element.find('span').length).toBe(1);
-        });
-        it('with a file input', function() {
-            expect(this.element.find('file-input').length).toBe(1);
-        });
-        it('with a checkbox', function() {
-            expect(this.element.find('checkbox').length).toBe(1);
+        ['file-input', 'checkbox'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('depending on the type of file', function() {
-            this.controller.fileObj = {name: 'test.csv'};
+            delimitedManagerSvc.fileObj = {name: 'test.csv'};
             scope.$digest();
             expect(this.element.find('radio-button').length).toBe(3);
 
-            this.controller.fileObj = {name: 'test.xls'};
+            delimitedManagerSvc.fileObj = {name: 'test.xls'};
             scope.$digest();
             expect(this.element.find('radio-button').length).toBe(0);
         });

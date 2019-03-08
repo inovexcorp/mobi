@@ -36,14 +36,14 @@
             </ui-select>
         </div>
         <div ng-if="dvm.os.annotationSelect !== dvm.prefixes.owl + 'deprecated'">
-            <text-area ng-model="dvm.os.annotationValue" display-text="'Value'"></text-area>
-            <language-select ng-model="dvm.os.annotationLanguage"></language-select>
+            <text-area bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value" display-text="'Value'"></text-area>
+            <language-select bind-model="dvm.os.annotationLanguage" change-event="dvm.os.annotationLanguage = value"></language-select>
         </div>
         <div ng-if="dvm.os.annotationSelect === dvm.prefixes.owl + 'deprecated'">
-            <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.annotationValue"></radio-button>
-            <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.annotationValue"></radio-button>
+            <radio-button display-text="'True'" value="'true'" bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value"></radio-button>
+            <radio-button display-text="'False'" value="'false'" bind-model="dvm.os.annotationValue" change-event="dvm.os.annotationValue = value"></radio-button>
         </div>
-        <!--<iri-select ng-model="dvm.os.annotationType" display-text="'Type'" multi-select="false" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
+        <!--<iri-select bind-model="dvm.os.annotationType" change-event="dvm.os.annotationType = value" display-text="'Type'" select-list="dvm.os.listItem.dataPropertyRange"></iri-select>-->
     </form>
 </div>
 <div class="modal-footer">

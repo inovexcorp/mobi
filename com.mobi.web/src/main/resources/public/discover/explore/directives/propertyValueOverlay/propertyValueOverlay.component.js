@@ -48,7 +48,7 @@
          * property on the {@link shared.service:discoverStateService selected instance}. The modal allows you to
          * view all reified statements associated with the value and add new ones from the provided list using a
          * {@link newInstancePropertyOverlay.component:newInstancePropertyOverlay}. Meant to be used in conjunction with
-         * the {@link modalService.directive:modalService}.
+         * the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

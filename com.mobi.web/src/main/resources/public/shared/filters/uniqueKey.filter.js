@@ -23,6 +23,18 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:uniqueKey
+     * @kind function
+     *
+     * @description 
+     * Takes an array of items and returns an array without duplicates based on a given key
+     *
+     * @param {Object[]} collection The array from which to remove duplicates
+     * @param {string} keyField The value on which to match
+     * @returns {Object[]} The original array minus any duplicate entries
+     */
     function uniqueKey() {
         return function(collection, keyField) {
             var results = [];
@@ -44,19 +56,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:uniqueKey
-         * @kind function
-         *
-         * @description 
-         * Takes an array of items and returns an array without duplicates based on a given key
-         *
-         * @param {Object[]} collection The array from which to remove duplicates
-         * @param {string} keyField The value on which to match
-         * @returns {Object[]} The original array minus any duplicate entries
-         */
+    angular.module('shared')
         .filter('uniqueKey', uniqueKey);
 })();

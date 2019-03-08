@@ -23,7 +23,7 @@
 <div class="group-tab row h-100 py-2">
     <div class="col-6 offset-3">
         <block>
-            <block-content class="padding">
+            <block-content>
                 <ul class="user-groups-list">
                     <li ng-repeat="group in dvm.groups track by group.title" class="user-group">{{group.title}} <small class="admin" ng-if="group.roles.includes('admin')">(Admin)</small><span class="member-count float-right"><i class="fa fa-users"></i> {{group.members.length}}</span></li>
                     <li class="no-groups" ng-if="dvm.groups.length === 0"><info-message>No groups</info-message></li>

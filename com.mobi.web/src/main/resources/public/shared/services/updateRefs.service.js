@@ -25,6 +25,15 @@
 
     updateRefsService.$inject = ['$filter'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:updateRefsService
+     * @requires $filter
+     *
+     * @description
+     * `updateRefsService` is a service that provides functionality to uypdate references
+     * in an object from {@link ontologyManager.service:ontologyManager ontologyManager}.
+     */
     function updateRefsService($filter) {
         var self = this;
         var exclude = [
@@ -124,16 +133,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:updateRefsService
-         * @requires $filter
-         *
-         * @description
-         * `updateRefsService` is a service that provides functionality to uypdate references
-         * in an object from {@link ontologyManager.service:ontologyManager ontologyManager}.
-         */
+    angular.module('shared')
         .service('updateRefsService', updateRefsService);
 })();

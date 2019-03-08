@@ -25,6 +25,20 @@
 
     utilService.$inject = ['$filter', '$http', '$q', '$window', '$rootScope', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:utilService
+     * @requires $filter
+     * @requires $http
+     * @requires $q
+     * @requires uuid
+     * @requires toastr
+     * @requires shared.service:prefixes
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `utilService` is a service that provides various utility methods for use across Mobi.
+     */
     function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, prefixes, httpService, REGEX) {
         var self = this;
 
@@ -722,21 +736,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:utilService
-         * @requires $filter
-         * @requires $http
-         * @requires $q
-         * @requires uuid
-         * @requires toastr
-         * @requires shared.service:prefixes
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `utilService` is a service that provides various utility methods for use across Mobi.
-         */
+    angular.module('shared')
         .service('utilService', utilService);
 })();

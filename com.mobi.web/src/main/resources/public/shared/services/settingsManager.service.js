@@ -25,6 +25,18 @@
 
     settingsManagerService.$inject = ['$window', '$cookies', 'prefixes'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:settingsManagerService
+     * @requires $window
+     * @requires $cookies
+     * @requires shared.service:prefixes
+     *
+     * @description 
+     * `settingsManagerService` is a service that provides utlities for saving user settings
+     * for the application. Currently they are saved as cookies and are not saved for 
+     * individual users.
+     */
     function settingsManagerService($window, $cookies, prefixes) {
         var self = this;
         var settings = {};
@@ -106,19 +118,6 @@
         initialize();
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:settingsManagerService
-         * @requires $window
-         * @requires $cookies
-         * @requires shared.service:prefixes
-         *
-         * @description 
-         * `settingsManagerService` is a service that provides utlities for saving user settings
-         * for the application. Currently they are saved as cookies and are not saved for 
-         * individual users.
-         */
+    angular.module('shared')
         .service('settingsManagerService', settingsManagerService);
 })();

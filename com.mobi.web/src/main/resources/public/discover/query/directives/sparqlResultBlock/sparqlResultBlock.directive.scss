@@ -27,32 +27,11 @@
     height: 100%;
     position: relative;
 
-    .message {
+    .message p {
         margin: 10px;
     }
     pre {
         background-color: #fff;
         border: 0;
-    }
-    .footer-relative {
-        position: relative;
-
-        .paging-details {
-            float: left;
-            line-height: 34px;
-        }
-        .download-button {
-            float: right;
-        }
-        .page-nav {
-            position: absolute;
-            left: 50%;
-            transform: translate(-50%, 0);
-            -webkit-transform: translate(-50%, 0);
-
-            .pagination {
-                margin: 0;
-            }
-        }
     }
 }

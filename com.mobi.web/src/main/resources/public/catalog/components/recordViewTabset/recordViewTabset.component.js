@@ -29,10 +29,9 @@
      * @requires shared.service:catalogManagerService
      *
      * @description
-     * `recordViewTabset` is a component which creates a {@link shared.directive:materialTabset} with tabs
-     * displaying information about the provided catalog Record. These tabs contain a
-     * {@link catalog.component.recordMarkdown} and a {@link catalog.component:branchList} if the Record is a 
-     * `VersionedRDFRecord`.
+     * `recordViewTabset` is a component which creates a {@link shared.component:materialTabset} with tabs displaying
+     * information about the provided catalog Record. These tabs contain a {@link catalog.component.recordMarkdown} and
+     * a {@link catalog.component:branchList} if the Record is a  `VersionedRDFRecord`.
      * 
      * @param {Object} record A JSON-LD object for a catalog Record
      * @param {boolean} canEdit Whether the Record can be edited by the current user

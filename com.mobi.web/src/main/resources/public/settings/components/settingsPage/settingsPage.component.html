@@ -21,18 +21,18 @@
   #L%
   -->
 <div class="settings-page h-100">
-    <tabset class="centered">
-    	<tab heading="'Profile'" active="dvm.tabs.profile">
-          <profile-tab></profile-tab>
-        </tab>
-        <tab heading="'Groups'" active="dvm.tabs.group">
-          <group-tab></group-tab>
-        </tab>
-        <tab heading="'Password'" active="dvm.tabs.password">
-          <password-tab></password-tab>
-        </tab>
-        <!-- <tab heading="'Preferences'" active="dvm.tabs.preferences">
-          <preferences-tab></preferences-tab>
-        </tab> -->
-    </tabset>
+    <material-tabset centered>
+        <material-tab heading="'Profile'" active="dvm.tabs.profile" set-active="dvm.tabs.profile = value">
+            <profile-tab></profile-tab>
+        </material-tab>
+        <material-tab heading="'Groups'" active="dvm.tabs.group" set-active="dvm.tabs.group = value">
+            <group-tab></group-tab>
+        </material-tab>
+        <material-tab heading="'Password'" active="dvm.tabs.password" set-active="dvm.tabs.password = value">
+            <password-tab></password-tab>
+        </material-tab>
+        <!-- <material-tab heading="'Preferences'" active="dvm.tabs.preferences" set-active="dvm.tabs.preferences = value">
+            <preferences-tab></preferences-tab>
+        </material-tab> -->
+    </material-tabset>
 </div>

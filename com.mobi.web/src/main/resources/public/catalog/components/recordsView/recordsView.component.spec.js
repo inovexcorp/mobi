@@ -102,6 +102,12 @@ describe('Records View component', function() {
             expect(catalogStateSvc.currentRecordPage).toEqual(1);
             expect(this.controller.setRecords).toHaveBeenCalledWith('test', catalogStateSvc.recordFilterType, catalogStateSvc.recordSortOption);
         });
+        it('should get the provided page of records', function() {
+            spyOn(this.controller, 'setRecords');
+            this.controller.getRecordPage(10);
+            expect(catalogStateSvc.currentRecordPage).toEqual(10);
+            expect(this.controller.setRecords).toHaveBeenCalledWith(catalogStateSvc.recordSearchText, catalogStateSvc.recordFilterType, catalogStateSvc.recordSortOption);
+        });
         describe('should set the list of records', function() {
             beforeEach(function() {
                 catalogStateSvc.recordFilterType = '';

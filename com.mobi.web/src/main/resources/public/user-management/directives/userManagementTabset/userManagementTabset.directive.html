@@ -21,15 +21,15 @@
   #L%
   -->
 <div class="user-management-tabset h-100">
-	<tabset class="centered">
-        <tab heading="'Users'" active="dvm.state.showUsers">
+	<material-tabset centered>
+        <material-tab heading="'Users'" active="dvm.state.showUsers" set-active="dvm.state.showUsers = value">
             <users-page></users-page>
-        </tab>
-        <tab heading="'Groups'" active="dvm.state.showGroups">
+        </material-tab>
+        <material-tab heading="'Groups'" active="dvm.state.showGroups" set-active="dvm.state.showGroups = value">
             <groups-page></groups-page>
-        </tab>
-        <tab heading="'Permissions'" active="dvm.state.showPermissions">
+        </material-tab>
+        <material-tab heading="'Permissions'" active="dvm.state.showPermissions" set-active="dvm.state.showPermissions = value">
             <permissions-page></permissions-page>
-        </tab>
-    </tabset>
+        </material-tab>
+    </material-tabset>
 </div>

@@ -26,7 +26,7 @@
             <h5>Commits</h5>
         </div>
         <div class="flex-1 vertical-scroll d-flex">
-            <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" head-title="dvm.getHeadTitle()" commit-data="dvm.commits" graph></commit-history-table>
+            <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" head-title="dvm.getHeadTitle()" receive-commits="dvm.commits = commits" entity-name-func="dvm.os.getEntityNameByIndex" graph></commit-history-table>
             <div class="view-table" ng-if="dvm.commits.length">
                 <table class="table">
                     <thead>

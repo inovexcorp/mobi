@@ -25,6 +25,18 @@
 
     mappingManagerService.$inject = ['$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:mappingManagerService
+     * @requires shared.service:prefixes
+     * @requires shared.service:ontologyManagerService
+     * @requires uuid
+     *
+     * @description
+     * `mappingManagerService` is a service that provides access to the Mobi mapping REST
+     * endpoints and utility functions for editing/creating mapping arrays and accessing
+     * various aspects of mapping arrays.
+     */
     function mappingManagerService($filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid, REST_PREFIX) {
         var self = this,
             om = ontologyManagerService,
@@ -945,19 +957,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:mappingManagerService
-         * @requires shared.service:prefixes
-         * @requires shared.service:ontologyManagerService
-         * @requires uuid
-         *
-         * @description
-         * `mappingManagerService` is a service that provides access to the Mobi mapping REST
-         * endpoints and utility functions for editing/creating mapping arrays and accessing
-         * various aspects of mapping arrays.
-         */
+    angular.module('shared')
         .service('mappingManagerService', mappingManagerService);
 })();

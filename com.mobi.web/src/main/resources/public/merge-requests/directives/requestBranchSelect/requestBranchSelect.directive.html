@@ -26,11 +26,11 @@
             <div class="form-group">
                 <span class="form-control-static">Merge </span>
             </div>
-            <branch-select class="select-branch" ng-model="dvm.state.requestConfig.sourceBranch" required="true" change-event="dvm.changeSource()" branches="dvm.branches"></branch-select>
+            <branch-select class="select-branch" bind-model="dvm.state.requestConfig.sourceBranch" required="true" change-event="dvm.changeSource(value)" branches="dvm.branches"></branch-select>
             <div class="form-group">
                 <span class="form-control-static">into</span>
             </div>
-            <branch-select class="select-branch" ng-model="dvm.state.requestConfig.targetBranch" required="true" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
+            <branch-select class="select-branch" bind-model="dvm.state.requestConfig.targetBranch" required="true" change-event="dvm.changeTarget(value)" branches="dvm.branches"></branch-select>
             <div class="form-group">
                 <span class="form-control-static">in <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong></span>
             </div>

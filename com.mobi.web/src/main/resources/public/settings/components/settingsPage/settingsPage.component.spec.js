@@ -50,10 +50,10 @@ describe('Settings Page component', function() {
             expect(this.element.prop('tagName')).toEqual('SETTINGS-PAGE');
             expect(this.element.querySelectorAll('.settings-page').length).toEqual(1);
         });
-        it('with tabs', function() {
-            expect(this.element.find('tab').length).toEqual(3);
+        it('with material-tabs', function() {
+            expect(this.element.find('material-tab').length).toEqual(3);
         });
-        ['tabset', 'profile-tab', 'group-tab', 'password-tab'].forEach(test => {
+        ['material-tabset', 'profile-tab', 'group-tab', 'password-tab'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toEqual(1);
             });

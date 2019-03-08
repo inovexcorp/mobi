@@ -27,8 +27,8 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-input ng-model="dvm.branchTitle" display-text="'Title'" required="true" is-focus-me="true"></text-input>
-        <text-area ng-model="dvm.branchDescription" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-input bind-model="dvm.branchTitle" change-event="dvm.branchTitle = value" display-text="'Title'" required="true" is-focus-me="true"></text-input>
+        <text-area bind-model="dvm.branchDescription" change-event="dvm.branchDescription = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
     </form>
 </div>
 <div class="modal-footer">

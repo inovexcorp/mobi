@@ -20,13 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="query-tab row">
-    <div class="col-12 block-container">
-        <block>
-            <block-content>
-                <sparql-editor></sparql-editor>
-            </block-content>
-        </block>
+<div class="query-tab container-fluid h-100 py-2 d-flex flex-column">
+    <div class="row flex-1 remove-min-height pb-2">
+        <div class="col-12 h-100">
+            <block class="h-100">
+                <block-content>
+                    <sparql-editor></sparql-editor>
+                </block-content>
+            </block>
+        </div>
     </div>
-    <sparql-result-block class="col-12 block-container"></sparql-result-block>
+    <div class="row flex-1 remove-min-height">
+        <sparql-result-block class="col-12"></sparql-result-block>
+    </div>
 </div>

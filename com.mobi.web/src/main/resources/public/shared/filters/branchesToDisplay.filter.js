@@ -25,6 +25,23 @@
 
     branchesToDisplay.$inject = ['catalogManagerService', 'utilService', 'loginManagerService', 'prefixes'];
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:branchesToDisplay
+     * @kind function
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:loginManagerService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * Takes an array of branch objects and filters that array to to display the correct branches for the currently
+     * logged in user. If a userBranch exists for that user, will display it as the normal branch. Additionally,
+     * it will filter out any user branches that do not belong to the current user.
+     *
+     * @param {Object[]} branches The array of branches to filter
+     * @returns {Object[]} an array of branches to display for the logged in user
+     */
     function branchesToDisplay(catalogManagerService, utilService, loginManagerService, prefixes) {
         var cm = catalogManagerService;
         var util = utilService;
@@ -45,24 +62,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:branchesToDisplay
-         * @kind function
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:loginManagerService
-         * @requires shared.service:prefixes
-         *
-         * @description
-         * Takes an array of branch objects and filters that array to to display the correct branches for the currently
-         * logged in user. If a userBranch exists for that user, will display it as the normal branch. Additionally,
-         * it will filter out any user branches that do not belong to the current user.
-         *
-         * @param {Object[]} branches The array of branches to filter
-         * @returns {Object[]} an array of branches to display for the logged in user
-         */
+    angular.module('shared')
         .filter('branchesToDisplay', branchesToDisplay);
 })();

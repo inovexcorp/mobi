@@ -51,9 +51,9 @@
          *
          * @description
          * `openOntologyTab` is a directive that creates a page for opening ontologies. The page includes a
-         * {@link shared.directive:searchBar} and a paginated list of ontologies with
-         * {@link shared.directive:actionMenu action menus} to manage and delete. In addition, the page includes
-         * buttons for {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
+         * {@link shared.component:searchBar} and a paginated list of ontologies with
+         * {@link shared.component:actionMenu action menus} to manage and delete. In addition, the page includes buttons
+         * for {@link newOntologyTab.directive:newOntologyTab creating new ontologies} and
          * {@link uploadOntologyTab.directive:uploadOntologyTab uploading ontologies}. The directive houses a method
          * for opening the modal deleting an ontology. The directive is replaced by the contents of its template.
          */
@@ -84,8 +84,18 @@
                     dvm.limit = 10;
                     dvm.totalSize = 0;
                     dvm.filteredList = [];
-                    dvm.id = "openOntologyTabTargetedSpinner";
+                    dvm.id = 'openOntologyTabTargetedSpinner';
 
+                    dvm.$onInit = function() {
+                        dvm.getPageOntologyRecords(1);
+                    }
+                    dvm.clickUpload = function(id) {
+                        document.getElementById(id).click();
+                    }
+                    dvm.updateFiles = function(event, files) {
+                        dvm.os.uploadFiles = files;
+                        dvm.showUploadOntologyOverlay();
+                    }
                     dvm.showUploadOntologyOverlay = function() {
                         modalService.openModal('uploadOntologyOverlay');
                     }
@@ -136,17 +146,16 @@
                                 if (!_.isEmpty(state)) {
                                     dvm.os.deleteOntologyState(dvm.recordId);
                                 }
-                                dvm.currentPage = 1;
-                                dvm.getPageOntologyRecords();
+                                dvm.getPageOntologyRecords(1);
                             }, dvm.util.createErrorToast);
                     }
-                    dvm.getPageOntologyRecords = function() {
-                        var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+                    dvm.getPageOntologyRecords = function(page) {
+                        dvm.currentPage = page;
                         var catalogId = _.get(cm.localCatalog, '@id', '');
                         var paginatedConfig = {
                             pageIndex: dvm.currentPage - 1,
                             limit: dvm.limit,
-                            recordType: ontologyRecordType,
+                            recordType: prefixes.ontologyEditor + 'OntologyRecord',
                             sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
                             searchText: dvm.filterText
                         };
@@ -160,8 +169,7 @@
                         });
                     }
                     dvm.search = function(event) {
-                        dvm.currentPage = 1;
-                        dvm.getPageOntologyRecords();
+                        dvm.getPageOntologyRecords(1);
                     }
                     dvm.manageRecords = function() {
                         _.forEach(dvm.filteredList, record => {
@@ -181,7 +189,7 @@
 
                     $scope.$watch(() => dvm.os.list.length, (newValue, oldValue) => {
                         if (newValue !== oldValue) {
-                            dvm.getPageOntologyRecords();
+                            dvm.getPageOntologyRecords(this.currentPage);
                         }
                     });
                     $scope.$watch(() => dvm.os.uploadList.length, (newValue, oldValue) => {
@@ -196,8 +204,6 @@
                             }
                         }
                     });
-
-                    dvm.getPageOntologyRecords();
                 }]
             }
         }

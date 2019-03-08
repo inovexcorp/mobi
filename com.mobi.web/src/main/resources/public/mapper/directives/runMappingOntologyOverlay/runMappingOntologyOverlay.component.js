@@ -50,7 +50,7 @@
          * committing the results to an Ontology. This includes `ui-select`s to determine which ontology and which
          * branch to commit the mapping to. The user can also choose whether the result data should be considered
          * additions or changes to the existing data on that branch. Meant to be used in conjunction with the
-         * {@link modalService.directive:modalService}.
+         * {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

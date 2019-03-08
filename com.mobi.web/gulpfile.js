@@ -230,7 +230,7 @@ gulp.task('html', function() {
 });
 
 gulp.task('filtered-html', function() {
-    return gulp.src(src + 'shared/directives/sidebar/sidebar.directive.html')
+    return gulp.src(src + 'shared/components/sidebar/sidebar.component.html')
         .pipe(strip.html({ignore: /<!-- inject:css -->|<!-- inject:js -->|<!-- endinject -->/g}))
         .pipe(gulp.dest('./target/filtered-resources'));
 })
