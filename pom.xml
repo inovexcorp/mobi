@@ -71,7 +71,6 @@
         <module>com.mobi.jaas</module>
         <module>com.mobi.web.security</module>
         <module>com.mobi.jaas.rest</module>
-        <module>mobi-server-karaf-feature</module>
         <module>mobi-karaf-feature</module>
         <module>com.mobi.rdf.orm.ontologies</module>
         <module>rdf-orm</module>

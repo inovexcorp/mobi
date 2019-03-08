@@ -96,7 +96,7 @@
                         <Bundle-Name>Mobi Server Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.server.impl*; provide:=true
+                            com.mobi.server.api*; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

@@ -91,14 +91,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>mobi-server-karaf-feature</artifactId>
-            <classifier>features</classifier>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>mobi-karaf-feature</artifactId>
             <classifier>features</classifier>
             <version>${project.version}</version>
