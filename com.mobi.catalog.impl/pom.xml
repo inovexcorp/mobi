@@ -59,7 +59,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>platform.config.api</artifactId>
+            <artifactId>server.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
