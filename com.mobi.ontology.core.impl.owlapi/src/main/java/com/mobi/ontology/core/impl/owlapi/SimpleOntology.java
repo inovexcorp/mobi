@@ -30,20 +30,14 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
-import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.api.propertyexpression.PropertyExpression;
-import com.mobi.ontology.core.api.types.ClassExpressionType;
-import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleCardinalityRestriction;
-import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.Datatype;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.persistence.utils.QueryResults;
@@ -89,20 +83,11 @@ import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
-import org.semanticweb.owlapi.model.OWLDataCardinalityRestriction;
-import org.semanticweb.owlapi.model.OWLDataExactCardinality;
-import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
-import org.semanticweb.owlapi.model.OWLDataMinCardinality;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
-import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
-import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
-import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
@@ -141,7 +126,6 @@ import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
@@ -556,38 +540,21 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Individual> getAllIndividuals() {
-        return Stream.concat(owlOntology.anonymousIndividuals(), owlOntology.individualsInSignature())
+        return owlOntology.individualsInSignature()
                 .map(SimpleOntologyValues::mobiIndividual)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public Set<NamedIndividual> getAllNamedIndividuals() {
-        return owlOntology.individualsInSignature()
-                .map(SimpleOntologyValues::mobiNamedIndividual)
-                .collect(Collectors.toSet());
-    }
-
-    @Override
-    public Set<NamedIndividual> getIndividualsOfType(IRI classIRI) {
+    public Set<Individual> getIndividualsOfType(IRI classIRI) {
         return getIndividualsOfType(new SimpleClass(classIRI));
     }
 
     @Override
-    public Set<NamedIndividual> getIndividualsOfType(OClass clazz) {
+    public Set<Individual> getIndividualsOfType(OClass clazz) {
         return owlReasoner.getInstances(SimpleOntologyValues.owlapiClass(clazz)).entities()
-                .map(SimpleOntologyValues::mobiNamedIndividual)
+                .map(SimpleOntologyValues::mobiIndividual)
                 .collect(Collectors.toSet());
-    }
-
-    @Override
-    public Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI) {
-        CardinalityVisitor cardinalityVisitor = new CardinalityVisitor();
-        OWLClass owlClass = new OWLClassImpl(org.semanticweb.owlapi.model.IRI.create(classIRI.stringValue()));
-        owlOntology.subClassAxiomsForSubClass(owlClass).forEach(ax -> ax.getSuperClass().accept(cardinalityVisitor));
-        owlOntology.equivalentClassesAxioms(owlClass).forEach(ax -> ax.classExpressions().forEach(classExpression ->
-                classExpression.accept(cardinalityVisitor)));
-        return cardinalityVisitor.getCardinalityProperties();
     }
 
     @Override
@@ -925,63 +892,6 @@ public class SimpleOntology implements Ontology {
     public Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory) {
         return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)", includeImports,
                 modelFactory);
-    }
-
-    /**
-     * Visits existential restrictions and collects the properties which are
-     * restricted.
-     */
-    private static class CardinalityVisitor implements OWLClassExpressionVisitor {
-
-        private final Set<CardinalityRestriction> cardinalityProperties;
-
-        CardinalityVisitor() {
-            cardinalityProperties = new HashSet<>();
-        }
-
-        Set<CardinalityRestriction> getCardinalityProperties() {
-            return cardinalityProperties;
-        }
-
-        public void visit(@Nonnull OWLObjectMinCardinality ce) {
-            addObjectPropertyExpression(ce, ClassExpressionType.OBJECT_MIN_CARDINALITY);
-        }
-
-        public void visit(@Nonnull OWLObjectExactCardinality ce) {
-            addObjectPropertyExpression(ce, ClassExpressionType.OBJECT_EXACT_CARDINALITY);
-        }
-
-        public void visit(@Nonnull OWLObjectMaxCardinality ce) {
-            addObjectPropertyExpression(ce, ClassExpressionType.OBJECT_MAX_CARDINALITY);
-        }
-
-        public void visit(@Nonnull OWLDataMinCardinality ce) {
-            addDataPropertyExpression(ce, ClassExpressionType.DATA_MIN_CARDINALITY);
-        }
-
-        public void visit(@Nonnull OWLDataExactCardinality ce) {
-            addDataPropertyExpression(ce, ClassExpressionType.DATA_EXACT_CARDINALITY);
-        }
-
-        public void visit(@Nonnull OWLDataMaxCardinality ce) {
-            addDataPropertyExpression(ce, ClassExpressionType.DATA_MAX_CARDINALITY);
-        }
-
-        private void addObjectPropertyExpression(OWLObjectCardinalityRestriction ce,
-                                                 ClassExpressionType classExpressionType) {
-            add(SimpleOntologyValues.mobiObjectProperty(ce.getProperty().asOWLObjectProperty()),
-                    ce.getCardinality(), classExpressionType);
-        }
-
-        private void addDataPropertyExpression(OWLDataCardinalityRestriction ce,
-                                               ClassExpressionType classExpressionType) {
-            add(SimpleOntologyValues.mobiDataProperty(ce.getProperty().asOWLDataProperty()),
-                    ce.getCardinality(), classExpressionType);
-        }
-
-        private void add(PropertyExpression pe, int cardinality, ClassExpressionType classExpressionType) {
-            cardinalityProperties.add(new SimpleCardinalityRestriction(pe, cardinality, classExpressionType));
-        }
     }
 
     /**

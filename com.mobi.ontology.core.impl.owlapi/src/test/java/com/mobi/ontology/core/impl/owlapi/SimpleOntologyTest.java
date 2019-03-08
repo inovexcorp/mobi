@@ -25,19 +25,16 @@ package com.mobi.ontology.core.impl.owlapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.mobi.ontology.core.api.Annotation;
+import com.mobi.ontology.core.api.OClass;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -189,7 +186,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Model emptyModel = MODEL_FACTORY.createModel();
         Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService, repositoryManager);
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
-        assertTrue(annotations.size() == 0);
+        assertEquals(0, annotations.size());
     }
 
     @Test
@@ -205,7 +202,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
 
         // Assertions
-        assertTrue(annotations.size() == 1);
+        assertEquals(1, annotations.size());
     }
     
     @Test
@@ -215,29 +212,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
 
-    @Test
-    public void getCardinalityPropertiesTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        assertEquals(0, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Woman")).size());
-    }
-
-    @Test
-    public void getCardinalityPropertiesOfSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Parent")).size());
-    }
-
-    @Test
-    public void getCardinalityPropertiesOfEquivalentClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Person")).size());
-    }
-
-    @Test
-    public void getCardinalityPropertiesOfEquivalentClassAndSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionInputStream, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        assertEquals(2, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Man")).size());
-    }
 
     // TODO: Test asModel
 

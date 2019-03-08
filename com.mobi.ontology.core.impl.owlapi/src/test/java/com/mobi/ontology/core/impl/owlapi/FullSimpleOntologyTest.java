@@ -33,16 +33,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.ontology.core.api.Hierarchy;
-import com.mobi.ontology.core.api.NamedIndividual;
+import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -298,13 +295,13 @@ public class FullSimpleOntologyTest {
 
     @Test
     public void getIndividualsOfTypeIRITest() throws Exception {
-        Set<NamedIndividual> individuals = ontology.getIndividualsOfType(classIRI);
+        Set<Individual> individuals = ontology.getIndividualsOfType(classIRI);
         assertEquals(1, individuals.size());
     }
 
     @Test
     public void getIndividualsOfSubClassTypeIRITest() throws Exception {
-        Set<NamedIndividual> individuals = ontology.getIndividualsOfType(classIRIC);
+        Set<Individual> individuals = ontology.getIndividualsOfType(classIRIC);
         assertEquals(1, individuals.size());
     }
 
@@ -313,7 +310,7 @@ public class FullSimpleOntologyTest {
         // Setup:
         OClass clazz = new SimpleClass(classIRI);
 
-        Set<NamedIndividual> individuals = ontology.getIndividualsOfType(clazz);
+        Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
         assertEquals(1, individuals.size());
     }
 
@@ -322,7 +319,7 @@ public class FullSimpleOntologyTest {
         // Setup:
         OClass clazz = new SimpleClass(classIRIC);
 
-        Set<NamedIndividual> individuals = ontology.getIndividualsOfType(clazz);
+        Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
         assertEquals(1, individuals.size());
     }
 

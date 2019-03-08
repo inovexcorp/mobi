@@ -1,4 +1,4 @@
-package com.mobi.ontology.core.api.propertyexpression;
+package com.mobi.ontology.core.api;
 
 /*-
  * #%L
@@ -23,7 +23,10 @@ package com.mobi.ontology.core.api.propertyexpression;
  * #L%
  */
 
-public interface ObjectInverseOf extends ObjectPropertyExpression {
+import com.mobi.rdf.api.IRI;
 
-    ObjectPropertyExpression getInverse();
+public interface AnnotationProperty {
+
+    IRI getIRI();
+
 }

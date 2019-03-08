@@ -28,22 +28,15 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.AnonymousIndividual;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.Individual;
-import com.mobi.ontology.core.api.NamedIndividual;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
-import com.mobi.ontology.core.impl.owlapi.datarange.SimpleDatatype;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -51,7 +44,6 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import org.semanticweb.owlapi.model.NodeID;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
@@ -70,7 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLAnnotationPropertyImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLAnonymousIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLDataPropertyImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLDatatypeImpl;
@@ -78,10 +69,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectPropertyImpl;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component (immediate = true)
@@ -142,7 +130,7 @@ public class SimpleOntologyValues {
         if (owlIri == null) {
             throw new IllegalArgumentException("IRI cannot be null.");
         }
-        return factory.createIRI(owlIri.toString());
+        return factory.createIRI(owlIri.getIRIString());
     }
 
     /**
@@ -153,26 +141,6 @@ public class SimpleOntologyValues {
             return null;
         }
         return org.semanticweb.owlapi.model.IRI.create(mobiIri.stringValue());
-    }
-
-    /**
-     * .
-     */
-    public static AnonymousIndividual mobiAnonymousIndividual(OWLAnonymousIndividual owlIndividual) {
-        if (owlIndividual == null) {
-            return null;
-        }
-        return new SimpleAnonymousIndividual(owlIndividual.getID());
-    }
-
-    /**
-     * .
-     */
-    public static OWLAnonymousIndividual owlapiAnonymousIndividual(AnonymousIndividual individual) {
-        if (individual == null) {
-            return null;
-        }
-        return new OWLAnonymousIndividualImpl(NodeID.getNodeID(individual.getId()));
     }
 
     /**
@@ -212,48 +180,23 @@ public class SimpleOntologyValues {
         if (owlAnno == null) {
             return null;
         }
-        Set<OWLAnnotation> owlAnnos = owlAnno.annotations().collect(Collectors.toSet());
-        if (owlAnnos.isEmpty()) {
-            AnnotationProperty property = mobiAnnotationProperty(owlAnno.getProperty());
-            OWLAnnotationValue value = owlAnno.getValue();
-            if (value instanceof OWLLiteral) {
-                OWLLiteral literal = (OWLLiteral) value;
-                Literal simpleLiteral = mobiLiteral(literal);
-                return new SimpleAnnotation(property, simpleLiteral, new HashSet<>());
-            } else if (value instanceof org.semanticweb.owlapi.model.IRI) {
-                org.semanticweb.owlapi.model.IRI iri = (org.semanticweb.owlapi.model.IRI) value;
-                IRI simpleIri = mobiIRI(iri);
-                return new SimpleAnnotation(property, simpleIri, new HashSet<>());
-            } else if (value instanceof OWLAnonymousIndividual) {
-                OWLAnonymousIndividual individual = (OWLAnonymousIndividual) value;
-                AnonymousIndividual simpleIndividual = mobiAnonymousIndividual(individual);
-                return new SimpleAnnotation(property, simpleIndividual, new HashSet<>());
-            } else {
-                throw new OWLRuntimeException("Invalid annotation value");
-            }
+
+        AnnotationProperty property = mobiAnnotationProperty(owlAnno.getProperty());
+        OWLAnnotationValue value = owlAnno.getValue();
+        if (value instanceof OWLLiteral) {
+            OWLLiteral literal = (OWLLiteral) value;
+            Literal simpleLiteral = mobiLiteral(literal);
+            return new SimpleAnnotation(property, simpleLiteral);
+        } else if (value instanceof org.semanticweb.owlapi.model.IRI) {
+            org.semanticweb.owlapi.model.IRI iri = (org.semanticweb.owlapi.model.IRI) value;
+            IRI simpleIri = mobiIRI(iri);
+            return new SimpleAnnotation(property, simpleIri);
+        } else if (value instanceof OWLAnonymousIndividual) {
+            OWLAnonymousIndividual individual = (OWLAnonymousIndividual) value;
+            Individual simpleIndividual = mobiIndividual(individual);
+            return new SimpleAnnotation(property, simpleIndividual);
         } else {
-            Set<Annotation> annos = new HashSet<>();
-            //Get annotations recursively
-            for (OWLAnnotation a : owlAnnos) {
-                annos.add(mobiAnnotation(a));
-            }
-            AnnotationProperty property = mobiAnnotationProperty(owlAnno.getProperty());
-            OWLAnnotationValue value = owlAnno.getValue();
-            if (value instanceof OWLLiteral) {
-                OWLLiteral literal = (OWLLiteral) value;
-                Literal simpleLiteral = mobiLiteral(literal);
-                return new SimpleAnnotation(property, simpleLiteral, annos);
-            } else if (value instanceof org.semanticweb.owlapi.model.IRI) {
-                org.semanticweb.owlapi.model.IRI iri = (org.semanticweb.owlapi.model.IRI) value;
-                IRI simpleIri = mobiIRI(iri);
-                return new SimpleAnnotation(property, simpleIri, annos);
-            } else if (value instanceof OWLAnonymousIndividual) {
-                OWLAnonymousIndividual individual = (OWLAnonymousIndividual) value;
-                AnonymousIndividual simpleIndividual = mobiAnonymousIndividual(individual);
-                return new SimpleAnnotation(property, simpleIndividual, annos);
-            } else {
-                throw new OWLRuntimeException("Invalid annotation value");
-            }
+            throw new OWLRuntimeException("Invalid annotation value");
         }
     }
 
@@ -265,89 +208,44 @@ public class SimpleOntologyValues {
         if (anno == null) {
             return null;
         }
-        if (!anno.isAnnotated()) {
-            OWLAnnotationProperty owlAnnoProperty = owlapiAnnotationProperty(anno.getProperty());
-            Value value = anno.getValue();
-            if (value instanceof IRI) {
-                org.semanticweb.owlapi.model.IRI iri = owlapiIRI((IRI) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, iri, Stream.empty());
-            } else if (value instanceof Literal) {
-                OWLLiteral literal = owlapiLiteral((Literal) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, literal, Stream.empty());
-            } else if (value instanceof SimpleAnonymousIndividual) {
-                OWLAnonymousIndividual individual = owlapiAnonymousIndividual((SimpleAnonymousIndividual) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, individual, Stream.empty());
-            } else {
-                throw new MobiOntologyException("Invalid annotation value");
-            }
+        OWLAnnotationProperty owlAnnoProperty = owlapiAnnotationProperty(anno.getProperty());
+        Value value = anno.getValue();
+        if (value instanceof IRI) {
+            org.semanticweb.owlapi.model.IRI iri = owlapiIRI((IRI) value);
+            return new OWLAnnotationImpl(owlAnnoProperty, iri, Stream.empty());
+        } else if (value instanceof Literal) {
+            OWLLiteral literal = owlapiLiteral((Literal) value);
+            return new OWLAnnotationImpl(owlAnnoProperty, literal, Stream.empty());
+        } else if (value instanceof SimpleIndividual) {
+            OWLIndividual individual = owlapiIndividual((SimpleIndividual) value);
+            return new OWLAnnotationImpl(owlAnnoProperty, (OWLAnonymousIndividual) individual, Stream.empty());
         } else {
-            Set<Annotation> annos = anno.getAnnotations();
-            Set<OWLAnnotation> owlAnnos = new HashSet<>();
-            //Get annotations recursively
-            for (Annotation a : annos) {
-                owlAnnos.add(owlapiAnnotation(a));
-            }
-            OWLAnnotationProperty owlAnnoProperty = owlapiAnnotationProperty(anno.getProperty());
-            Value value = anno.getValue();
-            if (value instanceof IRI) {
-                org.semanticweb.owlapi.model.IRI iri = owlapiIRI((IRI)value);
-                return new OWLAnnotationImpl(owlAnnoProperty, iri, owlAnnos.stream());
-            } else if (value instanceof Literal) {
-                OWLLiteral literal = owlapiLiteral((Literal) value);
-                return new OWLAnnotationImpl(owlAnnoProperty, literal, owlAnnos.stream());
-            } else if (value instanceof SimpleAnonymousIndividual) {
-                OWLAnonymousIndividual individual = owlapiAnonymousIndividual((SimpleAnonymousIndividual)value);
-                return new OWLAnnotationImpl(owlAnnoProperty, individual, owlAnnos.stream());
-            } else {
-                throw new MobiOntologyException("Invalid annotation value");
-            }
+            throw new MobiOntologyException("Invalid annotation value");
         }
-    }
-
-    /**
-     * .
-     */
-    public static NamedIndividual mobiNamedIndividual(OWLNamedIndividual owlapiIndividual) {
-        if (owlapiIndividual == null) {
-            return null;
-        }
-        org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIndividual.getIRI();
-        IRI mobiIri = mobiIRI(owlapiIri);
-        return new SimpleNamedIndividual(mobiIri);
-    }
-
-    /**
-     * .
-     */
-    public static OWLNamedIndividual owlapiNamedIndividual(NamedIndividual mobiIndividual) {
-        if (mobiIndividual == null) {
-            return null;
-        }
-        IRI mobiIri = mobiIndividual.getIRI();
-        org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIRI(mobiIri);
-        return new OWLNamedIndividualImpl(owlapiIri);
     }
 
     /**
      * .
      */
     public static Individual mobiIndividual(OWLIndividual owlapiIndividual) {
-        if (owlapiIndividual instanceof OWLAnonymousIndividual) {
-            return mobiAnonymousIndividual((OWLAnonymousIndividual) owlapiIndividual);
-        } else {
-            return mobiNamedIndividual((OWLNamedIndividual) owlapiIndividual);
+        if (owlapiIndividual == null || !owlapiIndividual.isNamed()) {
+            return null;
         }
+        org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIndividual.asOWLNamedIndividual().getIRI();
+        IRI mobiIri = mobiIRI(owlapiIri);
+        return new SimpleIndividual(mobiIri);
     }
 
     /**
      * .
      */
-    public static OWLIndividual owlapiIndividual(Individual mobiIndividual) {
-        if (mobiIndividual instanceof AnonymousIndividual) {
-            return owlapiAnonymousIndividual((AnonymousIndividual) mobiIndividual);
-        } else {
-            return owlapiNamedIndividual((NamedIndividual) mobiIndividual);
+    public static OWLNamedIndividual owlapiIndividual(Individual mobiIndividual) {
+        if (mobiIndividual == null) {
+            return null;
         }
+        IRI mobiIri = mobiIndividual.getIRI();
+        org.semanticweb.owlapi.model.IRI owlapiIri = owlapiIRI(mobiIri);
+        return new OWLNamedIndividualImpl(owlapiIri);
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.mobi.ontology.core.impl.owlapi.propertyExpression;
+package com.mobi.ontology.core.impl.owlapi;
 
 /*-
  * #%L
@@ -23,18 +23,28 @@ package com.mobi.ontology.core.impl.owlapi.propertyExpression;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.api.types.EntityType;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.impl.owlapi.SimpleOntologyValues;
 import com.mobi.rdf.api.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 import javax.annotation.Nonnull;
 
 
-public class SimpleObjectProperty extends SimpleObjectPropertyExpression implements ObjectProperty {
+public class SimpleClass implements OClass {
+
     private IRI iri;
+    private final boolean isThing;
+    private final boolean isNothing;
+    private OWLClass owlClass;
     
-    public SimpleObjectProperty(@Nonnull IRI iri) {
+    
+    public SimpleClass(@Nonnull IRI iri) {
         this.iri = iri;
+        owlClass = new OWLClassImpl(SimpleOntologyValues.owlapiIRI(iri));
+        isThing = owlClass.isOWLThing();
+        isNothing = owlClass.isOWLNothing();
     }
     
     @Override
@@ -42,27 +52,17 @@ public class SimpleObjectProperty extends SimpleObjectPropertyExpression impleme
         return iri;
     }
     
-    public EntityType getEntityType() {
-        return EntityType.OBJECT_PROPERTY;
-    }
-    
-    
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
         
-        if(obj instanceof ObjectProperty) {
-            IRI otherIri = ((ObjectProperty) obj).getIRI();
+        if (obj instanceof OClass) {
+            IRI otherIri = ((OClass) obj).getIRI();
             return otherIri.equals(iri);
         }
         
         return false;
-    }
-    
-    
-    public ObjectProperty asObjectProperty() {
-        return this;
     }
 }

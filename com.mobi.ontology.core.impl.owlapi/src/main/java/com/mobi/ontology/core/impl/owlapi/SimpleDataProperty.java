@@ -23,58 +23,36 @@ package com.mobi.ontology.core.impl.owlapi;
  * #L%
  */
 
-import com.mobi.ontology.core.api.NamedIndividual;
-import com.mobi.ontology.core.api.types.EntityType;
+import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.rdf.api.IRI;
 
 import javax.annotation.Nonnull;
 
 
-public class SimpleNamedIndividual
-	implements NamedIndividual {
+public class SimpleDataProperty implements DataProperty {
 
     private IRI iri;
-
-
-    public SimpleNamedIndividual(@Nonnull IRI iri) {
+    
+    public SimpleDataProperty(@Nonnull IRI iri) {
         this.iri = iri;
     }
-
-
+    
     @Override
     public IRI getIRI() {
         return iri;
     }
-
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.NAMED_INDIVIDUAL;
-    }
-
-
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
-        if (obj instanceof NamedIndividual) {
-            NamedIndividual other = (NamedIndividual) obj;
-            return iri.equals(other.getIRI());
+        
+        if (obj instanceof DataProperty) {
+            IRI otherIri = ((DataProperty) obj).getIRI();
+            return otherIri.equals(iri);
         }
-
-        return false;
-    }
-
-
-    @Override
-    public boolean isNamed() {
-        return true;
-    }
-
-
-    @Override
-    public boolean isAnonymous() {
+        
         return false;
     }
 

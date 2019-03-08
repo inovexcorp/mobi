@@ -1,4 +1,4 @@
-package com.mobi.ontology.core.api.propertyexpression;
+package com.mobi.ontology.core.api;
 
 /*-
  * #%L
@@ -23,19 +23,21 @@ package com.mobi.ontology.core.api.propertyexpression;
  * #L%
  */
 
-public interface ObjectPropertyExpression extends PropertyExpression {
+import com.mobi.rdf.api.IRI;
 
-    /**
-     * Obtains the property that corresponds to the inverse of this property.
-     * 
-     * @return The inverse of this property.
-     */
-    ObjectPropertyExpression getInverseProperty();
+public interface Datatype {
 
-    /**
-     * Get the named object property used in this property expression.
-     * 
-     * @return P if PE = inv(P) otherwise PE.
-     */
-    ObjectPropertyExpression getNamedProperty();
+    IRI getIRI();
+
+    boolean isString();
+
+    boolean isInteger();
+
+    boolean isFloat();
+
+    boolean isDouble();
+
+    boolean isBoolean();
+
+    boolean isRDFPlainLiteral();
 }

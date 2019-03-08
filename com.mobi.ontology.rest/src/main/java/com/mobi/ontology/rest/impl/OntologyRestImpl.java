@@ -48,13 +48,17 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.core.api.Entity;
 import com.mobi.ontology.core.api.Hierarchy;
+import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.rest.OntologyRest;
@@ -1359,7 +1363,7 @@ public class OntologyRestImpl implements OntologyRest {
         Model model = ontology.asModel(modelFactory);
         Set<IRI> iris = ontology.getAllClasses()
                 .stream()
-                .map(Entity::getIRI)
+                .map(OClass::getIRI)
                 .filter(iri -> model.contains(iri, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                         null))
                 .collect(Collectors.toSet());
@@ -1392,7 +1396,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getDatatypeArray(Ontology ontology) {
         Set<IRI> iris = ontology.getAllDatatypes()
                 .stream()
-                .map(Entity::getIRI)
+                .map(Datatype::getIRI)
                 .collect(Collectors.toSet());
         return new JSONObject().element("datatypes", irisToJsonArray(iris));
     }
@@ -1406,7 +1410,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getObjectPropertyIRIArray(Ontology ontology) {
         Set<IRI> iris = ontology.getAllObjectProperties()
                 .stream()
-                .map(Entity::getIRI)
+                .map(ObjectProperty::getIRI)
                 .collect(Collectors.toSet());
         return new JSONObject().element("objectProperties", irisToJsonArray(iris));
     }
@@ -1434,7 +1438,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getDataPropertyIRIArray(Ontology ontology) {
         Set<IRI> iris = ontology.getAllDataProperties()
                 .stream()
-                .map(Entity::getIRI)
+                .map(DataProperty::getIRI)
                 .collect(Collectors.toSet());
         return new JSONObject().element("dataProperties", irisToJsonArray(iris));
     }
@@ -1461,10 +1465,10 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private JSONObject getNamedIndividualArray(Ontology ontology) {
         Model model = ontology.asModel(modelFactory);
-        Set<IRI> iris = ontology.getAllNamedIndividuals().stream()
+        Set<IRI> iris = ontology.getAllIndividuals().stream()
                 .filter(individual -> model.contains(individual.getIRI(),
                         valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
-                .map(Entity::getIRI)
+                .map(Individual::getIRI)
                 .collect(Collectors.toSet());
         return new JSONObject().element("namedIndividuals", irisToJsonArray(iris));
     }

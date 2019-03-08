@@ -27,27 +27,24 @@ import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.mock;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.powermock.api.easymock.PowerMock.mockStatic;
 import static org.powermock.api.easymock.PowerMock.mockStaticPartial;
 import static org.powermock.api.easymock.PowerMock.replay;
 
 import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.AnonymousIndividual;
-import com.mobi.ontology.core.api.NamedIndividual;
+import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.api.types.ClassExpressionType;
-import com.mobi.ontology.core.api.types.EntityType;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.Datatype;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +54,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.NodeID;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
-import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
@@ -68,18 +64,17 @@ import org.semanticweb.owlapi.model.OWLOntologyID;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLLiteralImplString;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({SimpleOntologyValues.class, 
     org.semanticweb.owlapi.model.IRI.class,
-    NodeID.class,
-    ClassExpressionType.class})
+    NodeID.class})
 public class SimpleOntologyValuesTest {
+
+    private static final String IRI = "urn:test";
 
     private ValueFactory factory;
     private BNodeService bNodeService;
@@ -89,7 +84,7 @@ public class SimpleOntologyValuesTest {
 
     @Before
     public void setUp() {
-        factory = mock(ValueFactory.class);
+        factory = OrmEnabledTestCase.getValueFactory();
         bNodeService = mock(BNodeService.class);
         owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         ontologyIRI = mock(IRI.class);
@@ -102,17 +97,15 @@ public class SimpleOntologyValuesTest {
     
     @Test
     public void testMobiIRI() throws Exception {
-        SimpleOntologyValues values = new SimpleOntologyValues();
-        values.setValueFactory(factory);
-        expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI).anyTimes();
-        replay(factory, SimpleOntologyValues.class);
+        expect(owlOntologyIRI.getIRIString()).andReturn(IRI);
+        replay(owlOntologyIRI);
 
-        assertEquals(ontologyIRI, SimpleOntologyValues.mobiIRI(owlOntologyIRI));
+        assertEquals(factory.createIRI(IRI), SimpleOntologyValues.mobiIRI(owlOntologyIRI));
     }
     
     @Test
     public void testOwlapiIRI() throws Exception {
-        expect(ontologyIRI.stringValue()).andReturn("http://test.com/ontology1");
+        expect(ontologyIRI.stringValue()).andReturn(IRI);
         mockStatic(org.semanticweb.owlapi.model.IRI.class);
         expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class))).andReturn(owlOntologyIRI);
         replay(ontologyIRI, org.semanticweb.owlapi.model.IRI.class);
@@ -121,31 +114,11 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMobiAnonymousIndividual() throws Exception {
-        OWLAnonymousIndividual owlIndividual = mock(OWLAnonymousIndividual.class);
-        NodeID nodeId = mock(NodeID.class);
-        expect(nodeId.getID()).andReturn("_:genid123");
-        expect(owlIndividual.getID()).andReturn(nodeId);
-        replay(owlIndividual, nodeId);
-        
-        Assert.assertEquals("_:genid123", SimpleOntologyValues.mobiAnonymousIndividual(owlIndividual).getId());
-    }
-    
-    @Test
-    public void testOwlapiAnonymousIndividual() throws Exception {
-        AnonymousIndividual mobiIndividual = new SimpleAnonymousIndividual(NodeID.getNodeID("_:genid123"));//mock(AnonymousIndividual.class);
-        assertEquals("_:genid123", SimpleOntologyValues.owlapiAnonymousIndividual(mobiIndividual).getID().getID());
-    }
-    
-    @Test
     public void testMobiLiteral() throws Exception {
         OWLLiteral owlLiteral = new OWLLiteralImplString("testString");
-        IRI iri = mock(IRI.class);
+        IRI iri = factory.createIRI("http://www.w3.org/2001/XMLSchema#string");
         Literal literal = mock(Literal.class);
         Datatype datatype = mock(Datatype.class);
-        
-        expect(iri.stringValue()).andReturn("http://www.w3.org/2001/XMLSchema#string").anyTimes();
-        replay(iri);
         
         expect(datatype.getIRI()).andReturn(iri).anyTimes();
         expect(literal.getDatatype()).andReturn(iri).anyTimes();
@@ -153,11 +126,10 @@ public class SimpleOntologyValuesTest {
         
         replay(literal, datatype);
         
-        expect(factory.createLiteral(isA(String.class), isA(IRI.class))).andReturn(literal).anyTimes();
         mockStaticPartial(SimpleOntologyValues.class, "mobiDatatype");
         expect(SimpleOntologyValues.mobiDatatype(isA(OWLDatatype.class))).andReturn(datatype).anyTimes();
-        replay(factory, SimpleOntologyValues.class);
-        
+        replay(SimpleOntologyValues.class);
+
         assertEquals("testString", SimpleOntologyValues.mobiLiteral(owlLiteral).getLabel());
         assertEquals(iri, SimpleOntologyValues.mobiLiteral(owlLiteral).getDatatype());
     }
@@ -182,12 +154,9 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testEmptyMobiAnnotation() throws Exception {
+    public void testMobiAnnotation() throws Exception {
         OWLAnnotation owlAnno = mock(OWLAnnotation.class);
         OWLAnnotation owlAnno1 = mock(OWLAnnotation.class);
-        Set<OWLAnnotation> mockAnnoSet = new HashSet<>();
-          
-        expect(owlAnno.annotations()).andReturn(mockAnnoSet.stream()).anyTimes();
           
         OWLAnnotationProperty owlProperty = mock(OWLAnnotationProperty.class);
         AnnotationProperty property = mock(AnnotationProperty.class);
@@ -202,55 +171,16 @@ public class SimpleOntologyValuesTest {
         expect(SimpleOntologyValues.mobiIRI(value)).andReturn(iri).anyTimes();
           
         replay(owlAnno, owlAnno1, owlProperty, property, value, iri, SimpleOntologyValues.class);
-        
-        assertEquals(0, SimpleOntologyValues.mobiAnnotation(owlAnno).getAnnotations().size());
     }
-    
-//    @Test
-//    public void testMobiAnnotation() throws Exception {
-//        OWLAnnotation owlAnno = mock(OWLAnnotation.class);
-//        OWLAnnotation owlAnno1 = mock(OWLAnnotation.class);
-//        Set<OWLAnnotation> mockAnnoSet = new HashSet<>();
-//        mockAnnoSet.add(owlAnno1);
-//        
-//        expect(owlAnno.getAnnotations()).andReturn(mockAnnoSet).anyTimes();
-//        expect(owlAnno1.getAnnotations()).andReturn(new HashSet<>()).anyTimes();
-//        
-//        OWLAnnotationProperty owlProperty = mock(OWLAnnotationProperty.class);
-//        AnnotationProperty property = mock(AnnotationProperty.class);
-//        org.semanticweb.owlapi.model.IRI value = mock(org.semanticweb.owlapi.model.IRI.class);
-//        OWLAnnotationProperty owlProperty1 = mock(OWLAnnotationProperty.class);
-//        AnnotationProperty property1 = mock(AnnotationProperty.class);
-//        org.semanticweb.owlapi.model.IRI value1 = mock(org.semanticweb.owlapi.model.IRI.class);
-//        IRI iri = mock(IRI.class);
-//        IRI iri1 = mock(IRI.class);
-//        
-//        expect(owlAnno.getProperty()).andReturn(owlProperty).anyTimes();
-//        expect(owlAnno1.getProperty()).andReturn(owlProperty1).anyTimes();
-//        expect(owlAnno.getValue()).andReturn(value).anyTimes();
-//        expect(owlAnno1.getValue()).andReturn(value1).anyTimes();
-//        mockStaticPartial(SimpleOntologyValues.class, "mobiAnnotationProperty", "mobiIRI");
-//        expect(SimpleOntologyValues.mobiAnnotationProperty(owlProperty)).andReturn(property).anyTimes();
-//        expect(SimpleOntologyValues.mobiAnnotationProperty(owlProperty1)).andReturn(property1);
-//        expect(SimpleOntologyValues.mobiIRI(value)).andReturn(iri).anyTimes();
-//        expect(SimpleOntologyValues.mobiIRI(value1)).andReturn(iri1).anyTimes();
-//        
-//        replay(owlAnno, owlAnno1, owlProperty, property, value, owlProperty1, property1, value1, iri, iri1, SimpleOntologyValues.class);
-//        
-//        assertEquals(2, SimpleOntologyValues.mobiAnnotation(owlAnno).getAnnotations().size());
-//    }
-    
+
     @Test
-    public void testEmptyOwlapiAnnotation() throws Exception {
+    public void testOwlapiAnnotation() throws Exception {
         Annotation anno = mock(Annotation.class);
-        Set<Annotation> mockAnnoSet = new HashSet<>();
         AnnotationProperty property = mock(AnnotationProperty.class);
         OWLAnnotationProperty owlProperty = mock(OWLAnnotationProperty.class);
         IRI value = mock(IRI.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
-        
-        expect(anno.isAnnotated()).andReturn(false);
-        expect(anno.getAnnotations()).andReturn(mockAnnoSet);
+
         expect(anno.getProperty()).andReturn(property);
         expect(anno.getValue()).andReturn(value).anyTimes();
         
@@ -262,26 +192,26 @@ public class SimpleOntologyValuesTest {
         
         assertEquals(0, SimpleOntologyValues.owlapiAnnotation(anno).annotations().count());
     }
-    
-//    @Test
-//    public void testOwlapiAnnotation() throws Exception {
-//
-//    }
+
     
     @Test
-    public void testMobiNamedIndividual() throws Exception {
+    public void testMobiIndividual() throws Exception {
         OWLNamedIndividual owlIndividual = mock(OWLNamedIndividual.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         
         expect(owlIndividual.getIRI()).andReturn(owlIRI);
+        expect(owlIndividual.isNamed()).andReturn(true);
+        expect(owlIndividual.asOWLNamedIndividual()).andReturn(owlIndividual);
+        expect(owlIRI.getIRIString()).andReturn(IRI).anyTimes();
         replay(owlIndividual, owlIRI);
-        
-        assertEquals(EntityType.NAMED_INDIVIDUAL, SimpleOntologyValues.mobiNamedIndividual(owlIndividual).getEntityType());
+
+        Individual mobiIndividual = SimpleOntologyValues.mobiIndividual(owlIndividual);
+        assertEquals(owlIRI.getIRIString(), mobiIndividual.getIRI().stringValue());
     }
     
     @Test
-    public void testOwlapiNamedIndividual() throws Exception {
-        NamedIndividual mobiIndividual = mock(NamedIndividual.class);
+    public void testOwlapiIndividual() throws Exception {
+        Individual mobiIndividual = mock(Individual.class);
         IRI mobiIRI = mock(IRI.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         
@@ -292,53 +222,7 @@ public class SimpleOntologyValuesTest {
         expect(SimpleOntologyValues.owlapiIRI(isA(IRI.class))).andReturn(owlIRI);
         replay(mobiIndividual, mobiIRI, SimpleOntologyValues.class);
         
-        assertTrue(SimpleOntologyValues.owlapiNamedIndividual(mobiIndividual).isOWLNamedIndividual());
-    }
-    
-    @Test
-    public void testMobiIndividual() throws Exception {
-        OWLAnonymousIndividual owlAnonymous = mock(OWLAnonymousIndividual.class);
-        OWLNamedIndividual owlNamed = mock(OWLNamedIndividual.class);
-        AnonymousIndividual anonymous = mock(AnonymousIndividual.class);
-        NamedIndividual named = mock(NamedIndividual.class);
-        
-        expect(anonymous.isAnonymous()).andReturn(true);
-        expect(anonymous.isNamed()).andReturn(false);
-        expect(named.isNamed()).andReturn(true);
-        expect(named.isAnonymous()).andReturn(false);
-        mockStaticPartial(SimpleOntologyValues.class, "mobiAnonymousIndividual", "mobiNamedIndividual");
-        expect(SimpleOntologyValues.mobiAnonymousIndividual(owlAnonymous)).andReturn(anonymous).anyTimes();
-        expect(SimpleOntologyValues.mobiNamedIndividual(owlNamed)).andReturn(named).anyTimes();
-        
-        replay(owlAnonymous, owlNamed, anonymous, named, SimpleOntologyValues.class);
-              
-        assertTrue(SimpleOntologyValues.mobiIndividual(owlAnonymous).isAnonymous());
-        assertFalse(SimpleOntologyValues.mobiIndividual(owlAnonymous).isNamed());
-        assertTrue(SimpleOntologyValues.mobiIndividual(owlNamed).isNamed());
-        assertFalse(SimpleOntologyValues.mobiIndividual(owlNamed).isAnonymous());
-    }
-    
-    @Test
-    public void testOwlapiIndividual() throws Exception {
-        OWLAnonymousIndividual owlAnonymous = mock(OWLAnonymousIndividual.class);
-        OWLNamedIndividual owlNamed = mock(OWLNamedIndividual.class);
-        AnonymousIndividual anonymous = mock(AnonymousIndividual.class);
-        NamedIndividual named = mock(NamedIndividual.class);
-        
-        expect(owlAnonymous.isAnonymous()).andReturn(true);
-        expect(owlAnonymous.isNamed()).andReturn(false);
-        expect(owlNamed.isNamed()).andReturn(true);
-        expect(owlNamed.isAnonymous()).andReturn(false);
-        mockStaticPartial(SimpleOntologyValues.class, "owlapiAnonymousIndividual", "owlapiNamedIndividual");
-        expect(SimpleOntologyValues.owlapiAnonymousIndividual(anonymous)).andReturn(owlAnonymous).anyTimes();
-        expect(SimpleOntologyValues.owlapiNamedIndividual(named)).andReturn(owlNamed).anyTimes();
-        
-        replay(owlAnonymous, owlNamed, anonymous, named, SimpleOntologyValues.class);
-              
-        assertTrue(SimpleOntologyValues.owlapiIndividual(anonymous).isAnonymous());
-        assertFalse(SimpleOntologyValues.owlapiIndividual(anonymous).isNamed());
-        assertTrue(SimpleOntologyValues.owlapiIndividual(named).isNamed());
-        assertFalse(SimpleOntologyValues.owlapiIndividual(named).isAnonymous());
+        assertTrue(SimpleOntologyValues.owlapiIndividual(mobiIndividual).isOWLNamedIndividual());
     }
     
     @Test
@@ -357,9 +241,7 @@ public class SimpleOntologyValuesTest {
         expect(SimpleOntologyValues.mobiIRI(oIRI)).andReturn(moIRI).anyTimes();
         expect(SimpleOntologyValues.mobiIRI(vIRI)).andReturn(mvIRI).anyTimes();
         
-        expect(factory.createIRI(isA(String.class))).andReturn(mvIRI).anyTimes();
-        
-        replay(factory, moIRI, mvIRI, SimpleOntologyValues.class);
+        replay(moIRI, mvIRI, SimpleOntologyValues.class);
 
         OntologyId ontologyId = SimpleOntologyValues.mobiOntologyId(owlId2);
         assertEquals("http://www.test.com/ontology", ontologyId.getOntologyIRI().get().stringValue());
@@ -426,43 +308,45 @@ public class SimpleOntologyValuesTest {
         assertEquals(owlClassIRI, SimpleOntologyValues.owlapiClass(mobiClass).getIRI());       
     }
     
-//    @Test
-//    public void testMobiDatatype() throws Exception {
-//        OWLDatatype owlDatatype = mock(OWLDatatype.class);
-//        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = mock(org.semanticweb.owlapi.model.IRI.class);
-//        IRI datatypeIRI = mock(IRI.class);
-//        
-//        expect(owlDatatype.getIRI()).andReturn(owlDatatypeIRI).anyTimes();
-//        expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
-//        
-//        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI", "owlapiIRI");
-//        expect(SimpleOntologyValues.mobiIRI(owlDatatypeIRI)).andReturn(datatypeIRI).anyTimes();
-//        expect(SimpleOntologyValues.owlapiIRI(datatypeIRI)).andReturn(owlDatatypeIRI).anyTimes();
-//        
-//        expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class), isA(String.class))).andReturn(owlDatatypeIRI).anyTimes();
-//
-//        replay(owlDatatype, owlDatatypeIRI, datatypeIRI, SimpleOntologyValues.class, org.semanticweb.owlapi.model.IRI.class);
-//        
-//        assertEquals(datatypeIRI, SimpleOntologyValues.mobiDatatype(owlDatatype).getIRI());
-//    }
+    @Test
+    public void testMobiDatatype() throws Exception {
+        OWLDatatype owlDatatype = mock(OWLDatatype.class);
+        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        IRI datatypeIRI = mock(IRI.class);
+
+        expect(owlDatatype.getIRI()).andReturn(owlDatatypeIRI).anyTimes();
+        expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
+
+        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI", "owlapiIRI");
+        expect(SimpleOntologyValues.mobiIRI(owlDatatypeIRI)).andReturn(datatypeIRI).anyTimes();
+        expect(SimpleOntologyValues.owlapiIRI(datatypeIRI)).andReturn(owlDatatypeIRI).anyTimes();
+
+        mockStaticPartial(org.semanticweb.owlapi.model.IRI.class, "create");
+        expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class), isA(String.class))).andReturn(owlDatatypeIRI).anyTimes();
+
+        replay(owlDatatype, owlDatatypeIRI, datatypeIRI, SimpleOntologyValues.class, org.semanticweb.owlapi.model.IRI.class);
+
+        assertEquals(datatypeIRI, SimpleOntologyValues.mobiDatatype(owlDatatype).getIRI());
+    }
     
-//    @Test
-//    public void testOwlapiDatatype() throws Exception {
-//        Datatype datatype = mock(Datatype.class);
-//        IRI datatypeIRI = mock(IRI.class);
-//        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = mock(org.semanticweb.owlapi.model.IRI.class);
-//        
-//        expect(datatype.getIRI()).andReturn(datatypeIRI).anyTimes();
-//        expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
-//        
-//        mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
-//        expect(SimpleOntologyValues.owlapiIRI(datatypeIRI)).andReturn(owlDatatypeIRI).anyTimes();
-//        
-//        expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class), isA(String.class))).andReturn(owlDatatypeIRI).anyTimes();
-//        replay(datatype, owlDatatypeIRI, datatypeIRI, SimpleOntologyValues.class, org.semanticweb.owlapi.model.IRI.class);
-//        
-//        assertEquals(owlDatatypeIRI, SimpleOntologyValues.owlapiDatatype(datatype).getIRI());
-//    }
+    @Test
+    public void testOwlapiDatatype() throws Exception {
+        Datatype datatype = mock(Datatype.class);
+        IRI datatypeIRI = mock(IRI.class);
+        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+
+        expect(datatype.getIRI()).andReturn(datatypeIRI).anyTimes();
+        expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
+
+        mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
+        expect(SimpleOntologyValues.owlapiIRI(datatypeIRI)).andReturn(owlDatatypeIRI).anyTimes();
+
+        mockStaticPartial(org.semanticweb.owlapi.model.IRI.class, "create");
+        expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class), isA(String.class))).andReturn(owlDatatypeIRI).anyTimes();
+        replay(datatype, owlDatatypeIRI, datatypeIRI, SimpleOntologyValues.class, org.semanticweb.owlapi.model.IRI.class);
+
+        assertEquals(owlDatatypeIRI, SimpleOntologyValues.owlapiDatatype(datatype).getIRI());
+    }
     
     @Test
     public void testMobiObjectProperty() throws Exception {

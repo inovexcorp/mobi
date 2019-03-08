@@ -23,13 +23,10 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.types.EntityType;
 import com.mobi.rdf.api.IRI;
 
-
-public interface Entity {
+public interface OClass {
 
     IRI getIRI();
 
-    EntityType getEntityType();
 }

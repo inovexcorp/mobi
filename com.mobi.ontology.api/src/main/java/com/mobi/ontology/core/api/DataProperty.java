@@ -1,8 +1,8 @@
-package com.mobi.ontology.core.impl.owlapi.propertyExpression;
+package com.mobi.ontology.core.api;
 
 /*-
  * #%L
- * com.mobi.ontology.core.impl.owlapi
+ * com.mobi.ontology.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,42 +23,10 @@ package com.mobi.ontology.core.impl.owlapi.propertyExpression;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.ObjectPropertyExpression;
+import com.mobi.rdf.api.IRI;
 
+public interface DataProperty {
 
-public class SimpleObjectPropertyExpression 
-	extends SimplePropertyExpression
-	implements ObjectPropertyExpression {
-
-
-	public ObjectPropertyExpression inverse;
-	
-	
-	@Override
-	public ObjectPropertyExpression getInverseProperty() 
-	{
-		if(inverse == null)
-			return new SimpleObjectInverseOf(this);
-		return inverse;
-	}
-
-	@Override
-	public ObjectPropertyExpression getNamedProperty() 
-	{
-		return inverse;
-	}
-	
-	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (this == obj) 
-			return true;
-		
-		if(!super.equals(obj))
-			return false;
-		
-		return obj instanceof ObjectPropertyExpression;	
-	}
+    IRI getIRI();
 
 }

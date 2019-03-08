@@ -1,4 +1,4 @@
-package com.mobi.ontology.core.impl.owlapi.propertyExpression;
+package com.mobi.ontology.core.impl.owlapi;
 
 /*-
  * #%L
@@ -23,56 +23,42 @@ package com.mobi.ontology.core.impl.owlapi.propertyExpression;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.types.EntityType;
+import com.mobi.ontology.core.api.Individual;
 import com.mobi.rdf.api.IRI;
 
 import javax.annotation.Nonnull;
 
 
-public class SimpleDataProperty implements DataProperty {
+public class SimpleIndividual implements Individual {
 
-	private IRI iri;
-	
-	public SimpleDataProperty(@Nonnull IRI iri)
-	{
-		this.iri = iri;
-	}
-	
-	@Override
-	public IRI getIRI() 
-	{
-		return iri;
-	}
-	
-	
-	@Override
-	public EntityType getEntityType()
-	{
-		return EntityType.DATA_PROPERTY;
-	}
-	
-	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (obj == this) {
-			return true;
-		}
-		
-		if(obj instanceof DataProperty) {
-			IRI otherIri = ((DataProperty) obj).getIRI();
-			return otherIri.equals(iri);
-		}
-		
-		return false;
-	}
-	
-	
-	@Override
-	public DataProperty asDataProperty() 
-	{
-		return this;
-	}
+    private static final long serialVersionUID = -7290404615930440920L;
 
+    private IRI iri;
+
+    public SimpleIndividual(@Nonnull IRI iri) {
+        this.iri = iri;
+    }
+
+    @Override
+    public IRI getIRI() {
+        return iri;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj instanceof Individual) {
+            Individual other = (Individual) obj;
+            return iri.equals(other.getIRI());
+        }
+
+        return false;
+    }
+
+    @Override
+    public String stringValue() {
+        return iri.stringValue();
+    }
 }

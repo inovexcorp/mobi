@@ -25,12 +25,8 @@ package com.mobi.ontology.core.api;
 
 import com.mobi.rdf.api.IRI;
 
-import java.util.Optional;
+public interface ObjectProperty {
 
+    IRI getIRI();
 
-public interface AnnotationSubject {
-
-    Optional<IRI> asIRI();
-
-    Optional<AnonymousIndividual> asAnonymousIndividual();
 }

@@ -60,25 +60,25 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Hierarchy;
-import com.mobi.ontology.core.api.NamedIndividual;
+import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.impl.owlapi.SimpleAnnotation;
-import com.mobi.ontology.core.impl.owlapi.SimpleNamedIndividual;
-import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
-import com.mobi.ontology.core.impl.owlapi.datarange.SimpleDatatype;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotationProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.ontology.core.impl.owlapi.SimpleIndividual;
+import com.mobi.ontology.core.impl.owlapi.SimpleClass;
+import com.mobi.ontology.core.impl.owlapi.SimpleDatatype;
+import com.mobi.ontology.core.impl.owlapi.SimpleAnnotationProperty;
+import com.mobi.ontology.core.impl.owlapi.SimpleDataProperty;
+import com.mobi.ontology.core.impl.owlapi.SimpleObjectProperty;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.exception.MalformedQueryException;
@@ -204,9 +204,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Set<Datatype> datatypes;
     private Set<ObjectProperty> objectProperties;
     private Set<DataProperty> dataProperties;
-    private Set<NamedIndividual> namedIndividuals;
-    private Set<NamedIndividual> concepts;
-    private Set<NamedIndividual> conceptSchemes;
+    private Set<Individual> namedIndividuals;
+    private Set<Individual> concepts;
+    private Set<Individual> conceptSchemes;
     private Set<IRI> derivedConcepts;
     private Set<IRI> derivedConceptSchemes;
     private Set<IRI> derivedSemanticRelations;
@@ -287,7 +287,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         annotationProperties = Collections.singleton(new SimpleAnnotationProperty(annotationPropertyIRI));
         IRI annotationIRI = vf.createIRI("http://mobi.com/annotation");
         AnnotationProperty annotationProperty = new SimpleAnnotationProperty(annotationIRI);
-        annotations = Collections.singleton(new SimpleAnnotation(annotationProperty, vf.createLiteral("word"), Collections.emptySet()));
+        annotations = Collections.singleton(new SimpleAnnotation(annotationProperty, vf.createLiteral("word")));
         classes = Collections.singleton(new SimpleClass(vf.createIRI("http://mobi.com/ontology#Class1a")));
         importedClasses = Collections.singleton(new SimpleClass(vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass")));
         datatypeIRI = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
@@ -299,9 +299,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         individualIRI = vf.createIRI("http://mobi.com/ontology#Individual1a");
         conceptIRI = vf.createIRI("http://mobi.com/ontology#Concept");
         conceptSchemeIRI = vf.createIRI("http://mobi.com/ontology#ConceptScheme");
-        namedIndividuals = Collections.singleton(new SimpleNamedIndividual(individualIRI));
-        concepts = Collections.singleton(new SimpleNamedIndividual(conceptIRI));
-        conceptSchemes = Collections.singleton(new SimpleNamedIndividual(conceptSchemeIRI));
+        namedIndividuals = Collections.singleton(new SimpleIndividual(individualIRI));
+        concepts = Collections.singleton(new SimpleIndividual(conceptIRI));
+        conceptSchemes = Collections.singleton(new SimpleIndividual(conceptSchemeIRI));
         derivedConcepts = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass"));
         derivedConceptSchemes = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSchemeSubClass"));
         derivedSemanticRelations = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#SemanticRelationSubProperty"));
@@ -370,7 +370,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontology.getAllDatatypes()).thenReturn(datatypes);
         when(ontology.getAllObjectProperties()).thenReturn(objectProperties);
         when(ontology.getAllDataProperties()).thenReturn(dataProperties);
-        when(ontology.getAllNamedIndividuals()).thenReturn(namedIndividuals);
+        when(ontology.getAllIndividuals()).thenReturn(namedIndividuals);
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT_SCHEME))).thenReturn(conceptSchemes);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
@@ -390,7 +390,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.getAllDatatypes()).thenReturn(datatypes);
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
-        when(importedOntology.getAllNamedIndividuals()).thenReturn(namedIndividuals);
+        when(importedOntology.getAllIndividuals()).thenReturn(namedIndividuals);
         when(importedOntology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
         when(importedOntology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT_SCHEME))).thenReturn(conceptSchemes);
         when(importedOntology.asJsonLD(anyBoolean())).thenReturn(importedOntologyJsonLd);
@@ -551,21 +551,21 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(responseArray.size(), set.size());
     }
 
-    private void assertIndividuals(JSONObject responseObject, Set<NamedIndividual> set) {
+    private void assertIndividuals(JSONObject responseObject, Set<Individual> set) {
         JSONArray jsonIndividuals = responseObject.optJSONArray("namedIndividuals");
         assertNotNull(jsonIndividuals);
         assertEquals(jsonIndividuals.size(), set.size());
         set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(individual.getIRI()))));
     }
 
-    private void assertConcepts(JSONObject responseObject, Set<NamedIndividual> set) {
+    private void assertConcepts(JSONObject responseObject, Set<Individual> set) {
         JSONArray jsonConcepts = responseObject.optJSONArray("concepts");
         assertNotNull(jsonConcepts);
         assertEquals(jsonConcepts.size(), set.size());
         set.forEach(concept -> assertTrue(jsonConcepts.contains(createJsonIRI(concept.getIRI()))));
     }
 
-    private void assertConceptSchemes(JSONObject responseObject, Set<NamedIndividual> set) {
+    private void assertConceptSchemes(JSONObject responseObject, Set<Individual> set) {
         JSONArray jsonConceptSchemes = responseObject.optJSONArray("conceptSchemes");
         assertNotNull(jsonConceptSchemes);
         assertEquals(jsonConceptSchemes.size(), set.size());
@@ -2549,7 +2549,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testGetNamedIndividualsInOntologyWhenNoNamedIndividuals() {
-        when(ontology.getAllNamedIndividuals()).thenReturn(Collections.EMPTY_SET);
+        when(ontology.getAllIndividuals()).thenReturn(Collections.EMPTY_SET);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
