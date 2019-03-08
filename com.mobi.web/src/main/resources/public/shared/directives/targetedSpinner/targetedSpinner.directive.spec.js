@@ -53,17 +53,17 @@ describe('Targeted Spinner directive', function() {
 
     it('should initialize with the correct value for cancelOnDestroy', function() {
         this.compile('<div targeted-spinner=""></div>');
-        expect(scope.cancelOnDestroy).toBe(false);
+        expect(scope.cancelOnDestroy).toEqual(false);
 
         this.compile('<div targeted-spinner="" cancel-on-destroy></div>');
-        expect(scope.cancelOnDestroy).toBe(true);
+        expect(scope.cancelOnDestroy).toEqual(true);
     });
-    it('should initialize with the correct value for small', function() {
+    it('should initialize with the correct value for diameter', function() {
         this.compile('<div targeted-spinner=""></div>');
-        expect(scope.small).toBe(false);
+        expect(scope.diameter).toBeUndefined();
 
-        this.compile('<div targeted-spinner="" cancel-on-destroy small></div>');
-        expect(scope.small).toBe(true);
+        this.compile('<div targeted-spinner="" diameter="10"></div>');
+        expect(scope.diameter).toEqual(10);
     });
     it('should clean up tracker when scope is destroyed', function() {
         this.compile('<div targeted-spinner="id" cancel-on-destroy></div>');

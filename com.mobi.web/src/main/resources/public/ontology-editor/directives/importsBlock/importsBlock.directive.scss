@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .imports-block {
+    .info-message {
+        padding: 10px;
+    }
     .block-header .float-right {
         margin-left: 10px;
     }

@@ -43,7 +43,7 @@
          * `newInstancePropertyOverlay` is a component that creates contents for a modal that adds a property to the
          * provided instance from the provided list of properties. The modal contains a dropdown list of the properties
          * that is searchable. When submitted, the modal passes back the IRI of the added property. Meant to be used in
-         * conjunction with the {@link modalService.directive:modalService}.
+         * conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

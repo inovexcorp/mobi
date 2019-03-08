@@ -150,40 +150,49 @@ describe('Edit Mapping Page directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('edit-mapping-page')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
             expect(this.element.querySelectorAll('.col-5').length).toBe(1);
             expect(this.element.querySelectorAll('.col-7').length).toBe(1);
-            expect(this.element.querySelectorAll('.edit-tabs').length).toBe(1);
+            expect(this.element.querySelectorAll('.editor-column').length).toBe(1);
         });
-        ['mapping-title', 'tabset', 'edit-mapping-form', 'rdf-preview-form'].forEach(test => {
+        it('with a mapping-title', function() {
+            expect(this.element.find('mapping-title').length).toBe(1);
+        });
+        it('depending on which tab is active', function() {
+            expect(this.element.find('edit-mapping-form').length).toBe(1);
+            expect(this.element.find('rdf-preview-form').length).toBe(0);
+            
+            this.controller.tabs.edit = false;
+            this.controller.tabs.preview = true;
+            scope.$digest();
+            expect(this.element.find('edit-mapping-form').length).toBe(0);
+            expect(this.element.find('rdf-preview-form').length).toBe(1);
+        });
+        ['.tab-headings', '.tab-contents'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.querySelectorAll(test).length).toBe(1);
             });
         });
-        it('with two tabs', function() {
-            expect(this.element.find('tab').length).toBe(2);
+        it('with .tab-headings', function() {
+            expect(this.element.querySelectorAll('.tab-heading').length).toBe(2);
         });
         it('with blocks', function() {
-            expect(this.element.find('block').length).toBe(3);
+            expect(this.element.find('block').length).toBe(2);
         });
         it('with buttons for canceling, saving, and saving and running', function() {
-            var footers = this.element.querySelectorAll('tab block-footer');
-            _.forEach(footers, footer => {
-                var buttons = angular.element(footer).find('button');
-                expect(buttons.length).toBe(6);
-                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[0]).text().trim());
-                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[1]).text().trim());
-                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[2]).text().trim());
-                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[3]).text().trim());
-                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[4]).text().trim());
-                expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[5]).text().trim());
-
-            });
+            var buttons = this.element.querySelectorAll('.tab-contents block-footer button');
+            expect(buttons.length).toBe(6);
+            expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[0]).text().trim());
+            expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[1]).text().trim());
+            expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[2]).text().trim());
+            expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[3]).text().trim());
+            expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[4]).text().trim());
+            expect(['Cancel', 'Save', 'Toggle Dropdown', 'Download', 'Upload to Dataset', 'Commit to Ontology']).toContain(angular.element(buttons[5]).text().trim());
         });
         it('with disabled buttons if the mapping is not saveable', function() {
             spyOn(this.controller, 'isSaveable');
             scope.$digest();
-            var buttons = _.toArray(this.element.querySelectorAll('tab block-footer button.btn-primary'));
+            var buttons = _.toArray(this.element.querySelectorAll('.tab-contents block-footer button.btn-primary'));
             _.forEach(buttons, button => expect(angular.element(button).attr('disabled')).toBeTruthy());
 
             this.controller.isSaveable.and.returnValue(true);
@@ -191,49 +200,34 @@ describe('Edit Mapping Page directive', function() {
             _.forEach(buttons, button => expect(angular.element(button).attr('disabled')).toBeFalsy());
         });
     });
-    it('should call cancel when a cancel button is clicked', function() {
+    it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
-        var cancelButtons = this.element.querySelectorAll('.cancel-mapping');
-        _.toArray(cancelButtons).forEach(button => {
-            this.controller.cancel.calls.reset();
-            angular.element(button).triggerHandler('click');
-            expect(this.controller.cancel).toHaveBeenCalled();
-        });
+        var button = angular.element(this.element.querySelectorAll('.cancel-mapping')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
-    it('should call save when a save button is clicked', function() {
+    it('should call save when the button is clicked', function() {
         spyOn(this.controller, 'save');
-        var saveButtons = this.element.querySelectorAll('.save-btn');
-        _.toArray(saveButtons).forEach(button => {
-            this.controller.save.calls.reset();
-            angular.element(button).triggerHandler('click');
-            expect(this.controller.save).toHaveBeenCalled();
-        });
+        var button = angular.element(this.element.querySelectorAll('.save-btn')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.save).toHaveBeenCalled();
     });
-    it('should set the correct state when a run download button is clicked', function() {
+    it('should call runMappingDownload when the run download button is clicked', function() {
         spyOn(this.controller, 'runMappingDownload');
-        var buttons = this.element.querySelectorAll('.run-download');
-        _.toArray(buttons).forEach(button => {
-            this.controller.runMappingDownload.calls.reset();
-            angular.element(button).triggerHandler('click');
-            expect(this.controller.runMappingDownload).toHaveBeenCalled();
-        });
+        var button = angular.element(this.element.querySelectorAll('.run-download')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingDownload).toHaveBeenCalled();
     });
-    it('should set the correct state when a run dataset button is clicked', function() {
+    it('should call runMappingDataset when the run dataset button is clicked', function() {
         spyOn(this.controller, 'runMappingDataset');
-        var buttons = this.element.querySelectorAll('.run-dataset');
-        _.toArray(buttons).forEach(button => {
-            this.controller.runMappingDataset.calls.reset();
-            angular.element(button).triggerHandler('click');
-            expect(this.controller.runMappingDataset).toHaveBeenCalled();
-        });
+        var button = angular.element(this.element.querySelectorAll('.run-dataset')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingDataset).toHaveBeenCalled();
     });
-    it('should set the correct state when a run ontology button is clicked', function() {
+    it('should call runMappingOntology when the run ontology button is clicked', function() {
         spyOn(this.controller, 'runMappingOntology');
-        var buttons = this.element.querySelectorAll('.run-ontology');
-        _.toArray(buttons).forEach(button => {
-            this.controller.runMappingOntology.calls.reset();
-            angular.element(button).triggerHandler('click');
-            expect(this.controller.runMappingOntology).toHaveBeenCalled();
-        });
+        var button = angular.element(this.element.querySelectorAll('.run-ontology')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.runMappingOntology).toHaveBeenCalled();
     });
 });

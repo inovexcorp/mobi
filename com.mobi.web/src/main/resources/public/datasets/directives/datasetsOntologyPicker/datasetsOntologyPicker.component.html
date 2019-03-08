@@ -23,9 +23,9 @@
 <div class="datasets-ontology-picker form-group">
     <custom-label muted-text="'(Optional)'">Ontologies</custom-label>
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <search-bar ng-model="dvm.ontologySearchConfig.searchText" submit-event="dvm.setOntologies()"></search-bar>
+    <search-bar bind-model="dvm.ontologySearchConfig.searchText" change-event="dvm.ontologySearchConfig.searchText = value" submit-event="dvm.setOntologies()"></search-bar>
     <div class="ontologies my-2" targeted-spinner="dvm.spinnerId">
-        <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available</info-message>
+        <info-message ng-if="dvm.ontologies.length === 0">No ontologies are available</info-message>
         <md-list>
             <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
                 <div class="md-list-item-text">

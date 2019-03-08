@@ -46,7 +46,7 @@
          * settings for running the currently selected {@link shared.service:mapperStateService#mapping mapping}
          * against the uploaded {@link shared.service:delimitedManagerService#dataRows delimited data}.
          * This includes a `ui-select` to determine which dataset to upload the results of a mapping into. Meant to be
-         * used in conjunction with the {@link modalService.directive:modalService}.
+         * used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

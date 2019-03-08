@@ -25,6 +25,17 @@
 
     httpService.$inject = ['$q', '$http'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:httpService
+     * @requires $q
+     * @requires $http
+     *
+     * @description
+     * `httpService` is a service that wraps Angular's native $http service and
+     * provides a way to determine if a call is still in progress. You can also
+     * cancel any pending request.
+     */
     function httpService($q, $http) {
         var self = this;
 
@@ -130,18 +141,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:httpService
-         * @requires $q
-         * @requires $http
-         *
-         * @description
-         * `httpService` is a service that wraps Angular's native $http service and
-         * provides a way to determine if a call is still in progress. You can also
-         * cancel any pending request.
-         */
+    angular.module('shared')
         .service('httpService', httpService);
 })();

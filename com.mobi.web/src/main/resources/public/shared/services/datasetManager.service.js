@@ -27,6 +27,18 @@
 
     datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService', 'httpService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:datasetManagerService
+     * @requires $http
+     * @requires $q
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     * @requires shared.service:discoverStateService
+     *
+     * @description
+     * `datasetManagerService` is a service that provides access to the Mobi Dataset REST endpoints.
+     */
     function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService, httpService, REST_PREFIX) {
         var self = this,
             util = utilService,
@@ -328,19 +340,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:datasetManagerService
-         * @requires $http
-         * @requires $q
-         * @requires shared.service:utilService
-         * @requires shared.service:prefixes
-         * @requires shared.service:discoverStateService
-         *
-         * @description
-         * `datasetManagerService` is a service that provides access to the Mobi Dataset REST endpoints.
-         */
+    angular.module('shared')
         .service('datasetManagerService', datasetManagerService);
 })();

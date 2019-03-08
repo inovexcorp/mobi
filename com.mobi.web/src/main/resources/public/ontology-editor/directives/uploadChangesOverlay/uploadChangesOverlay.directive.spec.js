@@ -21,20 +21,18 @@
  * #L%
  */
 describe('Upload Changes Overlay directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('uploadChangesOverlay');
-        mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.close = jasmine.createSpy('close');
@@ -49,7 +47,6 @@ describe('Upload Changes Overlay directive', function() {
         scope = null;
         $q = null;
         ontologyStateSvc = null;
-        ontologyManagerSvc = null;
         this.element.remove();
     });
 
@@ -60,13 +57,10 @@ describe('Upload Changes Overlay directive', function() {
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with a button', function() {
-            expect(this.element.find('button').length).toBe(4);
+        it('with buttons', function() {
+            expect(this.element.find('button').length).toBe(3);
         });
-        it('with a span', function() {
-            expect(this.element.find('span').length).toBe(2);
-        });
-        _.forEach(['form', 'file-input'], function(tag) {
+        _.forEach(['form', 'span', 'file-input'], function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
@@ -79,11 +73,11 @@ describe('Upload Changes Overlay directive', function() {
         });
         it('depending on whether the form is invalid', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.form.$invalid = false;
-            scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+            
+            this.controller.form.$invalid = true;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -94,6 +88,10 @@ describe('Upload Changes Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('should update the selected file', function() {
+            this.controller.update({});
+            expect(this.controller.file).toEqual({});
+        });
         describe('should upload an ontology', function() {
             beforeEach(function() {
                 this.controller.os.listItem = {
@@ -109,7 +107,6 @@ describe('Upload Changes Overlay directive', function() {
                     },
                     ontology: []
                 };
-                this.controller.fileName = 'No file selected';
                 this.controller.file = {};
             });
             it('unless an error occurs', function() {
@@ -122,12 +119,9 @@ describe('Upload Changes Overlay directive', function() {
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('succesfully', function() {
-                this.controller.file = {name: 'File Name'};
-                this.controller.update();
                 this.controller.submit();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
-                expect(this.controller.fileName).toEqual('File Name');
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(true);
                 expect(this.controller.error).toBeFalsy();
                 expect(scope.close).toHaveBeenCalled();

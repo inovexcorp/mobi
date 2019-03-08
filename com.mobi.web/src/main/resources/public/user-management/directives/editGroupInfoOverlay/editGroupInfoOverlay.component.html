@@ -27,7 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <text-area ng-model="dvm.newGroup.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-area bind-model="dvm.newGroup.description" change-event="dvm.newGroup.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
     </form>
 </div>
 <div class="modal-footer">

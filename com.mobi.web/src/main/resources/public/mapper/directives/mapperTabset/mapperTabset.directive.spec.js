@@ -63,8 +63,8 @@ describe('Mapper Tabset directive', function() {
             it('is editing a mapping', function() {
                 mapperStateSvc.step = mapperStateSvc.editMappingStep;
                 scope.$digest();
-                expect(this.element.find('tabset').length).toBe(1);
-                expect(this.element.find('tab').length).toBe(2);
+                expect(this.element.find('material-tabset').length).toBe(1);
+                expect(this.element.find('material-tab').length).toBe(2);
                 expect(this.element.find('edit-mapping-page').length).toBe(1);
             });
         });

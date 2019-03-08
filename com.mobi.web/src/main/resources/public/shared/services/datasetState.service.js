@@ -25,6 +25,17 @@
 
     datasetStateService.$inject = ['datasetManagerService', 'utilService', 'prefixes', '$q'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:datasetStateService
+     * @requires shared.service:datasetManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * `datasetStateService` is a service which contains various variables to hold the
+     * state of the catalog page and utility functions to update those variables.
+     */
     function datasetStateService(datasetManagerService, utilService, prefixes, $q) {
         var self = this;
         var dm = datasetManagerService;
@@ -163,18 +174,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:datasetStateService
-         * @requires shared.service:datasetManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:prefixes
-         *
-         * @description
-         * `datasetStateService` is a service which contains various variables to hold the
-         * state of the catalog page and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('datasetStateService', datasetStateService);
 })();

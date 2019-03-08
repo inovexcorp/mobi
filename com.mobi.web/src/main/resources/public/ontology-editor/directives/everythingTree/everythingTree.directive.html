@@ -22,7 +22,7 @@
   -->
 <div class="tree everything-tree hierarchy-tree h-100 w-100 p-0  d-flex flex-column">
     <div class="search pb-1">
-        <search-bar ng-model="dvm.searchText" submit-event="dvm.onKeyup()"></search-bar>
+        <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
     </div>
     <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height">
         <div md-virtual-repeat="entity in dvm.filteredHierarchy | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">

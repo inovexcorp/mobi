@@ -32,9 +32,12 @@
      * along with two buttons. One button has a configurable click action to "submit" the text and the other has a
      * configurable click action to "cancel" the text. The header contains a button for toggling a preview of the
      * contents of the textarea displayed as rendered Markdown. The header also contains a link to documentation on
-     * Markdown.
+     * Markdown. The value of the textarea is bound to `bindModel`, but only one way. The provided `changeEvent`
+     * function is expected to update the value of `bindModel`.
      *
      * @param {*} bindModel The variable to bind the value of the text area to
+     * @param {Function} changeEvent A function to be called when the value of the textarea changes. Expects an argument
+     * called `value` and should update the value of `bindModel`.
      * @param {string} placeHolder A placeholder string for the text area
      * @param {boolean} [isFocusMe=false] An optional boolean for whether the text area should be focused on render
      * @param {string} buttonText The text for the button for submitting the markdown
@@ -46,7 +49,8 @@
     const markdownEditorComponent = {
         templateUrl: 'shared/components/markdownEditor/markdownEditor.component.html',
         bindings: {
-            bindModel: '=ngModel',
+            bindModel: '<',
+            changeEvent: '&',
             placeHolder: '<',
             isFocusMe: '<?',
             buttonText: '<',
@@ -94,7 +98,6 @@
         }
     }
 
-    angular
-        .module('shared')
+    angular.module('shared')
         .component('markdownEditor', markdownEditorComponent);
 })();

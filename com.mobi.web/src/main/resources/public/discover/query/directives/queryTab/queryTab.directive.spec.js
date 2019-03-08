@@ -46,7 +46,9 @@ describe('Query Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('query-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+        });
+        it('with .rows', function() {
+            expect(this.element.querySelectorAll('.row').length).toBe(2);            
         });
         it('with a block', function() {
             expect(this.element.find('block').length).toEqual(1);

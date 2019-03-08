@@ -25,6 +25,21 @@
 
     ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:ontologyStateService
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:updateRefsService
+     * @requires shared.service:stateManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:catalogManagerService
+     * @requires shared.service:propertyManagerService
+     * @requires shared.service:prefixes
+     * @requires shared.service:manchesterConverterService
+     * @requires shared.service:policyEnforcementService
+     * @requires shared.service:policyManagerService
+     * @requires shared.service:httpService
+     */
     function ontologyStateService($q, $filter, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, policyEnforcementService, policyManagerService, httpService, uuid) {
         var self = this;
         var om = ontologyManagerService;
@@ -1179,7 +1194,7 @@
          * @param {Object} entity The entity you want the name of.
          * @returns {string} The beautified IRI string.
          */
-        self.getEntityNameByIndex = function(entityIRI, listItem) {
+        self.getEntityNameByIndex = function(entityIRI, listItem = self.listItem) {
             return getEntityNameByIndex(entityIRI, getIndices(listItem));
         }
         function getEntityNameByIndex(entityIRI, indices) {
@@ -1335,7 +1350,7 @@
         }
         self.onEdit = function(iriBegin, iriThen, iriEnd) {
             var newIRI = iriBegin + iriThen + iriEnd;
-            var oldEntity = $filter('removeMobi')(self.listItem.selected);
+            var oldEntity = _.omit(angular.copy(self.listItem.selected), 'mobi');
             self.getActivePage().entityIRI = newIRI;
             if (_.some(self.listItem.additions, oldEntity)) {
                 _.remove(self.listItem.additions, oldEntity);
@@ -1347,7 +1362,7 @@
             if (self.getActiveKey() !== 'project') {
                 self.setCommonIriParts(iriBegin, iriThen);
             }
-            self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMobi')(self.listItem.selected));
+            self.addToAdditions(self.listItem.ontologyRecord.recordId, _.omit(angular.copy(self.listItem.selected), 'mobi'));
             return om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, oldEntity['@id'], 'construct')
                 .then(statements => {
                     _.forEach(statements, statement => self.addToDeletions(self.listItem.ontologyRecord.recordId, statement));
@@ -1786,7 +1801,7 @@
         function addToInProgress(recordId, json, prop) {
             var listItem = self.getListItemByRecordId(recordId);
             var entity = _.find(listItem[prop], {'@id': json['@id']});
-            var filteredJson = $filter('removeMobi')(json);
+            var filteredJson = _.omit(angular.copy(json), 'mobi');
             if (entity) {
                 _.mergeWith(entity, filteredJson, util.mergingArrays);
             } else  {
@@ -1831,22 +1846,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:ontologyStateService
-         * @requires shared.service:ontologyManagerService
-         * @requires shared.service:updateRefsService
-         * @requires shared.service:stateManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:catalogManagerService
-         * @requires shared.service:propertyManagerService
-         * @requires shared.service:prefixes
-         * @requires shared.service:manchesterConverterService
-         * @requires shared.service:policyEnforcementService
-         * @requires shared.service:policyManagerService
-         * @requires shared.service:httpService
-         */
+    angular.module('shared')
         .service('ontologyStateService', ontologyStateService);
 })();

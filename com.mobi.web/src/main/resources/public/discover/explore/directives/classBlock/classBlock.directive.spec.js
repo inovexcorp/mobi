@@ -50,17 +50,10 @@ describe('Class Block directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('class-block')).toBe(true);
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a class-tab-header', function() {
-            expect(this.element.find('class-block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        ['block', 'block-header', 'class-block-header', 'block-content'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with a .padding and info-message', function() {
             expect(this.element.querySelectorAll('.padding').length).toBe(1);
@@ -83,15 +76,15 @@ describe('Class Block directive', function() {
             expect(this.element.querySelectorAll('.text-warning').length).toBe(1);
             expect(this.element.querySelectorAll('.fa-exclamation-circle').length).toBe(1);
         });
-        it('with a .h-100 and class-cards', function() {
-            expect(this.element.querySelectorAll('.h-100').length).toBe(0);
+        it('with a .class-cards-container and class-cards', function() {
+            expect(this.element.querySelectorAll('.class-cards-container').length).toBe(0);
             expect(this.element.find('class-cards').length).toBe(0);
 
             discoverStateSvc.explore.recordId = 'recordId';
             discoverStateSvc.explore.classDetails = [{}];
             scope.$digest();
 
-            expect(this.element.querySelectorAll('.h-100').length).toBe(1);
+            expect(this.element.querySelectorAll('.class-cards-container').length).toBe(1);
             expect(this.element.find('class-cards').length).toBe(1);
         });
     });

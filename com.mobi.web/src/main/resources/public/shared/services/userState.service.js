@@ -23,6 +23,14 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc service
+     * @name shared.service:userStateService
+     *
+     * @description
+     * `userStateService` is a service which contains various variables to hold the
+     * state of the user management page and utility functions to update those variables.
+     */
     function userStateService() {
         var self = this;
 
@@ -133,15 +141,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:userStateService
-         *
-         * @description
-         * `userStateService` is a service which contains various variables to hold the
-         * state of the user management page and utility functions to update those variables.
-         */
+    angular.module('shared')
         .service('userStateService', userStateService);
 })();

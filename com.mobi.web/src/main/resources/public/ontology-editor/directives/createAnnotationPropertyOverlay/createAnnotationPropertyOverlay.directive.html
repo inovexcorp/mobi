@@ -33,8 +33,9 @@
             <input type="text" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required
                    ng-model="dvm.property[dvm.prefixes.dcterms + 'title'][0]['@value']" focus-me="true">
         </div>
-        <text-area ng-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
-                   display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <text-area bind-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
+            change-event="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
+            display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <advanced-language-select ng-model="dvm.language"></advanced-language-select>
     </form>
 </div>

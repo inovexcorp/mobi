@@ -144,9 +144,11 @@ describe('Users Page directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('users-page')).toEqual(true);
-            expect(this.element.hasClass('row')).toEqual(true);
             expect(this.element.querySelectorAll('.col-4').length).toEqual(1);
             expect(this.element.querySelectorAll('.col-8').length).toEqual(1);
+        });
+        it('with .rows', function() {
+            expect(this.element.querySelectorAll('.row').length).toBe(6);            
         });
         it('with blocks', function() {
             expect(this.element.find('block').length).toEqual(5);
@@ -183,7 +185,7 @@ describe('Users Page directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.col-8 .user-profile').length).toEqual(1);
             expect(this.element.find('permissions-input').length).toEqual(1);
-            expect(this.element.querySelectorAll('.col-6 .user-groups-list').length).toEqual(1);
+            expect(this.element.querySelectorAll('.user-groups-list').length).toEqual(1);
             expect(deleteButton.attr('disabled')).toBeFalsy();
             expect(passwordButton.attr('disabled')).toBeFalsy();
             expect(editProfileButton.attr('disabled')).toBeFalsy();
@@ -224,13 +226,13 @@ describe('Users Page directive', function() {
             userStateSvc.selectedUser = {username: 'user'};
             spyOn(this.controller, 'getUserGroups').and.returnValue([{title: 'group', roles: []}]);
             scope.$digest();
-            expect(this.element.querySelectorAll('.col-6 .user-groups-list li').length).toEqual(1);
-            expect(this.element.querySelectorAll('.col-6 .user-groups-list li.no-groups').length).toEqual(0);
+            expect(this.element.querySelectorAll('.user-groups-list li').length).toEqual(1);
+            expect(this.element.querySelectorAll('.user-groups-list li.no-groups').length).toEqual(0);
 
             this.controller.getUserGroups.and.returnValue([]);
             scope.$digest();
-            expect(this.element.querySelectorAll('.col-6 .user-groups-list li').length).toEqual(1);
-            expect(this.element.querySelectorAll('.col-6 .user-groups-list li.no-groups').length).toEqual(1);
+            expect(this.element.querySelectorAll('.user-groups-list li').length).toEqual(1);
+            expect(this.element.querySelectorAll('.user-groups-list li.no-groups').length).toEqual(1);
         });
     });
     it('should call createGroup when the button is clicked', function() {

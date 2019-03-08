@@ -23,6 +23,14 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc service
+     * @name shared.service:discoverStateService
+     *
+     * @description
+     * `discoverStateService` is a service which contains various variables to hold the
+     * state of the discover module along with some utility functions for those variables.
+     */
     function discoverStateService() {
         var self = this;
 
@@ -273,15 +281,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:discoverStateService
-         *
-         * @description
-         * `discoverStateService` is a service which contains various variables to hold the
-         * state of the discover module along with some utility functions for those variables.
-         */
+    angular.module('shared')
         .service('discoverStateService', discoverStateService);
 })();

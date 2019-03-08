@@ -25,6 +25,19 @@
 
     provManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes', 'httpService'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:provManagerService
+     * @requires $http
+     * @requires $q
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     * @requires shared.service:httpService
+     *
+     * @description
+     * `provManagerService` is a service that provides access to the Mobi Provenance REST endpoints and variables
+     * to hold information about the different types of activities.
+     */
     function provManagerService($http, $q, REST_PREFIX, utilService, prefixes, httpService) {
         var self = this,
             util = utilService,
@@ -91,20 +104,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:provManagerService
-         * @requires $http
-         * @requires $q
-         * @requires shared.service:utilService
-         * @requires shared.service:prefixes
-         * @requires shared.service:httpService
-         *
-         * @description
-         * `provManagerService` is a service that provides access to the Mobi Provenance REST endpoints and variables
-         * to hold information about the different types of activities.
-         */
+    angular.module('shared')
         .service('provManagerService', provManagerService);
 })();

@@ -27,12 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div class="form-group">
-            <custom-label>Select a file</custom-label>
-            <button type="button" class="btn btn-light btn-sm ml-1" onclick="document.getElementById('upload-changes-file-input').click()">Choose File</button>
-            <span class="mx-1"> {{dvm.fileName}}</span>
-            <file-input id="upload-changes-file-input" class="hide" ng-model="dvm.file" accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf" on-change="dvm.update()" required></file-input>
-        </div>
+        <file-input display-text="'Select a file'" bind-model="dvm.file" change-event="dvm.update(value)" accept="'.owl,.ttl,.xml,.jsonld,.owx,.rdf'" required></file-input>
     </form>
 </div>
 <div class="modal-footer">

@@ -50,7 +50,7 @@
          * the modal contains a text input for the concept scheme name (which populates the
          * {@link staticIri.directive:staticIri IRI}),
          * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the top concepts.
-         * Meant to be used in conjunction with the {@link modalService.directive:modalService}.
+         * Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

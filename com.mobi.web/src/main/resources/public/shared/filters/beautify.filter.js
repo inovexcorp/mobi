@@ -23,6 +23,19 @@
 (function() {
     'use strict';
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:beautify
+     * @kind function
+     *
+     * @description 
+     * Takes a string, capitalizes the first letter, and adds space before every capital
+     * letter. If the passed in value is falsey or an object, returns an empty string.
+     *
+     * @param {string} value The string to beautify
+     * @returns {string} Either an empty string if the value is not a string or a beautified
+     * version of the value if it is a string.
+     */
     function beautify() {
         return function(value) {
             if (value && typeof value !== 'object') {
@@ -42,20 +55,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:beautify
-         * @kind function
-         *
-         * @description 
-         * Takes a string, capitalizes the first letter, and adds space before every capital
-         * letter. If the passed in value is falsey or an object, returns an empty string.
-         *
-         * @param {string} value The string to beautify
-         * @returns {string} Either an empty string if the value is not a string or a beautified
-         * version of the value if it is a string.
-         */
+    angular.module('shared')
         .filter('beautify', beautify);
 })();

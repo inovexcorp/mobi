@@ -25,6 +25,15 @@
 
     stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'REST_PREFIX'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:stateManagerService
+     * @requires shared.service:utilService
+     *
+     * @description
+     * `stateManagerService` is a service that provides access to the Mobi state REST endpoints and the `states`
+     * variable which holds all the state for the currently logged in user.
+     */
     function stateManagerService($http, $q, $httpParamSerializer, utilService, REST_PREFIX) {
         var self = this;
         var prefix = REST_PREFIX + 'states';
@@ -165,16 +174,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:stateManagerService
-         * @requires shared.service:utilService
-         *
-         * @description
-         * `stateManagerService` is a service that provides access to the Mobi state REST endpoints and the `states`
-         * variable which holds all the state for the currently logged in user.
-         */
+    angular.module('shared')
         .service('stateManagerService', stateManagerService);
 })();
