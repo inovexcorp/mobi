@@ -1,12 +1,12 @@
-package com.mobi.platform.config.impl.server;
+package com.mobi.server.impl;
 
 /*-
  * #%L
- * com.mobi.platform.config.impl
+ * com.mobi.server.impl
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,16 +23,15 @@ package com.mobi.platform.config.impl.server;
  * #L%
  */
 
-
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
-import com.mobi.platform.config.api.server.Mobi;
-import com.mobi.platform.config.api.server.MobiConfig;
-import com.mobi.platform.config.api.server.ServerUtils;
+import com.mobi.server.api.Mobi;
+import com.mobi.server.api.MobiConfig;
+import com.mobi.server.api.ServerUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.osgi.service.cm.Configuration;
