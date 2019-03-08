@@ -23,27 +23,34 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.login {
+.login-page {
     left: 0;
     position: absolute;
     width: 100%;
 
-    /* Style for the box around the login form */
-    .form-container {
-        border-radius: 10px;
+    .center-section {
         margin: 0 auto;
-        padding: 20px 20px 30px;
         width: 425px;
 
-        /* Applies proper margins to the login header */
-        h1 {
-            margin: 0 0 15px;
+        /* Style for the image container */
+        .img-container {
+            padding: 1.5rem 1.5rem 5rem 1.5rem;
+        }
+        /* Style for the box around the login form */
+        .form-container {
+            border-radius: 10px;
+            padding: 20px 20px 30px;
+
+            /* Applies proper margins to the login header */
+            h1 {
+                margin: 0 0 15px;
+            }
         }
     }
 }
 
 @media (max-width: $screen-xs-max) {
-    .login .form-container {
+    .login-page .center-section {
         width: 90%;
     }
 }

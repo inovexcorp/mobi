@@ -43,7 +43,7 @@
                 url: '/login',
                 views: {
                     container: {
-                        templateUrl: 'login/login.module.html'
+                        template: '<login-page></login-page>'
                     }
                 },
                 data: {
