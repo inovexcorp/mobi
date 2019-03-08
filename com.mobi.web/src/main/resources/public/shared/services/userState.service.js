@@ -42,7 +42,7 @@
          *
          * @description
          * `groupSearchString` holds a string to be used in filtering the
-         * {@link groupsList.directive:groupsList groups list}.
+         * {@link user-management.component:groupsList groups list}.
          */
         self.groupSearchString = '';
         /**
@@ -53,21 +53,9 @@
          *
          * @description
          * `userSearchString` holds a string to be used in filtering the
-         * {@link usersList.directive:usersList users list}.
+         * {@link user-management.component:usersList users list}.
          */
         self.userSearchString = '';
-        /**
-         * @ngdoc property
-         * @name shared.service:userStateService#filteredGroupList
-         * @propertyOf shared.service:userStateService
-         * @type {boolean}
-         *
-         * @description
-         * `filteredGroupList` holds a boolean indicating whether the
-         * {@link groupsList.directive:groupsList groups list} should be filtered based
-         * on which user is logged in.
-         */
-        self.filteredGroupList = false;
         /**
          * @ngdoc property
          * @name shared.service:userStateService#showGroups
@@ -76,7 +64,7 @@
          *
          * @description
          * `showGroups` holds a boolean indicating whether the
-         * {@link groupsPage.directive:groupsPage groups page} should be shown.
+         * {@link user-management.component:groupsPage groups page} should be shown.
          */
         self.showGroups = false;
         /**
@@ -87,7 +75,7 @@
          *
          * @description
          * `showUsers` holds a boolean indicating whether the
-         * {@link usersPage.directive:usersPage users page} should be shown.
+         * {@link user-management.component:usersPage users page} should be shown.
          */
         self.showUsers = true;
         /**
@@ -98,7 +86,7 @@
          *
          * @description
          * `showPermissions` holds a boolean indicating whether the
-         * {@link permissionsPage.directive:permissionsPage permissions page} should be shown.
+         * {@link user-management.component:permissionsPage permissions page} should be shown.
          */
         self.showPermissions = false;
         /**
@@ -135,7 +123,6 @@
         self.reset = function() {
             self.selectedGroup = undefined;
             self.selectedUser = undefined;
-            self.filteredGroupList = true;
             self.groupSearchString = '';
             self.userSearchString = '';
         }
