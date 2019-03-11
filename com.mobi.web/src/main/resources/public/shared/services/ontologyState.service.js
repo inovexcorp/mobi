@@ -1525,7 +1525,7 @@
                 commonGoTo('properties', iri, self.listItem.objectProperties.flat);
                 self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                 var index = 0;
-                if (self.listItem.dataProperties.flat) {
+                if (self.listItem.dataProperties.flat.length > 0) {
                     index += getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
                 }
                 self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
@@ -1533,10 +1533,10 @@
                 commonGoTo('properties', iri, self.listItem.annotations.flat);
                 self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                 var index = 0;
-                if (self.listItem.dataProperties.flat) {
+                if (self.listItem.dataProperties.flat.length > 0) {
                     index += getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
                 }
-                if (self.listItem.objectProperties.flat) {
+                if (self.listItem.objectProperties.flat.length > 0) {
                     index += getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
                 }
                 self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.annotations.flat, true, self.getAnnotationPropertiesOpened) + 1;

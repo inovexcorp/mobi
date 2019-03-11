@@ -46,6 +46,18 @@ describe('Concept Scheme Hierarchy Block directive', function() {
         this.element.remove();
     });
 
+    describe('controller methods', function() {
+        it('updateSearch changes schemes search text', function() {
+            expect(ontologyStateSvc.listItem.editorTabStates.schemes.searchText).toEqual('');
+            this.controller.updateSearch('newValue');
+            expect(ontologyStateSvc.listItem.editorTabStates.schemes.searchText).toEqual('newValue');
+        });
+        it('resetIndex resets schemes hierarchy index', function() {
+            ontologyStateSvc.listItem.editorTabStates.schemes.index = 4;
+            this.controller.resetIndex();
+            expect(ontologyStateSvc.listItem.editorTabStates.schemes.index).toEqual(0);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');

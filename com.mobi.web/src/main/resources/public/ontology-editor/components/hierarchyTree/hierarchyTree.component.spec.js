@@ -59,8 +59,10 @@ describe('Hierarchy Tree component', function() {
             indent: 0,
             path: []
         }];
+        scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" update-search="updateSearch(value)"></hierarchy-tree>'))(scope);
+        scope.resetIndex = jasmine.createSpy('resetIndex');
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });
@@ -93,9 +95,18 @@ describe('Hierarchy Tree component', function() {
                 path: []
             }]);
         });
+        it('index should be one way bound', function() {
+            this.controller.index = 0;
+            scope.$digest();
+            expect(scope.index).toEqual(4);
+        });
         it('updateSearch is one way bound', function() {
             this.controller.updateSearch({value: 'value'});
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
+        });
+        it('resetIndex is one way bound', function() {
+            this.controller.resetIndex();
+            expect(scope.resetIndex).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
