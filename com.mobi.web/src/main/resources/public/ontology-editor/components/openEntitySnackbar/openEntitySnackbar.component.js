@@ -42,14 +42,26 @@
         controller: openEntitySnackbarComponentCtrl
     };
 
-    openEntitySnackbarComponentCtrl.$inject = ['ontologyStateService'];
+    openEntitySnackbarComponentCtrl.$inject = ['$timeout', 'ontologyStateService'];
 
-    function openEntitySnackbarComponentCtrl(ontologyStateService) {
+    function openEntitySnackbarComponentCtrl($timeout, ontologyStateService) {
         var dvm = this;
         dvm.os = ontologyStateService;
+        dvm.show = true;
 
         dvm.$onInit = function() {
-            console.log(dvm.iri)
+            setShow();
+        }
+
+        function setShow() {
+            dvm.show = true;
+            $timeout(() => {
+                dvm.show = false;
+                $timeout(() => {
+                    dvm.os.listItem.goTo.active = false;
+                    dvm.os.listItem.goTo.entityIRI = '';
+                }, 500);
+            }, 5500);
         }
     }
     

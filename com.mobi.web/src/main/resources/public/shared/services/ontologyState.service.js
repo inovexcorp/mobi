@@ -188,7 +188,11 @@
             individualsParentPath: [],
             iriList: [],
             selected: {},
-            failedImports: []
+            failedImports: [],
+            goTo: {
+                entityIRI: '',
+                active: false
+            }
         };
         _.forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate.dataPropertyRange, iri));
         _.forEach(pm.defaultAnnotations, iri => addIri(ontologyListItemTemplate.annotations.iris, iri));
