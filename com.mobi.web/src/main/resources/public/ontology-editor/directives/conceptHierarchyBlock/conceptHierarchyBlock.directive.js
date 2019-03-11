@@ -64,6 +64,9 @@
                     dvm.updateSearch = function(value) {
                         dvm.os.listItem.editorTabStates.concepts.searchText = value;
                     }
+                    dvm.resetIndex = function() {
+                        dvm.os.listItem.editorTabStates.concepts.index = 0;
+                    }
                 }
             }
         }
