@@ -21,18 +21,22 @@
  * #L%
  */
 describe('Open Entity Snackbar component', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope, $timeout, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$timeout_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $timeout = _$timeout_;
             ontologyStateSvc = _ontologyStateService_;
         });
+
+        ontologyStateSvc.listItem.goTo.entityIRI = 'iri';
+        ontologyStateSvc.listItem.goTo.active = true;
 
         this.element = $compile(angular.element('<open-entity-snackbar></open-entity-snackbar>'))(scope);
         scope.$digest();
@@ -46,9 +50,22 @@ describe('Open Entity Snackbar component', function() {
         this.element.remove();
     });
 
+    describe('initializes with the correct values', function() {
+        it('for show and goTo', function() {
+            expect(this.controller.show).toEqual(true);
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
+            $timeout.flush();
+            expect(this.controller.show).toEqual(false);
+            $timeout.flush();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('OPEN-ENTITY-SNACKBAR');
+            expect(this.element.querySelectorAll('.snackbar-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.snackbar-btn').length).toEqual(1);
         });
     });

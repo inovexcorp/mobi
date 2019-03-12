@@ -171,6 +171,8 @@ describe('Create Class Overlay directive', function() {
                 expect(scope.close).toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.setSuperClasses).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('class-iri');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
             describe('has values', function() {
                 beforeEach(function () {
@@ -192,6 +194,8 @@ describe('Create Class Overlay directive', function() {
                     expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                     expect(ontologyStateSvc.listItem.derivedConcepts).toContain('class-iri');
                     expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('class-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
                 it('without a derived concept', function() {
                     this.controller.create();
@@ -208,6 +212,8 @@ describe('Create Class Overlay directive', function() {
                     expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                     expect(ontologyStateSvc.listItem.derivedConcepts).toEqual([]);
                     expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('class-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
             });
         });

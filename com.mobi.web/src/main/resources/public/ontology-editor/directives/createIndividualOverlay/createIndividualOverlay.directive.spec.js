@@ -146,7 +146,11 @@ describe('Create Individual Overlay directive', function() {
         describe('should create an individual', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem = {
-                    ontologyRecord: {recordId: 'recordId'}
+                    ontologyRecord: {recordId: 'recordId'},
+                    goTo: {
+                        entityIRI: '',
+                        active: false
+                    }
                 };
                 ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
                 ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
@@ -164,6 +168,8 @@ describe('Create Individual Overlay directive', function() {
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('id');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
             it('if it is a derived conceptScheme', function() {
                 ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
@@ -176,6 +182,8 @@ describe('Create Individual Overlay directive', function() {
                 expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('id');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
             it('if it is not a derived concept or a concept', function() {
                 this.controller.create();
@@ -187,6 +195,8 @@ describe('Create Individual Overlay directive', function() {
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('id');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
         });
         it('should cancel the overlay', function() {
