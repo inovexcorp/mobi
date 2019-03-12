@@ -155,9 +155,6 @@ describe('Edit Mapping Page directive', function() {
             expect(this.element.querySelectorAll('.col-7').length).toBe(1);
             expect(this.element.querySelectorAll('.editor-column').length).toBe(1);
         });
-        it('with a mapping-title', function() {
-            expect(this.element.find('mapping-title').length).toBe(1);
-        });
         it('depending on which tab is active', function() {
             expect(this.element.find('edit-mapping-form').length).toBe(1);
             expect(this.element.find('rdf-preview-form').length).toBe(0);

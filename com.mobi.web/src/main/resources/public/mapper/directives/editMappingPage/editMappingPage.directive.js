@@ -49,7 +49,7 @@
          * {@link shared.component:block blocks} for editing the current
          * {@link shared.service:mapperStateService#mapping mapping}. The left column contains either a block for
          * {@link editMappingForm.directive:editMappingForm editing} the mapping or a block for
-         * {@link rdfPreviewForm.directive:rdfPreviewForm previewing} the mapped data using the current state of the
+         * {@link mapper.component:rdfPreviewForm previewing} the mapped data using the current state of the
          * mapping. The right column contains a {@link previewDataGrid.directive:previewDataGrid preview} of the loaded
          * delimited data. From here, the user can choose to save the mapping and optionally run it against the loaded
          * delimited data. The directive houses the method for opening a modal to confirm canceling a mapping. The

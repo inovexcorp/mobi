@@ -23,7 +23,7 @@
 <div class="edit-mapping-page container-fluid py-3 h-100">
     <div class="row h-100">
         <div class="col-5 h-100 d-flex flex-column editor-column">
-            <mapping-title></mapping-title>
+            <h3 class="mapping-title text-truncate">{{dvm.state.mapping.record.title}}</h3>
             <div class="flex-1 remove-min-height d-flex flex-column">
                 <div class="tab-headings">
                     <div class="tab-heading p-2 d-inline-block" ng-class="{'active': dvm.tabs.edit}" ng-click="dvm.tabs.edit = true; dvm.tabs.preview = false">Edit</div>

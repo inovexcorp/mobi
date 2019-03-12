@@ -20,20 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    angular
-        .module('mapper', [
-            /* Custom Directives */
-            'classMappingDetails',
-            'editMappingForm',
-            'editMappingPage',
-            'fileUploadPage',
-            'fileUploadForm',
-            'mapperSerializationSelect',
-            'mappingCommitsPage',
-            'mappingSelectPage',
-            'previewDataGrid',
-        ]);
-})();
+.mapper-page {
+    background-color: var(--light);
+}

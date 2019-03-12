@@ -118,9 +118,6 @@ describe('File Upload Page directive', function() {
             expect(this.element.querySelectorAll('.col-5').length).toBe(1);
             expect(this.element.querySelectorAll('.col-7').length).toBe(1);
         });
-        it('with a mapping title', function() {
-            expect(this.element.find('mapping-title').length).toBe(1);
-        });
         it('with blocks', function() {
             expect(this.element.find('block').length).toBe(2);
         });

@@ -118,20 +118,13 @@ describe('Mapping Select Page directive', function() {
             expect(this.element.querySelectorAll('.row').length).toBe(1);
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
-        it('with a mappingListBlock', function() {
-            expect(this.element.find('mapping-list-block').length).toBe(1);
-        });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(this.element.find('block-header').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toBe(1);
+        ['mapping-list-block', 'block', 'block-header', 'block-content', 'action-menu'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toBe(1);
+            });
         });
         it('with buttons for downloading, editing, running, and duplicating a mapping', function() {
-            var buttons = this.element.querySelectorAll('.col-8 block-header div ul a');
+            var buttons = this.element.querySelectorAll('.col-8 block-header action-menu a');
             expect(buttons.length).toBe(4);
             _.forEach(_.toArray(buttons), function(button) {
                 expect(['Edit', 'Run', 'Download', 'Duplicate']).toContain(angular.element(button).text().trim());

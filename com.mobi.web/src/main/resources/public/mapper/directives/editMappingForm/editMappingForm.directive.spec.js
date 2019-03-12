@@ -21,19 +21,21 @@
  * #L%
  */
 describe('Edit Mapping Form directive', function() {
-    var $compile, scope, mapperStateSvc, utilSvc, modalSvc;
+    var $compile, scope, mapperStateSvc, mappingManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('editMappingForm');
         mockMapperState();
+        mockMappingManager();
         mockUtil();
         mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _mapperStateService_, _utilService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _mapperStateService_, _mappingManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
+            mappingManagerSvc = _mappingManagerService_;
             utilSvc = _utilService_;
             modalSvc = _modalService_;
         });
@@ -48,6 +50,7 @@ describe('Edit Mapping Form directive', function() {
         $compile = null;
         scope = null;
         mapperStateSvc = null;
+        mappingManagerSvc = null;
         utilSvc = null;
         modalSvc = null;
         this.element.remove();
@@ -85,11 +88,11 @@ describe('Edit Mapping Form directive', function() {
     describe('controller methods', function() {
         it('should open the classMappingOverlay', function() {
             this.controller.openClassMappingOverlay();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('classMappingOverlay');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('classMappingOverlay', {}, this.controller.setClassMappings);
         });
         it('should open the mappingConfigOverlay', function() {
             this.controller.openMappingConfig();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('mappingConfigOverlay', {}, undefined, 'lg');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('mappingConfigOverlay', {}, this.controller.setClassMappings, 'lg');
         });
         it('should confirm deleting a class mapping', function() {
             this.controller.confirmDeleteClass();
@@ -98,16 +101,24 @@ describe('Edit Mapping Form directive', function() {
         it('should delete a class mapping from the mapping', function() {
             mapperStateSvc.selectedClassMappingId = 'class';
             var classMappingId = mapperStateSvc.selectedClassMappingId;
+            spyOn(this.controller, 'setClassMappings');
             this.controller.deleteClass();
             expect(mapperStateSvc.deleteClass).toHaveBeenCalledWith(classMappingId);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
+            expect(this.controller.setClassMappings).toHaveBeenCalled();
         });
         it('should get the name of a mapping entity', function() {
             var id = 'id';
             mapperStateSvc.mapping.jsonld = [{'@id': id}];
             expect(_.isString(this.controller.getEntityName(id))).toBe(true);
             expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': id}, 'title');
+        });
+        it('should set the class mappings of the mapping', function() {
+            mappingManagerSvc.getAllClassMappings.and.returnValue([{}]);
+            this.controller.setClassMappings();
+            expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
+            expect(this.controller.classMappings).toEqual([{}]);
         });
     });
     it('should call openClassMappingOverlay when the add class button is linked', function() {

@@ -49,10 +49,10 @@
          * `classMappingDetails` is a directive that creates a div with sections to view and edit information
          * about the {@link shared.service:mapperStateService#selectedClassMappingId selected class mapping}.
          * One section is for viewing and editing the
-         * {@link iriTemplateOverlay.component:iriTemplateOverlay IRI template} of the class mapping. Another section is
+         * {@link mapper.component:iriTemplateOverlay IRI template} of the class mapping. Another section is
          * for viewing the list of property mappings associated with the class mapping, adding to that list, editing
          * items in the list, and removing from that list. The directive houses methods for opening the modals for
-         * {@link propMappingOverlay.directive:propMappingOverlay editing, adding}, and removing PropertyMappings. The
+         * {@link mapper.component:propMappingOverlay editing, adding}, and removing PropertyMappings. The
          * directive is replaced by the contents of its template.
          */
         .directive('classMappingDetails', classMappingDetails);

@@ -33,7 +33,7 @@
             <button class="btn btn-link no-padding float-right add-class-mapping-button" ng-click="dvm.openClassMappingOverlay()" ng-disabled="dvm.state.availableClasses.length === 0"><i class="fa fa-plus"></i> Add Class</button>
         </div>
         <div class="class-mapping-select-container">
-            <class-mapping-select ng-model="dvm.state.selectedClassMappingId"></class-mapping-select>
+            <class-mapping-select bind-model="dvm.state.selectedClassMappingId" class-mappings="dvm.classMappings" change-event="dvm.state.selectedClassMappingId = value"></class-mapping-select>
             <button class="btn btn-link remove-min-width" ng-click="dvm.confirmDeleteClass()" ng-disabled="!dvm.state.selectedClassMappingId"><i class="fa fa-trash"></i></button>
         </div>
     </div>

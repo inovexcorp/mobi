@@ -45,17 +45,17 @@
          * @description
          * `editMappingForm` is a directive that creates a div with a section to view and edit the current
          * {@link shared.service:mapperStateService#mapping mapping} configuration, a section to
-         * {@link classMappingSelect.directive:classMappingSelect select a class mapping} and delete the selected class
-         * mapping, a button to {@link classMappingOverlay.component:classMappingOverlay add a new class mapping}, and
+         * {@link mapper.component:classMappingSelect select a class mapping} and delete the selected class mapping, a
+         * button to {@link mapper.component:classMappingOverlay add a new class mapping}, and
          * {@link classMappingDetails.directive:classMappingDetails class mapping details}. The directive houses the
          * method for opening a modal to remove a ClassMapping. The directive is replaced by the contents of its
          * template.
          */
         .directive('editMappingForm', editMappingForm);
 
-        editMappingForm.$inject = ['mapperStateService', 'utilService', 'modalService'];
+        editMappingForm.$inject = ['mapperStateService', 'mappingManagerService', 'utilService', 'modalService'];
 
-        function editMappingForm(mapperStateService, utilService, modalService) {
+        function editMappingForm(mapperStateService, mappingManagerService, utilService, modalService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -63,14 +63,19 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
                     dvm.util = utilService;
+                    dvm.classMappings = [];
 
+                    dvm.$onInit = function() {
+                        dvm.setClassMappings();
+                    }
                     dvm.openClassMappingOverlay = function() {
-                        modalService.openModal('classMappingOverlay');
+                        modalService.openModal('classMappingOverlay', {}, dvm.setClassMappings);
                     }
                     dvm.openMappingConfig = function() {
-                        modalService.openModal('mappingConfigOverlay', {}, undefined, 'lg');
+                        modalService.openModal('mappingConfigOverlay', {}, dvm.setClassMappings, 'lg');
                     }
                     dvm.confirmDeleteClass = function() {
                         modalService.openConfirmModal('<p>Are you sure you want to delete <strong>' + dvm.getEntityName(dvm.state.selectedClassMappingId) + '</strong>?</p><p class="form-text">Deleting a class will remove any properties that link to it.</p>', dvm.deleteClass);
@@ -79,9 +84,13 @@
                         dvm.state.deleteClass(dvm.state.selectedClassMappingId);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = '';
+                        dvm.setClassMappings();
                     }
                     dvm.getEntityName = function(id) {
                         return dvm.util.getDctermsValue(_.find(dvm.state.mapping.jsonld, {'@id': id}), 'title');
+                    }
+                    dvm.setClassMappings = function() {
+                        dvm.classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
                     }
                 },
                 templateUrl: 'mapper/directives/editMappingForm/editMappingForm.directive.html'
