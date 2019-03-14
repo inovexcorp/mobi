@@ -46,7 +46,7 @@ describe('Property Tree component', function() {
             prefixes = _prefixes_;
         });
 
-        scope.datatypeProps =[{
+        scope.datatypeProps = [{
             entityIRI: 'dataProp1',
             hasChildren: true,
             indent: 1,
@@ -57,20 +57,21 @@ describe('Property Tree component', function() {
             indent: 2,
             get: ontologyStateSvc.getNoDomainsOpened
         }];
-        scope.objectProps =[{
+        scope.objectProps = [{
             entityIRI: 'objectProp1',
             hasChildren: false,
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened
         }];
-        scope.annotationProps =[{
+        scope.annotationProps = [{
             entityIRI: 'annotationProp1',
             hasChildren: false,
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened
         }];
+        scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
-        this.element = $compile(angular.element('<property-tree datatype-props="datatypeProps" object-props="objectProps" annotation-props="annotationProps" update-search="updateSearch(value)"></property-tree>'))(scope);
+        this.element = $compile(angular.element('<property-tree datatype-props="datatypeProps" object-props="objectProps" annotation-props="annotationProps" index="index" update-search="updateSearch(value)"></property-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('propertyTree');
     });
@@ -104,6 +105,11 @@ describe('Property Tree component', function() {
             this.controller.annotationProps = [];
             scope.$digest();
             expect(angular.copy(scope.annotationProps)).toEqual(copy);
+        });
+        it('index should be one way bound', function() {
+            this.controller.index = 0;
+            scope.$digest();
+            expect(scope.index).toEqual(4);
         });
         it('updateSearch is one way bound', function() {
             this.controller.updateSearch({value: 'value'});

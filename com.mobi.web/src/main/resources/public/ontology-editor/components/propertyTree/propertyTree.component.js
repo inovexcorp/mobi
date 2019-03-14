@@ -48,6 +48,7 @@
             datatypeProps: '<',
             objectProps: '<',
             annotationProps: '<',
+            index: '<',
             updateSearch: '&'
         },
         controllerAs: 'dvm',
@@ -73,6 +74,11 @@
         dvm.$onChanges = function() {
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
+        }
+        dvm.$onDestroy = function() {
+            if (dvm.os.listItem.editorTabStates) {
+                dvm.os.listItem.editorTabStates.properties.index = 0;
+            }
         }
         dvm.onKeyup = function () {
             dvm.filterText = dvm.searchText;

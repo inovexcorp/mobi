@@ -66,23 +66,28 @@
             },
             classes: {
                 active: false,
-                searchText: ''
+                searchText: '',
+                index: 0
             },
             properties: {
                 active: false,
-                searchText: ''
+                searchText: '',
+                index: 0
             },
             individuals: {
                 active: false,
-                searchText: ''
+                searchText: '',
+                index: 0
             },
             concepts: {
                 active: false,
-                searchText: ''
+                searchText: '',
+                index: 0
             },
             schemes: {
                 active: false,
-                searchText: ''
+                searchText: '',
+                index: 0
             },
             search: {
                 active: false
@@ -1511,21 +1516,47 @@
                 commonGoTo('project', iri);
             } else if (om.isClass(entity)) {
                 commonGoTo('classes', iri, self.listItem.classes.flat);
+                self.listItem.editorTabStates.classes.index = getScrollIndex(iri, self.listItem.classes.flat);
             } else if (om.isDataTypeProperty(entity)) {
-                self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                 commonGoTo('properties', iri, self.listItem.dataProperties.flat);
+                self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+                // Index is incremented by 1 to account for Data Property folder
+                self.listItem.editorTabStates.properties.index = getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
             } else if (om.isObjectProperty(entity)) {
-                self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                 commonGoTo('properties', iri, self.listItem.objectProperties.flat);
+                self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+
+                var index = 0;
+                // If Data Properties are present, count the number of shown properties and increment by 1 for the Data Property folder
+                if (self.listItem.dataProperties.flat.length > 0) {
+                    index += getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
+                }
+                // Index is incremented by 1 to account for Object Property folder
+                self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
             } else if (om.isAnnotation(entity)) {
-                self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                 commonGoTo('properties', iri, self.listItem.annotations.flat);
+                self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+
+                var index = 0;
+                // If Data Properties are present, count the number of shown properties and increment by 1 for the Data Property folder
+                if (self.listItem.dataProperties.flat.length > 0) {
+                    index += getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
+                }
+                // If Object Properties are present, count the number of shown properties and increment by 1 for the Object Property folder
+                if (self.listItem.objectProperties.flat.length > 0) {
+                    index += getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
+                }
+                // Index is incremented by 1 to account for Annotation Property folder
+                self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.annotations.flat, true, self.getAnnotationPropertiesOpened) + 1;
             } else if (om.isConcept(entity, self.listItem.derivedConcepts)) {
                 commonGoTo('concepts', iri, self.listItem.concepts.flat);
+                self.listItem.editorTabStates.concepts.index = getScrollIndex(iri, self.listItem.concepts.flat);
             } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
                 commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
+                self.listItem.editorTabStates.schemes.index = getScrollIndex(iri, self.listItem.conceptSchemes.flat);
             } else if (om.isIndividual(entity)) {
                 commonGoTo('individuals', iri, self.listItem.individuals.flat);
+                self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
             }
         }
         self.openAt = function(flatHierarchy, entityIRI) {
@@ -1665,6 +1696,22 @@
             if (flatHierarchy) {
                 self.openAt(flatHierarchy, iri);
             }
+        }
+        function getScrollIndex(iri, flatHierarchy, property = false, checkPropertyOpened) {
+            var scrollIndex = 0;
+            var index = _.findIndex(flatHierarchy, {entityIRI: iri});
+            if (index < 0) {
+                index = flatHierarchy.length;
+            }
+            for (var i = 0; i < index; i++) {
+                var node = flatHierarchy[i];
+                if (!property && ((node.indent > 0 && self.areParentsOpen(node)) || node.indent === 0)) {
+                    scrollIndex++;
+                } else if (property && self.areParentsOpen(node) && checkPropertyOpened(self.listItem.ontologyRecord.recordId)) {
+                    scrollIndex++;
+                }
+            }
+            return scrollIndex;
         }
         function getOpenPath() {
             return self.getActiveKey() + '.' + _.join(_.map([...arguments], encodeURIComponent), '.');

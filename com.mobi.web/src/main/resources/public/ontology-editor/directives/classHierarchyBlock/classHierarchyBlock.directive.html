@@ -22,5 +22,5 @@
   -->
 <div class="class-hierarchy-block py-1">
     <info-message ng-if="!dvm.os.listItem.classes.flat.length">(No classes defined)</info-message>
-    <hierarchy-tree ng-if="dvm.os.listItem.classes.flat.length" hierarchy="dvm.os.listItem.classes.flat" update-search="dvm.updateSearch(value)"></hierarchy-tree>
+    <hierarchy-tree ng-if="dvm.os.listItem.classes.flat.length" hierarchy="dvm.os.listItem.classes.flat" update-search="dvm.updateSearch(value)" index="dvm.os.listItem.editorTabStates.classes.index" reset-index="dvm.resetIndex()"></hierarchy-tree>
 </div>
