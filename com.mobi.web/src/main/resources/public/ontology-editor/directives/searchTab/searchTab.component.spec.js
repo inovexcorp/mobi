@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Search Tab component', function() {
+fdescribe('Search Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontoUtils, ontologyManagerSvc, httpSvc;
 
     beforeEach(function() {
@@ -155,6 +155,7 @@ describe('Search Tab component', function() {
                                 'class2'
                             ]
                         };
+                        ontologyStateSvc.getEntityNameByIndex.and.returnValue('');
                         ontologyManagerSvc.getSearchResults.and.returnValue($q.when(results));
                         this.controller.onKeyup({keyCode: 13});
                         scope.$apply();

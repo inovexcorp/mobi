@@ -49,7 +49,7 @@
         dvm.os = ontologyStateService;
         dvm.ontoUtils = ontologyUtilsManagerService;
         dvm.om = ontologyManagerService;
-        
+
         dvm.$onInit = function() {
             dvm.os.listItem.editorTabStates.search.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
         }
@@ -61,6 +61,9 @@
                 dvm.om.getSearchResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.os.listItem.editorTabStates.search.id)
                     .then(results => {
                         state.search.errorMessage = '';
+                        _.forEach(results, arr => {
+                            arr.sort((iri1, iri2) => dvm.os.getEntityNameByIndex(iri1, dvm.os.listItem).localeCompare(dvm.os.getEntityNameByIndex(iri2, dvm.os.listItem)));
+                        });
                         state.search.results = results;
                         state.search.infoMessage = !_.isEmpty(results) ? '' : 'There were no results for your search text.';
                         state.search.highlightText = state.search.searchText;
