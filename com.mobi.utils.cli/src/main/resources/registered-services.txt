@@ -5,6 +5,6 @@
 (&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=ontologyCache))
 (&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=policyCache))
 (&(objectClass=com.mobi.platform.config.api.state.StateManager))
-(&(objectClass=com.mobi.platform.config.api.server.Mobi)(component.name=com.mobi.platform.server))
+(&(objectClass=com.mobi.server.api.Mobi)(component.name=com.mobi.platform.server))
 (&(objectClass=com.mobi.security.policy.api.xacml.XACMLPolicyManager))
 (&(objectClass=com.mobi.vfs.api.VirtualFilesystem))

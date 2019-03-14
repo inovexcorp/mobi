@@ -1,12 +1,12 @@
-package com.mobi.platform.config.api.server;
+package com.mobi.server.api;
 
 /*-
  * #%L
- * com.mobi.platform.config.api
+ * com.mobi.server.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,24 +23,24 @@ package com.mobi.platform.config.api.server;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import com.mobi.exception.MobiException;
 
-/**
- * Service configuration for a {@link Mobi} implementation.  Should only be one in the system.
- */
-@Meta.OCD
-public interface MobiConfig {
+import java.net.InetAddress;
+
+public interface ServerUtils {
+    /**
+     * Gets the MAC id of the current server
+     *
+     * @return The MAC id of the current server
+     * @throws MobiException If there is an issue fetching the MAC id
+     */
+    byte[] getMacId();
 
     /**
-     * @return The configured server identifier for the system
+     * Tries to identify the local network interface
+     *
+     * @return The local network address
+     * @throws MobiException If there is an issue getting the local host address
      */
-    @Meta.AD(required = false)
-    String serverId();
-
-    /**
-     * @return The configured host name for the system
-     */
-    @Meta.AD(required = false)
-    String hostName();
-
+    InetAddress getLocalhost();
 }
