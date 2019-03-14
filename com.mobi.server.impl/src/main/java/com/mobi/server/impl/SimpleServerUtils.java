@@ -1,12 +1,12 @@
-package com.mobi.platform.config.impl.server;
+package com.mobi.server.impl;
 
 /*-
  * #%L
- * com.mobi.platform.config.impl
+ * com.mobi.server.impl
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,7 +25,7 @@ package com.mobi.platform.config.impl.server;
 
 import aQute.bnd.annotation.component.Component;
 import com.mobi.exception.MobiException;
-import com.mobi.platform.config.api.server.ServerUtils;
+import com.mobi.server.api.ServerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,13 +78,13 @@ public class SimpleServerUtils implements ServerUtils {
             }
             // Try and identify the localhost network interface if unsuccessful above.
             if (ip == null) {
-                LOGGER.warn("Couldn't identify local network address via the network interfaces... " +
-                        "Going to look up via the hosts database mechanism");
+                LOGGER.warn("Couldn't identify local network address via the network interfaces... "
+                        + "Going to look up via the hosts database mechanism");
                 try {
                     ip = InetAddress.getLocalHost();
                 } catch (UnknownHostException e) {
-                    throw new MobiException("Issue identifying localhost network interface... Please check your " +
-                            "network configuration.", e);
+                    throw new MobiException("Issue identifying localhost network interface... Please check your "
+                            + "network configuration.", e);
                 }
             } else {
                 LOGGER.debug("Successfully identified local network address via the network interfaces.");

@@ -31,7 +31,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
-import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.server.api.Mobi;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
