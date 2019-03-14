@@ -221,7 +221,7 @@ describe('Hierarchy Tree component', function() {
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                 });
             });
-            describe('indent is 0 and the parent path has a length of 2', function () {
+            describe('indent is 0', function () {
                 beforeEach(function() {
                     this.node = {
                         indent: 0,
@@ -277,34 +277,6 @@ describe('Hierarchy Tree component', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(false);
                     expect(this.controller.isShown(this.node)).toBe(false);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
-                });
-            });
-            describe('indent is 0 and the parent path does not have a length of 2', function () {
-                beforeEach(function() {
-                    this.node = {
-                        indent: 0,
-                        entityIRI: 'iri',
-                        path: ['recordId', 'otherIRI', 'iri']
-                    };
-                });
-                describe('and filterText is set and node is parent node without a text match', function() {
-                    beforeEach(function() {
-                        this.controller.filterText = 'text';
-                        this.node.parentNoMatch = true;
-                    });
-                    it('and has a child that has a text match', function() {
-                        this.node.displayNode = true;
-                        ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                        expect(this.controller.isShown(this.node)).toBe(false);
-                    });
-                    it('and does not have a child with a text match', function() {
-                        ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                        expect(this.controller.isShown(this.node)).toBe(false);
-                    });
-                });
-                it('and filterText is not set and is not a parent node without a text match', function() {
-                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(this.controller.isShown(this.node)).toBe(false);
                 });
             });
         });
