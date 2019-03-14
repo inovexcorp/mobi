@@ -36,6 +36,7 @@ describe('Property Hierarchy Block directive', function() {
 
         this.element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('propertyHierarchyBlock');
     });
 
     afterEach(function() {
@@ -45,6 +46,13 @@ describe('Property Hierarchy Block directive', function() {
         this.element.remove();
     });
 
+    describe('controller methods', function() {
+        it('updateSearch changes properties search text', function() {
+            expect(ontologyStateSvc.listItem.editorTabStates.properties.searchText).toEqual('');
+            this.controller.updateSearch('newValue');
+            expect(ontologyStateSvc.listItem.editorTabStates.properties.searchText).toEqual('newValue');
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
