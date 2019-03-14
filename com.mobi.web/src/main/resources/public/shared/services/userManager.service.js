@@ -25,6 +25,18 @@
 
     userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:userManagerService
+     * @requires $http
+     * @requires $q
+     * @requires shared.service:utilService
+     * @requires shared.service:prefixes
+     *
+     * @description
+     * `userManagerService` is a service that provides access to the Mobi users and
+     * groups REST endpoints for adding, removing, and editing Mobi users and groups.
+     */
     function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var self = this,
             userPrefix = REST_PREFIX + 'users',
@@ -214,7 +226,7 @@
                     return self.getUser(newUser.username);
                 }, $q.reject)
                 .then(user => {
-                    self.users.push(user);
+                    self.users = self.users.concat([user]);
                 }, util.rejectError);
         }
         /**
@@ -475,7 +487,7 @@
                     return self.getGroup(newGroup.title);
                 }, $q.reject)
                 .then(group => {
-                    self.groups.push(group);
+                    self.groups = self.groups.concat([group]);
                 }, util.rejectError);
         }
         /**
@@ -784,19 +796,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:userManagerService
-         * @requires $http
-         * @requires $q
-         * @requires shared.service:utilService
-         * @requires shared.service:prefixes
-         *
-         * @description
-         * `userManagerService` is a service that provides access to the Mobi users and
-         * groups REST endpoints for adding, removing, and editing Mobi users and groups.
-         */
+    angular.module('shared')
         .service('userManagerService', userManagerService);
 })();

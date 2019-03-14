@@ -27,7 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-        <text-input is-invalid="dvm.form.fileName.$invalid" ng-model="dvm.fileName" input-name="'fileName'" display-text="'Data File Name'"></text-input>
+        <text-input is-invalid="dvm.form.fileName.$invalid" bind-model="dvm.fileName" change-event="dvm.fileName = value" input-name="'fileName'" display-text="'Data File Name'"></text-input>
         <div class="form-group">
             <custom-label>Serialization</custom-label>
             <mapper-serialization-select format="dvm.format" name="downloadFormat" ng-class="{'is-invalid': dvm.form.downloadFormat.$invalid}"></mapper-serialization-select>

@@ -27,7 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <text-area required="true" text-area-name="'comment'" ng-model="dvm.comment" display-text="'Comment'" is-focus-me="true"></text-area>
+        <text-area required="true" text-area-name="'comment'" bind-model="dvm.comment" change-event="dvm.comment = value" display-text="'Comment'" is-focus-me="true"></text-area>
     </form>
 </div>
 <div class="modal-footer">

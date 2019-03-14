@@ -49,7 +49,7 @@ describe('Explore Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('explore-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a class-block.col', function() {
             expect(this.element.querySelectorAll('class-block.col').length).toBe(1);

@@ -48,11 +48,11 @@
                         </div>
                         <div aria-labelledby="heading_{{$id}}" class="collapse" data-parent="#accordion_{{$id}}" id="collapse_{{$id}}">
                             <div class="expansion-panel-body">
-                                <statement-container ng-if="item.additions.length" additions class="m-0">
-                                    <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition/>
+                                <statement-container ng-if="item.additions.length" additions>
+                                    <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o"/>
                                 </statement-container>
-                                <statement-container ng-if="item.deletions.length" deletions class="m-0">
-                                    <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion/>
+                                <statement-container ng-if="item.deletions.length" deletions>
+                                    <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o"/>
                                 </statement-container>
                             </div>
                         </div>

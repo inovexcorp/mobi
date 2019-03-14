@@ -24,6 +24,9 @@
 @import "./src/main/resources/public/css/variables";
 
 .search-form {
+    .block-content {
+        padding: 10px;
+    }
     .dataset-wrapper {
         display: flex;
         flex-direction: row;

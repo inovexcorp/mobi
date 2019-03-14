@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="merge-request-view">
-    <block>
-        <block-content class="padding">
+<div class="merge-request-view d-flex flex-column">
+    <block class="h-100">
+        <block-content>
             <div class="main-details">
                 <span class="open-indicator badge badge-pill float-right" ng-class="dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'badge-success' : 'badge-primary'">{{dvm.mm.isAccepted(dvm.state.selected.jsonld) ? 'Accepted' : 'Open'}}</span>
                 <div class="title">
@@ -42,7 +42,7 @@
                                 <li ng-repeat="assignee in dvm.state.selected.assignees" ng-class="{'last': $last}">{{assignee}}</li>
                             </ul>
                         </div>
-                        <checkbox ng-if="dvm.state.selected.sourceTitle !== 'MASTER' && !dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-model="dvm.state.selected.removeSource" display-text="'Remove ' + dvm.state.selected.sourceTitle + ' after merge.'" is-disabled="true"></checkbox>
+                        <checkbox ng-if="dvm.state.selected.sourceTitle !== 'MASTER' && !dvm.mm.isAccepted(dvm.state.selected.jsonld)" bind-model="dvm.state.selected.removeSource" change-event="dvm.state.selected.removeSource = value" display-text="'Remove ' + dvm.state.selected.sourceTitle + ' after merge.'" is-disabled="true"></checkbox>
                     </div>
                     <div ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" class="edit-button-container col-auto text-center">
                         <button type="button" class="btn btn-link remove-min-width p-0 fa fa-pencil fa-fw" ng-click="dvm.editRequest()"></button>
@@ -69,14 +69,14 @@
             </div>
         </block-content>
         <block-footer>
-            <div class="view-buttons" ng-if="!dvm.resolveConflicts">
-                <button class="btn btn-primary float-right" ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-disabled="dvm.state.selected.conflicts.length || !dvm.state.selected.targetTitle" ng-click="dvm.showAccept()">Accept</button>
-                <button class="btn btn-danger float-right" ng-click="dvm.showDelete()">Delete</button>
-                <button class="btn float-right" ng-click="dvm.back()">Back</button>
+            <div class="view-buttons text-right" ng-if="!dvm.resolveConflicts">
+                <button class="btn" ng-click="dvm.back()">Back</button>
+                <button class="btn btn-danger" ng-click="dvm.showDelete()">Delete</button>
+                <button class="btn btn-primary" ng-if="!dvm.mm.isAccepted(dvm.state.selected.jsonld)" ng-disabled="dvm.state.selected.conflicts.length || !dvm.state.selected.targetTitle" ng-click="dvm.showAccept()">Accept</button>
             </div>
-            <div class="conflicts-buttons" ng-if="dvm.resolveConflicts">
-                <button class="btn btn-primary float-right" ng-disabled="!dvm.allResolved()" ng-click="dvm.resolve()">Resolve</button>
-                <button class="btn float-right" ng-click="dvm.cancelResolve()">Cancel</button>
+            <div class="conflicts-buttons text-right" ng-if="dvm.resolveConflicts">
+                <button class="btn" ng-click="dvm.cancelResolve()">Cancel</button>
+                <button class="btn btn-primary" ng-disabled="!dvm.allResolved()" ng-click="dvm.resolve()">Resolve</button>
             </div>
         </block-footer>
     </block>

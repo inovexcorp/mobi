@@ -24,13 +24,13 @@
     <div class="row justify-content-center">
         <form name="dvm.form" novalidate autocomplete="off">
             <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
-            <branch-select ng-model="dvm.os.listItem.merge.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget()" branches="dvm.branches"></branch-select>
-            <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" ng-model="dvm.os.listItem.merge.checkbox" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
+            <branch-select bind-model="dvm.os.listItem.merge.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget(value)" branches="dvm.branches"></branch-select>
+            <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.os.listItem.userBranch" bind-model="dvm.os.listItem.merge.checkbox" change-event="dvm.os.listItem.merge.checkbox = value" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
         </form>
     </div>
     <div class="flex-1 vertical-scroll p-2">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <commit-difference-tabset ng-if="dvm.os.listItem.merge.target" class="in-overlay" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference"></commit-difference-tabset>
+        <commit-difference-tabset ng-if="dvm.os.listItem.merge.target" branch-title="dvm.branchTitle" commit-id="dvm.os.listItem.ontologyRecord.commitId" target-id="dvm.targetHeadCommitId" difference="dvm.os.listItem.merge.difference" entity-name-func="dvm.os.getEntityNameByIndex"></commit-difference-tabset>
     </div>
     <div class="btn-container pt-2">
         <button class="btn btn-primary float-right" ng-click="dvm.submit()" ng-disabled="!dvm.os.listItem.merge.target || !dvm.os.listItem.upToDate">Submit</button>

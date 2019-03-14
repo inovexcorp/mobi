@@ -62,16 +62,16 @@ describe('Ontology Button Stack directive', function() {
         it('with a circle-button-stack', function() {
             expect(this.element.find('circle-button-stack').length).toBe(1);
         });
-        it('with circle-buttons', function() {
-            expect(this.element.find('circle-button').length).toBe(6);
+        it('with button.btn-floats', function() {
+            expect(this.element.querySelectorAll('button.btn-float').length).toBe(6);
         });
         it('depending on whether the ontology is committable', function() {
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
             scope.$digest();
-            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
-            var tagButton = angular.element(this.element.querySelectorAll('circle-button.btn-dark')[0]);
-            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
-            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            var uploadButton = angular.element(this.element.querySelectorAll('button.upload-circle-button')[0]);
+            var tagButton = angular.element(this.element.querySelectorAll('button.btn-dark')[0]);
+            var commitButton = angular.element(this.element.querySelectorAll('button.btn-info')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('button.btn-success')[0]);
             expect(tagButton.attr('disabled')).toBeFalsy();
             expect(uploadButton.attr('disabled')).toBeFalsy();
             expect(commitButton.attr('disabled')).toBeTruthy();
@@ -85,8 +85,8 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether the ontology has changes', function() {
-            var tagButton = angular.element(this.element.querySelectorAll('circle-button.btn-dark')[0]);
-            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            var tagButton = angular.element(this.element.querySelectorAll('button.btn-dark')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('button.btn-success')[0]);
             expect(tagButton.attr('disabled')).toBeFalsy();
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
@@ -96,7 +96,7 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether the branch is a user branch', function() {
-            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('button.btn-success')[0]);
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.userBranch = true;
@@ -104,7 +104,7 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on whether the branch is out of date', function() {
-            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('button.btn-success')[0]);
             expect(mergeButton.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.upToDate = false;
@@ -112,12 +112,12 @@ describe('Ontology Button Stack directive', function() {
             expect(mergeButton.attr('disabled')).toBeTruthy();
         });
         it('depending on if the user cannot modify record', function() {
-            var tagButton = angular.element(this.element.querySelectorAll('circle-button.btn-dark')[0]);
-            var uploadButton = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
-            var branchButton = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
-            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
-            var createEntityButton = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
-            var mergeButton = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+            var tagButton = angular.element(this.element.querySelectorAll('button.btn-dark')[0]);
+            var uploadButton = angular.element(this.element.querySelectorAll('button.upload-circle-button')[0]);
+            var branchButton = angular.element(this.element.querySelectorAll('button.btn-warning')[0]);
+            var commitButton = angular.element(this.element.querySelectorAll('button.btn-info')[0]);
+            var createEntityButton = angular.element(this.element.querySelectorAll('button.btn-primary')[0]);
+            var mergeButton = angular.element(this.element.querySelectorAll('button.btn-success')[0]);
 
             ontologyStateSvc.listItem.userCanModify = false;
             ontologyStateSvc.canModify.and.returnValue(false);
@@ -132,7 +132,7 @@ describe('Ontology Button Stack directive', function() {
         it('depending on whether the ontology is open on a branch', function() {
             ontologyStateSvc.isCommittable.and.returnValue(true);
             scope.$digest();
-            var commitButton = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
+            var commitButton = angular.element(this.element.querySelectorAll('button.btn-info')[0]);
             expect(commitButton.attr('disabled')).toBeTruthy();
 
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
@@ -174,30 +174,30 @@ describe('Ontology Button Stack directive', function() {
     });
     it('should call showUploadChangesOverlay when the upload changes button is clicked', function() {
         spyOn(this.controller, 'showUploadChangesOverlay');
-        var button = angular.element(this.element.querySelectorAll('circle-button.upload-circle-button')[0]);
+        var button = angular.element(this.element.querySelectorAll('button.upload-circle-button')[0]);
         button.triggerHandler('click');
         expect(this.controller.showUploadChangesOverlay).toHaveBeenCalled();
     });
     it('should call showCreateBranchOverlay when the create branch button is clicked', function() {
         spyOn(this.controller, 'showCreateBranchOverlay');
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
+        var button = angular.element(this.element.querySelectorAll('button.btn-warning')[0]);
         button.triggerHandler('click');
         expect(this.controller.showCreateBranchOverlay).toHaveBeenCalled();
     });
     it('should set the correct state when the merge button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+        var button = angular.element(this.element.querySelectorAll('button.btn-success')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.listItem.merge.active).toEqual(true);
     });
     it('should call showCommitOverlay when the commit button is clicked', function() {
         spyOn(this.controller, 'showCommitOverlay');
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-info')[0]);
+        var button = angular.element(this.element.querySelectorAll('button.btn-info')[0]);
         button.triggerHandler('click');
         expect(this.controller.showCommitOverlay).toHaveBeenCalled();
     });
     it('should call showCreateEntityOverlay when the create entity button is clicked', function() {
         spyOn(this.controller, 'showCreateEntityOverlay');
-        var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.showCreateEntityOverlay).toHaveBeenCalled();
     });

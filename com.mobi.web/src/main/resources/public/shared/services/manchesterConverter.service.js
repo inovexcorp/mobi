@@ -25,6 +25,17 @@
 
     manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'utilService', 'antlr'];
 
+    /**
+     * @ngdoc service
+     * @name shared.service:manchesterConverterService
+     * @requires $filter
+     * @requires shared.service:prefixes
+     * @requires shared.service:ontologyManagerService
+     *
+     * @description
+     * `manchesterConverterService` is a service that provides utility functions for converting JSON-LD
+     * blank nodes into Manchester Syntax and vice versa.
+     */
     function manchesterConverterService($filter, ontologyManagerService, prefixes, utilService, antlr) {
         var self = this;
         var om = ontologyManagerService;
@@ -251,18 +262,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc service
-         * @name shared.service:manchesterConverterService
-         * @requires $filter
-         * @requires shared.service:prefixes
-         * @requires shared.service:ontologyManagerService
-         *
-         * @description
-         * `manchesterConverterService` is a service that provides utility functions for converting JSON-LD
-         * blank nodes into Manchester Syntax and vice versa.
-         */
+    angular.module('shared')
         .service('manchesterConverterService', manchesterConverterService);
 })();

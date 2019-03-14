@@ -46,7 +46,7 @@
          * `individualTypesModal` is a directive that creates content for a modal that edits the types of the selected
          * individual in the current {@link shared.service:ontologyStateService selected ontology}. The form in
          * the modal contains a 'ui-select' for the classes this individual will be an instance of. Meant to be used in
-         * conjunction with the {@link modalService.directive:modalService}.
+         * conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal

@@ -41,7 +41,7 @@
         </div>
         <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container h-100"></section>
         <footer ui-view="footer"></footer>
-        <spinner ng-show="pendingRequests > 0"></spinner>
+        <spinner ng-if="pendingRequests > 0"></spinner>
         <!-- inject:js -->
         <!-- endinject -->
     </body>

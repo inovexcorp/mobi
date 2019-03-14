@@ -26,7 +26,7 @@
 </div>
 <div class="modal-body">
     <form name="dvm.form">
-        <text-input ng-model="dvm.fileName" display-text="'File Name'" required="true" input-name="'fileName'" is-invalid="dvm.form.fileName.$invalid"></text-input>
+        <text-input bind-model="dvm.fileName" change-event="dvm.fileName = value" display-text="'File Name'" required="true" input-name="'fileName'" is-invalid="dvm.form.fileName.$invalid"></text-input>
         <div class="form-group">
             <custom-label>File Type</custom-label>
             <select class="form-control" ng-model="dvm.fileType" required>

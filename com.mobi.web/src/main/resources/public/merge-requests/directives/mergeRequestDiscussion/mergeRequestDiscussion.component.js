@@ -29,9 +29,8 @@
          * @name mergeRequestDiscussion
          *
          * @description
-         * The `mergeRequestDiscussion` module only provides the `mergeRequestDiscussion` component
-         * which creates a {@link shared.directive:materialTabset} with tabs related to the discussion and
-         * difference of a Merge Request.
+         * The `mergeRequestDiscussion` module only provides the `mergeRequestDiscussion` component which creates a
+         * display of the comments and discussion of a Merge Request.
          */
         .module('mergeRequestDiscussion', [])
         /**

@@ -24,9 +24,6 @@
 @import "./src/main/resources/public/css/variables";
 
 axiom-overlay {
-    .tab {
-        padding-top: 10px;
-    }
     .codemirror-wrapper.readOnly .CodeMirror {
         background-color: var(--light-dark);
         opacity: .65;

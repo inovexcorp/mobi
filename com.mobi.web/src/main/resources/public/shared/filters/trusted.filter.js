@@ -25,6 +25,21 @@
 
     trusted.$inject = ['$sce'];
 
+    /**
+     * @ngdoc filter
+     * @name shared.filter:trusted
+     * @kind function
+     * @requires $sce
+     *
+     * @description 
+     * Takes a string and uses the $sce service to generate the HTML 
+     * representation of the string. If the passed in value is falsey, 
+     * returns undefined.
+     *
+     * @param {string} text The string to inspect for HTML
+     * @returns {*} Undefined if text is not a string or falsey; otherwise, 
+     * the HTML generated from the text string
+     */
     function trusted($sce) {
         return function(text) {
             if(text && typeof text !== 'object') {
@@ -35,22 +50,6 @@
         }
     }
 
-    angular
-        .module('shared')
-        /**
-         * @ngdoc filter
-         * @name shared.filter:trusted
-         * @kind function
-         * @requires $sce
-         *
-         * @description 
-         * Takes a string and uses the $sce service to generate the HTML 
-         * representation of the string. If the passed in value is falsey, 
-         * returns undefined.
-         *
-         * @param {string} text The string to inspect for HTML
-         * @returns {*} Undefined if text is not a string or falsey; otherwise, 
-         * the HTML generated from the text string
-         */
+    angular.module('shared')
         .filter('trusted', trusted);
 })();

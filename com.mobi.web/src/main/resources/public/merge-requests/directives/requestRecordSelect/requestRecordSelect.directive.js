@@ -44,10 +44,9 @@
          * @requires shared.service:prefixes
          *
          * @description
-         * `requestRecordSelect` is a directive which creates a div containing a search form, a list
-         * of VersionedRDFRecords and a {@link shared.directive:pagination} container to select
-         * the VersionedRDFRecord for a new MergeRequest. The directive is replaced by the contents of
-         * its template.
+         * `requestRecordSelect` is a directive which creates a div containing a search form, a list of
+         * VersionedRDFRecords and a {@link shared.component:paging} container to select the VersionedRDFRecord for a
+         * new MergeRequest. The directive is replaced by the contents of its template.
          */
         .directive('requestRecordSelect', requestRecordSelect);
 
@@ -78,11 +77,15 @@
                     pageIndex: 0,
                 };
 
+                dvm.$onInit = function() {
+                    dvm.setInitialRecords();
+                }
                 dvm.selectRecord = function(record) {
                     dvm.state.requestConfig.recordId = record['@id'];
                     dvm.state.requestConfig.record = record;
                 }
-                dvm.setRecords = function() {
+                dvm.setRecords = function(page) {
+                    dvm.currentPage = page;
                     dvm.config.pageIndex = dvm.currentPage - 1;
                     cm.getRecords(catalogId, dvm.config)
                         .then(response => setPagination(response), error => {
@@ -92,11 +95,8 @@
                         });
                 }
                 dvm.setInitialRecords = function() {
-                    dvm.currentPage = 1;
-                    dvm.setRecords();
+                    dvm.setRecords(1);
                 }
-
-                dvm.setInitialRecords();
 
                 function setPagination(response) {
                     dvm.records = _.chunk(response.data, 2);

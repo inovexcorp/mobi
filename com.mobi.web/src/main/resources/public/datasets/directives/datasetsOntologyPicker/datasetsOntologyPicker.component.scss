@@ -28,6 +28,9 @@
         max-height: 300px;
         overflow-y: auto;
 
+        .info-message {
+            padding: 10px;
+        }
         md-checkbox {
             margin-right: 0;
         }

@@ -69,10 +69,12 @@ describe('Request Record Select directive', function() {
             expect(mergeRequestsStateSvc.requestConfig.recordId).toEqual('record');
             expect(mergeRequestsStateSvc.requestConfig.record).toEqual({'@id': 'record'});
         });
-        describe('should set the list of records', function() {
+        describe('should set the list of records to the specified page', function() {
             it('successfully', function() {
-                this.controller.setRecords();
+                this.controller.setRecords(10);
                 scope.$apply();
+                expect(this.controller.currentPage).toEqual(10);
+                expect(this.controller.config.pageIndex).toEqual(9);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
                 expect(angular.copy(this.controller.records)).toEqual([[{'@id': '1'}, {'@id': '2'}], [{'@id': '3'}]]);
                 expect(this.controller.totalSize).toEqual(3);
@@ -80,8 +82,10 @@ describe('Request Record Select directive', function() {
             });
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
-                this.controller.setRecords();
+                this.controller.setRecords(10);
                 scope.$apply();
+                expect(this.controller.currentPage).toEqual(10);
+                expect(this.controller.config.pageIndex).toEqual(9);
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
                 expect(this.controller.records).toEqual([]);
                 expect(this.controller.totalSize).toEqual(0);
@@ -90,10 +94,8 @@ describe('Request Record Select directive', function() {
         });
         it('should set the initial page of records', function() {
             spyOn(this.controller, 'setRecords');
-            this.controller.currentPage = 10;
             this.controller.setInitialRecords();
-            expect(this.controller.currentPage).toEqual(1);
-            expect(this.controller.setRecords).toHaveBeenCalled();
+            expect(this.controller.setRecords).toHaveBeenCalledWith(1);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -101,16 +103,12 @@ describe('Request Record Select directive', function() {
             expect(this.element.hasClass('request-record-select')).toEqual(true);
             expect(this.element.querySelectorAll('.record-search-form').length).toEqual(1);
             expect(this.element.querySelectorAll('.records').length).toEqual(1);
-            expect(this.element.querySelectorAll('.paging-container').length).toEqual(1);
         });
         it('with an input for the search text', function() {
             expect(this.element.querySelectorAll('.record-search-form input').length).toEqual(1);
         });
-        it('with a paging-details', function() {
-            expect(this.element.find('paging-details').length).toEqual(1);
-        });
-        it('with a pagination', function() {
-            expect(this.element.find('pagination').length).toEqual(1);
+        it('with a paging', function() {
+            expect(this.element.find('paging').length).toEqual(1);
         });
         it('depending on how many records there are', function() {
             this.controller.records = [[{'@id': '1'}, {'@id': '2'}], [{'@id': '3'}]];
@@ -129,11 +127,11 @@ describe('Request Record Select directive', function() {
             expect(card.hasClass('selected')).toEqual(true);
         });
     });
-    it('should call setRecords when the search button is clicked', function() {
-        spyOn(this.controller, 'setRecords');
+    it('should call setInitialRecords when the search button is clicked', function() {
+        spyOn(this.controller, 'setInitialRecords');
         var button = angular.element(this.element.querySelectorAll('.record-search-form button')[0]);
         button.triggerHandler('click');
-        expect(this.controller.setRecords).toHaveBeenCalled();
+        expect(this.controller.setInitialRecords).toHaveBeenCalled();
     });
     it('should select a record when it is clicked', function() {
         this.controller.records = [[{'@id': 'record'}]];

@@ -140,13 +140,19 @@ describe('Open Ontology Tab directive', function() {
         it('depending if a user has access to manage a record', function() {
             this.controller.filteredList = [{userCanManage: true}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item').length).toBe(2);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu a').length).toBe(2);
         });
-        it('with a hidden file-input', function() {
-            expect(this.element.querySelectorAll('file-input.hide').length).toEqual(1);
+        it('with a hidden file input', function() {
+            expect(this.element.querySelectorAll('input[type="file"].hide').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
+        it('should update the uploaded files', function() {
+            spyOn(this.controller, 'showUploadOntologyOverlay');
+            this.controller.updateFiles(undefined, [{}]);
+            expect(ontologyStateSvc.uploadFiles).toEqual([{}]);
+            expect(this.controller.showUploadOntologyOverlay).toHaveBeenCalled();
+        });
         it('should determine whether an ontology is open', function() {
             expect(this.controller.isOpened({'@id': 'id'})).toEqual(false);
             ontologyStateSvc.list = [{ontologyRecord: {recordId: 'id'}}];
@@ -214,6 +220,7 @@ describe('Open Ontology Tab directive', function() {
                 this.recordId = 'recordA';
                 this.controller.recordId = this.recordId;
                 ontologyStateSvc.getOntologyStateByRecordId.and.returnValue({id: 'state'});
+                spyOn(this.controller, 'getPageOntologyRecords');
             });
             it('unless an error occurs', function() {
                 ontologyManagerSvc.deleteOntology.and.returnValue($q.reject('Error message'));
@@ -224,6 +231,7 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.records.data).toContain(jasmine.objectContaining({'@id': this.recordId}));
                 expect(ontologyStateSvc.getOntologyStateByRecordId).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.deleteOntologyState).not.toHaveBeenCalled();
+                expect(this.controller.getPageOntologyRecords).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
             it('successfully', function() {
@@ -234,32 +242,33 @@ describe('Open Ontology Tab directive', function() {
                 expect(this.records).not.toContain(jasmine.objectContaining({'@id': this.recordId}));
                 expect(ontologyStateSvc.getOntologyStateByRecordId).toHaveBeenCalledWith(this.recordId);
                 expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
+                expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
-        it('should get the list of ontology records', function() {
+        it('should get the list of ontology records at the specified page', function() {
             var catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
             var sortOption = {field: 'http://purl.org/dc/terms/title', asc: true};
             catalogManagerSvc.sortOptions = [sortOption];
-            var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+            var page = 2;
             var paginatedConfig = {
-                pageIndex: 0,
+                pageIndex: page - 1,
                 limit: 10,
-                recordType: ontologyRecordType,
+                recordType: prefixes.ontologyEditor + 'OntologyRecord',
                 sortOption,
                 searchText: undefined
             };
             ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
-            this.controller.getPageOntologyRecords();
+            this.controller.getPageOntologyRecords(page);
             scope.$apply();
+            expect(this.controller.currentPage).toEqual(page);
             expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, paginatedConfig, this.controller.id);
-            expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordA'}));
+            expect(this.controller.filteredList).toContain(jasmine.objectContaining({'@id': 'recordK'}));
         });
         it('should perform a search', function() {
             spyOn(this.controller, 'getPageOntologyRecords');
             this.controller.search();
-            expect(this.controller.currentPage).toEqual(1);
-            expect(this.controller.getPageOntologyRecords).toHaveBeenCalled();
+            expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1);
         });
         it('should show a record access overlay', function() {
             this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule');
@@ -280,7 +289,7 @@ describe('Open Ontology Tab directive', function() {
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
-        var link = angular.element(this.element.querySelectorAll('.ontologies .list-group-item action-menu action-menu-item')[1]);
+        var link = angular.element(this.element.querySelectorAll('.ontologies .list-group-item action-menu a.delete-record')[0]);
         link.triggerHandler('click');
         expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
     });
