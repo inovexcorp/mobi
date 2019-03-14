@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Run Mapping Dataset Overlay component', function() {
-    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc;
+    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,18 +33,20 @@ describe('Run Mapping Dataset Overlay component', function() {
         mockDatasetManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             datasetManagerSvc = _datasetManagerService_;
+            utilSvc = _utilService_;
         });
 
         this.datasetRecord = {'@id': 'dataset'};
         datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[this.datasetRecord]]}));
         datasetManagerSvc.getRecordFromArray.and.returnValue(this.datasetRecord);
+        utilSvc.getDctermsValue.and.returnValue('title');
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
@@ -60,11 +62,12 @@ describe('Run Mapping Dataset Overlay component', function() {
         mapperStateSvc = null;
         delimitedManagerSvc = null;
         datasetManagerSvc = null;
+        this.element.remove();
     });
 
     it('should initialize with the correct values for datasetRecords', function() {
         scope.$apply();
-        expect(this.controller.datasetRecords).toEqual([this.datasetRecord]);
+        expect(this.controller.datasetRecords).toEqual([Object.assign({}, this.datasetRecord, {title: 'title'})]);
         expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
         expect(datasetManagerSvc.getRecordFromArray).toHaveBeenCalledWith([this.datasetRecord]);
     });
@@ -76,6 +79,41 @@ describe('Run Mapping Dataset Overlay component', function() {
         it('dismiss should be called in the parent scope', function() {
             this.controller.dismiss();
             expect(scope.dismiss).toHaveBeenCalled();
+        });
+        describe('should set the record list for the select', function() {
+            describe('if search text is provided', function() {
+                it('if there are less than 100 records', function() {
+                    this.controller.datasetRecords = [{title: 'Record 3'}, {title: 'Record 1'}, {title: 'Record 20'}, {title: 'Record 2'}];
+                    this.controller.setRecords('2');
+                    expect(this.controller.selectRecords).toEqual([
+                        { title: 'Record 2' },
+                        { title: 'Record 20' }
+                    ]);
+                });
+                it('if there are more than 100 records', function() {
+                    this.controller.datasetRecords = _.reverse(_.map(_.range(1, 201), num => ({title: 'Record ' + num})));
+                    this.controller.setRecords('1');
+                    expect(this.controller.selectRecords.length).toEqual(100);
+                    expect(this.controller.selectRecords[0].title).toEqual('Record 1');
+                });
+            });
+            describe('if no search text is provided', function() {
+                it('if there are less than 100 records', function() {
+                    this.controller.datasetRecords = [{title: 'Record 3'}, {title: 'Record 1'}, {title: 'Record 2'}];
+                    this.controller.setRecords();
+                    expect(this.controller.selectRecords).toEqual([
+                        { title: 'Record 1' },
+                        { title: 'Record 2' },
+                        { title: 'Record 3' }
+                    ]);
+                });
+                it('if there are more than 100 records', function() {
+                    this.controller.datasetRecords = _.reverse(_.map(_.range(1, 151), num => ({title: 'Record ' + num})));
+                    this.controller.setRecords();
+                    expect(this.controller.selectRecords.length).toEqual(100);
+                    expect(this.controller.selectRecords[0].title).toEqual('Record 1');
+                });
+            });
         });
     });
     describe('controller methods', function() {

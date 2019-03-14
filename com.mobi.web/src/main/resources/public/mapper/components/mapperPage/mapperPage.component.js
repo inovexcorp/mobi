@@ -31,9 +31,9 @@
      * @description
      * `mapperPage` is a component which creates a {@link shared.component:tabset tabset} with different pages depending
      * on the current {@link shared.service:mapperStateService#step step} of the mapping process. The three pages are
-     * {@link mappingSelectPage.directive:mappingSelectPage mappingSelectPage},
-     * {@link fileUploadPage.directive:fileUploadPage fileUploadPage}, and the
-     * {@link editMappingPage.directive:editMappingPage editMappingPage}.
+     * {@link mapper.component:mappingSelectPage mappingSelectPage},
+     * {@link mapper.component:fileUploadPage fileUploadPage}, and the
+     * {@link mapper.component:editMappingPage editMappingPage}.
      */
     const mapperPageComponent = {
         templateUrl: 'mapper/components/mapperPage/mapperPage.component.html',

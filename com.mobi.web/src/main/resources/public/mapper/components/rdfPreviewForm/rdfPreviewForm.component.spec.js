@@ -26,7 +26,7 @@ describe('RDF Preview Form component', function() {
     beforeEach(function() {
         module('templates');
         module('mapper');
-        mockComponent('mapperSerializationSelect', 'mapperSerializationSelect');
+        mockComponent('mapper', 'mapperSerializationSelect');
         mockMapperState();
         mockDelimitedManager();
 

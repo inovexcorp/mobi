@@ -23,27 +23,34 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.rdf-preview-form {
+.edit-mapping-form {
 	display: flex;
 	flex-direction: column;
 
-    .codemirror-wrapper {
-        flex: 1;
-        min-height: 0;
-        position: relative;
-
-        .CodeMirror {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            top: 0;
-            border: 1px solid #ccc;
-            height: auto;
-
-			.CodeMirror-cursor {
-				display: none !important
-			}
+    .mapping-config {
+        p {
+            margin-bottom: 0;
+            display: inline-block;
+            @include textOverflow;
+            position: relative;
+            padding-right: 20px;
+            max-width: 100%;
         }
+        button {
+            position: absolute;
+            right: 0;
+        }
+    }
+    .class-mappings {
+        .classes-field-name {
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        .control-label {
+            width: 100%;
+        }
+    }
+    ul.dl-horizontal {
+        margin-bottom: 0;
     }
 }

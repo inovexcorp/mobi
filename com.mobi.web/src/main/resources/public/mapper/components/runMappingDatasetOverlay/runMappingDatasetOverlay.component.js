@@ -58,15 +58,29 @@
         var dam = datasetManagerService;
         var state = mapperStateService;
         var dm = delimitedManagerService;
-        dvm.util = utilService;
+        var util = utilService;
         dvm.errorMessage = '';
         dvm.datasetRecordIRI = '';
         dvm.datasetRecords = [];
+        dvm.selectRecords = [];
 
-        dam.getDatasetRecords().then(response => {
-            dvm.datasetRecords = _.map(response.data, arr => dam.getRecordFromArray(arr));
-        }, onError);
-
+        dvm.$onInit = function() {
+            dam.getDatasetRecords().then(response => {
+                dvm.datasetRecords = _.map(response.data, arr => {
+                    var record = angular.copy(dam.getRecordFromArray(arr));
+                    record.title = util.getDctermsValue(record, 'title');
+                    return record;
+                });
+            }, onError);
+        }
+        dvm.setRecords = function(searchText) {
+            var tempRecords = angular.copy(dvm.datasetRecords);
+            if (searchText) {
+                tempRecords = _.filter(tempRecords, record => _.includes(record.title.toLowerCase(), searchText.toLowerCase()));
+            }
+            tempRecords.sort((record1, record2) => record1.title.localeCompare(record2.title));
+            dvm.selectRecords = tempRecords.slice(0, 100);
+        }
         dvm.run = function() {
             if (state.editMapping && state.isMappingChanged()) {
                 state.saveMapping().then(runMapping, onError);
@@ -90,7 +104,7 @@
             state.initialize();
             state.resetEdit();
             dm.reset();
-            dvm.util.createSuccessToast('Successfully ran mapping');
+            util.createSuccessToast('Successfully ran mapping');
             dvm.close();
         }
     }

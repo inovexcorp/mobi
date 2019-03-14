@@ -26,7 +26,7 @@ describe('Run Mapping Download Overlay component', function() {
     beforeEach(function() {
         module('templates');
         module('mapper');
-        mockComponent('mapperSerializationSelect', 'mapperSerializationSelect');
+        mockComponent('mapper', 'mapperSerializationSelect');
         injectCamelCaseFilter();
         injectHighlightFilter();
         injectTrustedFilter();

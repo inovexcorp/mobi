@@ -23,12 +23,12 @@
 <div class="class-select">
     <ui-select ng-model="dvm.selectedClass" on-select="dvm.changeEvent({value: dvm.selectedClass})" ng-disabled="dvm.isDisabledWhen" autofocus>
         <ui-select-match placeholder="Select a class">
-            <span ng-if="$select.selected" title="{{$select.selected.classObj['@id']}}">{{dvm.om.getEntityName($select.selected.classObj)}}</span>
+            <span ng-if="$select.selected" title="{{$select.selected.classObj['@id']}}">{{$select.selected.name}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.getOntologyId" repeat="clazz in dvm.classes | filter:$select.search | orderBy:dvm.om.getEntityName track by $index" ui-disable-choice="dvm.om.isDeprecated(clazz.classObj)">
+        <ui-select-choices refresh="dvm.setClasses($select.search)" refresh-delay="300" group-by="'groupHeader'" repeat="clazz in dvm.selectClasses track by clazz.classObj['@id']" ui-disable-choice="clazz.isDeprecated">
             <div title="{{clazz.classObj['@id']}}">
-                <span ng-bind-html="dvm.om.getEntityName(clazz.classObj) | highlight:$select.search | trusted"></span>
-                <span class="text-muted" ng-if="dvm.om.isDeprecated(clazz.classObj)">(Deprecated)</span>
+                <span ng-bind-html="clazz.name | highlight:$select.search | trusted"></span>
+                <span class="text-muted" ng-if="clazz.isDeprecated">(Deprecated)</span>
             </div>
         </ui-select-choices>
     </ui-select>

@@ -20,16 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<form class="rdf-preview-form h-100">
-    <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-    <div class="form-group">
-        <custom-label>Serialization</custom-label>
-        <div class="select-container d-flex">
-            <mapper-serialization-select class="flex-1" format="dvm.serializeFormat" change-event="dvm.serializeFormat = value" required></mapper-serialization-select>
-            <button class="btn ml-2" ng-click="dvm.generatePreview()">Refresh</button>
-        </div>
-    </div>
-    <div class="codemirror-wrapper">
-        <ui-codemirror ng-model="dvm.dm.preview" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
-    </div>
-</form>
+<select ng-model="dvm.format" class="mapper-serialization-select form-control" name="{{dvm.name}}" ng-required="dvm.isRequired" ng-class="{'is-invalid': dvm.form[dvm.name].$invalid}" ng-change="dvm.changeEvent({value: dvm.format})">
+    <option ng-repeat="option in dvm.options" value="{{option.value}}">{{option.name}}</option>
+</select>

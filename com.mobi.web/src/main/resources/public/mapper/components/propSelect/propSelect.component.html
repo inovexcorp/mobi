@@ -23,12 +23,12 @@
 <div class="prop-select">
     <ui-select ng-model="dvm.selectedProp" on-select="dvm.changeEvent({value: dvm.selectedProp})" ng-disabled="dvm.isDisabledWhen" autofocus>
         <ui-select-match placeholder="Select a property">
-            <span title="{{$select.selected.propObj['@id']}}">{{dvm.om.getEntityName($select.selected.propObj)}}</span>
+            <span title="{{$select.selected.propObj['@id']}}">{{$select.selected.name}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.getOntologyId" repeat="prop in dvm.props | filter:$select.search | orderBy:dvm.om.getEntityName track by $index" ui-disable-choice="dvm.om.isDeprecated(prop.propObj)">
+        <ui-select-choices refresh="dvm.setProps($select.search)" refresh-delay="300" group-by="'groupHeader'" repeat="prop in dvm.selectProps track by prop.propObj['@id']" ui-disable-choice="prop.isDeprecated">
             <div title="{{prop.propObj['@id']}}">
-                <span ng-bind-html="dvm.om.getEntityName(prop.propObj) | highlight:$select.search | trusted"></span>
-                <span class="text-muted" ng-if="dvm.om.isDeprecated(prop.propObj)">(Deprecated)</span>
+                <span ng-bind-html="prop.name | highlight:$select.search | trusted"></span>
+                <span class="text-muted" ng-if="prop.isDeprecated">(Deprecated)</span>
             </div>
         </ui-select-choices>
     </ui-select>

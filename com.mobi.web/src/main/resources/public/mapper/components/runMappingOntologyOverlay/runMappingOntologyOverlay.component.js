@@ -91,20 +91,6 @@
                     dvm.ontologies = response.data;
                 });
         }
-        function setOntologyBranches(ontologyRecord) {
-            var catalogId = _.get(cm.localCatalog, '@id', '');
-            var recordId = _.get(ontologyRecord, '@id', '');
-            var paginatedConfig = {
-                sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
-            };
-            if (recordId) {
-                return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
-                    .then(response => {
-                        dvm.branches = response.data;
-                        dvm.branchId = _.get(_.find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
-                    });
-            }
-        }
         dvm.run = function() {
             if (state.editMapping && state.isMappingChanged()) {
                 state.saveMapping().then(runMapping, onError);
@@ -156,6 +142,20 @@
             }
             if (!toast) {
                 dvm.util.createSuccessToast('Successfully ran mapping');
+            }
+        }
+        function setOntologyBranches(ontologyRecord) {
+            var catalogId = _.get(cm.localCatalog, '@id', '');
+            var recordId = _.get(ontologyRecord, '@id', '');
+            var paginatedConfig = {
+                sortOption: _.find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
+            };
+            if (recordId) {
+                return cm.getRecordBranches(recordId, catalogId, paginatedConfig)
+                    .then(response => {
+                        dvm.branches = response.data;
+                        dvm.branchId = _.get(_.find(dvm.branches, branch => dvm.util.getDctermsValue(branch, 'title') === 'MASTER'), '@id');
+                    });
             }
         }
     }

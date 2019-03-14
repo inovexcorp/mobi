@@ -58,10 +58,26 @@
 
     function classSelectComponentCtrl($filter, ontologyManagerService) {
         var dvm = this;
-        dvm.om = ontologyManagerService;
+        var om = ontologyManagerService;
+        dvm.selectClasses = [];
 
         dvm.getOntologyId = function(clazz) {
             return clazz.ontologyId || $filter('splitIRI')(clazz.classObj['@id']).begin;
+        }
+        dvm.setClasses = function(searchText) {
+            var tempClasses = angular.copy(dvm.classes);
+            _.forEach(tempClasses, clazz => {
+                clazz.name = om.getEntityName(clazz.classObj);
+            });
+            if (searchText) {
+                tempClasses = _.filter(tempClasses, clazz => _.includes(clazz.name.toLowerCase(), searchText.toLowerCase()));
+            }
+            tempClasses.sort((clazz1, clazz2) => clazz1.name.localeCompare(clazz2.name));
+            dvm.selectClasses = _.map(tempClasses.slice(0, 100), clazz => {
+                clazz.isDeprecated = om.isDeprecated(clazz.classObj);
+                clazz.groupHeader = dvm.getOntologyId(clazz);
+                return clazz;
+            });
         }
     }
 

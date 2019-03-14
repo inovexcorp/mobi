@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Select component', function() {
-    var $compile, scope, splitIRI;
+    var $compile, scope, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -31,9 +31,10 @@ describe('Class Select component', function() {
         injectTrustedFilter();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
             splitIRI = _splitIRIFilter_;
         });
 
@@ -49,6 +50,7 @@ describe('Class Select component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyManagerSvc = null;
         splitIRI = null;
         this.element.remove();
     });
@@ -75,13 +77,89 @@ describe('Class Select component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should get the ontology id of a prop', function() {
+        it('should get the ontology id of a class', function() {
             expect(this.controller.getOntologyId({ontologyId: 'test'})).toEqual('test');
             expect(splitIRI).not.toHaveBeenCalled();
 
             splitIRI.and.returnValue({begin: 'test'});
             expect(this.controller.getOntologyId({classObj: {'@id': ''}})).toEqual('test');
             expect(splitIRI).toHaveBeenCalledWith('');
+        });
+        describe('should set the class list for the select', function() {
+            beforeEach(function() {
+                this.ontologyId = 'ontologyId';
+                ontologyManagerSvc.isDeprecated.and.returnValue(false);
+                ontologyManagerSvc.getEntityName.and.callFake(obj => obj['@id']);
+                spyOn(this.controller, 'getOntologyId').and.returnValue(this.ontologyId);
+            });
+            describe('if search text is provided', function() {
+                it('if there are less than 100 classes', function() {
+                    this.controller.classes = [{classObj: {'@id': 'class3'}}, {classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class20'}}, {classObj: {'@id': 'class2'}}];
+                    this.controller.setClasses('2');
+                    expect(this.controller.selectClasses).toEqual([
+                        {
+                            classObj: {'@id': 'class2'},
+                            name: 'class2',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        },
+                        {
+                            classObj: {'@id': 'class20'},
+                            name: 'class20',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        }
+                    ]);
+                });
+                it('if there are more than 100 classes', function() {
+                    this.controller.classes = _.reverse(_.map(_.range(1, 201), num => ({classObj: {'@id': 'class' + num}})));
+                    this.controller.setClasses('1');
+                    expect(this.controller.selectClasses.length).toEqual(100);
+                    expect(this.controller.selectClasses[0].name).toEqual('class1');
+                    _.forEach(this.controller.selectClasses, clazz => {
+                        expect(clazz.name).toEqual(clazz.classObj['@id']);
+                        expect(clazz.isDeprecated).toEqual(false);
+                        expect(clazz.groupHeader).toEqual(this.ontologyId);
+                    });
+                });
+            });
+            describe('if no search text is provided', function() {
+                it('if there are less than 100 classes', function() {
+                    this.controller.classes = [{classObj: {'@id': 'class3'}}, {classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
+                    this.controller.setClasses();
+                    expect(this.controller.selectClasses).toEqual([
+                        {
+                            classObj: {'@id': 'class1'},
+                            name: 'class1',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        },
+                        {
+                            classObj: {'@id': 'class2'},
+                            name: 'class2',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        },
+                        {
+                            classObj: {'@id': 'class3'},
+                            name: 'class3',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        }
+                    ]);
+                });
+                it('if there are more than 100 classes', function() {
+                    this.controller.classes = _.reverse(_.map(_.range(1, 151), num => ({classObj: {'@id': 'class' + num}})));
+                    this.controller.setClasses();
+                    expect(this.controller.selectClasses.length).toEqual(100);
+                    expect(this.controller.selectClasses[0].name).toEqual('class1');
+                    _.forEach(this.controller.selectClasses, clazz => {
+                        expect(clazz.name).toEqual(clazz.classObj['@id']);
+                        expect(clazz.isDeprecated).toEqual(false);
+                        expect(clazz.groupHeader).toEqual(this.ontologyId);
+                    });
+                });
+            });
         });
     });
     describe('contains the correct html', function() {

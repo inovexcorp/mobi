@@ -30,7 +30,7 @@
         <text-input is-invalid="dvm.form.fileName.$invalid" bind-model="dvm.fileName" change-event="dvm.fileName = value" input-name="'fileName'" display-text="'Data File Name'"></text-input>
         <div class="form-group">
             <custom-label>Serialization</custom-label>
-            <mapper-serialization-select format="dvm.format" name="downloadFormat" ng-class="{'is-invalid': dvm.form.downloadFormat.$invalid}"></mapper-serialization-select>
+            <mapper-serialization-select format="dvm.format" name="'downloadFormat'" change-event="dvm.format = value"></mapper-serialization-select>
         </div>
     </form>
 </div>

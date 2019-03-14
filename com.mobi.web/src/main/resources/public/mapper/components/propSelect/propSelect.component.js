@@ -57,10 +57,26 @@
 
     function propSelectComponentCtrl($filter, ontologyManagerService) {
         var dvm = this;
-        dvm.om = ontologyManagerService;
+        var om = ontologyManagerService;
+        dvm.selectProps = [];
 
         dvm.getOntologyId = function(prop) {
             return prop.ontologyId || $filter('splitIRI')(prop.propObj['@id']).begin;
+        }
+        dvm.setProps = function(searchText) {
+            var tempProps = angular.copy(dvm.props);
+            _.forEach(tempProps, prop => {
+                prop.name = om.getEntityName(prop.propObj);
+            });
+            if (searchText) {
+                tempProps = _.filter(tempProps, prop => _.includes(prop.name.toLowerCase(), searchText.toLowerCase()));
+            }
+            tempProps.sort((prop1, prop2) => prop1.name.localeCompare(prop2.name));
+            dvm.selectProps = _.map(tempProps.slice(0, 100), prop => {
+                prop.isDeprecated = om.isDeprecated(prop.propObj);
+                prop.groupHeader = dvm.getOntologyId(prop);
+                return prop;
+            });
         }
     }
 

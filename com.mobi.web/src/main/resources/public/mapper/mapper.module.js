@@ -23,17 +23,12 @@
 (function() {
     'use strict';
 
-    angular
-        .module('mapper', [
-            /* Custom Directives */
-            'classMappingDetails',
-            'editMappingForm',
-            'editMappingPage',
-            'fileUploadPage',
-            'fileUploadForm',
-            'mapperSerializationSelect',
-            'mappingCommitsPage',
-            'mappingSelectPage',
-            'previewDataGrid',
-        ]);
+    /**
+     * @ngdoc overview
+     * @name mapper
+     *
+     * @description
+     * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
+     */
+    angular.module('mapper', []);
 })();

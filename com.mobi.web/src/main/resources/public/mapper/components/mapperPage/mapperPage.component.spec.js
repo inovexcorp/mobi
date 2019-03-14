@@ -26,10 +26,10 @@ describe('Mapper Page component', function() {
     beforeEach(function() {
         module('templates');
         module('mapper');
-        mockComponent('mappingSelectPage', 'mappingSelectPage');
-        mockComponent('fileUploadPage', 'fileUploadPage');
-        mockComponent('editMappingPage', 'editMappingPage');
-        mockComponent('mappingCommitsPage', 'mappingCommitsPage');
+        mockComponent('mapper', 'mappingSelectPage');
+        mockComponent('mapper', 'fileUploadPage');
+        mockComponent('mapper', 'editMappingPage');
+        mockComponent('mapper', 'mappingCommitsPage');
         mockMapperState();
 
         inject(function(_$compile_, _$rootScope_, _mapperStateService_) {

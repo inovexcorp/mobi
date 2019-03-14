@@ -84,7 +84,6 @@ describe('Column Select component', function() {
             expect(this.element.querySelectorAll('.value-preview').length).toEqual(0);
 
             this.controller.selectedColumn = '0';
-            console.log(angular.isNumber('0'));
             scope.$digest();
             expect(this.element.querySelectorAll('.value-preview').length).toEqual(1);
         });

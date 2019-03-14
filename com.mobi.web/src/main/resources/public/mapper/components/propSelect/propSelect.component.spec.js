@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Prop Select component', function() {
-    var $compile, scope, splitIRI;
+    var $compile, scope, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -31,9 +31,10 @@ describe('Prop Select component', function() {
         injectTrustedFilter();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
             splitIRI = _splitIRIFilter_;
         });
 
@@ -49,6 +50,7 @@ describe('Prop Select component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyManagerSvc = null;
         splitIRI = null;
         this.element.remove();
     });
@@ -82,6 +84,82 @@ describe('Prop Select component', function() {
             splitIRI.and.returnValue({begin: 'test'});
             expect(this.controller.getOntologyId({propObj: {'@id': ''}})).toEqual('test');
             expect(splitIRI).toHaveBeenCalledWith('');
+        });
+        describe('should set the property list for the select', function() {
+            beforeEach(function() {
+                this.ontologyId = 'ontologyId';
+                ontologyManagerSvc.isDeprecated.and.returnValue(false);
+                ontologyManagerSvc.getEntityName.and.callFake(obj => obj['@id']);
+                spyOn(this.controller, 'getOntologyId').and.returnValue(this.ontologyId);
+            });
+            describe('if search text is provided', function() {
+                it('if there are less than 100 properties', function() {
+                    this.controller.props = [{propObj: {'@id': 'prop3'}}, {propObj: {'@id': 'prop1'}}, {propObj: {'@id': 'prop20'}}, {propObj: {'@id': 'prop2'}}];
+                    this.controller.setProps('2');
+                    expect(this.controller.selectProps).toEqual([
+                        {
+                            propObj: {'@id': 'prop2'},
+                            name: 'prop2',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        },
+                        {
+                            propObj: {'@id': 'prop20'},
+                            name: 'prop20',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        }
+                    ]);
+                });
+                it('if there are more than 100 props', function() {
+                    this.controller.props = _.reverse(_.map(_.range(1, 201), num => ({propObj: {'@id': 'prop' + num}})));
+                    this.controller.setProps('1');
+                    expect(this.controller.selectProps.length).toEqual(100);
+                    expect(this.controller.selectProps[0].name).toEqual('prop1');
+                    _.forEach(this.controller.selectProps, prop => {
+                        expect(prop.name).toEqual(prop.propObj['@id']);
+                        expect(prop.isDeprecated).toEqual(false);
+                        expect(prop.groupHeader).toEqual(this.ontologyId);
+                    });
+                });
+            });
+            describe('if no search text is provided', function() {
+                it('if there are less than 100 props', function() {
+                    this.controller.props = [{propObj: {'@id': 'prop3'}}, {propObj: {'@id': 'prop1'}}, {propObj: {'@id': 'prop2'}}];
+                    this.controller.setProps();
+                    expect(this.controller.selectProps).toEqual([
+                        {
+                            propObj: {'@id': 'prop1'},
+                            name: 'prop1',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        },
+                        {
+                            propObj: {'@id': 'prop2'},
+                            name: 'prop2',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        },
+                        {
+                            propObj: {'@id': 'prop3'},
+                            name: 'prop3',
+                            isDeprecated: false,
+                            groupHeader: this.ontologyId
+                        }
+                    ]);
+                });
+                it('if there are more than 100 props', function() {
+                    this.controller.props = _.reverse(_.map(_.range(1, 151), num => ({propObj: {'@id': 'prop' + num}})));
+                    this.controller.setProps();
+                    expect(this.controller.selectProps.length).toEqual(100);
+                    expect(this.controller.selectProps[0].name).toEqual('prop1');
+                    _.forEach(this.controller.selectProps, prop => {
+                        expect(prop.name).toEqual(prop.propObj['@id']);
+                        expect(prop.isDeprecated).toEqual(false);
+                        expect(prop.groupHeader).toEqual(this.ontologyId);
+                    });
+                });
+            });
         });
     });
     describe('contains the correct html', function() {

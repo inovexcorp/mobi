@@ -32,7 +32,7 @@
      * @description
      * `downloadMappingOverlay` is a component that content for a modal to download the current
      * {@link shared.service:mapperStateService#mapping mapping} in a variety of different formats using a
-     * {@link mapperSerializationSelect.directive:mapperSerializationSelect mapperSerializationSelect}.
+     * {@link mapper.component:mapperSerializationSelect mapperSerializationSelect}.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal

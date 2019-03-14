@@ -31,9 +31,9 @@
      *
      * @description
      * `rdfPreviewForm` is a component that creates a form with controls to select an RDF
-     * {@link mapperSerializationSelect.directive:mapperSerializationSelect serialization} and a `code-mirror` to view a
-     * preview of the loaded {@link shared.service:delimitedManagerService#dataRows delimited data} mapped by the
-     * current {@link shared.service:mapperStateService#mapping mapping}.
+     * {@link mapper.component:mapperSerializationSelect serialization} and a `code-mirror` to view a preview of the
+     * loaded {@link shared.service:delimitedManagerService#dataRows delimited data} mapped by the current
+     * {@link shared.service:mapperStateService#mapping mapping}.
      */
     const rdfPreviewFormComponent = {
         templateUrl: 'mapper/components/rdfPreviewForm/rdfPreviewForm.component.html',

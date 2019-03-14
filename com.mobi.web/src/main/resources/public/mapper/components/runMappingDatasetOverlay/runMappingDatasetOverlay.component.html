@@ -31,10 +31,10 @@
             <custom-label>Dataset</custom-label>
             <ui-select ng-model="dvm.datasetRecordIRI" ng-disabled="dvm.datasetRecords.length === 0">
                 <ui-select-match placeholder="Select a Dataset">
-                    <span title="{{$select.selected['@id']}}">{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+                    <span title="{{$select.selected['@id']}}">{{$select.selected.title}}</span>
                 </ui-select-match>
-                <ui-select-choices repeat="record['@id'] as record in dvm.datasetRecords | filter:$select.search">
-                    <div title="{{record['@id']}}" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:$select.search | trusted"></div>
+                <ui-select-choices refresh="dvm.setRecords($select.search)" refresh-delay="300" repeat="record['@id'] as record in dvm.selectRecords track by record['@id']">
+                    <div title="{{record['@id']}}" ng-bind-html="record.title | highlight:$select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
         </div>

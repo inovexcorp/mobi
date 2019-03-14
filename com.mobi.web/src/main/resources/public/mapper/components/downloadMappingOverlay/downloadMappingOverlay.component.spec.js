@@ -26,7 +26,7 @@ describe('Download Mapping Overlay component', function() {
     beforeEach(function() {
         module('templates');
         module('mapper');
-        mockComponent('mapperSerializationSelect', 'mapperSerializationSelect');
+        mockComponent('mapper', 'mapperSerializationSelect');
         mockMappingManager();
         mockMapperState();
         mockOntologyManager();
@@ -78,7 +78,7 @@ describe('Download Mapping Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DOWNLOAD-MAPPING-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('DOWNLOAD-MAPPING-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
