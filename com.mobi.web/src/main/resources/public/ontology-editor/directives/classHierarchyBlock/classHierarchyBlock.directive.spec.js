@@ -46,6 +46,18 @@ describe('Class Hierarchy Block directive', function() {
         this.element.remove();
     });
 
+    describe('controller methods', function() {
+        it('updateSearch changes classes search text', function() {
+            expect(ontologyStateSvc.listItem.editorTabStates.classes.searchText).toEqual('');
+            this.controller.updateSearch('newValue');
+            expect(ontologyStateSvc.listItem.editorTabStates.classes.searchText).toEqual('newValue');
+        });
+        it('resetIndex resets classes hierarchy index', function() {
+            ontologyStateSvc.listItem.editorTabStates.classes.index = 4;
+            this.controller.resetIndex();
+            expect(ontologyStateSvc.listItem.editorTabStates.classes.index).toEqual(0);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');

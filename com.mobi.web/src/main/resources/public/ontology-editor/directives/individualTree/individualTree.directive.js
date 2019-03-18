@@ -63,8 +63,9 @@
                 templateUrl: 'ontology-editor/directives/individualTree/individualTree.directive.html',
                 scope: {},
                 bindToController: {
-                    updateSearch: '&',
-                    hierarchy: '<'
+                    hierarchy: '<',
+                    index: '<',
+                    updateSearch: '&'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -82,6 +83,11 @@
                     }
                     dvm.$onChanges = function() {
                         update();
+                    }
+                    dvm.$onDestroy = function() {
+                        if (dvm.os.listItem.editorTabStates) {
+                            dvm.os.listItem.editorTabStates.individuals.index = 0;
+                        }
                     }
                     dvm.onKeyup = function () {
                         dvm.filterText = dvm.searchText;

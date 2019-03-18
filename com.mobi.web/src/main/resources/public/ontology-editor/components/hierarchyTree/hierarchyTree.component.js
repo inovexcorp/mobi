@@ -44,7 +44,9 @@
         templateUrl: 'ontology-editor/components/hierarchyTree/hierarchyTree.component.html',
         bindings: {
             hierarchy: '<',
-            updateSearch: '&'
+            index: '<',
+            updateSearch: '&',
+            resetIndex: '&'
         },
         controllerAs: 'dvm',
         controller: hierarchyTreeComponentCtrl
@@ -67,6 +69,11 @@
         }
         dvm.$onChanges = function() {
             update();
+        }
+        dvm.$onDestroy = function() {
+            if (dvm.os.listItem.editorTabStates) {
+                dvm.resetIndex();
+            }
         }
         dvm.onKeyup = function () {
             dvm.filterText = dvm.searchText;
@@ -109,7 +116,7 @@
             }
         }
         dvm.isShown = function (node) {
-            var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+            var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || node.indent === 0;
             if (dvm.filterText && node.parentNoMatch) {
                 if (node.displayNode === undefined) {
                     return false;
