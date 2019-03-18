@@ -29,6 +29,8 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -47,8 +49,8 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
@@ -63,6 +65,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import com.mobi.rest.util.MobiRestTestNg;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -242,6 +245,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(ontology.containsClass(classId)).thenReturn(true);
         when(ontology.containsClass(vf.createIRI(MISSING_ID))).thenReturn(false);
         when(ontology.getSubClassesFor(any(IRI.class))).thenReturn(Collections.singleton(vf.createIRI(CLASS_ID_STR_2)));
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenReturn(new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
 
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
         when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
@@ -541,6 +545,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(ontology2.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
         when(ontology2.getDataPropertyRange(dataProperty)).thenReturn(Collections.EMPTY_SET);
         when(ontology2.getObjectPropertyRange(objectProperty)).thenReturn(Collections.EMPTY_SET);
+        when(ontology2.getTupleQueryResults(anyString(), anyBoolean())).thenReturn(new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
         when(ontologyManager.retrieveOntology(vf.createIRI(ontologyId), vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology2));
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
                 .getResourceAsStream("/expected-class-property-details.json")));

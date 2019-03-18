@@ -23,12 +23,10 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.IRI;
 
+public interface AnnotationProperty {
 
-public interface Annotation {
+    IRI getIRI();
 
-    AnnotationProperty getProperty();
-
-    Value getValue();
 }

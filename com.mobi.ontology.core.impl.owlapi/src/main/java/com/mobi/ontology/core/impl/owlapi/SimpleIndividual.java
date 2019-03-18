@@ -23,34 +23,25 @@ package com.mobi.ontology.core.impl.owlapi;
  * #L%
  */
 
-import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.AnnotationProperty;
-import com.mobi.rdf.api.Value;
+import com.mobi.ontology.core.api.Individual;
+import com.mobi.rdf.api.IRI;
 
 import javax.annotation.Nonnull;
 
 
-public class SimpleAnnotation implements Annotation {
+public class SimpleIndividual implements Individual {
 
-    private AnnotationProperty property;
-    private Value value;
+    private static final long serialVersionUID = -7290404615930440920L;
 
-    /**
-     * .
-     */
-    public SimpleAnnotation(@Nonnull AnnotationProperty property, Value value) {
-        this.property = property;
-        this.value = value;
+    private IRI iri;
+
+    public SimpleIndividual(@Nonnull IRI iri) {
+        this.iri = iri;
     }
 
     @Override
-    public AnnotationProperty getProperty() {
-        return property;
-    }
-
-    @Override
-    public Value getValue() {
-        return value;
+    public IRI getIRI() {
+        return iri;
     }
 
     @Override
@@ -58,12 +49,16 @@ public class SimpleAnnotation implements Annotation {
         if (obj == this) {
             return true;
         }
-        if ((obj instanceof SimpleAnnotation)) {
-            SimpleAnnotation other = (SimpleAnnotation) obj;
-            return (other.getProperty().equals(property)) && (other.getValue().equals(value));
+        if (obj instanceof Individual) {
+            Individual other = (Individual) obj;
+            return iri.equals(other.getIRI());
         }
 
         return false;
     }
 
+    @Override
+    public String stringValue() {
+        return iri.stringValue();
+    }
 }

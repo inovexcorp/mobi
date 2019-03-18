@@ -44,11 +44,8 @@ import com.mobi.explorable.dataset.rest.jaxb.RestrictionDetails;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import com.mobi.ontology.core.api.propertyexpression.Property;
-import com.mobi.ontology.core.api.propertyexpression.PropertyExpression;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.Statements;
@@ -83,6 +80,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -112,6 +110,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private static final String GET_CLASSES_INSTANCES;
     private static final String GET_ALL_CLASS_INSTANCES;
     private static final String GET_REIFIED_STATEMENTS;
+    private static final String GET_CARDINALITY_RESTRICTIONS;
     private static final String COUNT_BINDING = "c";
     private static final String TYPE_BINDING = "type";
     private static final String INSTANCE_BINDING = "inst";
@@ -124,6 +123,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private static final String SUBJECT_BINDING = "subject";
     private static final String PREDICATE_BINDING = "predicate";
     private static final String OBJECT_BINDING = "object";
+    private static final String CLASS_IRI_REPLACE = "%CLASSIRI%";
 
     static {
         try {
@@ -131,36 +131,24 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-types.rq"),
                     "UTF-8"
             );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-        try {
             GET_CLASSES_DETAILS = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-details.rq"),
                     "UTF-8"
             );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-        try {
             GET_CLASSES_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-instances.rq"),
                     "UTF-8"
             );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-        try {
             GET_ALL_CLASS_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-all-class-instances.rq"),
                     "UTF-8"
             );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-        try {
             GET_REIFIED_STATEMENTS = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-reified-statements.rq"),
+                    "UTF-8"
+            );
+            GET_CARDINALITY_RESTRICTIONS = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-cardinality-restrictions.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -718,7 +706,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         IRI classId = factory.createIRI(classIRI);
         record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
             if (ontology.containsClass(classId)) {
-                Set<CardinalityRestriction> restrictions = ontology.getCardinalityProperties(classId);
+                Set<Restriction> restrictions = getRestrictions(classId, ontology);
                 ontology.getAllClassDataProperties(classId).stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
                                 ontology.getDataPropertyRange(dataProperty), "Data", restrictions))
@@ -739,6 +727,38 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             }
         }));
         return details;
+    }
+
+    private static class Restriction {
+        private Resource propertyIRI;
+        private RestrictionDetails details;
+
+        Restriction(Resource propertyIRI, RestrictionDetails details) {
+            this.propertyIRI = propertyIRI;
+            this.details = details;
+        }
+
+        Resource getPropertyIRI() {
+            return propertyIRI;
+        }
+
+        public RestrictionDetails getDetails() {
+            return details;
+        }
+    }
+
+    private Set<Restriction> getRestrictions(IRI classId, Ontology ontology) {
+        String queryStr = GET_CARDINALITY_RESTRICTIONS.replace(CLASS_IRI_REPLACE, classId.stringValue());
+        Set<Restriction> restrictions = new HashSet<>();
+        ontology.getTupleQueryResults(queryStr, true).forEach(bindings -> {
+            if (bindings.hasBinding("property")) {
+                RestrictionDetails detail = new RestrictionDetails();
+                detail.setCardinality(Bindings.requiredLiteral(bindings, "cardinality").intValue());
+                detail.setCardinalityType(Bindings.requiredResource(bindings, "cardinalityType").stringValue());
+                restrictions.add(new Restriction(Bindings.requiredResource(bindings, "property"), detail));
+            }
+        });
+        return restrictions;
     }
 
     /**
@@ -792,7 +812,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     /**
-     * Creates a PropertDetails object using the IRI, range, type, and cardinality restrictions.
+     * Creates a PropertyDetails object using the IRI, range, type, and cardinality restrictions.
      *
      * @param propertyIRI  the IRI of the property
      * @param range        the range of the property
@@ -801,20 +821,12 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @return a new PropertyDetails object constructed from the parameters
      */
     private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type,
-                                                  Set<CardinalityRestriction> allRestrictions) {
+                                                  Set<Restriction> allRestrictions) {
         PropertyDetails details = createPropertyDetails(propertyIRI, range, type);
         Set<RestrictionDetails> allRestrictionDetails = allRestrictions.stream()
-            .filter(restriction -> {
-                PropertyExpression pe = restriction.getProperty();
-                return pe instanceof Property && ((Property) pe).getIRI().equals(propertyIRI);
-            })
-            .map(restriction -> {
-                RestrictionDetails restrictionDetails = new RestrictionDetails();
-                restrictionDetails.setCardinality(restriction.getCardinality());
-                restrictionDetails.setClassExpressionType(restriction.getClassExpressionType());
-                return restrictionDetails;
-            })
-            .collect(Collectors.toSet());
+                .filter(restriction -> restriction.getPropertyIRI().equals(propertyIRI))
+                .map(Restriction::getDetails)
+                .collect(Collectors.toSet());
         if (allRestrictionDetails.size() > 0) {
             details.setRestrictions(allRestrictionDetails);
         }
