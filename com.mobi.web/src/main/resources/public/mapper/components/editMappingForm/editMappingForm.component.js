@@ -27,6 +27,7 @@
      * @ngdoc component
      * @name mapper.component:editMappingForm
      * @requires shared.service:mapperStateService
+     * @requires shared.service:mappingManagerService
      * @requires shared.service:utilService
      * @requires shared.service:modalService
      *

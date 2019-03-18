@@ -33,7 +33,7 @@
      * `fileUploadForm` is a component that creates a form for uploaded delimited data into Mobi using the
      * {@link shared.service:delimitedManagerService delimitedManagerService}. If the chosen file is a SV file, the user
      * must select a separator for the columns and selecting a new value will automatically upload the file again. Tests
-     * whether the selected file is compatiable with the current {@link shared.service:mapperStateService mapping} and
+     * whether the selected file is compatible with the current {@link shared.service:mapperStateService mapping} and
      * outputs a list of any invalid data property mappings.
      */
     const fileUploadFormComponent = {

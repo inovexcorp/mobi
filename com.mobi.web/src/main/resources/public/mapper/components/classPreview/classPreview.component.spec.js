@@ -109,13 +109,13 @@ describe('Class Preview component', function() {
         });
         it('depending on whether classObj has more than 10 properties', function() {
             this.controller.props = [{}];
-            this.controller.total = 9
+            this.controller.total = 9;
             scope.$digest();
             var item = angular.element(this.element.querySelectorAll('ul li')[0]);
             expect(item.hasClass('last')).toEqual(true);
             expect(item.hasClass('limited')).toEqual(false);
 
-            this.controller.total = 11
+            this.controller.total = 11;
             scope.$digest();
             expect(item.hasClass('last')).toEqual(true);
             expect(item.hasClass('limited')).toEqual(true);

@@ -56,13 +56,16 @@
         var mm = mappingManagerService;
 
         dvm.errorMessage = '';
-        dvm.newMapping = state.createMapping();
-        if (state.mapping) {
-            dvm.newMapping.record = angular.copy(state.mapping.record);
-            dvm.newMapping.jsonld = angular.copy(state.mapping.jsonld);
-            dvm.newMapping.ontology = angular.copy(state.mapping.ontology);
-        }
+        dvm.newMapping = {};
 
+        dvm.$onInit = function() {
+            dvm.newMapping = state.createMapping();
+            if (state.mapping) {
+                dvm.newMapping.record = angular.copy(state.mapping.record);
+                dvm.newMapping.jsonld = angular.copy(state.mapping.jsonld);
+                dvm.newMapping.ontology = angular.copy(state.mapping.ontology);
+            }
+        }
         dvm.cancel = function() {
             state.editMapping = false;
             state.newMapping = false;

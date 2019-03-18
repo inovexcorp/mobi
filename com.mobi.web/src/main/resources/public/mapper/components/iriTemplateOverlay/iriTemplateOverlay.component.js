@@ -60,18 +60,23 @@
         dvm.state = mapperStateService;
         dvm.dm = delimitedManagerService;
         dvm.util = utilService;
+        dvm.beginsWith = '';
+        dvm.then = '';
+        dvm.endsWith = '';
+        dvm.localNameOptions = [];
 
-        var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
-        var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
-        dvm.beginsWith = prefix.slice(0, -1);
-        dvm.then = prefix[prefix.length - 1];
-        dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
-        for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
-            dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
-        };
-        var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName')});
-        dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
-
+        dvm.$onInit = function() {
+            var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+            var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
+            dvm.beginsWith = prefix.slice(0, -1);
+            dvm.then = prefix[prefix.length - 1];
+            dvm.localNameOptions = [{text: 'UUID', value: '${UUID}'}];
+            for (var idx = 0; idx < dvm.dm.dataRows[0].length; idx++) {
+                dvm.localNameOptions.push({text: dvm.dm.getHeader(idx), value: '${' + idx + '}'});
+            };
+            var selectedIndex = _.findIndex(dvm.localNameOptions, {'value': dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName')});
+            dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
+        }
         dvm.set = function() {
             var originalClassMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
             var originalPrefix = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'hasPrefix');

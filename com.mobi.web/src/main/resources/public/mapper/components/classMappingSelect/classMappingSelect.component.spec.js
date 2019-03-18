@@ -52,7 +52,7 @@ describe('Class Mapping Select component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('selectedProp should be one way bound', function() {
+        it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'test';
             scope.$digest();
             expect(scope.bindModel).toEqual('');

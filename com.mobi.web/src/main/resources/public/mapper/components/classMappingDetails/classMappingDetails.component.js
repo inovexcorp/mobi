@@ -29,6 +29,7 @@
      * @requires shared.service:mappingManagerService
      * @requires shared.service:mapperStateService
      * @requires shared.service:delimitedManagerService
+     * @requires shared.service:propertyManagerService
      * @requires shared.service:prefixes
      * @requires shared.service:utilService
      * @requires shared.service:modalService

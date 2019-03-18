@@ -26,8 +26,6 @@
     /**
      * @ngdoc component
      * @name mapper.component:classMappingSelect
-     * @requires shared.service:mappingManagerService
-     * @requires shared.service:mapperStateService
      * @requires shared.service:utilService
      *
      * @description

@@ -26,7 +26,6 @@
     /**
      * @ngdoc component
      * @name classMappingOverlay.component:classMappingOverlay
-     * @requires shared.service:mappingManagerService
      * @requires shared.service:mapperStateService
      *
      * @description

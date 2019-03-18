@@ -24,8 +24,8 @@
     'use strict';
 
     /**
-     * @ngdoc directive
-     * @name editMappingPage.directive:editMappingPage
+     * @ngdoc component
+     * @name mapper.component:editMappingPage
      * @requires shared.service:delimitedManagerService
      * @requires shared.service:mapperStateService
      * @requires shared.service:mappingManagerService
