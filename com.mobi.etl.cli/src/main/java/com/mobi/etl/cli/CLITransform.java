@@ -138,16 +138,18 @@ public class CLITransform implements Action {
         }
 
         if (outputFile == null && dataset == null) {
-            System.out.println("No output file or dataset provided. Please supply one or more option.");
+            System.out.println("No output file or dataset provided. Please supply one or more options.");
             return null;
         }
 
         try {
             String extension = FilenameUtils.getExtension(newFile.getName());
 
-            Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalog().getResource(), vf.createIRI(mappingRecordIRI));
+            Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalog().getResource(),
+                    vf.createIRI(mappingRecordIRI));
             Resource headCommit = masterBranch.getHead_resource()
-                    .orElseThrow(() -> new IllegalStateException("Mapping record master branch does not have a head commit."));
+                    .orElseThrow(() -> new IllegalStateException("Mapping record master branch does not have a "
+                            + "head commit."));
             Model mapping = catalogManager.getCompiledResource(headCommit);
 
             Model model;
