@@ -48,20 +48,31 @@
         var dvm = this;
         dvm.os = ontologyStateService;
         dvm.show = true;
+        dvm.entityName = '';
 
         dvm.$onInit = function() {
             setShow();
+            dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
+        }
+
+        dvm.openEntity = function() {
+            dvm.os.goTo(dvm.iri);
+            closeSnackbar();
         }
 
         function setShow() {
             dvm.show = true;
             $timeout(() => {
-                dvm.show = false;
-                $timeout(() => {
-                    dvm.os.listItem.goTo.active = false;
-                    dvm.os.listItem.goTo.entityIRI = '';
-                }, 500);
+                closeSnackbar();
             }, 5500);
+        }
+
+        function closeSnackbar() {
+            dvm.show = false;
+            $timeout(() => {
+                dvm.os.listItem.goTo.active = false;
+                dvm.os.listItem.goTo.entityIRI = '';
+            }, 500);
         }
     }
     

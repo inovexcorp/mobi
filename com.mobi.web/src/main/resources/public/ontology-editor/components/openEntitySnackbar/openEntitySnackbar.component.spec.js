@@ -37,8 +37,10 @@ describe('Open Entity Snackbar component', function() {
 
         ontologyStateSvc.listItem.goTo.entityIRI = 'iri';
         ontologyStateSvc.listItem.goTo.active = true;
+        ontologyStateSvc.getEntityNameByIndex.and.returnValue('Entity Name');
 
-        this.element = $compile(angular.element('<open-entity-snackbar></open-entity-snackbar>'))(scope);
+        scope.iri = 'iri';
+        this.element = $compile(angular.element('<open-entity-snackbar iri="iri"></open-entity-snackbar>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('openEntitySnackbar');
     });
@@ -51,12 +53,25 @@ describe('Open Entity Snackbar component', function() {
     });
 
     describe('initializes with the correct values', function() {
-        it('for show and goTo', function() {
+        it('for show, entityName and goTo', function() {
+            expect(this.controller.entityName).toEqual('Entity Name');
             expect(this.controller.show).toEqual(true);
             expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');
             expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             $timeout.flush();
             expect(this.controller.show).toEqual(false);
+            $timeout.flush();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
+        });
+    });
+    describe('controller methods', function() {
+        it('openEntity calls ontologyStateService goTo and closes the snackbar', function() {
+            this.controller.openEntity();
+            expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('iri');
+            expect(this.controller.show).toEqual(false);
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             $timeout.flush();
             expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
             expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);

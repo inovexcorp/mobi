@@ -22,7 +22,7 @@
   -->
 <div class="open-entity-snackbar snackbar" ng-class="{'show': dvm.show}">
     <div class="snackbar-body">
-        Created new entity
+        {{dvm.entityName}} successfully created
     </div>
-    <button class="snackbar-btn" type="button" ng-click="dvm.os.goTo(dvm.iri)">Open</button>
+    <button class="snackbar-btn" type="button" ng-click="dvm.openEntity()">Open</button>
 </div>
