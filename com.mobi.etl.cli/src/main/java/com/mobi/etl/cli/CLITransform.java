@@ -39,9 +39,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
@@ -95,12 +97,14 @@ public class CLITransform implements Action {
 
     // Command Parameters
 
-    @Argument(name = "Mapping Record", description = "The IRI of the Mapping Record", required = true)
+    @Completion(FileCompleter.class)
+    @Argument(name = "Delimited File", description = "The path of the File to be transformed", required = true)
+    private String file = null;
+    
+    @Argument(index = 1, name = "Mapping Record", description = "The IRI of the Mapping Record", required = true)
     private String mappingRecordIRI = null;
 
-    @Argument(index = 1, name = "Delimited File", description = "The path of the File to be transformed", required = true)
-    private String file = null;
-
+    @Completion(FileCompleter.class)
     @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no dataset "
             + "given)")
     private String outputFile = null;
