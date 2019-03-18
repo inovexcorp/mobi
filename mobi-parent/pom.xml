@@ -62,7 +62,7 @@
         <swagger.version>1.5.7</swagger.version>
         <osgi.version>6.0.0</osgi.version>
         <servlet.version>3.1.0</servlet.version>
-        <jackson.version>2.9.7</jackson.version>
+        <jackson.version>2.9.8</jackson.version>
         <guice.version>4.1.0</guice.version>
         <poi.version>3.14_1</poi.version>
         <opencsv.version>4.2</opencsv.version>
