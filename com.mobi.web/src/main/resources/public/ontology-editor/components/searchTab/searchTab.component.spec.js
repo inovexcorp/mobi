@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Search Tab component', function() {
+describe('Search Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontoUtils, ontologyManagerSvc, httpSvc;
 
     beforeEach(function() {
