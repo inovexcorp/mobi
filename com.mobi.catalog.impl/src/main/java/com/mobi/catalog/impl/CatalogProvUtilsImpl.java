@@ -35,7 +35,7 @@ import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
-import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.server.api.Mobi;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;

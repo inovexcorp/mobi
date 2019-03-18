@@ -59,8 +59,10 @@ describe('Hierarchy Tree component', function() {
             indent: 0,
             path: []
         }];
+        scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" update-search="updateSearch(value)"></hierarchy-tree>'))(scope);
+        scope.resetIndex = jasmine.createSpy('resetIndex');
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });
@@ -93,9 +95,18 @@ describe('Hierarchy Tree component', function() {
                 path: []
             }]);
         });
+        it('index should be one way bound', function() {
+            this.controller.index = 0;
+            scope.$digest();
+            expect(scope.index).toEqual(4);
+        });
         it('updateSearch is one way bound', function() {
             this.controller.updateSearch({value: 'value'});
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
+        });
+        it('resetIndex is one way bound', function() {
+            this.controller.resetIndex();
+            expect(scope.resetIndex).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -210,7 +221,7 @@ describe('Hierarchy Tree component', function() {
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                 });
             });
-            describe('indent is 0 and the parent path has a length of 2', function () {
+            describe('indent is 0', function () {
                 beforeEach(function() {
                     this.node = {
                         indent: 0,
@@ -266,34 +277,6 @@ describe('Hierarchy Tree component', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(false);
                     expect(this.controller.isShown(this.node)).toBe(false);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
-                });
-            });
-            describe('indent is 0 and the parent path does not have a length of 2', function () {
-                beforeEach(function() {
-                    this.node = {
-                        indent: 0,
-                        entityIRI: 'iri',
-                        path: ['recordId', 'otherIRI', 'iri']
-                    };
-                });
-                describe('and filterText is set and node is parent node without a text match', function() {
-                    beforeEach(function() {
-                        this.controller.filterText = 'text';
-                        this.node.parentNoMatch = true;
-                    });
-                    it('and has a child that has a text match', function() {
-                        this.node.displayNode = true;
-                        ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                        expect(this.controller.isShown(this.node)).toBe(false);
-                    });
-                    it('and does not have a child with a text match', function() {
-                        ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                        expect(this.controller.isShown(this.node)).toBe(false);
-                    });
-                });
-                it('and filterText is not set and is not a parent node without a text match', function() {
-                    ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(this.controller.isShown(this.node)).toBe(false);
                 });
             });
         });

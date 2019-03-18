@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.15.39-SNAPSHOT</version>
+        <version>1.15.41-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,7 +41,7 @@
 
     <dependencies>
         <dependency>
-            <!-- scope is compile so all features (there is only one) are installed into startup.properties and the feature repo itself is not added in etc/org.apache.karaf.features.cfg file -->
+            <!-- scope is compile so all features are installed into startup.properties and the feature repo itself is not added in etc/org.apache.karaf.features.cfg file -->
             <groupId>org.apache.karaf.features</groupId>
             <artifactId>framework</artifactId>
             <version>${karaf.version}</version>
@@ -215,6 +215,8 @@
                         <feature>camel</feature>
 
                         <!-- Mobi Features -->
+                        <feature>mobi-server-deps</feature>
+                        <feature>mobi-server-core</feature>
                         <feature>mobi-deps</feature>
                         <feature>mobi-core</feature>
                         <feature>mobi-cli</feature>

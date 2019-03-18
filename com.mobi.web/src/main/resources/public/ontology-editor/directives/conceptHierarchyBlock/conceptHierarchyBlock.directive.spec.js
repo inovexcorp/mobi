@@ -46,6 +46,18 @@ describe('Concept Hierarchy Block directive', function() {
         this.element.remove();
     });
 
+    describe('controller methods', function() {
+        it('updateSearch changes concepts search text', function() {
+            expect(ontologyStateSvc.listItem.editorTabStates.concepts.searchText).toEqual('');
+            this.controller.updateSearch('newValue');
+            expect(ontologyStateSvc.listItem.editorTabStates.concepts.searchText).toEqual('newValue');
+        });
+        it('resetIndex resets concepts hierarchy index', function() {
+            ontologyStateSvc.listItem.editorTabStates.concepts.index = 4;
+            this.controller.resetIndex();
+            expect(ontologyStateSvc.listItem.editorTabStates.concepts.index).toEqual(0);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');

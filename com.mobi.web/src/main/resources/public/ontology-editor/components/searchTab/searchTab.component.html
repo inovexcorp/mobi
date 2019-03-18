@@ -48,7 +48,7 @@
                     <button class="btn btn-primary" ng-if="dvm.canGoTo()" ng-click="dvm.os.goTo(dvm.os.listItem.editorTabStates.search.entityIRI)">Go To</button>
                 </div>
             </div>
-            <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key">
+            <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key" disable-animate>
                 <div class="prop-header d-flex align-items-center clearfix">
                     <p class="text text-truncate m-0" title="{{key}}"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
                     <small class="ml-1 text-muted text-truncate flex-1">&lt;<span ng-bind-html="key | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>&gt;</small>

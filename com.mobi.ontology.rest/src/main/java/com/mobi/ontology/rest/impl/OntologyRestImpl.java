@@ -1340,12 +1340,6 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private JSONObject getAnnotationArray(Ontology ontology) {
         Set<IRI> iris = new HashSet<>();
-//        iris.addAll(ontology.getAllAnnotations()
-//                .stream()
-//                .filter(Objects::nonNull)
-//                .map(Annotation::getProperty)
-//                .map(Entity::getIRI)
-//                .collect(Collectors.toSet()));
         iris.addAll(ontology.getAllAnnotationProperties()
                 .stream()
                 .map(AnnotationProperty::getIRI)

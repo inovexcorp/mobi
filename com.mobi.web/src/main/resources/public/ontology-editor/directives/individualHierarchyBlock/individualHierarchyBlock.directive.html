@@ -22,5 +22,5 @@
   -->
 <div class="individual-hierarchy-block py-1">
     <info-message ng-if="!dvm.os.listItem.individuals.flat.length">(No individuals defined)</info-message>
-    <individual-tree ng-if="dvm.os.listItem.individuals.flat.length" hierarchy="dvm.os.listItem.individuals.flat" update-search="dvm.updateSearch(value)"></individual-tree>
+    <individual-tree ng-if="dvm.os.listItem.individuals.flat.length" hierarchy="dvm.os.listItem.individuals.flat" update-search="dvm.updateSearch(value)" index="dvm.os.listItem.editorTabStates.individuals.index"></individual-tree>
 </div>
