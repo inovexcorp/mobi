@@ -79,8 +79,9 @@ describe('Individual Tree directive', function() {
             path: ['recordId', 'Class B', 'Class B1', 'Individual B1'],
             indent: 2
         }];
+        scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
-        this.element = $compile(angular.element('<individual-tree hierarchy="hierarchy" update-search="updateSearch(value)"></individual-tree>'))(scope);
+        this.element = $compile(angular.element('<individual-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)"></individual-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('individualTree');
     });
@@ -101,6 +102,11 @@ describe('Individual Tree directive', function() {
             this.controller.hierarchy = [];
             scope.$digest();
             expect(angular.copy(scope.hierarchy)).toEqual(copy);
+        });
+        it('index should be one way bound', function() {
+            this.controller.index = 0;
+            scope.$digest();
+            expect(scope.index).toEqual(4);
         });
         it('updateSearch is one way bound', function() {
             this.controller.updateSearch({value: 'value'});
