@@ -75,13 +75,11 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
-                    dvm.annotations = _.keys(dvm.os.listItem.annotations.iris);
+                    dvm.annotations = [];
 
-                    function createJson(value, type, language) {
-                        var valueObj = dvm.pm.createValueObj(value, type, language);
-                        return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, valueObj);
+                    dvm.$onInit = function() {
+                        dvm.annotations = _.union(_.keys(dvm.os.listItem.annotations.iris), dvm.pm.defaultAnnotations, dvm.pm.owlAnnotations);
                     }
-
                     dvm.disableProp = function(annotation) {
                         return annotation === prefixes.owl + 'deprecated' && _.has(dvm.os.listItem.selected, "['" + prefixes.owl + 'deprecated' + "']");
                     }
@@ -135,6 +133,11 @@
                     }
                     dvm.cancel = function() {
                         $scope.dismiss();
+                    }
+
+                    function createJson(value, type, language) {
+                        var valueObj = dvm.pm.createValueObj(value, type, language);
+                        return dvm.util.createJson(dvm.os.listItem.selected['@id'], dvm.os.annotationSelect, valueObj);
                     }
                 }]
             }

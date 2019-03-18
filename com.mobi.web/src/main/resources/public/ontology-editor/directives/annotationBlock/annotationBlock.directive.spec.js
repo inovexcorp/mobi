@@ -21,21 +21,23 @@
  * #L%
  */
 describe('Annotation Block directive', function() {
-    var $compile, scope, ontologyStateSvc, ontoUtils, modalSvc;
+    var $compile, scope, ontologyStateSvc, ontoUtils, propertyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
         module('annotationBlock');
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockPropertyManager();
         mockModal();
         injectShowPropertiesFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_, _propertyManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontoUtils = _ontologyUtilsManagerService_;
+            propertyManagerSvc = _propertyManagerService_;
             modalSvc = _modalService_;
         });
 
@@ -53,10 +55,18 @@ describe('Annotation Block directive', function() {
         scope = null;
         ontologyStateSvc = null;
         ontoUtils = null;
+        propertyManagerSvc = null;
         modalSvc = null;
         this.element.remove();
     });
 
+    it('initializes with the correct data', function() {
+        ontologyStateSvc.listItem.annotations.iris = {'annotation1': '', 'default2': '', 'owl2': ''};
+        propertyManagerSvc.defaultAnnotations = ['default1', 'default2'];
+        propertyManagerSvc.owlAnnotations = ['owl1', 'owl2'];
+        this.controller.$onInit();
+        expect(this.controller.annotations).toEqual(['annotation1', 'default2', 'owl2', 'default1', 'owl1']);
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
