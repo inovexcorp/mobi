@@ -1011,7 +1011,7 @@ public interface OntologyRest {
                                        @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns the  object property hierarchy for the ontology identified by the provided IDs as a JSON object with keys
+     * Returns the object property hierarchy for the ontology identified by the provided IDs as a JSON object with keys
      * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
      * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
@@ -1163,7 +1163,7 @@ public interface OntologyRest {
 
     /**
      * Returns classes with individuals defined in the ontology identified by the provided IDs as a JSON object with a
-     * key for a map of class IRIs to arrays of individual IRIs
+     * key for a map of class IRIs to arrays of individual IRIs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless

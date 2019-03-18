@@ -191,7 +191,7 @@ public class SimpleOntology implements Ontology {
     private OWLOntologyManager owlManager;
 
     private static String CONCEPT = SKOS.CONCEPT.stringValue();
-    private static String CONCEPT_SCEHEME = SKOS.CONCEPT_SCHEME.stringValue();
+    private static String CONCEPT_SCHEME = SKOS.CONCEPT_SCHEME.stringValue();
 
     private static final String SELECT_ENTITY_USAGES;
     private static final String CONSTRUCT_ENTITY_USAGES;
@@ -202,15 +202,15 @@ public class SimpleOntology implements Ontology {
     static {
         try {
             SELECT_ENTITY_USAGES = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-entity-usages.rq"),
+                    SimpleOntology.class.getResourceAsStream("/get-entity-usages.rq"),
                     "UTF-8"
             );
             CONSTRUCT_ENTITY_USAGES = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/construct-entity-usages.rq"),
+                    SimpleOntology.class.getResourceAsStream("/construct-entity-usages.rq"),
                     "UTF-8"
             );
             GET_SEARCH_RESULTS = IOUtils.toString(
-                    SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
+                    SimpleOntology.class.getResourceAsStream("/get-search-results.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -635,11 +635,12 @@ public class SimpleOntology implements Ontology {
             return owlOntology.axioms(AxiomType.SUBCLASS_OF, Imports.INCLUDED)
                     .filter(axiom -> axiom.getSuperClass().equals(owlClass))
                     .map(OWLSubClassOfAxiom::getSubClass)
-                    .filter(subclass -> !subclass.isBottomEntity() && subclass.isOWLClass())
+                    .filter(subclass -> !subclass.isBottomEntity() && subclass.isOWLClass()
+                                && !subclass.asOWLClass().getIRI().equals(owlClass.getIRI()))
                     .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.asOWLClass().getIRI()));
         } else {
-            return owlReasoner.getSubClasses(owlClass, direct).entities()
-                    .filter(subclass -> !subclass.isBottomEntity())
+            return owlReasoner.getSubClasses(owlClass, false).entities()
+                    .filter(subclass -> !subclass.isBottomEntity() && !subclass.getIRI().equals(owlClass.getIRI()))
                     .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()));
         }
     }
@@ -696,11 +697,13 @@ public class SimpleOntology implements Ontology {
             return owlOntology.axioms(AxiomType.SUB_DATA_PROPERTY, Imports.INCLUDED)
                     .filter(axiom -> axiom.getSuperProperty().equals(property))
                     .map(OWLSubPropertyAxiom::getSubProperty)
-                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLDataProperty())
+                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLDataProperty()
+                            && !subproperty.asOWLDataProperty().getIRI().equals(property.getIRI()))
                     .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.asOWLDataProperty().getIRI()));
         } else {
-            return owlReasoner.getSubDataProperties(property, direct).entities()
-                    .filter(subproperty -> !subproperty.isBottomEntity())
+            return owlReasoner.getSubDataProperties(property, false).entities()
+                    .filter(subproperty -> !subproperty.isBottomEntity()
+                            && !subproperty.getIRI().equals(property.getIRI()))
                     .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
         }
     }
@@ -738,15 +741,35 @@ public class SimpleOntology implements Ontology {
                 .map(axiom -> axiom.getEntity().asOWLAnnotationProperty());
     }
 
-    // TODO: Implement indirect
     private Stream<IRI> getSubAnnotationPropertiesFor(OWLAnnotationProperty property, boolean direct) {
-//        if (direct) {
-            return owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
-                    .filter(axiom -> axiom.getSuperProperty().equals(property))
-                    .map(OWLSubAnnotationPropertyOfAxiom::getSubProperty)
-                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLAnnotationProperty())
+        Set<OWLAnnotationProperty> directProps = owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
+                .filter(axiom -> axiom.getSuperProperty().equals(property))
+                .map(OWLSubAnnotationPropertyOfAxiom::getSubProperty)
+                .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLAnnotationProperty()
+                        && !subproperty.getIRI().equals(property.getIRI()))
+                .collect(Collectors.toSet());
+        if (direct) {
+            return directProps.stream()
                     .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
-//        }
+        } else {
+            Set<IRI> rtn = directProps.stream()
+                    .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getIRI()))
+                    .collect(Collectors.toSet());
+            while (directProps.size() > 0) {
+                OWLAnnotationProperty nextProp = directProps.iterator().next();
+                directProps.remove(nextProp);
+                owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
+                        .filter(axiom -> axiom.getSuperProperty().equals(nextProp))
+                        .map(OWLSubAnnotationPropertyOfAxiom::getSubProperty)
+                        .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLAnnotationProperty()
+                                && !subproperty.getIRI().equals(nextProp.getIRI()))
+                        .forEach(subproperty -> {
+                            rtn.add(SimpleOntologyValues.mobiIRI(subproperty.getIRI()));
+                            directProps.add(subproperty);
+                        });
+            }
+            return rtn.stream();
+        }
     }
 
     @Override
@@ -772,11 +795,13 @@ public class SimpleOntology implements Ontology {
             return owlOntology.axioms(AxiomType.SUB_OBJECT_PROPERTY, Imports.INCLUDED)
                     .filter(axiom -> axiom.getSuperProperty().equals(property))
                     .map(OWLSubPropertyAxiom::getSubProperty)
-                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLObjectProperty())
+                    .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLObjectProperty()
+                            && !subproperty.getNamedProperty().getIRI().equals(property.getIRI()))
                     .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()));
         } else {
             return owlReasoner.getSubObjectProperties(property, false).entities()
-                    .filter(subproperty -> !subproperty.isBottomEntity())
+                    .filter(subproperty -> !subproperty.isBottomEntity()
+                            && !subproperty.getNamedProperty().getIRI().equals(property.getIRI()))
                     .map(subproperty -> SimpleOntologyValues.mobiIRI(subproperty.getNamedProperty().getIRI()));
         }
     }
@@ -863,13 +888,19 @@ public class SimpleOntology implements Ontology {
                             if (property.equals(SKOS.NARROWER.stringValue())
                                     || property.equals(SKOS.NARROWER_TRANSITIVE.stringValue())
                                     || property.equals(SKOS.NARROW_MATCH.stringValue())) {
-                                subConcepts.add(SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
+                                IRI subConceptIRI = SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID()));
+                                if (!subConceptIRI.equals(conceptIRI)) {
+                                    subConcepts.add(subConceptIRI);
+                                }
                             } else if (property.equals(SKOS.BROADER.stringValue())
                                     || property.equals(SKOS.BROADER_TRANSITIVE.stringValue())
                                     || property.equals(SKOS.BROAD_MATCH.stringValue())) {
-                                superConcepts.add(SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID())));
+                                IRI superConceptIRI = SimpleOntologyValues.mobiIRI(
+                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID()));
+                                if (!superConceptIRI.equals(conceptIRI)) {
+                                    superConcepts.add(superConceptIRI);
+                                }
                             }
                         });
 
@@ -889,7 +920,7 @@ public class SimpleOntology implements Ontology {
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             OWLClass schemeClass = owlManager.getOWLDataFactory()
-                    .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT_SCEHEME));
+                    .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT_SCHEME));
             owlReasoner.instances(schemeClass).forEach(conceptScheme -> {
                 IRI schemeIRI = SimpleOntologyValues.mobiIRI(conceptScheme.getIRI());
                 hierarchy.addIRI(schemeIRI);
