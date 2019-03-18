@@ -24,7 +24,7 @@
     <div class="search pb-1">
         <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
     </div>
-    <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height">
+    <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height" md-top-index="dvm.index">
         <div md-virtual-repeat="node in dvm.filteredHierarchy | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
             <div ng-if="!node.entityIRI" class="tree-item">
                 <a ng-click="node.set(dvm.os.listItem.ontologyRecord.recordId, !node.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">

@@ -46,6 +46,13 @@ describe('Individual Hierarchy directive', function() {
         this.element.remove();
     });
 
+    describe('controller methods', function() {
+        it('updateSearch changes individuals search text', function() {
+            expect(ontologyStateSvc.listItem.editorTabStates.individuals.searchText).toEqual('');
+            this.controller.updateSearch('newValue');
+            expect(ontologyStateSvc.listItem.editorTabStates.individuals.searchText).toEqual('newValue');
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');

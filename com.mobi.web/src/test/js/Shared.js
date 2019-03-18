@@ -562,22 +562,33 @@ function mockOntologyState() {
                        entityIRI: ''
                    },
                    overview: {
-                       active: false
+                       active: false,
+                       searchText: ''
                    },
                    classes: {
-                       active: false
+                       active: false,
+                       searchText: '',
+                       index: 0
                    },
                    properties: {
-                       active: false
+                       active: false,
+                       searchText: '',
+                       index: 0
                    },
                    individuals: {
-                       active: false
+                       active: false,
+                       searchText: '',
+                       index: 0
                    },
                    concepts: {
-                       active: false
+                       active: false,
+                       searchText: '',
+                       index: 0
                    },
                    schemes: {
-                       active: false
+                       active: false,
+                       searchText: '',
+                       index: 0
                    },
                    search: {
                        active: false
