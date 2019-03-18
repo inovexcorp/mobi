@@ -105,7 +105,7 @@ public class EtlIT extends KarafTestSupport {
         MappingRecord record = catalogManager.createRecord(user, config, MappingRecord.class);
 
         String outputFilename = "test.ttl";
-        executeCommand(String.format("mobi:transform -h -o=%s %s %s", outputFilename, record.getResource().stringValue(), delimitedFile));
+        executeCommand(String.format("mobi:transform -h -o=%s %s %s", outputFilename, delimitedFile, record.getResource().stringValue()));
 
         outputFile = new File(outputFilename);
 
