@@ -23,47 +23,42 @@ package com.mobi.ontology.core.impl.owlapi;
  * #L%
  */
 
-import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.AnnotationProperty;
-import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.IRI;
 
 import javax.annotation.Nonnull;
 
 
-public class SimpleAnnotation implements Annotation {
+public class SimpleAnnotationProperty implements AnnotationProperty {
 
-    private AnnotationProperty property;
-    private Value value;
+    private IRI iri;
 
-    /**
-     * .
-     */
-    public SimpleAnnotation(@Nonnull AnnotationProperty property, Value value) {
-        this.property = property;
-        this.value = value;
+    public SimpleAnnotationProperty(@Nonnull IRI iri) {
+        this.iri = iri;
     }
-
+        
     @Override
-    public AnnotationProperty getProperty() {
-        return property;
+    public IRI getIRI() {
+        return iri;
     }
-
+    
     @Override
-    public Value getValue() {
-        return value;
+    public String toString() {
+        return iri.toString();
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
-        if ((obj instanceof SimpleAnnotation)) {
-            SimpleAnnotation other = (SimpleAnnotation) obj;
-            return (other.getProperty().equals(property)) && (other.getValue().equals(value));
-        }
 
+        if (obj instanceof SimpleAnnotationProperty) {
+            SimpleAnnotationProperty other = (SimpleAnnotationProperty) obj;
+            return iri.equals(other.getIRI());
+        }
+        
         return false;
     }
-
+    
 }

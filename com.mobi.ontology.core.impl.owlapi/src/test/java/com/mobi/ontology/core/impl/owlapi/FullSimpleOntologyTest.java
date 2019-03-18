@@ -32,19 +32,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
-import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
+import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -52,6 +55,8 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
@@ -65,12 +70,19 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FullSimpleOntologyTest {
     private ValueFactory vf;
     private ModelFactory mf;
+    private RepositoryManager repoManager = new SimpleRepositoryManager();
     private IRI classIRI;
     private IRI classIRIC;
     private IRI classIRID;
@@ -84,6 +96,8 @@ public class FullSimpleOntologyTest {
     private IRI importedIRI;
     private Ontology ontology;
     private Ontology ont1;
+    private Ontology queryOntology;
+    private Ontology queryVocabulary;
 
     @Mock
     private OntologyManager ontologyManager;
@@ -131,11 +145,11 @@ public class FullSimpleOntologyTest {
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true);
         Resource ont3IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-3");
         Resource ont3RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-3");
         InputStream stream3 = this.getClass().getResourceAsStream("/test-local-imports-3.ttl");
-        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService, true);
+        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService, repoManager, true);
         when(ontologyManager.getOntologyRecordResource(ont3IRI)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
         com.mobi.rdf.api.Model ont3Model = ont3.asModel(mf);
@@ -144,14 +158,20 @@ public class FullSimpleOntologyTest {
         Resource ont2IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-2");
         Resource ont2RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-2");
         InputStream stream2 = this.getClass().getResourceAsStream("/test-local-imports-2.ttl");
-        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, true);
+        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repoManager, true);
         when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
         com.mobi.rdf.api.Model ont2Model = ont2.asModel(mf);
         when(ontologyManager.getOntologyModel(ont2RecordIRI)).thenReturn(ont2Model);
 
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
-        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, true);
+        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true);
+
+        InputStream streamQueryOntology = this.getClass().getResourceAsStream("/test-ontology.ttl");
+        queryOntology = new SimpleOntology(streamQueryOntology, ontologyManager, transformer, bNodeService, repoManager, true);
+
+        InputStream streamQueryVocabulary = this.getClass().getResourceAsStream("/test-vocabulary.ttl");
+        queryVocabulary= new SimpleOntology(streamQueryVocabulary, ontologyManager, transformer, bNodeService, repoManager, true);
 
         values.setOntologyManager(ontologyManager);
         values.setTransformer(transformer);
@@ -160,9 +180,9 @@ public class FullSimpleOntologyTest {
     @Test
     public void withAndWithoutImportsEqualsTest() throws Exception {
         InputStream stream = getClass().getResourceAsStream("/test-imports.owl");
-        Ontology withImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology withImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true);
         stream = getClass().getResourceAsStream("/test-imports.owl");
-        Ontology withoutImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, false);
+        Ontology withoutImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, false);
         assertEquals(withImports, withoutImports);
     }
 
@@ -170,7 +190,7 @@ public class FullSimpleOntologyTest {
     public void getImportedOntologyIRIsTest() throws Exception {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, true);
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true);
 
         Set<IRI> iris = ont.getImportedOntologyIRIs();
         assertEquals(2, iris.size());
@@ -380,7 +400,7 @@ public class FullSimpleOntologyTest {
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld");
-        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true);
 
         String jsonld = listOntology.asJsonLD(true).toString();
         assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
@@ -396,12 +416,295 @@ public class FullSimpleOntologyTest {
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
-        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, true);
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true);
 
         String jsonld = listOntology.asJsonLD(false).toString();
         assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", "\"")),
                 removeWhitespace(jsonld.replaceAll("_:node[a-zA-Z0-9]+\"", "\"")));
         verify(blankNodeService, times(0)).skolemize(any(com.mobi.rdf.api.Model.class));
+    }
+
+    @Test
+    public void testGetSubClassesOf() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
+                vf.createIRI("http://mobi.com/ontology#Class1c"), vf.createIRI("http://mobi.com/ontology#Class2a"), vf.createIRI("http://mobi.com/ontology#Class2b"),
+                vf.createIRI("http://mobi.com/ontology#Class3a")).collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#Class1a", Collections.singleton("http://mobi.com/ontology#Class1b"));
+        expectedParentMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1c"));
+        expectedParentMap.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Class2b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Class1a"));
+        expectedChildMap.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Class1b"));
+        expectedChildMap.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Class2a"));
+
+        Hierarchy result = queryOntology.getSubClassesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetSubClassesFor() {
+        // Setup:
+        Set<IRI> expected = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1b"), vf.createIRI("http://mobi.com/ontology#Class1c")).collect(Collectors.toSet());
+
+        IRI start = vf.createIRI("http://mobi.com/ontology#Class1a");
+        Set<IRI> results = queryOntology.getSubClassesFor(start);
+        assertEquals(results, expected);
+    }
+
+    @Test
+    public void testGetSubDatatypePropertiesOf() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#dataProperty1a"), vf.createIRI("http://mobi.com/ontology#dataProperty1b"))
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#dataProperty1a", Collections.singleton("http://mobi.com/ontology#dataProperty1b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#dataProperty1b", Collections.singleton("http://mobi.com/ontology#dataProperty1a"));
+
+        Hierarchy result = queryOntology.getSubDatatypePropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetSubAnnotationPropertiesOf() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#annotationProperty1a"), vf.createIRI("http://mobi.com/ontology#annotationProperty1b"),
+                vf.createIRI("http://purl.org/dc/terms/title")).collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#annotationProperty1a", Collections.singleton("http://mobi.com/ontology#annotationProperty1b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#annotationProperty1b", Collections.singleton("http://mobi.com/ontology#annotationProperty1a"));
+
+        Hierarchy result = queryOntology.getSubAnnotationPropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetSubObjectPropertiesOf() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#objectProperty1a"), vf.createIRI("http://mobi.com/ontology#objectProperty1b"))
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#objectProperty1a", Collections.singleton("http://mobi.com/ontology#objectProperty1b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#objectProperty1b", Collections.singleton("http://mobi.com/ontology#objectProperty1a"));
+
+        Hierarchy result = queryOntology.getSubObjectPropertiesOf(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testSubPropertiesFor() {
+        // Setup:
+        Set<IRI> expected = Collections.singleton(vf.createIRI("http://mobi.com/ontology#annotationProperty1b"));
+
+        IRI start = vf.createIRI("http://mobi.com/ontology#annotationProperty1a");
+        Set<IRI> results = queryOntology.getSubPropertiesFor(start);
+        assertEquals(expected, results);
+    }
+
+    @Test
+    public void testGetClassesWithIndividuals() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology#Class1a"), vf.createIRI("http://mobi.com/ontology#Class1b"),
+                vf.createIRI("http://mobi.com/ontology#Class1c"), vf.createIRI("http://mobi.com/ontology#Class2a"),
+                vf.createIRI("http://mobi.com/ontology#Class2b"), vf.createIRI("http://mobi.com/ontology#Individual1a"),
+                vf.createIRI("http://mobi.com/ontology#Individual1b"), vf.createIRI("http://mobi.com/ontology#Individual1c"),
+                vf.createIRI("http://mobi.com/ontology#Individual2a"), vf.createIRI("http://mobi.com/ontology#Individual2b"))
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("http://mobi.com/ontology#Class1a", Collections.singleton("http://mobi.com/ontology#Individual1a"));
+        expectedParentMap.put("http://mobi.com/ontology#Class1b", Collections.singleton("http://mobi.com/ontology#Individual1b"));
+        expectedParentMap.put("http://mobi.com/ontology#Class1c", Collections.singleton("http://mobi.com/ontology#Individual1c"));
+        expectedParentMap.put("http://mobi.com/ontology#Class2a", Collections.singleton("http://mobi.com/ontology#Individual2a"));
+        expectedParentMap.put("http://mobi.com/ontology#Class2b", Collections.singleton("http://mobi.com/ontology#Individual2b"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("http://mobi.com/ontology#Individual1a", Collections.singleton("http://mobi.com/ontology#Class1a"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual1b", Collections.singleton("http://mobi.com/ontology#Class1b"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual1c", Collections.singleton("http://mobi.com/ontology#Class1c"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual2a", Collections.singleton("http://mobi.com/ontology#Class2a"));
+        expectedChildMap.put("http://mobi.com/ontology#Individual2b", Collections.singleton("http://mobi.com/ontology#Class2b"));
+
+        Hierarchy result = queryOntology.getClassesWithIndividuals(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetEntityUsages() throws Exception {
+        Set<String> subjects = Stream.of("http://mobi.com/ontology#Class1b",
+                "http://mobi.com/ontology#Individual1a").collect(Collectors.toSet());
+        Set<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toSet());
+
+        TupleQueryResult result = queryOntology.getEntityUsages(vf.createIRI("http://mobi.com/ontology#Class1a"));
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            Optional<Binding> optionalSubject = b.getBinding("s");
+            if (optionalSubject.isPresent()) {
+                String subject = optionalSubject.get().getValue().stringValue();
+                assertTrue(subjects.contains(subject));
+                subjects.remove(subject);
+            }
+            Optional<Binding> optionalPredicate = b.getBinding("p");
+            if (optionalPredicate.isPresent()) {
+                String predicate = optionalPredicate.get().getValue().stringValue();
+                assertTrue(predicates.contains(predicate));
+                predicates.remove(predicate);
+            }
+        });
+        assertEquals(0, subjects.size());
+        assertEquals(0, predicates.size());
+    }
+
+    @Test
+    public void testConstructEntityUsages() throws Exception {
+        Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
+        Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
+        IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Resource individual1a = vf.createIRI("http://mobi.com/ontology#Individual1a");
+        IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        com.mobi.rdf.api.Model expected = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf,
+                class1a), vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
+
+        com.mobi.rdf.api.Model result = queryOntology.constructEntityUsages(class1a, mf);
+        assertEquals(result, expected);
+    }
+
+    @Test
+    public void testGetConceptRelationships() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("https://mobi.com/vocabulary#Concept1"), vf.createIRI("https://mobi.com/vocabulary#Concept2"),
+                vf.createIRI("https://mobi.com/vocabulary#Concept3"), vf.createIRI("https://mobi.com/vocabulary#Concept4"))
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("https://mobi.com/vocabulary#Concept1", Stream.of("https://mobi.com/vocabulary#Concept2", "https://mobi.com/vocabulary#Concept3").collect(Collectors.toSet()));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept2", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept3", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+
+        Hierarchy result = queryVocabulary.getConceptRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetConceptSchemeRelationships() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("https://mobi.com/vocabulary#ConceptScheme1"), vf.createIRI("https://mobi.com/vocabulary#ConceptScheme2"),
+                vf.createIRI("https://mobi.com/vocabulary#ConceptScheme3"), vf.createIRI("https://mobi.com/vocabulary#Concept1"),
+                vf.createIRI("https://mobi.com/vocabulary#Concept2"), vf.createIRI("https://mobi.com/vocabulary#Concept3"))
+                .collect(Collectors.toSet());
+        Map<String, Set<String>> expectedParentMap = new HashMap<>();
+        expectedParentMap.put("https://mobi.com/vocabulary#ConceptScheme1", Collections.singleton("https://mobi.com/vocabulary#Concept1"));
+        expectedParentMap.put("https://mobi.com/vocabulary#ConceptScheme2", Collections.singleton("https://mobi.com/vocabulary#Concept2"));
+        expectedParentMap.put("https://mobi.com/vocabulary#ConceptScheme3", Collections.singleton("https://mobi.com/vocabulary#Concept3"));
+        Map<String, Set<String>> expectedChildMap = new HashMap<>();
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept1", Collections.singleton("https://mobi.com/vocabulary#ConceptScheme1"));
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept2", Collections.singleton("https://mobi.com/vocabulary#ConceptScheme2"));
+        expectedChildMap.put("https://mobi.com/vocabulary#Concept3", Collections.singleton("https://mobi.com/vocabulary#ConceptScheme3"));
+
+        Hierarchy result = queryVocabulary.getConceptSchemeRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        Set<String> parentKeys = parentMap.keySet();
+        assertEquals(expectedParentMap.keySet(), parentKeys);
+        parentKeys.forEach(iri -> assertEquals(expectedParentMap.get(iri), parentMap.get(iri)));
+
+        Map<String, Set<String>> childMap = result.getChildMap();
+        Set<String> childKeys = childMap.keySet();
+        assertEquals(expectedChildMap.keySet(), childKeys);
+        childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetSearchResults() throws Exception {
+        Set<String> entities = Stream.of("http://mobi.com/ontology#Class3a", "http://mobi.com/ontology#Class2a",
+                "http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
+                "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
+
+        TupleQueryResult result = queryOntology.getSearchResults("class", vf);
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "entity").stringValue();
+            assertTrue(entities.contains(parent));
+            entities.remove(parent);
+            assertEquals("http://www.w3.org/2002/07/owl#Class", Bindings.requiredResource(b, "type").stringValue());
+        });
+        assertEquals(0, entities.size());
+    }
+
+    @Test
+    public void testGetTupleQueryResults() throws Exception {
+        List<BindingSet> result = QueryResults.asList(queryOntology.getTupleQueryResults("select distinct ?s where { ?s ?p ?o . }", true));
+        assertEquals(19, result.size());
+    }
+
+    @Test
+    public void testGetGraphQueryResults() throws Exception {
+        com.mobi.rdf.api.Model result = queryOntology.getGraphQueryResults("construct {?s ?p ?o} where { ?s ?p ?o . }", true, mf);
+        assertEquals(queryOntology.asModel(mf).size(), result.size());
     }
 
     private String replaceBlankNodeSuffix(String s) {

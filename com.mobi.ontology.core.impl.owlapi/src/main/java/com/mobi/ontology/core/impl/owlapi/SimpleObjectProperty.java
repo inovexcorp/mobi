@@ -1,8 +1,8 @@
-package com.mobi.ontology.core.api;
+package com.mobi.ontology.core.impl.owlapi;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.ontology.core.impl.owlapi
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,12 +23,35 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.rdf.api.Value;
+import com.mobi.ontology.core.api.ObjectProperty;
+import com.mobi.rdf.api.IRI;
+
+import javax.annotation.Nonnull;
 
 
-public interface Annotation {
+public class SimpleObjectProperty implements ObjectProperty {
+    private IRI iri;
+    
+    public SimpleObjectProperty(@Nonnull IRI iri) {
+        this.iri = iri;
+    }
+    
+    @Override
+    public IRI getIRI() {
+        return iri;
+    }
 
-    AnnotationProperty getProperty();
-
-    Value getValue();
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        
+        if(obj instanceof ObjectProperty) {
+            IRI otherIri = ((ObjectProperty) obj).getIRI();
+            return otherIri.equals(iri);
+        }
+        
+        return false;
+    }
 }

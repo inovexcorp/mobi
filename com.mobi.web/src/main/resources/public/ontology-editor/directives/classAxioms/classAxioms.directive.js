@@ -81,8 +81,8 @@
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subClassOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classes.hierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.classes.index);
-                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classes, dvm.os.listItem.selected['@id'], axiomObject['@id']);
+                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes);
                             dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
                             dvm.os.listItem.individuals.flat = dvm.os.createFlatIndividualTree(dvm.os.listItem);
                             dvm.os.setVocabularyStuff();

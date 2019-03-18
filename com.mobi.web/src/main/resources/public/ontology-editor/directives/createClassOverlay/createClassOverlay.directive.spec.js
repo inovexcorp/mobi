@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, prefixes, ontoUtils;
+    var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -31,8 +31,7 @@ describe('Create Class Overlay directive', function() {
         mockOntologyUtilsManager();
         injectCamelCaseFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
-            $q = _$q_;
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -53,26 +52,17 @@ describe('Create Class Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         ontologyStateSvc = null;
         prefixes = null;
         ontoUtils = null;
         this.element.remove();
     });
 
-    describe('initializes with the correct values', function() {
-        it('if parent ontology is opened', function() {
-            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(this.controller.prefix).toBe(this.iri);
-            expect(this.controller.clazz['@id']).toBe(this.controller.prefix);
-            expect(this.controller.clazz['@type']).toEqual(['Class']);
-        });
-        it('if parent ontology is not opened', function() {
-            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(this.controller.prefix).toBe(this.iri);
-            expect(this.controller.clazz['@id']).toBe(this.controller.prefix);
-            expect(this.controller.clazz['@type']).toEqual(['Class']);
-        });
+    it('initializes with the correct values', function() {
+        expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+        expect(this.controller.prefix).toBe(this.iri);
+        expect(this.controller.clazz['@id']).toBe(this.controller.prefix);
+        expect(this.controller.clazz['@type']).toEqual(['Class']);
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -149,7 +139,6 @@ describe('Create Class Overlay directive', function() {
             beforeEach(function() {
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-                ontologyStateSvc.listItem.classes.hierarchy = [];
                 this.controller.language = 'en';
                 this.controller.clazz = {
                     '@id': 'class-iri',
@@ -165,9 +154,8 @@ describe('Create Class Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes);
                 expect(ontologyStateSvc.listItem.classes.flat).toEqual([{prop: 'entity'}]);
-                expect(ontologyStateSvc.listItem.classes.hierarchy).toContain({'entityIRI': 'class-iri'});
                 expect(scope.close).toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.setSuperClasses).not.toHaveBeenCalled();
@@ -188,7 +176,6 @@ describe('Create Class Overlay directive', function() {
                     expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.classes.hierarchy).toEqual([]);
                     expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                     expect(ontologyStateSvc.listItem.derivedConcepts).toContain('class-iri');
                     expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);
@@ -204,7 +191,6 @@ describe('Create Class Overlay directive', function() {
                     expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.classes.hierarchy).toEqual([]);
                     expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                     expect(ontologyStateSvc.listItem.derivedConcepts).toEqual([]);
                     expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);

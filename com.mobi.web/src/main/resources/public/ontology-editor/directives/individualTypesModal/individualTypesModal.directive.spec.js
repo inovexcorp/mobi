@@ -129,9 +129,7 @@ describe('Individual Types Modal directive', function() {
                 this.controller.types.push('concept');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'concept']);
-                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([{entityIRI: this.iri}]);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{entityIRI: this.iri}], ontologyStateSvc.listItem.ontologyRecord.recordId);
-                expect(ontologyStateSvc.listItem.concepts.flat).toEqual([this.iri]);
+                expect(ontoUtils.addConcept).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('title', [{'@value': 'title'}]);
@@ -141,6 +139,7 @@ describe('Individual Types Modal directive', function() {
                     ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'concept']
                     this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
                     ontologyStateSvc.listItem.concepts.flat = [this.iri];
+                    ontologyStateSvc.listItem.concepts.iris = {[this.iri]: ''};
                     ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
                     ontologyStateSvc.flattenHierarchy.and.returnValue([]);
                 });
@@ -155,8 +154,9 @@ describe('Individual Types Modal directive', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('concepts');
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({});
@@ -165,8 +165,9 @@ describe('Individual Types Modal directive', function() {
                     it('and the concepts page is not active', function() {
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({});
@@ -184,8 +185,9 @@ describe('Individual Types Modal directive', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('schemes');
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
@@ -194,8 +196,9 @@ describe('Individual Types Modal directive', function() {
                     it('and the schemes page is not active', function() {
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
@@ -205,8 +208,9 @@ describe('Individual Types Modal directive', function() {
                 it('and is not selected elsewhere', function() {
                     this.controller.submit();
                     expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.iri, ontologyStateSvc.listItem.concepts.index);
-                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                    expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                     expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
                     expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                     expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
@@ -216,9 +220,7 @@ describe('Individual Types Modal directive', function() {
                 this.controller.types.push('scheme');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'scheme']);
-                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{entityIRI: this.iri}]);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith([{entityIRI: this.iri}], ontologyStateSvc.listItem.ontologyRecord.recordId);
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([this.iri]);
+                expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).toHaveBeenCalledWith('title', [{'@value': 'title'}]);
@@ -228,6 +230,7 @@ describe('Individual Types Modal directive', function() {
                     ontologyStateSvc.listItem.selected['@type'] = [prefixes.owl + 'NamedIndividual', 'type1', 'scheme']
                     this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
                     ontologyStateSvc.listItem.conceptSchemes.flat = [this.iri];
+                    ontologyStateSvc.listItem.concepts.iris = {[this.iri]: ''};
                     ontologyStateSvc.flattenHierarchy.and.returnValue([]);
                 });
                 describe('and the individual is selected in the schemes page', function() {
@@ -241,7 +244,8 @@ describe('Individual Types Modal directive', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('schemes');
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({});
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
                         expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
@@ -249,7 +253,8 @@ describe('Individual Types Modal directive', function() {
                     it('and the schemes page is not active', function() {
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                        expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({});
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                         expect(ontologyStateSvc.listItem.editorTabStates.schemes).toEqual({});
                         expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
@@ -258,7 +263,8 @@ describe('Individual Types Modal directive', function() {
                 it('and the individual is not selected elsewhere', function() {
                     this.controller.submit();
                     expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
-                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.iri, ontologyStateSvc.listItem.conceptSchemes.index);
+                    expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({});
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                     expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
                     expect(ontologyStateSvc.unSelectItem).not.toHaveBeenCalled();
                 });

@@ -317,61 +317,39 @@ describe('Instance Form directive', function() {
                 propertyIRI: 'propertyId',
                 restrictions: [{
                     cardinality: 1,
-                    classExpressionType: 'DATA_EXACT_CARDINALITY'
+                    cardinalityType: prefixes.owl + 'cardinality'
                 }]
             }, {
                 propertyIRI: 'propertyId2',
                 restrictions: [{
                     cardinality: 1,
-                    classExpressionType: 'DATA_MIN_CARDINALITY'
+                    cardinalityType: prefixes.owl + 'minCardinality'
                 }]
             }, {
                 propertyIRI: 'propertyId3',
                 restrictions: [{
                     cardinality: 1,
-                    classExpressionType: 'DATA_MAX_CARDINALITY'
+                    cardinalityType: prefixes.owl + 'maxCardinality'
                 }]
             }, {
                 propertyIRI: 'propertyId4',
                 restrictions: [{
                     cardinality: 1,
-                    classExpressionType: 'OBJECT_EXACT_CARDINALITY'
-                }]
-            }, {
-                propertyIRI: 'propertyId5',
-                restrictions: [{
-                    cardinality: 1,
-                    classExpressionType: 'OBJECT_MIN_CARDINALITY'
-                }]
-            }, {
-                propertyIRI: 'propertyId6',
-                restrictions: [{
-                    cardinality: 1,
-                    classExpressionType: 'OBJECT_MAX_CARDINALITY'
-                }]
-            }, {
-                propertyIRI: 'propertyId7',
-                restrictions: [{
-                    cardinality: 1,
-                    classExpressionType: 'DATA_EXACT_CARDINALITY'
+                    cardinalityType: prefixes.owl + 'cardinality'
                 }]
             }];
             this.controller.instance = {
                 '@id': 'id',
-                propertyId7: [{'@value': 'just the one'}],
+                propertyId4: [{'@value': 'just the one'}],
                 propertyId3: [{'@value': 'one'}, {'@value': 'two'}],
-                propertyId6: [{'@value': 'one'}, {'@value': 'two'}]
             };
             var expected = [
                 'Must have exactly 1 value(s) for propertyId',
                 'Must have at least 1 value(s) for propertyId2',
                 'Must have at most 1 value(s) for propertyId3',
-                'Must have exactly 1 value(s) for propertyId4',
-                'Must have at least 1 value(s) for propertyId5',
-                'Must have at most 1 value(s) for propertyId6'
             ];
             expect(this.controller.getMissingProperties()).toEqual(expected);
-            _.forEach(['propertyId', 'propertyId2', 'propertyId3', 'propertyId4', 'propertyId5', 'propertyId6'], function(item) {
+            _.forEach(['propertyId', 'propertyId2', 'propertyId3'], function(item) {
                 expect(util.getBeautifulIRI).toHaveBeenCalledWith(item);
             });
             expect(this.controller.isValid).toBe(false);
@@ -382,19 +360,19 @@ describe('Instance Form directive', function() {
                     propertyIRI: 'propertyId',
                     restrictions: [{
                         cardinality: 1,
-                        classExpressionType: 'DATA_EXACT_CARDINALITY'
+                        cardinalityType: prefixes.owl + 'cardinality'
                     }]
                 }, {
                     propertyIRI: 'propertyId2',
                     restrictions: [{
                         cardinality: 1,
-                        classExpressionType: 'DATA_MIN_CARDINALITY'
+                        cardinalityType: prefixes.owl + 'minCardinality'
                     }]
                 }, {
                     propertyIRI: 'propertyId3',
                     restrictions: [{
                         cardinality: 1,
-                        classExpressionType: 'DATA_MAX_CARDINALITY'
+                        cardinalityType: prefixes.owl + 'maxCardinality'
                     }]
                 }, {
                     propertyIRI: 'propertyId4'
