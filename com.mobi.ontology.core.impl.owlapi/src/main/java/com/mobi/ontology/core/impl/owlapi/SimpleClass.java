@@ -24,10 +24,7 @@ package com.mobi.ontology.core.impl.owlapi;
  */
 
 import com.mobi.ontology.core.api.OClass;
-import com.mobi.ontology.core.impl.owlapi.SimpleOntologyValues;
 import com.mobi.rdf.api.IRI;
-import org.semanticweb.owlapi.model.OWLClass;
-import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 import javax.annotation.Nonnull;
 
@@ -35,16 +32,10 @@ import javax.annotation.Nonnull;
 public class SimpleClass implements OClass {
 
     private IRI iri;
-    private final boolean isThing;
-    private final boolean isNothing;
-    private OWLClass owlClass;
-    
+
     
     public SimpleClass(@Nonnull IRI iri) {
         this.iri = iri;
-        owlClass = new OWLClassImpl(SimpleOntologyValues.owlapiIRI(iri));
-        isThing = owlClass.isOWLThing();
-        isNothing = owlClass.isOWLNothing();
     }
     
     @Override
