@@ -25,27 +25,25 @@
 
     /**
      * @ngdoc component
-     * @name catalog.component:catalogPage
-     * @requires shared.service:catalogStateService
+     * @name datasets.component:datasetsPage
      *
      * @description
-     * `catalogPage` is a component which creates the main page of the Catalog module. The component contains different
-     * content depending on whether a catalog Record has been selected.
+     * `datasetsPage` is a component which creates the main page of the Datasets module. The component contains
+     * a {@link datasets.component.datasetsTabset datsetsTabset} for navigating the Datasets module
      */
-    const catalogPageComponent = {
-        templateUrl: 'catalog/components/catalogPage/catalogPage.component.html',
+    const datasetsPageComponent = {
+        templateUrl: 'datasets/components/datasetsPage/datasetsPage.component.html',
         bindings: {},
         controllerAs: 'dvm',
-        controller: catalogPageComponentCtrl
+        controller: datasetsPageComponentCtrl
     };
 
-    catalogPageComponentCtrl.$inject = ['catalogStateService'];
+    datasetsPageComponentCtrl.$inject = [];
 
-    function catalogPageComponentCtrl(catalogStateService) {
+    function datasetsPageComponentCtrl() {
         var dvm = this;
-        dvm.state = catalogStateService;
     }
 
-    angular.module('catalog')
-        .component('catalogPage', catalogPageComponent);
+    angular.module('datasets')
+        .component('datasetsPage', datasetsPageComponent);
 })();
