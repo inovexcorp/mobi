@@ -690,7 +690,11 @@ function mockOntologyState() {
                 importedOntologies: [],
                 importedOntologyIds: [],
                 iriList: [],
-                failedImports: []
+                failedImports: [],
+                goTo: {
+                    entityIRI: '',
+                    active: false
+                }
             };
             this.states = [];
             this.list = [];
