@@ -26,7 +26,6 @@
     /**
      * @ngdoc component
      * @name datasets.component:datasetsList
-     * 
      * @requires shared.service:datasetStateService
      * @requires shared.service:datasetManagerService
      * @requires shared.service:catalogManagerService
@@ -40,13 +39,14 @@
      * {@link shared.service:datasetStateService Dataset Records} and
      * {@link shared.component:confirmModal confirmModal}s for deleting and clearing
      * datasets. Each dataset only displays its title, dataset IRI, and a portion of its description until it is
-     * opened. Only one dataset can be open at a time. The component is replaced by the contents of its template.
+     * opened. Only one dataset can be open at a time.
      */
     const datasetsListComponent = {
         templateUrl: 'datasets/components/datasetsList/datasetsList.component.html',
+        bindings: {},
         controllerAs: 'dvm',
         controller: datasetsListComponentCtrl
-    }
+    };
 
     datasetsListComponentCtrl.$inject = ['$q', 'datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'modalService'];
 

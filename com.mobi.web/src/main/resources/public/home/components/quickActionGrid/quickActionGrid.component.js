@@ -31,8 +31,7 @@
      * @description
      * `quickActionGrid` is a component which creates a Bootstrap `.card` containing a grid of links to perform
      * common actions in the application. These actions are searching the catalog, opening an ontology, reading the
-     * documentation, exploring data, querying data, and ingesting data. The component is replaced by the contents
-     * of its template.
+     * documentation, exploring data, querying data, and ingesting data.
      */
     const quickActionGridComponent = {
         templateUrl: 'home/components/quickActionGrid/quickActionGrid.component.html',

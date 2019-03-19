@@ -26,7 +26,6 @@
     /**
      * @ngdoc component
      * @name datasets.component:datasetsTabset
-     * 
      * @requires shared.service:datasetStateService
      * @requires shared.service:modalService
      *
@@ -36,14 +35,14 @@
      * to open the {@link datasets.component:newDatasetOverlay newDatasetOverlay}, and a
      * {@link datasets.component:datasetsList datasetsList}. The list of results in
      * {@link shared.service:datasetStateService datasetStateService} is initialized by this component.
-     * The search text input is submitted on press of the enter key. The component is replaced by the contents
-     * of its template.
+     * The search text input is submitted on press of the enter key.
      */
     const datasetsTabsetComponent = {
         templateUrl: 'datasets/components/datasetsTabset/datasetsTabset.component.html',
+        bindings: {},
         controllerAs: 'dvm',
         controller: datasetsTabsetComponentCtrl
-    }
+    };
 
     datasetsTabsetComponentCtrl.$inject = ['datasetStateService', 'modalService'];
 

@@ -26,6 +26,7 @@ describe('New Dataset Overlay component', function() {
     beforeEach(function() {
         module('templates');
         module('datasets');
+        mockComponent('datasets', 'datasetsOntologyPicker');
         mockDatasetManager();
         mockDatasetState();
         mockUtil();

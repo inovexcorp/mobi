@@ -34,8 +34,7 @@
      * it also provides a list of links, they connect nodes to display (complex) relations.
      * Every link needs to have at least a source and a target. Both are ids referencing a node.
      * The visualization will have default functionalities like zoom, pan, remove node,
-     * highlight node nearest neighbors and dragging events. The component is replaced by the contents of its
-     * template.
+     * highlight node nearest neighbors and dragging events.
      *
      * @param {Object} entity A JSON-LD array
      */
