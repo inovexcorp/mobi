@@ -67,8 +67,11 @@
                     var pm = propertyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
-
+                    dvm.properties = [];
+                    
+                    dvm.$onInit = function() {
+                        dvm.properties = _.union(pm.ontologyProperties, pm.defaultAnnotations, pm.owlAnnotations, _.keys(dvm.os.listItem.annotations.iris));
+                    }
                     dvm.openAddOverlay = function() {
                         dvm.os.editingOntologyProperty = false;
                         dvm.os.ontologyProperty = undefined;
@@ -96,7 +99,7 @@
                     }
 
                     $scope.$watch('dvm.os.listItem.selected', () => {
-                        dvm.properties = _.union(pm.ontologyProperties, _.keys(dvm.os.listItem.annotations.iris));
+                        dvm.properties = _.union(pm.ontologyProperties, pm.defaultAnnotations, pm.owlAnnotations, _.keys(dvm.os.listItem.annotations.iris));
                     });
                 }]
             }

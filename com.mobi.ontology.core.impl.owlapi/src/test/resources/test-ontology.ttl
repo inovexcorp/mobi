@@ -91,6 +91,11 @@
          <http://purl.org/dc/terms/title> "Class 2b"^^xsd:string .
 
 
+###  http://mobi.com/ontology#Class3a
+:Class3a rdf:type owl:Class ;
+         <http://purl.org/dc/terms/title> "Class 3a"^^xsd:string .
+
+
 #################################################################
 #    Individuals
 #################################################################
