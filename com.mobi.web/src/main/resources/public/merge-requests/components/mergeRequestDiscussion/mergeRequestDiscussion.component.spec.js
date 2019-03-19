@@ -40,7 +40,8 @@ describe('Merge Request Discussion component', function() {
         });
 
         scope.request = {jsonld: {'@id': 'request'}, comments: []};
-        this.element = $compile(angular.element('<merge-request-discussion request="request"></merge-request-discussion>'))(scope);
+        scope.updateRequest = jasmine.createSpy('updateRequest');
+        this.element = $compile(angular.element('<merge-request-discussion request="request" update-request="updateRequest(value)"></merge-request-discussion>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeRequestDiscussion');
     });
@@ -55,10 +56,15 @@ describe('Merge Request Discussion component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('request should be two way bound', function() {
+        it('request should be one way bound', function() {
+            var copy = angular.copy(this.controller.request);
             this.controller.request = {};
             scope.$digest();
-            expect(scope.request).toEqual({});
+            expect(scope.request).toEqual(copy);
+        });
+        it('updateRequest should be called in the parent scope', function() {
+            this.controller.updateRequest({value: this.controller.request});
+            expect(scope.updateRequest).toHaveBeenCalledWith(this.controller.request);
         });
     });
     describe('controller methods', function() {
@@ -76,6 +82,7 @@ describe('Merge Request Discussion component', function() {
                     expect(this.controller.newComment).toEqual('');
                     expect(mergeRequestManagerSvc.getComments).toHaveBeenCalledWith(this.controller.request.jsonld['@id']);
                     expect(angular.copy(this.controller.request.comments)).toEqual([[{'@id': 'comment'}]]);
+                    expect(scope.updateRequest).toHaveBeenCalledWith(this.controller.request);
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless getComments rejects', function() {

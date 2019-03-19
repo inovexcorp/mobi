@@ -41,7 +41,8 @@
     const mergeRequestDiscussionComponent = {
         templateUrl: 'merge-requests/components/mergeRequestDiscussion/mergeRequestDiscussion.component.html',
         bindings: {
-            request: '='
+            request: '<',
+            updateRequest: '&'
         },
         controllerAs: 'dvm',
         controller: mergeRequestDiscussionComponentCtrl
@@ -63,6 +64,7 @@
                 }, $q.reject)
                 .then(comments => {
                     dvm.request.comments = comments;
+                    dvm.updateRequest({value: dvm.request});
                 }, util.createErrorToast);
         }
     }

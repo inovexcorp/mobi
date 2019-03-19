@@ -36,7 +36,8 @@ describe('Merge Request Tabset component', function() {
         });
 
         scope.request = {difference: {additions: [], deletions: []}};
-        this.element = $compile(angular.element('<merge-request-tabset request="request" parent-id="parentId"></merge-request-tabset>'))(scope);
+        scope.updateRequest = jasmine.createSpy('updateRequest');
+        this.element = $compile(angular.element('<merge-request-tabset request="request" parent-id="parentId" update-request="updateRequest(value)"></merge-request-tabset>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeRequestTabset');
     });
@@ -48,10 +49,15 @@ describe('Merge Request Tabset component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('request should be two way bound', function() {
+        it('request should be one way bound', function() {
+            var copy = angular.copy(this.controller.request);
             this.controller.request = {};
             scope.$digest();
-            expect(scope.request).toEqual({});
+            expect(scope.request).toEqual(copy);
+        });
+        it('updateRequest should be called in the parent scope', function() {
+            this.controller.updateRequest({value: this.controller.request});
+            expect(scope.updateRequest).toHaveBeenCalledWith(this.controller.request);
         });
     });
     describe('contains the correct html', function() {

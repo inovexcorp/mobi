@@ -46,9 +46,10 @@
     const commentDisplayComponent = {
         templateUrl: 'merge-requests/components/commentDisplay/commentDisplay.component.html',
         bindings: {
-            request: '=',
+            request: '<',
             comment: '<',
-            isReply: '<'
+            isReply: '<',
+            updateRequest: '&'
         },
         controllerAs: 'dvm',
         controller: commentDisplayComponentCtrl
@@ -86,6 +87,7 @@
                 .then(() => dvm.mm.getComments(dvm.request.jsonld['@id']), $q.reject)
                 .then(comments => {
                     dvm.request.comments = comments;
+                    dvm.updateRequest({value: dvm.request});
                 }, util.createErrorToast);
         }
 

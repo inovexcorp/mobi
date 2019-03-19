@@ -61,7 +61,7 @@
                     <span class="fa fa-exclamation-triangle" />
                     <span>The target branch for this merge request has been deleted.</span>
                 </div>
-                <merge-request-tabset request="dvm.state.selected"></merge-request-tabset>
+                <merge-request-tabset request="dvm.state.selected" updateRequest="dvm.state.select = value"></merge-request-tabset>
             </div>
             <div class="resolve-conflicts mt-2 pt-2" ng-if="dvm.resolveConflicts">
                 <error-display ng-if="dvm.resolveError">Conflict resolution failed</error-display>

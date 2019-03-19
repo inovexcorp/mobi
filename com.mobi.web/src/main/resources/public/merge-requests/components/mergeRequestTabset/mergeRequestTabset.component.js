@@ -39,7 +39,8 @@
     const mergeRequestTabsetComponent = {
         templateUrl: 'merge-requests/components/mergeRequestTabset/mergeRequestTabset.component.html',
         bindings: {
-            request: '=',
+            request: '<',
+            updateRequest: '&'
         },
         controllerAs: 'dvm',
         controller: mergeRequestTabsetComponentCtrl,

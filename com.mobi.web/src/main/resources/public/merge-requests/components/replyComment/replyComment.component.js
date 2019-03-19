@@ -40,8 +40,9 @@
     const replyCommentComponent = {
         templateUrl: 'merge-requests/components/replyComment/replyComment.component.html',
         bindings: {
-            request: '=',
+            request: '<',
             parentId: '<',
+            updateRequest: '&'
         },
         controllerAs: 'dvm',
         controller: replyCommentComponentCtrl
@@ -65,6 +66,7 @@
                 }, $q.reject)
                 .then(comments => {
                     dvm.request.comments = comments;
+                    dvm.updateRequest({value: dvm.request})
                 }, util.createErrorToast);
         }
         dvm.cancel = function() {

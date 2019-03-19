@@ -55,8 +55,9 @@ describe('Comment Display component', function() {
 
         scope.request = {jsonld: {'@id': 'request'}};
         scope.comment = {'@id': 'comment'};
+        scope.updateRequest = jasmine.createSpy('updateRequest');
         scope.isReply = true;
-        this.element = $compile(angular.element('<comment-display request="request" comment="comment" is-reply="isReply"></comment-display>'))(scope);
+        this.element = $compile(angular.element('<comment-display request="request" comment="comment" is-reply="isReply" update-request="updateRequest(value)"></comment-display>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commentDisplay');
     });
@@ -75,10 +76,11 @@ describe('Comment Display component', function() {
     });
 
     describe('controller bound variable', function() {
-        it('request should be two way bound', function() {
+        it('request should be one way bound', function() {
+            var copy = angular.copy(this.controller.request);
             this.controller.request = {};
             scope.$digest();
-            expect(scope.request).toEqual({});
+            expect(scope.request).toEqual(copy);
         });
         it('comment should be one way bound', function() {
             this.controller.comment = {};
@@ -89,6 +91,10 @@ describe('Comment Display component', function() {
             this.controller.isReply = false;
             scope.$digest();
             expect(scope.isReply).toBe(true);
+        });
+        it('updateRequest should be called in the parent scope', function() {
+            this.controller.updateRequest({value: this.controller.request});
+            expect(scope.updateRequest).toHaveBeenCalledWith(this.controller.request);
         });
     });
     describe('controller methods', function() {
@@ -131,6 +137,7 @@ describe('Comment Display component', function() {
                     expect(mergeRequestManagerSvc.deleteComment).toHaveBeenCalledWith(this.controller.request.jsonld['@id'], this.controller.comment['@id']);
                     expect(mergeRequestManagerSvc.getComments).toHaveBeenCalledWith(this.controller.request.jsonld['@id']);
                     expect(this.controller.request.comments).toEqual([{}]);
+                    expect(scope.updateRequest).toHaveBeenCalledWith(this.controller.request);
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless getComments rejects', function() {
