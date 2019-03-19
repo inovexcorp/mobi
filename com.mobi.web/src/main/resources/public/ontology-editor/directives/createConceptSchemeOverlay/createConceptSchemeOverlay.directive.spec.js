@@ -175,6 +175,8 @@ describe('Create Concept Scheme Overlay directive', function() {
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(scope.close).toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('scheme');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
         });
         it('should set the list of concepts', function() {
             ontoUtils.getSelectList.and.returnValue(['concept']);

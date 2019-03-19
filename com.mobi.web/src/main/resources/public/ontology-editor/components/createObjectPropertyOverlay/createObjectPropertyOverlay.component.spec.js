@@ -186,6 +186,8 @@ describe('Create Object Property Overlay component', function() {
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
             describe('if controller.values', function() {
                 beforeEach(function() {
@@ -203,6 +205,8 @@ describe('Create Object Property Overlay component', function() {
                     expect(scope.close).toHaveBeenCalled();
                     expect(ontologyStateSvc.listItem.objectProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties);
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
                 describe('has values', function() {
                     beforeEach(function() {
@@ -223,6 +227,8 @@ describe('Create Object Property Overlay component', function() {
                         expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
                         expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith('property-iri', ['propertyA'], 'objectProperties');
                         expect(ontologyStateSvc.listItem.derivedSemanticRelations).toContain(this.controller.property['@id']);
+                        expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                        expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                     });
                     it('without a derived semantic relation', function() {
                         this.controller.create();
@@ -238,6 +244,8 @@ describe('Create Object Property Overlay component', function() {
                         expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
                         expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith('property-iri', ['propertyA'], 'objectProperties');
                         expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual([]);
+                        expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                        expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                     });
                 });
             });

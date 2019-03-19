@@ -83,7 +83,7 @@
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
                         }]
-                    }
+                    };
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -120,6 +120,9 @@
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // Open snackbar
+                        dvm.os.listItem.goTo.entityIRI = dvm.clazz['@id'];
+                        dvm.os.listItem.goTo.active = true;
                         // hide the overlay
                         $scope.close()
                     }

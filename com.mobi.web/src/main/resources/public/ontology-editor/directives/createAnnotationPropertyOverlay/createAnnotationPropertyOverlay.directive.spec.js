@@ -157,6 +157,8 @@ describe('Create Annotation Overlay directive', function() {
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
         });
         it('should cancel the overlay', function() {
