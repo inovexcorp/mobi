@@ -40,7 +40,7 @@
      * of its template.
      */
     const datasetsTabsetComponent = {
-        templateUrl: 'datasets/directives/datasetsTabset/datasetsTabset.directive.html',
+        templateUrl: 'datasets/components/datasetsTabset/datasetsTabset.directive.html',
         controllerAs: 'dvm',
         controller: datasetsTabsetComponentCtrl
     }

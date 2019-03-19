@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name uploadDataOverlay.component:uploadDataOverlay
+     * @name datasets.component:uploadDataOverlay
      * @requires shared.service:datasetManagerService
      * @requires shared.service:datasetStateService
      * @requires shared.service:utilService
@@ -40,7 +40,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const uploadDataOverlayComponent ={
-        templateUrl: 'datasets/directives/uploadDataOverlay/uploadDataOverlay.component.html',
+        templateUrl: 'datasets/components/uploadDataOverlay/uploadDataOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'

@@ -43,7 +43,7 @@
      * opened. Only one dataset can be open at a time. The component is replaced by the contents of its template.
      */
     const datasetsListComponent = {
-        templateUrl: 'datasets/directives/datasetsList/datasetsList.directive.html',
+        templateUrl: 'datasets/components/datasetsList/datasetsList.directive.html',
         controllerAs: 'dvm',
         controller: datasetsListComponentCtrl
     }

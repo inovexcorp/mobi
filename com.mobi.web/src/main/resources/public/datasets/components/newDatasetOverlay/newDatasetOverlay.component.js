@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name newDatasetOverlay.component:newDatasetOverlay
+     * @name datasets.component:newDatasetOverlay
      * @requires shared.service:datasetManagerService
      * @requires shared.service:datasetStateService
      * @requires shared.service:utilService
@@ -42,7 +42,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const newDatasetOverlayComponent = {
-        templateUrl: 'datasets/directives/newDatasetOverlay/newDatasetOverlay.component.html',
+        templateUrl: 'datasets/components/newDatasetOverlay/newDatasetOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'
