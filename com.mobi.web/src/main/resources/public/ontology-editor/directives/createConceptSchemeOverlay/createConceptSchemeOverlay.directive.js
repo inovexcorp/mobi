@@ -118,6 +118,9 @@
                         dvm.ontoUtils.addIndividual(dvm.scheme);
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // Open snackbar
+                        dvm.os.listItem.goTo.entityIRI = dvm.scheme['@id'];
+                        dvm.os.listItem.goTo.active = true;
                         // hide the overlay
                         $scope.close();
                     }

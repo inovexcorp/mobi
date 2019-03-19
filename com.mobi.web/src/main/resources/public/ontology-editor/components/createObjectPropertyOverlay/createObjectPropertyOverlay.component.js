@@ -125,6 +125,9 @@
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
             // Save the changes to the ontology
             dvm.ontoUtils.saveCurrentChanges();
+            // Open snackbar
+            dvm.os.listItem.goTo.entityIRI = dvm.property['@id'];
+            dvm.os.listItem.goTo.active = true;
             // hide the overlay
             dvm.close();
         }

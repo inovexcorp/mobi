@@ -1358,7 +1358,6 @@
          * @returns {string} The beautified IRI string.
          */
         self.getEntityName = function(entity) {
-
             var result =_.reduce(self.entityNameProps, (tempResult, prop) => tempResult || getPrioritizedValue(entity, prop), '');
             if (!result && _.has(entity, '@id')) {
                 result = utilService.getBeautifulIRI(entity['@id']);

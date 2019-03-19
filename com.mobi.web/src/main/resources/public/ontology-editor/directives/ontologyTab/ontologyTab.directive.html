@@ -77,4 +77,5 @@
         <span ng-if="dvm.os.listItem.isSaved" class="saved-text text-muted">Saved</span>
         <ontology-button-stack></ontology-button-stack>
     </div>
+    <open-entity-snackbar ng-if="dvm.os.listItem.goTo.active" iri="dvm.os.listItem.goTo.entityIRI"></open-entity-snackbar>
 </div>
