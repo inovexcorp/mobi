@@ -30,7 +30,7 @@
          *
          * @description
          * The `superClassSelect` module only provides the `superClassSelect` directive which creates a collapsible
-         * {@link classSelect.directive:classSelect} for super classes.
+         * {@link ontologyClassSelect.directive:ontologyClassSelect} for super classes.
          */
         .module('superClassSelect', [])
         /**
@@ -43,9 +43,10 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * `classSelect` is a directive that creates a collapsible {@link classSelect.directive:classSelect} for
-         * selecting the super classes of a class. When collapsed and then reopened, all previous values are cleared.
-         * The directive is replaced by the contents of its template.
+         * `classSelect` is a directive that creates a collapsible
+         * {@link ontologyClassSelect.directive:ontologyClassSelect} for selecting the super classes of a class. When
+         * collapsed and then reopened, all previous values are cleared. The directive is replaced by the contents of
+         * its template.
          *
          * @param {string[]} values The selected class IRIs for super classes
          */
