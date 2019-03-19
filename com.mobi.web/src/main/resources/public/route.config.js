@@ -156,7 +156,7 @@
                 url: '/merge-requests',
                 views: {
                     'container@': {
-                        templateUrl: 'merge-requests/merge-requests.module.html'
+                        template: '<merge-requests-page></merge-requests-page>'
                     }
                 },
                 data: {

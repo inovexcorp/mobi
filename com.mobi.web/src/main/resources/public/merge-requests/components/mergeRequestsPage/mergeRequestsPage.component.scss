@@ -20,15 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    /**
-     * @ngdoc overview
-     * @name merge-requests
-     *
-     * @description
-     * The `merge-requests` module provides components that make up the Merge Requests module in the Mobi application.
-     */
-    angular.module('merge-requests', []);
-})();
+.merge-requests-page {
+    background-color: var(--light);
+}
