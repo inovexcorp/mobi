@@ -146,7 +146,7 @@
                 url: '/datasets',
                 views: {
                     'container@': {
-                        templateUrl: '<datasets-page></datasets-page>'
+                        template: '<datasets-page></datasets-page>'
                     }
                 },
                 data: {
