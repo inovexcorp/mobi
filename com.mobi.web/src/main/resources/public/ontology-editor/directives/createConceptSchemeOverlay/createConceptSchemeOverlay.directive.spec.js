@@ -21,14 +21,13 @@
  * #L%
  */
 describe('Create Concept Scheme Overlay directive', function() {
-    var $compile, scope, $q, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRI, ontoUtils;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
         module('createConceptSchemeOverlay');
         injectRegexConstant();
         injectCamelCaseFilter();
-        injectSplitIRIFilter();
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyManager();
@@ -37,14 +36,12 @@ describe('Create Concept Scheme Overlay directive', function() {
         mockUtil();
         mockOntologyUtilsManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_) {
-            $q = _$q_;
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            splitIRI = _splitIRIFilter_;
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
@@ -62,11 +59,9 @@ describe('Create Concept Scheme Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
         prefixes = null;
-        splitIRI = null;
         ontoUtils = null;
         this.element.remove();
     });
@@ -171,11 +166,11 @@ describe('Create Concept Scheme Overlay directive', function() {
             this.controller.create();
             expect(this.controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(this.controller.selectedConcepts);
             _.forEach(this.controller.selectedConcepts, concept => {
-                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, concept['@id'], ontologyStateSvc.listItem.conceptSchemes.index, 'scheme');
+                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, concept['@id'], 'scheme');
             });
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.scheme, this.controller.language);
-            expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([{entityIRI: this.controller.scheme['@id']}]);
+            expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({[this.controller.scheme['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

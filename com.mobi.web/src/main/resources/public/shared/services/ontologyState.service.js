@@ -137,26 +137,26 @@
             derivedSemanticRelations: [],
             classes: {
                 iris: {},
-                hierarchy: [],
-                index: {},
+                parentMap: {},
+                childMap: {},
                 flat: []
             },
             dataProperties: {
                 iris: {},
-                hierarchy: [],
-                index: {},
+                parentMap: {},
+                childMap: {},
                 flat: []
             },
             objectProperties: {
                 iris: {},
-                hierarchy: [],
-                index: {},
+                parentMap: {},
+                childMap: {},
                 flat: []
             },
             annotations: {
                 iris: {},
-                hierarchy: [],
-                index: {},
+                parentMap: {},
+                childMap: {},
                 flat: []
             },
             individuals: {
@@ -164,13 +164,15 @@
                 flat: []
             },
             concepts: {
-                hierarchy: [],
-                index: {},
+                iris: {},
+                parentMap: {},
+                childMap: {},
                 flat: []
             },
             conceptSchemes: {
-                hierarchy: [],
-                index: {},
+                iris: {},
+                parentMap: {},
+                childMap: {},
                 flat: []
             },
             blankNodes: {},
@@ -195,8 +197,6 @@
             }
         };
         _.forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate.dataPropertyRange, iri));
-        _.forEach(pm.defaultAnnotations, iri => addIri(ontologyListItemTemplate.annotations.iris, iri));
-        _.forEach(pm.owlAnnotations, iri => addIri(ontologyListItemTemplate.annotations.iris, iri, prefixes.owl.slice(0, -1)));
 
         var emptyInProgressCommit = {
             additions: [],
@@ -823,6 +823,8 @@
                 _.get(responseIriList, 'dataProperties', []).forEach(iri => addIri(listItem.dataProperties.iris, iri, ontologyId));
                 _.get(responseIriList, 'objectProperties', []).forEach(iri => addIri(listItem.objectProperties.iris, iri, ontologyId));
                 _.get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem.individuals.iris, iri, ontologyId));
+                _.get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem.concepts.iris, iri, ontologyId));
+                _.get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem.conceptSchemes.iris, iri, ontologyId));
                 listItem.derivedConcepts = _.get(responseIriList, 'derivedConcepts', []);
                 listItem.derivedConceptSchemes = _.get(responseIriList, 'derivedConceptSchemes', []);
                 listItem.derivedSemanticRelations = _.get(responseIriList, 'derivedSemanticRelations', []);
@@ -833,6 +835,8 @@
                     iriList.dataProperties.forEach(iri => addIri(listItem.dataProperties.iris, iri, iriList.id));
                     iriList.objectProperties.forEach(iri => addIri(listItem.objectProperties.iris, iri, iriList.id));
                     iriList.namedIndividuals.forEach(iri => addIri(listItem.individuals.iris, iri, iriList.id));
+                    iriList.concepts.forEach(iri => addIri(listItem.concepts.iris, iri, iriList.id));
+                    iriList.conceptSchemes.forEach(iri => addIri(listItem.conceptSchemes.iris, iri, iriList.id));
                     iriList.datatypes.forEach(iri => addIri(listItem.dataPropertyRange, iri, iriList.id));
                     listItem.iriList.push(iriList['id'])
                     listItem.iriList = _.union(listItem.iriList, _.flatten(_.values(iriList)))
@@ -841,17 +845,17 @@
                     addImportedOntologyToListItem(listItem, importedOntObj);
                 });
                 setHierarchyInfo(listItem.classes, response[0], 'classHierarchy');
-                listItem.classes.flat = self.flattenHierarchy(listItem.classes.hierarchy, recordId, listItem);
+                listItem.classes.flat = self.flattenHierarchy(listItem.classes, listItem);
                 setHierarchyInfo(listItem.dataProperties, response[0], 'dataPropertyHierarchy');
-                listItem.dataProperties.flat = self.flattenHierarchy(listItem.dataProperties.hierarchy, recordId, listItem);
+                listItem.dataProperties.flat = self.flattenHierarchy(listItem.dataProperties, listItem);
                 setHierarchyInfo(listItem.objectProperties, response[0], 'objectPropertyHierarchy');
-                listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties.hierarchy, recordId, listItem);
+                listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties, listItem);
                 setHierarchyInfo(listItem.annotations, response[0], 'annotationHierarchy');
-                listItem.annotations.flat = self.flattenHierarchy(listItem.annotations.hierarchy, recordId, listItem);
+                listItem.annotations.flat = self.flattenHierarchy(listItem.annotations, listItem);
                 setHierarchyInfo(listItem.concepts, response[0], 'conceptHierarchy');
-                listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, recordId, listItem);
+                listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
                 setHierarchyInfo(listItem.conceptSchemes, response[0], 'conceptSchemeHierarchy');
-                listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
+                listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
                 listItem.classesAndIndividuals = response[0].individuals;
                 listItem.classesWithIndividuals = _.keys(listItem.classesAndIndividuals);
                 listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
@@ -888,10 +892,26 @@
 
         self.getIndividualsParentPath = function(listItem) {
             var result = [];
-            _.forEach(_.keys(listItem.classesAndIndividuals), classIRI => {
-                result = _.concat(result, getClassesForIndividuals(listItem.classes.index, classIRI));
+            _.forEach(Object.keys(listItem.classesAndIndividuals), classIRI => {
+                result = result.concat(getParents(listItem.classes.childMap, classIRI));
             });
             return _.uniq(result);
+        }
+        function getParents(childMap, classIRI) {
+            var result = [classIRI];
+            if (_.has(childMap, classIRI)) {
+                var toFind = [classIRI];
+                while (toFind.length) {
+                    var temp = toFind.pop();
+                    _.forEach(childMap[temp], parent => {
+                        result.push(parent);
+                        if (_.has(childMap, parent)) {
+                            toFind.push(parent);
+                        }
+                    });
+                }
+            }
+            return result;
         }
         self.setVocabularyStuff = function(listItem = self.listItem) {
             httpService.cancel(self.vocabularySpinnerId);
@@ -900,12 +920,14 @@
                     listItem.derivedConcepts = _.get(response, 'derivedConcepts', []);
                     listItem.derivedConceptSchemes = _.get(response, 'derivedConceptSchemes', []);
                     listItem.derivedSemanticRelations = _.get(response, 'derivedSemanticRelations', []);
-                    listItem.concepts.hierarchy = _.get(response, 'concepts.hierarchy', []);
-                    listItem.concepts.index = _.get(response, 'concepts.index', {});
-                    listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, listItem.ontologyRecord.recordId, listItem);
-                    listItem.conceptSchemes.hierarchy = _.get(response, 'conceptSchemes.hierarchy', []);
-                    listItem.conceptSchemes.index = _.get(response, 'conceptSchemes.index', {});
-                    listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, listItem.ontologyRecord.recordId, listItem);
+                    listItem.concepts.iris = {};
+                    response.concepts.forEach(iri => addIri(listItem.concepts.iris, iri, listItem.ontologyId));
+                    setHierarchyInfo(listItem.concepts, response, 'conceptHierarchy');
+                    listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
+                    listItem.conceptSchemes.iris = {};
+                    response.conceptSchemes.forEach(iri => addIri(listItem.conceptSchemes.iris, iri, listItem.ontologyId));
+                    setHierarchyInfo(listItem.conceptSchemes, response, 'conceptSchemeHierarchy');
+                    listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
                     _.unset(listItem.editorTabStates.concepts, 'entityIRI');
                     _.unset(listItem.editorTabStates.concepts, 'usages');
                 }, util.createErrorToast);
@@ -916,21 +938,39 @@
          * @methodOf shared.service:ontologyStateService
          *
          * @description
-         * Flattens the provided hierarchy into an array that represents the hierarchical structure to be used
-         * with a virtual scrolling solution.
+         * Flattens the provided hierarchy information into an array that represents the hierarchical structure to be
+         * used with a virtual scrolling solution.
          *
-         * @param {Object} hierarchy The Object set up in a hierarchical structure.
-         * @param {string} recordId The record ID associated with the provided hierarchy.
+         * @param {Object} hierarchyInfo An Object with hierarchical information. Expects it to have a `iris` key with
+         * an object of iris in the hierarchy, a `parentMap` key with a map of parent IRIs to arrays of children IRIs,
+         * and a `childMap` key with a map of child IRIs to arrays of parent IRIs.
          * @param {Object} [listItem=self.listItem] The listItem associated with the provided hierarchy.
          * @returns {Object[]} An array which represents the provided hierarchy.
          */
-        self.flattenHierarchy = function(hierarchy, recordId, listItem = self.listItem) {
+        self.flattenHierarchy = function(hierarchyInfo, listItem = self.listItem) {
+            var topLevel = _.difference(Object.keys(hierarchyInfo.iris), Object.keys(hierarchyInfo.childMap)).sort((s1, s2) => compareEntityName(s1, s2, listItem));
+            var sortedParentMap = _.mapValues(hierarchyInfo.parentMap, arr => arr.sort((s1, s2) => compareEntityName(s1, s2, listItem)));
             var result = [];
-            var sortedHierarchy = orderHierarchy(hierarchy, listItem);
-            _.forEach(sortedHierarchy, node => {
-                addNodeToResult(node, result, 0, [recordId]);
+            _.forEach(topLevel, iri => {
+                addNodeToFlatHierarchy(iri, result, 0, [listItem.ontologyRecord.recordId], sortedParentMap);
             });
             return result;
+        }
+        function compareEntityName(s1, s2, listItem) {
+            return _.lowerCase(self.getEntityNameByIndex(s1, listItem)).localeCompare(_.lowerCase(self.getEntityNameByIndex(s2, listItem)));
+        }
+        function addNodeToFlatHierarchy(iri, result, indent, path, parentMap) {
+            var newPath = _.concat(path, iri);
+            var item = {
+                entityIRI: iri,
+                hasChildren: _.has(parentMap, iri),
+                indent,
+                path: newPath
+            };
+            result.push(item);
+            _.forEach(_.get(parentMap, iri, []), child => {
+                addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap);
+            });
         }
         /**
          * @ngdoc method
@@ -945,7 +985,7 @@
          * @param {Object} listItem The listItem representing the ontology to create the structure for
          * @returns {Object[]} An array which contains the class-property relationships.
          */
-        self.createFlatEverythingTree = function(listItem) {
+        self.createFlatEverythingTree = function(listItem = self.listItem) {
             var result = [];
             var ontology = _.get(listItem, 'ontology');
             var ontologyId = _.get(listItem, 'ontologyId');
@@ -965,7 +1005,7 @@
 
             _.forEach(orderedClasses, clazz => {
                 var classProps = om.getClassProperties([allProps], clazz['@id']);
-                orderedProperties = sortByName(classProps, listItem);
+                orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
                 path = [listItem.ontologyRecord.recordId, clazz['@id']];
                 result.push(_.merge({}, clazz, {
                     indent: 0,
@@ -981,7 +1021,7 @@
                 });
             });
             var noDomainProps = om.getNoDomainProperties([allProps]);
-            var orderedNoDomainProperties = sortByName(noDomainProps, listItem);
+            var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
             if (orderedNoDomainProperties.length) {
                 result.push({
                     title: 'Properties',
@@ -1021,7 +1061,7 @@
                         result.push(_.merge({}, node, {isClass: true}));
                         var sortedIndividuals = _.sortBy(_.get(classesWithIndividuals, node.entityIRI), entityIRI => _.lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
                         _.forEach(sortedIndividuals, entityIRI => {
-                            addNodeToResult({entityIRI}, result, node.indent + 1, node.path);
+                            addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {});
                         });
                     }
                 });
@@ -1091,7 +1131,7 @@
             var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'));
             _.forEach(toRemove, obj => {
                 var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
-                _.remove(listItem.iriList, item => item === obj.entityIRI);
+                _.pull(listItem.iriList, obj.entityIRI);
                 _.unset(listItem.index, obj.entityIRI);
                 _.forOwn(listItem.index, (value, key) => {
                     if (value.position > newPosition) {
@@ -1421,85 +1461,59 @@
         self.isCommittable = function(listItem) {
             return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
         }
-        self.addEntityToHierarchy = function(hierarchy, entityIRI, indexObject, parentIRI) {
-            var hierarchyItem = {entityIRI};
-            var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
-            if (pathsToEntity.length) {
-                if (pathsToEntity[0].length > 1) {
-                    var path = pathsToEntity[0];
-                    hierarchyItem = _.find(hierarchy, {entityIRI: path.shift()});
-                    while (path.length > 0) {
-                        hierarchyItem = _.find(hierarchyItem.subEntities, {entityIRI: path.shift()});
-                    }
-                } else if (_.some(hierarchy, {entityIRI})) {
-                    hierarchyItem = _.remove(hierarchy, hierarchyItem)[0];
-                }
-            }
-            if (parentIRI && self.getPathsTo(hierarchy, indexObject, parentIRI).length) {
-                _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent =>
-                    parent.subEntities = _.union(_.get(parent, 'subEntities', []), [hierarchyItem]));
-                indexObject[entityIRI] = _.union(_.get(indexObject, entityIRI, []), [parentIRI]);
-            } else {
-                hierarchy.push(hierarchyItem);
+        self.addEntityToHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
+            if (parentIRI && _.has(hierarchyInfo.iris, parentIRI)) {
+                hierarchyInfo.parentMap[parentIRI] = _.union(_.get(hierarchyInfo.parentMap, parentIRI), [entityIRI]);
+                hierarchyInfo.childMap[entityIRI] = _.union(_.get(hierarchyInfo.childMap, entityIRI), [parentIRI]);
             }
         }
-        self.deleteEntityFromParentInHierarchy = function(hierarchy, entityIRI, parentIRI, indexObject) {
-            var deletedEntity;
-            _.forEach(getEntities(hierarchy, parentIRI, indexObject), parent => {
-                if (_.has(parent, 'subEntities')) {
-                    deletedEntity = _.remove(parent.subEntities, {entityIRI})[0];
-                    if (!parent.subEntities.length) {
-                        _.unset(parent, 'subEntities');
-                    }
-                }
-            });
-            if (_.has(indexObject, entityIRI)) {
-                _.remove(indexObject[entityIRI], item => item === parentIRI);
-                if (!indexObject[entityIRI].length) {
-                    _.unset(indexObject, entityIRI);
-                    hierarchy.push(deletedEntity);
-                }
+        self.deleteEntityFromParentInHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
+            _.pull(hierarchyInfo.parentMap[parentIRI], entityIRI);
+            if (!_.get(hierarchyInfo.parentMap, parentIRI, []).length) {
+                delete hierarchyInfo.parentMap[parentIRI];
+            }
+            _.pull(hierarchyInfo.childMap[entityIRI], parentIRI);
+            if (!_.get(hierarchyInfo.childMap, entityIRI, []).length) {
+                delete hierarchyInfo.childMap[entityIRI];
             }
         }
-        self.deleteEntityFromHierarchy = function(hierarchy, entityIRI, indexObject) {
-            var deletedEntity;
-            var paths = self.getPathsTo(hierarchy, indexObject, entityIRI);
-            _.forEach(paths, path => {
-                if (path.length === 1) {
-                    deletedEntity = _.remove(hierarchy, {entityIRI: path.shift()})[0];
-                } else if (path.length > 1) {
-                    var current = _.find(hierarchy, {entityIRI: path.shift()});
-                    while (path.length > 1) {
-                        current = _.find(current.subEntities, {entityIRI: path.shift()});
-                    }
-                    deletedEntity = _.remove(current.subEntities, {entityIRI: path.shift()})[0];
-                    if (!current.subEntities.length) {
-                        _.unset(current, 'subEntities');
-                    }
+        self.deleteEntityFromHierarchy = function(hierarchyInfo, entityIRI) {
+            var children = _.get(hierarchyInfo.parentMap, entityIRI, []);
+            delete hierarchyInfo.parentMap[entityIRI];
+            _.forEach(children, child => {
+                _.pull(hierarchyInfo.childMap[child], entityIRI); 
+                if (!_.get(hierarchyInfo.childMap, child, []).length) {
+                    delete hierarchyInfo.childMap[child];
                 }
             });
-            _.unset(indexObject, entityIRI);
-            updateRefsService.remove(indexObject, entityIRI);
-            _.forEach(_.get(deletedEntity, 'subEntities', []), hierarchyItem => {
-                var paths = self.getPathsTo(hierarchy, indexObject, hierarchyItem.entityIRI);
-                if (paths.length === 0) {
-                    hierarchy.push(hierarchyItem);
-                    _.unset(indexObject, hierarchyItem.entityIRI);
+            var parents = _.get(hierarchyInfo.childMap, entityIRI, []);
+            delete hierarchyInfo.childMap[entityIRI];
+            _.forEach(parents, parent => {
+                _.pull(hierarchyInfo.parentMap[parent], entityIRI);
+                if (!_.get(hierarchyInfo.parentMap, parent, []).length) {
+                    delete hierarchyInfo.parentMap[parent];
                 }
             });
         }
-        self.getPathsTo = function(hierarchy, indexObject, entityIRI) {
+        self.getPathsTo = function(hierarchyInfo, entityIRI) {
             var result = [];
-            if (_.has(indexObject, entityIRI)) {
-                _.forEach(indexObject[entityIRI], parentIRI => {
-                    var paths = self.getPathsTo(hierarchy, indexObject, parentIRI);
-                    _.forEach(paths, path => {
-                        path.push(entityIRI);
-                        result.push(path);
-                    });
-                });
-            } else if (_.some(hierarchy, {entityIRI})) {
-                result.push([entityIRI]);
+            if (_.has(hierarchyInfo.iris, entityIRI)) {
+                if (_.has(hierarchyInfo.childMap, entityIRI)) {
+                    var toFind = [[entityIRI]];
+                    while (toFind.length) {
+                        var temp = toFind.pop();
+                        _.forEach(hierarchyInfo.childMap[temp[0]], parent => {
+                            var temp2 = [parent].concat(temp);
+                            if (_.has(hierarchyInfo.childMap, parent)) {
+                                toFind.push(temp2);
+                            } else {
+                                result.push(temp2);
+                            }
+                        });
+                    }
+                } else {
+                    result.push([entityIRI]);
+                }
             }
             return result;
         }
@@ -1682,18 +1696,6 @@
         function getIndices(listItem) {
             return _.concat([_.get(listItem, 'index')], _.map(_.get(listItem, 'importedOntologies'), 'index'));
         }
-        function getEntities(hierarchy, entityIRI, indexObject) {
-            var results = [];
-            var pathsToEntity = self.getPathsTo(hierarchy, indexObject, entityIRI);
-            _.forEach(pathsToEntity, path => {
-                var entity = _.find(hierarchy, {entityIRI: path.shift()});
-                while (path.length > 0) {
-                    entity = _.find(entity.subEntities, {entityIRI: path.shift()});
-                }
-                results.push(entity);
-            });
-            return results;
-        }
         function commonGoTo(key, iri, flatHierarchy) {
             self.setActivePage(key);
             self.selectItem(iri);
@@ -1768,9 +1770,6 @@
                     findValuesMissingDatatypes(object[key]);
                 });
             }
-        }
-        function addOntologyIdToArray(arr, ontologyId) {
-            return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
         }
         function setPropertyIcon(entity) {
             _.set(entity, 'mobi.icon', getIcon(entity));
@@ -1860,30 +1859,6 @@
                 listItem[prop].push(filteredJson);
             }
         }
-        function orderHierarchy(hierarchy, listItem) {
-            return _.sortBy(hierarchy, node => {
-                if (_.has(node, 'subEntities')) {
-                    node.subEntities = orderHierarchy(node.subEntities, listItem);
-                }
-                return _.lowerCase(self.getEntityNameByIndex(node.entityIRI, listItem));
-            });
-        }
-        function addNodeToResult(node, result, indent, path) {
-            var newPath = _.concat(path, node.entityIRI);
-            var item = {
-                hasChildren: _.has(node, 'subEntities'),
-                entityIRI: node.entityIRI,
-                indent,
-                path: newPath
-            };
-            result.push(item);
-            _.forEach(_.get(node, 'subEntities', []), subNode => {
-                addNodeToResult(subNode, result, indent + 1, newPath);
-            });
-        }
-        function sortByName(array, listItem) {
-            return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], listItem)));
-        }
         function addImportedOntologyToListItem(listItem, importedOntObj) {
             var index = {};
             var blankNodes = {};
@@ -1915,23 +1890,11 @@
             listItem.importedOntologyIds.push(importedOntObj.id);
             listItem.importedOntologies.push(importedOntologyListItem);
         }
-    }
-    function getClassesForIndividuals(index, iri) {
-        var result = [iri];
-        if (_.has(index, iri)) {
-            var indexCopy = angular.copy(index);
-            var parentIRIs = _.get(indexCopy, iri);
-            _.unset(indexCopy, iri);
-            _.forEach(parentIRIs, parentIRI => {
-                result = _.concat(result, getClassesForIndividuals(indexCopy, parentIRI));
-            });
+        function setHierarchyInfo(obj, response, key) {
+            var hierarchyInfo = _.get(response, key, {parentMap: {}, childMap: {}});
+            obj.parentMap = hierarchyInfo.parentMap;
+            obj.childMap = hierarchyInfo.childMap;
         }
-        return result;
-    }
-    function setHierarchyInfo(obj, response, key) {
-        var hierarchyInfo = _.get(response, key, {hierarchy: [], index: {}});
-        obj.hierarchy = hierarchyInfo.hierarchy;
-        obj.index = hierarchyInfo.index;
     }
 
     angular.module('shared')
