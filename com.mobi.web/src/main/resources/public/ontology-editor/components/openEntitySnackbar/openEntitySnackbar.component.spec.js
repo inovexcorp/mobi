@@ -54,6 +54,7 @@ describe('Open Entity Snackbar component', function() {
 
     describe('initializes with the correct values', function() {
         it('for show, entityName and goTo', function() {
+            $timeout.flush();
             expect(this.controller.entityName).toEqual('Entity Name');
             expect(this.controller.show).toEqual(true);
             expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');

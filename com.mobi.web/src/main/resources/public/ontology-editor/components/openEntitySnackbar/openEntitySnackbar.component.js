@@ -47,24 +47,29 @@
     function openEntitySnackbarComponentCtrl($timeout, ontologyStateService) {
         var dvm = this;
         dvm.os = ontologyStateService;
-        dvm.show = true;
+        dvm.show = false;
         dvm.entityName = '';
 
         dvm.$onInit = function() {
             setShow();
             dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
         }
-
+        dvm.$onDestroy = function() {
+            dvm.os.listItem.goTo.active = false;
+            dvm.os.listItem.goTo.entityIRI = '';
+        }
         dvm.openEntity = function() {
             dvm.os.goTo(dvm.iri);
             closeSnackbar();
         }
 
         function setShow() {
-            dvm.show = true;
             $timeout(() => {
-                closeSnackbar();
-            }, 5500);
+                dvm.show = true;
+                $timeout(() => {
+                    closeSnackbar();
+                }, 5500);
+            }, 200)
         }
 
         function closeSnackbar() {
