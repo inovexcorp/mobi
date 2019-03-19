@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Datasets List component', function() {
+describe('Datasets List component', function() {
     var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('datasetsList');
+        module('datasets');
+        mockComponent('datasets', 'uploadDataOverlay');
         mockDatasetState();
         mockDatasetManager();
         mockCatalogManager();
@@ -231,8 +232,7 @@ fdescribe('Datasets List component', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('datasets-list')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('DATASETS-LIST');
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         ['block', 'block-content', 'block-footer', 'paging'].forEach(test => {

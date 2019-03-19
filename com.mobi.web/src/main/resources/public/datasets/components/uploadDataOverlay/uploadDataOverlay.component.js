@@ -46,12 +46,12 @@
             dismiss: '&'
         },
         controllerAs: 'dvm',
-        controller: UploadDataOverlayComponentCtrl
+        controller: uploadDataOverlayComponentCtrl
     };
 
     uploadDataOverlayComponentCtrl.$inject = ['datasetManagerService', 'datasetStateService', 'utilService', 'httpService'];
 
-    function UploadDataOverlayComponentCtrl(datasetManagerService, datasetStateService, utilService, httpService) {
+    function uploadDataOverlayComponentCtrl(datasetManagerService, datasetStateService, utilService, httpService) {
         var dvm = this;
         var state = datasetStateService;
         var dm = datasetManagerService;

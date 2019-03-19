@@ -36,7 +36,7 @@
      * `editDatasetOverlay` is a component that creates content for a modal with a form containing fields for
      * editing an existing Dataset Record. The form contains fields for the title, description,
      * {@link shared.component:keywordSelect keywords}, and
-     * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the Dataset
+     * {@link datasets.component:datasetsOntologyPicker ontologies to be linked} to the Dataset
      * Record. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal

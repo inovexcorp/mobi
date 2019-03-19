@@ -25,7 +25,7 @@ describe('Upload Data Overlay component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('uploadDataOverlay');
+        module('datasets');
         mockDatasetManager();
         mockDatasetState();
         mockUtil();

@@ -43,7 +43,7 @@
      * opened. Only one dataset can be open at a time. The component is replaced by the contents of its template.
      */
     const datasetsListComponent = {
-        templateUrl: 'datasets/components/datasetsList/datasetsList.directive.html',
+        templateUrl: 'datasets/components/datasetsList/datasetsList.component.html',
         controllerAs: 'dvm',
         controller: datasetsListComponentCtrl
     }
@@ -55,13 +55,15 @@
         var dm = datasetManagerService;
         var cm = catalogManagerService;
         var cachedOntologyRecords = [];
-        var catalogId = _.get(cm.localCatalog, '@id', '');
         dvm.state = datasetStateService;
         dvm.util = utilService;
         dvm.prefixes = prefixes;
         dvm.cachedOntologyIds = [];
-        dvm.currentPage = dvm.state.paginationConfig.pageIndex + 1;
 
+        dvm.$onInit = function() {
+            dvm.catalogId = _.get(cm.localCatalog, '@id', '');
+            dvm.currentPage = dvm.state.paginationConfig.pageIndex + 1;
+        }
         dvm.getIdentifiedOntologyIds = function(dataset) {
             return _.map(dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']);
         }
@@ -76,7 +78,7 @@
                 dvm.state.selectedDataset = dataset;
                 dvm.state.openedDatasetId = dataset.record['@id'];
                 var toRetrieve = _.filter(dvm.getIdentifiedOntologyIds(dataset), id => !_.includes(dvm.cachedOntologyIds, id));
-                $q.all(_.map(toRetrieve, id => cm.getRecord(id, catalogId)))
+                $q.all(_.map(toRetrieve, id => cm.getRecord(id, dvm.catalogId)))
                     .then(responses => {
                         dvm.cachedOntologyIds = _.concat(dvm.cachedOntologyIds, _.map(responses, '@id'));
                         cachedOntologyRecords = _.concat(cachedOntologyRecords, responses);
@@ -121,6 +123,6 @@
         }
     }
 
-    angular.module(dataset)
+    angular.module('datasets')
         .component('datasetsList', datasetsListComponent);
 })();

@@ -25,7 +25,7 @@ describe('Edit Dataset Overlay component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('editDatasetOverlay');
+        module('datasets');
         mockDatasetState();
         mockDatasetManager();
         mockCatalogManager();

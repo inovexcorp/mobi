@@ -34,7 +34,7 @@
      * `newDatasetOverlay` is a component that creates content for a modal with a form containing fields for
      * creating a new Dataset Record. The fields are for the title, repository id, dataset IRI, description,
      * {@link shared.component:keywordSelect keywords}, and
-     * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the new Dataset
+     * {@link datasets.component:datasetsOntologyPicker ontologies to be linked} to the new Dataset
      * Record. The repository id is a static field for now. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *
