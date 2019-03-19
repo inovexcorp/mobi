@@ -20,6 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datasets-page clearfix h-100">
-    <datasets-tabset></datasets-tabset>
+<div class="catalog-page h-100 container-fluid">
+    <records-view ng-if="!dvm.state.selectedRecord"></records-view>
+    <record-view ng-if="dvm.state.selectedRecord"></record-view>
 </div>
