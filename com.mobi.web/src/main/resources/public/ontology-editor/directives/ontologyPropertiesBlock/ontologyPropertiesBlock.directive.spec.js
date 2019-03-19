@@ -60,6 +60,14 @@ describe('Ontology Properties Block directive', function() {
         this.element.remove();
     });
 
+    it('initializes with the correct data', function() {
+        ontologyStateSvc.listItem.annotations.iris = {'annotation1': '', 'ont2': '', 'default2': '', 'owl2': ''};
+        propertyManagerSvc.ontologyProperties = ['ont1', 'ont2'];
+        propertyManagerSvc.defaultAnnotations = ['default1', 'default2'];
+        propertyManagerSvc.owlAnnotations = ['owl1', 'owl2'];
+        this.controller.$onInit();
+        expect(this.controller.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', 'annotation1']);
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');

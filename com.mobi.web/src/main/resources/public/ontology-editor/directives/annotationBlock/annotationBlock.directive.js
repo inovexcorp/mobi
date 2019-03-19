@@ -52,9 +52,9 @@
          */
         .directive('annotationBlock', annotationBlock);
 
-        annotationBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
+        annotationBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
 
-        function annotationBlock(ontologyStateService, ontologyUtilsManagerService, modalService) {
+        function annotationBlock(ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -67,10 +67,14 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var pm = propertyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.annotations = _.keys(dvm.os.listItem.annotations.iris);
+                    dvm.annotations = [];
 
+                    dvm.$onInit = function() {
+                        dvm.annotations = _.union(_.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
+                    }
                     dvm.openAddOverlay = function() {
                         dvm.os.editingAnnotation = false;
                         dvm.os.annotationSelect = undefined;

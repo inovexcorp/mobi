@@ -145,11 +145,11 @@
                         _.forEach(dvm.properties, property => {
                             _.forEach(_.get(property, 'restrictions', []), restriction => {
                                 var length = _.get(dvm.instance, property.propertyIRI, []).length;
-                                if (_.includes(restriction.classExpressionType, 'EXACT') && length !== restriction.cardinality) {
+                                if (restriction.cardinalityType === prefixes.owl + 'cardinality' && length !== restriction.cardinality) {
                                     missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
-                                } else if (_.includes(restriction.classExpressionType, 'MIN') && length < restriction.cardinality) {
+                                } else if (restriction.cardinalityType === prefixes.owl + 'minCardinality' && length < restriction.cardinality) {
                                     missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
-                                } else if (_.includes(restriction.classExpressionType, 'MAX') && length > restriction.cardinality) {
+                                } else if (restriction.cardinalityType === prefixes.owl + 'maxCardinality' && length > restriction.cardinality) {
                                     missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
                                 }
                             });
@@ -161,11 +161,11 @@
                         var details = _.find(dvm.properties, {propertyIRI});
                         var results = [];
                         _.forEach(_.get(details, 'restrictions', []), restriction => {
-                            if (_.includes(restriction.classExpressionType, 'EXACT')) {
+                            if (restriction.cardinalityType === prefixes.owl + 'cardinality') {
                                 results.push('exactly ' + restriction.cardinality);
-                            } else if (_.includes(restriction.classExpressionType, 'MIN')) {
+                            } else if (restriction.cardinalityType === prefixes.owl + 'minCardinality') {
                                 results.push('at least ' + restriction.cardinality);
-                            } else if (_.includes(restriction.classExpressionType, 'MAX')) {
+                            } else if (restriction.cardinalityType === prefixes.owl + 'maxCardinality') {
                                 results.push('at most ' + restriction.cardinality);
                             }
                         });

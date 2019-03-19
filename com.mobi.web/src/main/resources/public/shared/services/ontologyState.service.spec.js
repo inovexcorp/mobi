@@ -132,36 +132,76 @@ describe('Ontology State Service', function() {
             other: {active: false}
         };
 
+        this.hierarchyInfo = {
+            iris: {
+                'node1a': this.ontologyId,
+                'node1b': this.ontologyId,
+                'node2a': this.ontologyId,
+                'node2b': this.ontologyId,
+                'node2c': this.ontologyId,
+                'node3a': this.ontologyId,
+                'node3b': this.ontologyId,
+                'node3c': this.ontologyId,
+            },
+            parentMap: {
+                'node1a': ['node2a', 'node2b', 'node2c'],
+                'node1b': ['node3b'],
+                'node2a': ['node3a', 'node3c'],
+                'node2b': ['node3a'],
+                'node2c': ['node3b'],
+                'node3b': ['node3a'],
+            },
+            childMap: {
+                'node2a': ['node1a'],
+                'node2b': ['node1a'],
+                'node2c': ['node1a'],
+                'node3a': ['node2a', 'node2b', 'node3b'],
+                'node3b': ['node1b', 'node2c'],
+                'node3c': ['node2a'],
+            }
+        };
         this.hierarchy = [{
-            entityIRI: 'node1a',
-            subEntities: [{
-                entityIRI: 'node2a',
-                subEntities: [{
-                    entityIRI: 'node3a'
+            '@id': 'node1a',
+            '@type': ['http://mobi.com/hierarchy#Node'],
+            'http://mobi.com/hierarchy#child': [{
+                '@id': 'node2a',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 },
                 {
-                    entityIRI: 'node3c'
+                    '@id': 'node3c',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }, {
-                entityIRI: 'node2b',
-                subEntities: [{
-                    entityIRI: 'node3a'
+                '@id': 'node2b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }, {
-                entityIRI: 'node2c',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
+                '@id': 'node2c',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3b',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
+                    'http://mobi.com/hierarchy#child': [{
+                        '@id': 'node3a',
+                        '@type': ['http://mobi.com/hierarchy#Node'],
                     }]
                 }]
             }]
         }, {
-            entityIRI: 'node1b',
-            subEntities: [{
-                entityIRI: 'node3b',
-                subEntities: [{
-                    entityIRI: 'node3a'
+            '@id': 'node1b',
+            '@type': ['http://mobi.com/hierarchy#Node'],
+            'http://mobi.com/hierarchy#child': [{
+                '@id': 'node3b',
+                '@type': ['http://mobi.com/hierarchy#Node'],
+                'http://mobi.com/hierarchy#child': [{
+                    '@id': 'node3a',
+                    '@type': ['http://mobi.com/hierarchy#Node'],
                 }]
             }]
         }];
@@ -2026,24 +2066,28 @@ describe('Ontology State Service', function() {
                 derivedConcepts: ['derivedConcept'],
                 derivedConceptSchemes: ['derivedConceptScheme'],
                 derivedSemanticRelations: ['derivedSemanticRelation'],
-                concepts: {
-                    index: {0: 'derivedConcept'},
-                    hierarchy: ['derivedConcept']
+                concepts: ['derivedConcept1', 'derivedConcept2'],
+                conceptSchemes: ['derivedConceptScheme1', 'derivedConceptScheme2'],
+                conceptHierarchy: {
+                    childMap: {'derivedConcept2': ['derivedConcept1']},
+                    parentMap: {'derivedConcept1': ['derivedConcept2']}
                 },
-                conceptSchemes: {
-                    index: {0: 'derivedConceptScheme'},
-                    hierarchy: ['derivedConceptScheme']
+                conceptSchemeHierarchy: {
+                    childMap: {'derivedConceptScheme2': ['derivedConceptScheme1']},
+                    parentMap: {'derivedConceptScheme1': ['derivedConceptScheme2']}
                 }
             };
-            spyOn(ontologyStateSvc, 'flattenHierarchy').and.callFake(_.identity);
+            this.flatHierarchy = [{entityIRI: 'test'}];
+            spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue(this.flatHierarchy);
         });
         describe('the current listItem when getVocabularyStuff', function() {
             beforeEach(function() {
-                ontologyStateSvc.listItem.derivedConcepts = [];
-                ontologyStateSvc.listItem.derivedConceptSchemes = [];
-                ontologyStateSvc.listItem.derivedSemanticRelations = [];
-                ontologyStateSvc.listItem.concepts = {hierarchy: [], index: {}, flat: []};
-                ontologyStateSvc.listItem.conceptSchemes = {hierarchy: [], index: {}, flat: []};
+                ontologyStateSvc.listItem.ontologyId = this.ontologyId;
+                ontologyStateSvc.listItem.derivedConcepts = ['0'];
+                ontologyStateSvc.listItem.derivedConceptSchemes = ['0'];
+                ontologyStateSvc.listItem.derivedSemanticRelations = ['0'];
+                ontologyStateSvc.listItem.concepts = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
+                ontologyStateSvc.listItem.conceptSchemes = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
                 ontologyStateSvc.listItem.editorTabStates.concepts = {entityIRI: 'iri', usages: []};
             });
             it('resolves', function() {
@@ -2051,36 +2095,36 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.setVocabularyStuff();
                 scope.$apply();
                 expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
-                expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, ontologyStateSvc.vocabularySpinnerId);
                 expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
                 expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual(['derivedSemanticRelation']);
-                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual(this.response.concepts.hierarchy);
-                expect(ontologyStateSvc.listItem.concepts.index).toEqual(this.response.concepts.index);
-                expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.response.concepts.hierarchy);
-                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual(this.response.conceptSchemes.hierarchy);
-                expect(ontologyStateSvc.listItem.conceptSchemes.index).toEqual(this.response.conceptSchemes.index);
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual(this.response.conceptSchemes.hierarchy);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.listItem.concepts.iris).toEqual({'derivedConcept1': this.ontologyId, 'derivedConcept2': this.ontologyId});
+                expect(ontologyStateSvc.listItem.concepts.childMap).toEqual(this.response.conceptHierarchy.childMap);
+                expect(ontologyStateSvc.listItem.concepts.parentMap).toEqual(this.response.conceptHierarchy.parentMap);
+                expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.flatHierarchy);
+                expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({'derivedConceptScheme1': this.ontologyId, 'derivedConceptScheme2': this.ontologyId});
+                expect(ontologyStateSvc.listItem.conceptSchemes.childMap).toEqual(this.response.conceptSchemeHierarchy.childMap);
+                expect(ontologyStateSvc.listItem.conceptSchemes.parentMap).toEqual(this.response.conceptSchemeHierarchy.parentMap);
+                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual(this.flatHierarchy);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, jasmine.objectContaining({ontologyId: ontologyStateSvc.listItem.ontologyId}));
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, jasmine.objectContaining({ontologyId: ontologyStateSvc.listItem.ontologyId}));
                 expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({});
                 expect(util.createErrorToast).not.toHaveBeenCalled();
             });
             it('rejects', function() {
+                var originalConcepts = angular.copy(ontologyStateSvc.listItem.concepts);
+                var originalConceptSchemes = angular.copy(ontologyStateSvc.listItem.conceptSchemes);
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.setVocabularyStuff();
                 scope.$apply();
                 expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
                 expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
-                expect(ontologyStateSvc.listItem.derivedConcepts).toEqual([]);
-                expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual([]);
-                expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual([]);
-                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([]);
-                expect(ontologyStateSvc.listItem.concepts.index).toEqual({});
-                expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
-                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([]);
-                expect(ontologyStateSvc.listItem.conceptSchemes.index).toEqual({});
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['0']);
+                expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['0']);
+                expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual(['0']);
+                expect(ontologyStateSvc.listItem.concepts).toEqual(originalConcepts);
+                expect(ontologyStateSvc.listItem.conceptSchemes).toEqual(originalConceptSchemes);
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({entityIRI: 'iri', usages: []});
                 expect(util.createErrorToast).toHaveBeenCalledWith(this.error);
@@ -2088,11 +2132,12 @@ describe('Ontology State Service', function() {
         });
         describe('the provided listItem when getVocabularyStuff', function() {
             beforeEach(function() {
-                listItem.editorTabStates.concepts = { entityIRI: 'iri', usages: [] };
-                listItem.derivedConcepts = [];
-                listItem.derivedConceptSchemes = [];
-                listItem.concepts = { index: {}, hierarchy: [], flat: [] };
-                listItem.conceptSchemes = { index: {}, hierarchy: [], flat: [] };
+                listItem.derivedConcepts = ['0'];
+                listItem.derivedConceptSchemes = ['0'];
+                listItem.derivedSemanticRelations = ['0'];
+                listItem.concepts = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
+                listItem.conceptSchemes = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
+                listItem.editorTabStates.concepts = {entityIRI: 'iri', usages: []};
             });
             it('resolves', function() {
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.when(this.response));
@@ -2102,31 +2147,32 @@ describe('Ontology State Service', function() {
                 expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
                 expect(listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
-                expect(listItem.concepts.hierarchy).toEqual(this.response.concepts.hierarchy);
-                expect(listItem.concepts.index).toEqual(this.response.concepts.index);
-                expect(listItem.concepts.flat).toEqual(this.response.concepts.hierarchy);
-                expect(listItem.conceptSchemes.hierarchy).toEqual(this.response.conceptSchemes.hierarchy);
-                expect(listItem.conceptSchemes.index).toEqual(this.response.conceptSchemes.index);
-                expect(listItem.conceptSchemes.flat).toEqual(this.response.conceptSchemes.hierarchy);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.concepts.hierarchy, listItem.ontologyRecord.recordId, listItem);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.conceptSchemes.hierarchy, listItem.ontologyRecord.recordId, listItem);
+                expect(listItem.concepts.iris).toEqual({'derivedConcept1': listItem.ontologyId, 'derivedConcept2': listItem.ontologyId});
+                expect(listItem.concepts.parentMap).toEqual(this.response.conceptHierarchy.parentMap);
+                expect(listItem.concepts.childMap).toEqual(this.response.conceptHierarchy.childMap);
+                expect(listItem.concepts.flat).toEqual(this.flatHierarchy);
+                expect(listItem.conceptSchemes.iris).toEqual({'derivedConceptScheme1': listItem.ontologyId, 'derivedConceptScheme2': listItem.ontologyId});
+                expect(listItem.conceptSchemes.parentMap).toEqual(this.response.conceptSchemeHierarchy.parentMap);
+                expect(listItem.conceptSchemes.childMap).toEqual(this.response.conceptSchemeHierarchy.childMap);
+                expect(listItem.conceptSchemes.flat).toEqual(this.flatHierarchy);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(listItem.concepts, jasmine.objectContaining({ontologyId: listItem.ontologyId}));
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(listItem.conceptSchemes, jasmine.objectContaining({ontologyId: listItem.ontologyId}));
                 expect(listItem.editorTabStates.concepts).toEqual({});
                 expect(util.createErrorToast).not.toHaveBeenCalled();
             });
             it('rejects', function() {
+                var originalConcepts = angular.copy(listItem.concepts);
+                var originalConceptSchemes = angular.copy(listItem.conceptSchemes);
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.reject(this.error));
                 ontologyStateSvc.setVocabularyStuff(listItem);
                 scope.$apply();
                 expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
                 expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
-                expect(listItem.derivedConcepts).toEqual([]);
-                expect(listItem.derivedConceptSchemes).toEqual([]);
-                expect(listItem.concepts.hierarchy).toEqual([]);
-                expect(listItem.concepts.index).toEqual({});
-                expect(listItem.concepts.flat).toEqual([]);
-                expect(listItem.conceptSchemes.hierarchy).toEqual([]);
-                expect(listItem.conceptSchemes.index).toEqual({});
-                expect(listItem.conceptSchemes.flat).toEqual([]);
+                expect(listItem.derivedConcepts).toEqual(['0']);
+                expect(listItem.derivedConceptSchemes).toEqual(['0']);
+                expect(listItem.derivedSemanticRelations).toEqual(['0']);
+                expect(listItem.concepts).toEqual(originalConcepts);
+                expect(listItem.conceptSchemes).toEqual(originalConceptSchemes);
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
                 expect(listItem.editorTabStates.concepts).toEqual({entityIRI: 'iri', usages: []});
                 expect(util.createErrorToast).toHaveBeenCalledWith(this.error);
@@ -2135,16 +2181,22 @@ describe('Ontology State Service', function() {
     });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
         spyOn(ontologyStateSvc, 'getEntityNameByIndex').and.callFake(_.identity);
-        expect(ontologyStateSvc.flattenHierarchy([{
-            entityIRI: 'Class B',
-            subEntities: [{
-                entityIRI: 'Class B2'
-            }, {
-                entityIRI: 'Class B1'
-            }]
-        }, {
-            entityIRI: 'Class A'
-        }], this.recordId)).toEqual([{
+        var hierarchyInfo = {
+            iris: {
+                'Class B': 'ontology',
+                'Class B1': 'ontology',
+                'Class B2': 'ontology',
+                'Class A': 'ontology',
+            },
+            parentMap: {
+                'Class B': ['Class B1', 'Class B2']
+            },
+            childMap: {
+                'Class B1': ['Class B'],
+                'Class B2': ['Class B']
+            }
+        }
+        expect(ontologyStateSvc.flattenHierarchy(hierarchyInfo, {ontologyRecord: {recordId: this.recordId}})).toEqual([{
             entityIRI: 'Class A',
             hasChildren: false,
             path: [this.recordId, 'Class A'],
@@ -2366,6 +2418,8 @@ describe('Ontology State Service', function() {
             this.datatypeId2 = 'datatypeId2';
             this.annotationId2 = 'annotationId2';
             this.individualId2 = 'individualId2';
+            this.conceptId2 = 'conceptId2';
+            this.conceptSchemeId2 = 'conceptSchemeId2';
             this.userBranchId = 'userBranchId';
             this.userBranch = {
                 '@id': this.userBranchId
@@ -2378,8 +2432,10 @@ describe('Ontology State Service', function() {
                     objectProperties: [this.objectPropertyId],
                     dataProperties: [this.dataPropertyId],
                     namedIndividuals: [this.individualId],
-                    derivedConcepts: [this.conceptId],
-                    derivedConceptSchemes: [this.conceptSchemeId],
+                    concepts: [this.conceptId],
+                    conceptSchemes: [this.conceptSchemeId],
+                    derivedConcepts: [this.classId],
+                    derivedConceptSchemes: [this.classId],
                     derivedSemanticRelations: [this.semanticRelationId]
                 },
                 importedIRIs: [{
@@ -2389,16 +2445,18 @@ describe('Ontology State Service', function() {
                     dataProperties: [this.dataPropertyId2],
                     objectProperties: [this.objectPropertyId2],
                     namedIndividuals: [this.individualId2],
-                    datatypes: [this.datatypeId2]
+                    datatypes: [this.datatypeId2],
+                    concepts: [this.conceptId2],
+                    conceptSchemes: [this.conceptSchemeId2],
                 }],
                 importedOntologies: [{ontology: [], ontologyId: 'importId', id: 'id'}],
-                classHierarchy: {hierarchy: [], index: {}},
+                classHierarchy: {parentMap: {}, childMap: {}},
                 individuals: {ClassA: ['IndivA1', 'IndivA2']},
-                dataPropertyHierarchy: {hierarchy: [], index: {}},
-                objectPropertyHierarchy: {hierarchy: [], index: {}},
-                annotationHierarchy: {hierarchy: [], index: {}},
-                conceptHierarchy: {hierarchy: [], index: {}},
-                conceptSchemeHierarchy: {hierarchy: [], index: {}},
+                dataPropertyHierarchy: {parentMap: {}, childMap: {}},
+                objectPropertyHierarchy: {parentMap: {}, childMap: {}},
+                annotationHierarchy: {parentMap: {}, childMap: {}},
+                conceptHierarchy: {parentMap: {}, childMap: {}},
+                conceptSchemeHierarchy: {parentMap: {}, childMap: {}},
                 failedImports: ['failedId']
             }));
             this.branches = [this.branch, this.userBranch];
@@ -2445,44 +2503,52 @@ describe('Ontology State Service', function() {
                         expectedIriObj[this.individualId2] = this.ontologyId;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
+                        expectedIriObj[this.conceptId] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
+                        expectedIriObj = {};
+                        expectedIriObj[this.conceptSchemeId] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
+                        expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
                         expectedIriObj[this.datatypeId2] = this.ontologyId;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
-                        expect(_.get(response, 'derivedConcepts')).toEqual([this.conceptId]);
-                        expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.conceptSchemeId]);
+                        expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
+                        expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedSemanticRelations')).toEqual([this.semanticRelationId]);
-                        expect(_.get(response, 'classes.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'classes.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'classes.parentMap')).toEqual({});
+                        expect(_.get(response, 'classes.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'classes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
                         expect(_.get(response, 'classesAndIndividuals')).toEqual({ClassA: ['IndivA1', 'IndivA2']});
                         expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalled();
                         expect(_.get(response, 'individualsParentPath')).toEqual(['ClassA']);
-                        expect(_.get(response, 'dataProperties.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'dataProperties.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'dataProperties.parentMap')).toEqual({});
+                        expect(_.get(response, 'dataProperties.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'dataProperties.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'objectProperties.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'objectProperties.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'objectProperties.parentMap')).toEqual({});
+                        expect(_.get(response, 'objectProperties.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'objectProperties.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'branches')).toEqual(this.branches);
                         expect(_.get(response, 'tags')).toEqual([this.tag]);
-                        expect(_.get(response, 'annotations.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'annotations.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'annotations.parentMap')).toEqual({});
+                        expect(_.get(response, 'annotations.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'annotations.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'concepts.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'concepts.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'concepts.parentMap')).toEqual({});
+                        expect(_.get(response, 'concepts.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'concepts.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'conceptSchemes.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'conceptSchemes.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'conceptSchemes.parentMap')).toEqual({});
+                        expect(_.get(response, 'conceptSchemes.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
+                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2533,44 +2599,52 @@ describe('Ontology State Service', function() {
                         expectedIriObj[this.individualId2] = this.ontologyId;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
+                        expectedIriObj[this.conceptId] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
+                        expectedIriObj = {};
+                        expectedIriObj[this.conceptSchemeId] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
+                        expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
                         expectedIriObj[this.datatypeId2] = this.ontologyId;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
-                        expect(_.get(response, 'derivedConcepts')).toEqual([this.conceptId]);
-                        expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.conceptSchemeId]);
+                        expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
+                        expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedSemanticRelations')).toEqual([this.semanticRelationId]);
-                        expect(_.get(response, 'classes.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'classes.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'classes.parentMap')).toEqual({});
+                        expect(_.get(response, 'classes.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'classes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
                         expect(_.get(response, 'classesAndIndividuals')).toEqual({ClassA: ['IndivA1', 'IndivA2']});
                         expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalled();
                         expect(_.get(response, 'individualsParentPath')).toEqual(['ClassA']);
-                        expect(_.get(response, 'dataProperties.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'dataProperties.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'dataProperties.parentMap')).toEqual({});
+                        expect(_.get(response, 'dataProperties.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'dataProperties.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'objectProperties.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'objectProperties.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'objectProperties.parentMap')).toEqual({});
+                        expect(_.get(response, 'objectProperties.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'objectProperties.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'branches')).toEqual(this.branches);
                         expect(_.get(response, 'tags')).toEqual([this.tag]);
-                        expect(_.get(response, 'annotations.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'annotations.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'annotations.parentMap')).toEqual({});
+                        expect(_.get(response, 'annotations.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'annotations.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'concepts.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'concepts.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'concepts.parentMap')).toEqual({});
+                        expect(_.get(response, 'concepts.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'concepts.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'conceptSchemes.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'conceptSchemes.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'conceptSchemes.parentMap')).toEqual({});
+                        expect(_.get(response, 'conceptSchemes.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
+                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2622,44 +2696,52 @@ describe('Ontology State Service', function() {
                         expectedIriObj[this.individualId2] = this.ontologyId;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
+                        expectedIriObj[this.conceptId] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
+                        expectedIriObj = {};
+                        expectedIriObj[this.conceptSchemeId] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
+                        expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
                         expectedIriObj[this.datatypeId2] = this.ontologyId;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
-                        expect(_.get(response, 'derivedConcepts')).toEqual([this.conceptId]);
-                        expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.conceptSchemeId]);
+                        expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
+                        expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedSemanticRelations')).toEqual([this.semanticRelationId]);
-                        expect(_.get(response, 'classes.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'classes.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'classes.parentMap')).toEqual({});
+                        expect(_.get(response, 'classes.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'classes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
                         expect(_.get(response, 'classesAndIndividuals')).toEqual({ClassA: ['IndivA1', 'IndivA2']});
                         expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalled();
                         expect(_.get(response, 'individualsParentPath')).toEqual(['ClassA']);
-                        expect(_.get(response, 'dataProperties.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'dataProperties.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'dataProperties.parentMap')).toEqual({});
+                        expect(_.get(response, 'dataProperties.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'dataProperties.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'objectProperties.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'objectProperties.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'objectProperties.parentMap')).toEqual({});
+                        expect(_.get(response, 'objectProperties.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'objectProperties.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'branches')).toEqual(this.branches);
                         expect(_.get(response, 'tags')).toEqual([this.tag]);
-                        expect(_.get(response, 'annotations.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'annotations.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'annotations.parentMap')).toEqual({});
+                        expect(_.get(response, 'annotations.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'annotations.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'concepts.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'concepts.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'concepts.parentMap')).toEqual({});
+                        expect(_.get(response, 'concepts.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'concepts.flat')).toEqual([{prop: 'flatten'}]);
-                        expect(_.get(response, 'conceptSchemes.hierarchy')).toEqual([]);
-                        expect(_.get(response, 'conceptSchemes.index')).toEqual({});
-                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes.hierarchy, this.recordId, response);
+                        expect(_.get(response, 'conceptSchemes.parentMap')).toEqual({});
+                        expect(_.get(response, 'conceptSchemes.childMap')).toEqual({});
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
+                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2715,7 +2797,7 @@ describe('Ontology State Service', function() {
                 classB: ['ind3', 'ind4']
             },
             classes: {
-                index: {
+                childMap: {
                     classB: ['classA'],
                     classZ: ['classY']
                 }
@@ -3342,520 +3424,55 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.isCommittable({})).toBe(false);
         });
     });
-    describe('addEntityToHierarchy', function() {
-        beforeEach(function() {
-            spyOn(ontologyStateSvc, 'flattenHierarchy');
+    describe('addEntityToHierarchy should add the entity to the proper maps', function() {
+        it('where the parent entity has children', function() {
+            ontologyStateSvc.addEntityToHierarchy(this.hierarchyInfo, 'new-node', 'node1a');
+            expect(this.hierarchyInfo.parentMap['node1a']).toEqual(['node2a', 'node2b', 'node2c', 'new-node']);
+            expect(this.hierarchyInfo.childMap['new-node']).toEqual(['node1a']);
         });
-        describe('should add the entity to the single proper location in the tree', function() {
-            it('where the parent entity has subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node1a');
-                expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        },
-                        {
-                            entityIRI: 'node3c'
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
-                            }]
-                        }]
-                    }, {
-                        entityIRI: 'new-node'
-                    }]
-                }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }]
-                }]);
-                expect(this.indexObject).toEqual({
-                    'node2a': ['node1a'],
-                    'node2b': ['node1a'],
-                    'node2c': ['node1a'],
-                    'node3a': ['node2a', 'node2b', 'node3b'],
-                    'node3b': ['node2c', 'node1b'],
-                    'node3c': ['node2a'],
-                    'new-node': ['node1a']
-                });
-            });
-            it('where the parent does not have subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node3c');
-                expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }, {
-                            entityIRI: 'node3c',
-                            subEntities: [{
-                                entityIRI: 'new-node'
-                            }]
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
-                            }]
-                        }]
-                    }]
-                }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }]
-                }]);
-                expect(this.indexObject).toEqual({
-                    'node2a': ['node1a'],
-                    'node2b': ['node1a'],
-                    'node2c': ['node1a'],
-                    'node3a': ['node2a', 'node2b', 'node3b'],
-                    'node3b': ['node2c', 'node1b'],
-                    'node3c': ['node2a'],
-                    'new-node': ['node3c']
-                });
-            });
+        it('where the parent does not have children', function() {
+            ontologyStateSvc.addEntityToHierarchy(this.hierarchyInfo, 'new-node', 'node3c');
+            expect(this.hierarchyInfo.parentMap['node3c']).toEqual(['new-node']);
+            expect(this.hierarchyInfo.childMap['new-node']).toEqual(['node3c']);
         });
-        describe('should add the entity to the multiple proper locations in the tree', function() {
-            it('where the parent entity has subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node3b');
-                expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }, {
-                            entityIRI: 'node3c'
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
-                            }, {
-                                entityIRI: 'new-node'
-                            }]
-                        }]
-                    }]
-                }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }, {
-                            entityIRI: 'new-node'
-                        }]
-                    }]
-                }]);
-                expect(this.indexObject).toEqual({
-                    'node2a': ['node1a'],
-                    'node2b': ['node1a'],
-                    'node2c': ['node1a'],
-                    'node3a': ['node2a', 'node2b', 'node3b'],
-                    'node3b': ['node2c', 'node1b'],
-                    'node3c': ['node2a'],
-                    'new-node': ['node3b']
-                });
-            });
-            it('where the parent does not have subEntities', function() {
-                ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'node3a');
-                expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a',
-                            subEntities: [{
-                                entityIRI: 'new-node'
-                            }]
-                        }, {
-                            entityIRI: 'node3c'
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a',
-                            subEntities: [{
-                                entityIRI: 'new-node'
-                            }]
-                        }]
-                    }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a',
-                                subEntities: [{
-                                    entityIRI: 'new-node'
-                                }]
-                            }]
-                        }]
-                    }]
-                }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a',
-                            subEntities: [{
-                                entityIRI: 'new-node'
-                            }]
-                        }]
-                    }]
-                }]);
-                expect(this.indexObject).toEqual({
-                    'node2a': ['node1a'],
-                    'node2b': ['node1a'],
-                    'node2c': ['node1a'],
-                    'node3a': ['node2a', 'node2b', 'node3b'],
-                    'node3b': ['node2c', 'node1b'],
-                    'node3c': ['node2a'],
-                    'new-node': ['node3a']
-                });
-            });
-        });
-        describe('should add the same hierarchy structure to the new area', function() {
-            it('when not at the root level', function() {
-                ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'node2b', this.indexObject, 'node1b');
-                expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }, {
-                            entityIRI: 'node3c'
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
-                            }]
-                        }]
-                    }]
-                }, {
-                    entityIRI: 'node1b',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }]
-                }]);
-                expect(this.indexObject).toEqual({
-                    'node2a': ['node1a'],
-                    'node2b': ['node1a','node1b'],
-                    'node2c': ['node1a'],
-                    'node3a': ['node2a', 'node2b', 'node3b'],
-                    'node3b': ['node2c', 'node1b'],
-                    'node3c': ['node2a']
-                });
-            });
-            it('when at the root level', function() {
-                ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'node1b', this.indexObject, 'node1a');
-                expect(this.hierarchy).toEqual([{
-                    entityIRI: 'node1a',
-                    subEntities: [{
-                        entityIRI: 'node2a',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }, {
-                            entityIRI: 'node3c'
-                        }]
-                    }, {
-                        entityIRI: 'node2b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }, {
-                        entityIRI: 'node2c',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
-                            }]
-                        }]
-                    }, {
-                        entityIRI: 'node1b',
-                        subEntities: [{
-                            entityIRI: 'node3b',
-                            subEntities: [{
-                                entityIRI: 'node3a'
-                            }]
-                        }]
-                    }]
-                }]);
-                expect(this.indexObject).toEqual({
-                    'node2a': ['node1a'],
-                    'node2b': ['node1a'],
-                    'node2c': ['node1a'],
-                    'node3a': ['node2a', 'node2b', 'node3b'],
-                    'node3b': ['node2c', 'node1b'],
-                    'node3c': ['node2a'],
-                    'node1b': ['node1a']
-                });
-            });
-        });
-        it('should add the entity to the end of the hierarchy if the provided parentIRI is not in the hierarchy', function() {
-            ontologyStateSvc.addEntityToHierarchy(this.hierarchy, 'new-node', this.indexObject, 'not-there');
-            expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2a',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }, {
-                        entityIRI: 'node3c'
-                    }]
-                }, {
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }]
-                }]
-            }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }]
-            }, {
-                entityIRI: 'new-node'
-            }]);
-            expect(this.indexObject).toEqual({
-                'node2a': ['node1a'],
-                'node2b': ['node1a'],
-                'node2c': ['node1a'],
-                'node3a': ['node2a', 'node2b', 'node3b'],
-                'node3b': ['node2c', 'node1b'],
-                'node3c': ['node2a']
-            });
+        it('unless the parent entity is not in the hierarchy', function() {
+            var originalParentMap = angular.copy(this.hierarchyInfo.parentMap);
+            var originalChildMap = angular.copy(this.hierarchyInfo.childMap);
+            ontologyStateSvc.addEntityToHierarchy(this.hierarchyInfo, 'new-node', 'not-there');
+            expect(this.hierarchyInfo.parentMap).toEqual(originalParentMap);
+            expect(this.hierarchyInfo.childMap).toEqual(originalChildMap);
         });
     });
-    describe('deleteEntityFromParentInHierarchy', function() {
-        beforeEach(function() {
-            spyOn(ontologyStateSvc, 'flattenHierarchy');
-        });
-        it('should remove the provided entityIRI from the parentIRI', function() {
-            ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchy, 'node3a', 'node3b', this.indexObject);
-            expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2a',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }, {
-                        entityIRI: 'node3c'
-                    }]
-                }, {
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b'
-                    }]
-                }]
-            }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b'
-                }]
-            }]);
-            expect(this.indexObject).toEqual({
-                'node2a': ['node1a'],
-                'node2b': ['node1a'],
-                'node2c': ['node1a'],
-                'node3a': ['node2a', 'node2b'],
-                'node3b': ['node2c', 'node1b'],
-                'node3c': ['node2a']
-            });
-        });
-        it('should add any subEntities that are unique to this location', function() {
-            ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchy, 'node2a', 'node1a', this.indexObject);
-            expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }]
-                }]
-            }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }]
-            }, {
-                entityIRI: 'node2a',
-                subEntities: [{
-                    entityIRI: 'node3a'
-                }, {
-                    entityIRI: 'node3c'
-                }]
-            }]);
-            expect(this.indexObject).toEqual({
-                'node2b': ['node1a'],
-                'node2c': ['node1a'],
-                'node3a': ['node2a', 'node2b', 'node3b'],
-                'node3b': ['node2c', 'node1b'],
-                'node3c': ['node2a']
-            });
-        });
+    it('deleteEntityFromParentInHierarchy should remove the provided entityIRI from the parentIRI', function() {
+        ontologyStateSvc.deleteEntityFromParentInHierarchy(this.hierarchyInfo, 'node3a', 'node3b');
+        expect(this.hierarchyInfo.parentMap['node3b']).toBeUndefined();
+        expect(this.hierarchyInfo.childMap['node3a']).toEqual(['node2a', 'node2b']);
     });
     describe('deleteEntityFromHierarchy', function() {
-        beforeEach(function() {
-            spyOn(ontologyStateSvc, 'flattenHierarchy');
-        });
         it('should delete the entity from the hierarchy tree', function() {
-            ontologyStateSvc.deleteEntityFromHierarchy(this.hierarchy, 'node3a', this.indexObject);
-            expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2a',
-                    subEntities: [{
-                        entityIRI: 'node3c'
-                    }]
-                }, {
-                    entityIRI: 'node2b'
-                }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b'
-                    }]
-                }]
-            }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b'
-                }]
-            }]);
-            expect(this.indexObject).toEqual({
-                'node2a': ['node1a'],
-                'node2b': ['node1a'],
-                'node2c': ['node1a'],
-                'node3b': ['node2c', 'node1b'],
-                'node3c': ['node2a']
-            });
+            ontologyStateSvc.deleteEntityFromHierarchy(this.hierarchyInfo, 'node3a');
+            expect(this.hierarchyInfo.parentMap['node2a']).toEqual(['node3c']);
+            expect(this.hierarchyInfo.parentMap['node2b']).toBeUndefined();
+            expect(this.hierarchyInfo.parentMap['node3b']).toBeUndefined();
+            expect(this.hierarchyInfo.childMap['node3a']).toBeUndefined();
         });
-        it('should move the subEntities if required', function() {
-            updateRefsSvc.remove.and.callFake(function(indexObject, entityIRI) {
-                _.unset(indexObject, 'node3c');
-            });
-            ontologyStateSvc.deleteEntityFromHierarchy(this.hierarchy, 'node2a', this.indexObject);
-            expect(this.hierarchy).toEqual([{
-                entityIRI: 'node1a',
-                subEntities: [{
-                    entityIRI: 'node2b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }, {
-                    entityIRI: 'node2c',
-                    subEntities: [{
-                        entityIRI: 'node3b',
-                        subEntities: [{
-                            entityIRI: 'node3a'
-                        }]
-                    }]
-                }]
-            }, {
-                entityIRI: 'node1b',
-                subEntities: [{
-                    entityIRI: 'node3b',
-                    subEntities: [{
-                        entityIRI: 'node3a'
-                    }]
-                }]
-            }, {
-                entityIRI: 'node3c'
-            }]);
-            expect(updateRefsSvc.remove).toHaveBeenCalledWith(this.indexObject, 'node2a');
-            expect(this.indexObject).toEqual({
-                'node2b': ['node1a'],
-                'node2c': ['node1a'],
-                'node3a': ['node2a', 'node2b', 'node3b'],
-                'node3b': ['node2c', 'node1b']
-            });
+        it('should move the children if required', function() {
+            ontologyStateSvc.deleteEntityFromHierarchy(this.hierarchyInfo, 'node2a');
+            expect(this.hierarchyInfo.parentMap['node2a']).toBeUndefined();
+            expect(this.hierarchyInfo.parentMap['node1a']).toEqual(['node2b', 'node2c']);
+            expect(this.hierarchyInfo.childMap['node2a']).toBeUndefined();
+            expect(this.hierarchyInfo.childMap['node3a']).toEqual(['node2b', 'node3b']);
+            expect(this.hierarchyInfo.childMap['node3c']).toBeUndefined();
         });
     });
     it('getPathsTo should return all paths to provided node', function() {
         var expectedPaths = [
-            ['node1a','node2a','node3a'],
-            ['node1a','node2b','node3a'],
-            ['node1a','node2c','node3b','node3a'],
-            ['node1b','node3b','node3a']
+            ['node1a', 'node2a', 'node3a'],
+            ['node1a', 'node2b', 'node3a'],
+            ['node1a', 'node2c', 'node3b', 'node3a'],
+            ['node1b', 'node3b', 'node3a']
         ];
-        var result = ontologyStateSvc.getPathsTo(this.hierarchy, this.indexObject, 'node3a');
+        var result = ontologyStateSvc.getPathsTo(this.hierarchyInfo, 'node3a');
         expect(result.length).toBe(4);
         expect(_.sortBy(result)).toEqual(_.sortBy(expectedPaths));
     });
