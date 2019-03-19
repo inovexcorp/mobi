@@ -136,7 +136,7 @@
          *
          * @description
          * `editTabs` holds an object that represents which tab is open on the
-         * {@link editMappingPage.directive:editMappingPage editMappingPage}.
+         * {@link mapper.component:editMappingPage editMappingPage}.
          */
         self.editTabs = {
             edit: true,
@@ -231,7 +231,7 @@
          *
          * @description
          * `highlightIndexes` holds an array of strings containing column indexes to highlight
-         * in the {@link previewDataGrid.directive:previewDataGrid previewDataGrid}.
+         * in the {@link mapper.component:previewDataGrid previewDataGrid}.
          */
         self.highlightIndexes = [];
         /**
@@ -387,11 +387,11 @@
          *
          * @description
          * Retrieves and saves the master branch of the current mapping for use on the
-         * {@link mappingCommitsPage.directive:mappingCommitsPage mappingCommitsPage}.
+         * {@link mapper.component:mappingCommitsPage mappingCommitsPage}.
          */
         self.setMasterBranch = function() {
             var catalogId = _.get(cm.localCatalog, '@id', '');
-            cm.getRecordMasterBranch(self.mapping.record.id, catalogId)
+            return cm.getRecordMasterBranch(self.mapping.record.id, catalogId)
                 .then(branch => _.set(self.mapping, 'branch', branch), util.createErrorToast);
         }
         /**

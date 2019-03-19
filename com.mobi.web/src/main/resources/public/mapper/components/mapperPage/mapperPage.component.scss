@@ -20,15 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    /**
-     * @ngdoc overview
-     * @name mapper
-     *
-     * @description
-     * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
-     */
-    angular.module('mapper', []);
-})();
+.mapper-page {
+    background-color: var(--light);
+}

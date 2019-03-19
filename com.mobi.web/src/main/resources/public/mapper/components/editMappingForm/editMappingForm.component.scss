@@ -20,15 +20,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    /**
-     * @ngdoc overview
-     * @name mapper
-     *
-     * @description
-     * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
-     */
-    angular.module('mapper', []);
-})();
+.edit-mapping-form {
+	display: flex;
+	flex-direction: column;
+
+    .mapping-config {
+        p {
+            margin-bottom: 0;
+            display: inline-block;
+            @include textOverflow;
+            position: relative;
+            padding-right: 20px;
+            max-width: 100%;
+        }
+        button {
+            position: absolute;
+            right: 0;
+        }
+    }
+    .class-mappings {
+        .classes-field-name {
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        .control-label {
+            width: 100%;
+        }
+    }
+    ul.dl-horizontal {
+        margin-bottom: 0;
+    }
+}

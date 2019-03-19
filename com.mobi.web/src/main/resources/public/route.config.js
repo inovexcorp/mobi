@@ -104,7 +104,7 @@
                 url: '/mapper',
                 views: {
                     'container@': {
-                        templateUrl: 'mapper/mapper.module.html'
+                        template: '<mapper-page></mapper-page>'
                     }
                 },
                 data: {

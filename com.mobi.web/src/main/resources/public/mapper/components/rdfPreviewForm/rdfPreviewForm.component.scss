@@ -20,15 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
 
-    /**
-     * @ngdoc overview
-     * @name mapper
-     *
-     * @description
-     * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
-     */
-    angular.module('mapper', []);
-})();
+.rdf-preview-form {
+	display: flex;
+	flex-direction: column;
+
+    .codemirror-wrapper {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+
+        .CodeMirror {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            border: 1px solid #ccc;
+            height: auto;
+
+			.CodeMirror-cursor {
+				display: none !important
+			}
+        }
+    }
+}
