@@ -31,7 +31,7 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <dataset-form-group ng-model="dvm.sparql.datasetRecordIRI" change-event="dvm.sparql.datasetRecordIRI = value"></dataset-form-group>
+        <dataset-form-group bind-model="dvm.sparql.datasetRecordIRI" change-event="dvm.sparql.datasetRecordIRI = value"></dataset-form-group>
         <div class="btn-container">
             <button class="btn btn-primary" ng-click="dvm.sparql.initialQueryRdf()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
         </div>

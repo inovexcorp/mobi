@@ -43,7 +43,7 @@ describe('Dataset Select component', function() {
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.onSelect = jasmine.createSpy('onSelect');
-        this.element = $compile(angular.element('<dataset-select ng-model="bindModel" change-event="changeEvent(value)" on-select="onSelect()"></dataset-select>'))(scope);
+        this.element = $compile(angular.element('<dataset-select bind-model="bindModel" change-event="changeEvent(value)" on-select="onSelect()"></dataset-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('datasetSelect');
     });
