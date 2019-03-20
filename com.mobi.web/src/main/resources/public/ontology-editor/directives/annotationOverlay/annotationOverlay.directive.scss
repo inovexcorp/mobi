@@ -23,11 +23,10 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 annotation-overlay {
-
-.ui-select-bootstrap .ui-select-match-text {
-    float:none !important;
-}
-.ui-select-toggle.form-control {
-    @include textOverflow();
-}
+    .ui-select-bootstrap .ui-select-match-text {
+        float:none !important;
+    }
+    .ui-select-toggle.form-control {
+        @include textOverflow();
+    }
 }
