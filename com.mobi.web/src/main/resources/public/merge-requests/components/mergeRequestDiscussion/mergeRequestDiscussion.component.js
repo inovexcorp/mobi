@@ -37,6 +37,8 @@
      * no markdown editors are shown since the discussion on the request is now read only.
      *
      * @param {Object} request An object representing a Merge Request with comments
+     * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
+     * called `value` and should update the value of `request`.
      */
     const mergeRequestDiscussionComponent = {
         templateUrl: 'merge-requests/components/mergeRequestDiscussion/mergeRequestDiscussion.component.html',

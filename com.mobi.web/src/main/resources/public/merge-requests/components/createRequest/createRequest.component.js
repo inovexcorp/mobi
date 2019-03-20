@@ -24,17 +24,17 @@
     'use strict';
 
     /**
-         * @ngdoc component
-         * @name merge-requests.component:createRequest
-         * @requires shared.service:mergeRequestsStateService
-         *
-         * @description
-         * `createRequest` is a component which creates a div containing a
-         * {@link shared.component:block} with the workflow steps of creating a MergeRequest. These steps are
-         * {@link merge-requests.component:requestRecordSelect},
-         * {@link merge-requests.component:requestBranchSelect}, and
-         * {@link merge-requests.component:requestDetailsForm}.
-         */
+     * @ngdoc component
+     * @name merge-requests.component:createRequest
+     * @requires shared.service:mergeRequestsStateService
+     *
+     * @description
+     * `createRequest` is a component which creates a div containing a
+     * {@link shared.component:block} with the workflow steps of creating a MergeRequest. These steps are
+     * {@link merge-requests.component:requestRecordSelect},
+     * {@link merge-requests.component:requestBranchSelect}, and
+     * {@link merge-requests.component:requestDetailsForm}.
+     */
     const createRequestComponent = {
         templateUrl: 'merge-requests/components/createRequest/createRequest.component.html',
         bindings: {},

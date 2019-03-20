@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name mergeRequestTabset.component:mergeRequestTabset
+     * @name merge-requests.component:mergeRequestTabset
      *
      * @description
      * `mergeRequestTabset` is a component which creates a div containing a
@@ -35,6 +35,8 @@
      * {@link shared.component:commitHistoryTable commits} of the provided Merge Request.
      *
      * @param {Object} request An object representing a Merge Request
+     * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
+     * called `value` and should update the value of `request`.
      */
     const mergeRequestTabsetComponent = {
         templateUrl: 'merge-requests/components/mergeRequestTabset/mergeRequestTabset.component.html',

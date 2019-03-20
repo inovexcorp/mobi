@@ -42,6 +42,8 @@
      * @param {Object} request An object representing the Merge Request the Comment belongs to
      * @param {Object} comment The Comment to display
      * @param {boolean} isReply Whether the Comment is a reply comment
+     * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
+     * called `value` and should update the value of `request`.
      */
     const commentDisplayComponent = {
         templateUrl: 'merge-requests/components/commentDisplay/commentDisplay.component.html',

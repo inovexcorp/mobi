@@ -30,9 +30,9 @@
      *
      * @description
      * `mergeRequestsPage` is a component which creates a div containing the main parts of the Merge Requests
-     * tool. The main parts of the page are the {@link mergeRequestList.component:mergeRequestList},
-     * {@link mergeRequestView.component:mergeRequestView}, and
-     * {@link createRequest.component:createRequest createRequest page}.
+     * tool. The main parts of the page are the {@link merge-requests.component:mergeRequestList},
+     * {@link merge-requests.component:mergeRequestView}, and
+     * {@link merge-requests.component:createRequest createRequest page}.
      */
     const mergeRequestsPageComponent = {
         templateUrl: 'merge-requests/components/mergeRequestsPage/mergeRequestsPage.component.html',

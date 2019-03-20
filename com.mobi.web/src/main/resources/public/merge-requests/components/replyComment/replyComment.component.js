@@ -36,6 +36,8 @@
      *
      * @param {Object} request An object representing the Merge Request with the parent comment
      * @param {string} parentId The IRI id of the parent comment this component will reply to
+     * @param {Function} updateRequest A function to be called when the value of `request` changes. Expects an argument
+     * called `value` and should update the value of `request`.
      */
     const replyCommentComponent = {
         templateUrl: 'merge-requests/components/replyComment/replyComment.component.html',

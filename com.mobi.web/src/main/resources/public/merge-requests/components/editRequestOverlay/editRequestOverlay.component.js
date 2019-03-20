@@ -22,8 +22,7 @@
  */
 (function() {
     'use strict';
-
-     /**
+    /**
      * @ngdoc component
      * @name merge-requests.component:editRequestOverlay
      * @requires shared.service:mergeRequestManagerService
