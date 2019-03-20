@@ -1,0 +1,90 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.datasets-list {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 15px 0;
+
+    .block-content {
+        padding: 10px;
+    }
+    .col-8 {
+        display: flex;
+        flex-direction: column;
+    }
+    .dataset {
+        border-bottom: 1px solid var(--light);
+        cursor: pointer;
+
+        &:last-child {
+            border-bottom: none;
+        }
+        &:hover {
+            background-color: var(--light);
+        }
+        .record-keywords {
+            margin-bottom: 0;
+        }
+        .ontologies {
+            li {
+                display: inline;
+
+                &:after {
+                    content: ', ';
+                }
+                &.last:after {
+                    content: '';
+                }
+            }
+        }
+        .header {
+            margin-bottom: 0;
+
+            i {
+                width: 0.8em;
+            }
+        }
+        .dataset-title {
+            font-weight: 500;
+            font-size: 24px;
+            display: inline-block;
+        }
+        p {
+            margin: 0;
+        }
+        .description {
+            @include textOverflow;
+        }
+        &.open {
+            .description {
+                text-overflow: clip;
+                white-space: normal;
+                overflow: visible;
+            }
+        }
+    }
+}

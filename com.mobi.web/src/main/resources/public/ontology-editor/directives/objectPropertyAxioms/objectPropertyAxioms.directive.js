@@ -81,8 +81,8 @@
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.objectProperties.index);
-                            dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.objectProperties, dvm.os.listItem.selected['@id'], axiomObject['@id']);
+                            dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties);
                             dvm.os.setVocabularyStuff();
                         }
                     }

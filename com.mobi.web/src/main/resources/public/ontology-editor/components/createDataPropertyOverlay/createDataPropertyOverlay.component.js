@@ -121,6 +121,9 @@
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
             // Save the changes to the ontology
             dvm.ontoUtils.saveCurrentChanges();
+            // Open snackbar
+            dvm.os.listItem.goTo.entityIRI = dvm.property['@id'];
+            dvm.os.listItem.goTo.active = true;
             // hide the overlay
             dvm.close();
         }
@@ -134,8 +137,7 @@
                 dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
                 dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), 'dataProperties');
             } else {
-                dvm.os.listItem.dataProperties.hierarchy.push({'entityIRI': dvm.property['@id']});
-                dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                dvm.os.listItem.dataProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.dataProperties);
             }
         }
     }

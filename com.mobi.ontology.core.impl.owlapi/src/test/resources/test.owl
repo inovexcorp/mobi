@@ -131,25 +131,32 @@
 
     <!-- http://test.com/ontology1#TestClassA -->
 
-    <owl:Class rdf:about="http://test.com/ontology1#TestClassA"/>
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassA">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class A</rdfs:label>
+    </owl:Class>
     
 
 
     <!-- http://test.com/ontology1#TestClassB -->
 
-    <owl:Class rdf:about="http://test.com/ontology1#TestClassB"/>
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassB">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class B</rdfs:label>
+    </owl:Class>
     
 
 
     <!-- http://test.com/ontology1#TestClassC -->
 
-    <owl:Class rdf:about="http://test.com/ontology1#TestClassC"/>
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassC">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class C</rdfs:label>
+    </owl:Class>
     
 
 
     <!-- http://test.com/ontology1#TestClassD -->
 
     <owl:Class rdf:about="http://test.com/ontology1#TestClassD">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class D</rdfs:label>
         <rdfs:subClassOf rdf:resource="http://test.com/ontology1#TestClassC"/>
     </owl:Class>
 
@@ -158,6 +165,7 @@
     <!-- http://test.com/ontology1#TestClassE -->
 
     <owl:Class rdf:about="http://test.com/ontology1#TestClassE">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class E</rdfs:label>
         <owl:equivalentClass rdf:resource="http://test.com/ontology1#TestClassC"/>
     </owl:Class>
     

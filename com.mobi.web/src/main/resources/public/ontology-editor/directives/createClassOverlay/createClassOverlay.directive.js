@@ -83,7 +83,7 @@
                         [prefixes.dcterms + 'description']: [{
                             '@value': ''
                         }]
-                    }
+                    };
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -113,15 +113,16 @@
                             }
                             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], superClassIds);
                         } else {
-                            var hierarchy = _.get(dvm.os.listItem, 'classes.hierarchy');
-                            hierarchy.push({'entityIRI': dvm.clazz['@id']});
-                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes);
                         }
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
                         // Update InProgressCommit
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // Open snackbar
+                        dvm.os.listItem.goTo.entityIRI = dvm.clazz['@id'];
+                        dvm.os.listItem.goTo.active = true;
                         // hide the overlay
                         $scope.close()
                     }

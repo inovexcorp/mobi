@@ -23,18 +23,13 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.core.api.axiom.Axiom;
-import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
+import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 
 import java.io.OutputStream;
 import java.util.Optional;
@@ -164,8 +159,6 @@ public interface Ontology {
      */
     Set<DataProperty> getAllNoDomainDataProperties();
 
-    Set<Axiom> getAxioms();
-
     Set<Datatype> getAllDatatypes();
 
     Set<ObjectProperty> getAllObjectProperties();
@@ -216,13 +209,6 @@ public interface Ontology {
     Set<Individual> getAllIndividuals();
 
     /**
-     * Retrieves a {@link Set} of all NamedIndividuals.
-     *
-     * @return a {@link Set} of all {@link NamedIndividual}s in the {@link Ontology}
-     */
-    Set<NamedIndividual> getAllNamedIndividuals();
-
-    /**
      * Searches for all individuals of a particular class or any sub-classes of the provided class.
      *
      * @param classIRI The {@link IRI} of the class of individuals to find.
@@ -239,12 +225,137 @@ public interface Ontology {
     Set<Individual> getIndividualsOfType(OClass clazz);
 
     /**
-     * Searches for all cardinality properties associated with a particular class.
+     * Gets the subClassOf relationships for classes in the Ontology. The parents will be OWL Classes and the
+     * children will be all OWL Classes that are direct subclasses.
      *
-     * @param classIRI The {@link IRI} of the class.
-     * @return The {@link Set} of {@link CardinalityRestriction}s.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Class {@link IRI IRIs} to Class {@link IRI IRIs}.
      */
-    Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI);
+    Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
+     * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     *
+     * @param iri The {@link IRI} of the class for which you want the list of subclasses.
+     * @return a {@link Set} with the {@link IRI IRIs} of the subclasses
+     */
+    Set<IRI> getSubClassesFor(IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
+     * <em>all</em> properties that can be traced back to the provided property IRI, even if nested.
+     *
+     * @param iri The {@link IRI} of the property for which you want the list of subproperties.
+     * @return a {@link Set} with the {@link IRI IRIs} of the subproperties
+     */
+    Set<IRI> getSubPropertiesFor(IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for datatype properties in the Ontology. The parents will be OWL
+     * DatatypeProperties and the children will be all OWL DatatypeProperties that are direct subproperties.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of DatatypeProperty {@link IRI IRIs} to DatatypeProperty {@link IRI IRIs}.
+     */
+    Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties in the Ontology. The parents will be OWL
+     * AnnotationProperties and the children will be all OWL AnnotationProperties that are direct subproperties.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of AnnotationProperty {@link IRI IRIs} to AnnotationProperty {@link IRI IRIs}.
+     */
+    Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the subPropertyOf relationships for object properties in the Ontology. The parents will be OWL
+     * ObjectProperties and the children will be all OWL ObjectProperties that are direct subproperties.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of ObjectProperty {@link IRI IRIs} to ObjectProperty {@link IRI IRIs}.
+     */
+    Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the classes with individuals in the Ontology. The parents will be OWL Classes and the children will be all
+     * instances of the classes directly.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Class {@link IRI IRIs} to individual {@link IRI IRIs}.
+     */
+    Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the entity usages for the provided Resource in the Ontology.
+     *
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getEntityUsages(Resource entity);
+
+    /**
+     * Constructs the entity usages for the provided Resource in the Ontology.
+     *
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a {@link Model} with the constructed statements.
+     */
+    Model constructEntityUsages(Resource entity, ModelFactory modelFactory);
+
+    /**
+     * Gets the concept relationships in the Ontology. The parents will be instances of skos:Concept or a subclass and
+     * the children will be instances of skos:Concept or a subclass that have a skos:broader, skos:broaderMatch, or
+     * skos:broaderTransitive property or are the object of a skos:narrower, skos:narrowerMatch, or
+     * skos:narrowerTransitive property.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Concept {@link IRI IRIs} to Concept {@link IRI IRIs}.
+     */
+    Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the concept scheme relationships in the Ontology. The parents will be instances of skos:ConceptScheme or
+     * a subclass and the children are instances of skos:Concept or a subclass that have a skos:inScheme or
+     * skos:topConceptOf property or are the object of a skos:hasTopConcept property.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Concept Scheme {@link IRI IRIs} to Concept {@link IRI IRIs}.
+     */
+    Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Searches the Ontology using the provided searchText.
+     *
+     * @param searchText the String for the text you want to search for in the Ontology.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSearchResults(String searchText, ValueFactory valueFactory);
+
+    /**
+     * Searches the Ontology & its import closures using the provided Sparql query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a Tuple Set with the query results.
+     */
+    TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports);
+
+    /**
+     * Searches the Ontology & its import closures using the provided SPARQL query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a model with the query results.
+     */
+    Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory);
 
     /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,

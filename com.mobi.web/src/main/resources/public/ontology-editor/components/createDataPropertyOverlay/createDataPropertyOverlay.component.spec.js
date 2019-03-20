@@ -178,6 +178,8 @@ describe('Create Data Property Overlay component', function() {
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
             });
             describe('if controller.values', function() {
                 beforeEach(function() {
@@ -190,12 +192,13 @@ describe('Create Data Property Overlay component', function() {
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.dataProperties.hierarchy).toContain({entityIRI: this.controller.property['@id']});
-                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties);
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
                 it('has values', function() {
                     this.controller.values = [{'@id': 'propertyA'}];
@@ -205,12 +208,14 @@ describe('Create Data Property Overlay component', function() {
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual(_.set({}, "['" + this.controller.property['@id'] + "']", ontologyStateSvc.listItem.ontologyId));
+                    expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
                     expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);
                     expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith('property-iri', ['propertyA'], 'dataProperties');
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
             });
             describe('if characteristics', function() {
@@ -220,10 +225,14 @@ describe('Create Data Property Overlay component', function() {
                     });
                     this.controller.create();
                     expect(_.includes(this.controller.property['@type'], this.functionalProperty)).toEqual(true);
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
                 it('are not set', function() {
                     this.controller.create();
                     expect(_.includes(this.controller.property['@type'], this.functionalProperty)).toEqual(false);
+                    expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('property-iri');
+                    expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
                 });
             });
         });

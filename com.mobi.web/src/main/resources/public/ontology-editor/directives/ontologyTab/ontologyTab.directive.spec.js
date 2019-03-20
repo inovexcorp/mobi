@@ -155,5 +155,12 @@ describe('Ontology Tab directive', function() {
             expect(this.element.find('ontology-button-stack').length).toBe(0);
             expect(this.element.find('merge-tab').length).toBe(1);
         });
+        it('if a new entity was created', function() {
+            expect(this.element.find('open-entity-snackbar').length).toBe(0);
+            ontologyStateSvc.listItem.goTo.active = true;
+            scope.$digest();
+
+            expect(this.element.find('open-entity-snackbar').length).toBe(1);
+        });
     });
 });

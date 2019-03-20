@@ -106,20 +106,21 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemes.hierarchy');
-                        var index = _.get(dvm.os.listItem, 'conceptSchemes.index');
-                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        dvm.os.listItem.conceptSchemes.iris[dvm.scheme['@id']] = dvm.os.listItem.ontologyId;
                         // Add top concepts to hierarchy if they exist
                         _.forEach(dvm.selectedConcepts, concept => {
-                            dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], index, dvm.scheme['@id']);
+                            dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemes, concept['@id'], dvm.scheme['@id']);
                         });
-                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
                         // Update additions
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
                         // Update individual hierarchy
                         dvm.ontoUtils.addIndividual(dvm.scheme);
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // Open snackbar
+                        dvm.os.listItem.goTo.entityIRI = dvm.scheme['@id'];
+                        dvm.os.listItem.goTo.active = true;
                         // hide the overlay
                         $scope.close();
                     }

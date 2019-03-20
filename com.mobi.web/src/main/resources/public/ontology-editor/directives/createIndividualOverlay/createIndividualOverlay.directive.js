@@ -46,8 +46,8 @@
          * `createIndividualOverlay` is a directive that creates content for a modal that creates an individual in the
          * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
          * a text input for the indivdiual name (which populates the {@link staticIri.directive:staticIri IRI}) and
-         * a {@link classSelect.directive:classSelect} for the classes this individual will be an instance of. Meant to
-         * be used in conjunction with the {@link shared.service:modalService}.
+         * a {@link ontologyClassSelect.directive:ontologyClassSelect} for the classes this individual will be an
+         * instance of. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *
          * @param {Function} close A function that closes the modal
          * @param {Function} dismiss A function that dismisses the modal
@@ -101,6 +101,9 @@
                         }
                         // Save the changes to the ontology
                         dvm.ontoUtils.saveCurrentChanges();
+                        // Open snackbar
+                        dvm.os.listItem.goTo.entityIRI = dvm.individual['@id'];
+                        dvm.os.listItem.goTo.active = true;
                         // hide the overlay
                         $scope.close();
                     }

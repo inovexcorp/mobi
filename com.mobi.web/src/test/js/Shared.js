@@ -423,9 +423,9 @@ function mockMapperState() {
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
             this.selectMapping = jasmine.createSpy('selectMapping');
-            this.isMappingChanged = jasmine.createSpy("isMappingChanged").and.returnValue(false);
-            this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
-            this.setMasterBranch = jasmine.createSpy("setMasterBranch");
+            this.isMappingChanged = jasmine.createSpy('isMappingChanged').and.returnValue(false);
+            this.saveMapping = jasmine.createSpy('saveMapping').and.returnValue($q.when());
+            this.setMasterBranch = jasmine.createSpy('setMasterBranch').and.returnValue($q.when());
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
             this.getProps = jasmine.createSpy('getProps').and.returnValue([]);
             this.getPropsByClassMappingId = jasmine.createSpy('getPropsByClassMappingId').and.returnValue([]);
@@ -628,26 +628,26 @@ function mockOntologyState() {
                 derivedSemanticRelations: [],
                 classes: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 objectProperties: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 dataProperties: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 annotations: {
                     iris: {},
-                    hierarchy: [],
-                    index: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 individuals: {
@@ -655,13 +655,15 @@ function mockOntologyState() {
                     flat: []
                 },
                 concepts: {
-                    hierarchy: [],
-                    index: {},
+                    iris: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 conceptSchemes: {
-                    hierarchy: [],
-                    index: {},
+                    iris: {},
+                    parentMap: {},
+                    childMap: {},
                     flat: []
                 },
                 blankNodes: {},
@@ -688,7 +690,11 @@ function mockOntologyState() {
                 importedOntologies: [],
                 importedOntologyIds: [],
                 iriList: [],
-                failedImports: []
+                failedImports: [],
+                goTo: {
+                    entityIRI: '',
+                    active: false
+                }
             };
             this.states = [];
             this.list = [];

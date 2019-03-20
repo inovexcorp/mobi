@@ -23,36 +23,12 @@
 (function() {
     'use strict';
 
-    angular
-        .module('mapper', [
-            /* Custom Directives */
-            'classMappingDetails',
-            'classMappingOverlay',
-            'classMappingSelect',
-            'classPreview',
-            'classSelect',
-            'columnSelect',
-            'createMappingOverlay',
-            'downloadMappingOverlay',
-            'editMappingForm',
-            'editMappingPage',
-            'fileUploadPage',
-            'fileUploadForm',
-            'iriTemplateOverlay',
-            'mapperSerializationSelect',
-            'mapperTabset',
-            'mappingCommitsPage',
-            'mappingConfigOverlay',
-            'mappingPreview',
-            'mappingSelectPage',
-            'mappingTitle',
-            'previewDataGrid',
-            'propMappingOverlay',
-            'propPreview',
-            'propSelect',
-            'rdfPreviewForm',
-            'runMappingDatasetOverlay',
-            'runMappingDownloadOverlay',
-            'runMappingOntologyOverlay'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name mapper
+     *
+     * @description
+     * The `mapper` module provides components that make up the Mapping Tool module in the Mobi application.
+     */
+    angular.module('mapper', []);
 })();

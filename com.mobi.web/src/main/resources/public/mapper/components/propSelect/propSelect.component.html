@@ -1,0 +1,35 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="prop-select">
+    <ui-select ng-model="dvm.selectedProp" on-select="dvm.changeEvent({value: dvm.selectedProp})" ng-disabled="dvm.isDisabledWhen" autofocus>
+        <ui-select-match placeholder="Select a property">
+            <span title="{{$select.selected.propObj['@id']}}">{{$select.selected.name}}</span>
+        </ui-select-match>
+        <ui-select-choices refresh="dvm.setProps($select.search)" refresh-delay="300" group-by="'groupHeader'" repeat="prop in dvm.selectProps track by prop.propObj['@id']" ui-disable-choice="prop.isDeprecated">
+            <div title="{{prop.propObj['@id']}}">
+                <span ng-bind-html="prop.name | highlight:$select.search | trusted"></span>
+                <span class="text-muted" ng-if="prop.isDeprecated">(Deprecated)</span>
+            </div>
+        </ui-select-choices>
+    </ui-select>
+</div>

@@ -104,7 +104,7 @@
                 url: '/mapper',
                 views: {
                     'container@': {
-                        templateUrl: 'mapper/mapper.module.html'
+                        template: '<mapper-page></mapper-page>'
                     }
                 },
                 data: {
@@ -146,7 +146,7 @@
                 url: '/datasets',
                 views: {
                     'container@': {
-                        templateUrl: 'datasets/datasets.module.html'
+                        template: '<datasets-page></datasets-page>'
                     }
                 },
                 data: {
@@ -156,7 +156,7 @@
                 url: '/merge-requests',
                 views: {
                     'container@': {
-                        templateUrl: 'merge-requests/merge-requests.module.html'
+                        template: '<merge-requests-page></merge-requests-page>'
                     }
                 },
                 data: {

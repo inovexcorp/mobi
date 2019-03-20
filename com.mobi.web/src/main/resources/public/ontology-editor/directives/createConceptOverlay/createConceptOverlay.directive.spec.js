@@ -21,14 +21,13 @@
  * #L%
  */
 describe('Create Concept Overlay directive', function() {
-    var $compile, scope, $q, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRI, ontoUtils, propertyManagerSvc;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('createConceptOverlay');
         injectRegexConstant();
         injectCamelCaseFilter();
-        injectSplitIRIFilter();
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyManager();
@@ -38,14 +37,12 @@ describe('Create Concept Overlay directive', function() {
         mockOntologyUtilsManager();
         mockPropertyManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _splitIRIFilter_, _ontologyUtilsManagerService_, _propertyManagerService_) {
-            $q = _$q_;
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_, _propertyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            splitIRI = _splitIRIFilter_;
             ontoUtils = _ontologyUtilsManagerService_;
             propertyManagerSvc = _propertyManagerService_;
         });
@@ -64,11 +61,9 @@ describe('Create Concept Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
         prefixes = null;
-        splitIRI = null;
         ontoUtils = null;
         propertyManagerSvc = null;
         this.element.remove();
@@ -172,17 +167,19 @@ describe('Create Concept Overlay directive', function() {
             propertyManagerSvc.addId.and.returnValue(true);
             this.controller.create();
             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(this.scheme, prefixes.skos + 'hasTopConcept', this.controller.concept['@id']);
-            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, this.scheme['@id']);
+            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, 'concept', this.scheme['@id']);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
+            expect(ontologyStateSvc.listItem.concepts.iris).toEqual({[this.controller.concept['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
             expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(scope.close).toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('concept');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
         });
         it('should set the list of schemes', function() {
             ontoUtils.getSelectList.and.returnValue(['scheme']);

@@ -24,11 +24,9 @@ package com.mobi.ontology.core.impl.owlapi;
  */
 
 import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
+import com.mobi.ontology.core.api.AnnotationProperty;
 import com.mobi.rdf.api.Value;
 
-import java.util.HashSet;
-import java.util.Set;
 import javax.annotation.Nonnull;
 
 
@@ -36,17 +34,13 @@ public class SimpleAnnotation implements Annotation {
 
     private AnnotationProperty property;
     private Value value;
-    private Set<Annotation> annotations;
 
     /**
      * .
      */
-    public SimpleAnnotation(@Nonnull AnnotationProperty property, Value value, Set<? extends Annotation> annotations) {
+    public SimpleAnnotation(@Nonnull AnnotationProperty property, Value value) {
         this.property = property;
         this.value = value;
-        if (annotations != null) {
-            this.annotations = new HashSet<>(annotations);
-        }
     }
 
     @Override
@@ -60,37 +54,13 @@ public class SimpleAnnotation implements Annotation {
     }
 
     @Override
-    public Set<Annotation> getAnnotations() {
-        return annotations;
-    }
-
-    /**
-     * .
-     */
-    public Annotation getAnnotatedAnnotation(@Nonnull Set<Annotation> annotations) {
-        if (annotations.isEmpty()) {
-            return this;
-        }
-
-        Set<Annotation> merged = new HashSet<Annotation>(this.annotations);
-        merged.addAll(annotations);
-        return new SimpleAnnotation(property, value, merged);
-    }
-
-    @Override
-    public boolean isAnnotated() {
-        return (!annotations.isEmpty());
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         }
         if ((obj instanceof SimpleAnnotation)) {
             SimpleAnnotation other = (SimpleAnnotation) obj;
-            return (other.getProperty().equals(property)) && (other.getValue().equals(value))
-                    && (other.getAnnotations().equals(annotations));
+            return (other.getProperty().equals(property)) && (other.getValue().equals(value));
         }
 
         return false;

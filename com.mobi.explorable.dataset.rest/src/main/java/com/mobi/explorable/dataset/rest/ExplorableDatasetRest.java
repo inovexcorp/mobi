@@ -49,8 +49,7 @@ import javax.ws.rs.core.UriInfo;
 @Api(value = "/explorable-datasets")
 public interface ExplorableDatasetRest {
     /**
-     * Retrieves all the class details associated with ontologies linked to a
-     * {@link Dataset} in the local
+     * Retrieves all the class details associated with ontologies linked to a {@link Dataset} in the local
      * {@link Catalog} in a JSON array.
      *
      * @param recordIRI The id of the {@link DatasetRecord} for the
@@ -66,13 +65,11 @@ public interface ExplorableDatasetRest {
 
     /**
      * Retrieves all the instance details associated with a specific class found in the ontologies linked to a
-     * {@link Dataset} in the local
-     * {@link Catalog} in a JSON array. Can optionally be paged if passed limit
-     * and offset. Can optionally be sorted in ascending or descending order based on the instance details title.
+     * {@link Dataset} in the local {@link Catalog} in a JSON array. Can optionally be paged if passed limit and offset.
+     * Can optionally be sorted in ascending or descending order based on the instance details title.
      *
      * @param uriInfo   The URI information of the request.
-     * @param recordIRI The id of the {@link DatasetRecord} for the
-     *                  {@link Dataset} to summarize.
+     * @param recordIRI The id of the {@link DatasetRecord} for the {@link Dataset} to summarize.
      * @param classIRI  The IRI of the class type to get
      * @param offset    The offset for a page of Dataset data
      * @param limit     The number of data to return in one page
@@ -95,11 +92,9 @@ public interface ExplorableDatasetRest {
 
     /**
      * Retrieves all the property details associated with a specific class found in the ontologies linked to a
-     * {@link Dataset} in the local
-     * {@link Catalog} in a JSON array.
+     * {@link Dataset} in the local {@link Catalog} in a JSON array.
      *
-     * @param recordIRI The id of the {@link DatasetRecord} for the
-     *                  {@link Dataset} to summarize.
+     * @param recordIRI The id of the {@link DatasetRecord} for the {@link Dataset} to summarize.
      * @param classIRI  The IRI of the class type to get property details for.
      * @return A {@link Response} with a JSON array.
      */
@@ -112,11 +107,9 @@ public interface ExplorableDatasetRest {
                                      @PathParam("classIRI") String classIRI);
 
     /**
-     * Creates an instance owned by a {@link Dataset} in the local
-     * {@link Catalog}.
+     * Creates an instance owned by a {@link Dataset} in the local {@link Catalog}.
      *
-     * @param recordIRI   The id of the {@link DatasetRecord} for the
-     *                    {@link Dataset}.
+     * @param recordIRI The id of the {@link DatasetRecord} for the {@link Dataset}.
      * @return A {@link Response} with the IRI string of the created Instance.
      */
     @POST
@@ -129,11 +122,9 @@ public interface ExplorableDatasetRest {
                             String newInstanceJson);
 
     /**
-     * Retrieves an instance owned by a {@link Dataset} in the local
-     * {@link Catalog}.
+     * Retrieves an instance owned by a {@link Dataset} in the local {@link Catalog}.
      *
-     * @param recordIRI   The id of the {@link DatasetRecord} for the
-     *                    {@link Dataset} to summarize.
+     * @param recordIRI   The id of the {@link DatasetRecord} for the {@link Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to get.
      * @return A {@link Response} with a JSON-LD serialization of the desired instance.
      */
@@ -146,11 +137,10 @@ public interface ExplorableDatasetRest {
                          @PathParam("instanceIRI") String instanceIRI);
 
     /**
-     * Updates an instance owned by a {@link Dataset} in the local
-     * {@link Catalog} using the modifications from the provided JSON-LD.
+     * Updates an instance owned by a {@link Dataset} in the local {@link Catalog} using the modifications from the
+     * provided JSON-LD.
      *
-     * @param recordIRI   The id of the {@link DatasetRecord} for the
-     *                    {@link Dataset} to summarize.
+     * @param recordIRI   The id of the {@link DatasetRecord} for the {@link Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to update.
      * @return A {@link Response} indicating whether or not the Instance was updated.
      */
