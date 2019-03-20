@@ -20,22 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="datasets-list row">
+<div class="datasets-list h-100 row">
     <div class="col-8 offset-2 h-100">
-        <block class="h-100">
+        <block class="h-100 pb-5">
             <block-content>
                 <div class="dataset padding" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.state.openedDatasetId}">
-                    <div uib-dropdown class='action-container'>
-                        <button uib-dropdown-toggle title="Dataset Actions" class="btn btn-flat remove-min-width">
-                            <i class="fa fa-ellipsis-h fa-fw"></i>
-                        </button>
-                        <ul uib-dropdown-menu class="dropdown-menu-right">
-                            <a ng-click="dvm.showUploadData(dataset)" class="dropdown-item action upload-data"><i class="fa fa-fw fa-upload"></i> Upload Data</a>
-                            <a ng-click="dvm.showEdit(dataset)" class="dropdown-item action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a>
-                            <a ng-click="dvm.showClear(dataset)" class="dropdown-item action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a>
-                            <a ng-click="dvm.showDelete(dataset)" class="dropdown-item action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
-                        </ul>
-                    </div>
+                    <action-menu class="float-right">
+                        <a ng-click="dvm.showUploadData(dataset)" class="dropdown-item action upload-data"><i class="fa fa-fw fa-upload"></i> Upload Data</a>
+                        <a ng-click="dvm.showEdit(dataset)" class="dropdown-item action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a>
+                        <a ng-click="dvm.showClear(dataset)" class="dropdown-item action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a>
+                        <a ng-click="dvm.showDelete(dataset)" class="dropdown-item action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
+                    </action-menu>
                     <div class="details" ng-click="dvm.clickDataset(dataset)">
                         <div class="header dataset-title">
                             <i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.state.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.state.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}

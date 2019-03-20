@@ -25,7 +25,7 @@ describe('Datasets Ontology Picker component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('datasetsOntologyPicker');
+        module('datasets');
         mockHttpService();
         mockDatasetState();
         mockCatalogManager();

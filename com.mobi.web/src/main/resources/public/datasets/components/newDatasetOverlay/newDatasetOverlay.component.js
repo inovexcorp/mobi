@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name newDatasetOverlay.component:newDatasetOverlay
+     * @name datasets.component:newDatasetOverlay
      * @requires shared.service:datasetManagerService
      * @requires shared.service:datasetStateService
      * @requires shared.service:utilService
@@ -34,7 +34,7 @@
      * `newDatasetOverlay` is a component that creates content for a modal with a form containing fields for
      * creating a new Dataset Record. The fields are for the title, repository id, dataset IRI, description,
      * {@link shared.component:keywordSelect keywords}, and
-     * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the new Dataset
+     * {@link datasets.component:datasetsOntologyPicker ontologies to be linked} to the new Dataset
      * Record. The repository id is a static field for now. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *
@@ -42,7 +42,7 @@
      * @param {Function} dismiss A function that dismisses the modal
      */
     const newDatasetOverlayComponent = {
-        templateUrl: 'datasets/directives/newDatasetOverlay/newDatasetOverlay.component.html',
+        templateUrl: 'datasets/components/newDatasetOverlay/newDatasetOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'
@@ -94,15 +94,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name newDatasetOverlay
-         *
-         * @description
-         * The `newDatasetOverlay` module only provides the `newDatasetOverlay` component which creates content for a
-         * modal to create a new Dataset Record.
-         */
-        .module('newDatasetOverlay', [])
+    angular.module('datasets')
         .component('newDatasetOverlay', newDatasetOverlayComponent);
 })();

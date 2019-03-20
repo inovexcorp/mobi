@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Datasets List directive', function() {
+describe('Datasets List component', function() {
     var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('datasetsList');
+        module('datasets');
         mockDatasetState();
         mockDatasetManager();
         mockCatalogManager();
@@ -74,7 +74,7 @@ describe('Datasets List directive', function() {
         describe('should set the correct state for clicking a dataset', function() {
             beforeEach(function() {
                 datasetStateSvc.openedDatasetId = 'test';
-            })
+            });
             it('if it was open', function() {
                 this.controller.clickDataset({record: {'@id': datasetStateSvc.openedDatasetId}});
                 expect(datasetStateSvc.selectedDataset).toBeUndefined();
@@ -231,8 +231,7 @@ describe('Datasets List directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('datasets-list')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('DATASETS-LIST');
             expect(this.element.querySelectorAll('.col-8').length).toBe(1);
         });
         ['block', 'block-content', 'block-footer', 'paging'].forEach(test => {
@@ -243,11 +242,13 @@ describe('Datasets List directive', function() {
         it('depending on how many datasets there are', function() {
             expect(this.element.querySelectorAll('block-content info-message').length).toBe(1);
             expect(this.element.querySelectorAll('block-content .dataset').length).toBe(0);
+            expect(this.element.querySelectorAll('action-menu').length).toBe(0);
 
             datasetStateSvc.results = [{}, {}];
             scope.$digest();
             expect(this.element.querySelectorAll('block-content info-message').length).toBe(0);
             expect(this.element.querySelectorAll('block-content .dataset').length).toBe(datasetStateSvc.results.length);
+            expect(this.element.querySelectorAll('action-menu').length).toBe(datasetStateSvc.results.length);
         });
         it('depending on whether a search has been submitted', function() {
             expect(this.element.querySelectorAll('block-content info-message.no-results').length).toBe(1);
@@ -286,7 +287,7 @@ describe('Datasets List directive', function() {
         datasetStateSvc.results = [dataset];
         scope.$digest();
         spyOn(this.controller, 'showUploadData');
-        var link = angular.element(this.element.querySelectorAll('block-content .dataset [uib-dropdown] .upload-data')[0]);
+        var link = angular.element(this.element.querySelectorAll('action-menu .upload-data')[0]);
         link.triggerHandler('click');
         expect(this.controller.showUploadData).toHaveBeenCalledWith(dataset);
     });
@@ -295,7 +296,7 @@ describe('Datasets List directive', function() {
         datasetStateSvc.results = [dataset];
         scope.$digest();
         spyOn(this.controller, 'showDelete');
-        var link = angular.element(this.element.querySelectorAll('block-content .dataset [uib-dropdown] .delete-dataset')[0]);
+        var link = angular.element(this.element.querySelectorAll('action-menu .delete-dataset')[0]);
         link.triggerHandler('click');
         expect(this.controller.showDelete).toHaveBeenCalledWith(dataset);
     });
@@ -304,7 +305,7 @@ describe('Datasets List directive', function() {
         datasetStateSvc.results = [dataset];
         scope.$digest();
         spyOn(this.controller, 'showClear');
-        var link = angular.element(this.element.querySelectorAll('block-content .dataset [uib-dropdown] .clear-dataset')[0]);
+        var link = angular.element(this.element.querySelectorAll('action-menu .clear-dataset')[0]);
         link.triggerHandler('click');
         expect(this.controller.showClear).toHaveBeenCalledWith(dataset);
     });
@@ -313,7 +314,7 @@ describe('Datasets List directive', function() {
         datasetStateSvc.results = [dataset];
         scope.$digest();
         spyOn(this.controller, 'showEdit');
-        var link = angular.element(this.element.querySelectorAll('block-content .dataset [uib-dropdown] .update-dataset')[0]);
+        var link = angular.element(this.element.querySelectorAll('action-menu .update-dataset')[0]);
         link.triggerHandler('click');
         expect(this.controller.showEdit).toHaveBeenCalledWith(dataset);
     });

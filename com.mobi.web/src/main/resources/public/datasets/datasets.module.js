@@ -23,14 +23,12 @@
 (function() {
     'use strict';
 
-    angular
-        .module('datasets', [
-            /* Custom Directives */
-            'datasetsList',
-            'datasetsTabset',
-            'editDatasetOverlay',
-            'newDatasetOverlay',
-            'datasetsOntologyPicker',
-            'uploadDataOverlay'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name datasets
+     *
+     * @description
+     * The `datasets` module provides components that make up the Datasets module in the Mobi application.
+     */
+    angular.module('datasets', []);
 })();

@@ -20,30 +20,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Dataset Overlay component', function() {
-    var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc;
+describe('Upload Data Overlay component', function() {
+    var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
-        module('newDatasetOverlay');
+        module('datasets');
         mockDatasetManager();
         mockDatasetState();
         mockUtil();
+        mockHttpService();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _datasetManagerService_, _datasetStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _datasetManagerService_, _datasetStateService_, _utilService_, _httpService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             datasetStateSvc = _datasetStateService_;
             datasetManagerSvc = _datasetManagerService_;
             utilSvc = _utilService_;
+            httpSvc = _httpService_;
         });
 
+        datasetStateSvc.selectedDataset = {record: {'@id': 'dataset'}};
+        utilSvc.getDctermsValue.and.returnValue('Test');
         scope.dismiss = jasmine.createSpy('dismiss');
         scope.close = jasmine.createSpy('close');
-        this.element = $compile(angular.element('<new-dataset-overlay close="close()" dismiss="dismiss()"></new-dataset-overlay>'))(scope);
+        this.element = $compile(angular.element('<upload-data-overlay close="close()" dismiss="dismiss()"></upload-data-overlay>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('newDatasetOverlay');
+        this.controller = this.element.controller('uploadDataOverlay');
     });
 
     afterEach(function() {
@@ -53,9 +57,14 @@ describe('New Dataset Overlay component', function() {
         datasetManagerSvc = null;
         datasetStateSvc = null;
         utilSvc = null;
+        httpSvc = null;
         this.element.remove();
     });
 
+    it('initializes with the correct values', function() {
+        expect(this.controller.datasetTitle).toEqual('Test');
+        expect(this.controller.importing).toEqual(false);
+    });
     describe('controller bound variable', function() {
         it('close should be called in the parent scope', function() {
             this.controller.close();
@@ -67,63 +76,47 @@ describe('New Dataset Overlay component', function() {
         });
     });
     describe('controller methods', function() {
-        it('should select an ontology', function() {
-            var ontology = {title: 'A', selected: true};
-            this.controller.selectedOntologies = [{title: 'B'}]
-            this.controller.selectOntology(ontology)
-            expect(this.controller.selectedOntologies).toEqual([ontology, {title: 'B'}]);
+        it('should update the selected file', function() {
+            this.controller.update({});
+            expect(this.controller.fileObj).toEqual({});
         });
-        it('should unselect an ontology', function() {
-            var ontology = {recordId: 'id'};
-            this.controller.selectedOntologies = [ontology];
-            this.controller.unselectOntology(ontology);
-            expect(this.controller.selectedOntologies).toEqual([]);
-        });
-        describe('should create a dataset', function() {
-            beforeEach(function() {
-                this.controller.keywords = ['a ', ' b', 'c d'];
-                this.controller.selectedOntologies = [{recordId: 'ontology1'}, {recordId: 'ontology2'}];
-            });
+        describe('should upload data to a dataset', function() {
             it('unless an error occurs', function() {
-                datasetManagerSvc.createDatasetRecord.and.returnValue($q.reject('Error Message'));
-                this.controller.create();
+                datasetManagerSvc.uploadData.and.returnValue($q.reject('Error Message'));
+                this.controller.submit();
                 scope.$apply();
-                expect(this.controller.recordConfig.keywords).toEqual(['a', 'b', 'c d']);
-                expect(this.controller.recordConfig.ontologies).toEqual(['ontology1', 'ontology2']);
-                expect(datasetManagerSvc.createDatasetRecord).toHaveBeenCalledWith(this.controller.recordConfig);
+                expect(datasetManagerSvc.uploadData).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.controller.fileObj, this.controller.uploadId);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
-                expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
                 expect(scope.close).not.toHaveBeenCalled();
-                expect(this.controller.error).toBe('Error Message');
             });
             it('successfully', function() {
-                this.controller.create();
+                this.controller.fileObj = {name: 'File Name'};
+                this.controller.submit();
+                expect(this.controller.importing).toEqual(true);
                 scope.$apply();
-                expect(this.controller.recordConfig.keywords).toEqual(['a', 'b', 'c d']);
-                expect(this.controller.recordConfig.ontologies).toEqual(['ontology1', 'ontology2']);
-                expect(datasetManagerSvc.createDatasetRecord).toHaveBeenCalledWith(this.controller.recordConfig);
+                expect(datasetManagerSvc.uploadData).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], this.controller.fileObj, this.controller.uploadId);
+                expect(this.controller.importing).toEqual(false);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                expect(datasetStateSvc.setResults).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
-                expect(this.controller.error).toBe('');
             });
         });
-        it('should close the overlay', function() {
+        it('should cancel any import and close the overlay', function() {
             this.controller.cancel();
+            expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.uploadId);
             expect(scope.dismiss).toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('NEW-DATASET-OVERLAY');
+            expect(this.element.prop('tagName')).toBe('UPLOAD-DATA-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
-        it('with text-inputs', function() {
-            expect(this.element.find('text-input').length).toBe(2);
+        it('with buttons', function() {
+            expect(this.element.find('button').length).toBe(3);
         });
-        ['text-area', 'keyword-select', 'datasets-ontology-picker'].forEach(test => {
+        ['form', 'span', 'file-input'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toBe(1);
             });
@@ -135,12 +128,17 @@ describe('New Dataset Overlay component', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('depending on the validity of the form', function() {
-            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeFalsy();
-            
-            this.controller.form.$invalid = true;
+        it('depending on whether data is importing', function() {
+            this.controller.form.$invalid = false;
             scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
+            expect(this.element.querySelectorAll('.importing-indicator').length).toEqual(0);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            this.controller.importing = true;
+            this.controller.form.$invalid = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('.importing-indicator').length).toEqual(1);
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('with buttons to cancel and submit', function() {
@@ -150,16 +148,16 @@ describe('New Dataset Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
+    it('should call upload when the Submit button is clicked', function() {
+        spyOn(this.controller, 'submit');
+        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.submit).toHaveBeenCalled();
+    });
     it('should call cancel when the button is clicked', function() {
         spyOn(this.controller, 'cancel');
         var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
-    });
-    it('should call create when the button is clicked', function() {
-        spyOn(this.controller, 'create');
-        var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
-        button.triggerHandler('click');
-        expect(this.controller.create).toHaveBeenCalled();
     });
 });
