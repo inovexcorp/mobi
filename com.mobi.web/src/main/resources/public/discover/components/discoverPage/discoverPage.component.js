@@ -24,16 +24,24 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name discover
+     * @ngdoc component
+     * @name discover.component:discoverPage
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * `discoverPage` is a component which creates the main page of the Discover module. The component contains
+     * a {@link discover.component.discoverTabset discoverTabset} for navigating the Discover module
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    const discoverPageComponent = {
+        templateUrl: 'discover/components/discoverPage/discoverPage.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: discoverPageComponentCtrl
+    };
+
+    function discoverPageComponentCtrl() {
+        var dvm = this;
+    }
+
+    angular.module('discover')
+        .component('discoverPage', discoverPageComponent);
 })();

@@ -24,16 +24,27 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name discover
+     * @ngdoc component
+     * @name explore.component:classBlock
+     * @requires shared.service:discoverStateService
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * HTML contents in the class block which contains the class details associated with
+     * a selected dataset.
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    const classBlockComponent = {
+        templateUrl: 'discover/explore/components/classBlock/classBlock.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: classBlockComponentCtrl
+    };
+
+    classBlockComponent.$inject = ['discoverStateService'];
+
+    function classBlockComponentCtrl(discoverStateService) {
+        this.ds = discoverStateService;
+    }
+
+    angular.module('explore')
+        .component('classBlock', classBlockComponent);
 })();

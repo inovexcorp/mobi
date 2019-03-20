@@ -22,18 +22,30 @@
  */
 (function() {
     'use strict';
-
+        
     /**
-     * @ngdoc overview
-     * @name discover
+     * @ngdoc component
+     * @name explore.component:exploreTab
+     * @requires shared.service:discoverStateService
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * HTML contents in the explore tab which contains either the class or instance cards
+     * depending on the step you are currently viewing.
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    const exploreTabComponent = {
+        templateUrl: 'discover/explore/components/exploreTab/exploreTab.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: exploreTabComponentCtrl
+    };
+
+    exploreTabComponent.$inject = ['discoverStateService'];
+
+    function exploreTabComponentCtrl(discoverStateService) {
+        var dvm = this;
+        dvm.ds = discoverStateService;
+    }
+
+    angular.module('explore')
+        .component('exploreTab', exploreTabComponent);
 })();

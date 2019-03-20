@@ -24,16 +24,28 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name discover
+     * @ngdoc component
+     * @name search.component:discoverSearchTab
+     * @requires shared.service:discoverStateService
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * HTML contents in the search tab within the discover page which gives the users the option to
+     * create a SPARQL query using the provided inputs.
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    const discoverSearchTabComponent = {
+        templateUrl: 'discover/search/components/discoverSearchTab/discoverSearchTab.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: discoverSearchTabComponentCtrl
+    };
+
+    discoverSearchTabComponent.$inject = ['discoverStateService'];
+
+    function discoverSearchTabComponentCtrl(discoverStateService) {
+        var dvm = this;
+        dvm.ds = discoverStateService;
+    }
+
+    angular.module('search')
+        .component('discoverSearchTab', discoverSearchTabComponent);
 })();

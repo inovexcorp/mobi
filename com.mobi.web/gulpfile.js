@@ -43,6 +43,7 @@ var jsFiles = function(prefix) {
             prefix + 'shared/directives/**/!(*.spec).js',
             prefix + 'shared/components/**/!(*.spec).js',
             prefix + '*/!(*.spec).js',
+            prefix + '**/discover/*/*.module.js',
             prefix + '**/*/services/**/!(*.spec).js',
             prefix + '**/*/components/**/!(*.spec).js',
             prefix + '**/*/directives/**/!(*.spec).js',

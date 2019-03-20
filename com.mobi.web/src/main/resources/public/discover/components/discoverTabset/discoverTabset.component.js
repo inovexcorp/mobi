@@ -24,16 +24,27 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name discover
+     * @ngdoc component
+     * @name discover.component:discoverTabset
+     * @requires shared.service:discoverStateService
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * HTML contents in the discover tabset which contains the explore and query tabs.
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    const discoverTabsetComponent = {
+        templateUrl: 'discover/components/discoverTabset/discoverTabset.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: discoverTabsetComponentCtrl
+    };
+
+    discoverTabsetComponent.$inject = ['discoverStateService'];
+        
+    function discoverTabsetComponentCtrl(discoverStateService) {
+        var dvm = this;
+        dvm.ds = discoverStateService;
+    }
+
+    angular.module('discover')
+        .component('discoverTabset', discoverTabsetComponent);
 })();

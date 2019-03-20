@@ -25,15 +25,10 @@
 
     /**
      * @ngdoc overview
-     * @name discover
+     * @name query
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * The `query` module provides components that make up the Query submodule in the Mobi application.
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    angular.module('query', []);
 })();

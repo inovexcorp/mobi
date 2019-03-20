@@ -24,16 +24,23 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name discover
+     * @ngdoc component
+     * @name query.component:queryTab
      *
      * @description
-     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     * HTML contents in the SPARQL editor tab.
      */
-    angular.module('discover', [
-            // Submodules
-            'explore',
-            'query',
-            'search'
-        ]);
+    const queryTabComponent = {
+        templateUrl: 'discover/query/components/queryTab/queryTab.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: queryTabComponentCtrl
+    };
+
+    function queryTabComponentCtrl() {
+        var dvm = this;
+    }
+
+    angular.module('query')
+        .component('queryTab', queryTabComponent);
 })();
