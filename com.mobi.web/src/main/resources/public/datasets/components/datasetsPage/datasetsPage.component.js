@@ -24,11 +24,26 @@
     'use strict';
 
     /**
-     * @ngdoc overview
-     * @name datasets
+     * @ngdoc component
+     * @name datasets.component:datasetsPage
      *
      * @description
-     * The `datasets` module provides components that make up the Datasets module in the Mobi application.
+     * `datasetsPage` is a component which creates the main page of the Datasets module. The component contains
+     * a {@link datasets.component.datasetsTabset datsetsTabset} for navigating the Datasets module
      */
-    angular.module('datasets', []);
+    const datasetsPageComponent = {
+        templateUrl: 'datasets/components/datasetsPage/datasetsPage.component.html',
+        bindings: {},
+        controllerAs: 'dvm',
+        controller: datasetsPageComponentCtrl
+    };
+
+    datasetsPageComponentCtrl.$inject = [];
+
+    function datasetsPageComponentCtrl() {
+        var dvm = this;
+    }
+
+    angular.module('datasets')
+        .component('datasetsPage', datasetsPageComponent);
 })();

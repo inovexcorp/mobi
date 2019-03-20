@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name datasetsTabset.component:datasetsOntologyPicker
+     * @name datasets.component:datasetsOntologyPicker
      * @requires shared.service:catalogManagerService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
@@ -54,7 +54,7 @@
      * This function should update the `selectedOntologies` binding.
      */
     const datasetsOntologyPickerComponent = {
-        templateUrl: 'datasets/directives/datasetsOntologyPicker/datasetsOntologyPicker.component.html',
+        templateUrl: 'datasets/components/datasetsOntologyPicker/datasetsOntologyPicker.component.html',
         bindings: {
             selectedOntologies: '<',
             selectOntology: '&',
@@ -122,15 +122,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name datasetsOntologyPicker
-         *
-         * @description
-         * The `datasetsOntologyPicker` module only provides the `datasetsOntologyPicker` component which creates a
-         * paged list for selecting ontologies.
-         */
-        .module('datasetsOntologyPicker', [])
+    angular.module('datasets')
         .component('datasetsOntologyPicker', datasetsOntologyPickerComponent);
 })();

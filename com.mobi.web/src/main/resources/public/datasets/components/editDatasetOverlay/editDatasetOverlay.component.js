@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name editDatasetOverlay.component:editDatasetOverlay
+     * @name datasets.component:editDatasetOverlay
      * @requires shared.service:datasetStateService
      * @requires shared.service:datasetManagerService
      * @requires shared.service:catalogManagerService
@@ -36,14 +36,14 @@
      * `editDatasetOverlay` is a component that creates content for a modal with a form containing fields for
      * editing an existing Dataset Record. The form contains fields for the title, description,
      * {@link shared.component:keywordSelect keywords}, and
-     * {@link datasetsOntologyPicker.directive:datasetsOntologyPicker ontologies to be linked} to the Dataset
+     * {@link datasets.component:datasetsOntologyPicker ontologies to be linked} to the Dataset
      * Record. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal
      */
     const editDatasetOverlayComponent = {
-        templateUrl: 'datasets/directives/editDatasetOverlay/editDatasetOverlay.component.html',
+        templateUrl: 'datasets/components/editDatasetOverlay/editDatasetOverlay.component.html',
         bindings: {
             close: '&',
             dismiss: '&'
@@ -166,15 +166,6 @@
         }
     }
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name editDatasetOverlay
-         *
-         * @description
-         * The `editDatasetOverlay` module only provides the `editDatasetOverlay` component which creates content for a
-         * modal to edit a Dataset Record.
-         */
-        .module('editDatasetOverlay', [])
+    angular.module('datasets')
         .component('editDatasetOverlay', editDatasetOverlayComponent);
 })();
