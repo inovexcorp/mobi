@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Datasets Tabset directive', function() {
+describe('Datasets Tabset component', function() {
     var $compile, scope, datasetStateSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('datasetsTabset');
+        module('datasets');
+        mockComponent('datasets', 'datasetsList');
         mockDatasetState();
         mockModal();
 
@@ -72,7 +73,7 @@ describe('Datasets Tabset directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('datasets-tabset')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('DATASETS-TABSET');
         });
         it('with a .white-bar', function() {
             expect(this.element.querySelectorAll('.white-bar').length).toBe(1);
