@@ -25,10 +25,10 @@
 
     /**
      * @ngdoc component
-     * @name diiscover.component:sparqlResultTable
+     * @name discover.component:sparqlResultTable
      *
      * @description
-     * HTML contents in the `sparqlResultTable` which create a table with a header row of binding names
+     * `sparqlResultTable` is a component that creates a table with a header row of binding names
      * and rows of the SPARQL query results provided in the SPARQL spec JSON format.
      *
      * @param {string[]} bindings The array of binding names for the SPARQL results

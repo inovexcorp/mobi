@@ -29,8 +29,9 @@
      * @requires shared.service:discoverStateService
      *
      * @description
-     * HTML contents in the search tab within the discover page which gives the users the option to
-     * create a SPARQL query using the provided inputs.
+     * `discoverSearchTab` is a component that provides a {@link search.component:searchForm} and a
+     * {@link discover.component:sparqlResultTable} to create SPARQL queries based on inputs into the `searchForm` and
+     * display the results of the queries.
      */
     const discoverSearchTabComponent = {
         templateUrl: 'discover/search/components/discoverSearchTab/discoverSearchTab.component.html',

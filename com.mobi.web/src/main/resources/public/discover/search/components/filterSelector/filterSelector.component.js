@@ -30,26 +30,26 @@
      * @requires shared.service:prefixes
      *
      * @description
-     * HTML contents for the filter selector which provides the users with the options to select filter options
+     * `filterSelector` is a component that provides the users with the options to select filter options
      * appropriate for the selected range.
      *
-     * @param {string} begin
+     * @param {string} begin The lower bound of a range of the property filter
      * @param {Function} updateBegin A function to be called when the value of `begin` changes. Expects an argument
      * called `value` and should update the value of `begin`.
-     * @param {boolean} boolean
+     * @param {boolean} boolean The boolean value of the property filter
      * @param {Function} updateBoolean A function to be called when the value of `boolean` changes. Expects an argument
      * called `value` and should update the value of `boolean`.
-     * @param {string} end
+     * @param {string} end The upper bound of a range of the property filter
      * @param {Function} updateEnd A function to be called when the value of `end` changes. Expects an argument
      * called `value` and should update the value of `end`.
-     * @param {string} filterType
+     * @param {string} filterType The type of filter to be used for the query
      * @param {Function} updateFilterType A function to be called when the value of `filterType` changes. Expects an argument
      * called `value` and should update the value of `filterType`.
-     * @param {string} range
-     * @param {string} regex
+     * @param {string} range The range of the property
+     * @param {string} regex The regex to match the property value against
      * @param {Function} updateRegex A function to be called when the value of `regex` changes. Expects an argument
      * called `value` and should update the value of `regex`.
-     * @param {string[]} value
+     * @param {string} value The value of the filter
      * @param {Function} updateValue A function to be called when the value of `value` changes. Expects an argument
      * called `value` and should update the value of `value`.
      */

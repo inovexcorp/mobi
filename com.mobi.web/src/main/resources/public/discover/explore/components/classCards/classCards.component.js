@@ -34,7 +34,7 @@
      * `classCards` is a component that creates a div which contains a 3 column grid used to display the
      * class details associated with a dataset record.
      *
-     * @param {Object[]} classDetails the details about the classes to be present as cards
+     * @param {Object[]} classDetails the details about the classes to be presented as cards
      */
     const classCardsComponent = {
         templateUrl: 'discover/explore/components/classCards/classCards.component.html',

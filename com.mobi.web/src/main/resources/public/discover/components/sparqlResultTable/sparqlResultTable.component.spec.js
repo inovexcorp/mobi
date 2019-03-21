@@ -76,7 +76,7 @@ describe('SPARQL Result Table component', function() {
             expect(scope.headers).toEqual(copy);
         });
     });
-    describe('contaiins the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('SPARQL-RESULT-TABLE');
         });

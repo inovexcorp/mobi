@@ -28,10 +28,9 @@
      * @name discover.component:datasetSelect
      * @requires shared.service:utilService
      * @requires shared.service:datasetManagerService
-     * @requires shared.service:prefixes
      *
      * @description
-     * HTML contents in the dataset select which provides a dropdown select of all datasets.
+     * `datasetSelect` is a component that provides a `ui-select` of all datasets.
      *
      * @param {string} bindModel The IRI of the dataset record
      * @param {Function} changeEvent A function to be called when the value of the ui-select changes. Expects an argument
@@ -42,30 +41,26 @@
         templateUrl: 'discover/components/datasetSelect/datasetSelect.component.html',
         bindings: {
             bindModel: '<',
-            changeEvent: '&',
-            onSelect: '&?'
+            changeEvent: '&'
         },
         controllerAs: 'dvm',
         controller: datasetSelectComponentCtrl
     };
 
-    datasetSelectComponent.$inject = ['utilService', 'datasetManagerService', 'prefixes'];
+    datasetSelectComponent.$inject = ['utilService', 'datasetManagerService'];
 
-    function datasetSelectComponentCtrl(utilService, datasetManagerService, prefixes) {
+    function datasetSelectComponentCtrl(utilService, datasetManagerService) {
         var dvm = this;
         dvm.dm = datasetManagerService;
         dvm.util = utilService;
-        dvm.datasetRecords = _.map(dvm.dm.datasetRecords, dvm.dm.getRecordFromArray);
+        dvm.datasetRecords = [];
 
         dvm.$onInit = function() {
+            dvm.datasetRecords = _.map(dvm.dm.datasetRecords, dvm.dm.getRecordFromArray);
             if (!_.some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
                 dvm.bindModel = '';
                 dvm.changeEvent({value: dvm.bindModel});
             }
-        }
-        dvm.update = function() {
-            dvm.changeEvent({value: dvm.bindModel});
-            dvm.onSelect();
         }
     }
 

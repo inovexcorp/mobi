@@ -29,8 +29,11 @@
      * @requires shared.service:discoverStateService
      *
      * @description
-     * HTML contents in the explore tab which contains either the class or instance cards
-     * depending on the step you are currently viewing.
+     * `exploreTab` is a component that creates a {@link explore.component:classBlock} to explore data within a dataset.
+     * It also provides an {@link explore.component:instanceBlock}, an {@link explore.component:instanceView},
+     * an {@link explore.component:instanceEditor}, and an {@link explore.component:instanceCreator} for viewing and
+     * managing instance data.
+     *
      */
     const exploreTabComponent = {
         templateUrl: 'discover/explore/components/exploreTab/exploreTab.component.html',

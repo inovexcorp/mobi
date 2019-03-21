@@ -33,8 +33,8 @@
      * @requires shared.service:modalService
      *
      * @description
-     * HTML contents in the class block header which provides a dropdown select to allow users to
-     * pick a dataset to determine what class details are to be shown on the page.
+     * `classBlockHeader` is a component that creates a {@link discover.component:datasetSelect} to select a dataset to explore.
+     * It also provides buttons to refresh the view of the dataset and to create an instance.
      */
     const classBlockHeaderComponent = {
         templateUrl: 'discover/explore/components/classBlockHeader/classBlockHeader.component.html',
@@ -51,14 +51,20 @@
         var util = utilService;
         dvm.ds = discoverStateService;
         dvm.eu = exploreUtilsService;
-        
+
         dvm.showCreate = function() {
             dvm.eu.getClasses(dvm.ds.explore.recordId)
                 .then(classes => {
                     modalService.openModal('newInstanceClassOverlay', {classes});
                 }, util.createErrorToast);
         }
-        dvm.onSelect = function() {
+        dvm.onSelect = function(value) {
+            dvm.ds.explore.recordId = value;
+            if (dvm.ds.explore.recordId !== '') {
+                dvm.refresh();
+            }
+        }
+        dvm.refresh = function() {
             es.getClassDetails(dvm.ds.explore.recordId)
                 .then(details => {
                     dvm.ds.explore.classDetails = details;

@@ -26,6 +26,7 @@
     /**
      * @ngdoc component
      * @name explore.component:instanceForm
+     * @requires shared.filter:splitIRIFilter
      * @requires shared.service:discoverStateService
      * @requires shared.service:utilService
      * @requires discover.service:exploreService
@@ -37,8 +38,7 @@
      * `instanceForm` is a component that creates a form with the complete list of properties associated with the
      * {@link shared.service:discoverStateService selected instance} in an editable format. Also provides a
      * way to {@link shared.component:editIriOverlay edit the instance IRI} after acknowledging the danger.
-     * If there are requierd properties not set on the instance, the provided `isValid` variable is set to false.
-     *
+     * If there are required properties not set on the instance, the provided `isValid` variable is set to false.
      *
      * @param {string} header The configurable header for the form
      * @param {boolean} isValid Whether all the required properties for the instance are set
@@ -55,6 +55,7 @@
         controllerAs: 'dvm',
         controller: instanceFormComponentCtrl
     };
+
     instanceFormComponent.$inject = ['$q', '$filter', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService', 'modalService'];
 
     function instanceFormComponentCtrl($q, $filter, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService, modalService) {
@@ -83,10 +84,11 @@
         dvm.showPropertyValueOverlay = false;
         dvm.changed = [];
         dvm.missingProperties = [];
-        dvm.instance = dvm.ds.getInstance();
         dvm.eu = exploreUtilsService;
+        dvm.instance = {};
 
         dvm.$onInit = function() {
+            dvm.instance = dvm.ds.getInstance();
             getProperties();
             getReificationProperties();
         }

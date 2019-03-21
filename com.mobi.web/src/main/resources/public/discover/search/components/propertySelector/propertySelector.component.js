@@ -32,7 +32,7 @@
      * @requires shared.service:utilService
      *
      * @description
-     * HTML contents for the property selector which provides the users an option to select a property and range
+     * `propertySelector` is a component that provides the users an option to select a property and range
      * they want to add to their search.
      *
      * @param {string[]} keys The keys of the provided properties

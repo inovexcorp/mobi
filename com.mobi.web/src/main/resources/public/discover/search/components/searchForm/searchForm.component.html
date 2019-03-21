@@ -26,7 +26,7 @@
             <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
             <form name="dvm.searchForm">
                 <div class="dataset-wrapper">
-                    <dataset-form-group class="w-100" bind-model="dvm.ds.search.datasetRecordId" on-select="dvm.getTypes()" change-event="dvm.ds.search.datasetRecordId = value"></dataset-form-group>
+                    <dataset-form-group class="w-100" bind-model="dvm.ds.search.datasetRecordId" change-event="dvm.onChange(value)"></dataset-form-group>
                     <a class="refresh-link" ng-click="dvm.refresh()" uib-tooltip="Refreshes the dataset metadata" tooltip-append-to-body="true"><i class="fa fa-refresh"></i>Refresh</a>
                 </div>
                 <div class="strike text-muted">AND</div>

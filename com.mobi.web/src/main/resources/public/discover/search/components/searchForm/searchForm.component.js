@@ -33,8 +33,9 @@
      * @requires shared.service:modalService
      *
      * @description
-     * HTML contents in the search form within the Search page for entering a keyword search combined
-     * using the AND operator or the OR operator.
+     * `searchForm` is a component that creates a form for creating keyword searches combined with property value searches
+     * using AND/OR operators to be transformed into a SPARQL query. It provides a {@link discover.component:datasetFormGroup}
+     * for selecting a dataset to perform the search against.
      */
     const searchFormComponent = {
         templateUrl: 'discover/search/components/searchForm/searchForm.component.html',
@@ -93,6 +94,12 @@
         }
         dvm.refresh = function() {
             if (dvm.ds.search.datasetRecordId) {
+                dvm.getTypes();
+            }
+        }
+        dvm.onChange = function(value) {
+            dvm.ds.search.datasetRecordId = value;
+            if (dvm.ds.search.datasetRecordId !== '') {
                 dvm.getTypes();
             }
         }

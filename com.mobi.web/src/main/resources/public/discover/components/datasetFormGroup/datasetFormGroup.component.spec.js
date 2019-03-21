@@ -35,8 +35,7 @@ describe('Dataset Form Group Component', function() {
 
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        scope.onSelect = jasmine.createSpy('onSelect');
-        this.element = $compile(angular.element('<dataset-form-group bindModel="bindModel" change-event="changeEvent(value)" on-select="onSelect()"></dataset-form-group>'))(scope);
+        this.element = $compile(angular.element('<dataset-form-group bindModel="bindModel" change-event="changeEvent(value)"></dataset-form-group>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('datasetFormGroup');
     });
@@ -56,10 +55,6 @@ describe('Dataset Form Group Component', function() {
         it('changeEvent should be called in the parent scope', function() {
             this.controller.changeEvent({value: 'Test'});
             expect(scope.changeEvent).toHaveBeenCalledWith('Test');
-        });
-        it('onSelect should be called in the parent scope', function() {
-            this.controller.onSelect();
-            expect(scope.onSelect).toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {
@@ -87,6 +82,11 @@ describe('Dataset Form Group Component', function() {
             scope.$digest();
             expect(scope.changeEvent).toHaveBeenCalledWith('');
             expect(scope.bindModel).toBe('');
+        });
+        it('onChange should call the correct methods', function() {
+            this.controller.onChange('value');
+            expect(this.controller.bindModel).toEqual('value');
+            expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.bindModel);
         });
     });
 });

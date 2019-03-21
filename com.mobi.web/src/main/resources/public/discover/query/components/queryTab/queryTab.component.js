@@ -28,7 +28,8 @@
      * @name query.component:queryTab
      *
      * @description
-     * HTML contents in the SPARQL editor tab.
+     * `queryTab` is a component that provides a {@link query.component:sparqlEditor} and a
+     * {@link query.component:sparqlResultBlock} to edit SPARQL queries and display the results of the queries.
      */
     const queryTabComponent = {
         templateUrl: 'discover/query/components/queryTab/queryTab.component.html',

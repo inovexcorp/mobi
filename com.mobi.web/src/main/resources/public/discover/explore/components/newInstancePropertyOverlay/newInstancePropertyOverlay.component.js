@@ -60,10 +60,11 @@
         dvm.util = utilService;
         dvm.propertyIRI = '';
 
-        $timeout(function() {
-            document.querySelector('#auto-complete').focus();
-        }, 200);
-
+        dvm.$onInit = function() {
+            $timeout(function() {
+                document.querySelector('#auto-complete').focus();
+            }, 200);
+        }
         dvm.getProperties = function() {
             return eu.getNewProperties(dvm.resolve.properties, dvm.resolve.instance, dvm.propertyIRI);
         }

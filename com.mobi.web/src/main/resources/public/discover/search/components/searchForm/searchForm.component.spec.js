@@ -189,6 +189,12 @@ describe('Search Form component', function() {
                 expect(this.controller.getTypes).toHaveBeenCalled();
             });
         });
+        it('onChange should call the correct methods', function() {
+            spyOn(this.controller, 'getTypes');
+            this.controller.onChange('value');
+            expect(discoverStateSvc.search.datasetRecordId).toEqual('value');
+            expect(this.controller.getTypes).toHaveBeenCalled();
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

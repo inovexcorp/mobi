@@ -55,11 +55,12 @@
         var es = exploreService;
         var util = utilService;
         var eu = exploreUtilsService;
-        dvm.classTitle = _.last(ds.explore.breadcrumbs);
         dvm.showDeleteOverlay = false;
+        dvm.classTitle = '';
         dvm.chunks = [];
 
         dvm.$onInit = function() {
+            dvm.classTitle = _.last(ds.explore.breadcrumbs);
             dvm.chunks = getChunks(dvm.instanceData);
         }
         dvm.$onChanges = function() {

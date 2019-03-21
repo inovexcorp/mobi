@@ -30,7 +30,7 @@
      * @name search.service:searchService
      * @requires shared.service:discoverStateService
      * @requires shared.service:httpService
-     * @requires sparqlManager.service:sparqlManager
+     * @requires shared.service:sparqlManager
      * @requires shared.service:prefixes
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:utilService

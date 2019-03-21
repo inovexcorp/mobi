@@ -23,8 +23,8 @@
 <form class="class-block-header">
     <div class="form-group float-left">
         <custom-label>Dataset</custom-label>
-        <dataset-select class="w-100" bind-model="dvm.ds.explore.recordId" change-event="dvm.ds.explore.recordId = value" on-select="dvm.onSelect()"></dataset-select>
+        <dataset-select class="w-100" bind-model="dvm.ds.explore.recordId" change-event="dvm.onSelect(value)"></dataset-select>
     </div>
-    <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-primary remove-min-width" ng-click="dvm.onSelect()"><i class="fa fa-refresh"></i></button>
+    <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-primary remove-min-width" ng-click="dvm.refresh()"><i class="fa fa-refresh"></i></button>
     <button ng-disabled="!dvm.ds.explore.recordId" class="btn btn-link float-right create-button" ng-click="dvm.showCreate()"><i class="fa fa-plus"></i>Create Instance</button>
 </form>

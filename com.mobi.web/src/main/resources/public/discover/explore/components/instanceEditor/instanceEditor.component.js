@@ -33,8 +33,9 @@
      * @requires explore.service:exploreUtilsService
      *
      * @description
-     * HTML contents in the instance view page which shows the complete list of properties
-     * associated with the selected instance in an editable format.
+     * `instanceEditor` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance being edited.
+     * It also provides an {@link explore.component:instanceForm} to show the complete list of properties
+     * available for the new instance in an editable format along with save and cancel buttons for the editing.
      */
     const instanceEditorComponent = {
         templateUrl: 'discover/explore/components/instanceEditor/instanceEditor.component.html',

@@ -32,9 +32,9 @@
      * @requires shared.service:prefixes
      *
      * @description
-     * HTML contents in the instance view page which shows the complete list of properties
-     * associated with the selected instance. If a property value is reified, a toggleable
-     * dropdown display is included.
+     * `instanceView` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance
+     * being viewed. It shows the complete list of properties associated with the selected instance. If a property value
+     * is reified, a toggleable dropdown display is included.
      *
      * @param {Object} entity The instance entity to view
      */

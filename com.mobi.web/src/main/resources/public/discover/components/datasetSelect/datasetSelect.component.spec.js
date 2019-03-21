@@ -42,8 +42,7 @@ describe('Dataset Select component', function() {
         datasetManagerSvc.splitDatasetArray.and.returnValue({});
         scope.bindModel = '';
         scope.changeEvent = jasmine.createSpy('changeEvent');
-        scope.onSelect = jasmine.createSpy('onSelect');
-        this.element = $compile(angular.element('<dataset-select bind-model="bindModel" change-event="changeEvent(value)" on-select="onSelect()"></dataset-select>'))(scope);
+        this.element = $compile(angular.element('<dataset-select bind-model="bindModel" change-event="changeEvent(value)"></dataset-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('datasetSelect');
     });
@@ -66,17 +65,6 @@ describe('Dataset Select component', function() {
         it('changeEvent should be called in the parent scope', function() {
             this.controller.changeEvent({value: 'Test'});
             expect(scope.changeEvent).toHaveBeenCalledWith('Test');
-        });
-        it('onSelect should be called in the parent scope', function() {
-            this.controller.onSelect();
-            expect(scope.onSelect).toHaveBeenCalled();
-        });
-    });
-    describe('controller methods', function() {
-        it('update calls the correct methods', function() {
-            this.controller.update();
-            expect(scope.onSelect).toHaveBeenCalled();
-            expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.bindModel);
         });
     });
     describe('contains the correct html', function() {

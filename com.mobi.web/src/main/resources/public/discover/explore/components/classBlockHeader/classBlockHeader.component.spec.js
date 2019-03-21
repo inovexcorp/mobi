@@ -117,21 +117,37 @@ describe('Class Block Header component', function() {
                 expect(modalSvc.openModal).not.toHaveBeenCalled();
             });
         });
-        describe('onSelect calls the proper methods when getClassDetails', function() {
+        describe('onSelect calls the proper methods', function() {
+            it('when value parameter is not an empty string', function() {
+                spyOn(this.controller, 'refresh');
+                this.controller.onSelect('recordId');
+                scope.$apply();
+                expect(discoverStateSvc.explore.recordId).toEqual('recordId');
+                expect(this.controller.refresh).toHaveBeenCalled();
+            });
+            it('when value parameter is an empty string', function() {
+                spyOn(this.controller, 'refresh');
+                this.controller.onSelect('');
+                scope.$apply();
+                expect(discoverStateSvc.explore.recordId).toEqual('');
+                expect(this.controller.refresh).not.toHaveBeenCalled();
+            });
+        });
+        describe('refresh calls the proper methods when getClassDetails', function() {
             beforeEach(function() {
-                discoverStateSvc.explore.recordId = 'recordId';
                 discoverStateSvc.explore.classDetails = [{}];
+                discoverStateSvc.explore.recordId = 'recordId';
             });
             it('resolves', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.when([{prop: 'details'}]));
-                this.controller.onSelect();
+                this.controller.refresh();
                 scope.$apply();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([{prop: 'details'}]);
             });
             it('rejects', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
-                this.controller.onSelect();
+                this.controller.refresh();
                 scope.$apply();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([]);

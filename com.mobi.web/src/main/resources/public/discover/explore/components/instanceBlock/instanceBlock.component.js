@@ -27,7 +27,7 @@
      * @ngdoc component
      * @name explore.component:instanceBlock
      * @requires $http
-     * @requires $filter
+     * @requires shared.filter:splitIRIFilter
      * @requires shared.service:discoverStateService
      * @requires discover.service:exploreService
      * @requires shared.service:utilService
@@ -44,6 +44,7 @@
         controllerAs: 'dvm',
         controller: instanceBlockComponentCtrl
     };
+
     instanceBlockComponent.$inject = ['$filter', 'discoverStateService', 'exploreService', 'utilService', 'uuid'];
 
     function instanceBlockComponentCtrl($filter, discoverStateService, exploreService, utilService, uuid) {

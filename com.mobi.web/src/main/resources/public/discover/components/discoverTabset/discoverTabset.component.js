@@ -29,7 +29,8 @@
      * @requires shared.service:discoverStateService
      *
      * @description
-     * HTML contents in the discover tabset which contains the explore and query tabs.
+     * `discoverTabset` is a component that creates a {@link shared.component:materialTabset tabset} of the
+     * {@link explore.component:exploreTab}, {@link query.component:queryTab}, and {@link search.component:searchTab}.
      */
     const discoverTabsetComponent = {
         templateUrl: 'discover/components/discoverTabset/discoverTabset.component.html',

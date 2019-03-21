@@ -33,8 +33,11 @@
      * @requires shared.service:ontologyManagerService
      *
      * @description
-     * HTML contents for the property filter overlay which provides the users with step by step options for building
-     * the property filter for the search page.
+     * `propertyFilterOverlay` is a component that creates content for a modal with a {@link search.component:propertySelector}
+     * and {@link search.component:filterSelector to create a property filter to be used in the search query.
+     *
+     * @param {Function} close A function that closes the modal
+     * @param {Function} dismiss A function that dismisses the modal
      */
     const propertyFilterOverlayComponent = {
         templateUrl: 'discover/search/components/propertyFilterOverlay/propertyFilterOverlay.component.html',
@@ -53,11 +56,11 @@
         var util = utilService;
         var ds = discoverStateService;
         var s = searchService;
-        var defaultProperties = _.map([prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'], iri => ({'@id': iri}));
+        var defaultProperties = [];
         dvm.om = ontologyManagerService;
         dvm.property = undefined;
         dvm.range = undefined;
-        dvm.keys = getKeys();
+        dvm.keys = []
         dvm.filterType = undefined;
         dvm.begin = undefined;
         dvm.end = undefined;
@@ -68,6 +71,8 @@
         dvm.path = [];
 
         dvm.$onInit = function() {
+            defaultProperties = _.map([prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'], iri => ({'@id': iri}));
+            dvm.key = getKeys();
             setProperties();
         }
         dvm.submittable = function() {

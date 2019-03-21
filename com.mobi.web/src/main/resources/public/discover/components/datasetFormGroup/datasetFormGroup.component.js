@@ -25,23 +25,21 @@
 
     /**
      * @ngdoc component
-     * @name discover.component:datasetSelect
+     * @name discover.component:datasetFormGroup
      *
      * @description
-     * HTML contents in the dataset select which provides a dropdown select of all datasets with a
-     * clear button.
+     * `datasetFormGroup` is a component that creates a form containing a {@link discover.component:datasetSelect} to select
+     * a dataset and a button to clear the selection.
      * 
      * @param {string} bindModel The IRI of the dataset record
      * @param {Function} changeEvent A function to be called when the value of the {@link discover.component:datasetSelect datasetSelect}
      * changes. Expects an argument called `value` and should update the value of `bindModel`.
-     * @param {Function} onSelect A function to be called when a new dataset is selected
      */
     const datasetFormGroupComponent = {
         templateUrl: 'discover/components/datasetFormGroup/datasetFormGroup.component.html',
         bindings: {
             bindModel: '<',
-            changeEvent: '&',
-            onSelect: '&?'
+            changeEvent: '&'
         },
         controllerAs: 'dvm',
         controller: datasetFormGroupComponentCtrl
@@ -52,6 +50,10 @@
 
         dvm.clear = function() {
             dvm.bindModel = '';
+            dvm.changeEvent({value: dvm.bindModel});
+        }
+        dvm.onChange = function(value) {
+            dvm.bindModel = value;
             dvm.changeEvent({value: dvm.bindModel});
         }
     }

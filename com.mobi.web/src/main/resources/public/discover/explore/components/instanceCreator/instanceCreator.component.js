@@ -34,8 +34,9 @@
      * @requires shared.service:prefixes
      *
      * @description
-     * HTML contents in the instance view page which shows the complete list of properties
-     * available for the new instance in an editable format.
+     * `instanceCreator` is a component that displays {@link shared.component:breadCrumbs} to the class of the instance being created.
+     * It also provides an {@link explore.component:instanceForm} to show the complete list of properties
+     * available for the new instance in an editable format along with save and cancel buttons for the editing.
      */
     const instanceCreatorComponent = {
         templateUrl: 'discover/explore/components/instanceCreator/instanceCreator.component.html',

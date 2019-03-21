@@ -29,8 +29,8 @@
      * @requires shared.service:discoverStateService
      *
      * @description
-     * HTML contents in the class block which contains the class details associated with
-     * a selected dataset.
+     * `classBlock` is a component that provides a {@link explore.component:ClassBlockHeader} and a
+     * {@link explore.component:classCards} to display the class details associated with a selected dataset.
      */
     const classBlockComponent = {
         templateUrl: 'discover/explore/components/classBlock/classBlock.component.html',

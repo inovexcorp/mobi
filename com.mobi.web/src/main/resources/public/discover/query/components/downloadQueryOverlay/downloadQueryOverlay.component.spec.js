@@ -25,7 +25,6 @@ describe('Download Query Overlay component', function() {
 
     beforeEach(function() {
         module('templates');
-        module('discover');
         module('query');
         mockSparqlManager();
 

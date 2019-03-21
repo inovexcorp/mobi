@@ -47,7 +47,7 @@
     function sparqlEditorComponentCtrl(sparqlManagerService, prefixes) {
         var dvm = this;
         dvm.sparql = sparqlManagerService;
-        dvm.prefixList = _.sortBy(_.map(prefixes, (value, key) => key + ': <' + value + '>'));
+        dvm.prefixList = [];
         dvm.editorOptions = {
             mode: 'application/sparql-query',
             indentUnit: 4,
@@ -55,6 +55,10 @@
             lineNumbers: true,
             lineWrapping: true,
             matchBrackets: true
+        }
+
+        dvm.$onInit = function() {
+            dvm.prefixList = _.sortBy(_.map(prefixes, (value, key) => key + ': <' + value + '>'));
         }
     }
 
