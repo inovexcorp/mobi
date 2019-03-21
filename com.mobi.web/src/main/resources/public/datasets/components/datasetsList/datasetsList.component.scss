@@ -37,15 +37,6 @@
         flex-direction: column;
     }
     .dataset {
-        border-bottom: 1px solid var(--light);
-        cursor: pointer;
-
-        &:last-child {
-            border-bottom: none;
-        }
-        &:hover {
-            background-color: var(--light);
-        }
         .record-keywords {
             margin-bottom: 0;
         }
@@ -60,21 +51,6 @@
                     content: '';
                 }
             }
-        }
-        .header {
-            margin-bottom: 0;
-
-            i {
-                width: 0.8em;
-            }
-        }
-        .dataset-title {
-            font-weight: 500;
-            font-size: 24px;
-            display: inline-block;
-        }
-        p {
-            margin: 0;
         }
         .description {
             @include textOverflow;

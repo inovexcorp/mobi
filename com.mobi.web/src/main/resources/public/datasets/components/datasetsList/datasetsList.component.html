@@ -24,19 +24,25 @@
     <div class="col-8 offset-2 h-100">
         <block class="h-100 pb-5">
             <block-content>
-                <div class="dataset padding" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.state.openedDatasetId}">
-                    <action-menu class="float-right">
-                        <a ng-click="dvm.showUploadData(dataset)" class="dropdown-item action upload-data"><i class="fa fa-fw fa-upload"></i> Upload Data</a>
-                        <a ng-click="dvm.showEdit(dataset)" class="dropdown-item action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a>
-                        <a ng-click="dvm.showClear(dataset)" class="dropdown-item action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a>
-                        <a ng-click="dvm.showDelete(dataset)" class="dropdown-item action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
-                    </action-menu>
-                    <div class="details" ng-click="dvm.clickDataset(dataset)">
-                        <div class="header dataset-title">
-                            <i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.state.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.state.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item list-group-item-action dataset" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.state.openedDatasetId}" disable-animate>
+                        <div class="dataset-info d-flex">
+                            <div class="details flex-1 remove-min-width" ng-click="dvm.clickDataset(dataset)">
+                                <h3 class="text-truncate w-100 mb-0">
+                                    <i class="fa fa-fw" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.state.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.state.openedDatasetId}"></i> {{dvm.util.getDctermsValue(dataset.record, 'title')}}
+                                </h3>
+                                <p class="text-muted mb-1"><small>{{dvm.util.getPropertyId(dataset.record, dvm.prefixes.dataset + 'dataset')}}</small></p>
+                                <p class="description">{{dvm.util.getDctermsValue(dataset.record, 'description') || '(None Specified)'}}</p>
+                            </div>
+                            <div>
+                                <action-menu>
+                                    <a ng-click="dvm.showUploadData(dataset)" class="dropdown-item action upload-data"><i class="fa fa-fw fa-upload"></i> Upload Data</a>
+                                    <a ng-click="dvm.showEdit(dataset)" class="dropdown-item action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a>
+                                    <a ng-click="dvm.showClear(dataset)" class="dropdown-item action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a>
+                                    <a ng-click="dvm.showDelete(dataset)" class="dropdown-item action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
+                                </action-menu>
+                            </div>
                         </div>
-                        <p class="text-muted"><small>{{dvm.util.getPropertyId(dataset.record, dvm.prefixes.dataset + 'dataset')}}</small></p>
-                        <p class="description">{{dvm.util.getDctermsValue(dataset.record, 'description') || '(None Specified)'}}</p>
                         <div class="full-details" ng-if="dataset.record['@id'] === dvm.state.openedDatasetId">
                             <entity-dates entity="dataset.record"></entity-dates>
                             <record-keywords record="dataset.record"></record-keywords>
@@ -45,7 +51,7 @@
                                 <span class="field-name">Ontologies: </span>
                                 <ul class="ontologies">
                                     <li ng-if="dataset.identifiers.length === 0" class="last">(None specified)</li>
-                                    <li ng-repeat="ontologyId in dvm.getIdentifiedOntologyIds(dataset) | inArray:dvm.cachedOntologyIds" ng-class="{'last': $last}">{{dvm.getOntologyTitle(ontologyId)}}</li>
+                                    <li class="break-word hyphens" ng-repeat="ontologyId in dvm.getIdentifiedOntologyIds(dataset) | inArray:dvm.cachedOntologyIds" ng-class="{'last': $last}">{{dvm.getOntologyTitle(ontologyId)}}</li>
                                 </ul>
                             </div>
                         </div>
