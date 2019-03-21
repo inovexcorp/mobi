@@ -503,4 +503,11 @@ body {
 }
 .break-word {
     word-break: break-word;
+    overflow-wrap: break-word;
+}
+.hyphens {
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
 }

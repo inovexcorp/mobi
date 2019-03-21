@@ -39,6 +39,6 @@
     <div class="selected-ontologies">
         <span class="field-name">Selected: </span>
         <span class="none-selected" ng-if="dvm.selectedOntologies.length === 0">(None)</span>
-        <span class="selected-ontology" ng-repeat="ontology in dvm.selectedOntologies track by ontology.recordId">{{ontology.title}} <a ng-click="dvm.unselect(ontology)" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
+        <span class="selected-ontology break-word hyphens" ng-repeat="ontology in dvm.selectedOntologies track by ontology.recordId">{{ontology.title}} <a ng-click="dvm.unselect(ontology)" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
     </div>
 </div>
