@@ -51,7 +51,6 @@
         require: '^^propertyFilterOverlay',
         bindings: {
             keys: '<',
-            updateKeys: '&',
             property: '<',
             updateProperty: '&',
             range: '<',
@@ -92,7 +91,7 @@
             if (dvm.ranges.length === 1) {
                 dvm.range = dvm.ranges[0]['@id'];
                 dvm.updateRange({value: dvm.range});
-                dvm.rangeChangeEvent();
+                $timeout(() => dvm.rangeChangeEvent());
             }
         }
         dvm.showNoDomains = function() {

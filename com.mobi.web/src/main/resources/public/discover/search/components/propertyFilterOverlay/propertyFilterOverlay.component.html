@@ -27,7 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <div class="path mb-3"><span ng-repeat-start="part in dvm.path" class="text">{{dvm.om.getEntityName(part.property)}}</span><span ng-repeat-end ng-if="!$last" class="arrow">&gt;</span></div>
-        <property-selector property="dvm.property" update-property="dvm.property = value" range="dvm.range" update-range="dvm.range = value" keys="dvm.keys" update-keys="dvm.keys = value" update-range-change-event="dvm.propertySelected()"></property-selector>
+        <property-selector property="dvm.property" update-property="dvm.property = value" range="dvm.range" update-range="dvm.range = value" keys="dvm.keys" range-change-event="dvm.propertySelected()"></property-selector>
         <filter-selector ng-if="dvm.showFilter" begin="dvm.begin" update-begin="dvm.begin = value" end="dvm.end" update-end="dvm.end = value" filter-type="dvm.filterType" update-filter-type="dvm.filterType = value" regex="dvm.regex" update-regex="dvm.regex = value" value="dvm.value" update-value="dvm.value = value" range="dvm.range" boolean="dvm.boolean" update-boolean="dvm.boolean = value"></filter-selector>
     </form>
 </div>

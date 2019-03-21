@@ -23,7 +23,7 @@
 <div class="filter-selector">
     <div ng-if="!dvm.isBoolean()">
         <custom-label>Filter Type</custom-label>
-        <md-select ng-model="dvm.filterType" aria-label="Filter type" ng-change="dvm.updateFilterType({value: dvm.FilterType})">
+        <md-select ng-model="dvm.filterType" aria-label="Filter type" ng-change="dvm.updateFilterType({value: dvm.filterType})">
             <md-option ng-value="type" ng-repeat="type in dvm.types[dvm.type] | orderBy track by $index">{{type}}</md-option>
         </md-select>
         <div ng-if="dvm.filterType && dvm.filterType !== 'Existence'" class="input-container">

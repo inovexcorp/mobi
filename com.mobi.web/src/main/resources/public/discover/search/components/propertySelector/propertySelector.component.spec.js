@@ -48,13 +48,12 @@ describe('Property Selector component', function() {
         discoverStateSvc.search.properties = {key: [{}]};
 
         scope.keys = ['key'];
-        scope.updateKeys = jasmine.createSpy('updateKeys');
         scope.property = {'@id': 'id'};
         scope.updateProperty = jasmine.createSpy('updateProperty');
         scope.range = 'range';
         scope.updateRange = jasmine.createSpy('updateRange');
         scope.rangeChangeEvent = jasmine.createSpy('rangeChangeEvent');
-        this.element = $compile(angular.element('<property-selector keys="keys" update-keys="updateKeys(value)" property="property" update-property="updateProperty(value)" range="range" update-range="updateRange(value)" range-change-event="rangeChangeEvent()"></property-selector>'))(scope);
+        this.element = $compile(angular.element('<property-selector keys="keys" property="property" update-property="updateProperty(value)" range="range" update-range="updateRange(value)" range-change-event="rangeChangeEvent()"></property-selector>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('propertySelector');
     });
@@ -76,10 +75,6 @@ describe('Property Selector component', function() {
             this.controller.keys = ['new-key'];
             scope.$apply();
             expect(scope.keys).toEqual(copy);
-        });
-        it('updateKeys should be called in the parent scope', function() {
-            this.controller.updateKeys({value: ['key1', 'key2']});
-            expect(scope.updateKeys).toHaveBeenCalledWith(['key1', 'key2']);
         });
         it('property should be two way bound', function() {
             var copy = angular.copy(this.controller.property);
@@ -265,10 +260,5 @@ describe('Property Selector component', function() {
                 expect(this.controller.checkEntityText({'@id': 'other'})).toBe(false);
             });
         });
-        it('rangeChange should call the correct methods', function() {
-            this.controller.rangeChange();
-            expect(scope.updateRange).toHaveBeenCalledWith(this.controller.range);
-            expect(scope.rangeChangeEvent).toHaveBeenCalled();
-        })
     });
 });
