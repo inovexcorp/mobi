@@ -34,7 +34,7 @@
      *
      * @description
      * `propertyFilterOverlay` is a component that creates content for a modal with a {@link search.component:propertySelector}
-     * and {@link search.component:filterSelector to create a property filter to be used in the search query.
+     * and {@link search.component:filterSelector} to create a property filter to be used in the search query.
      *
      * @param {Function} close A function that closes the modal
      * @param {Function} dismiss A function that dismisses the modal
@@ -49,9 +49,9 @@
         controller: propertyFilterOverlayComponentCtrl
     };
 
-    propertyFilterOverlayComponent.$inject = ['discoverStateService', 'utilService', 'searchService', 'prefixes', 'ontologyManagerService']
+    propertyFilterOverlayComponent.$inject = ['$timeout', 'discoverStateService', 'utilService', 'searchService', 'prefixes', 'ontologyManagerService']
 
-    function propertyFilterOverlayComponentCtrl(discoverStateService, utilService, searchService, prefixes, ontologyManagerService) {
+    function propertyFilterOverlayComponentCtrl($timeout, discoverStateService, utilService, searchService, prefixes, ontologyManagerService) {
         var dvm = this;
         var util = utilService;
         var ds = discoverStateService;
@@ -60,7 +60,7 @@
         dvm.om = ontologyManagerService;
         dvm.property = undefined;
         dvm.range = undefined;
-        dvm.keys = []
+        dvm.keys = [];
         dvm.filterType = undefined;
         dvm.begin = undefined;
         dvm.end = undefined;
@@ -72,7 +72,7 @@
 
         dvm.$onInit = function() {
             defaultProperties = _.map([prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'], iri => ({'@id': iri}));
-            dvm.key = getKeys();
+            dvm.keys = getKeys();
             setProperties();
         }
         dvm.submittable = function() {
@@ -156,8 +156,12 @@
             }));
             dvm.close();
         }
+        dvm.rangeEvent = function(value) {
+            dvm.range = value;
+            $timeout(() => dvm.propertySelected());
+        }
         dvm.propertySelected = function() {
-            if (dvm.property) {
+            if (dvm.property && dvm.property !== {}) {
                 dvm.path.push({property: angular.copy(dvm.property), range: dvm.range});
                 if (dvm.om.isObjectProperty(dvm.property)) {
                     dvm.keys = [dvm.range];

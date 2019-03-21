@@ -41,8 +41,8 @@
                     <md-chip-template ng-click="dvm.onSelect($chip['@value'], key, $index)">{{$chip['@value']}}</md-chip-template>
                 </md-chips>
                 <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.transformChip($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
-                    <md-autocomplete md-items="item in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0" md-item-text="item.title">
-                        <span md-highlight-text="dvm.searchText[key]">{{item.title}} :: {{item.instanceIRI}}</span>
+                    <md-autocomplete md-items="item in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0" md-item-text="item.title" md-match-case-insensitive>
+                        <span md-highlight-text="dvm.searchText[key]" md-highlight-flags="ig">{{item.title}} :: {{item.instanceIRI}}</span>
                     </md-autocomplete>
                     <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{dvm.ds.explore.instance.objectMap[$chip['@id']] || $chip['@id']}}</md-chip-template>
                 </md-chips>

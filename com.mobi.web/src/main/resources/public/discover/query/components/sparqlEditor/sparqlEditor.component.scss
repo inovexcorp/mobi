@@ -43,6 +43,14 @@
             margin-top: 24px;
         }
     }
+    dataset-form-group {
+        dataset-select {
+            width: 80%
+        }
+        .btn-clear {
+            line-height: 3;
+        }
+    }
 
     .codemirror-wrapper {
         flex: 1;

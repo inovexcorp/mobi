@@ -25,8 +25,8 @@
         <block-content>
             <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
             <form name="dvm.searchForm">
-                <div class="dataset-wrapper">
-                    <dataset-form-group class="w-100" bind-model="dvm.ds.search.datasetRecordId" change-event="dvm.onChange(value)"></dataset-form-group>
+                <div class="dataset-wrapper d-flex">
+                    <dataset-form-group class="flex-1" bind-model="dvm.ds.search.datasetRecordId" change-event="dvm.onChange(value)"></dataset-form-group>
                     <a class="refresh-link" ng-click="dvm.refresh()" uib-tooltip="Refreshes the dataset metadata" tooltip-append-to-body="true"><i class="fa fa-refresh"></i>Refresh</a>
                 </div>
                 <div class="strike text-muted">AND</div>
@@ -64,7 +64,7 @@
                 <div class="properties-container">
                     <div class="header-wrapper">
                         <custom-label class="property-label">Properties</custom-label>
-                        <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="float-right btn btn-link property-link" ng-click="dvm.createPropertyFilter()"><i class="fa fa-fw fa-plus"></i>Property</button>
+                        <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="float-right btn btn-link property-link p-1" ng-click="dvm.createPropertyFilter()"><i class="fa fa-fw fa-plus"></i>Property</button>
                     </div>
                     <md-list ng-class="{disabled: !dvm.ds.search.datasetRecordId}">
                         <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">

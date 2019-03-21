@@ -28,22 +28,15 @@
         padding: 10px;
     }
     .dataset-wrapper {
-        display: flex;
-        flex-direction: row;
-
-        .dataset-form-group {
-            flex: 1;
-
-            .flex-container .btn-clear {
-                line-height: 0;
-                margin-left: 5px;
-            }
+        .btn-clear {
+            line-height: 0;
+            margin-left: 5px;
         }
         .refresh-link {
             display: inline-block;
             height: 33px;
             line-height: 33px;
-            margin: 25px 0 15px 5px;
+            margin: 21px 0 15px 5px;
             vertical-align: bottom;
         }
         a {

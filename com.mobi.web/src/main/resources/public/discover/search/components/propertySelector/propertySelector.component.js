@@ -55,15 +55,14 @@
             updateProperty: '&',
             range: '<',
             updateRange: '&',
-            rangeChangeEvent: '&'
         },
         controllerAs: 'dvm',
         controller: propertySelectorComponentCtrl
     };
 
-    propertySelectorComponent.$inject = ['$timeout', 'discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
+    propertySelectorComponent.$inject = ['discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
 
-    function propertySelectorComponentCtrl($timeout, discoverStateService, ontologyManagerService, prefixes, utilService) {
+    function propertySelectorComponentCtrl(discoverStateService, ontologyManagerService, prefixes, utilService) {
         var dvm = this;
         dvm.ds = discoverStateService;
         dvm.util = utilService;
@@ -91,7 +90,6 @@
             if (dvm.ranges.length === 1) {
                 dvm.range = dvm.ranges[0]['@id'];
                 dvm.updateRange({value: dvm.range});
-                $timeout(() => dvm.rangeChangeEvent());
             }
         }
         dvm.showNoDomains = function() {
