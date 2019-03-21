@@ -22,24 +22,11 @@
  */
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
-
-axiom-overlay {
-    .codemirror-wrapper.readOnly .CodeMirror {
-        background-color: var(--light-dark);
-        opacity: .65;
-    }
-    .CodeMirror {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-bottom: 10px;
-        font-family: inherit;
-        height: 200px;
-    }
+annotation-overlay {
     .ui-select-bootstrap .ui-select-match-text {
         float:none !important;
     }
     .ui-select-toggle.form-control {
         @include textOverflow();
     }
-
 }
