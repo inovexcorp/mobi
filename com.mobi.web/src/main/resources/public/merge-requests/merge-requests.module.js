@@ -23,20 +23,12 @@
 (function() {
     'use strict';
 
-    angular
-        .module('merge-requests', [
-            /* Custom Directives */
-            'commentDisplay',
-            'createRequest',
-            'editRequestOverlay',
-            'mergeRequestDiscussion',
-            'mergeRequestList',
-            'mergeRequestsPage',
-            'mergeRequestTabset',
-            'mergeRequestView',
-            'replyComment',
-            'requestBranchSelect',
-            'requestDetailsForm',
-            'requestRecordSelect'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name merge-requests
+     *
+     * @description
+     * The `merge-requests` module provides components that make up the Merge Requests module in the Mobi application.
+     */
+    angular.module('merge-requests', []);
 })();
