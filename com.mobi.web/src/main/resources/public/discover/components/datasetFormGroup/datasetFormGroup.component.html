@@ -22,8 +22,8 @@
   -->
 <div class="dataset-form-group form-group w-100">
       <custom-label>Dataset</custom-label>
-      <div class="d-flex">
-          <dataset-select class="select-container flex-1" bind-model="dvm.bindModel" change-event="dvm.onChange(value)"></dataset-select>
+      <div class="d-flex align-items-center">
+          <dataset-select class="select-container flex-1 remove-min-width" bind-model="dvm.bindModel" change-event="dvm.onChange(value)"></dataset-select>
           <a ng-click="dvm.clear()" class="btn-clear"><i class="fa fa-fw fa-times"></i>Clear</a>
       </div>
   </div>

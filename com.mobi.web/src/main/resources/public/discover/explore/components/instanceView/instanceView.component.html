@@ -35,9 +35,9 @@
                         <h3 class="property">{{dvm.util.getBeautifulIRI(key)}}</h3>
                         <ul class="values" ng-class="{'show-more': more, 'show-link': value.length > 1}">
                             <li ng-repeat="item in value track by $index" ng-init="reification = dvm.getReification(key, item)">
-                                <div class="value-container">
-                                    <value-display value="item"></value-display>
-                                    <span class="show-reification float-right" ng-show="reification" ng-click="showReification = !showReification"><i class="pt-1 fa fa-2x" ng-class="{'fa-angle-down': !showReification, 'fa-angle-up': showReification}"></i></span>
+                                <div class="value-container d-flex align-items-center">
+                                    <value-display class="flex-1" value="item"></value-display>
+                                    <span class="show-reification" ng-show="reification" ng-click="showReification = !showReification"><i class="fa fa-fw fa-2x" ng-class="{'fa-angle-down': !showReification, 'fa-angle-up': showReification}"></i></span>
                                 </div>
                                 <div class="well well-sm" uib-collapse="!showReification">
                                     <div ng-repeat="(keyR, valueR) in reification track by $index">

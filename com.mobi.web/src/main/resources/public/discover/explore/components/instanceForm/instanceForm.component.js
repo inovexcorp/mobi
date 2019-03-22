@@ -109,7 +109,7 @@
                     .then(response => {
                         var options = _.filter(response.data, item => !_.some(dvm.instance[propertyIRI], {'@id': item.instanceIRI}));
                         if (dvm.searchText[propertyIRI]) {
-                            return _.filter(options, item => dvm.eu.contains(item.instanceIRI + item.title, dvm.searchText[propertyIRI]));
+                            return _.filter(options, item => dvm.eu.contains(item.title, dvm.searchText[propertyIRI]) || dvm.eu.contains(item.instanceIRI, dvm.searchText[propertyIRI]));
                         }
                         return options;
                     }, errorMessage => {

@@ -29,22 +29,16 @@
     }
     .dataset-wrapper {
         .btn-clear {
-            line-height: 0;
-            margin-left: 5px;
+            margin-left: 0.25rem;
         }
         .refresh-link {
-            display: inline-block;
-            height: 33px;
-            line-height: 33px;
-            margin: 21px 0 15px 5px;
-            vertical-align: bottom;
+            margin-top: 3px;
         }
         a {
             font-size: 0;
 
             i {
                 font-size: 14px;
-                line-height: 33px;
             }
         }
     }
@@ -85,6 +79,12 @@
     .properties-container {
         .header-wrapper .property-label {
             margin: 7px 0;
+        }
+        .btn-link {
+            &:hover {
+                color: inherit;
+                text-decoration: none;
+            }
         }
         md-list-item {
             width: 100%;
