@@ -23,42 +23,28 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name explore
-         *
-         * @description
-         * The `explore` module only provides the `exploreService` service which provides access
-         * to the Mobi explorable-datasets REST endpoints.
-         */
-        .module('explore', [])
-        /**
-         * @ngdoc service
-         * @name explore.service:exploreService
-         * @requires $http
-         * @requires $q
-         * @requires shared.service:utilService
-         * @requires shared.service:discoverStateService
-         *
-         * @description
-         * `exploreService` is a service that provides access to the Mobi explorable-datasets REST
-         * endpoints.
-         */
-        .service('exploreService', exploreService);
+    exploreService.$inject = ['$http', '$q', 'utilService', 'REST_PREFIX'];
 
-    exploreService.$inject = ['$http', '$q', 'utilService', 'discoverStateService', 'REST_PREFIX'];
-
-    function exploreService($http, $q, utilService, discoverStateService, REST_PREFIX) {
+    /**
+     * @ngdoc service
+     * @name discover.service:exploreService
+     * @requires $http
+     * @requires $q
+     * @requires shared.service:utilService
+     *
+     * @description
+     * `exploreService` is a service that provides access to the Mobi explorable-datasets REST
+     * endpoints.
+     */
+    function exploreService($http, $q, utilService, REST_PREFIX) {
         var self = this;
         var prefix = REST_PREFIX + 'explorable-datasets/';
         var util = utilService;
-        var ds = discoverStateService;
 
         /**
          * @ngdoc method
          * @name getClassDetails
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the GET /mobirest/explorable-datasets/{recordId}/class-details endpoint and returns the
@@ -74,7 +60,7 @@
         /**
          * @ngdoc method
          * @name getClassInstanceDetails
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
@@ -101,7 +87,7 @@
         /**
          * @ngdoc method
          * @name getClassPropertyDetails
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns the
@@ -120,7 +106,7 @@
         /**
          * @ngdoc method
          * @name createInstance
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint
@@ -138,7 +124,7 @@
         /**
          * @ngdoc method
          * @name getInstance
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
@@ -157,7 +143,7 @@
         /**
          * @ngdoc method
          * @name updateInstance
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
@@ -176,7 +162,7 @@
         /**
          * @ngdoc method
          * @name deleteInstance
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Calls the DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
@@ -194,7 +180,7 @@
         /**
          * @ngdoc method
          * @name createPagedResultsObject
-         * @methodOf explore.service:exploreService
+         * @methodOf discover.service:exploreService
          *
          * @description
          * Creates an object which contains all of the paginated details from the provided response in the expected format.
@@ -215,4 +201,7 @@
             return object;
         }
     }
+
+    angular.module('discover')
+        .service('exploreService', exploreService);
 })();
