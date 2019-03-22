@@ -44,7 +44,6 @@
      * @param {string} range the range of the selected property
      * @param {Function} updateRange A function to be called when the value of `range` changes. Expects an argument
      * called `value` and should update the value of `range`.
-     * @param {Function} rangeChangeEvent A function to be called when the value of `range` changes.
      */
     const propertySelectorComponent = {
         templateUrl: 'discover/search/components/propertySelector/propertySelector.component.html',

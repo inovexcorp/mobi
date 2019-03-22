@@ -38,7 +38,7 @@
     </div>
     <div ng-if="dvm.property && dvm.ranges.length > 1" class="form-group">
         <custom-label>Range</custom-label>
-        <md-select ng-model="dvm.range" md-on-close="dvm.rangeSearch = ''" md-selected-text="dvm.getSelectedRangeText()" aria-label="Range" ng-change="dvm.rangeChangeEvent()">
+        <md-select ng-model="dvm.range" md-on-close="dvm.rangeSearch = ''" md-selected-text="dvm.getSelectedRangeText()" aria-label="Range" ng-change="dvm.updateRange({value: dvm.range})">
             <md-select-header>
                 <input ng-model="dvm.rangeSearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()" placeholder="Search...">
             </md-select-header>

@@ -64,9 +64,6 @@ describe('Dataset Form Group Component', function() {
         it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(1);
         });
-        it('with a .flex-container', function() {
-            expect(this.element.querySelectorAll('.flex-container').length).toBe(1);
-        });
         it('with a dataset-select', function() {
             expect(this.element.find('dataset-select').length).toBe(1);
         });

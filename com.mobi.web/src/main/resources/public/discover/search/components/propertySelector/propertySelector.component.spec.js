@@ -52,8 +52,7 @@ describe('Property Selector component', function() {
         scope.updateProperty = jasmine.createSpy('updateProperty');
         scope.range = 'range';
         scope.updateRange = jasmine.createSpy('updateRange');
-        scope.rangeChangeEvent = jasmine.createSpy('rangeChangeEvent');
-        this.element = $compile(angular.element('<property-selector keys="keys" property="property" update-property="updateProperty(value)" range="range" update-range="updateRange(value)" range-change-event="rangeChangeEvent()"></property-selector>'))(scope);
+        this.element = $compile(angular.element('<property-selector keys="keys" property="property" update-property="updateProperty(value)" range="range" update-range="updateRange(value)"></property-selector>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('propertySelector');
     });
@@ -95,10 +94,6 @@ describe('Property Selector component', function() {
         it('updateRange should be called in the parent scope', function() {
             this.controller.updateRange({value: 'Test'});
             expect(scope.updateRange).toHaveBeenCalledWith('Test');
-        });
-        it('rangeChangeEvent should be called in the parent scope', function() {
-            this.controller.rangeChangeEvent();
-            expect(scope.rangeChangeEvent).toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {
