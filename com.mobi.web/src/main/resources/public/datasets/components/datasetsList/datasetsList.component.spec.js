@@ -265,10 +265,10 @@ describe('Datasets List component', function() {
             scope.$digest();
             var datasets = this.element.querySelectorAll('block-content .dataset');
             expect(angular.element(datasets[0]).hasClass('open')).toBe(true);
-            expect(angular.element(datasets[0].querySelectorAll('.header i')[0]).hasClass('fa-caret-down')).toBe(true);
+            expect(angular.element(datasets[0].querySelectorAll('h3 i')[0]).hasClass('fa-caret-down')).toBe(true);
             expect(datasets[0].querySelectorAll('.full-details').length).toBe(1);
             expect(angular.element(datasets[1]).hasClass('open')).toBe(false);
-            expect(angular.element(datasets[1].querySelectorAll('.header i')[0]).hasClass('fa-caret-right')).toBe(true);
+            expect(angular.element(datasets[1].querySelectorAll('h3 i')[0]).hasClass('fa-caret-right')).toBe(true);
             expect(datasets[1].querySelectorAll('.full-details').length).toBe(0);
         });
     });

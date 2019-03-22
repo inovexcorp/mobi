@@ -26,7 +26,7 @@
 </div>
 <div class="modal-body">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-    <static-iri iri="dvm.scheme['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+    <static-iri iri="dvm.scheme['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)" duplicate-check="true"></static-iri>
     <form name="dvm.form" novalidate autocomplete="off">
         <div class="form-group">
             <custom-label>Name</custom-label>
