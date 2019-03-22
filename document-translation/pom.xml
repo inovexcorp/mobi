@@ -28,7 +28,7 @@
     <parent>
         <artifactId>mobi-parent</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.15.50</version>
+        <version>1.15.51</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
