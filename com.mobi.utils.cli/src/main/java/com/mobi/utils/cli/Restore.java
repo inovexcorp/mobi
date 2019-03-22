@@ -81,7 +81,7 @@ public class Restore implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Restore.class);
 
-    private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + "/restoreZip";
+    private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15");
 
     // Service References
@@ -270,7 +270,7 @@ public class Restore implements Action {
         String policyFileLocation = (String) serviceRef.getProperty("policyFileLocation");
         LOGGER.trace("Identified policy directory as " + policyFileLocation);
         File policyDir = new File(policyFileLocation);
-        File tmpPolicyDir = new File(RESTORE_PATH + "/policies");
+        File tmpPolicyDir = new File(RESTORE_PATH + File.separator + "policies");
         FileUtils.copyDirectory(tmpPolicyDir, policyDir);
     }
 
@@ -349,8 +349,8 @@ public class Restore implements Action {
                 }
                 if (newFile.getAbsolutePath().endsWith("configurations.zip")
                         || newFile.getAbsolutePath().endsWith("policies.zip")) {
-                    unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath() + File.separator
-                            + FilenameUtils.removeExtension(newFile.getName()));
+                    unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath()
+                            + File.separator + FilenameUtils.removeExtension(newFile.getName()));
                 } else if (newFile.getAbsolutePath().endsWith(".zip")) {
                     unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath());
                 }
