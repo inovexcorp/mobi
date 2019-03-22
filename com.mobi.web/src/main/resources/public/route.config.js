@@ -126,7 +126,7 @@
                 url: '/discover',
                 views: {
                     'container@': {
-                        templateUrl: 'discover/discover.module.html'
+                        template: '<discover-page></discover-page>'
                     }
                 },
                 data: {

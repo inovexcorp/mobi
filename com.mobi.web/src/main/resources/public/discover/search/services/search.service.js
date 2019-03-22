@@ -23,34 +23,22 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name search
-         *
-         * @description
-         * The `search` module only provides the `searchService` service which provides utility
-         * methods for the creating and submitting search queries.
-         */
-        .module('search', [])
-        /**
-         * @ngdoc service
-         * @name search.service:searchService
-         * @requires shared.service:discoverStateService
-         * @requires shared.service:httpService
-         * @requires sparqlManager.service:sparqlManager
-         * @requires shared.service:prefixes
-         * @requires shared.service:ontologyManagerService
-         * @requires shared.service:utilService
-         *
-         * @description
-         * `searchService` is a service that provides methods to create search query strings
-         * and submit them to the {@link shared.service:sparqlManagerService SPARQL query endpoints}.
-         */
-        .service('searchService', searchService);
-
     searchService.$inject = ['$q', 'discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs', 'prefixes', 'datasetManagerService', 'ontologyManagerService', 'utilService'];
 
+    /**
+     * @ngdoc service
+     * @name search.service:searchService
+     * @requires shared.service:discoverStateService
+     * @requires shared.service:httpService
+     * @requires shared.service:sparqlManager
+     * @requires shared.service:prefixes
+     * @requires shared.service:ontologyManagerService
+     * @requires shared.service:utilService
+     *
+     * @description
+     * `searchService` is a service that provides methods to create search query strings
+     * and submit them to the {@link shared.service:sparqlManagerService SPARQL query endpoints}.
+     */
     function searchService($q, discoverStateService, httpService, sparqlManagerService, sparqljs, prefixes, datasetManagerService, ontologyManagerService, utilService) {
         var self = this;
         var ds = discoverStateService;
@@ -474,4 +462,7 @@
             return {variable, patterns};
         }
     }
+
+    angular.module('search')
+        .service('searchService', searchService);
 })();

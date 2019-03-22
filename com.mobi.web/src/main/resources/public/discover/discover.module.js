@@ -23,45 +23,17 @@
 (function() {
     'use strict';
 
-    angular
-        .module('discover', [
-            /* Services */
+    /**
+     * @ngdoc overview
+     * @name discover
+     *
+     * @description
+     * The `discover` module provides components that make up the Discover module in the Mobi application.
+     */
+    angular.module('discover', [
+            // Submodules
             'explore',
-            'exploreUtils',
-            'search',
-
-            /* Common */
-            'datasetFormGroup',
-            'datasetSelect',
-            'discoverTabset',
-            'sparqlResultTable',
-
-            /* Explore tab */
-            'classBlock',
-            'classBlockHeader',
-            'classCards',
-            'exploreTab',
-            'instanceBlock',
-            'instanceCards',
-            'instanceCreator',
-            'instanceEditor',
-            'instanceForm',
-            'instanceView',
-            'newInstanceClassOverlay',
-            'newInstancePropertyOverlay',
-            'propertyValueOverlay',
-
-            /* Search tab */
-            'discoverSearchTab',
-            'filterSelector',
-            'propertyFilterOverlay',
-            'propertySelector',
-            'searchForm',
-
-            /* Query tab */
-            'downloadQueryOverlay',
-            'queryTab',
-            'sparqlEditor',
-            'sparqlResultBlock'
+            'query',
+            'search'
         ]);
 })();

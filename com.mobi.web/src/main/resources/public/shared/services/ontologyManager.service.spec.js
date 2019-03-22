@@ -1108,6 +1108,35 @@ describe('Ontology Manager service', function() {
             expect(util.rejectError).toHaveBeenCalledWith({statusText: this.error}, 'An error has occurred with your search.');
         });
     });
+    describe('getQueryResults calls the correct functions when GET /mobirest/ontologies/{recordId}/query', function() {
+        beforeEach(function() {
+            this.query = 'select * where {?s ?p ?o}';
+            this.params = paramSerializer({
+                query: this.query,
+                branchId: this.branchId,
+                commitId: this.commitId,
+                format: this.format
+            });
+        });
+        it('succeeds', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/query?' + this.params).respond(200, [{}]);
+            ontologyManagerSvc.getQueryResults(this.recordId, this.branchId, this.commitId, this.query, this.format)
+                .then(response => expect(response).toEqual([{}]),
+                    () => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/query?' + this.params).respond(400, null, null, this.error);
+            ontologyManagerSvc.getQueryResults(this.recordId, this.branchId, this.commitId, this.query, this.format)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe(this.error);
+                }.bind(this));
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: this.error, status: 400}));
+        });
+    });
     describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {
         beforeEach(function() {
             this.params = paramSerializer({

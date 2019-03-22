@@ -694,6 +694,27 @@
         }
         /**
          * @ngdoc method
+         * @name getQueryResults
+         *
+         * @description
+         * Get the results of the provided SPARQL query.
+         *
+         * @param recordId The record ID of the ontology to query.
+         * @param branchId The branch ID of the ontology to query.
+         * @param commitId The commit ID of the ontology to query.
+         * @param query The SPARQL query to run against the ontology.
+         * @param format The return format of the query results.
+         * @param id The id to link this REST call to.
+         * @return {Promise} A promise containing the SPARQL query results
+         */
+        self.getQueryResults = function(recordId, branchId, commitId, query, format, id) {
+            var config = { params: { query, branchId, commitId, format } };
+            var url = prefix + '/' + encodeURIComponent(recordId) + '/query';
+            var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+            return promise.then(response => response.data, util.rejectError);
+        }
+        /**
+         * @ngdoc method
          * @name getFailedImports
          * @methodOf shared.service:ontologyManagerService
          *

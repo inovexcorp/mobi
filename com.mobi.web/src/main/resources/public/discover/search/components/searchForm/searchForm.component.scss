@@ -1,0 +1,121 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.search-form {
+    .block-content {
+        padding: 10px;
+    }
+    .dataset-wrapper {
+        .btn-clear {
+            margin-left: 0.25rem;
+        }
+        .refresh-link {
+            margin-top: 3px;
+        }
+        a {
+            font-size: 0;
+
+            i {
+                font-size: 14px;
+            }
+        }
+    }
+    .boolean-operator {
+        md-radio-group md-radio-button {
+            display: inline-block;
+            margin-bottom: 0;
+            margin-left: 10px;
+        }
+    }
+    .strike {
+        font-weight: bold;
+        margin-bottom: 15px;
+        overflow:hidden;
+        position: relative;
+        white-space: nowrap;
+
+        &:after {
+            background: var(--light-dark);
+            content: '';
+            height: 1px;
+            margin-left: 10px;
+            position: absolute;
+            top: 50%;
+            width: 9999px;
+        }
+    }
+    .md-chips .md-chip-input-container {
+        width: 100%;
+
+        input {
+            width: 100%;
+        }
+        md-autocomplete md-autocomplete-wrap {
+            width: 100%;
+        }
+    }
+    .properties-container {
+        .header-wrapper .property-label {
+            margin: 7px 0;
+        }
+        .btn-link {
+            &:hover {
+                color: inherit;
+                text-decoration: none;
+            }
+        }
+        md-list-item {
+            width: 100%;
+        }
+    }
+    md-list {
+        border: 1px solid var(--light);
+        min-height: 250px;
+        padding: 0;
+
+        &.disabled {
+            opacity: .75;
+
+            md-list-item:hover {
+                background: transparent;
+            }
+        }
+        md-list-item:hover {
+            background: var(--light);
+        }
+        .fa {
+            font-size: 1.5em;
+        }
+    }
+}
+
+.search-form-searchbox {
+    border: none;
+    border-bottom: 1px solid var(--light-dark);
+    outline: none;
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+}
