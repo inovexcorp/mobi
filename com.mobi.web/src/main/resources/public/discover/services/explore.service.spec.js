@@ -24,9 +24,8 @@ describe('Explore Service', function() {
     var exploreSvc, $q, $httpBackend, utilSvc;
 
     beforeEach(function() {
-        module('explore');
+        module('discover');
         mockUtil();
-        mockDiscoverState();
         injectRestPathConstant();
 
         inject(function(exploreService, _$q_, _$httpBackend_, _utilService_) {

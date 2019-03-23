@@ -23,30 +23,18 @@
 (function() {
     'use strict';
 
-    angular
-        /**
-         * @ngdoc overview
-         * @name exploreUtils
-         *
-         * @description
-         * The `exploreUtils` module only provides the `exploreUtilsService` service which provides utility
-         * functions for the explore sub module.
-         */
-        .module('exploreUtils', [])
-        /**
-         * @ngdoc service
-         * @name exploreUtils.service:exploreUtilsService
-         * @requires shared.service:prefixes
-         * @requires shared.service:sparqlManagerService
-         * @requires shared.service:utilService
-         * @requires shared.service:datasetManagerService
-         * @requires shared.service:ontologyManagerService
-         *
-         * @description
-         * `exploreUtilsService` is a service that provides utility functions for the explore sub module.
-         */
-        .service('exploreUtilsService', exploreUtilsService);
-
+    /**
+     * @ngdoc service
+     * @name explore.service:exploreUtilsService
+     * @requires shared.service:prefixes
+     * @requires shared.service:sparqlManagerService
+     * @requires shared.service:utilService
+     * @requires shared.service:datasetManagerService
+     * @requires shared.service:ontologyManagerService
+     *
+     * @description
+     * `exploreUtilsService` is a service that provides utility functions for the explore sub module.
+     */
     exploreUtilsService.$inject = ['$q', 'REGEX', 'prefixes', 'utilService', 'datasetManagerService', 'ontologyManagerService', 'sparqlManagerService'];
 
     function exploreUtilsService($q, REGEX, prefixes, utilService, datasetManagerService, ontologyManagerService, sparqlManagerService) {
@@ -334,4 +322,7 @@
             return _.get(thing, prefixes.rdf + localName, {});
         }
     }
+
+    angular.module('explore')
+        .service('exploreUtilsService', exploreUtilsService);
 })();

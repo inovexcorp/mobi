@@ -24,7 +24,7 @@ describe('Explore Utils Service', function() {
     var exploreUtilsSvc, scope, $q, utilSvc, prefixes, regex, utilSvc, datasetManagerSvc, ontologyManagerSvc, sparqlManagerSvc;
 
     beforeEach(function() {
-        module('exploreUtils');
+        module('explore');
         mockPrefixes();
         injectRegexConstant();
         mockUtil();
