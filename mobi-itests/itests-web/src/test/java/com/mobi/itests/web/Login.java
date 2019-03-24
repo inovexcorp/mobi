@@ -70,7 +70,7 @@ public class Login {
         password.click();
         password.clear();
         password.sendKeys("admin");
-        driver.findElement(By.xpath("//section/div/div/form/button")).click();
+        driver.findElement(By.xpath("//section/login-page/div/div/div/form/button")).click();
         new WebDriverWait(driver, 10).until(ExpectedConditions.titleIs("Home | Mobi"));
     }
     

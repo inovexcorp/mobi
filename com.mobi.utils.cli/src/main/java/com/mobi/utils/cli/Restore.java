@@ -331,14 +331,32 @@ public class Restore implements Action {
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(filePath))) {
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
-                File newFile = newFile(destDir, zipEntry);
-                if (zipEntry.isDirectory()) {
-                    newFile.mkdirs();
-                    zipEntry = zis.getNextEntry();
-                    continue;
-                }
-                if (!newFile.getParentFile().exists()) {
-                    newFile.getParentFile().mkdirs();
+                File newFile;
+                // For malformed zip files
+                if (zipEntry.getName().contains("\\")) {
+                    String[] pathParts = zipEntry.getName().split("\\\\");
+
+                    String path = destination;
+                    for (int i = 0; i < pathParts.length - 1; i++) {
+                        path = path + File.separator + pathParts[i];
+                        File directory = new File(path);
+                        if (!directory.getParentFile().exists()) {
+                            directory.getParentFile().mkdirs();
+                        }
+                        directory.mkdir();
+                    }
+                    newFile = new File(path + File.separator + pathParts[pathParts.length - 1]);
+                } else {
+                    // Normal processing
+                    newFile = newFile(destDir, zipEntry);
+                    if (zipEntry.isDirectory()) {
+                        newFile.mkdirs();
+                        zipEntry = zis.getNextEntry();
+                        continue;
+                    }
+                    if (!newFile.getParentFile().exists()) {
+                        newFile.getParentFile().mkdirs();
+                    }
                 }
                 try (FileOutputStream fos = new FileOutputStream(newFile)) {
                     int len;
