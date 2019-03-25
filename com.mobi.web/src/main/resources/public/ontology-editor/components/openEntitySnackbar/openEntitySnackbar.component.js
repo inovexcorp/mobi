@@ -72,6 +72,7 @@
         }
         dvm.openEntity = function() {
             dvm.os.goTo(dvm.iri);
+            $timeout.cancel(dvm.closeTimeout);
             closeSnackbar();
         }
         dvm.hoverIn = function() {

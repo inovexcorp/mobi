@@ -100,8 +100,10 @@ describe('Open Entity Snackbar component', function() {
             expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
         });
         it('openEntity calls ontologyStateService goTo and closes the snackbar', function() {
+            spyOn($timeout, 'cancel');
             this.controller.openEntity();
             expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('iri');
+            expect($timeout.cancel).toHaveBeenCalledWith(this.controller.closeTimeout);
             expect(this.controller.show).toEqual(false);
             expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');
             expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
