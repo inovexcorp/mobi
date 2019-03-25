@@ -49,10 +49,22 @@
         dvm.os = ontologyStateService;
         dvm.show = false;
         dvm.entityName = '';
+        dvm.hoverEdit = false;
+        dvm.closeTimeout = undefined;
 
         dvm.$onInit = function() {
-            setShow();
             dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
+            setShow();
+        }
+        dvm.$onChanges = function(changesObj) {
+            if (!changesObj.iri.isFirstChange()) {
+                dvm.show = false;
+                $timeout.cancel(dvm.closeTimeout);
+                $timeout(() => {
+                    dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
+                    setShow();
+                }, 200);
+            }
         }
         dvm.$onDestroy = function() {
             dvm.os.listItem.goTo.active = false;
@@ -62,22 +74,30 @@
             dvm.os.goTo(dvm.iri);
             closeSnackbar();
         }
+        dvm.hoverIn = function() {
+            dvm.hoverEdit = true;
+        }
+        dvm.hoverOut = function() {
+            dvm.hoverEdit = false;
+            closeSnackbar();
+        }
 
         function setShow() {
             $timeout(() => {
                 dvm.show = true;
-                $timeout(() => {
+                dvm.closeTimeout = $timeout(() => {
                     closeSnackbar();
                 }, 5500);
             }, 200)
         }
-
         function closeSnackbar() {
-            dvm.show = false;
-            $timeout(() => {
-                dvm.os.listItem.goTo.active = false;
-                dvm.os.listItem.goTo.entityIRI = '';
-            }, 500);
+            if (!dvm.hoverEdit) {
+                dvm.show = false;
+                $timeout(() => {
+                    dvm.os.listItem.goTo.active = false;
+                    dvm.os.listItem.goTo.entityIRI = '';
+                }, 500);
+            }
         }
     }
     
