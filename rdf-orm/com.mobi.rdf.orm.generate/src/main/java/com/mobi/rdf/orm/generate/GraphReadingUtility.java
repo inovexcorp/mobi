@@ -27,12 +27,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +88,10 @@ public class GraphReadingUtility {
             throws RDFParseException, RDFHandlerException, UnsupportedRDFormatException, IOException {
         final StatementCollector collector = new StatementCollector();
         final RDFParser parser = Rio.createParser(format);
+        final ParserConfig config = new ParserConfig();
+        config.addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
         parser.setRDFHandler(collector);
+        parser.setParserConfig(config);
         parser.parse(is, baseURI);
         return new LinkedHashModel(collector.getStatements());
     }
