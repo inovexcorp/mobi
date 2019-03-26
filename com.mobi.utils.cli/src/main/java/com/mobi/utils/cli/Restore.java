@@ -81,7 +81,7 @@ public class Restore implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Restore.class);
 
-    private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + "/restoreZip";
+    private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15");
 
     // Service References
@@ -270,7 +270,7 @@ public class Restore implements Action {
         String policyFileLocation = (String) serviceRef.getProperty("policyFileLocation");
         LOGGER.trace("Identified policy directory as " + policyFileLocation);
         File policyDir = new File(policyFileLocation);
-        File tmpPolicyDir = new File(RESTORE_PATH + "/policies");
+        File tmpPolicyDir = new File(RESTORE_PATH + File.separator + "policies");
         FileUtils.copyDirectory(tmpPolicyDir, policyDir);
     }
 
@@ -331,14 +331,32 @@ public class Restore implements Action {
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(filePath))) {
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
-                File newFile = newFile(destDir, zipEntry);
-                if (zipEntry.isDirectory()) {
-                    newFile.mkdirs();
-                    zipEntry = zis.getNextEntry();
-                    continue;
-                }
-                if (!newFile.getParentFile().exists()) {
-                    newFile.getParentFile().mkdirs();
+                File newFile;
+                // For malformed zip files
+                if (zipEntry.getName().contains("\\")) {
+                    String[] pathParts = zipEntry.getName().split("\\\\");
+
+                    String path = destination;
+                    for (int i = 0; i < pathParts.length - 1; i++) {
+                        path = path + File.separator + pathParts[i];
+                        File directory = new File(path);
+                        if (!directory.getParentFile().exists()) {
+                            directory.getParentFile().mkdirs();
+                        }
+                        directory.mkdir();
+                    }
+                    newFile = new File(path + File.separator + pathParts[pathParts.length - 1]);
+                } else {
+                    // Normal processing
+                    newFile = newFile(destDir, zipEntry);
+                    if (zipEntry.isDirectory()) {
+                        newFile.mkdirs();
+                        zipEntry = zis.getNextEntry();
+                        continue;
+                    }
+                    if (!newFile.getParentFile().exists()) {
+                        newFile.getParentFile().mkdirs();
+                    }
                 }
                 try (FileOutputStream fos = new FileOutputStream(newFile)) {
                     int len;
@@ -349,8 +367,8 @@ public class Restore implements Action {
                 }
                 if (newFile.getAbsolutePath().endsWith("configurations.zip")
                         || newFile.getAbsolutePath().endsWith("policies.zip")) {
-                    unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath() + File.separator
-                            + FilenameUtils.removeExtension(newFile.getName()));
+                    unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath()
+                            + File.separator + FilenameUtils.removeExtension(newFile.getName()));
                 } else if (newFile.getAbsolutePath().endsWith(".zip")) {
                     unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath());
                 }

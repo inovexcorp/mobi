@@ -37,7 +37,13 @@ describe('Open Entity Snackbar component', function() {
 
         ontologyStateSvc.listItem.goTo.entityIRI = 'iri';
         ontologyStateSvc.listItem.goTo.active = true;
-        ontologyStateSvc.getEntityNameByIndex.and.returnValue('Entity Name');
+        ontologyStateSvc.getEntityNameByIndex.and.callFake(function(entityIRI) {
+            if (entityIRI === 'iri') {
+                return 'Entity Name';
+            } else if (entityIRI === 'newIRI') {
+                return 'New Entity Name'
+            }
+        });
 
         scope.iri = 'iri';
         this.element = $compile(angular.element('<open-entity-snackbar iri="iri"></open-entity-snackbar>'))(scope);
@@ -52,6 +58,13 @@ describe('Open Entity Snackbar component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('iri is one way bound', function() {
+            this.controller.iri = 'newIRI';
+            scope.$digest();
+            expect(scope.iri).toEqual('iri');
+        });
+    });
     describe('initializes with the correct values', function() {
         it('for show, entityName and goTo', function() {
             $timeout.flush();
@@ -67,9 +80,47 @@ describe('Open Entity Snackbar component', function() {
         });
     });
     describe('controller methods', function() {
+        it('$onChanges resets the snackbar and cancels previous timeout', function() {
+            spyOn($timeout, 'cancel');
+            ontologyStateSvc.listItem.goTo.entityIRI = 'newIRI';
+            scope.iri = 'newIRI';
+            scope.$apply();
+            expect(this.controller.show).toEqual(false);
+            expect(this.controller.entityName).toEqual('Entity Name');
+            expect($timeout.cancel).toHaveBeenCalledWith(this.controller.closeTimeout);
+            $timeout.flush();
+            expect(this.controller.entityName).toEqual('New Entity Name');
+            expect(this.controller.show).toEqual(true);
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('newIRI');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
+            $timeout.flush();
+            expect(this.controller.show).toEqual(false);
+            $timeout.flush();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
+        });
         it('openEntity calls ontologyStateService goTo and closes the snackbar', function() {
+            spyOn($timeout, 'cancel');
             this.controller.openEntity();
             expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('iri');
+            expect($timeout.cancel).toHaveBeenCalledWith(this.controller.closeTimeout);
+            expect(this.controller.show).toEqual(false);
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);
+            $timeout.flush();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
+        });
+        it('hoverIn sets the correct state of hoverEdit', function() {
+            expect(this.controller.hoverEdit).toEqual(false);
+            this.controller.hoverIn();
+            expect(this.controller.hoverEdit).toEqual(true);
+        });
+        it('hoverIn sets the correct state of hoverEdit and closes the snackbar', function() {
+            this.controller.hoverEdit = true;
+            expect(this.controller.hoverEdit).toEqual(true);
+            this.controller.hoverOut();
+            expect(this.controller.hoverEdit).toEqual(false);
             expect(this.controller.show).toEqual(false);
             expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('iri');
             expect(ontologyStateSvc.listItem.goTo.active).toEqual(true);

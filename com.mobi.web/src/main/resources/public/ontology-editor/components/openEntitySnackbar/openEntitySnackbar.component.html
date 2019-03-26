@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="open-entity-snackbar snackbar" ng-class="{'show': dvm.show}">
+<div class="open-entity-snackbar snackbar" ng-class="{'show': dvm.show}" ng-mouseover="dvm.hoverIn()" ng-mouseleave="dvm.hoverOut()">
     <div class="snackbar-body">
         {{dvm.entityName}} successfully created
     </div>
