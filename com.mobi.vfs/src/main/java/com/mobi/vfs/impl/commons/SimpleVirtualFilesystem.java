@@ -183,14 +183,14 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     private String filePathFromHash(StreamingXXHash64 hash64) {
         String hash = Long.toHexString(hash64.getValue());
-        return hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash.substring(4, hash.length());
+        return hash.substring(0, 2) + File.separator + hash.substring(2, 4) + File.separator + hash.substring(4);
     }
 
     private String formatDirectory(String directory) {
         if (StringUtils.isEmpty(directory)) {
             directory = "";
-        } else if (!directory.endsWith("/")) {
-            directory = directory + "/";
+        } else if (!directory.endsWith(File.separator)) {
+            directory = directory + File.separator;
         }
         return directory;
     }
@@ -210,8 +210,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             if (directory.isFolder()) {
                 try {
                     final String id = directory.getIdentifier();
-                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/"
-                            + UUID.randomUUID() + "-" + System.currentTimeMillis());
+                    final FileObject obj = this.fsManager.resolveFile(id.endsWith(File.separator) ? id : id
+                            + File.separator + UUID.randomUUID() + "-" + System.currentTimeMillis());
                     final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive,
                             timeToLiveUnit);
                     if (tempFiles.offer(tvf)) {
@@ -250,8 +250,8 @@ public class SimpleVirtualFilesystem implements VirtualFilesystem {
             if (directory.isFolder()) {
                 try {
                     final String id = directory.getIdentifier();
-                    final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/"
-                            + UUID.randomUUID() + "-" + System.currentTimeMillis());
+                    final FileObject obj = this.fsManager.resolveFile(id.endsWith(File.separator) ? id :
+                            id + File.separator + UUID.randomUUID() + "-" + System.currentTimeMillis());
                     final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive,
                             timeToLiveUnit);
                     if (tempFiles.offer(tvf, createDuration, createTimeUnit)) {
