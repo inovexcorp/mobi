@@ -32,7 +32,6 @@ describe('New Dataset Overlay component', function() {
         mockUtil();
         injectRegexConstant();
 
-
         inject(function(_$compile_, _$rootScope_, _$q_, _datasetManagerService_, _datasetStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
