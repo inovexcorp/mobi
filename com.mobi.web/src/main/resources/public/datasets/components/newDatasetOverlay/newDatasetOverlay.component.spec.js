@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Dataset Overlay component', function() {
+fdescribe('New Dataset Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc;
 
     beforeEach(function() {
@@ -30,6 +30,8 @@ describe('New Dataset Overlay component', function() {
         mockDatasetManager();
         mockDatasetState();
         mockUtil();
+        injectRegexConstant();
+
 
         inject(function(_$compile_, _$rootScope_, _$q_, _datasetManagerService_, _datasetStateService_, _utilService_) {
             $compile = _$compile_;
@@ -122,7 +124,7 @@ describe('New Dataset Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with text-inputs', function() {
-            expect(this.element.find('text-input').length).toBe(2);
+            expect(this.element.find('text-input').length).toBe(1);
         });
         ['text-area', 'keyword-select', 'datasets-ontology-picker'].forEach(test => {
             it('with a ' + test, function() {
@@ -149,6 +151,20 @@ describe('New Dataset Overlay component', function() {
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
+        });
+        it('depending on whether the ontology iri is valid', function() {
+            var iriInput = angular.element(this.element.querySelectorAll('.form-group input')[0]);
+            expect(iriInput.hasClass('is-invalid')).toBe(false);
+
+            this.controller.form = {
+                iri: {
+                    '$error': {
+                        pattern: true
+                    }
+                }
+            }
+            scope.$digest();
+            expect(iriInput.hasClass('is-invalid')).toBe(true);
         });
     });
     it('should call cancel when the button is clicked', function() {

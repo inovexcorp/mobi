@@ -28,7 +28,13 @@
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <text-input display-text="'Title'" input-name="'title'" bind-model="dvm.recordConfig.title" change-event="dvm.recordConfig.title = value" required="true" is-focus-me="true"></text-input>
-        <text-input bind-model="dvm.recordConfig.datasetIRI" change-event="dvm.recordConfig.datasetIRI = value" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
+        <div class="form-group">
+            <custom-label muted-text="'(Optional)'">Dataset IRI</custom-label>
+            <input class="form-control" name="iri" ng-model="dvm.recordConfig.datasetIRI" ng-pattern="dvm.iriPattern" ng-class="{'is-invalid': dvm.form.iri.$error.pattern}" />
+            <p ng-messages="dvm.form.iri.$error" class="invalid-feedback">
+                <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
+            </p>
+        </div>
         <small class="form-text">System will create a default IRI if not provided.</small>
         <text-area bind-model="dvm.recordConfig.description" change-event="dvm.recordConfig.description = value" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value"></keyword-select>
