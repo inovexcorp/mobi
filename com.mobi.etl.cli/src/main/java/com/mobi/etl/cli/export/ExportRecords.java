@@ -53,7 +53,8 @@ public class ExportRecords extends ExportBase implements Action {
 
     // Command Parameters
 
-    @Argument(name = "CatalogRecords", description = "A comma-separated list of catalog record IDs to export")
+    @Argument(name = "CatalogRecords", description = "A comma-separated list of catalog record IDs to export. NOTE: "
+            + "Any % symbols as a result of URL encoding must be escaped.")
     private String recordsParam = null;
 
     // Implementation

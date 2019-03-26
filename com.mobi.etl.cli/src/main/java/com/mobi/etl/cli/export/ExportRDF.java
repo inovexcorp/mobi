@@ -54,21 +54,24 @@ public class ExportRDF extends ExportBase implements Action {
             + "exported from")
     private String repositoryId = null;
 
-    @Option( name = "-subj", aliases = "--subject", description = "A subject filter for exported data.")
+    @Option( name = "-subj", aliases = "--subject", description = "A subject filter for exported data. NOTE: Any % "
+            + "symbols as a result of URL encoding must be escaped.")
     private String subj = null;
 
-    @Option(name = "-pred", aliases = "--predicate", description = "A predicate filter for exported data.")
+    @Option(name = "-pred", aliases = "--predicate", description = "A predicate filter for exported data. NOTE: Any % "
+            + "symbols as a result of URL encoding must be escaped.")
     private String predicate = null;
 
     @Option(name = "-objIRI", aliases = "--objectIRI", description = "An object filter for exported data. Takes "
-            + "precedence over ObjectLiteral")
+            + "precedence over ObjectLiteral. NOTE: Any % symbols as a result of URL encoding must be escaped.")
     private String objIRI = null;
 
     @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal filter for exported data. "
             + "ObjectIRI takes precedence")
     private String objLit = null;
 
-    @Option(name = "-g", aliases = "--graph", description = "A graph filter for exported data.")
+    @Option(name = "-g", aliases = "--graph", description = "A graph filter for exported data. NOTE: Any % symbols as "
+            + "a result of URL encoding must be escaped.")
     private String graph = null;
 
     // Implementation
