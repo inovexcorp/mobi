@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('New Dataset Overlay component', function() {
+describe('New Dataset Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc;
 
     beforeEach(function() {
@@ -152,7 +152,7 @@ fdescribe('New Dataset Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
-        it('depending on whether the ontology iri is valid', function() {
+        it('depending on whether the dataset iri is valid', function() {
             var iriInput = angular.element(this.element.querySelectorAll('.form-group input')[0]);
             expect(iriInput.hasClass('is-invalid')).toBe(false);
 
@@ -162,7 +162,7 @@ fdescribe('New Dataset Overlay component', function() {
                         pattern: true
                     }
                 }
-            }
+            };
             scope.$digest();
             expect(iriInput.hasClass('is-invalid')).toBe(true);
         });
