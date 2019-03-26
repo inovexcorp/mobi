@@ -1,4 +1,4 @@
-@Version("2.1.1.${build}")
+@Version("2.1.0.${build}")
 
 package com.mobi.rdf.orm.generate;
 
