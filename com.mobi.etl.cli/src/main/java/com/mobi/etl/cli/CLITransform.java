@@ -101,7 +101,8 @@ public class CLITransform implements Action {
     @Argument(name = "Delimited File", description = "The path of the File to be transformed", required = true)
     private String file = null;
     
-    @Argument(index = 1, name = "Mapping Record", description = "The IRI of the Mapping Record", required = true)
+    @Argument(index = 1, name = "Mapping Record", description = "The IRI of the Mapping Record. NOTE: Any % symbols as "
+            + "a result of URL encoding must be escaped.", required = true)
     private String mappingRecordIRI = null;
 
     @Completion(FileCompleter.class)
@@ -110,7 +111,8 @@ public class CLITransform implements Action {
     private String outputFile = null;
 
     @Option(name = "-d", aliases = "--dataset",
-            description = "The dataset to store the resulting triples. (Required if no output file given)")
+            description = "The dataset to store the resulting triples. (Required if no output file given). NOTE: Any % "
+                    + "symbols as a result of URL encoding must be escaped.")
     private String dataset = null;
 
     @Option(name = "-h", aliases = "--headers", description = "The file contains headers.")

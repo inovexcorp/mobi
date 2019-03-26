@@ -51,9 +51,9 @@
         controller: newDatasetOverlayComponentCtrl
     };
 
-    newDatasetOverlayComponentCtrl.$inject = ['datasetManagerService', 'datasetStateService', 'utilService'];
+    newDatasetOverlayComponentCtrl.$inject = ['REGEX', 'datasetManagerService', 'datasetStateService', 'utilService'];
 
-    function newDatasetOverlayComponentCtrl(datasetManagerService, datasetStateService, utilService) {
+    function newDatasetOverlayComponentCtrl(REGEX, datasetManagerService, datasetStateService, utilService) {
         var dvm = this;
         var state = datasetStateService;
         var dm = datasetManagerService;
@@ -67,6 +67,7 @@
         };
         dvm.keywords = [];
         dvm.selectedOntologies = [];
+        dvm.iriPattern = REGEX.IRI;
 
         dvm.selectOntology = function(ontology) {
             dvm.selectedOntologies.push(ontology);
