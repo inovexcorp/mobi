@@ -50,7 +50,8 @@ public class ExportDataset extends ExportBase implements Action {
 
     // Command Parameters
 
-    @Argument(name = "DatasetRecord", description = "The IRI of the DatasetRecord to export", required = true)
+    @Argument(name = "DatasetRecord", description = "The IRI of the DatasetRecord to export. NOTE: Any % symbols as a "
+            + "result of URL encoding must be escaped.", required = true)
     private String datasetParam = null;
 
     // Implementation

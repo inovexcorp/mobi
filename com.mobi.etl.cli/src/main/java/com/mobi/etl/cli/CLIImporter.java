@@ -70,7 +70,7 @@ public class CLIImporter implements Action {
     private String repositoryId = null;
 
     @Option( name = "-d", aliases = "--dataset", description = "The id of the DatasetRecord the file will be "
-            + "imported to")
+            + "imported to. NOTE: Any % symbols as a result of URL encoding must be escaped.")
     private String datasetRecordId = null;
 
     @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an "

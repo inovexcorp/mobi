@@ -23,8 +23,13 @@ package com.mobi.sparql.cli;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.Value;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
@@ -33,13 +38,6 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
-import com.mobi.exception.MobiException;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -69,7 +67,8 @@ public class Query implements Action {
     @Option(name = "-f", aliases = "--query-file", description = "The input query file")
     private String queryFileParam = null;
 
-    @Argument(name = "Query", description = "The SPARQL query (ignored if query file provided)")
+    @Argument(name = "Query", description = "The SPARQL query (ignored if query file provided). NOTE: Any % symbols as"
+            + " a result of URL encoding must be escaped.")
     private String queryParam = null;
 
     // Implementation
