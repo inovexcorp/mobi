@@ -189,6 +189,7 @@ public class Backup implements Action {
                 String name = srcFile.getPath();
                 name = name.replace(rootPath.getPath(), "");
                 name = name.substring(1);
+                name = name.replaceAll("\\\\", "/");
                 LOGGER.trace("Zip " + srcFile + "\n to " + name);
                 zip.putNextEntry(new ZipEntry(name));
                 while ((len = in.read(buf)) > 0) {

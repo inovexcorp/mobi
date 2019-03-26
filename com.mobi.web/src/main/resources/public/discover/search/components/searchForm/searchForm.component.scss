@@ -81,7 +81,7 @@
             margin: 7px 0;
         }
         .btn-link {
-            &:hover {
+            &:hover:enabled {
                 color: inherit;
                 text-decoration: none;
             }
