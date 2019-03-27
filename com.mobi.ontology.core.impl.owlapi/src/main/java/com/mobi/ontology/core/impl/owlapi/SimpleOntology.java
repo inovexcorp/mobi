@@ -28,16 +28,16 @@ import static java.util.Arrays.copyOf;
 
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Annotation;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.OClass;
-import com.mobi.ontology.core.api.Datatype;
-import com.mobi.ontology.core.api.AnnotationProperty;
-import com.mobi.ontology.core.api.DataProperty;
-import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.persistence.utils.QueryResults;
@@ -562,7 +562,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            getDeclaredClasses()
+            Set<OWLClass> classes = getDeclaredClasses().collect(Collectors.toSet());
+            classes.parallelStream()
                     .forEach(owlClass -> {
                         if (owlClass.isTopEntity()) {
                             return;
@@ -571,6 +572,7 @@ public class SimpleOntology implements Ontology {
                         hierarchy.addIRI(classIRI);
                         getSubClassesFor(owlClass, true)
                                 .forEach(subclassIRI -> hierarchy.addParentChild(classIRI, subclassIRI));
+
                     });
             return hierarchy;
         } finally {
@@ -596,6 +598,21 @@ public class SimpleOntology implements Ontology {
                     .map(OWLSubClassOfAxiom::getSubClass)
                     .filter(subclass -> !subclass.isBottomEntity() && subclass.isOWLClass()
                                 && !subclass.asOWLClass().getIRI().equals(owlClass.getIRI()))
+                    .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.asOWLClass().getIRI()));
+        } else {
+            return owlReasoner.getSubClasses(owlClass, false).entities()
+                    .filter(subclass -> !subclass.isBottomEntity() && !subclass.getIRI().equals(owlClass.getIRI()))
+                    .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.getIRI()));
+        }
+    }
+
+    private Stream<IRI> getSubClassesFor(Set<OWLSubClassOfAxiom> axioms, OWLClass owlClass, boolean direct) {
+        if (direct) {
+            return axioms.stream()
+                    .filter(axiom -> axiom.getSuperClass().equals(owlClass))
+                    .map(OWLSubClassOfAxiom::getSubClass)
+                    .filter(subclass -> !subclass.isBottomEntity() && subclass.isOWLClass()
+                            && !subclass.asOWLClass().getIRI().equals(owlClass.getIRI()))
                     .map(subclass -> SimpleOntologyValues.mobiIRI(subclass.asOWLClass().getIRI()));
         } else {
             return owlReasoner.getSubClasses(owlClass, false).entities()
@@ -638,7 +655,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            getDeclaredDatatypeProperties()
+            Set<OWLDataProperty> properties = getDeclaredDatatypeProperties().collect(Collectors.toSet());
+            properties.parallelStream()
                     .forEach(property -> {
                         IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
                         hierarchy.addIRI(propIRI);
@@ -678,7 +696,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            getDeclaredAnnotationProperties()
+            Set<OWLAnnotationProperty> properties = getDeclaredAnnotationProperties().collect(Collectors.toSet());
+            properties.parallelStream()
                     .forEach(property -> {
                         if (property.isBuiltIn()) {
                             return;
@@ -736,7 +755,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            getDeclaredObjectProperties()
+            Set<OWLObjectProperty> properties = getDeclaredObjectProperties().collect(Collectors.toSet());
+            properties.parallelStream()
                     .forEach(property -> {
                         IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
                         hierarchy.addIRI(propIRI);
@@ -776,7 +796,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            getDeclaredClasses()
+            Set<OWLClass> classes = getDeclaredClasses().collect(Collectors.toSet());
+            classes.parallelStream()
                     .forEach(owlClass -> {
                         Set<IRI> iris = owlReasoner.instances(owlClass, true)
                                 .map(individual -> SimpleOntologyValues.mobiIRI(individual.getIRI()))

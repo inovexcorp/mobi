@@ -38,10 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A POJO that represents hierarchical relationships within an {@link Ontology}. Contains a {@link Map} of IRI Strings
@@ -53,8 +52,8 @@ public class Hierarchy {
     private static final Logger LOG = LoggerFactory.getLogger(Hierarchy.class);
 
     private Model model;
-    private Map<String, Set<String>> parentMap = new HashMap<>();
-    private Map<String, Set<String>> childMap = new HashMap<>();
+    private Map<String, Set<String>> parentMap = new ConcurrentHashMap<>();
+    private Map<String, Set<String>> childMap = new ConcurrentHashMap<>();
 
     private IRI type;
     private IRI nodeType;
@@ -101,14 +100,14 @@ public class Hierarchy {
         if (childMap.containsKey(childStr)) {
             childMap.get(childStr).add(parentStr);
         } else {
-            Set<String> set = new HashSet<>();
+            Set<String> set = ConcurrentHashMap.newKeySet();
             set.add(parentStr);
             childMap.put(childStr, set);
         }
         if (parentMap.containsKey(parentStr)) {
             parentMap.get(parentStr).add(childStr);
         } else {
-            Set<String> set = new HashSet<>();
+            Set<String> set = ConcurrentHashMap.newKeySet();
             set.add(childStr);
             parentMap.put(parentStr, set);
         }
