@@ -497,22 +497,70 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         return iri.stringValue();
     }
 
+    private Set<String> createSetClassIRIs(Set<OClass> classes) {
+        return classes.stream()
+                .map(oclass -> oclass.getIRI().stringValue())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> createSetDatatypeIRIs(Set<Datatype> datatypes) {
+        return datatypes.stream()
+                .map(datatype -> datatype.getIRI().stringValue())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> createSetObjectPropertyIRIs(Set<ObjectProperty> objectProperties) {
+        return objectProperties.stream()
+                .map(objectProperty -> objectProperty.getIRI().stringValue())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> createSetDataPropertyIRIs(Set<DataProperty> dataProperties) {
+        return dataProperties.stream()
+                .map(dataProperty -> dataProperty.getIRI().stringValue())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> createSetAnnotationPropertyIRIs(Set<AnnotationProperty> annotationProperties) {
+        return annotationProperties.stream()
+                .map(annotationProperty -> annotationProperty.getIRI().stringValue())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> createSetIndividualIRIs(Set<Individual> individuals) {
+        return individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .collect(Collectors.toSet());
+    }
+
     private void assertAnnotations(JSONObject responseObject, Set<AnnotationProperty> propSet, Set<Annotation> annSet) {
         JSONArray jsonAnnotations = responseObject.optJSONArray("annotationProperties");
         assertNotNull(jsonAnnotations);
         assertEquals(jsonAnnotations.size(), propSet.size());
-//        assertEquals(jsonAnnotations.size(), propSet.size() + annSet.size());
         propSet.forEach(annotationProperty ->
                 assertTrue(jsonAnnotations.contains(createJsonIRI(annotationProperty.getIRI()))));
-//        annSet.forEach(annotation ->
-//                assertTrue(jsonAnnotations.contains(createJsonIRI(annotation.getProperty().getIRI()))));
+    }
+
+    private void assertHierarchyResults(Response response, Set<String> iris) {
+        JSONObject responseObj = getResponse(response);
+        assertTrue(responseObj.keySet().containsAll(basicHierarchyResults.keySet()));
+        assertIRIObject(responseObj, "iris", iris);
+    }
+
+    private void assertIRIObject(JSONObject responseObject, String key, Set<String> set) {
+        JSONArray jsonArr = responseObject.optJSONArray(key);
+        assertNotNull(jsonArr);
+        assertEquals(jsonArr.size(), set.size());
+        set.forEach(iri -> assertTrue(jsonArr.contains(iri)));
     }
 
     private void assertClassIRIs(JSONObject responseObject, Set<OClass> set) {
-        JSONArray jsonClasses = responseObject.optJSONArray("classes");
-        assertNotNull(jsonClasses);
-        assertEquals(jsonClasses.size(), set.size());
-        set.forEach(oClass -> assertTrue(jsonClasses.contains(createJsonIRI(oClass.getIRI()))));
+        Set<String> iris = createSetClassIRIs(set);
+        assertIRIObject(responseObject, "classes", iris);
+//        JSONArray jsonClasses = responseObject.optJSONArray("classes");
+//        assertNotNull(jsonClasses);
+//        assertEquals(jsonClasses.size(), set.size());
+//        set.forEach(oClass -> assertTrue(jsonClasses.contains(createJsonIRI(oClass.getIRI()))));
     }
 
     private void assertClasses(JSONArray responseArray, Set<OClass> set) {
@@ -521,17 +569,21 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     private void assertDatatypes(JSONObject responseObject, Set<Datatype> set) {
-        JSONArray jsonDatatypes = responseObject.optJSONArray("datatypes");
-        assertNotNull(jsonDatatypes);
-        assertEquals(jsonDatatypes.size(), set.size());
-        set.forEach(datatype -> assertTrue(jsonDatatypes.contains(createJsonIRI(datatype.getIRI()))));
+        Set<String> iris = createSetDatatypeIRIs(set);
+        assertIRIObject(responseObject, "datatypes", iris);
+//        JSONArray jsonDatatypes = responseObject.optJSONArray("datatypes");
+//        assertNotNull(jsonDatatypes);
+//        assertEquals(jsonDatatypes.size(), set.size());
+//        set.forEach(datatype -> assertTrue(jsonDatatypes.contains(createJsonIRI(datatype.getIRI()))));
     }
 
     private void assertObjectPropertyIRIs(JSONObject responseObject, Set<ObjectProperty> set) {
-        JSONArray jsonObjectProperties = responseObject.optJSONArray("objectProperties");
-        assertNotNull(jsonObjectProperties);
-        assertEquals(jsonObjectProperties.size(), set.size());
-        set.forEach(objectProperty -> assertTrue(jsonObjectProperties.contains(createJsonIRI(objectProperty.getIRI()))));
+        Set<String> iris = createSetObjectPropertyIRIs(set);
+        assertIRIObject(responseObject, "objectProperties", iris);
+//        JSONArray jsonObjectProperties = responseObject.optJSONArray("objectProperties");
+//        assertNotNull(jsonObjectProperties);
+//        assertEquals(jsonObjectProperties.size(), set.size());
+//        set.forEach(objectProperty -> assertTrue(jsonObjectProperties.contains(createJsonIRI(objectProperty.getIRI()))));
     }
 
     private void assertObjectProperties(JSONArray responseArray, Set<ObjectProperty> set) {
@@ -540,10 +592,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     private void assertDataPropertyIRIs(JSONObject responseObject, Set<DataProperty> set) {
-        JSONArray jsonDataProperties = responseObject.optJSONArray("dataProperties");
-        assertNotNull(jsonDataProperties);
-        assertEquals(jsonDataProperties.size(), set.size());
-        set.forEach(dataProperty -> assertTrue(jsonDataProperties.contains(createJsonIRI(dataProperty.getIRI()))));
+        Set<String> iris = createSetDataPropertyIRIs(set);
+        assertIRIObject(responseObject, "dataProperties", iris);
+//        JSONArray jsonDataProperties = responseObject.optJSONArray("dataProperties");
+//        assertNotNull(jsonDataProperties);
+//        assertEquals(jsonDataProperties.size(), set.size());
+//        set.forEach(dataProperty -> assertTrue(jsonDataProperties.contains(createJsonIRI(dataProperty.getIRI()))));
     }
 
     private void assertDataProperties(JSONArray responseArray, Set<DataProperty> set) {
@@ -552,24 +606,30 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     private void assertIndividuals(JSONObject responseObject, Set<Individual> set) {
-        JSONArray jsonIndividuals = responseObject.optJSONArray("namedIndividuals");
-        assertNotNull(jsonIndividuals);
-        assertEquals(jsonIndividuals.size(), set.size());
-        set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(individual.getIRI()))));
+        Set<String> iris = createSetIndividualIRIs(set);
+        assertIRIObject(responseObject, "namedIndividuals", iris);
+//        JSONArray jsonIndividuals = responseObject.optJSONArray("namedIndividuals");
+//        assertNotNull(jsonIndividuals);
+//        assertEquals(jsonIndividuals.size(), set.size());
+//        set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(individual.getIRI()))));
     }
 
     private void assertConcepts(JSONObject responseObject, Set<Individual> set) {
-        JSONArray jsonConcepts = responseObject.optJSONArray("concepts");
-        assertNotNull(jsonConcepts);
-        assertEquals(jsonConcepts.size(), set.size());
-        set.forEach(concept -> assertTrue(jsonConcepts.contains(createJsonIRI(concept.getIRI()))));
+        Set<String> iris = createSetIndividualIRIs(set);
+        assertIRIObject(responseObject, "concepts", iris);
+//        JSONArray jsonConcepts = responseObject.optJSONArray("concepts");
+//        assertNotNull(jsonConcepts);
+//        assertEquals(jsonConcepts.size(), set.size());
+//        set.forEach(concept -> assertTrue(jsonConcepts.contains(createJsonIRI(concept.getIRI()))));
     }
 
     private void assertConceptSchemes(JSONObject responseObject, Set<Individual> set) {
-        JSONArray jsonConceptSchemes = responseObject.optJSONArray("conceptSchemes");
-        assertNotNull(jsonConceptSchemes);
-        assertEquals(jsonConceptSchemes.size(), set.size());
-        set.forEach(scheme -> assertTrue(jsonConceptSchemes.contains(createJsonIRI(scheme.getIRI()))));
+        Set<String> iris = createSetIndividualIRIs(set);
+        assertIRIObject(responseObject, "conceptSchemes", iris);
+//        JSONArray jsonConceptSchemes = responseObject.optJSONArray("conceptSchemes");
+//        assertNotNull(jsonConceptSchemes);
+//        assertEquals(jsonConceptSchemes.size(), set.size());
+//        set.forEach(scheme -> assertTrue(jsonConceptSchemes.contains(createJsonIRI(scheme.getIRI()))));
     }
 
     private void assertDerivedConcepts(JSONObject responseObject, Set<IRI> set) {
@@ -3469,7 +3529,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubClassesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetClassIRIs(classes));
     }
 
     @Test
@@ -3484,7 +3544,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubClassesOf(vf, mf);
         assertGetOntology(false);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetClassIRIs(classes));
     }
 
     @Test
@@ -3496,7 +3556,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubClassesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetClassIRIs(classes));
     }
 
     @Test
@@ -3508,7 +3568,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubClassesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetClassIRIs(classes));
     }
 
     @Test
@@ -3520,7 +3580,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubClassesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetClassIRIs(classes));
     }
 
     @Test
@@ -3547,7 +3607,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubObjectPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetObjectPropertyIRIs(objectProperties));
     }
 
     @Test
@@ -3562,7 +3622,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubObjectPropertiesOf(vf, mf);
         assertGetOntology(false);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetObjectPropertyIRIs(objectProperties));
     }
 
     @Test
@@ -3574,7 +3634,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubObjectPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetObjectPropertyIRIs(objectProperties));
     }
 
     @Test
@@ -3586,7 +3646,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubObjectPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetObjectPropertyIRIs(objectProperties));
     }
 
     @Test
@@ -3598,7 +3658,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubObjectPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetObjectPropertyIRIs(objectProperties));
     }
 
     @Test
@@ -3625,7 +3685,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubDatatypePropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetDataPropertyIRIs(dataProperties));
     }
 
     @Test
@@ -3640,7 +3700,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubDatatypePropertiesOf(vf, mf);
         assertGetOntology(false);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetDataPropertyIRIs(dataProperties));
     }
 
     @Test
@@ -3652,7 +3712,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubDatatypePropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetDataPropertyIRIs(dataProperties));
     }
 
     @Test
@@ -3664,7 +3724,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubDatatypePropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetDataPropertyIRIs(dataProperties));
     }
 
     @Test
@@ -3676,7 +3736,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubDatatypePropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetDataPropertyIRIs(dataProperties));
     }
 
     @Test
@@ -3703,7 +3763,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubAnnotationPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetAnnotationPropertyIRIs(annotationProperties));
     }
 
     @Test
@@ -3718,7 +3778,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubAnnotationPropertiesOf(vf, mf);
         assertGetOntology(false);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetAnnotationPropertyIRIs(annotationProperties));
     }
 
     @Test
@@ -3730,7 +3790,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubAnnotationPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetAnnotationPropertyIRIs(annotationProperties));
     }
 
     @Test
@@ -3742,7 +3802,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubAnnotationPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetAnnotationPropertyIRIs(annotationProperties));
     }
 
     @Test
@@ -3754,7 +3814,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubAnnotationPropertiesOf(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetAnnotationPropertyIRIs(annotationProperties));
     }
 
     @Test
@@ -3781,7 +3841,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(concepts));
     }
 
     @Test
@@ -3796,7 +3856,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptRelationships(vf, mf);
         assertGetOntology(false);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(concepts));
     }
 
     @Test
@@ -3808,7 +3868,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getConceptRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(concepts));
     }
 
     @Test
@@ -3820,7 +3880,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getConceptRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(concepts));
     }
 
     @Test
@@ -3832,7 +3892,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getConceptRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(concepts));
     }
 
     @Test
@@ -3859,7 +3919,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptSchemeRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(conceptSchemes));
     }
 
     @Test
@@ -3874,7 +3934,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptSchemeRelationships(vf, mf);
         assertGetOntology(false);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(conceptSchemes));
     }
 
     @Test
@@ -3886,7 +3946,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getConceptSchemeRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(conceptSchemes));
     }
 
     @Test
@@ -3898,7 +3958,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getConceptSchemeRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(conceptSchemes));
     }
 
     @Test
@@ -3910,7 +3970,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getConceptSchemeRelationships(vf, mf);
         assertGetOntology(true);
-        assertEquals(getResponse(response), basicHierarchyResults);
+        assertHierarchyResults(response, createSetIndividualIRIs(conceptSchemes));
     }
 
     @Test
