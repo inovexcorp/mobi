@@ -48,17 +48,17 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.OClass;
-import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.AnnotationProperty;
-import com.mobi.ontology.core.api.DataProperty;
-import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.rest.OntologyRest;
@@ -929,8 +929,13 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Set<String> classIRIs = ontology.getAllClasses()
+                    .stream()
+                    .map(OClass::getIRI)
+                    .map(IRI::stringValue)
+                    .collect(Collectors.toSet());
             Hierarchy hierarchy = ontology.getSubClassesOf(valueFactory, modelFactory);
-            return Response.ok(getHierarchyStream(hierarchy, nested)).build();
+            return Response.ok(getHierarchyStream(hierarchy, nested, classIRIs)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -943,8 +948,13 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Set<String> objectPropIRIs = ontology.getAllObjectProperties()
+                    .stream()
+                    .map(ObjectProperty::getIRI)
+                    .map(IRI::stringValue)
+                    .collect(Collectors.toSet());
             Hierarchy hierarchy = ontology.getSubObjectPropertiesOf(valueFactory, modelFactory);
-            return Response.ok(getHierarchyStream(hierarchy, nested)).build();
+            return Response.ok(getHierarchyStream(hierarchy, nested, objectPropIRIs)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -957,8 +967,13 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Set<String> dataPropIRIs = ontology.getAllDataProperties()
+                    .stream()
+                    .map(DataProperty::getIRI)
+                    .map(IRI::stringValue)
+                    .collect(Collectors.toSet());
             Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory);
-            return Response.ok(getHierarchyStream(hierarchy, nested)).build();
+            return Response.ok(getHierarchyStream(hierarchy, nested, dataPropIRIs)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -971,8 +986,13 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Set<String> annoPropIRIs = ontology.getAllAnnotationProperties()
+                    .stream()
+                    .map(AnnotationProperty::getIRI)
+                    .map(IRI::stringValue)
+                    .collect(Collectors.toSet());
             Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory);
-            return Response.ok(getHierarchyStream(hierarchy, nested)).build();
+            return Response.ok(getHierarchyStream(hierarchy, nested, annoPropIRIs)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -986,7 +1006,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getConceptRelationships(valueFactory, modelFactory);
-            return Response.ok(getHierarchyStream(hierarchy, nested)).build();
+            return Response.ok(getHierarchyStream(hierarchy, nested, Collections.emptySet())).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -999,8 +1019,13 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+//            Set<String> schemeIRIs = ontology.getCo()
+//                    .stream()
+//                    .map(AnnotationProperty::getIRI)
+//                    .map(IRI::stringValue)
+//                    .collect(Collectors.toSet());
             Hierarchy hierarchy = ontology.getConceptSchemeRelationships(valueFactory, modelFactory);
-            return Response.ok(getHierarchyStream(hierarchy, nested)).build();
+            return Response.ok(getHierarchyStream(hierarchy, nested, Collections.emptySet())).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1135,20 +1160,22 @@ public class OntologyRestImpl implements OntologyRest {
                 .collect(Collectors.toSet());
     }
 
-    private StreamingOutput getHierarchyStream(Hierarchy hierarchy, boolean includeNested) {
-        return outputStream -> writeHierarchyToStream(hierarchy, outputStream, includeNested);
+    private StreamingOutput getHierarchyStream(Hierarchy hierarchy, boolean includeNested, Set<String> iris) {
+        return outputStream -> writeHierarchyToStream(hierarchy, outputStream, includeNested, iris);
     }
 
     private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream) throws IOException {
-        writeHierarchyToStream(hierarchy, outputStream, false);
+        writeHierarchyToStream(hierarchy, outputStream, false, Collections.emptySet());
     }
 
-    private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream, boolean includeNested)
-            throws IOException {
+    private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream, boolean includeNested,
+                                        Set<String> iris) throws IOException {
         outputStream.write("{\"parentMap\": ".getBytes());
         outputStream.write(JSONObject.fromObject(hierarchy.getParentMap()).toString().getBytes());
         outputStream.write(", \"childMap\": ".getBytes());
         outputStream.write(JSONObject.fromObject(hierarchy.getChildMap()).toString().getBytes());
+        outputStream.write(", \"iris\": ".getBytes());
+        outputStream.write(JSONArray.fromObject(iris).toString().getBytes());
         if (includeNested) {
             outputStream.write("{\"hierarchy\": ".getBytes());
             hierarchy.writeHierarchyString(sesameTransformer, outputStream);

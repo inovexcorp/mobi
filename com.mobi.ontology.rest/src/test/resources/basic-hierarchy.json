@@ -8,5 +8,6 @@
     "https://mobi.com#child": [
       "https://mobi.com#parent"
     ]
-  }
+  },
+  "iris": []
 }
