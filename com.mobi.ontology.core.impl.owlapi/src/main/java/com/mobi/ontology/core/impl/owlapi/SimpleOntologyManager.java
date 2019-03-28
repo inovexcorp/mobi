@@ -38,6 +38,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.config.OntologyManagerConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
@@ -51,7 +52,6 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
-import com.mobi.service.config.ThreadPoolConfig;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ import javax.cache.Cache;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.optional,
-        designateFactory = ThreadPoolConfig.class,
+        designateFactory = OntologyManagerConfig.class,
         name = SimpleOntologyManager.COMPONENT_NAME
 )
 public class SimpleOntologyManager implements OntologyManager {
@@ -158,7 +158,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Activate
     protected void start(Map<String, Object> props) {
-        ThreadPoolConfig config = Configurable.createConfigurable(ThreadPoolConfig.class, props);
+        OntologyManagerConfig config = Configurable.createConfigurable(OntologyManagerConfig.class, props);
         if (config.poolSize() == 0) {
             int cpus = Runtime.getRuntime().availableProcessors();
             log.debug("OntologyManager pool size: " + (cpus / 2));
