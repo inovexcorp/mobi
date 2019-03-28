@@ -142,6 +142,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -162,6 +164,7 @@ public class SimpleOntology implements Ontology {
     private Set<AnnotationProperty> annotationProperties;
     private Set<IRI> missingImports = new HashSet<>();
     private org.eclipse.rdf4j.model.Model sesameModel;
+    private ForkJoinPool threadPool;
 
     //Owlapi variables
     private OWLOntology owlOntology;
@@ -211,9 +214,9 @@ public class SimpleOntology implements Ontology {
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService, RepositoryManager repoManager, boolean resolveImports)
-            throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, repoManager, resolveImports);
+                          BNodeService bNodeService, RepositoryManager repoManager, boolean resolveImports,
+                          ForkJoinPool threadPool) throws MobiOntologyException {
+        initialize(ontologyManager, transformer, bNodeService, repoManager, resolveImports, threadPool);
         byte[] bytes = inputStreamToByteArray(inputStream);
         try {
             sesameModel = createSesameModel(new ByteArrayInputStream(bytes));
@@ -233,8 +236,9 @@ public class SimpleOntology implements Ontology {
      * @throws MobiOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService, RepositoryManager repoManager) throws MobiOntologyException {
-        initialize(ontologyManager, transformer, bNodeService, repoManager, true);
+                          BNodeService bNodeService, RepositoryManager repoManager, ForkJoinPool threadPool)
+            throws MobiOntologyException {
+        initialize(ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         sesameModel = new LinkedHashModel();
         sesameModel = this.transformer.sesameModel(model);
         createOntologyFromSesameModel();
@@ -242,7 +246,8 @@ public class SimpleOntology implements Ontology {
     }
 
     private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService,
-                            RepositoryManager repoManager, boolean resolveImports) {
+                            RepositoryManager repoManager, boolean resolveImports, ForkJoinPool threadPool) {
+        this.threadPool = threadPool;
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
@@ -282,7 +287,7 @@ public class SimpleOntology implements Ontology {
      */
     protected SimpleOntology(OWLOntology ontology, OWLOntologyManager owlManager, Resource resource,
                              OntologyManager ontologyManager, SesameTransformer transformer,
-                             BNodeService bNodeService, RepositoryManager repoManager) {
+                             BNodeService bNodeService, RepositoryManager repoManager, ForkJoinPool threadPool) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
@@ -362,7 +367,7 @@ public class SimpleOntology implements Ontology {
                         return this;
                     }
                     return new SimpleOntology(ontology, owlManager, null, ontologyManager, transformer, bNodeService,
-                            repoManager);
+                            repoManager, threadPool);
                 })
                 .collect(Collectors.toSet());
         LOG.trace("Exit getImportsClosure()");
@@ -563,7 +568,7 @@ public class SimpleOntology implements Ontology {
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             Set<OWLClass> classes = getDeclaredClasses().collect(Collectors.toSet());
-            classes.parallelStream()
+            threadPool.submit(() -> classes.parallelStream()
                     .forEach(owlClass -> {
                         if (owlClass.isTopEntity()) {
                             return;
@@ -572,9 +577,10 @@ public class SimpleOntology implements Ontology {
                         hierarchy.addIRI(classIRI);
                         getSubClassesFor(owlClass, true)
                                 .forEach(subclassIRI -> hierarchy.addParentChild(classIRI, subclassIRI));
-
-                    });
+                    })).get();
             return hierarchy;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MobiOntologyException("Error retrieving getSubClassesOf", e);
         } finally {
             logTrace("getSubClassesOf()", start);
         }
@@ -656,14 +662,16 @@ public class SimpleOntology implements Ontology {
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             Set<OWLDataProperty> properties = getDeclaredDatatypeProperties().collect(Collectors.toSet());
-            properties.parallelStream()
+            threadPool.submit(() -> properties.parallelStream()
                     .forEach(property -> {
                         IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
                         hierarchy.addIRI(propIRI);
                         getSubDatatypePropertiesFor(property, true)
                                 .forEach(subpropIRI -> hierarchy.addParentChild(propIRI, subpropIRI));
-                    });
+                    })).get();
             return hierarchy;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MobiOntologyException("Error retrieving getSubDatatypePropertiesOf", e);
         } finally {
             logTrace("getSubDatatypePropertiesOf()", start);
         }
@@ -697,7 +705,7 @@ public class SimpleOntology implements Ontology {
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             Set<OWLAnnotationProperty> properties = getDeclaredAnnotationProperties().collect(Collectors.toSet());
-            properties.parallelStream()
+            threadPool.submit(() -> properties.parallelStream()
                     .forEach(property -> {
                         if (property.isBuiltIn()) {
                             return;
@@ -706,8 +714,10 @@ public class SimpleOntology implements Ontology {
                         hierarchy.addIRI(propIRI);
                         getSubAnnotationPropertiesFor(property, true)
                                 .forEach(subpropIRI -> hierarchy.addParentChild(propIRI, subpropIRI));
-                    });
+                    })).get();
             return hierarchy;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MobiOntologyException("Error retrieving subAnnotationPropertiesOf", e);
         } finally {
             logTrace("getSubAnnotationPropertiesOf()", start);
         }
@@ -756,14 +766,16 @@ public class SimpleOntology implements Ontology {
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             Set<OWLObjectProperty> properties = getDeclaredObjectProperties().collect(Collectors.toSet());
-            properties.parallelStream()
+            threadPool.submit(() -> properties.parallelStream()
                     .forEach(property -> {
                         IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
                         hierarchy.addIRI(propIRI);
                         getSubObjectPropertiesFor(property, true)
                                 .forEach(subpropIRI -> hierarchy.addParentChild(propIRI, subpropIRI));
-                    });
+                    })).get();
             return hierarchy;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MobiOntologyException("Error retrieving getSubObjectPropertiesOf", e);
         } finally {
             logTrace("getSubObjectPropertiesOf()", start);
         }
@@ -797,7 +809,7 @@ public class SimpleOntology implements Ontology {
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             Set<OWLClass> classes = getDeclaredClasses().collect(Collectors.toSet());
-            classes.parallelStream()
+            threadPool.submit(() -> classes.parallelStream()
                     .forEach(owlClass -> {
                         Set<IRI> iris = owlReasoner.instances(owlClass, true)
                                 .map(individual -> SimpleOntologyValues.mobiIRI(individual.getIRI()))
@@ -806,8 +818,10 @@ public class SimpleOntology implements Ontology {
                             IRI classIRI = SimpleOntologyValues.mobiIRI(owlClass.getIRI());
                             iris.forEach(iri -> hierarchy.addParentChild(classIRI, iri));
                         }
-                    });
+                    })).get();
             return hierarchy;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new MobiOntologyException("Error retrieving getClassesWithIndividuals", e);
         } finally {
             logTrace("getClassesWithIndividuals()", start);
         }
@@ -1065,7 +1079,7 @@ public class SimpleOntology implements Ontology {
                             return this;
                         }
                         return new SimpleOntology(ontology, owlManager, null, ontologyManager, transformer,
-                                bNodeService, repoManager);
+                                bNodeService, repoManager, threadPool);
                     }).forEach(ont -> conn.add(transformer.mobiModel(ont.asSesameModel())));
             conn.commit();
         } else {
