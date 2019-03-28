@@ -165,8 +165,8 @@
                     self.currentUser = '';
                     self.currentUserIRI = '';
                     userStateService.reset();
+                    $state.go('login');
                 });
-            $state.go('login');
         }
 
         /**
@@ -194,7 +194,6 @@
                 self.currentUser = '';
                 self.currentUserIRI = '';
                 $state.go('login');
-                return $q.reject(data);
             };
             return self.getCurrentLogin().then(data => {
                 if (data.scope === anon) {
