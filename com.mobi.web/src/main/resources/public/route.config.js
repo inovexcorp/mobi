@@ -26,6 +26,7 @@
     angular
         .module('app')
         .config(config)
+        .config(hashPrefixConfig)
         .run(run);
 
     config.$inject = ['$stateProvider', '$urlRouterProvider', 'uiSelectConfig'];
@@ -35,7 +36,7 @@
         uiSelectConfig.theme = 'bootstrap';
 
         // Defaults to login
-        $urlRouterProvider.otherwise('/login');
+        $urlRouterProvider.otherwise('/home');
 
         // Sets the states
         $stateProvider
@@ -65,17 +66,6 @@
                 },
                 data: {
                     title: 'Home'
-                }
-            })
-            .state('root.webtop', {
-                url: '/webtop',
-                views: {
-                    'container@': {
-                        templateUrl: 'webtop/webtop.html'
-                    }
-                },
-                data: {
-                    title: 'Webtop'
                 }
             })
             .state('root.catalog', {
@@ -171,9 +161,23 @@
         }
     }
 
-    run.$inject = ['$rootScope', '$state'];
+    hashPrefixConfig.$inject = ['$locationProvider'];
 
-    function run($rootScope, $state) {
+    function hashPrefixConfig($locationProvider) {
+        $locationProvider.hashPrefix('');
+    }
+
+    run.$inject = ['$rootScope', '$state', '$transitions'];
+
+    function run($rootScope, $state, $transitions) {
         $rootScope.$state = $state;
+
+        $transitions.onBefore({ to: 'login' }, trans => {
+            var lm = trans.injector().get('loginManagerService');
+            if (lm.currentUser) {
+                trans.router.stateService.transitionTo('root.home');
+                return false;
+            }
+        });
     }
 })();
