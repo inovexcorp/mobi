@@ -76,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -98,6 +99,7 @@ public class FullSimpleOntologyTest {
     private Ontology ont1;
     private Ontology queryOntology;
     private Ontology queryVocabulary;
+    private ForkJoinPool threadPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() / 2);
 
     @Mock
     private OntologyManager ontologyManager;
@@ -113,6 +115,7 @@ public class FullSimpleOntologyTest {
 
     @Before
     public void setUp() {
+
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
         IRI ontologyIRI = vf.createIRI("http://test.com/ontology1");
@@ -145,11 +148,11 @@ public class FullSimpleOntologyTest {
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true);
+        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         Resource ont3IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-3");
         Resource ont3RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-3");
         InputStream stream3 = this.getClass().getResourceAsStream("/test-local-imports-3.ttl");
-        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService, repoManager, true);
+        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         when(ontologyManager.getOntologyRecordResource(ont3IRI)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
         com.mobi.rdf.api.Model ont3Model = ont3.asModel(mf);
@@ -158,20 +161,20 @@ public class FullSimpleOntologyTest {
         Resource ont2IRI = vf.createIRI("http://mobi.com/ontology/test-local-imports-2");
         Resource ont2RecordIRI = vf.createIRI("https://mobi.com/record/test-local-imports-2");
         InputStream stream2 = this.getClass().getResourceAsStream("/test-local-imports-2.ttl");
-        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repoManager, true);
+        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
         com.mobi.rdf.api.Model ont2Model = ont2.asModel(mf);
         when(ontologyManager.getOntologyModel(ont2RecordIRI)).thenReturn(ont2Model);
 
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
-        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true);
+        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
         InputStream streamQueryOntology = this.getClass().getResourceAsStream("/test-ontology.ttl");
-        queryOntology = new SimpleOntology(streamQueryOntology, ontologyManager, transformer, bNodeService, repoManager, true);
+        queryOntology = new SimpleOntology(streamQueryOntology, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
         InputStream streamQueryVocabulary = this.getClass().getResourceAsStream("/test-vocabulary.ttl");
-        queryVocabulary= new SimpleOntology(streamQueryVocabulary, ontologyManager, transformer, bNodeService, repoManager, true);
+        queryVocabulary= new SimpleOntology(streamQueryVocabulary, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
         values.setOntologyManager(ontologyManager);
         values.setTransformer(transformer);
@@ -180,9 +183,9 @@ public class FullSimpleOntologyTest {
     @Test
     public void withAndWithoutImportsEqualsTest() throws Exception {
         InputStream stream = getClass().getResourceAsStream("/test-imports.owl");
-        Ontology withImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true);
+        Ontology withImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         stream = getClass().getResourceAsStream("/test-imports.owl");
-        Ontology withoutImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, false);
+        Ontology withoutImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, false, threadPool);
         assertEquals(withImports, withoutImports);
     }
 
@@ -190,7 +193,7 @@ public class FullSimpleOntologyTest {
     public void getImportedOntologyIRIsTest() throws Exception {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true);
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
         Set<IRI> iris = ont.getImportedOntologyIRIs();
         assertEquals(2, iris.size());
@@ -400,7 +403,7 @@ public class FullSimpleOntologyTest {
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld");
-        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true);
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true, threadPool);
 
         String jsonld = listOntology.asJsonLD(true).toString();
         assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
@@ -416,7 +419,7 @@ public class FullSimpleOntologyTest {
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
-        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true);
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService, repoManager, true, threadPool);
 
         String jsonld = listOntology.asJsonLD(false).toString();
         assertEquals(removeWhitespace(IOUtils.toString(expected, Charset.defaultCharset()).replaceAll("_:node[a-zA-Z0-9]+\"", "\"")),

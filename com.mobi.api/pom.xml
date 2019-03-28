@@ -56,7 +56,8 @@
                         <Bundle-Name>Mobi Core API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.exception
+                            com.mobi.exception,
+                            com.mobi.service.config
                         </Export-Package>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
