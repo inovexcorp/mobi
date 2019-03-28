@@ -557,10 +557,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private void assertClassIRIs(JSONObject responseObject, Set<OClass> set) {
         Set<String> iris = createSetClassIRIs(set);
         assertIRIObject(responseObject, "classes", iris);
-//        JSONArray jsonClasses = responseObject.optJSONArray("classes");
-//        assertNotNull(jsonClasses);
-//        assertEquals(jsonClasses.size(), set.size());
-//        set.forEach(oClass -> assertTrue(jsonClasses.contains(createJsonIRI(oClass.getIRI()))));
     }
 
     private void assertClasses(JSONArray responseArray, Set<OClass> set) {
@@ -571,19 +567,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private void assertDatatypes(JSONObject responseObject, Set<Datatype> set) {
         Set<String> iris = createSetDatatypeIRIs(set);
         assertIRIObject(responseObject, "datatypes", iris);
-//        JSONArray jsonDatatypes = responseObject.optJSONArray("datatypes");
-//        assertNotNull(jsonDatatypes);
-//        assertEquals(jsonDatatypes.size(), set.size());
-//        set.forEach(datatype -> assertTrue(jsonDatatypes.contains(createJsonIRI(datatype.getIRI()))));
     }
 
     private void assertObjectPropertyIRIs(JSONObject responseObject, Set<ObjectProperty> set) {
         Set<String> iris = createSetObjectPropertyIRIs(set);
         assertIRIObject(responseObject, "objectProperties", iris);
-//        JSONArray jsonObjectProperties = responseObject.optJSONArray("objectProperties");
-//        assertNotNull(jsonObjectProperties);
-//        assertEquals(jsonObjectProperties.size(), set.size());
-//        set.forEach(objectProperty -> assertTrue(jsonObjectProperties.contains(createJsonIRI(objectProperty.getIRI()))));
     }
 
     private void assertObjectProperties(JSONArray responseArray, Set<ObjectProperty> set) {
@@ -594,10 +582,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private void assertDataPropertyIRIs(JSONObject responseObject, Set<DataProperty> set) {
         Set<String> iris = createSetDataPropertyIRIs(set);
         assertIRIObject(responseObject, "dataProperties", iris);
-//        JSONArray jsonDataProperties = responseObject.optJSONArray("dataProperties");
-//        assertNotNull(jsonDataProperties);
-//        assertEquals(jsonDataProperties.size(), set.size());
-//        set.forEach(dataProperty -> assertTrue(jsonDataProperties.contains(createJsonIRI(dataProperty.getIRI()))));
     }
 
     private void assertDataProperties(JSONArray responseArray, Set<DataProperty> set) {
@@ -608,28 +592,16 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private void assertIndividuals(JSONObject responseObject, Set<Individual> set) {
         Set<String> iris = createSetIndividualIRIs(set);
         assertIRIObject(responseObject, "namedIndividuals", iris);
-//        JSONArray jsonIndividuals = responseObject.optJSONArray("namedIndividuals");
-//        assertNotNull(jsonIndividuals);
-//        assertEquals(jsonIndividuals.size(), set.size());
-//        set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(individual.getIRI()))));
     }
 
     private void assertConcepts(JSONObject responseObject, Set<Individual> set) {
         Set<String> iris = createSetIndividualIRIs(set);
         assertIRIObject(responseObject, "concepts", iris);
-//        JSONArray jsonConcepts = responseObject.optJSONArray("concepts");
-//        assertNotNull(jsonConcepts);
-//        assertEquals(jsonConcepts.size(), set.size());
-//        set.forEach(concept -> assertTrue(jsonConcepts.contains(createJsonIRI(concept.getIRI()))));
     }
 
     private void assertConceptSchemes(JSONObject responseObject, Set<Individual> set) {
         Set<String> iris = createSetIndividualIRIs(set);
         assertIRIObject(responseObject, "conceptSchemes", iris);
-//        JSONArray jsonConceptSchemes = responseObject.optJSONArray("conceptSchemes");
-//        assertNotNull(jsonConceptSchemes);
-//        assertEquals(jsonConceptSchemes.size(), set.size());
-//        set.forEach(scheme -> assertTrue(jsonConceptSchemes.contains(createJsonIRI(scheme.getIRI()))));
     }
 
     private void assertDerivedConcepts(JSONObject responseObject, Set<IRI> set) {
