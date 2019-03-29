@@ -180,16 +180,16 @@ describe('Ontology Property Overlay directive', function() {
                 beforeEach(function() {
                     ontologyStateSvc.ontologyProperty = 'id';
                 });
-                it('and ontologyStateService.listItem.annotations.iris is empty', function() {
-                    ontologyStateSvc.listItem.annotations.iris = {};
+                it('and annotations is empty', function() {
+                    this.controller.annotations = [];
                     expect(this.controller.isAnnotationProperty()).toBe(false);
                 });
-                it('and ontologyStateService.listItem.annotations.iris does not contain ontologyProperty as a key', function() {
-                    ontologyStateSvc.listItem.annotations.iris = {other: 'ontologyId'};
+                it('and annotations does not contain ontologyProperty as a key', function() {
+                    this.controller.annotations = ['other'];
                     expect(this.controller.isAnnotationProperty()).toBe(false);
                 });
-                it('and ontologyStateService.listItem.annotations.iris does contain ontologyProperty as a key', function() {
-                    ontologyStateSvc.listItem.annotations.iris = {id: 'ontologyId'};
+                it('and annotations does contain ontologyProperty as a key', function() {
+                    this.controller.annotations = ['id'];
                     expect(this.controller.isAnnotationProperty()).toBe(true);
                 });
             });
