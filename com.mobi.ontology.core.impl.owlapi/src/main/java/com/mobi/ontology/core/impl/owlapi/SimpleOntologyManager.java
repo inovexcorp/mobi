@@ -23,8 +23,12 @@ package com.mobi.ontology.core.impl.owlapi;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -34,6 +38,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.config.OntologyManagerConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
@@ -53,11 +58,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
-@Component
+@Component(
+        configurationPolicy = ConfigurationPolicy.optional,
+        designateFactory = OntologyManagerConfig.class,
+        name = SimpleOntologyManager.COMPONENT_NAME
+)
 public class SimpleOntologyManager implements OntologyManager {
 
     private ValueFactory valueFactory;
@@ -71,6 +82,9 @@ public class SimpleOntologyManager implements OntologyManager {
     private OntologyCache ontologyCache;
     private BNodeService bNodeService;
 
+    private ForkJoinPool threadPool;
+
+    static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String FIND_ONTOLOGY;
@@ -142,15 +156,33 @@ public class SimpleOntologyManager implements OntologyManager {
         this.bNodeService = bNodeService;
     }
 
+    @Activate
+    protected void start(Map<String, Object> props) {
+        OntologyManagerConfig config = Configurable.createConfigurable(OntologyManagerConfig.class, props);
+        if (config.poolSize() == 0) {
+            int cpus = Runtime.getRuntime().availableProcessors();
+            log.debug("OntologyManager pool size: " + (cpus / 2));
+            threadPool = new ForkJoinPool(cpus / 2);
+        } else {
+            log.debug("OntologyManager pool size: " + config.poolSize());
+            threadPool = new ForkJoinPool(config.poolSize());
+        }
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        start(props);
+    }
+
     @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
         return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, repositoryManager,
-                resolveImports);
+                resolveImports, threadPool);
     }
 
     @Override
     public Ontology createOntology(Model model) {
-        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager);
+        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool);
     }
 
     @Override

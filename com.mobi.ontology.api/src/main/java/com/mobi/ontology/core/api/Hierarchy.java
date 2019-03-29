@@ -38,10 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A POJO that represents hierarchical relationships within an {@link Ontology}. Contains a {@link Map} of IRI Strings
@@ -53,12 +52,14 @@ public class Hierarchy {
     private static final Logger LOG = LoggerFactory.getLogger(Hierarchy.class);
 
     private Model model;
-    private Map<String, Set<String>> parentMap = new HashMap<>();
-    private Map<String, Set<String>> childMap = new HashMap<>();
+    private Set<Resource> iris = ConcurrentHashMap.newKeySet();
+    private Map<String, Set<String>> parentMap = new ConcurrentHashMap<>();
+    private Map<String, Set<String>> childMap = new ConcurrentHashMap<>();
 
     private IRI type;
     private IRI nodeType;
     private IRI childProp;
+    private ValueFactory vf;
 
     /**
      * Creates an empty {@link Hierarchy}.
@@ -71,6 +72,7 @@ public class Hierarchy {
         type = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         nodeType = vf.createIRI("http://mobi.com/hierarchy#Node");
         childProp = vf.createIRI("http://mobi.com/hierarchy#child");
+        this.vf = vf;
     }
 
     public Map<String, Set<String>> getChildMap() {
@@ -82,6 +84,18 @@ public class Hierarchy {
     }
 
     public Model getModel() {
+        model.clear();
+        iris.forEach(iri -> model.add(iri, type, nodeType));
+        childMap.forEach((childStr, parentStrSet) -> {
+            IRI child = vf.createIRI(childStr);
+            model.add(child, type, nodeType);
+
+            parentStrSet.forEach(parentStr -> {
+                IRI parent = vf.createIRI(parentStr);
+                model.add(parent, type, nodeType);
+                model.add(parent, childProp, child);
+            });
+        });
         return model;
     }
 
@@ -93,29 +107,26 @@ public class Hierarchy {
      * @param child A child entity's {@link Resource}
      */
     public void addParentChild(Resource parent, Resource child) {
-        model.add(parent, type, nodeType);
-        model.add(child, type, nodeType);
-        model.add(parent, childProp, child);
         String childStr = child.stringValue();
         String parentStr = parent.stringValue();
         if (childMap.containsKey(childStr)) {
             childMap.get(childStr).add(parentStr);
         } else {
-            Set<String> set = new HashSet<>();
+            Set<String> set = ConcurrentHashMap.newKeySet();
             set.add(parentStr);
             childMap.put(childStr, set);
         }
         if (parentMap.containsKey(parentStr)) {
             parentMap.get(parentStr).add(childStr);
         } else {
-            Set<String> set = new HashSet<>();
+            Set<String> set = ConcurrentHashMap.newKeySet();
             set.add(childStr);
             parentMap.put(parentStr, set);
         }
     }
 
     public void addIRI(Resource iri) {
-        model.add(iri, type, nodeType);
+        iris.add(iri);
     }
 
     /**
@@ -131,7 +142,7 @@ public class Hierarchy {
         watch.start();
         RDFWriter writer = Rio.createWriter(RDFFormat.JSONLD, outputStream);
         writer.getWriterConfig().set(JSONLDSettings.HIERARCHICAL_VIEW, true);
-        Rio.write(transformer.sesameModel(model), writer);
+        Rio.write(transformer.sesameModel(getModel()), writer);
         watch.stop();
         LOG.trace("End writing hierarchy JSON-LD: " + watch.getTime() + "ms");
     }

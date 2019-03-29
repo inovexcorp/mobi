@@ -1,6 +1,4 @@
-@Version("7.1.1.${build}")
-
-package com.mobi.ontology.core.api;
+package com.mobi.ontology.core.api.config;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package com.mobi.ontology.core.api;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,10 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+import com.mobi.service.config.ThreadPoolConfig;
+
+@Meta.OCD
+public interface OntologyManagerConfig extends ThreadPoolConfig {
+
+}

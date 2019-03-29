@@ -67,6 +67,7 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
@@ -94,6 +95,9 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
     @Mock
     private IRI versionIRI;
+
+    @Mock
+    private ForkJoinPool threadPool;
 
     @Before
     public void setUp() throws Exception {
@@ -129,7 +133,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void testStreamConstructor() throws Exception {
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
@@ -137,14 +141,14 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test (expected = MobiOntologyException.class)
     public void testStreamConstructorEmpty() throws Exception {
         InputStream stream =  new ByteArrayInputStream(new byte[0]);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
     }
 
     @Test (expected = MobiOntologyException.class)
     public void testStreamConstructorNoFormatMatch() throws Exception {
         String noMatch = "This is not a valid ontology file.";
         InputStream stream =  new ByteArrayInputStream(noMatch.getBytes());
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
     }
 
     @Test
@@ -152,8 +156,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
 
         assertEquals(ontology1, ontology2);
     }
@@ -163,8 +167,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = this.getClass().getResourceAsStream("/travel.owl");
 
-        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
 
         assertNotEquals(ontology1, ontology2);
     }
@@ -175,8 +179,8 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true);
-        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
+        Ontology ontology2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
 
         assertEquals(ontology1.hashCode(), ontology2.hashCode());
     }
@@ -184,7 +188,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void annotationsAreEmptyForEmptyOntology() throws Exception {
         Model emptyModel = MODEL_FACTORY.createModel();
-        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService, repositoryManager);
+        Ontology ontology = new SimpleOntology(emptyModel, ontologyManager, transformer, bNodeService, repositoryManager, threadPool);
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
         assertEquals(0, annotations.size());
     }
@@ -196,7 +200,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
 
         // Setup
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
 
         // Test
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
@@ -208,7 +212,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void missingDirectImportTest() throws Exception {
         InputStream file = getClass().getResourceAsStream("/protegeSample.owl");
-        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer, bNodeService, repositoryManager, true);
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer, bNodeService, repositoryManager, true, threadPool);
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
 
