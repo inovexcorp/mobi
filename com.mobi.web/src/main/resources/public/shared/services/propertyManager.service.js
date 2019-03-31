@@ -39,6 +39,7 @@
 
         var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => prefixes.rdfs + item);
         var dcAnnotations = _.map(['description', 'title'], item => prefixes.dcterms + item);
+        var dcElementsAnnotations = _.map(['description', 'title'], item => prefixes.dc + item);
         /**
          * @ngdoc property
          * @name defaultAnnotations
@@ -48,7 +49,7 @@
          * @description
          * `defaultAnnotations` holds an array of annotations that are available by default.
          */
-        self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations);
+        self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations, dcElementsAnnotations);
         /**
          * @ngdoc property
          * @name owlAnnotations

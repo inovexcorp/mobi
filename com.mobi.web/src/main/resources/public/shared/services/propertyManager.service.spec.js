@@ -46,7 +46,9 @@ describe('Property Manager service', function() {
                 prefixes.rdfs + 'seeAlso',
                 prefixes.rdfs + 'isDefinedBy',
                 prefixes.dcterms + 'description',
-                prefixes.dcterms + 'title'
+                prefixes.dcterms + 'title',
+                prefixes.dc + 'description',
+                prefixes.dc + 'title'
             ]);
         });
         it('owlAnnotations', function() {
