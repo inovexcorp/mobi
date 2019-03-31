@@ -78,10 +78,12 @@
                     dvm.os = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.util = utilService;
+                    dvm.annotations = [];
                     dvm.properties = [];
 
                     dvm.$onInit = function() {
-                        dvm.properties = _.union(pm.ontologyProperties, pm.defaultAnnotations, pm.owlAnnotations, _.keys(dvm.os.listItem.annotations.iris));
+                        dvm.annotations = _.union(pm.defaultAnnotations, pm.owlAnnotations, _.keys(dvm.os.listItem.annotations.iris));
+                        dvm.properties = _.union(pm.ontologyProperties, dvm.annotations);
                     }
                     dvm.submit = function() {
                         if (dvm.os.editingOntologyProperty) {
@@ -94,7 +96,7 @@
                         return !!dvm.os.ontologyProperty && _.some(pm.ontologyProperties, property => dvm.os.ontologyProperty === property);
                     }
                     dvm.isAnnotationProperty = function() {
-                        return !!dvm.os.ontologyProperty && _.has(dvm.os.listItem.annotations.iris, dvm.os.ontologyProperty);
+                        return !!dvm.os.ontologyProperty && _.includes(dvm.annotations, dvm.os.ontologyProperty);
                     }
                     dvm.selectProp = function() {
                         dvm.os.ontologyPropertyValue = '';
