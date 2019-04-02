@@ -40,16 +40,20 @@ describe('Property Manager service', function() {
 
     describe('should initialize with the correct value for', function() {
         it('defaultAnnotations', function() {
-            expect(propertyManagerSvc.defaultAnnotations).toEqual([
+            [
                 prefixes.rdfs + 'comment',
                 prefixes.rdfs + 'label',
                 prefixes.rdfs + 'seeAlso',
                 prefixes.rdfs + 'isDefinedBy',
                 prefixes.dcterms + 'description',
                 prefixes.dcterms + 'title',
+                prefixes.dcterms + 'contributor',
                 prefixes.dc + 'description',
-                prefixes.dc + 'title'
-            ]);
+                prefixes.dc + 'title',
+                prefixes.dc + 'contributor',
+            ].forEach(str => {
+                expect(propertyManagerSvc.defaultAnnotations).toContain(str);
+            });
         });
         it('owlAnnotations', function() {
             expect(propertyManagerSvc.owlAnnotations).toEqual([prefixes.owl + 'deprecated']);
