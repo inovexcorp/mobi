@@ -1,0 +1,30 @@
+@prefix : <http://mobi.com/ontology/only-declared#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://mobi.com/ontology/only-declared> .
+
+<http://mobi.com/ontology/only-declared> a owl:Ontology .
+
+:ClassA a owl:Class ;
+         rdfs:subClassOf [
+             a owl:Restriction ;
+             owl:onProperty :missingObjectProp ;
+             owl:someValuesFrom :missingIndividual
+         ] .
+
+:ClassB a owl:Class ;
+         rdfs:subClassOf :MissingClass .
+
+:ClassC a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty :missingDataProp ;
+        owl:someValuesFrom [
+            a rdfs:Datatype ;
+            owl:onDatatype xsd:integer ;
+            owl:withRestrictions ( [ xsd:minExclusive "12"^^xsd:integer ] [xsd:maxExclusive "19"^^xsd:integer] )
+        ]
+    ] .
