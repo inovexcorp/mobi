@@ -217,6 +217,81 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
+    public void getAllClassesTest() throws Exception {
+        // Setup:
+        Set<String> expectedClasses = Stream.of("http://test.com/ontology1#TestClassA",
+                "http://test.com/ontology1#TestClassB", "http://test.com/ontology1#TestClassC",
+                "http://test.com/ontology1#TestClassD", "http://test.com/ontology1#TestClassE").collect(Collectors.toSet());
+
+        Set<OClass> classes = ontology.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
+    public void getAllClassesDeclaredTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/only-declared.ttl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Set<String> expectedClasses = Stream.of("http://mobi.com/ontology/only-declared#ClassA",
+                "http://mobi.com/ontology/only-declared#ClassB", "http://mobi.com/ontology/only-declared#ClassC").collect(Collectors.toSet());
+
+        Set<OClass> classes = ont.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
+    public void getAllObjectPropertiesTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Stream.of("http://test.com/ontology1#testObjectProperty1", "http://test.com/ontology1#testObjectProperty2").collect(Collectors.toSet());
+
+        Set<ObjectProperty> properties = ontology.getAllObjectProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
+    public void getAllObjectPropertiesDeclaredTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/only-declared.ttl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Set<String> expectedProps = Collections.emptySet();
+
+        Set<ObjectProperty> properties = ont.getAllObjectProperties();
+        assertEquals(expectedProps.size(), properties.size());
+    }
+
+    @Test
+    public void getAllDataPropertiesTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Stream.of("http://test.com/ontology1#testDataProperty1", "http://test.com/ontology1#testDataProperty2").collect(Collectors.toSet());
+
+        Set<DataProperty> properties = ontology.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
+    public void getAllDataPropertiesDeclaredTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/only-declared.ttl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Set<String> expectedProps = Collections.emptySet();
+
+        Set<DataProperty> properties = ont.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+    }
+
+    @Test
     public void getDataPropertyTest() throws Exception {
         Optional<DataProperty> optional = ontology.getDataProperty(dataProp1IRI);
         assertTrue(optional.isPresent());

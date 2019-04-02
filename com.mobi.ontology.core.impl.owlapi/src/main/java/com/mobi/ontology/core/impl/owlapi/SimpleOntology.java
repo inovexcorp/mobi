@@ -408,7 +408,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<OClass> getAllClasses() {
-        return owlOntology.classesInSignature()
+        return getDeclaredClasses()
                 .map(SimpleOntologyValues::mobiClass)
                 .collect(Collectors.toSet());
     }
@@ -489,7 +489,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<ObjectProperty> getAllObjectProperties() {
-        return owlOntology.objectPropertiesInSignature()
+        return getDeclaredObjectProperties()
                 .map(SimpleOntologyValues::mobiObjectProperty)
                 .collect(Collectors.toSet());
     }
@@ -517,7 +517,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<DataProperty> getAllDataProperties() {
-        return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
+        return getDeclaredDatatypeProperties()
                 .map(SimpleOntologyValues::mobiDataProperty)
                 .collect(Collectors.toSet());
     }
