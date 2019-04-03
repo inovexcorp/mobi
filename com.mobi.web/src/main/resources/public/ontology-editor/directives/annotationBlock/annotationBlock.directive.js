@@ -47,7 +47,7 @@
          * {@link shared.service:ontologyStateService selected entity} using
          * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding an
          * annotation. The directive houses the methods for opening the modal for
-         * {@link annotationOverlay.directive:annotationOverlay editing, adding}, and removing annotations. The
+         * {@link ontology-editor.component:annotationOverlay editing, adding}, and removing annotations. The
          * directive is replaced by the contents of its template.
          */
         .directive('annotationBlock', annotationBlock);

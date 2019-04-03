@@ -31,7 +31,7 @@
             <custom-label>Axiom</custom-label>
             <ui-select ng-model="dvm.axiom" on-select="dvm.values = []; dvm.editorOptions.readOnly = false" autofocus>
                 <ui-select-match placeholder="Select an axiom">{{$select.selected.iri}}</ui-select-match>
-                <ui-select-choices group-by="dvm.getIRINamespace" repeat="axiom in resolve.axiomList | filter:$select.search | orderBy:dvm.getIRILocalName">
+                <ui-select-choices group-by="dvm.getIRINamespace" repeat="axiom in dvm.resolve.axiomList | filter:$select.search | orderBy:dvm.getIRILocalName">
                     <div ng-bind-html="dvm.getIRILocalName(axiom) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>

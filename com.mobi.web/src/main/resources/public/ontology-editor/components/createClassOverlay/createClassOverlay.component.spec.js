@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Class Overlay directive', function() {
+describe('Create Class Overlay component', function() {
     var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('createClassOverlay');
+        module('ontology-editor');
+        mockComponent('staticIri', 'staticIri');
+        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
+        mockComponent('superClassSelect', 'superClassSelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();

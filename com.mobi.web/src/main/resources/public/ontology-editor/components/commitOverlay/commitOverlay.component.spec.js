@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit Overlay directive', function() {
+describe('Commit Overlay component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('commitOverlay');
+        module('ontology-editor');
         mockOntologyState();
         mockCatalogManager();
         mockUtil();

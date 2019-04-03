@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Annotation Overlay directive', function() {
+describe('Annotation Overlay component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, util;
 
     beforeEach(function() {
         module('templates');
-        module('annotationOverlay');
+        module('ontology-editor');
         mockOntologyState();
         mockPropertyManager();
         mockUtil();

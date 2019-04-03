@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Axiom Overlay directive', function() {
+describe('Axiom Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc, util, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI, removeIriFromArray;
 
     beforeEach(function() {
         module('templates');
-        module('axiomOverlay');
+        module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();

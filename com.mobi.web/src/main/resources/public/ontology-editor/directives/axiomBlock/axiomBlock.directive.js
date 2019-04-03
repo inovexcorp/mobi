@@ -52,7 +52,7 @@
          * {@link objectPropertyAxioms.directive:objectPropertyAxioms}, and
          * {@link datatypePropertyAxioms.directive:datatypePropertyAxioms}. The section header contains a button for
          * adding an axiom. The directive houses the methods for opening the modal for
-         * {@link axiomOverlay.directive:axiomOverlay adding} and removing axioms. The directive is replaced by the
+         * {@link ontology-editor.component:axiomOverlay adding} and removing axioms. The directive is replaced by the
          * contents of its template.
          */
         .directive('axiomBlock', axiomBlock);

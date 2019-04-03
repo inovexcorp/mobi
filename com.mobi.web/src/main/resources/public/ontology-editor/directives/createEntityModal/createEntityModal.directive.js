@@ -44,12 +44,12 @@
          * @description
          * `createEntityModal` is a directive that creates content for a modal that provides buttons to create different
          * types of entities in the current {@link shared.service:ontologyStateService selected ontology}. The
-         * options are {@link createClassOverlay.directive:createClassOverlay classes},
+         * options are {@link ontology-editor.component:createClassOverlay classes},
          * {@link ontology-editor.component:createDataPropertyOverlay data properties},
          * {@link ontology-editor.component:createObjectPropertyOverlay object properties},
-         * {@link createAnnotationPropertyOverlay.directive:createAnnotationPropertyOverlay annotations properties},
+         * {@link ontology-editor.component:createAnnotationPropertyOverlay annotations properties},
          * {@link createIndividualOverlay.directive:createIndividualOverlay individuals}
-         * {@link createConceptOverlay.directive:createConceptOverlay concepts} if ontology is a vocabulary, and
+         * {@link ontology-editor.component:createConceptOverlay concepts} if ontology is a vocabulary, and
          * {@link createConceptSchemeOverlay.directive:createConceptSchemeOverlay concept schemes} if ontology is a
          * vocabulary. Meant to be used in conjunction with the {@link shared.service:modalService}.
          *

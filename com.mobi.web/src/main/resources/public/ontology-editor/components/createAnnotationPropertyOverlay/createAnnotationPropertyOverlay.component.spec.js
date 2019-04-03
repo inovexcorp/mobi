@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Annotation Overlay directive', function() {
+describe('Create Annotation Overlay component', function() {
     var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('createAnnotationPropertyOverlay');
+        module('ontology-editor');
+        mockComponent('staticIri', 'staticIri');
+        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Branch Overlay directive', function() {
+describe('Create Branch Overlay component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('createBranchOverlay');
+        module('ontology-editor');
         mockCatalogManager();
         mockOntologyState();
         mockPrefixes();

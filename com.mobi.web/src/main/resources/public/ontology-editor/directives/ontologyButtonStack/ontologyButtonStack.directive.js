@@ -47,8 +47,8 @@
          * actions are uploading a file of changes, creating a branch, merging branches, and commiting changes. The
          * directive houses the methods for opening modals for
          * {@link uploadChangesOverlay.directive:uploadChangesOverlay uploading changes},
-         * {@link createBranchOverlay.directive:createBranchOverlay creating branches},
-         * {@link commitOverlay.directive:commitOverlay commiting}, and
+         * {@link ontology-editor.component:createBranchOverlay creating branches},
+         * {@link ontology-editor.component:commitOverlay commiting}, and
          * {@link createEntityModal.directive:createEntityModal creating entities}. The directive is replaced by the
          * contents of its template.
          */
