@@ -25,17 +25,18 @@
         <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
     </div>
     <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height">
-        <div md-virtual-repeat="entity in dvm.filteredHierarchy | filter:dvm.isShown" class="tree-item-wrapper" md-item-size="26">
+        <div md-virtual-repeat="entity in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
             <div ng-if="!entity['@id']" class="tree-item">
-                <a ng-click="entity.set(dvm.os.listItem.ontologyRecord.recordId, !entity.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
-                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{entity.title}}</span>
+                <a ng-click="dvm.toggleOpen(entity); $event.stopPropagation()">
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.isOpened, 'fa-folder-o': !entity.isOpened}"></i><span>{{entity.title}}</span>
                 </a>
             </div>
             <tree-item ng-if="entity['@id']" ng-style="{'padding-left': (dvm.indent * entity.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === entity['@id']" current-entity="entity"
                        on-click="dvm.os.selectItem(entity['@id'])" has-children="entity.hasChildren"
-                       path="entity.path" is-opened="dvm.os.getOpened(dvm.os.joinPath(entity.path))"
-                       underline="entity.underline"></tree-item>
+                       path="entity.path" is-opened="entity.isOpened"
+                       underline="entity.underline"
+                       toggle-open="dvm.toggleOpen(entity)"></tree-item>
         </div>
     </md-virtual-repeat-container>
 </div>

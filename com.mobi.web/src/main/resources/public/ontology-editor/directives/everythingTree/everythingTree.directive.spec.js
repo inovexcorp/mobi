@@ -90,21 +90,25 @@ describe('Everything Tree directive', function() {
                 '@id': 'class1',
                 hasChildren: true,
                 indent: 0,
-                path: ['recordId']
+                path: ['recordId'],
+                isOpened: true
             }, {
                 '@id': 'property1',
                 hasChildren: false,
                 indent: 1,
-                path: ['recordId', 'class1']
+                path: ['recordId', 'class1'],
+                isOpened: true
             }, {
                 title: 'Properties',
                 get: jasmine.any(Function),
-                set: jasmine.any(Function)
+                set: jasmine.any(Function),
+                isOpened: true
             }, {
                 '@id': 'property1',
                 hasChildren: false,
                 indent: 1,
-                get: ontologyStateSvc.getNoDomainsOpened
+                get: ontologyStateSvc.getNoDomainsOpened,
+                isOpened: true
             }]);
         });
         it('updateSearch is one way bound', function() {
@@ -132,6 +136,15 @@ describe('Everything Tree directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('toggleOpen should set the correct values', function() {
+            spyOn(this.controller, 'isShown').and.returnValue(false);
+            var node = {isOpened: false, path: ['a', 'b']};
+            this.controller.toggleOpen(node);
+            expect(node.isOpened).toEqual(true);
+            expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('a.b', true);
+            expect(this.controller.isShown).toHaveBeenCalled();
+            expect(this.controller.filteredHierarchy).toEqual([]);
+        });
         describe('searchFilter', function() {
             beforeEach(function() {
                 this.filterNodeParent = {
@@ -144,7 +157,8 @@ describe('Everything Tree directive', function() {
                     indent: 1,
                     '@id': 'iri',
                     hasChildren: false,
-                    path: ['recordId', 'otherIri', 'iri']
+                    path: ['recordId', 'otherIri', 'iri'],
+                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
                 };
                 this.filterNodeFolder = {
                     title: 'Properties',
@@ -153,11 +167,6 @@ describe('Everything Tree directive', function() {
                 };
                 this.controller.hierarchy = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
                 this.controller.filterText = 'ti';
-                this.filterEntity = {
-                    '@id': 'urn:id',
-                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
-                };
-                ontologyStateSvc.getEntityByRecordId.and.returnValue(this.filterEntity);
                 ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
             });
             describe('has filter text', function() {
@@ -168,10 +177,7 @@ describe('Everything Tree directive', function() {
                     });
                     describe('that do not have a matching text value', function () {
                         beforeEach(function () {
-                            var noMatchEntity = {
-                                '@id': 'urn:title',
-                            };
-                            ontologyStateSvc.getEntityByRecordId.and.returnValue(noMatchEntity);
+                            delete this.filterNode[prefixes.dcterms + 'title'];
                             utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
                         describe('and does not have a matching entity local name', function () {
@@ -414,7 +420,7 @@ describe('Everything Tree directive', function() {
                     set: jasmine.createSpy('set')
                 };
                 this.controller.filterText = 'text';
-                this.controller.filteredHierarchy = [node];
+                this.controller.preFilteredHierarchy = [node];
                 expect(this.controller.isShown(node)).toBe(false);
             });
         });

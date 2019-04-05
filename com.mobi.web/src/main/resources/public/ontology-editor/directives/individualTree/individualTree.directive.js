@@ -77,39 +77,52 @@
                     dvm.util = utilService;
                     dvm.searchText = '';
                     dvm.filterText = '';
+                    dvm.filteredHierarchy = [];
+                    dvm.preFilteredHierarchy = [];
 
                     dvm.$onInit = function() {
                         update();
                     }
-                    dvm.$onChanges = function() {
-                        update();
+                    dvm.$onChanges = function(changesObj) {
+                        if (!changesObj.hierarchy.isFirstChange()) {
+                            update();
+                        }
                     }
                     dvm.$onDestroy = function() {
                         if (dvm.os.listItem.editorTabStates) {
                             dvm.os.listItem.editorTabStates.individuals.index = 0;
                         }
                     }
-                    dvm.onKeyup = function () {
+                    dvm.onKeyup = function() {
                         dvm.filterText = dvm.searchText;
                         update();
+                    }
+                    dvm.toggleOpen = function(node) {
+                        node.isOpened = !node.isOpened;
+                        dvm.os.setOpened(_.join(node.path, '.'), node.isOpened);
+                        dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
                     }
                     dvm.searchFilter = function (node) {
                         delete node.underline;
                         delete node.parentNoMatch;
                         delete node.displayNode;
-                        if (dvm.filterText) {
-                            if (node.isClass) {
+                        delete node.entity;
+                        delete node.isOpened;
+                        node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
+                        if (node.isClass) {
+                            if (dvm.filterText) {
                                 node.parentNoMatch = true;
-                                return true;
-                            } else {
-                                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
-                                var searchValues = _.pick(entity, dvm.om.entityNameProps);
+                            }
+                        } else {
+                            node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
+                            if (dvm.filterText) {
+                                var searchValues = _.pick(node.entity, dvm.om.entityNameProps);
                                 var match = false;
                                 _.some(_.keys(searchValues), key => _.some(searchValues[key], value => {
                                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                         match = true;
                                 }));
-                                if (dvm.util.getBeautifulIRI(entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                                if (dvm.util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
                                     match = true;
                                 }
                                 if (match) {
@@ -120,15 +133,16 @@
                                         dvm.os.setOpened(path, true);
 
                                         var parentNode = _.find(dvm.hierarchy, {'entityIRI': iri});
+                                        parentNode.isOpened = true;
                                         parentNode.displayNode = true;
                                     }
                                     node.underline = true;
                                 }
                                 return match;
                             }
-                        } else {
-                            return true;
                         }
+                        return true;
+
                     }
                     dvm.isShown = function(node) {
                         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.os.getOpened)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
@@ -147,7 +161,8 @@
 
                     function update() {
                         dvm.updateSearch({value: dvm.filterText});
-                        dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+                        dvm.preFilteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+                        dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
                     }
                 }
             }
