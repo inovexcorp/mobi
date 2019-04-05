@@ -86,7 +86,8 @@
         <module>com.mobi.dataset.rest</module>
         <module>com.mobi.sparql.utils</module>
         <module>com.mobi.cache</module>
-        <module>com.mobi.cache.impl.ehcache</module>
+        <module>com.mobi.cache.impl.core</module>
+        <module>com.mobi.cache.impl.repository</module>
         <module>com.mobi.explorable.dataset.rest</module>
         <module>com.mobi.etl.workflows</module>
         <module>mobi-itests</module>
