@@ -749,6 +749,7 @@ function mockOntologyState() {
             this.addEntityToHierarchy = jasmine.createSpy('addEntityToHierarchy');
             this.deleteEntityFromParentInHierarchy = jasmine.createSpy('deleteEntityFromParentInHierarchy');
             this.deleteEntityFromHierarchy = jasmine.createSpy('deleteEntityFromHierarchy');
+            this.joinPath = jasmine.createSpy('joinPath').and.returnValue('');
             this.getPathsTo = jasmine.createSpy('getPathsTo');
             this.goTo = jasmine.createSpy('goTo');
             this.openAt = jasmine.createSpy('openAt');

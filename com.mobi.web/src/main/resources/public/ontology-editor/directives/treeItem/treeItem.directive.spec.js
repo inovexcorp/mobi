@@ -40,11 +40,12 @@ describe('Tree Item directive', function() {
         scope.hasChildren = true;
         scope.isActive = false;
         scope.onClick = jasmine.createSpy('onClick');
+        scope.toggleOpen = jasmine.createSpy('toggleOpen');
         scope.currentEntity = {'@id': 'id'};
         scope.isOpened = true;
         scope.isBold = false;
         scope.path = '';
-        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
+        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
         scope.$digest();
         this.isolatedScope = this.element.isolateScope();
         this.controller = this.element.controller('treeItem');
@@ -74,12 +75,14 @@ describe('Tree Item directive', function() {
             scope.$digest();
             expect(scope.isBold).toBe(false);
         });
-        it('onClick should be called in parent scope when invoked', function() {
+        it('onClick should be called in parent scope', function() {
             this.controller.onClick();
             expect(scope.onClick).toHaveBeenCalled();
         });
-    });
-    describe('controller bound variable', function() {
+        it('toggleOpen should be called in parent scope', function() {
+            this.controller.toggleOpen();
+            expect(scope.toggleOpen).toHaveBeenCalled();
+        });
         it('currentEntity should be two way bound', function() {
             this.controller.currentEntity = {id: 'new'};
             scope.$digest();
@@ -155,35 +158,6 @@ describe('Tree Item directive', function() {
                 this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
                 expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
-            });
-        });
-        describe('toggleOpen', function() {
-            it('should call correct manager function', function() {
-                scope.currentEntity = {mobi: {anonymous: 'anon'}};
-                scope.$digest();
-                this.controller.toggleOpen();
-                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.controller.path, this.controller.isOpened);
-            });
-            it('should return true when not set', function() {
-                this.controller.isOpened = undefined;
-                this.controller.toggleOpen();
-                expect(this.controller.isOpened).toBe(true);
-            });
-            it('should return true if it is false', function() {
-                this.controller.isOpened = false;
-                this.controller.toggleOpen();
-                expect(this.controller.isOpened).toBe(true);
-            });
-            it('should return false if it is true', function() {
-                this.controller.isOpened = true;
-                this.controller.toggleOpen();
-                expect(this.controller.isOpened).toBe(false);
-            });
-            it('should be called when double clicked', function() {
-                spyOn(this.controller, 'toggleOpen');
-                var anchor = this.element.querySelectorAll('a')[0];
-                angular.element(anchor).triggerHandler('dblclick');
-                expect(this.controller.toggleOpen).toHaveBeenCalled();
             });
         });
         describe('isSaved', function() {
