@@ -91,14 +91,12 @@ describe('Everything Tree directive', function() {
                 hasChildren: true,
                 indent: 0,
                 path: ['recordId'],
-                entity: undefined,
                 isOpened: true
             }, {
                 '@id': 'property1',
                 hasChildren: false,
                 indent: 1,
                 path: ['recordId', 'class1'],
-                entity: undefined,
                 isOpened: true
             }, {
                 title: 'Properties',
@@ -110,7 +108,6 @@ describe('Everything Tree directive', function() {
                 hasChildren: false,
                 indent: 1,
                 get: ontologyStateSvc.getNoDomainsOpened,
-                entity: undefined,
                 isOpened: true
             }]);
         });
@@ -160,7 +157,8 @@ describe('Everything Tree directive', function() {
                     indent: 1,
                     '@id': 'iri',
                     hasChildren: false,
-                    path: ['recordId', 'otherIri', 'iri']
+                    path: ['recordId', 'otherIri', 'iri'],
+                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
                 };
                 this.filterNodeFolder = {
                     title: 'Properties',
@@ -169,11 +167,6 @@ describe('Everything Tree directive', function() {
                 };
                 this.controller.hierarchy = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
                 this.controller.filterText = 'ti';
-                this.filterEntity = {
-                    '@id': 'urn:id',
-                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
-                };
-                ontologyStateSvc.getEntityByRecordId.and.returnValue(this.filterEntity);
                 ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
             });
             describe('has filter text', function() {
@@ -184,10 +177,7 @@ describe('Everything Tree directive', function() {
                     });
                     describe('that do not have a matching text value', function () {
                         beforeEach(function () {
-                            var noMatchEntity = {
-                                '@id': 'urn:title',
-                            };
-                            ontologyStateSvc.getEntityByRecordId.and.returnValue(noMatchEntity);
+                            delete this.filterNode[prefixes.dcterms + 'title'];
                             utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
                         describe('and does not have a matching entity local name', function () {

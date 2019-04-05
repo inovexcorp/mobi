@@ -103,23 +103,21 @@
                         delete node.parentNoMatch;
                         delete node.displayNode;
                         delete node.isOpened;
-                        delete node.entity;
                         if (node.title) {
                             if (dvm.filterText) {
                                 node.set(dvm.os.listItem.ontologyRecord.recordId, true);
                             }
                             node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
                         } else {
-                            node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node['@id']);
                             node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
                             if (dvm.filterText) {
-                                var searchValues = _.pick(node.entity, dvm.om.entityNameProps);
+                                var searchValues = _.pick(node, dvm.om.entityNameProps);
                                 var match = false;
                                 _.some(Object.keys(searchValues), key => _.some(searchValues[key], value => {
                                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                         match = true;
                                 }));
-                                if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                                if (util.getBeautifulIRI(node['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
                                     match = true;
                                 }
                                 if (match) {

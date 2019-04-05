@@ -75,7 +75,7 @@
             update();
         }
         dvm.$onChanges = function(changesObj) {
-            if (!changesObj.datatypeProps.isFirstChange() && !changesObj.objectProps.isFirstChange() && !changesObj.annotationProps.isFirstChange()) {
+            if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
                 dvm.flatPropertyTree = constructFlatPropertyTree();
                 update();
             }
@@ -104,13 +104,13 @@
             delete node.displayNode;
             delete node.isOpened;
             delete node.entity;
-            node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
             if (node.title) {
                 if (dvm.filterText) {
                     node.parentNoMatch = true;
                 }
                 node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
             } else {
+                node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
                 node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
                 if (dvm.filterText) {
                     var searchValues = _.pick(node.entity, om.entityNameProps);
