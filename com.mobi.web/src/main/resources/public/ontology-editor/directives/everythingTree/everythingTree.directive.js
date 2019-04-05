@@ -130,6 +130,7 @@
                                         dvm.os.setOpened(path, true);
 
                                         var parentNode = _.find(dvm.hierarchy, {'@id': iri});
+                                        parentNode.isOpened = true;
                                         parentNode.displayNode = true;
                                     }
                                     node.underline = true;

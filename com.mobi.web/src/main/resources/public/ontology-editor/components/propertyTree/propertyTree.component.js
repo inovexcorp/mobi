@@ -66,41 +66,60 @@
         dvm.ou = ontologyUtilsManagerService;
         dvm.searchText = '';
         dvm.filterText = '';
+        dvm.flatPropertyTree = [];
+        dvm.filteredHierarchy = [];
+        dvm.preFilteredHierarchy = [];
 
         dvm.$onInit = function() {
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
         }
-        dvm.$onChanges = function() {
-            dvm.flatPropertyTree = constructFlatPropertyTree();
-            update();
+        dvm.$onChanges = function(changesObj) {
+            if (!changesObj.datatypeProps.isFirstChange() && !changesObj.objectProps.isFirstChange() && !changesObj.annotationProps.isFirstChange()) {
+                dvm.flatPropertyTree = constructFlatPropertyTree();
+                update();
+            }
         }
         dvm.$onDestroy = function() {
             if (dvm.os.listItem.editorTabStates) {
                 dvm.os.listItem.editorTabStates.properties.index = 0;
             }
         }
-        dvm.onKeyup = function () {
+        dvm.onKeyup = function() {
             dvm.filterText = dvm.searchText;
             update();
+        }
+        dvm.toggleOpen = function(node) {
+            node.isOpened = !node.isOpened;
+            if (!node.title) {
+                dvm.os.setOpened(_.join(node.path, '.'), node.isOpened);
+            } else {
+                node.set(dvm.os.listItem.ontologyRecord.recordId, node.isOpened);
+            }
+            dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
         }
         dvm.searchFilter = function (node) {
             delete node.underline;
             delete node.parentNoMatch;
             delete node.displayNode;
-            if (dvm.filterText) {
-                if (node['title']) {
+            delete node.isOpened;
+            delete node.entity;
+            node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
+            if (node.title) {
+                if (dvm.filterText) {
                     node.parentNoMatch = true;
-                    return true;
-                } else {
-                    var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
-                    var searchValues = _.pick(entity, om.entityNameProps);
+                }
+                node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
+            } else {
+                node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
+                if (dvm.filterText) {
+                    var searchValues = _.pick(node.entity, om.entityNameProps);
                     var match = false;
-                    _.some(_.keys(searchValues), key => _.some(searchValues[key], value => {
+                    _.some(Object.keys(searchValues), key => _.some(searchValues[key], value => {
                         if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                             match = true;
                     }));
-                    if (util.getBeautifulIRI(entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                    if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
                         match = true;
                     }
                     if (match) {
@@ -111,26 +130,30 @@
                             dvm.os.setOpened(path, true);
 
                             var parentNode = _.find(dvm.flatPropertyTree, {'entityIRI': iri});
+                            parentNode.isOpened = true;
                             parentNode.displayNode = true;
                         }
                         node.underline = true;
 
-                        if (entity['@type'][0] === prefixes.owl + 'DatatypeProperty') {
+                        if (node.entity['@type'][0] === prefixes.owl + 'DatatypeProperty') {
                             var propertyFolder = _.find(dvm.flatPropertyTree, {title: 'Data Properties'});
                             propertyFolder.set(dvm.os.listItem.ontologyRecord.recordId, true);
                             propertyFolder.displayNode = true;
+                            propertyFolder.isOpened = true;
                             delete node.parentNoMatch;
                         }
-                        if (entity['@type'][0] === prefixes.owl + 'ObjectProperty') {
+                        if (node.entity['@type'][0] === prefixes.owl + 'ObjectProperty') {
                             var propertyFolder = _.find(dvm.flatPropertyTree, {title: 'Object Properties'});
                             propertyFolder.set(dvm.os.listItem.ontologyRecord.recordId, true);
                             propertyFolder.displayNode = true;
+                            propertyFolder.isOpened = true;
                             delete node.parentNoMatch;
                         }
-                        if (entity['@type'][0] === prefixes.owl + 'AnnotationProperty') {
+                        if (node.entity['@type'][0] === prefixes.owl + 'AnnotationProperty') {
                             var propertyFolder = _.find(dvm.flatPropertyTree, {title: 'Annotation Properties'});
                             propertyFolder.set(dvm.os.listItem.ontologyRecord.recordId, true);
                             propertyFolder.displayNode = true;
+                            propertyFolder.isOpened = true;
                             delete node.parentNoMatch;
                         }
                     }
@@ -140,9 +163,8 @@
                     }
                     return match;
                 }
-            } else {
-                return true;
             }
+            return true;
         }
         dvm.isShown = function (node) {
             var displayNode = !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
@@ -158,7 +180,8 @@
 
         function update() {
             dvm.updateSearch({value: dvm.filterText});
-            dvm.filteredHierarchy = _.filter(dvm.flatPropertyTree, dvm.searchFilter);
+            dvm.preFilteredHierarchy = _.filter(dvm.flatPropertyTree, dvm.searchFilter);
+            dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
         }
         function addGetToArrayItems(array, get) {
             return _.map(array, item => _.merge(item, {get}));

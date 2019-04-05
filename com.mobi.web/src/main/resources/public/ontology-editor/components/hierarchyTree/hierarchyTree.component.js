@@ -64,7 +64,7 @@
         dvm.searchText = '';
         dvm.filterText = '';
         dvm.filteredHierarchy = [];
-        var filteredHierarchy = [];
+        dvm.preFilteredHierarchy = [];
 
         dvm.$onInit = function() {
             update();
@@ -86,7 +86,7 @@
         dvm.toggleOpen = function(node) {
             node.isOpened = !node.isOpened;
             dvm.os.setOpened(_.join(node.path, '.'), node.isOpened);
-            dvm.filteredHierarchy = _.filter(filteredHierarchy, dvm.isShown);
+            dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
         }
         dvm.searchFilter = function(node) {
             delete node.underline;
@@ -114,6 +114,7 @@
                         dvm.os.setOpened(path, true);
 
                         var parentNode = _.find(dvm.hierarchy, {'entityIRI': iri});
+                        parentNode.isOpened = true;
                         parentNode.displayNode = true;
                     }
                     node.underline = true;
@@ -141,8 +142,8 @@
 
         function update() {
             dvm.updateSearch({value: dvm.filterText});
-            filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
-            dvm.filteredHierarchy = _.filter(filteredHierarchy, dvm.isShown);
+            dvm.preFilteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+            dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
         }
     }
 
