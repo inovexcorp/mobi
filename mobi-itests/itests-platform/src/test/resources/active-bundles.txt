@@ -7,7 +7,7 @@ com.mobi.etl.rdf
 com.mobi.etl.rest
 com.mobi.etl.workflows
 com.mobi.ontology.api
-com.mobi.ontology.core.impl.owlapi
+com.mobi.ontology.impl.owlapi
 com.mobi.ontology.rest
 com.mobi.ontology.utils
 com.mobi.persistence.api
