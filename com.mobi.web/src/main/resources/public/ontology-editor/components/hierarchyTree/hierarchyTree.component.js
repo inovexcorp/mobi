@@ -63,35 +63,47 @@
         dvm.ou = ontologyUtilsManagerService;
         dvm.searchText = '';
         dvm.filterText = '';
+        dvm.filteredHierarchy = [];
+        var filteredHierarchy = [];
 
         dvm.$onInit = function() {
             update();
         }
-        dvm.$onChanges = function() {
-            update();
+        dvm.$onChanges = function(changesObj) {
+            if (!changesObj.hierarchy.isFirstChange()) {
+                update();
+            }
         }
         dvm.$onDestroy = function() {
             if (dvm.os.listItem.editorTabStates) {
                 dvm.resetIndex();
             }
         }
-        dvm.onKeyup = function () {
+        dvm.onKeyup = function() {
             dvm.filterText = dvm.searchText;
             update();
         }
-        dvm.searchFilter = function (node) {
+        dvm.toggleOpen = function(node) {
+            node.isOpened = !node.isOpened;
+            dvm.os.setOpened(_.join(node.path, '.'), node.isOpened);
+            dvm.filteredHierarchy = _.filter(filteredHierarchy, dvm.isShown);
+        }
+        dvm.searchFilter = function(node) {
             delete node.underline;
             delete node.parentNoMatch;
             delete node.displayNode;
+            delete node.entity;
+            delete node.isOpened;
+            node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
+            node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
             if (dvm.filterText) {
-                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
-                var searchValues = _.pick(entity, om.entityNameProps);
+                var searchValues = _.pick(node.entity, om.entityNameProps);
                 var match = false;
-                _.some(_.keys(searchValues), key => _.some(searchValues[key], value => {
+                _.some(Object.keys(searchValues), key => _.some(searchValues[key], value => {
                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                         match = true;
                 }));
-                if (util.getBeautifulIRI(entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
                     match = true;
                 }
                 if (match) {
@@ -129,7 +141,8 @@
 
         function update() {
             dvm.updateSearch({value: dvm.filterText});
-            dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+            filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+            dvm.filteredHierarchy = _.filter(filteredHierarchy, dvm.isShown);
         }
     }
 

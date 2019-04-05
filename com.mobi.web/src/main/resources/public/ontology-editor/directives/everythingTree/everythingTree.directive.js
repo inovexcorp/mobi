@@ -74,34 +74,52 @@
                     dvm.os = ontologyStateService;
                     dvm.searchText = '';
                     dvm.filterText = '';
+                    dvm.filteredHierarchy = [];
+                    dvm.preFilteredHierarchy = [];
 
                     dvm.$onInit = function() {
                         update();
                     }
-                    dvm.$onChanges = function() {
-                        update();
+                    dvm.$onChanges = function(changesObj) {
+                        if (!changesObj.hierarchy.isFirstChange()) {
+                            update();
+                        }
                     }
-                    dvm.onKeyup = function () {
+                    dvm.onKeyup = function() {
                         dvm.filterText = dvm.searchText;
                         update();
                     }
-                    dvm.searchFilter = function (node) {
+                    dvm.toggleOpen = function(node) {
+                        node.isOpened = !node.isOpened;
+                        if (!node.title) {
+                            dvm.os.setOpened(_.join(node.path, '.'), node.isOpened);
+                        } else {
+                            node.set(dvm.os.listItem.ontologyRecord.recordId, node.isOpened);
+                        }
+                        dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
+                    }
+                    dvm.searchFilter = function(node) {
                         delete node.underline;
                         delete node.parentNoMatch;
                         delete node.displayNode;
-                        if (dvm.filterText) {
-                            if (node['title']) {
+                        delete node.isOpened;
+                        delete node.entity;
+                        if (node.title) {
+                            if (dvm.filterText) {
                                 node.set(dvm.os.listItem.ontologyRecord.recordId, true);
-                                return true;
-                            } else {
-                                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node['@id']);
-                                var searchValues = _.pick(entity, dvm.om.entityNameProps);
+                            }
+                            node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
+                        } else {
+                            node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node['@id']);
+                            node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
+                            if (dvm.filterText) {
+                                var searchValues = _.pick(node.entity, dvm.om.entityNameProps);
                                 var match = false;
-                                _.some(_.keys(searchValues), key => _.some(searchValues[key], value => {
+                                _.some(Object.keys(searchValues), key => _.some(searchValues[key], value => {
                                     if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                                         match = true;
                                 }));
-                                if (util.getBeautifulIRI(entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                                if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
                                     match = true;
                                 }
                                 if (match) {
@@ -122,15 +140,14 @@
                                 }
                                 return match;
                             }
-                        } else {
-                            return true;
                         }
+                        return true;
                     }
                     dvm.isShown = function(node) {
                         var displayNode = !_.has(node, '@id') || (_.has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!_.has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
                         if (dvm.filterText && node['title']) {
-                            var position = _.findIndex(dvm.filteredHierarchy, 'title');
-                            if (position === dvm.filteredHierarchy.length - 1) {
+                            var position = _.findIndex(dvm.preFilteredHierarchy, 'title');
+                            if (position === dvm.preFilteredHierarchy.length - 1) {
                                 node.set(dvm.os.listItem.ontologyRecord.recordId, false);
                                 return false;
                             }
@@ -147,7 +164,8 @@
 
                     function update() {
                         dvm.updateSearch({value: dvm.filterText});
-                        dvm.filteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+                        dvm.preFilteredHierarchy = _.filter(dvm.hierarchy, dvm.searchFilter);
+                        dvm.filteredHierarchy = _.filter(dvm.preFilteredHierarchy, dvm.isShown);
                     }
                 }
             }

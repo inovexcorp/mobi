@@ -90,21 +90,28 @@ describe('Everything Tree directive', function() {
                 '@id': 'class1',
                 hasChildren: true,
                 indent: 0,
-                path: ['recordId']
+                path: ['recordId'],
+                entity: undefined,
+                isOpened: true
             }, {
                 '@id': 'property1',
                 hasChildren: false,
                 indent: 1,
-                path: ['recordId', 'class1']
+                path: ['recordId', 'class1'],
+                entity: undefined,
+                isOpened: true
             }, {
                 title: 'Properties',
                 get: jasmine.any(Function),
-                set: jasmine.any(Function)
+                set: jasmine.any(Function),
+                isOpened: true
             }, {
                 '@id': 'property1',
                 hasChildren: false,
                 indent: 1,
-                get: ontologyStateSvc.getNoDomainsOpened
+                get: ontologyStateSvc.getNoDomainsOpened,
+                entity: undefined,
+                isOpened: true
             }]);
         });
         it('updateSearch is one way bound', function() {
@@ -414,7 +421,7 @@ describe('Everything Tree directive', function() {
                     set: jasmine.createSpy('set')
                 };
                 this.controller.filterText = 'text';
-                this.controller.filteredHierarchy = [node];
+                this.controller.preFilteredHierarchy = [node];
                 expect(this.controller.isShown(node)).toBe(false);
             });
         });
