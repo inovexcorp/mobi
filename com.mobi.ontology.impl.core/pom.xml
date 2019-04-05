@@ -29,7 +29,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.3-SNAPSHOT</version>
+        <version>1.16.4-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -134,7 +134,7 @@
                         <Bundle-Name>Mobi Ontology Impl Core</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.ontology.core.api; provide:=true
+                            com.mobi.ontology.core.api.record;provide:=true
                         </Export-Package>
                         <Import-Package>
                             !javax.annotation,
