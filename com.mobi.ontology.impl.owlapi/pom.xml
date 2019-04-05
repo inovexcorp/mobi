@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.ontology.impl.core
+  com.mobi.ontology.impl.owlapi
   $Id:$
   $HeadURL:$
   %%
@@ -34,7 +34,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>ontology.impl.core</artifactId>
+    <artifactId>ontology.impl.owlapi</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
@@ -51,6 +51,21 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>persistence.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>catalog.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>ontology.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -60,13 +75,45 @@
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
 
+        <!-- Openrdf Sesame dependencies -->
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-runtime-osgi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <version>4.5.1</version>
+        </dependency>
+
+        <!-- Owlapi dependencies -->
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-distribution</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.rdf4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+
         <!--  Test dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
+		    <scope>test</scope>
+	    </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>repository.impl.core</artifactId>
@@ -131,10 +178,16 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Ontology Impl Core</Bundle-Name>
+                        <Bundle-Name>Mobi Ontology Impl OWLAPI</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.ontology.core.api; provide:=true
+                            com.mobi.ontology.core.api; provide:=true,
+                            com.mobi.ontology.core.api.axiom; provide:=true,
+                            com.mobi.ontology.core.api.change; provide:=true,
+                            com.mobi.ontology.core.api.classexpression; provide:=true,
+                            com.mobi.ontology.core.api.datarange; provide:=true,
+                            com.mobi.ontology.core.api.propertyexpression; provide:=true,
+                            com.mobi.ontology.core.api.types; provide:=true,
                         </Export-Package>
                         <Import-Package>
                             !javax.annotation,

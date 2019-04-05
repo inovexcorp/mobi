@@ -90,7 +90,7 @@ public class OntologyRestIT extends KarafTestSupport {
         String vocabulary = "test-vocabulary.ttl";
         Files.copy(getBundleEntry(thisBundleContext, "/" + vocabulary), Paths.get(vocabulary));
 
-        waitForService("(&(objectClass=com.mobi.ontology.core.impl.owlapi.record.SimpleOntologyRecordService))", 10000L);
+        waitForService("(&(objectClass=com.mobi.ontology.impl.core.record.SimpleOntologyRecordService))", 10000L);
         waitForService("(&(objectClass=com.mobi.ontology.rest.OntologyRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
