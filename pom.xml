@@ -50,7 +50,8 @@
         <module>com.mobi.etl.rdf</module>
         <module>com.mobi.etl.rest</module>
         <module>com.mobi.ontology.api</module>
-        <module>com.mobi.ontology.core.impl.owlapi</module>
+        <module>com.mobi.ontology.impl.core</module>
+        <module>com.mobi.ontology.impl.owlapi</module>
         <module>com.mobi.ontology.rest</module>
         <module>com.mobi.web</module>
         <module>com.mobi.api</module>

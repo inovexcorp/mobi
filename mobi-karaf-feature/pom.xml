@@ -84,7 +84,7 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.core.impl.owlapi</artifactId>
+            <artifactId>ontology.impl.owlapi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

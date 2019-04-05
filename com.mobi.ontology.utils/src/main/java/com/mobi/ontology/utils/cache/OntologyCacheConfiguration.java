@@ -2,11 +2,11 @@ package com.mobi.ontology.utils.cache;
 
 /*-
  * #%L
- * com.mobi.ontology.core.impl.owlapi
+ * com.mobi.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
