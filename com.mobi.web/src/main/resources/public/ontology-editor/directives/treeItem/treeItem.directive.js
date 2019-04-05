@@ -42,7 +42,8 @@
                     currentEntity: '<',
                     isOpened: '<',
                     path: '<',
-                    underline: '<'
+                    underline: '<',
+                    toggleOpen: '&'
                 },
                 templateUrl: 'ontology-editor/directives/treeItem/treeItem.directive.html',
                 controllerAs: 'dvm',
@@ -50,22 +51,21 @@
                     var dvm = this;
                     var treeDisplay = settingsManagerService.getTreeDisplay();
                     var os = ontologyStateService;
+                    dvm.treeDisplay = '';
 
                     dvm.$onInit = function() {
                         dvm.saved = dvm.isSaved();
+                        dvm.treeDisplay = dvm.getTreeDisplay();
                     }
                     dvm.$onChanges = function() {
                         dvm.saved = dvm.isSaved();
+                        dvm.treeDisplay = dvm.getTreeDisplay();
                     }
                     dvm.getTreeDisplay = function() {
                         if (treeDisplay === 'pretty') {
                             return os.getEntityNameByIndex(_.get(dvm.currentEntity, '@id'), os.listItem);
                         }
                         return _.get(dvm.currentEntity, 'mobi.anonymous', '');
-                    }
-                    dvm.toggleOpen = function() {
-                        dvm.isOpened = !dvm.isOpened;
-                        os.setOpened(_.join(dvm.path, '.'), dvm.isOpened);
                     }
                     dvm.isSaved = function() {
                         var ids = _.unionWith(_.map(os.listItem.inProgressCommit.additions, '@id'), _.map(os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);

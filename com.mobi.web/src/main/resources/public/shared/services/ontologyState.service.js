@@ -1823,10 +1823,10 @@
             if  (!entityIRI || !listItem) {
                 return;
             }
-            var ontology = _.get(listItem, 'ontology');
-            var ontologyId = _.get(listItem, 'ontologyId');
-            var importedOntologyListItems = _.get(listItem, 'importedOntologies', []);
-            var importedOntologyIds = _.get(listItem, 'importedOntologyIds');
+            var ontology = listItem.ontology;
+            var ontologyId = listItem.ontologyId;
+            var importedOntologyListItems = listItem.importedOntologies || [];
+            var importedOntologyIds = listItem.importedOntologyIds;
             var indices = getIndices(listItem);
             return getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds);
         }
