@@ -104,6 +104,7 @@
         <module>com.mobi.email.api</module>
         <module>com.mobi.email.impl</module>
         <module>com.mobi.utils.cli</module>
+        <module>com.mobi.ontology.impl.core</module>
     </modules>
 
     <properties>

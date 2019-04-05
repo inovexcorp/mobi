@@ -141,6 +141,7 @@
         <bundle start-level="80">mvn:com.mobi/vfs/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/etl.workflows/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/ontology.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.core.impl.owlapi/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/persistence.api/${project.version}</bundle>

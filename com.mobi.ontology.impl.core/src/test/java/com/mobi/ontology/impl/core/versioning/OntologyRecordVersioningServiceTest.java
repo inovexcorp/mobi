@@ -1,4 +1,4 @@
-package com.mobi.ontology.core.impl.owlapi.versioning;
+package com.mobi.ontology.impl.core.versioning;
 
 /*-
  * #%L
@@ -29,7 +29,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.anyListOf;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,6 +62,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -343,7 +343,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
             verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
@@ -367,7 +367,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", null, null);
             verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
             verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
@@ -391,7 +391,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -416,7 +416,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, commit);
             verify(catalogUtils, times(2)).getCommitChain(commit.getResource(), false, conn);
-            verify(catalogUtils).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -443,7 +443,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(any(com.mobi.rdf.api.Resource.class), eq(ontologyRecordFactory), eq(conn));
             verify(ontologyManager).ontologyIriExists(newIRI);
@@ -470,7 +470,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), any(RepositoryConnection.class));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class));
+            verify(catalogUtils, times(0)).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), any(RepositoryConnection.class));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
             verify(ontologyManager).ontologyIriExists(usedIRI);
@@ -494,7 +494,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
             verify(catalogUtils, times(0)).getCommitChain(any(com.mobi.rdf.api.Resource.class), eq(false), eq(conn));
-            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(Matchers.anyListOf(com.mobi.rdf.api.Resource.class), eq(conn));
             verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);

@@ -1,4 +1,4 @@
-package com.mobi.ontology.core.impl.owlapi.record;
+package com.mobi.ontology.impl.core.record;
 
 /*-
  * #%L
