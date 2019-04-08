@@ -84,15 +84,21 @@ describe('Hierarchy Tree component', function() {
             expect(angular.copy(scope.hierarchy)).toEqual([{
                 entityIRI: 'class1',
                 indent: 0,
-                path: []
+                path: [],
+                entity: undefined,
+                isOpened: false
             }, {
                 entityIRI: 'class2',
                 indent: 1,
-                path: []
+                path: [],
+                entity: undefined,
+                isOpened: false
             }, {
                 entityIRI: 'class3',
                 indent: 0,
-                path: []
+                path: [],
+                entity: undefined,
+                isOpened: false
             }]);
         });
         it('index should be one way bound', function() {
@@ -109,7 +115,7 @@ describe('Hierarchy Tree component', function() {
             expect(scope.resetIndex).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);
             scope.$apply();
@@ -128,6 +134,15 @@ describe('Hierarchy Tree component', function() {
         });
     });
     describe('controller methods', function() {
+        it('toggleOpen should set the correct values', function() {
+            spyOn(this.controller, 'isShown').and.returnValue(false);
+            var node = {isOpened: false, path: ['a', 'b']};
+            this.controller.toggleOpen(node);
+            expect(node.isOpened).toEqual(true);
+            expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('a.b', true);
+            expect(this.controller.isShown).toHaveBeenCalled();
+            expect(this.controller.filteredHierarchy).toEqual([]);
+        });
         describe('searchFilter', function() {
             beforeEach(function() {
                 this.filterNode = {
