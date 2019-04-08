@@ -25,15 +25,18 @@ package com.mobi.cache.impl.repository.jcache;
 
 import static java.util.Objects.requireNonNull;
 
-import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.cache.api.repository.CacheFactory;
+import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryManager;
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -45,10 +48,10 @@ import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
 
-@Component
+//@Component
 public class RepositoryCacheManager implements CacheManager {
 
-    private Map<String, CacheFactory> cacheFactoryMap;
+    private Map<String, CacheFactory<?, ?>> cacheFactoryMap = new HashMap<>();
     private RepositoryManager repositoryManager;
     private Map<String, Cache<?, ?>> caches;
 
@@ -108,20 +111,32 @@ public class RepositoryCacheManager implements CacheManager {
         requireNotClosed();
         requireNonNull(configuration);
 
+        RepositoryConfiguration<K, V> repoConfig;
+        if (configuration instanceof RepositoryConfiguration<?, ?>) {
+            repoConfig = (RepositoryConfiguration<K, V>) configuration;
+            if (StringUtils.isEmpty(repoConfig.getRepoId())) {
+                throw new CacheException("Configuration must specify a repoId");
+            }
+        } else {
+            throw new CacheException("Configuration must be a RepositoryConfiguration");
+        }
+
         Cache<?, ?> cache = caches.compute(cacheName, (name, existing) -> {
             if ((existing != null) && !existing.isClosed()) {
                 throw new CacheException("Cache " + cacheName + " already exists");
             }
-            Optional<CacheFactory> cacheFactoryOpt = Optional.of(cacheFactoryMap.get(configuration.getValueType()));
-            CacheFactory<K, V> cacheFactory = cacheFactoryOpt.orElseThrow(() -> new CacheException());
-            return cacheFactory.createCache(configuration);
+            Repository repo = repositoryManager.getRepository(repoConfig.getRepoId()).orElseThrow(
+                    () -> new CacheException("Repository " + repoConfig.getRepoId() + " must exist for " + cacheName));
+            Optional<CacheFactory> cacheFactoryOpt = Optional.of(cacheFactoryMap.get(
+                    repoConfig.getValueType().getName()));
+            @SuppressWarnings("unchecked")
+            CacheFactory<K, V> cacheFactory = cacheFactoryOpt.orElseThrow(
+                    () -> new CacheException("CacheFactory does not exist for " + repoConfig.getValueType().getName()));
+            return cacheFactory.createCache(repoConfig ,repo);
         });
 
-        if (configuration instanceof CompleteConfiguration<?, ?>) {
-            CompleteConfiguration<K, V> castedConfig = (CompleteConfiguration) configuration;
-            enableManagement(cache.getName(), castedConfig.isManagementEnabled());
-            enableStatistics(cache.getName(), castedConfig.isStatisticsEnabled());
-        }
+        enableManagement(cache.getName(), repoConfig.isManagementEnabled());
+        enableStatistics(cache.getName(), repoConfig.isStatisticsEnabled());
 
         @SuppressWarnings("unchecked")
         Cache<K, V> castedCache = (Cache<K, V>) cache;
@@ -212,8 +227,7 @@ public class RepositoryCacheManager implements CacheManager {
         if (clazz.isAssignableFrom(getClass())) {
             return clazz.cast(this);
         }
-        throw new IllegalArgumentException("Unwapping to " + clazz
-                + " is not a supported by this implementation");
+        throw new IllegalArgumentException("Unwrapping to " + clazz + " is not a supported by this implementation");
     }
 
     private void requireNotClosed() {

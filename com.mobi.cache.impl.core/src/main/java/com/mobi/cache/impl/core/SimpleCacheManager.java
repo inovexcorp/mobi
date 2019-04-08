@@ -28,10 +28,11 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.cache.api.CacheManager;
+import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.config.CacheConfiguration;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import javax.cache.Cache;
@@ -41,30 +42,39 @@ import javax.cache.spi.CachingProvider;
 @Component(immediate = true)
 public class SimpleCacheManager implements CacheManager {
 
-    private Map<String, CachingProvider> cachingProviderMap = new HashMap<>();
+    private List<CachingProvider> cachingProviders = new ArrayList<>();
     private CachingProvider provider;
+    private CachingProvider repoProvider;
     private javax.cache.CacheManager cacheManager;
+    private javax.cache.CacheManager repoCacheManager;
     private final Semaphore mutex = new Semaphore(1);
 
     @Reference(type = '*', dynamic = true, optional = true)
     private <K, V> void addCache(CacheConfiguration<K, V> configuration) throws InterruptedException {
         checkCacheManager();
-        cacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
+        if (configuration instanceof RepositoryConfiguration && repoCacheManager != null) {
+            repoCacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
+        } else {
+            cacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
+        }
     }
 
     private <K, V> void removeCache(CacheConfiguration<K, V> configuration) {
-        if (cacheManager != null && !cacheManager.isClosed()) {
+        if (configuration instanceof RepositoryConfiguration && repoCacheManager != null
+                && !repoCacheManager.isClosed()) {
+            repoCacheManager.destroyCache(configuration.getCacheId());
+        } else if (cacheManager != null && !cacheManager.isClosed()) {
             cacheManager.destroyCache(configuration.getCacheId());
         }
     }
 
     @Reference(type = '*', dynamic = true, optional = true)
     public void addCachingProvider(CachingProvider cachingProvider)  {
-        cachingProviderMap.put(cachingProvider.getDefaultURI().getPath(), cachingProvider);
+        cachingProviders.add(cachingProvider);
     }
 
     public void removeCachingProvider(CachingProvider cachingProvider) {
-        cachingProviderMap.remove(cachingProvider.getDefaultURI().getPath());
+        cachingProviders.remove(cachingProvider);
     }
 
     @Activate
@@ -84,14 +94,24 @@ public class SimpleCacheManager implements CacheManager {
 
     @Override
     public <K, V> Optional<Cache<K, V>> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+        Optional<Cache<K, V>> repoCacheOpt = Optional.ofNullable(repoCacheManager.getCache(cacheName, keyType,
+                valueType));
+        if (repoCacheOpt.isPresent()) {
+            return repoCacheOpt;
+        }
         return Optional.ofNullable(cacheManager.getCache(cacheName, keyType, valueType));
     }
 
     private void checkCacheManager() throws InterruptedException {
         mutex.acquire();
         if (cacheManager == null) {
-            provider = Caching.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider", this.getClass().getClassLoader());
+            provider = Caching.getCachingProvider("org.ehcache.jsr107.EhcacheCachingProvider",
+                    this.getClass().getClassLoader());
             cacheManager = provider.getCacheManager();
+        }
+        if (repoCacheManager == null && cachingProviders.size() > 0) {
+            repoProvider = cachingProviders.get(0);
+            repoCacheManager = repoProvider.getCacheManager();
         }
         mutex.release();
     }

@@ -25,8 +25,8 @@ package com.mobi.cache.impl.repository.jcache;
 
 import static javax.cache.configuration.OptionalFeature.STORE_BY_REFERENCE;
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,15 +41,16 @@ import javax.cache.spi.CachingProvider;
 @Component
 public class RepositoryCachingProvider implements CachingProvider {
 
-    private final Map<ClassLoader, Map<URI, CacheManager>> cacheManagers;
+    private Map<ClassLoader, Map<URI, CacheManager>> cacheManagers;
     private RepositoryCacheManager repositoryCacheManager;
 
-    @Reference
-    void setRepositoryCacheManager(RepositoryCacheManager repositoryCacheManager) {
-        repositoryCacheManager = this.repositoryCacheManager;
-    }
+//    @Reference
+//    void setRepositoryCacheManager(RepositoryCacheManager repositoryCacheManager) {
+//        this.repositoryCacheManager = repositoryCacheManager;
+//    }
 
-    public RepositoryCachingProvider() {
+    @Activate
+    public void activate() {
         this.cacheManagers = new WeakHashMap<>(1);
     }
 

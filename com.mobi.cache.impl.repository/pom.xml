@@ -49,6 +49,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
@@ -68,10 +72,6 @@
                         <Export-Package>
                             com.mobi.cache.api; provide:=true
                         </Export-Package>
-                        <Import-Package>
-                            org.ehcache.jsr107,
-                            *
-                        </Import-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

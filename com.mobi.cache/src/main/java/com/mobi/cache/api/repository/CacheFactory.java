@@ -23,8 +23,10 @@ package com.mobi.cache.api.repository;
  * #L%
  */
 
+import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
+import com.mobi.repository.api.Repository;
+
 import javax.cache.Cache;
-import javax.cache.configuration.Configuration;
 
 public interface CacheFactory<K, V> {
 
@@ -36,8 +38,9 @@ public interface CacheFactory<K, V> {
 
     /**
      * Create a Cache using the provided configuration
-     * @param configuration
+     * @param configuration the {@link RepositoryConfiguration} to create the cache from
+     * @param repository the {@link Repository} backing the cache
      * @return A JSR-107 Cache object
      */
-    Cache<K, V> createCache(Configuration<K, V> configuration);
+    Cache<K, V> createCache(RepositoryConfiguration<K, V> configuration, Repository repository);
 }

@@ -162,6 +162,7 @@
         <bundle start-level="80">mvn:com.mobi/sparql.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/cache.impl.core/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.mobi/cache.impl.repository/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/prov.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/prov.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/document.translator.api/${project.version}</bundle>
