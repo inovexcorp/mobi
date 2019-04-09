@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Individual Overlay directive', function() {
+describe('Create Individual Overlay component', function() {
     var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('createIndividualOverlay');
+        module('ontology-editor');
+        mockComponent('staticIri', 'staticIri');
+        mockComponent('ontologyClassSelect', 'ontologyClassSelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();

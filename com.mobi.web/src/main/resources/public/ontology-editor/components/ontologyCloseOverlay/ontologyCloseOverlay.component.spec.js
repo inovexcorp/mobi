@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Close Overlay directive', function() {
+describe('Ontology Close Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyCloseOverlay');
+        module('ontology-editor');
         mockOntologyState();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_) {
@@ -113,7 +113,7 @@ describe('Ontology Close Overlay directive', function() {
             });
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
-            this.controller.close();
+            this.controller.closeModal();
             expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
             expect(scope.close).toHaveBeenCalled();
         });

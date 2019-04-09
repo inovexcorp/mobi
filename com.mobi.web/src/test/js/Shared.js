@@ -1027,11 +1027,10 @@ function mockUtil() {
             this.removePropertyId = jasmine.createSpy('removePropertyId');
             this.replacePropertyId = jasmine.createSpy('replacePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
-            this.removeDctermsValue = jasmine.createSpy('getDctermsValue');
+            this.removeDctermsValue = jasmine.createSpy('removeDctermsValue');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.updateDctermsValue = jasmine.createSpy('updateDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');
-            this.getDctermsValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.getDctermsId = jasmine.createSpy('getDctermsId').and.returnValue('');
             this.parseLinks = jasmine.createSpy('parseLinks').and.returnValue({});
             this.createErrorToast = jasmine.createSpy('createErrorToast');

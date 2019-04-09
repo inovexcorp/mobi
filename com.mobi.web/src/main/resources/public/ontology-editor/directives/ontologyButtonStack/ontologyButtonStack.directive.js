@@ -49,7 +49,7 @@
          * {@link uploadChangesOverlay.directive:uploadChangesOverlay uploading changes},
          * {@link ontology-editor.component:createBranchOverlay creating branches},
          * {@link ontology-editor.component:commitOverlay commiting}, and
-         * {@link createEntityModal.directive:createEntityModal creating entities}. The directive is replaced by the
+         * {@link ontology-editor.component:createEntityModal creating entities}. The directive is replaced by the
          * contents of its template.
          */
         .directive('ontologyButtonStack', ontologyButtonStack);

@@ -48,7 +48,7 @@
          * {@link shared.service:ontologyStateService opened ontologies}. The currently selected
          * {@link shared.service:ontologyStateService listItem} will have a
          * {@link ontologyBranchSelect.directive:ontologyBranchSelect} displayed underneath and a link to
-         * {@link ontologyCloseOverlay.directive:ontologyCloseOverlay close the ontology}. The directive is
+         * {@link ontology-editor.component:ontologyCloseOverlay close the ontology}. The directive is
          * replaced by the contents of its template.
          */
         .directive('ontologySidebar', ontologySidebar);

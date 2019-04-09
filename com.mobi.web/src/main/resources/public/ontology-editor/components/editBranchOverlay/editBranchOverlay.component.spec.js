@@ -20,30 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Edit Branch Overlay directive', function() {
+describe('Edit Branch Overlay component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, prefixes, utilSvc;
 
     beforeEach(function() {
         module('templates');
-        module('editBranchOverlay');
+        module('ontology-editor');
         mockCatalogManager();
         mockOntologyState();
         mockPrefixes();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_, _prefixes_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyStateService_, _prefixes_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            $q = _$q_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
         });
 
         scope.resolve = {
             branch: {'@id': 'id', [prefixes.dcterms + 'description']: 'description'}
-        }
+        };
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
         this.element = $compile(angular.element('<edit-branch-overlay resolve="resolve" close="close()" dismiss="dismiss()"></edit-branch-overlay>'))(scope);

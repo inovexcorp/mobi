@@ -40,7 +40,7 @@
      * branch which will open a {@link shared.component:confirmModal}. Each tag in the `ui-select` has a
      * button for deleting the tag which will open a {@link shared.component:confirmModal}. The component also
      * houses the method for opening a modal for
-     * {@link editBranchOverlay.directive:editBranchOverlay editing a branch}.
+     * {@link ontology-editor.component:editBranchOverlay editing a branch}.
      *
      * @param {Object} listItem An item from the `list` in ontologyStateService
      * @param {Object} state An item from the `states` in stateManagerService

@@ -25,7 +25,8 @@ describe('New Ontology Overlay directive', function() {
 
     beforeEach(function() {
         module('templates');
-        module('newOntologyOverlay');
+        module('ontology-editor');
+        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
         mockUtil();
         mockOntologyState();
         mockPrefixes();

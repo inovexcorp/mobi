@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Concept Scheme Overlay directive', function() {
+describe('Create Concept Scheme Overlay component', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('createConceptSchemeOverlay');
+        module('ontology-editor');
+        mockComponent('staticIri', 'staticIri');
+        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
         injectRegexConstant();
         injectCamelCaseFilter();
         injectHighlightFilter();

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Entity Modal directive', function() {
+describe('Create Entity Modal component', function() {
     var $compile, scope, ontologyStateSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('createEntityModal');
+        module('ontology-editor');
         mockOntologyState();
         mockModal();
 
