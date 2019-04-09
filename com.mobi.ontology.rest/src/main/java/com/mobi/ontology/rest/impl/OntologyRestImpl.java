@@ -1225,13 +1225,12 @@ public class OntologyRestImpl implements OntologyRest {
 
             if (optionalOntology.isPresent() && applyInProgressCommit) {
                 User user = getActiveUser(context, engineManager);
-                Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(
+                Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
                         configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user);
 
-                if (optional.isPresent()) {
-                    Model ontologyModel = catalogManager.applyInProgressCommit(optional.get().getResource(),
-                            optionalOntology.get().asModel(modelFactory));
-                    optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
+                if (inProgressCommitOpt.isPresent()) {
+                    optionalOntology = Optional.of(ontologyManager.applyChanges(optionalOntology.get(),
+                            inProgressCommitOpt.get()));
                 }
             }
         } catch (IllegalArgumentException ex) {

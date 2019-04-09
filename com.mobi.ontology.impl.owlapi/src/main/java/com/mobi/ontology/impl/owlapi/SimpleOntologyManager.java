@@ -31,8 +31,10 @@ import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
@@ -48,6 +50,7 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -72,6 +75,7 @@ import javax.cache.Cache;
 public class SimpleOntologyManager implements OntologyManager {
 
     private ValueFactory valueFactory;
+    private ModelFactory modelFactory;
     private SesameTransformer sesameTransformer;
     private OntologyRecordFactory ontologyRecordFactory;
     private CatalogConfigProvider configProvider;
@@ -109,6 +113,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
         this.valueFactory = valueFactory;
+    }
+
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     @Reference
@@ -183,6 +192,20 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Ontology createOntology(Model model) {
         return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool);
+    }
+
+    @Override
+    public Ontology applyChanges(Ontology ontology, Difference difference) {
+        Model changedOntologyModel = utilsService.applyDifference(ontology.asModel(modelFactory), difference);
+        return createOntology(changedOntologyModel);
+    }
+
+    @Override
+    public Ontology applyChanges(Ontology ontology, InProgressCommit inProgressCommit) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Difference difference = utilsService.getCommitDifference(inProgressCommit.getResource(), conn);
+            return applyChanges(ontology, difference);
+        }
     }
 
     @Override
