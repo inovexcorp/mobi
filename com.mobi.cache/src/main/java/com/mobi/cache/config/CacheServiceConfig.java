@@ -39,6 +39,13 @@ public interface CacheServiceConfig {
     String id();
 
     /**
+     * The Repository ID.
+     *
+     * @return The String the Repository ID.
+     */
+    String repoId();
+
+    /**
      * The number of entries to track in the cache. NOTE: This is an optional property.
      *
      * @return The String representing the number of entries to track in the cache.

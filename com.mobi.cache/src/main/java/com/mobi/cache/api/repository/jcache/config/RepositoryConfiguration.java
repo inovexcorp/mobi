@@ -23,6 +23,7 @@ package com.mobi.cache.api.repository.jcache.config;
  * #L%
  */
 
+import java.util.Objects;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
 import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.Factory;
@@ -35,6 +36,11 @@ public class RepositoryConfiguration<K, V> implements CompleteConfiguration<K, V
 
     private final MutableConfiguration<K, V> delegate;
     private String repoId;
+
+    public RepositoryConfiguration(String repoId) {
+        delegate = new MutableConfiguration<>();
+        this.repoId = repoId;
+    }
 
     public RepositoryConfiguration(CompleteConfiguration<K, V> configuration) {
         delegate = new MutableConfiguration<>(configuration);
@@ -105,5 +111,22 @@ public class RepositoryConfiguration<K, V> implements CompleteConfiguration<K, V
 
     public void setRepoId(String repoId) {
         this.repoId = repoId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        } else if (!(o instanceof RepositoryConfiguration<?, ?>)) {
+            return false;
+        }
+        RepositoryConfiguration<?, ?> config = (RepositoryConfiguration<?, ?>) o;
+        return Objects.equals(repoId, config.repoId)
+                && delegate.equals(config.delegate);
+    }
+
+    @Override
+    public int hashCode() {
+        return delegate.hashCode();
     }
 }

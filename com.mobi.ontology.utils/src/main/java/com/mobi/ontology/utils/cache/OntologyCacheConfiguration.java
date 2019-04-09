@@ -28,12 +28,14 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.metatype.Configurable;
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.jsr107.Eh107Configuration;
+import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.config.CacheConfiguration;
 import com.mobi.cache.config.CacheServiceConfig;
 import com.mobi.ontology.core.api.Ontology;
+import org.apache.commons.lang3.StringUtils;
+import org.ehcache.config.builders.CacheConfigurationBuilder;
+import org.ehcache.config.builders.ResourcePoolsBuilder;
+import org.ehcache.jsr107.Eh107Configuration;
 
 import java.util.Map;
 import javax.cache.configuration.Configuration;
@@ -45,6 +47,7 @@ import javax.cache.configuration.Configuration;
 public class OntologyCacheConfiguration implements CacheConfiguration {
 
     private String cacheId;
+    private String repoId;
     private int numEntries;
 
     @Activate
@@ -57,6 +60,10 @@ public class OntologyCacheConfiguration implements CacheConfiguration {
             this.numEntries = config.numEntries();
         } else {
             this.numEntries = 10;
+        }
+
+        if (props.containsKey("repoId")) {
+            this.repoId = config.repoId();
         }
     }
 
@@ -72,8 +79,12 @@ public class OntologyCacheConfiguration implements CacheConfiguration {
 
     @Override
     public Configuration getCacheConfiguration() {
-        return Eh107Configuration.fromEhcacheCacheConfiguration(CacheConfigurationBuilder
-                .newCacheConfigurationBuilder(String.class, Ontology.class, ResourcePoolsBuilder.heap(numEntries))
-                .build());
+        if (!StringUtils.isEmpty(repoId)) {
+            return new RepositoryConfiguration(repoId);
+        } else {
+            return Eh107Configuration.fromEhcacheCacheConfiguration(CacheConfigurationBuilder
+                    .newCacheConfigurationBuilder(String.class, Ontology.class, ResourcePoolsBuilder.heap(numEntries))
+                    .build());
+        }
     }
 }
