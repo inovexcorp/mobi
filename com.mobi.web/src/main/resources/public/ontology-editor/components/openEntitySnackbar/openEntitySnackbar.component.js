@@ -67,8 +67,10 @@
             }
         }
         dvm.$onDestroy = function() {
-            dvm.os.listItem.goTo.active = false;
-            dvm.os.listItem.goTo.entityIRI = '';
+            if (dvm.os.listItem.goTo) {
+                dvm.os.listItem.goTo.active = false;
+                dvm.os.listItem.goTo.entityIRI = '';
+            }
         }
         dvm.openEntity = function() {
             dvm.os.goTo(dvm.iri);
