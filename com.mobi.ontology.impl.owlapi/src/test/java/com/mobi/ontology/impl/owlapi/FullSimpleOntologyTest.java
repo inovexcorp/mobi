@@ -31,14 +31,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.OClass;
-import com.mobi.ontology.core.api.DataProperty;
-import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -60,6 +61,7 @@ import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,6 +100,7 @@ public class FullSimpleOntologyTest {
     private Ontology ont1;
     private Ontology queryOntology;
     private Ontology queryVocabulary;
+    private Ontology onlyDeclared;
     private ForkJoinPool threadPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() / 2);
 
     @Mock
@@ -137,6 +140,7 @@ public class FullSimpleOntologyTest {
 
         when(transformer.mobiModel(any(Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
+        when(transformer.sesameResource(any(Resource.class))).thenAnswer(i -> Values.sesameResource(i.getArgumentAt(0, Resource.class)));
         when(transformer.mobiStatement(any(Statement.class))).thenAnswer(i -> Values.mobiStatement(i.getArgumentAt(0, Statement.class)));
 
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
@@ -174,6 +178,9 @@ public class FullSimpleOntologyTest {
 
         InputStream streamQueryVocabulary = this.getClass().getResourceAsStream("/test-vocabulary.ttl");
         queryVocabulary= new SimpleOntology(streamQueryVocabulary, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+
+        InputStream streamOnlyDeclared = this.getClass().getResourceAsStream("/only-declared.ttl");
+        onlyDeclared = new SimpleOntology(streamOnlyDeclared, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
         values.setOntologyManager(ontologyManager);
         values.setTransformer(transformer);
@@ -216,6 +223,27 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
+    public void withDctermsImport() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/skos-kgaa.ttl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        Set<String> expectedClasses = Stream.of("http://www.w3.org/2004/02/skos/core#ConceptScheme",
+                "http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#Collection",
+                "http://www.w3.org/2004/02/skos/core#OrderedCollection").collect(Collectors.toSet());
+
+        Set<Ontology> ontologies = ont.getImportsClosure();
+        assertEquals(2, ontologies.size());
+        Set<IRI> iris = ont.getImportedOntologyIRIs();
+        assertEquals(1, iris.size());
+        assertTrue(iris.contains(vf.createIRI("http://purl.org/dc/terms/")));
+        Set<OClass> classes = ont.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
     public void getAllClassesTest() throws Exception {
         // Setup:
         Set<String> expectedClasses = Stream.of("http://test.com/ontology1#TestClassA",
@@ -232,12 +260,22 @@ public class FullSimpleOntologyTest {
     @Test
     public void getAllClassesDeclaredTest() throws Exception {
         // Setup:
-        InputStream stream = this.getClass().getResourceAsStream("/only-declared.ttl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         Set<String> expectedClasses = Stream.of("http://mobi.com/ontology/only-declared#ClassA",
                 "http://mobi.com/ontology/only-declared#ClassB", "http://mobi.com/ontology/only-declared#ClassC").collect(Collectors.toSet());
 
-        Set<OClass> classes = ont.getAllClasses();
+        Set<OClass> classes = onlyDeclared.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
+
+    @Test
+    public void getAllClassesNoImportsTest() throws Exception {
+        // Setup:
+        Set<String> expectedClasses = Stream.of("http://mobi.com/ontology/test-local-imports-1#Class0", "http://mobi.com/ontology/test-local-imports-1#Class1").collect(Collectors.toSet());
+
+        Set<OClass> classes = ont1.getAllClasses();
         assertEquals(expectedClasses.size(), classes.size());
         classes.stream()
                 .map(oClass -> oClass.getIRI().stringValue())
@@ -259,11 +297,18 @@ public class FullSimpleOntologyTest {
     @Test
     public void getAllObjectPropertiesDeclaredTest() throws Exception {
         // Setup:
-        InputStream stream = this.getClass().getResourceAsStream("/only-declared.ttl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         Set<String> expectedProps = Collections.emptySet();
 
-        Set<ObjectProperty> properties = ont.getAllObjectProperties();
+        Set<ObjectProperty> properties = onlyDeclared.getAllObjectProperties();
+        assertEquals(expectedProps.size(), properties.size());
+    }
+
+    @Test
+    public void getAllObjectPropertiesNoImportsTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Collections.emptySet();
+
+        Set<ObjectProperty> properties = ont1.getAllObjectProperties();
         assertEquals(expectedProps.size(), properties.size());
     }
 
@@ -282,11 +327,39 @@ public class FullSimpleOntologyTest {
     @Test
     public void getAllDataPropertiesDeclaredTest() throws Exception {
         // Setup:
-        InputStream stream = this.getClass().getResourceAsStream("/only-declared.ttl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
         Set<String> expectedProps = Collections.emptySet();
 
-        Set<DataProperty> properties = ont.getAllDataProperties();
+        Set<DataProperty> properties = onlyDeclared.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+    }
+
+    @Test
+    public void getAllDataPropertiesNoImportsTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Collections.emptySet();
+
+        Set<DataProperty> properties = ont1.getAllDataProperties();
+        assertEquals(expectedProps.size(), properties.size());
+    }
+
+    @Test
+    public void getAllAnnotationPropertiesTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Stream.of("http://test.com/ontology1#testAnnotation").collect(Collectors.toSet());
+
+        Set<AnnotationProperty> properties = ontology.getAllAnnotationProperties();
+        assertEquals(expectedProps.size(), properties.size());
+        properties.stream()
+                .map(property -> property.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedProps.contains(iri)));
+    }
+
+    @Test
+    public void getAllAnnotationPropertiesNoImportsTest() throws Exception {
+        // Setup:
+        Set<String> expectedProps = Collections.emptySet();
+
+        Set<AnnotationProperty> properties = ont1.getAllAnnotationProperties();
         assertEquals(expectedProps.size(), properties.size());
     }
 
@@ -371,33 +444,99 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
+    public void getAllIndividualsTest() throws Exception {
+        // Setup:
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualD", "http://test.com/ontology1#IndividualA").collect(Collectors.toSet());
+
+        Set<Individual> individuals = ontology.getAllIndividuals();
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
+    public void getAllIndividualsDeclaredTest() throws Exception {
+        // Setup:
+        Set<String> expectedIndividuals = Stream.of("http://mobi.com/ontology/only-declared#ConceptA").collect(Collectors.toSet());
+
+        Set<Individual> individuals = onlyDeclared.getAllIndividuals();
+        assertEquals(expectedIndividuals.size(), individuals.size());
+    }
+
+    @Test
     public void getIndividualsOfTypeIRITest() throws Exception {
+        // Setup:
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualA").collect(Collectors.toSet());
+
         Set<Individual> individuals = ontology.getIndividualsOfType(classIRI);
-        assertEquals(1, individuals.size());
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
     }
 
     @Test
     public void getIndividualsOfSubClassTypeIRITest() throws Exception {
+        // Setup:
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualD").collect(Collectors.toSet());
+
         Set<Individual> individuals = ontology.getIndividualsOfType(classIRIC);
-        assertEquals(1, individuals.size());
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
+    public void getIndividualsOfTypeIRIDeclaredTest() {
+        // Setup:
+        Set<String> expectedIndividuals = Stream.of("http://mobi.com/ontology/only-declared#ConceptA").collect(Collectors.toSet());
+
+        Set<Individual> individuals = onlyDeclared.getIndividualsOfType(vf.createIRI(SKOS.CONCEPT.stringValue()));
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
     }
 
     @Test
     public void getIndividualsOfTypeTest() throws Exception {
         // Setup:
         OClass clazz = new SimpleClass(classIRI);
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualA").collect(Collectors.toSet());
 
         Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
-        assertEquals(1, individuals.size());
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
     }
 
     @Test
     public void getIndividualsOfSubClassTypeTest() throws Exception {
         // Setup:
         OClass clazz = new SimpleClass(classIRIC);
+        Set<String> expectedIndividuals = Stream.of("http://test.com/ontology1#IndividualD").collect(Collectors.toSet());
 
         Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
-        assertEquals(1, individuals.size());
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
+    }
+
+    @Test
+    public void getIndividualsOfTypeDeclaredTest() throws Exception {
+        // Setup:
+        OClass clazz = new SimpleClass(vf.createIRI(SKOS.CONCEPT.stringValue()));
+        Set<String> expectedIndividuals = Stream.of("http://mobi.com/ontology/only-declared#ConceptA").collect(Collectors.toSet());
+
+        Set<Individual> individuals = onlyDeclared.getIndividualsOfType(clazz);
+        assertEquals(expectedIndividuals.size(), individuals.size());
+        individuals.stream()
+                .map(individual -> individual.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedIndividuals.contains(iri)));
     }
 
     @Test
@@ -721,6 +860,21 @@ public class FullSimpleOntologyTest {
         Set<String> childKeys = childMap.keySet();
         assertEquals(expectedChildMap.keySet(), childKeys);
         childKeys.forEach(iri -> assertEquals(expectedChildMap.get(iri), childMap.get(iri)));
+
+        assertEquals(expectedSubjects, result.getModel().subjects());
+    }
+
+    @Test
+    public void testGetConceptRelationshipsDeclared() throws Exception {
+        // Setup:
+        Set<Resource> expectedSubjects = Stream.of(vf.createIRI("http://mobi.com/ontology/only-declared#ConceptA"))
+                .collect(Collectors.toSet());
+
+        Hierarchy result = onlyDeclared.getConceptRelationships(vf, mf);
+        Map<String, Set<String>> parentMap = result.getParentMap();
+        assertEquals(0, parentMap.size());
+        Map<String, Set<String>> childMap = result.getChildMap();
+        assertEquals(0, childMap.size());
 
         assertEquals(expectedSubjects, result.getModel().subjects());
     }
