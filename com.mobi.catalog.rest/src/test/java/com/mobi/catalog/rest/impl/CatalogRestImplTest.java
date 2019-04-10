@@ -2087,6 +2087,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", Branch.TYPE);
         fd.field("title", "Title");
+        fd.field("commitId", COMMIT_IRIS[0]);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
@@ -2112,6 +2113,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", Branch.TYPE);
         fd.field("title", "Title");
+        fd.field("commitId", COMMIT_IRIS[0]);
         doThrow(new MobiException()).when(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class));
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
@@ -3312,13 +3314,21 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         fd.field("type", ormFactory.getTypeIRI().stringValue());
         fd.field("title", "Title");
         fd.field("description", "Description");
+        // TODO: Check if this is the right way to get a commit iri? Need to add this line because catalogId is now a
+        //  formdataparam
+        fd.field("commitId", COMMIT_IRIS[0]);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         assertTrue(response.readEntity(String.class).contains(BRANCH_IRI));
         verify(catalogManager).createBranch(anyString(), anyString(), eq(ormFactory));
-        verify(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class));
+        ArgumentCaptor<Branch> branchArgumentCaptor = ArgumentCaptor.forClass(Branch.class);
+        verify(catalogManager).addBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), branchArgumentCaptor.capture());
+        Branch branch = branchArgumentCaptor.getValue();
+        Optional<Resource> optHead = branch.getHead_resource();
+        assertTrue(optHead.isPresent());
+        assertEquals(COMMIT_IRIS[0], optHead.get().stringValue());
     }
 
     private void isJsonld(String body) {
