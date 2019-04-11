@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Property Overlay directive', function() {
+describe('Ontology Property Overlay component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, util, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyPropertyOverlay');
+        module('ontology-editor');
         injectRegexConstant();
         injectHighlightFilter();
         injectTrustedFilter();

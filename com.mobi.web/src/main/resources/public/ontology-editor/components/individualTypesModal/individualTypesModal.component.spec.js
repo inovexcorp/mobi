@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Individual Types Modal directive', function() {
+describe('Individual Types Modal component', function() {
     var $compile, scope, ontologyStateSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('individualTypesModal');
+        module('ontology-editor');
+        mockComponent('ontologyClassSelect', 'ontologyClassSelect');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Download Overlay directive', function() {
+describe('Ontology Download Overlay component', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyDownloadOverlay');
+        module('ontology-editor');
+        mockComponent('serializationSelect', 'serializationSelect');
         injectRegexConstant();
         injectSplitIRIFilter();
         mockOntologyState();

@@ -46,7 +46,7 @@
          * the Ontology Editor against the current {@link shared.service:ontologyStateService selected ontology}. These
          * actions are uploading a file of changes, creating a branch, merging branches, and commiting changes. The
          * directive houses the methods for opening modals for
-         * {@link uploadChangesOverlay.directive:uploadChangesOverlay uploading changes},
+         * {@link ontology-editor.component:uploadChangesOverlay uploading changes},
          * {@link ontology-editor.component:createBranchOverlay creating branches},
          * {@link ontology-editor.component:commitOverlay commiting}, and
          * {@link ontology-editor.component:createEntityModal creating entities}. The directive is replaced by the

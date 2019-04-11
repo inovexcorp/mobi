@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Relationship Overlay directive', function() {
+describe('Relationship Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, util, ontoUtils, propertyManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('relationshipOverlay');
+        module('ontology-editor');
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyManager();
@@ -65,6 +65,24 @@ describe('Relationship Overlay directive', function() {
         this.element.remove();
     });
 
+    describe('initializes with the correct values for', function() {
+        it('conceptList', function() {
+            ontologyManagerSvc.getConceptIRIs.and.returnValue(['concept1', 'concept2']);
+            ontologyStateSvc.listItem.selected = {'@id': 'concept1'};
+            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
+            this.controller.$onInit();
+            expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith([], ontologyStateSvc.listItem.derivedConcepts);
+            expect(this.controller.conceptList).toEqual(['concept2']);
+        });
+        it('schemeList', function() {
+            ontologyManagerSvc.getConceptSchemeIRIs.and.returnValue(['scheme1', 'scheme2']);
+            ontologyStateSvc.listItem.selected = {'@id': 'scheme1'};
+            ontologyStateSvc.getOntologiesArray.and.returnValue([]);
+            this.controller.$onInit();
+            expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith([], ontologyStateSvc.listItem.derivedConceptSchemes);
+            expect(this.controller.schemeList).toEqual(['scheme2']);
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('RELATIONSHIP-OVERLAY');

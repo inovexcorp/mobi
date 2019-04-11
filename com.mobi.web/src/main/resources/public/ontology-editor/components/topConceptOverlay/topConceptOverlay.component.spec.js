@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Top Concept Overlay directive', function() {
+describe('Top Concept Overlay component', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('topConceptOverlay');
+        module('ontology-editor');
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyManager();

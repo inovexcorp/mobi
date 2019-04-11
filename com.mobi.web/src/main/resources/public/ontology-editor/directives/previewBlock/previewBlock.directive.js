@@ -46,7 +46,7 @@
          * `previewBlock` is a directive that creates a {@link shared.component:block} that displays a `codemirror` with
          * the current {@link shared.service:ontologyStateService selected ontology} in a specified RDF format.
          * The `block` contains a {@link serializationSelect.directive:serializationSelect}, button to refresh the
-         * preview, and a button for {@link ontologyDownloadOverlay.directive:ontologyDownloadOverlay downloading}
+         * preview, and a button for {@link ontology-editor.component:ontologyDownloadOverlay downloading}
          * the ontology. The directive is replaced by the contents of its template.
          */
         .directive('previewBlock', previewBlock);

@@ -48,7 +48,7 @@
          * annotations) on the current {@link shared.service:ontologyStateService selected ontology} using
          * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a property.
          * The directive houses the methods for opening the modal for
-         * {@link ontologyPropertyOverlay.directive:ontologyPropertyOverlay editing, adding}, and removing
+         * {@link ontology-editor.component:ontologyPropertyOverlay editing, adding}, and removing
          * ontology properties. The directive is replaced by the contents of its template.
          */
         .directive('ontologyPropertiesBlock', ontologyPropertiesBlock);

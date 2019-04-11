@@ -228,7 +228,7 @@
          * @description
          * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
          * {@link uploadOntologyTab.directive:uploadOntologyTab} and
-         * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay}.
+         * {@link ontology-editor.component:uploadOntologyOverlay}.
          */
         self.uploadFiles = [];
 

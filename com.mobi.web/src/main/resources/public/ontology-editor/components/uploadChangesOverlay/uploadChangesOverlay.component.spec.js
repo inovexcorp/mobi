@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Upload Changes Overlay directive', function() {
+describe('Upload Changes Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('uploadChangesOverlay');
+        module('ontology-editor');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_) {
