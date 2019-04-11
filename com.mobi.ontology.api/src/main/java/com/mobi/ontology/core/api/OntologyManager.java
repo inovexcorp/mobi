@@ -56,7 +56,7 @@ public interface OntologyManager {
     Ontology createOntology(Model model);
 
     /**
-     * Applies the Difference to the provided Ontology and returns a new Ontology object
+     * Applies the Difference to the provided Ontology and returns a new Ontology object.
      *
      * @param ontology the Ontology to apply the Difference to
      * @param difference the Difference with changes made to the ontology
@@ -65,7 +65,17 @@ public interface OntologyManager {
     Ontology applyChanges(Ontology ontology, Difference difference);
 
     /**
-     * Applies the changes in the InProgressCommit to the provided Ontology and returns a new Ontology object
+     * Applies the changes in the InProgressCommit associated with the Resource to the provided Ontology and returns a
+     * new Ontology object.
+     *
+     * @param ontology the Ontology to apply the Difference to
+     * @param inProgressCommitId the Resource for the InProgressCommit that has the changes made to the ontology
+     * @return An Ontology with the applied changes
+     */
+    Ontology applyChanges(Ontology ontology, Resource inProgressCommitId);
+
+    /**
+     * Applies the changes in the InProgressCommit to the provided Ontology and returns a new Ontology object.
      *
      * @param ontology the Ontology to apply the Difference to
      * @param inProgressCommit the InProgressCommit with changes made to the ontology

@@ -45,6 +45,7 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -93,6 +94,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Mock
     private SesameTransformer sesameTransformer;
+
+    @Mock
+    private OntologyId ontologyId;
 
     @Mock
     private Ontology ontology;
@@ -158,6 +162,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.removeRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(record);
         when(catalogManager.removeBranch(catalogIRI, recordIRI, branchIRI)).thenReturn(Collections.singletonList(commitIRI));
+        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(inProgressCommit));
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
@@ -168,6 +173,9 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         ontologyModel = Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE));
         when(ontology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
         when(ontology.getImportsClosure()).thenReturn(Collections.singleton(ontology));
+        when(ontology.getOntologyId()).thenReturn(ontologyId);
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
+        when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
         when(vocabulary.asModel(MODEL_FACTORY)).thenReturn(Values.mobiModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
@@ -239,6 +247,41 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.applyChanges(ontology, inProgressCommit);
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
         verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testApplyChangesInProgressCommitDifferenceNotFoundCommit() {
+        when(catalogUtilsService.getCommitDifference(any(Resource.class), any(RepositoryConnection.class))).thenThrow(new IllegalStateException());
+        manager.applyChanges(ontology, inProgressCommit);
+    }
+
+    @Test
+    public void testApplyChangesInProgressCommitId() {
+        manager.applyChanges(ontology, inProgressCommit.getResource());
+        verify(catalogManager).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommit.getResource()));
+        verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
+        verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+    }
+
+    @Test
+    public void testApplyChangesInProgressCommitIdOntologyIRINotSet() {
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.empty());
+        manager.applyChanges(ontology, inProgressCommit.getResource());
+        verify(catalogManager).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommit.getResource()));
+        verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
+        verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testApplyChangesInProgressCommitIdRecordNotFound() {
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(versionIRI));
+        manager.applyChanges(ontology, inProgressCommit.getResource());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testApplyChangesInProgressCommitIdInProgressCommitNotFound() {
+        when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.empty());
+        manager.applyChanges(ontology, inProgressCommit.getResource());
     }
 
     // Testing retrieveOntologyByIRI

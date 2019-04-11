@@ -201,11 +201,32 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public Ontology applyChanges(Ontology ontology, Resource inProgressCommitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Resource ontologyIRI = ontology.getOntologyId().getOntologyIRI()
+                    .orElse((IRI) ontology.getOntologyId().getOntologyIdentifier());
+            Resource recordId = getOntologyRecordResource(ontologyIRI).orElseThrow(
+                    () -> new IllegalStateException("OntologyIRI " + ontologyIRI
+                            + " is not associated with an OntologyRecord"));
+            InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(
+                    configProvider.getLocalCatalogIRI(), recordId, inProgressCommitId).orElseThrow(
+                            () -> new IllegalStateException("InProgressCommit for " + inProgressCommitId
+                                    + " could not be found"));
+            return applyInProgressCommitChanges(ontology, inProgressCommit, conn);
+        }
+    }
+
+    @Override
     public Ontology applyChanges(Ontology ontology, InProgressCommit inProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Difference difference = utilsService.getCommitDifference(inProgressCommit.getResource(), conn);
-            return applyChanges(ontology, difference);
+            return applyInProgressCommitChanges(ontology, inProgressCommit, conn);
         }
+    }
+
+    private Ontology applyInProgressCommitChanges(Ontology ontology, InProgressCommit inProgressCommit,
+                                                  RepositoryConnection conn) {
+        Difference difference = utilsService.getCommitDifference(inProgressCommit.getResource(), conn);
+        return applyChanges(ontology, difference);
     }
 
     @Override
