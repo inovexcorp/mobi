@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -170,6 +171,15 @@ public class FullSimpleOntologyTest {
         com.mobi.rdf.api.Model ont2Model = ont2.asModel(mf);
         when(ontologyManager.getOntologyModel(ont2RecordIRI)).thenReturn(ont2Model);
 
+        Resource dctermsIRI = vf.createIRI("http://purl.org/dc/terms/");
+        Resource dctermsRecordIRI = vf.createIRI("https://mobi.com/record/dcterms");
+        InputStream dctermsStream = this.getClass().getResourceAsStream("/dcterms.rdf");
+        Ontology dcterms = new SimpleOntology(dctermsStream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        when(ontologyManager.getOntologyRecordResource(dctermsIRI)).thenReturn(Optional.of(dctermsRecordIRI));
+        when(ontologyManager.retrieveOntology(dctermsRecordIRI)).thenReturn(Optional.of(dcterms));
+        com.mobi.rdf.api.Model dctermsModel = dcterms.asModel(mf);
+        when(ontologyManager.getOntologyModel(dctermsRecordIRI)).thenReturn(dctermsModel);
+
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
@@ -231,6 +241,7 @@ public class FullSimpleOntologyTest {
                 "http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#Collection",
                 "http://www.w3.org/2004/02/skos/core#OrderedCollection").collect(Collectors.toSet());
 
+        verify(ontologyManager, atLeastOnce()).getOntologyModel(vf.createIRI("https://mobi.com/record/dcterms"));
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(2, ontologies.size());
         Set<IRI> iris = ont.getImportedOntologyIRIs();
