@@ -1,4 +1,4 @@
-@Version("1.2.4.${build}")
+@Version("1.2.5.${build}")
 
 package com.mobi.ontology.core.api.record;
 

@@ -81,6 +81,7 @@ import org.semanticweb.owlapi.model.HasDomain;
 import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
+import org.semanticweb.owlapi.model.MissingOntologyHeaderStrategy;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -88,6 +89,7 @@ import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
@@ -106,6 +108,7 @@ import org.semanticweb.owlapi.model.OWLRuntimeException;
 import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.OWLSubPropertyAxiom;
+import org.semanticweb.owlapi.model.UnknownOWLOntologyException;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.Navigation;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
@@ -173,6 +176,7 @@ public class SimpleOntology implements Ontology {
     // Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
     private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
             .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT)
+            .setMissingOntologyHeaderStrategy(MissingOntologyHeaderStrategy.IMPORT_GRAPH)
             .setTreatDublinCoreAsBuiltIn(true);
     private OWLOntologyManager owlManager;
 
@@ -277,7 +281,7 @@ public class SimpleOntology implements Ontology {
         RDFParserRegistry parserRegistry = RDFParserRegistry.getInstance();
         Set<RioAbstractParserFactory> owlParsers = new HashSet<>(Arrays.asList(new RioOWLXMLParserFactory(),
                 new RioManchesterSyntaxParserFactory(), new RioFunctionalSyntaxParserFactory()));
-        owlParsers.forEach(parser -> parserRegistry.add(parser));
+        owlParsers.forEach(parserRegistry::add);
     }
 
     /**
@@ -327,7 +331,15 @@ public class SimpleOntology implements Ontology {
         } else if (resource != null) {
             this.ontologyId = ontologyManager.createOntologyId(resource);
         } else {
-            this.ontologyId = ontologyManager.createOntologyId();
+            try {
+                org.semanticweb.owlapi.model.IRI docId = owlManager.getOntologyDocumentIRI(owlOntology);
+                this.ontologyId = ontologyManager.createOntologyId(SimpleOntologyValues.mobiIRI(docId));
+            } catch (UnknownOWLOntologyException ex) {
+                this.ontologyId = ontologyManager.createOntologyId();
+            }
+            if (sesameModel == null) {
+                setSesameModel();
+            }
             sesameModel.add(transformer.sesameResource(this.ontologyId.getOntologyIdentifier()), RDF.TYPE,
                     OWL.ONTOLOGY);
         }
@@ -408,7 +420,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<OClass> getAllClasses() {
-        return getDeclaredClasses()
+        return getDeclaredClasses(Imports.EXCLUDED)
                 .map(SimpleOntologyValues::mobiClass)
                 .collect(Collectors.toSet());
     }
@@ -489,7 +501,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<ObjectProperty> getAllObjectProperties() {
-        return getDeclaredObjectProperties()
+        return getDeclaredObjectProperties(Imports.EXCLUDED)
                 .map(SimpleOntologyValues::mobiObjectProperty)
                 .collect(Collectors.toSet());
     }
@@ -517,7 +529,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<DataProperty> getAllDataProperties() {
-        return getDeclaredDatatypeProperties()
+        return getDeclaredDatatypeProperties(Imports.EXCLUDED)
                 .map(SimpleOntologyValues::mobiDataProperty)
                 .collect(Collectors.toSet());
     }
@@ -546,6 +558,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Individual> getAllIndividuals() {
         return owlOntology.individualsInSignature()
+                .filter(this::isDeclaredIndividual)
                 .map(SimpleOntologyValues::mobiIndividual)
                 .collect(Collectors.toSet());
     }
@@ -558,6 +571,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Individual> getIndividualsOfType(OClass clazz) {
         return owlReasoner.getInstances(SimpleOntologyValues.owlapiClass(clazz)).entities()
+                .filter(this::isDeclaredIndividual)
                 .map(SimpleOntologyValues::mobiIndividual)
                 .collect(Collectors.toSet());
     }
@@ -567,7 +581,7 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            Set<OWLClass> classes = getDeclaredClasses().collect(Collectors.toSet());
+            Set<OWLClass> classes = getDeclaredClasses(Imports.INCLUDED).collect(Collectors.toSet());
             threadPool.submit(() -> classes.parallelStream()
                     .forEach(owlClass -> {
                         if (owlClass.isTopEntity()) {
@@ -627,8 +641,8 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    private Stream<OWLClass> getDeclaredClasses() {
-        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+    private Stream<OWLClass> getDeclaredClasses(Imports imports) {
+        return owlOntology.axioms(AxiomType.DECLARATION, imports)
                 .filter(axiom -> axiom.getEntity().isOWLClass())
                 .map(axiom -> axiom.getEntity().asOWLClass());
     }
@@ -661,7 +675,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            Set<OWLDataProperty> properties = getDeclaredDatatypeProperties().collect(Collectors.toSet());
+            Set<OWLDataProperty> properties = getDeclaredDatatypeProperties(Imports.INCLUDED)
+                    .collect(Collectors.toSet());
             threadPool.submit(() -> properties.parallelStream()
                     .forEach(property -> {
                         IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
@@ -693,8 +708,8 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    private Stream<OWLDataProperty> getDeclaredDatatypeProperties() {
-        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+    private Stream<OWLDataProperty> getDeclaredDatatypeProperties(Imports imports) {
+        return owlOntology.axioms(AxiomType.DECLARATION, imports)
                 .filter(axiom -> axiom.getEntity().isOWLDataProperty())
                 .map(axiom -> axiom.getEntity().asOWLDataProperty());
     }
@@ -704,7 +719,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            Set<OWLAnnotationProperty> properties = getDeclaredAnnotationProperties().collect(Collectors.toSet());
+            Set<OWLAnnotationProperty> properties = getDeclaredAnnotationProperties(Imports.INCLUDED)
+                    .collect(Collectors.toSet());
             threadPool.submit(() -> properties.parallelStream()
                     .forEach(property -> {
                         if (property.isBuiltIn()) {
@@ -723,14 +739,15 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    private Stream<OWLAnnotationProperty> getDeclaredAnnotationProperties() {
-        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+    private Stream<OWLAnnotationProperty> getDeclaredAnnotationProperties(Imports imports) {
+        return owlOntology.axioms(AxiomType.DECLARATION, imports)
                 .filter(axiom -> axiom.getEntity().isOWLAnnotationProperty())
                 .map(axiom -> axiom.getEntity().asOWLAnnotationProperty());
     }
 
     private Stream<IRI> getSubAnnotationPropertiesFor(OWLAnnotationProperty property, boolean direct) {
-        Set<OWLAnnotationProperty> directProps = owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF, Imports.INCLUDED)
+        Set<OWLAnnotationProperty> directProps = owlOntology.axioms(AxiomType.SUB_ANNOTATION_PROPERTY_OF,
+                Imports.INCLUDED)
                 .filter(axiom -> axiom.getSuperProperty().equals(property))
                 .map(OWLSubAnnotationPropertyOfAxiom::getSubProperty)
                 .filter(subproperty -> !subproperty.isBottomEntity() && subproperty.isOWLAnnotationProperty()
@@ -765,7 +782,8 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            Set<OWLObjectProperty> properties = getDeclaredObjectProperties().collect(Collectors.toSet());
+            Set<OWLObjectProperty> properties = getDeclaredObjectProperties(Imports.INCLUDED)
+                    .collect(Collectors.toSet());
             threadPool.submit(() -> properties.parallelStream()
                     .forEach(property -> {
                         IRI propIRI = SimpleOntologyValues.mobiIRI(property.getIRI());
@@ -797,8 +815,8 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    private Stream<OWLObjectProperty> getDeclaredObjectProperties() {
-        return owlOntology.axioms(AxiomType.DECLARATION, Imports.INCLUDED)
+    private Stream<OWLObjectProperty> getDeclaredObjectProperties(Imports imports) {
+        return owlOntology.axioms(AxiomType.DECLARATION, imports)
                 .filter(axiom -> axiom.getEntity().isOWLObjectProperty())
                 .map(axiom -> axiom.getEntity().asOWLObjectProperty());
     }
@@ -808,7 +826,7 @@ public class SimpleOntology implements Ontology {
         long start = getStartTime();
         try {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
-            Set<OWLClass> classes = getDeclaredClasses().collect(Collectors.toSet());
+            Set<OWLClass> classes = getDeclaredClasses(Imports.INCLUDED).collect(Collectors.toSet());
             threadPool.submit(() -> classes.parallelStream()
                     .forEach(owlClass -> {
                         Set<IRI> iris = owlReasoner.instances(owlClass, true)
@@ -868,39 +886,45 @@ public class SimpleOntology implements Ontology {
 
             OWLClass conceptClass = owlManager.getOWLDataFactory()
                     .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT));
-            owlReasoner.instances(conceptClass).forEach(concept -> {
-                IRI conceptIRI = SimpleOntologyValues.mobiIRI(concept.getIRI());
-                hierarchy.addIRI(conceptIRI);
+            owlReasoner.instances(conceptClass)
+                    .filter(this::isDeclaredIndividual)
+                    .forEach(concept -> {
+                        IRI conceptIRI = SimpleOntologyValues.mobiIRI(concept.getIRI());
+                        hierarchy.addIRI(conceptIRI);
 
-                Set<IRI> superConcepts = new HashSet<>();
-                Set<IRI> subConcepts = new HashSet<>();
-                owlOntology.axioms(concept, Imports.INCLUDED)
-                        .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
-                        .map(axiom -> (OWLObjectPropertyAssertionAxiom) axiom)
-                        .forEach(axiom -> {
-                            String property = axiom.getProperty().getNamedProperty().toStringID();
-                            if (property.equals(SKOS.NARROWER.stringValue())
-                                    || property.equals(SKOS.NARROWER_TRANSITIVE.stringValue())
-                                    || property.equals(SKOS.NARROW_MATCH.stringValue())) {
-                                IRI subConceptIRI = SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID()));
-                                if (!subConceptIRI.equals(conceptIRI)) {
-                                    subConcepts.add(subConceptIRI);
-                                }
-                            } else if (property.equals(SKOS.BROADER.stringValue())
-                                    || property.equals(SKOS.BROADER_TRANSITIVE.stringValue())
-                                    || property.equals(SKOS.BROAD_MATCH.stringValue())) {
-                                IRI superConceptIRI = SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID()));
-                                if (!superConceptIRI.equals(conceptIRI)) {
-                                    superConcepts.add(superConceptIRI);
-                                }
-                            }
-                        });
+                        Set<IRI> superConcepts = new HashSet<>();
+                        Set<IRI> subConcepts = new HashSet<>();
+                        owlOntology.axioms(concept, Imports.INCLUDED)
+                                .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
+                                .map(axiom -> (OWLObjectPropertyAssertionAxiom) axiom)
+                                .forEach(axiom -> {
+                                    String property = axiom.getProperty().getNamedProperty().toStringID();
+                                    if (property.equals(SKOS.NARROWER.stringValue())
+                                            || property.equals(SKOS.NARROWER_TRANSITIVE.stringValue())
+                                            || property.equals(SKOS.NARROW_MATCH.stringValue())) {
+                                        IRI subConceptIRI = SimpleOntologyValues.mobiIRI(
+                                                org.semanticweb.owlapi.model.IRI.create(axiom.getObject()
+                                                        .toStringID()));
+                                        if (!subConceptIRI.equals(conceptIRI)
+                                                && isDeclaredIndividual(axiom.getObject())) {
+                                            subConcepts.add(subConceptIRI);
+                                        }
+                                    } else if (property.equals(SKOS.BROADER.stringValue())
+                                            || property.equals(SKOS.BROADER_TRANSITIVE.stringValue())
+                                            || property.equals(SKOS.BROAD_MATCH.stringValue())) {
+                                        IRI superConceptIRI = SimpleOntologyValues.mobiIRI(
+                                                org.semanticweb.owlapi.model.IRI.create(axiom.getObject()
+                                                        .toStringID()));
+                                        if (!superConceptIRI.equals(conceptIRI)
+                                                && isDeclaredIndividual(axiom.getObject())) {
+                                            superConcepts.add(superConceptIRI);
+                                        }
+                                    }
+                                });
 
-                superConcepts.forEach(iri -> hierarchy.addParentChild(iri, conceptIRI));
-                subConcepts.forEach(iri -> hierarchy.addParentChild(conceptIRI, iri));
-            });
+                        superConcepts.forEach(iri -> hierarchy.addParentChild(iri, conceptIRI));
+                        subConcepts.forEach(iri -> hierarchy.addParentChild(conceptIRI, iri));
+                    });
 
             return hierarchy;
         } finally {
@@ -915,30 +939,38 @@ public class SimpleOntology implements Ontology {
             Hierarchy hierarchy = new Hierarchy(vf, mf);
             OWLClass schemeClass = owlManager.getOWLDataFactory()
                     .getOWLClass(org.semanticweb.owlapi.model.IRI.create(CONCEPT_SCHEME));
-            owlReasoner.instances(schemeClass).forEach(conceptScheme -> {
-                IRI schemeIRI = SimpleOntologyValues.mobiIRI(conceptScheme.getIRI());
-                hierarchy.addIRI(schemeIRI);
-                owlOntology.referencingAxioms(conceptScheme, Imports.INCLUDED)
-                        .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
-                        .map(owlIndividualAxiom -> (OWLObjectPropertyAssertionAxiom) owlIndividualAxiom)
-                        .forEach(axiom -> {
-                            String property = axiom.getProperty().getNamedProperty().toStringID();
-                            if (property.equals(SKOS.HAS_TOP_CONCEPT.stringValue())) {
-                                IRI conceptIRI = SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getObject().toStringID()));
-                                hierarchy.addParentChild(schemeIRI, conceptIRI);
-                            } else if (property.equals(SKOS.IN_SCHEME.stringValue())
-                                    || property.equals(SKOS.TOP_CONCEPT_OF.stringValue())) {
-                                IRI conceptIRI = SimpleOntologyValues.mobiIRI(
-                                        org.semanticweb.owlapi.model.IRI.create(axiom.getSubject().toStringID()));
-                                hierarchy.addParentChild(schemeIRI, conceptIRI);
-                            }
-                        });
-            });
+            owlReasoner.instances(schemeClass)
+                    .filter(this::isDeclaredIndividual)
+                    .forEach(conceptScheme -> {
+                        IRI schemeIRI = SimpleOntologyValues.mobiIRI(conceptScheme.getIRI());
+                        hierarchy.addIRI(schemeIRI);
+                        owlOntology.referencingAxioms(conceptScheme, Imports.INCLUDED)
+                                .filter(axiom -> axiom.getAxiomType() == AxiomType.OBJECT_PROPERTY_ASSERTION)
+                                .map(owlIndividualAxiom -> (OWLObjectPropertyAssertionAxiom) owlIndividualAxiom)
+                                .forEach(axiom -> {
+                                    String property = axiom.getProperty().getNamedProperty().toStringID();
+                                    if (property.equals(SKOS.HAS_TOP_CONCEPT.stringValue())) {
+                                        IRI conceptIRI = SimpleOntologyValues.mobiIRI(
+                                                org.semanticweb.owlapi.model.IRI.create(axiom.getObject()
+                                                        .toStringID()));
+                                        hierarchy.addParentChild(schemeIRI, conceptIRI);
+                                    } else if (property.equals(SKOS.IN_SCHEME.stringValue())
+                                            || property.equals(SKOS.TOP_CONCEPT_OF.stringValue())) {
+                                        IRI conceptIRI = SimpleOntologyValues.mobiIRI(
+                                                org.semanticweb.owlapi.model.IRI.create(axiom.getSubject()
+                                                        .toStringID()));
+                                        hierarchy.addParentChild(schemeIRI, conceptIRI);
+                                    }
+                                });
+                    });
             return hierarchy;
         } finally {
             logTrace("getConceptSchemeRelationships()", start);
         }
+    }
+
+    private boolean isDeclaredIndividual(OWLIndividual individual) {
+        return owlOntology.classAssertionAxioms(individual).count() > 0;
     }
 
     @Override
@@ -961,20 +993,26 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
+     * Retrieves an unmodifiable model for the Ontology. Sets the model if not already found.
+     *
      * @return the unmodifiable sesame model that represents this Ontology.
      */
     protected synchronized org.eclipse.rdf4j.model.Model asSesameModel() throws MobiOntologyException {
         if (sesameModel != null) {
             return sesameModel.unmodifiable();
         } else {
-            sesameModel = new org.eclipse.rdf4j.model.impl.LinkedHashModel();
-            RDFHandler rdfHandler = new StatementCollector(sesameModel);
-            OWLDocumentFormat format = this.owlOntology.getFormat();
-            format.setAddMissingTypes(false);
-            RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, format);
-            renderer.render();
+            setSesameModel();
             return sesameModel.unmodifiable();
         }
+    }
+
+    protected synchronized void setSesameModel() throws MobiOntologyException {
+        sesameModel = new org.eclipse.rdf4j.model.impl.LinkedHashModel();
+        RDFHandler rdfHandler = new StatementCollector(sesameModel);
+        OWLDocumentFormat format = this.owlOntology.getFormat();
+        format.setAddMissingTypes(false);
+        RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, format);
+        renderer.render();
     }
 
     @Override
@@ -1188,11 +1226,11 @@ public class SimpleOntology implements Ontology {
 
     private @Nonnull OutputStream getOntologyDocument(PrefixDocumentFormatImpl prefixFormat)
             throws MobiOntologyException {
-        OutputStream os = null;
+        OutputStream os;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         OWLDocumentFormat format = owlManager.getOntologyFormat(owlOntology);
-        if (format.isPrefixOWLDocumentFormat()) {
+        if (format != null && format.isPrefixOWLDocumentFormat()) {
             prefixFormat.copyPrefixesFrom(format.asPrefixOWLDocumentFormat());
         }
 
@@ -1237,7 +1275,7 @@ public class SimpleOntology implements Ontology {
         }
         annotationProperties = new HashSet<>();
 
-        annotationProperties = getDeclaredAnnotationProperties()
+        annotationProperties = getDeclaredAnnotationProperties(Imports.EXCLUDED)
                 .map(SimpleOntologyValues::mobiAnnotationProperty)
                 .collect(Collectors.toSet());
     }
@@ -1261,9 +1299,8 @@ public class SimpleOntology implements Ontology {
         return stream.map(HasDomain::getDomain)
                 .filter(AsOWLClass::isOWLClass)
                 .map(AsOWLClass::asOWLClass)
-                .filter(owlClass -> owlClass.getIRI().equals(iri) || equivalentClasses.contains(owlClass)
-                        || superClasses.containsEntity(owlClass))
-                .count() > 0;
+                .anyMatch(owlClass -> owlClass.getIRI().equals(iri) || equivalentClasses.contains(owlClass)
+                        || superClasses.containsEntity(owlClass));
     }
 
     private <T extends OWLPropertyDomainAxiom<?>> boolean hasNoDomain(Stream<T> stream) {
@@ -1271,10 +1308,10 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Reads the provided {@link InputStream} into a {@link byte[]}
+     * Reads the provided {@link InputStream} into a byte[].
      *
-     * @param inputStream
-     * @return {@link byte[]}
+     * @param inputStream An ontology {@link InputStream} to convert into a byte array for reuse.
+     * @return The {@link InputStream} as a byte array.
      */
     private byte[] inputStreamToByteArray(InputStream inputStream) {
         int size = 8192;

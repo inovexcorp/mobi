@@ -32,6 +32,7 @@ import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
@@ -42,6 +43,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
@@ -111,7 +113,14 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
      * @param ontology created ontology
      */
     private void setOntologyToRecord(T record, Ontology ontology) {
-        Resource ontologyIRI = ontology.getOntologyId().getOntologyIdentifier();
+        OntologyId ontologyId = ontology.getOntologyId();
+        Optional<IRI> optOntologyIRI = ontologyId.getOntologyIRI();
+        Resource ontologyIRI;
+        if (optOntologyIRI.isPresent()) {
+            ontologyIRI = optOntologyIRI.get();
+        } else {
+            ontologyIRI = ontologyId.getOntologyIdentifier();
+        }
         validateOntology(ontologyIRI);
         record.setOntologyIRI(ontologyIRI);
     }
