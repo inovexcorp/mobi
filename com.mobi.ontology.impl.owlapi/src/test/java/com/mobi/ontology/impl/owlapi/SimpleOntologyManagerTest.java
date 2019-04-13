@@ -258,6 +258,8 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test
     public void testApplyChangesInProgressCommitId() {
         manager.applyChanges(ontology, inProgressCommit.getResource());
+        verify(ontologyId).getOntologyIRI();
+        verify(ontologyId).getOntologyIdentifier();
         verify(catalogManager).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommit.getResource()));
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
         verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
@@ -267,6 +269,8 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     public void testApplyChangesInProgressCommitIdOntologyIRINotSet() {
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.empty());
         manager.applyChanges(ontology, inProgressCommit.getResource());
+        verify(ontologyId).getOntologyIRI();
+        verify(ontologyId).getOntologyIdentifier();
         verify(catalogManager).getInProgressCommit(eq(catalogIRI), eq(recordIRI), eq(inProgressCommit.getResource()));
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
         verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
