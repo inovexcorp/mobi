@@ -99,6 +99,11 @@ describe('Open Entity Snackbar component', function() {
             expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
             expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
         });
+        it('$onDestroy resets the state of listItem.goTo if present', function() {
+            this.controller.$onDestroy();
+            expect(ontologyStateSvc.listItem.goTo.entityIRI).toEqual('');
+            expect(ontologyStateSvc.listItem.goTo.active).toEqual(false);
+        });
         it('openEntity calls ontologyStateService goTo and closes the snackbar', function() {
             spyOn($timeout, 'cancel');
             this.controller.openEntity();

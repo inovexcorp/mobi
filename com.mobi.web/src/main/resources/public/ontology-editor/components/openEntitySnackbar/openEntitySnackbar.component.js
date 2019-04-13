@@ -97,8 +97,10 @@
             if (!dvm.hoverEdit) {
                 dvm.show = false;
                 $timeout(() => {
-                    dvm.os.listItem.goTo.active = false;
-                    dvm.os.listItem.goTo.entityIRI = '';
+                    if (dvm.os.listItem.goTo) {
+                        dvm.os.listItem.goTo.active = false;
+                        dvm.os.listItem.goTo.entityIRI = '';
+                    }
                 }, 500);
             }
         }
