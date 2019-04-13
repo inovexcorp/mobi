@@ -23,19 +23,27 @@ package com.mobi.ontology.impl.owlapi;
  * #L%
  */
 
-import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.mock;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.powermock.api.easymock.PowerMock.mockStatic;
 import static org.powermock.api.easymock.PowerMock.replay;
 
+import com.mobi.ontology.core.api.OntologyId;
+import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -43,91 +51,106 @@ import java.util.Optional;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
-public class SimpleOntologyIdTest {
-
-    private IRI idMock;
-    private ValueFactory factory;
+public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     private IRI ontologyIRI;
     private IRI versionIRI;
+    private IRI identifierIRI;
     private String ontologyIRIString = "http://test.com/ontology1";
     private String versionIRIString = "http://test.com/ontology1/1.0.0";
+    private String identifierString = "http://test.com/identifier";
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private IRI ontologyType;
+    private IRI typeIRI;
+    private IRI versionIRIPred;
+
+    private static final String ONTOLOGY_PREFIX = "http://mobi.com/ontologies/";
 
     @Before
     public void setUp() {
-        idMock = mock(IRI.class);
-        factory = mock(ValueFactory.class);
+        vf = getValueFactory();
+        mf = getModelFactory();
+
+        ontologyIRI = vf.createIRI(ontologyIRIString);
+        versionIRI = vf.createIRI(versionIRIString);
+        identifierIRI = vf.createIRI(identifierString);
+
+        ontologyType = vf.createIRI(OWL.ONTOLOGY.stringValue());
+        typeIRI = vf.createIRI(RDF.TYPE.stringValue());
+        versionIRIPred = vf.createIRI(OWL.VERSIONIRI.stringValue());
 
         org.semanticweb.owlapi.model.IRI owlOntIRI = org.semanticweb.owlapi.model.IRI.create(ontologyIRIString);
         org.semanticweb.owlapi.model.IRI owlVerIRI = org.semanticweb.owlapi.model.IRI.create(versionIRIString);
 
-        ontologyIRI = mock(IRI.class);
-        expect(ontologyIRI.stringValue()).andReturn(ontologyIRIString).anyTimes();
-        expect(ontologyIRI.getNamespace()).andReturn(ontologyIRIString).anyTimes();
 
-        versionIRI = mock(IRI.class);
-        expect(versionIRI.stringValue()).andReturn(versionIRIString).anyTimes();
-        expect(versionIRI.getNamespace()).andReturn(ontologyIRIString).anyTimes();
-        
-        replay(ontologyIRI, versionIRI);
+        Capture<IRI> mobiIRI = EasyMock.newCapture();
+        Capture<org.semanticweb.owlapi.model.IRI> owlapiIRI = EasyMock.newCapture();
+
 
         mockStatic(SimpleOntologyValues.class);
-        expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntIRI).anyTimes();
-        expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVerIRI).anyTimes();
-        expect(SimpleOntologyValues.mobiIRI(owlOntIRI)).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.mobiIRI(owlVerIRI)).andReturn(versionIRI).anyTimes();
+        expect(SimpleOntologyValues.owlapiIRI(capture(mobiIRI))).andAnswer(() -> org.semanticweb.owlapi.model.IRI.create(mobiIRI.getValue().stringValue())).anyTimes();
+        expect(SimpleOntologyValues.mobiIRI(capture(owlapiIRI))).andAnswer(() -> vf.createIRI(owlapiIRI.getValue().getIRIString())).anyTimes();
 
-        expect(factory.createIRI(ontologyIRIString)).andReturn(ontologyIRI).anyTimes();
-        expect(factory.createIRI(versionIRIString)).andReturn(versionIRI).anyTimes();
+        replay(SimpleOntologyValues.class);
     }
     
     @Test
     public void testConstructorWithNoInputValue() {
-        expect(factory.createIRI(anyString())).andReturn(idMock);
-        replay(factory, idMock);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).build();
         
-        assertEquals(idMock, ontologyId.getOntologyIdentifier());
+        assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
     
     @Test
     public void testConstructorWithOnlyId() {
-        replay(factory, idMock);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).id(identifierIRI).build();
         
-        assertEquals(idMock, ontologyId.getOntologyIdentifier());
-        assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
-        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
-    }
-    
-    @Test
-    public void testConstructorWithOnlySpecificId() {
-        expect(idMock.stringValue()).andReturn("http://test.com/iri1");
-        replay(factory, idMock);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).build();
-        
-        assertEquals(idMock, ontologyId.getOntologyIdentifier());
-        assertEquals("http://test.com/iri1", ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(identifierIRI, ontologyId.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
     
     @Test
     public void testConstructorWithIdAndOntologyIRI() {
-        replay(factory, idMock, SimpleOntologyValues.class);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).ontologyIRI(ontologyIRI).build();
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).id(identifierIRI).ontologyIRI(ontologyIRI).build();
         
         assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
         assertEquals(ontologyIRIString, ontologyId.getOntologyIdentifier().stringValue());
         assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
-    
+
     @Test
-    public void testConstructorWithOntologyIRIAndVersionIRIAndNoID() {
-        replay(factory, idMock, SimpleOntologyValues.class);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+    public void testConstructorWithIdAndOntologyIRIAndVersionIRI() {
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).id(identifierIRI).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+
+        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(ontologyIRI, ontologyId.getOntologyIRI().get());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
+        assertEquals(versionIRI, ontologyId.getVersionIRI().get());
+        assertEquals(versionIRIString, ontologyId.getVersionIRI().get().stringValue());
+    }
+
+    @Test
+    public void testConstructorWithNoIdAndOntologyIRIAndNoVersionIRI() {
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).ontologyIRI(ontologyIRI).build();
+
+        assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+    }
+
+    @Test(expected = MobiOntologyException.class)
+    public void testConstructorWithNoIdAndNoOntologyIRIAndVersionIRI() {
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).versionIRI(versionIRI).build();
+    }
+
+    @Test
+    public void testConstructorWithNoIdAndOntologyIRIAndVersionIRI() {
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
         
         assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
         assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
@@ -136,18 +159,116 @@ public class SimpleOntologyIdTest {
         assertEquals(versionIRI, ontologyId.getVersionIRI().get());
         assertEquals(versionIRIString, ontologyId.getVersionIRI().get().stringValue());
     }
-    
+
     @Test
-    public void testConstructorWithOntologyIRIAndVersionIRIAndID() {
-        replay(factory, idMock, SimpleOntologyValues.class);
-        OntologyId ontologyId = new SimpleOntologyId.Builder(factory).id(idMock).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
-        
-        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
-        assertEquals(versionIRIString, ontologyId.getOntologyIdentifier().stringValue());
-        assertEquals(ontologyIRI, ontologyId.getOntologyIRI().get());
-        assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
-        assertEquals(versionIRI, ontologyId.getVersionIRI().get());
-        assertEquals(versionIRIString, ontologyId.getVersionIRI().get().stringValue());
+    public void testConstructorWithModelNoOntologyIRINoVersionIRI() {
+        Model model = mf.createModel();
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+        assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
+        assertTrue(ontologyId.getOntologyIRI().get().stringValue().startsWith(ONTOLOGY_PREFIX));
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
-    
+
+    @Test
+    public void testConstructorWithModelSingleOntologyIRINoVersionIRI() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+        assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+    }
+
+    @Test
+    public void testConstructorWithModelMultipleOntologyIRIsNoVersionIRI() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+        model.add(vf.createIRI("urn:secondIRI"), typeIRI, ontologyType);
+        model.add(vf.createIRI("urn:thirdIRI"), typeIRI, ontologyType);
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+        assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+    }
+
+    @Test
+    public void testConstructorWithModelSingleOntologyIRIAndSingleVersionIRI() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+        model.add(ontologyIRI, versionIRIPred, versionIRI);
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
+    }
+
+    @Test
+    public void testConstructorWithModelMultipleOntologyIRIsSingleVersionIRI() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+        model.add(vf.createIRI("urn:secondIRI"), typeIRI, ontologyType);
+        model.add(vf.createIRI("urn:thirdIRI"), typeIRI, ontologyType);
+        model.add(ontologyIRI, versionIRIPred, versionIRI);
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
+    }
+
+    @Test(expected = MobiOntologyException.class)
+    public void testConstructorWithModelSingleOntologyIRIsMultipleVersionIRIs() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+        model.add(ontologyIRI, versionIRIPred, versionIRI);
+        model.add(ontologyIRI, versionIRIPred, vf.createIRI("urn:secondIRI"));
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+    }
+
+    @Test(expected = MobiOntologyException.class)
+    public void testConstructorWithModelMultipleOntologyIRIsMultipleVersionIRIs() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+        model.add(vf.createIRI("urn:secondIRI"), typeIRI, ontologyType);
+        model.add(ontologyIRI, versionIRIPred, versionIRI);
+        model.add(ontologyIRI, versionIRIPred, vf.createIRI("urn:secondIRI"));
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+    }
+
+    @Test
+    public void testConstructorWithModelOntologyIRIandID() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).id(identifierIRI).model(model).build();
+
+        assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIdentifier().stringValue());
+        assertEquals(ontologyIRIString, ontologyId.getOntologyIRI().get().stringValue());
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+    }
+
+    @Test(expected = MobiOntologyException.class)
+    public void testConstructorWithModelVNoOntologyIRIAndVersionIRI() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, versionIRIPred, versionIRI);
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+    }
+
+    @Test
+    public void testConstructorWithModelAndOtherFieldsSet() {
+        Model model = mf.createModel();
+        model.add(ontologyIRI, typeIRI, ontologyType);
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).ontologyIRI(vf.createIRI("urn:otherOntologyIRI")).versionIRI(vf.createIRI("urn:otherVersionIRI")).id(identifierIRI).build();
+        assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
+        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+    }
 }

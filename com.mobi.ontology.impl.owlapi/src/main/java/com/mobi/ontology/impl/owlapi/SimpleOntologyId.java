@@ -26,8 +26,12 @@ package com.mobi.ontology.impl.owlapi;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
 import java.util.Optional;
@@ -46,10 +50,23 @@ public class SimpleOntologyId implements OntologyId {
         private Resource identifier;
         private IRI ontologyIRI;
         private IRI versionIRI;
+        private Model model;
         private ValueFactory factory;
 
         public Builder(ValueFactory factory) {
             this.factory = factory;
+        }
+
+        /**
+         * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
+         * OntologyIRI and VersionIRI.
+         *
+         * @param model the Model to use to retrieve identifier information
+         * @return SimpleOntologyId Builder
+         */
+        public Builder model(Model model) {
+            this.model = model;
+            return this;
         }
 
         public Builder id(Resource identifier) {
@@ -73,10 +90,40 @@ public class SimpleOntologyId implements OntologyId {
     }
 
     private SimpleOntologyId(Builder builder) {
-        if (builder.versionIRI != null && builder.ontologyIRI == null) {
-            throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
-        }
         this.factory = builder.factory;
+
+        if (builder.model != null) {
+            Model ontologyIriModel = builder.model.filter(null, factory.createIRI(RDF.TYPE.stringValue()),
+                    factory.createIRI(OWL.ONTOLOGY.stringValue()));
+            if (ontologyIriModel.size() > 0) {
+                Optional<Statement> ontologyStatementOpt = ontologyIriModel.stream().findFirst();
+                ontologyStatementOpt.ifPresent(ontologyStatement -> {
+                    builder.ontologyIRI = factory.createIRI(ontologyStatement.getSubject().stringValue());
+                });
+            } else {
+                builder.ontologyIRI = factory.createIRI(DEFAULT_PREFIX + UUID.randomUUID());
+            }
+
+            Model versionIriModel = builder.model.filter(null, factory.createIRI(OWL.VERSIONIRI.stringValue()), null);
+            if (versionIriModel.size() == 1) {
+                if (ontologyIriModel.size() == 0) {
+                    throw new MobiOntologyException("Ontology must have an ontologyIRI defined when a versionIRI "
+                            + "is present");
+                }
+                Optional<Statement> versionStatementOpt = versionIriModel.stream().findFirst();
+                versionStatementOpt.ifPresent(versionStatement -> {
+                    builder.versionIRI = factory.createIRI(versionStatement.getObject().stringValue());
+                });
+            } else if (versionIriModel.size() > 1) {
+                throw new MobiOntologyException("Ontology cannot have more than one versionIRI.");
+            } else {
+                builder.versionIRI = null;
+            }
+        }
+
+        if (builder.versionIRI != null && builder.ontologyIRI == null) {
+            throw new MobiOntologyException("ontologyIRI must not be null if versionIRI is not null");
+        }
 
         org.semanticweb.owlapi.model.IRI ontologyIRI = null;
         org.semanticweb.owlapi.model.IRI versionIRI = null;

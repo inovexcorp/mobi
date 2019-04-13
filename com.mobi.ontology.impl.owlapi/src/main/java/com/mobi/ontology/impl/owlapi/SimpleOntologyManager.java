@@ -300,6 +300,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public OntologyId createOntologyId(Model model) {
+        return new SimpleOntologyId.Builder(valueFactory).model(model).build();
+    }
+
+    @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }

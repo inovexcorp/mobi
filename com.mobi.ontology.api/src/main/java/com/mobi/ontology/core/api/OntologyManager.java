@@ -165,6 +165,15 @@ public interface OntologyManager {
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 
     /**
+     * Creates a new OntologyId using the provided Model to extract the OntologyIRI and VersionIRI to determine the
+     * identifier. If no OntologyIRI is on the Model, one is created and added to it.
+     *
+     * @param model the ontology Model you want to create the recordId for.
+     * @return an OntologyId using the ontologyIRI and/or versionIRI from the model to determine the proper identifier.
+     */
+    OntologyId createOntologyId(Model model);
+
+    /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
      * provided Resource.
      *
