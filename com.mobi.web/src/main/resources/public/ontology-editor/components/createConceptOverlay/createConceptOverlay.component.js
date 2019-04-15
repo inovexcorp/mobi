@@ -36,7 +36,7 @@
      * @description
      * `createConceptOverlay` is a component that creates content for a modal that creates a concept in the current
      * {@link shared.service:ontologyStateService selected ontology/vocabulary}. The form in the modal
-     * contains a text input for the concept name (which populates the {@link staticIri.directive:staticIri IRI}),
+     * contains a text input for the concept name (which populates the {@link ontology-editor.component:staticIri IRI}),
      * an {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the concept scheme
      * the concept is "top" of. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *

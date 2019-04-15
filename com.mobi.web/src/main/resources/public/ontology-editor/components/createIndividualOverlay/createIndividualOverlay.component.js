@@ -33,7 +33,7 @@
      * @description
      * `createIndividualOverlay` is a component that creates content for a modal that creates an individual in the
      * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains
-     * a text input for the individual name (which populates the {@link staticIri.directive:staticIri IRI}) and
+     * a text input for the individual name (which populates the {@link ontology-editor.component:staticIri IRI}) and
      * a {@link ontologyClassSelect.directive:ontologyClassSelect} for the classes this individual will be an
      * instance of. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *

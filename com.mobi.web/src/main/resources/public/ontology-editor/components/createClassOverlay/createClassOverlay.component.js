@@ -33,7 +33,7 @@
      * @description
      * `createClassOverlay` is a component that creates content for a modal that creates a class in the current
      * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
-     * text input for the class name (which populates the {@link staticIri.directive:staticIri IRI}), a
+     * text input for the class name (which populates the {@link ontology-editor.component:staticIri IRI}), a
      * {@link shared.component:textArea} for the class description, an
      * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
      * {@link superClassSelect.directive:superClassSelect}. Meant to be used in conjunction with the

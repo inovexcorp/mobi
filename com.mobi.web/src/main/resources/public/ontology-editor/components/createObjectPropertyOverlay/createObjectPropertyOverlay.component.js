@@ -33,7 +33,7 @@
      * @description
      * `createObjectPropertyOverlay` is a component that creates content for a modal that creates an object property in
      * the current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a text
-     * input for the property name (which populates the {@link staticIri.directive:staticIri IRI}), a
+     * input for the property name (which populates the {@link ontology-editor.component:staticIri IRI}), a
      * {@link shared.component:textArea} for the property description,
      * {@link advancedLanguageSelect.directive:advancedLanguageSelect},
      * {@link shared.component:checkbox checkboxes} for the property characteristics, an
