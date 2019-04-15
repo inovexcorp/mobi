@@ -24,6 +24,7 @@ package com.mobi.ontology.impl.core.record;
  */
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -66,9 +67,11 @@ import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.Value;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -177,7 +180,10 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private Ontology ontology;
 
     @Mock
-    private OntologyId ontologyId;
+    private OntologyId ontologyId1;
+
+    @Mock
+    private OntologyId ontologyId2;
 
     @Mock
     private OntologyManager ontologyManager;
@@ -237,11 +243,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
         testRecord.setOntologyIRI(testIRI);
 
-
         MockitoAnnotations.initMocks(this);
         when(ontology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
-        when(ontology.getOntologyId()).thenReturn(ontologyId);
-        when(ontologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
+        when(ontology.getOntologyId()).thenReturn(ontologyId1);
+        when(ontologyId1.getOntologyIRI()).thenReturn(Optional.empty());
+        when(ontologyId1.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
+        when(ontologyId2.getOntologyIRI()).thenReturn(Optional.of(importedOntologyIRI));
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(any(InputStream.class), any(Boolean.class))).thenReturn(ontology);
         when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(false);
@@ -312,7 +319,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     /* create() */
 
     @Test
-    public void createTest() throws Exception {
+    public void createWithoutOntologyIRITest() throws Exception {
+        // Setup:
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
         names.add("Rick");
@@ -326,11 +334,84 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
-        recordService.create(user, config, connection);
+        OntologyRecord ontologyRecord = recordService.create(user, config, connection);
+        Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        assertTrue(optTitle.isPresent());
+        assertEquals("TestTitle", optTitle.get().stringValue());
+        Optional<Value> optDescription = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        assertTrue(optDescription.isPresent());
+        assertEquals("TestTitle", optDescription.get().stringValue());
+        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        Set<Value> publishers = ontologyRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertEquals(users.size(), publishers.size());
+        Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
+        assertTrue(optCatalogId.isPresent());
+        assertEquals(catalogId.stringValue(), optCatalogId.get().stringValue());
+        Set<Literal> keywords = ontologyRecord.getKeyword();
+        assertEquals(names.size(), keywords.size());
+        assertEquals(1, ontologyRecord.getBranch_resource().size());
+        Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
+        assertTrue(optMasterBranch.isPresent());
+        Optional<Resource> optOntologyIri = ontologyRecord.getOntologyIRI();
+        assertTrue(optOntologyIri.isPresent());
+        assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
         verify(ontology).asModel(eq(MODEL_FACTORY));
         verify(ontology).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyId1).getOntologyIRI();
+        verify(ontologyId1).getOntologyIdentifier();
+        verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
+        verify(utilsService, times(2)).addObject(any(Record.class),
+                any(RepositoryConnection.class));
+        verify(provUtils).startCreateActivity(eq(user));
+        verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+    }
+
+    @Test
+    public void createWithOntologyIRITest() throws Exception {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        when(ontology.getOntologyId()).thenReturn(ontologyId2);
+
+        OntologyRecord ontologyRecord = recordService.create(user, config, connection);
+        Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        assertTrue(optTitle.isPresent());
+        assertEquals("TestTitle", optTitle.get().stringValue());
+        Optional<Value> optDescription = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        assertTrue(optDescription.isPresent());
+        assertEquals("TestTitle", optDescription.get().stringValue());
+        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        Set<Value> publishers = ontologyRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertEquals(users.size(), publishers.size());
+        Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
+        assertTrue(optCatalogId.isPresent());
+        assertEquals(catalogId.stringValue(), optCatalogId.get().stringValue());
+        Set<Literal> keywords = ontologyRecord.getKeyword();
+        assertEquals(names.size(), keywords.size());
+        assertEquals(1, ontologyRecord.getBranch_resource().size());
+        Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
+        assertTrue(optMasterBranch.isPresent());
+        Optional<Resource> optOntologyIri = ontologyRecord.getOntologyIRI();
+        assertTrue(optOntologyIri.isPresent());
+        assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
+
+        verify(ontology).asModel(eq(MODEL_FACTORY));
+        verify(ontology).getOntologyId();
+        verify(ontologyId2).getOntologyIRI();
+        verify(ontologyId2, times(0)).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
@@ -353,11 +434,32 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, MODEL_FACTORY.createModel());
 
-        recordService.create(user, config, connection);
+        OntologyRecord ontologyRecord = recordService.create(user, config, connection);
+        Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        assertTrue(optTitle.isPresent());
+        assertEquals("TestTitle", optTitle.get().stringValue());
+        Optional<Value> optDescription = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.description_IRI));
+        assertTrue(optDescription.isPresent());
+        assertEquals("TestTitle", optDescription.get().stringValue());
+        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.modified_IRI)).isPresent());
+        assertTrue(ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.issued_IRI)).isPresent());
+        Set<Value> publishers = ontologyRecord.getProperties(VALUE_FACTORY.createIRI(_Thing.publisher_IRI));
+        assertEquals(users.size(), publishers.size());
+        Optional<Resource> optCatalogId = ontologyRecord.getCatalog_resource();
+        assertTrue(optCatalogId.isPresent());
+        assertEquals(catalogId.stringValue(), optCatalogId.get().stringValue());
+        Set<Literal> keywords = ontologyRecord.getKeyword();
+        assertEquals(names.size(), keywords.size());
+        assertEquals(1, ontologyRecord.getBranch_resource().size());
+        Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
+        assertTrue(optMasterBranch.isPresent());
+        Optional<Resource> optOntologyIri = ontologyRecord.getOntologyIRI();
+        assertTrue(optOntologyIri.isPresent());
+        assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
         verify(ontology).asModel(eq(MODEL_FACTORY));
         verify(ontology).getOntologyId();
-        verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyId1).getOntologyIdentifier();
         verify(ontologyManager).createOntology(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));

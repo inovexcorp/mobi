@@ -9,3 +9,5 @@
 <http://mobi.com/ontology/test-local-imports-3> a owl:Ontology .
 
 :Class3 a owl:Class .
+
+:AnnotationProperty0 a owl:AnnotationProperty .

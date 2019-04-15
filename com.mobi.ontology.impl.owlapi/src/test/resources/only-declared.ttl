@@ -4,9 +4,15 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @base <http://mobi.com/ontology/only-declared> .
 
-<http://mobi.com/ontology/only-declared> a owl:Ontology .
+<http://mobi.com/ontology/only-declared> a owl:Ontology ;
+    owl:imports <http://www.w3.org/2004/02/skos/core#> .
+
+:ConceptA a skos:Concept ;
+          skos:narrower :ConceptB ;
+          skos:topConceptOf :ConceptSchemeA .
 
 :ClassA a owl:Class ;
          rdfs:subClassOf [
