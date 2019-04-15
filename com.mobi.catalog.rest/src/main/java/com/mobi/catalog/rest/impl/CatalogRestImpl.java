@@ -729,27 +729,29 @@ public class CatalogRestImpl implements CatalogRest {
         }
     }
 
-    //@Override
+    @Override
     @ActionId(value = Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createBranch(ContainerRequestContext context, String catalogId, String recordId,
                                  String typeIRI, String title, String description, String commitId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()){
+        try ( RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Branch title is required");
             checkStringParam(commitId, "Commit ID is required");
             IRI recordIri = vf.createIRI(recordId);
             IRI commitIri = vf.createIRI(commitId);
-            if(!catalogUtilsService.commitInRecord(recordIri, commitIri, conn)){
+            if (!catalogUtilsService.commitInRecord(recordIri, commitIri, conn)) {
                 throw ErrorUtils.sendError("Commit not in Record", Response.Status.BAD_REQUEST);
             }
             Map<String, OrmFactory<? extends Branch>> branchFactories = getBranchFactories();
             if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Branch type", Response.Status.BAD_REQUEST);
             }
+
             Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
             newBranch.setProperty(getActiveUser(context, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
-            Commit newCommit = commitFactory.createNew(commitIri);
+            Commit newCommit = catalogManager.getCommit(commitIri).orElseThrow(() -> ErrorUtils.sendError("Commit "
+                    + commitId + " could not be found", Response.Status.BAD_REQUEST));;
             newBranch.setHead(newCommit);
             catalogManager.addBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch);
             return Response.status(201).entity(newBranch.getResource().stringValue()).build();

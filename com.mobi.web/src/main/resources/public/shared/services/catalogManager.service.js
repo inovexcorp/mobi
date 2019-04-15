@@ -930,6 +930,7 @@
             return createBranch(recordId, catalogId, branchConfig, commitId)
                 .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                 .then(branch => {
+                    branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
                     branch[prefixes.catalog + 'createdFrom'] = [{'@id': parentBranchId}];
                     return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
                 }, $q.reject);

@@ -849,6 +849,16 @@ describe('Catalog Manager service', function() {
             };
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches';
             this.branch = {'@id': this.branchId};
+            this.fd = new FormData();
+            this.config = {
+                transformRequest: _.identity,
+                headers: {
+                    'Content-Type': undefined
+                }
+            };
+            this.fd.append('title', this.branchConfig.title);
+            this.fd.append('type', this.branchConfig.type);
+            this.fd.append('commitId', this.commitId);
             spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(this.branch));
             spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(this.branchId));
         });
@@ -867,8 +877,6 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
-            // expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, this.commitId);
-            // expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
         it('without a description', function() {
             delete this.branchConfig.description;
@@ -879,8 +887,6 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
-            // expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, this.commitId);
-            // expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
     });
     describe('should create a new UserBranch', function() {
@@ -910,8 +916,8 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
-            //expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
-            //expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
         it('without a description', function() {
             delete this.branchConfig.description;
@@ -923,8 +929,8 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
                 .then(response => expect(response).toEqual(self.branchId), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
-            //expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
-            //expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
     });
     describe('should update a Record Branch', function() {

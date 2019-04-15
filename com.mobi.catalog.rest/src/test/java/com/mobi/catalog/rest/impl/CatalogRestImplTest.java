@@ -368,6 +368,16 @@ public class CatalogRestImplTest extends MobiRestTestNg {
             }
             return Optional.ofNullable(found);
         });
+        when(catalogManager.getCommit(any(Resource.class))).thenAnswer(i -> {
+            Resource iri = i.getArgumentAt(0, Resource.class);
+            Commit found = null;
+            for (Commit commit : testCommits) {
+                if (iri.equals(commit.getResource())) {
+                    found = commit;
+                }
+            }
+            return Optional.ofNullable(found);
+        });
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(testInProgressCommit));
         when(catalogManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class))).thenReturn(Optional.of(testInProgressCommit));
         when(catalogManager.getConflicts(any(Resource.class), any(Resource.class))).thenReturn(Collections.singleton(conflict));
@@ -3314,8 +3324,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         fd.field("type", ormFactory.getTypeIRI().stringValue());
         fd.field("title", "Title");
         fd.field("description", "Description");
-        // TODO: Check if this is the right way to get a commit iri? Need to add this line because catalogId is now a
-        //  formdataparam
         fd.field("commitId", COMMIT_IRIS[0]);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
