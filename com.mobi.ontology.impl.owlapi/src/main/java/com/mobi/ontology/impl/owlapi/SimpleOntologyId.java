@@ -154,11 +154,7 @@ public class SimpleOntologyId implements OntologyId {
     public Optional<IRI> getOntologyIRI() {
         Optional<org.semanticweb.owlapi.model.IRI> ontIRI = ontologyId.getOntologyIRI();
 
-        if (ontIRI.isPresent()) {
-            return Optional.of(SimpleOntologyValues.mobiIRI(ontIRI.get()));
-        } else {
-            return Optional.empty();
-        }
+        return ontIRI.map(SimpleOntologyValues::mobiIRI);
     }
 
 
@@ -166,11 +162,7 @@ public class SimpleOntologyId implements OntologyId {
     public Optional<IRI> getVersionIRI() {
         Optional<org.semanticweb.owlapi.model.IRI> verIRI = ontologyId.getVersionIRI();
 
-        if (verIRI.isPresent()) {
-            return Optional.of(SimpleOntologyValues.mobiIRI(verIRI.get()));
-        } else {
-            return Optional.empty();
-        }
+        return verIRI.map(SimpleOntologyValues::mobiIRI);
     }
 
 

@@ -92,7 +92,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     }
 
     /**
-     * Creates an ontology Model based on config file.
+     * Creates an ontology Model based on a {@link RecordOperationConfig}.
      *
      * @param config A {@link RepositoryConnection} to use for lookup
      * @return created ontology
@@ -111,7 +111,6 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         } else {
             throw new IllegalArgumentException("Ontology config does not have initial data.");
         }
-
         return ontologyModel;
     }
 
