@@ -849,16 +849,6 @@ describe('Catalog Manager service', function() {
             };
             this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches';
             this.branch = {'@id': this.branchId};
-            this.fd = new FormData();
-            this.config = {
-                transformRequest: _.identity,
-                headers: {
-                    'Content-Type': undefined
-                }
-            };
-            this.fd.append('title', this.branchConfig.title);
-            this.fd.append('type', this.branchConfig.type);
-            this.fd.append('commitId', this.commitId);
             spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(this.branch));
             spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(this.branchId));
         });
