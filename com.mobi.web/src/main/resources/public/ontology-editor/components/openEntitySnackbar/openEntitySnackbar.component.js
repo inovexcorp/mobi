@@ -51,6 +51,7 @@
         dvm.entityName = '';
         dvm.hoverEdit = false;
         dvm.closeTimeout = undefined;
+        dvm.resetStateTimeout = undefined;
 
         dvm.$onInit = function() {
             dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
@@ -67,6 +68,8 @@
             }
         }
         dvm.$onDestroy = function() {
+            $timeout.cancel(dvm.closeTimeout);
+            $timeout.cancel(dvm.resetStateTimeout);
             if (dvm.os.listItem.goTo) {
                 dvm.os.listItem.goTo.active = false;
                 dvm.os.listItem.goTo.entityIRI = '';
@@ -96,7 +99,7 @@
         function closeSnackbar() {
             if (!dvm.hoverEdit) {
                 dvm.show = false;
-                $timeout(() => {
+                dvm.resetStateTimeout = $timeout(() => {
                     if (dvm.os.listItem.goTo) {
                         dvm.os.listItem.goTo.active = false;
                         dvm.os.listItem.goTo.entityIRI = '';
