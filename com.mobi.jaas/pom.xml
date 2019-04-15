@@ -141,7 +141,8 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Bundle-Name>Mobi Jaas</Bundle-Name>
                         <Export-Package>
-                            com.mobi.jaas.*;provide=true
+                            com.mobi.jaas.*;provide=true,
+                            com.mobi.jaas.modules.*;provide=true,
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>
