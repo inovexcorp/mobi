@@ -91,10 +91,21 @@ describe('Ontology Sidebar directive', function() {
                 this.oldListItem = {id: 'id'};
                 ontologyStateSvc.listItem = this.oldListItem;
             });
-            it('defined', function() {
-                this.controller.onClick({ontologyRecord: {type: 'type'}});
-                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}, active: true});
-                expect(this.oldListItem.active).toEqual(false);
+            describe('defined', function() {
+                it('and does not have an entity snackbar open', function() {
+                    ontologyStateSvc.listItem.goTo = null;
+                    this.controller.onClick({ontologyRecord: {type: 'type'}});
+                    expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}, active: true});
+                    expect(this.oldListItem.active).toEqual(false);
+                });
+                it('and does have an entity snackbar open', function() {
+                    ontologyStateSvc.listItem.goTo = {};
+                    this.controller.onClick({ontologyRecord: {type: 'type'}});
+                    expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}, active: true});
+                    expect(this.oldListItem.active).toEqual(false);
+                    expect(this.oldListItem.goTo.active).toEqual(false);
+                    expect(this.oldListItem.goTo.entityIRI).toEqual('');
+                });
             });
             it('undefined', function() {
                 this.controller.onClick(undefined);
