@@ -68,7 +68,7 @@ public class SimpleCacheManager implements CacheManager {
         }
     }
 
-    @Reference(type = '*', dynamic = true, optional = true)
+    @Reference(dynamic = true)
     public void addCachingProvider(CachingProvider cachingProvider)  {
         cachingProviders.add(cachingProvider);
     }
@@ -89,6 +89,12 @@ public class SimpleCacheManager implements CacheManager {
         }
         if (provider != null) {
             provider.close();
+        }
+        if (repoCacheManager != null) {
+            repoCacheManager.close();
+        }
+        if (repoProvider != null) {
+            repoProvider.close();
         }
     }
 

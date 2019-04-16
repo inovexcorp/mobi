@@ -25,8 +25,8 @@ package com.mobi.cache.impl.repository.jcache;
 
 import static javax.cache.configuration.OptionalFeature.STORE_BY_REFERENCE;
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,17 +41,15 @@ import javax.cache.spi.CachingProvider;
 @Component
 public class RepositoryCachingProvider implements CachingProvider {
 
-    private Map<ClassLoader, Map<URI, CacheManager>> cacheManagers;
-    private RepositoryCacheManager repositoryCacheManager;
+    private Map<ClassLoader, Map<URI, CacheManager>> cacheManagers = new WeakHashMap<>(1);
 
-//    @Reference
-//    void setRepositoryCacheManager(RepositoryCacheManager repositoryCacheManager) {
-//        this.repositoryCacheManager = repositoryCacheManager;
-//    }
-
-    @Activate
-    public void activate() {
-        this.cacheManagers = new WeakHashMap<>(1);
+    @Reference
+    void setCacheManager(CacheManager cacheManager) {
+        synchronized (cacheManagers) {
+            Map<URI, CacheManager> map = new HashMap<>();
+            map.put(getDefaultURI(), cacheManager);
+            cacheManagers.put(getDefaultClassLoader(), map);
+        }
     }
 
     @Override
@@ -85,12 +83,14 @@ public class RepositoryCachingProvider implements CachingProvider {
         ClassLoader managerClassLoader = getManagerClassLoader(classLoader);
 
         synchronized (cacheManagers) {
-            Map<URI, CacheManager> cacheManagersByURI = cacheManagers.computeIfAbsent(
-                    managerClassLoader, any -> new HashMap<>());
-            return cacheManagersByURI.computeIfAbsent(managerURI, any -> {
-                Properties managerProperties = (properties == null) ? getDefaultProperties() : properties;
-                return new RepositoryCacheManager(this, managerURI, managerClassLoader, managerProperties);
-            });
+            Map<URI, CacheManager> cacheManagersByURI = cacheManagers.get(managerClassLoader);
+            if (cacheManagersByURI != null) {
+                CacheManager cacheManager = cacheManagersByURI.get(managerURI);
+                if (cacheManager != null) {
+                    return cacheManager;
+                }
+            }
+            return null;
         }
     }
 

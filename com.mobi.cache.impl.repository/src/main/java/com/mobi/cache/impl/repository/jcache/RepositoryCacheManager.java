@@ -25,6 +25,7 @@ package com.mobi.cache.impl.repository.jcache;
 
 import static java.util.Objects.requireNonNull;
 
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.cache.api.repository.CacheFactory;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
@@ -37,9 +38,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.cache.Cache;
 import javax.cache.CacheException;
@@ -48,19 +51,43 @@ import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
 
-//@Component
+@Component
 public class RepositoryCacheManager implements CacheManager {
 
     private Map<String, CacheFactory<?, ?>> cacheFactoryMap = new HashMap<>();
     private RepositoryManager repositoryManager;
     private Map<String, Cache<?, ?>> caches;
+    private CachingProvider cachingProvider;
+    private Set<CachingProvider> cachingProviders = new HashSet<>();
 
-    private final WeakReference<ClassLoader> classLoaderReference;
-    private final CachingProvider cacheProvider;
-    private final Properties properties;
-    private final URI uri;
+    private WeakReference<ClassLoader> classLoaderReference;
+    private Properties properties;
+    private URI uri;
 
     private volatile boolean closed;
+
+    @Reference(type = '*', dynamic = true, optional = true)
+    public void addCachingProvider(CachingProvider cachingProvider) {
+        if (cachingProviders.size() == 0) {
+            cachingProviders.add(cachingProvider);
+            this.cachingProvider = cachingProvider;
+            this.classLoaderReference = new WeakReference<>(
+                    requireNonNull(cachingProvider.getDefaultClassLoader()));
+            this.properties = requireNonNull(cachingProvider.getDefaultProperties());
+            this.caches = new ConcurrentHashMap<>();
+            this.uri = requireNonNull(cachingProvider.getDefaultURI());
+        }
+    }
+
+    public void removeCachingProvider(CachingProvider cachingProvider) {
+        cachingProviders.removeIf(cachingProvider1
+                -> cachingProvider1.getDefaultURI() == cachingProvider.getDefaultURI());
+        this.cachingProvider = null;
+        this.classLoaderReference = null;
+        this.properties = null;
+        this.caches = null;
+        this.uri = null;
+    }
 
     @Reference(type = '*', dynamic = true, optional = true)
     public void addCacheFactory(CacheFactory cacheFactory)  {
@@ -76,18 +103,9 @@ public class RepositoryCacheManager implements CacheManager {
         this.repositoryManager = repositoryManager;
     }
 
-    public RepositoryCacheManager(CachingProvider cacheProvider, URI uri, ClassLoader classLoader,
-                                  Properties properties) {
-        this.classLoaderReference = new WeakReference<>(requireNonNull(classLoader));
-        this.cacheProvider = requireNonNull(cacheProvider);
-        this.properties = requireNonNull(properties);
-        this.caches = new ConcurrentHashMap<>();
-        this.uri = requireNonNull(uri);
-    }
-
     @Override
     public CachingProvider getCachingProvider() {
-        return cacheProvider;
+        return cachingProvider;
     }
 
     @Override
@@ -208,7 +226,7 @@ public class RepositoryCacheManager implements CacheManager {
         }
         synchronized (cacheFactoryMap) {
             if (!isClosed()) {
-                cacheProvider.close(uri, classLoaderReference.get());
+                cachingProvider.close(uri, classLoaderReference.get());
                 for (Cache<?, ?> cache : caches.values()) {
                     cache.close();
                 }
