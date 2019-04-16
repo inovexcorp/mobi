@@ -26,7 +26,7 @@
 	<parent>
 		<groupId>com.mobi</groupId>
 		<artifactId>rdf-orm</artifactId>
-		<version>1.16.6</version>
+		<version>1.16.7</version>
 	</parent>
 
 	<artifactId>rdf.orm.generate</artifactId>
