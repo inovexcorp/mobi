@@ -79,10 +79,6 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         typeIRI = vf.createIRI(RDF.TYPE.stringValue());
         versionIRIPred = vf.createIRI(OWL.VERSIONIRI.stringValue());
 
-        org.semanticweb.owlapi.model.IRI owlOntIRI = org.semanticweb.owlapi.model.IRI.create(ontologyIRIString);
-        org.semanticweb.owlapi.model.IRI owlVerIRI = org.semanticweb.owlapi.model.IRI.create(versionIRIString);
-
-
         Capture<IRI> mobiIRI = EasyMock.newCapture();
         Capture<org.semanticweb.owlapi.model.IRI> owlapiIRI = EasyMock.newCapture();
 

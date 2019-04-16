@@ -34,8 +34,11 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -152,6 +155,76 @@ public class Models {
      */
     public static Optional<IRI> predicate(Model m) {
         return m.stream().map(Statement::getPredicate).findAny();
+    }
+
+    /**
+     * Finds the first subject in the provided Model that has the given predicate and object.
+     *
+     * @param model The Model to filter
+     * @param predicate The predicate to filter by
+     * @param object The object to filter by
+     * @return An Optional Resource of the first subject found with the given predicate and object
+     */
+    public static Optional<Resource> findFirstSubject(Model model, IRI predicate, IRI object) {
+        Model filteredModel = model.filter(null, predicate, object);
+        if (filteredModel.size() > 0) {
+            Optional<Statement> optionalStatement = filteredModel.stream().findFirst();
+            if (optionalStatement.isPresent()) {
+                return Optional.of(optionalStatement.get().getSubject());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Finds the first object in the provided Model that has the given subject and predicate.
+     *
+     * @param model The Model to filter
+     * @param subject The subject to filter by
+     * @param predicate The predicate to filter by
+     * @return An Optional Value of the first object found with the given subject and predicate
+     */
+    public static Optional<Value> findFirstObject(Model model, IRI subject, IRI predicate) {
+        Model filteredModel = model.filter(subject, predicate, null);
+        if (filteredModel.size() > 0) {
+            Optional<Statement> optionalStatement = filteredModel.stream().findFirst();
+            if (optionalStatement.isPresent()) {
+                return Optional.of(optionalStatement.get().getObject());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Finds the first OntologyIRI in the provided Model.
+     *
+     * @param model The Model to filter
+     * @param vf The ValueFactory used to create an IRI
+     * @return An Optional IRI of the first OntologyIRI found in the Model
+     */
+    public static Optional<IRI> findFirstOntologyIRI(Model model, ValueFactory vf) {
+        Optional<Resource> optionalResource = findFirstSubject(model, vf.createIRI(RDF.TYPE.stringValue()),
+                vf.createIRI(OWL.ONTOLOGY.stringValue()));
+        if (optionalResource.isPresent() && optionalResource.get() instanceof IRI) {
+            return Optional.of((IRI) optionalResource.get());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Finds the first VersionIRI in the provided Model with the given OntologyIRI.
+     *
+     * @param model The Model to filter
+     * @param ontologyIRI The OntologyIRI used to filter
+     * @param vf The ValueFactory used to create an IRI
+     * @return An Optional IRI of the first VersionIRI found for the given OntologyIRI
+     */
+    public static Optional<IRI> findFirstVersionIRI(Model model, IRI ontologyIRI, ValueFactory vf) {
+        Optional<Value> optionalValue = findFirstObject(model, ontologyIRI, vf.createIRI(OWL.VERSIONIRI.stringValue()));
+        if (optionalValue.isPresent() && optionalValue.get() instanceof IRI) {
+            return Optional.of((IRI) optionalValue.get());
+        }
+        return Optional.empty();
     }
 
     /**

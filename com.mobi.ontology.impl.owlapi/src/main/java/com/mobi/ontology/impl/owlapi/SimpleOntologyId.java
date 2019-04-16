@@ -25,13 +25,11 @@ package com.mobi.ontology.impl.owlapi;
 
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.persistence.utils.Models;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 
 import java.util.Optional;
@@ -96,21 +94,11 @@ public class SimpleOntologyId implements OntologyId {
             builder.ontologyIRI = null;
             builder.versionIRI = null;
             builder.identifier = null;
-            Model ontologyIriModel = builder.model.filter(null, factory.createIRI(RDF.TYPE.stringValue()),
-                    factory.createIRI(OWL.ONTOLOGY.stringValue()));
-            if (ontologyIriModel.size() > 0) {
-                Optional<Statement> ontologyStatementOpt = ontologyIriModel.stream().findFirst();
-                ontologyStatementOpt.ifPresent(ontologyStatement
-                        -> builder.ontologyIRI = factory.createIRI(ontologyStatement.getSubject().stringValue()));
-            }
+            Models.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
+                    -> builder.ontologyIRI = ontologyIRI);
             if (builder.ontologyIRI != null) {
-                Model versionIriModel = builder.model.filter(builder.ontologyIRI,
-                        factory.createIRI(OWL.VERSIONIRI.stringValue()), null);
-                if (versionIriModel.size() > 0) {
-                    Optional<Statement> versionStatementOpt = versionIriModel.stream().findFirst();
-                    versionStatementOpt.ifPresent(versionStatement
-                            -> builder.versionIRI = factory.createIRI(versionStatement.getObject().stringValue()));
-                }
+                Models.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI
+                        -> builder.versionIRI = versionIRI);
             }
         }
 
