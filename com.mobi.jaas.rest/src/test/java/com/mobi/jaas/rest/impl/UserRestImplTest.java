@@ -23,6 +23,7 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
+import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
@@ -48,6 +49,7 @@ import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
@@ -84,6 +86,7 @@ import javax.ws.rs.core.Response;
 public class UserRestImplTest extends MobiRestTestNg {
     private UserRestImpl rest;
     private ValueFactory vf;
+    private ModelFactory mf;
     private OrmFactory<User> userFactory;
     private OrmFactory<Role> roleFactory;
     private OrmFactory<Thing> thingFactory;
@@ -94,6 +97,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     private Set<User> users;
     private Set<Group> groups;
     private Set<Role> roles;
+    private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
 
     @Mock
     private EngineManager engineManager;
@@ -110,6 +114,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
+        mf = getModelFactory();
         OrmFactory<Group> groupFactory = getRequiredOrmFactory(Group.class);
         userFactory = getRequiredOrmFactory(User.class);
         roleFactory = getRequiredOrmFactory(Role.class);
@@ -141,7 +146,10 @@ public class UserRestImplTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
         when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+
         when(userFactoryMock.createNew(any(Resource.class), any(Model.class))).thenReturn(user);
+
+        when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
         rest = new UserRestImpl();
         rest.setEngineManager(engineManager);
@@ -166,29 +174,35 @@ public class UserRestImplTest extends MobiRestTestNg {
         user.setPassword(vf.createLiteral("ABC"));
 
         reset(engineManager);
-        reset(rdfEngine);
-        when(engineManager.getUsers(anyString())).thenReturn(users);
+
+        when(engineManager.getUsers()).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
-        when(engineManager.userExists(UsernameTestFilter.USERNAME)).thenReturn(true);
-        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
-        when(engineManager.checkPassword(anyString(), anyString(), anyString())).thenReturn(true);
-        when(engineManager.getGroups(anyString())).thenReturn(groups);
+        when(engineManager.userExists("error")).thenReturn(false);
+        when(engineManager.createUser(eq(ENGINE_NAME), any(UserConfig.class))).thenReturn(user);
+        when(engineManager.retrieveUser(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser(ENGINE_NAME, "error")).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser("error")).thenReturn(Optional.empty());
+        when(engineManager.checkPassword(eq(ENGINE_NAME), anyString(), anyString())).thenReturn(true);
+        when(engineManager.getGroups()).thenReturn(groups);
         when(engineManager.groupExists(anyString())).thenReturn(true);
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
-        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
-        when(engineManager.getUserRoles(anyString(), anyString())).thenReturn(Stream.concat(roles.stream(),
+        when(engineManager.groupExists("error")).thenReturn(false);
+        when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(group));
+        when(engineManager.retrieveGroup(ENGINE_NAME, "error")).thenReturn(Optional.empty());
+        when(engineManager.retrieveGroup(anyString())).thenReturn(Optional.of(group));
+        when(engineManager.retrieveGroup("error")).thenReturn(Optional.empty());
+        when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(role));
+        when(engineManager.getUserRoles(eq(ENGINE_NAME), anyString())).thenReturn(Stream.concat(roles.stream(),
                 group.getHasGroupRole().stream()).collect(Collectors.toSet()));
         when(engineManager.getUserRoles(UsernameTestFilter.USERNAME)).thenReturn(Stream.concat(roles.stream(),
                 group.getHasGroupRole().stream()).collect(Collectors.toSet()));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.empty());
-        when(rdfEngine.getEngineName()).thenReturn("com.mobi.jaas.engines.RdfEngine");
     }
 
     @Test
     public void getUsersTest() {
         Response response = target().path("users").request().get();
-        verify(engineManager, atLeastOnce()).getUsers(anyString());
+        verify(engineManager, atLeastOnce()).getUsers();
         assertEquals(response.getStatus(), 200);
         try {
             String str = response.readEntity(String.class);
@@ -215,7 +229,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        verify(engineManager).storeUser(anyString(), any(User.class));
+        verify(engineManager).storeUser(eq(ENGINE_NAME), any(User.class));
     }
 
     @Test
@@ -269,7 +283,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     public void getUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().get();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertFalse(result.containsKey("@graph"));
         assertTrue(result.containsKey("@id"));
@@ -278,12 +292,9 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getUserThatDoesNotExistTest() {
-        // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/error").request().get();
         assertEquals(response.getStatus(), 404);
-        verify(engineManager).retrieveUser(anyString(), eq("error"));
+        verify(engineManager).retrieveUser("error");
     }
 
     @Test
@@ -293,8 +304,8 @@ public class UserRestImplTest extends MobiRestTestNg {
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
-        verify(engineManager).updateUser(anyString(), any(User.class));
+        verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
 
     @Test
@@ -311,14 +322,14 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateUserThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        // Setup:
+        when(engineManager.retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME)).thenReturn(Optional.empty());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
-        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
     }
 
     @Test
@@ -328,9 +339,9 @@ public class UserRestImplTest extends MobiRestTestNg {
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).checkPassword(anyString(), eq(UsernameTestFilter.USERNAME), eq("ABC"));
-        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
-        verify(engineManager).updateUser(anyString(), any(User.class));
+        verify(engineManager).checkPassword(ENGINE_NAME, UsernameTestFilter.USERNAME, "ABC");
+        verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
 
     @Test
@@ -373,7 +384,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void changePasswordForUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME)).thenReturn(Optional.empty());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
@@ -388,8 +399,8 @@ public class UserRestImplTest extends MobiRestTestNg {
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("user", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), eq("username"));
-        verify(engineManager).updateUser(anyString(), any(User.class));
+        verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, "username");
+        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
 
     @Test
@@ -401,9 +412,6 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Test
     public void resetPasswordOfUserThatDoesNotExistTest() {
-        // Setup:
-        when(engineManager.retrieveUser(anyString(), eq("error"))).thenReturn(Optional.empty());
-
         Response response = target().path("users/error/password")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
@@ -414,7 +422,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     public void deleteUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).deleteUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
     }
 
     @Test
@@ -429,7 +437,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void getUserRolesTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").request().get();
-        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -442,7 +450,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void getUserRolesIncludingGroupsTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("includeGroups", "true").request().get();
-        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -454,9 +462,6 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getUserRolesThatDoNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/error/roles").request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -475,15 +480,14 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
-        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
-        verify(engineManager).updateUser(anyString(), any(User.class));
+        verify(engineManager).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        roles.keySet().forEach(s -> verify(engineManager).getRole(ENGINE_NAME, s));
+        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
 
     @Test
     public void addRolesToUserThatDoesNotExistTest() {
         //Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
         String[] roles = {"testRole"};
 
         Response response = target().path("users/error/roles").queryParam("roles", roles)
@@ -514,15 +518,12 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
-        verify(engineManager).updateUser(anyString(), any(User.class));
+        verify(engineManager).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
+        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
 
     @Test
     public void removeRoleFromUserThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/error/roles").queryParam("role", "testRole")
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -542,8 +543,8 @@ public class UserRestImplTest extends MobiRestTestNg {
     public void getUserGroupsTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
-        verify(engineManager).getGroups(anyString());
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
+        verify(engineManager).getGroups();
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), groups.size());
@@ -557,15 +558,12 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void addGroupToUserThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -573,9 +571,6 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Test
     public void addGroupThatDoesNotExistToUserTest() {
-        //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
@@ -586,15 +581,12 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void removeGroupFromUserThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -602,9 +594,6 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Test
     public void removeGroupThatDoesNotExistFromUserTest() {
-        //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().delete();
         assertEquals(response.getStatus(), 400);

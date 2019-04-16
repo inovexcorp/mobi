@@ -92,6 +92,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
     private Set<User> users;
     private Set<Group> groups;
     private Set<Role> roles;
+    private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
 
     @Mock
     private EngineManager engineManager;
@@ -138,6 +139,8 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
         when(groupFactoryMock.createNew(any(Resource.class), any(Model.class))).thenReturn(group);
 
+        when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
+
         rest = spy(new GroupRestImpl());
         injectOrmFactoryReferencesIntoService(rest);
         rest.setEngineManager(engineManager);
@@ -159,23 +162,29 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager);
-        reset(rdfEngine);
-        when(engineManager.getUsers(anyString())).thenReturn(users);
+        when(engineManager.getUsers()).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
-        when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
-        when(engineManager.getGroups(anyString())).thenReturn(groups);
+        when(engineManager.userExists("error")).thenReturn(false);
+        when(engineManager.createUser(eq(ENGINE_NAME), any(UserConfig.class))).thenReturn(user);
+        when(engineManager.retrieveUser(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser(ENGINE_NAME, "error")).thenReturn(Optional.empty());
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser("error")).thenReturn(Optional.empty());
+        when(engineManager.getGroups()).thenReturn(groups);
         when(engineManager.groupExists(anyString())).thenReturn(true);
-        when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(group);
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
-        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
-        when(rdfEngine.getEngineName()).thenReturn("com.mobi.jaas.engines.RdfEngine");
+        when(engineManager.groupExists("error")).thenReturn(false);
+        when(engineManager.createGroup(eq(ENGINE_NAME), any(GroupConfig.class))).thenReturn(group);
+        when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(group));
+        when(engineManager.retrieveGroup(ENGINE_NAME, "error")).thenReturn(Optional.empty());
+        when(engineManager.retrieveGroup(anyString())).thenReturn(Optional.of(group));
+        when(engineManager.retrieveGroup("error")).thenReturn(Optional.empty());
+        when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(role));
     }
 
     @Test
     public void getGroupsTest() {
         Response response = target().path("groups").request().get();
-        verify(engineManager, atLeastOnce()).getGroups(anyString());
+        verify(engineManager, atLeastOnce()).getGroups();
         assertEquals(response.getStatus(), 200);
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
@@ -199,7 +208,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
         Response response = target().path("groups")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        verify(engineManager).storeGroup(anyString(), any(Group.class));
+        verify(engineManager).storeGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
@@ -231,7 +240,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
     public void getGroupTest() {
         Response response = target().path("groups/testGroup").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager).retrieveGroup("testGroup");
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertFalse(result.containsKey("@graph"));
         assertTrue(result.containsKey("@id"));
@@ -240,9 +249,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getGroupThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/error").request().get();
         assertEquals(response.getStatus(), 404);
     }
@@ -254,14 +260,13 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld"), transformer),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void updateGroupWithDifferentTitleTest() {
         //Setup:
-
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/group2"));
         newGroup.setTitle(Collections.singleton(vf.createLiteral("group2")));
 
@@ -274,27 +279,24 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void updateGroupThatDoesNotExistTest() {
         //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/testGroup")
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld"), transformer),
                         MediaType.APPLICATION_JSON_TYPE));
         assertEquals(response.getStatus(), 400);
-        verify(engineManager, atLeastOnce()).retrieveGroup(anyString(), eq("testGroup"));
+        verify(engineManager, atLeastOnce()).retrieveGroup(ENGINE_NAME, "testGroup");
     }
 
     @Test
     public void deleteGroupTest() {
         Response response = target().path("groups/testGroup").request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).deleteGroup(anyString(), eq("testGroup"));
+        verify(engineManager).deleteGroup(ENGINE_NAME, "testGroup");
     }
 
     @Test
     public void deleteGroupThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.groupExists(anyString())).thenReturn(false);
-
         Response response = target().path("groups/error").request().delete();
         assertEquals(response.getStatus(), 400);
     }
@@ -313,9 +315,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getGroupRolesThatDoNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/error/roles").request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -328,21 +327,20 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .mapToObj(Integer::toString)
                 .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://mobi.com/roles/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
-        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(newGroup));
+        when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(newGroup));
 
         Response response = target().path("groups/testGroup/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        roles.keySet().forEach(s -> verify(engineManager).getRole(anyString(), eq(s)));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        roles.keySet().forEach(s -> verify(engineManager).getRole(ENGINE_NAME, s));
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void addRoleToGroupThatDoesNotExistTest() {
         //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
         String[] roles = {"testRole"};
 
         Response response = target().path("groups/error/roles").queryParam("roles", roles)
@@ -353,7 +351,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void addRoleThatDoesNotExistToGroupTest() {
         //Setup:
-        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenReturn(Optional.empty());
         String[] roles = {"testRole"};
 
         Response response = target().path("groups/testGroup/roles").queryParam("roles", roles)
@@ -373,15 +371,12 @@ public class GroupRestImplTest extends MobiRestTestNg {
         Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void removeRoleFromGroupThatDoesNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/error/roles").queryParam("role", "testRole")
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -390,7 +385,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void removeRoleThatDoesNotExistFromGroupTest() {
         //Setup:
-        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("groups/testGroup/roles").queryParam("role", "error")
                 .request().delete();
@@ -411,9 +406,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getGroupUsersThatDoNotExistTest() {
-        //Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/error/users").request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -426,22 +418,19 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .mapToObj(Integer::toString)
                 .forEach(s -> users.put(s, userFactory.createNew(vf.createIRI("http://mobi.com/users/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
-        when(engineManager.retrieveUser(anyString(), anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(1, String.class))));
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(newGroup));
+        when(engineManager.retrieveUser(eq(ENGINE_NAME), anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(newGroup));
 
         Response response = target().path("groups/testGroup/users").queryParam("users", users.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        users.keySet().forEach(s -> verify(engineManager).retrieveUser(anyString(), eq(s)));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        users.keySet().forEach(s -> verify(engineManager).retrieveUser(ENGINE_NAME, s));
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void addGroupUserToGroupThatDoesNotExistTest() {
-        // Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/error/users").request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
@@ -449,7 +438,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @Test
     public void addGroupUserThatDoesNotExistTest() {
         // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
         String[] usernames = {"error"};
 
         Response response = target().path("groups/testGroup/users").queryParam("users", usernames)
@@ -462,16 +450,13 @@ public class GroupRestImplTest extends MobiRestTestNg {
         Response response = target().path("groups/testGroup/users").queryParam("user", "tester")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveGroup(anyString(), eq("testGroup"));
-        verify(engineManager).retrieveUser(anyString(), eq("tester"));
-        verify(engineManager).updateGroup(anyString(), any(Group.class));
+        verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
+        verify(engineManager).retrieveUser(ENGINE_NAME, "tester");
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
     @Test
     public void removeGroupUserFromGroupThatDoesNotExistTest() {
-        // Setup:
-        when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/error/users").queryParam("user", "tester")
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -479,9 +464,6 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
     @Test
     public void removeGroupUserTHatDoesNotExistTest() {
-        // Setup:
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.empty());
-
         Response response = target().path("groups/testGroup/users").queryParam("user", "error")
                 .request().delete();
         assertEquals(response.getStatus(), 400);

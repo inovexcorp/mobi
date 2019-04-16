@@ -158,6 +158,15 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public Set<Group> getGroups() {
+        Set<Group> groups = new HashSet<>();
+        for (Engine engine : engines.values()) {
+            groups.addAll(engine.getGroups());
+        }
+        return groups;
+    }
+
+    @Override
     public Group createGroup(String engine, GroupConfig groupConfig) {
         if (engines.containsKey(engine)) {
             return engines.get(engine).createGroup(groupConfig);
@@ -176,6 +185,17 @@ public class SimpleEngineManager implements EngineManager {
     public Optional<Group> retrieveGroup(String engine, String groupTitle) {
         if (engines.containsKey(engine)) {
             return engines.get(engine).retrieveGroup(groupTitle);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Group> retrieveGroup(String groupTitle) {
+        for (Engine engine : engines.values()) {
+            Optional<Group> optional = engine.retrieveGroup(groupTitle);
+            if (optional.isPresent()) {
+                return optional;
+            }
         }
         return Optional.empty();
     }

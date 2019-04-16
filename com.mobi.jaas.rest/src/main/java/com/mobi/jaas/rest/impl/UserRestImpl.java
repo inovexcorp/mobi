@@ -101,7 +101,7 @@ public class UserRestImpl implements UserRest {
     @Override
     public Response getUsers() {
         try {
-            Set<User> users = engineManager.getUsers(rdfEngine.getEngineName());
+            Set<User> users = engineManager.getUsers();
             JSONArray result = JSONArray.fromObject(users.stream()
                     .map(user -> {
                         user.clearPassword();
@@ -131,7 +131,7 @@ public class UserRestImpl implements UserRest {
 
         Set<String> roleSet = new HashSet<>();
         if (roles != null && roles.size() > 0) {
-            roleSet = roles.stream().map(role -> role.getValue()).collect(Collectors.toSet());
+            roleSet = roles.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
         }
 
         UserConfig.Builder builder = new UserConfig.Builder(username, password, roleSet);
@@ -146,6 +146,9 @@ public class UserRestImpl implements UserRest {
         }
 
         User user = engineManager.createUser(rdfEngine.getEngineName(), builder.build());
+        if (!user.getUsername().isPresent()) {
+            throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
+        }
         engineManager.storeUser(rdfEngine.getEngineName(), user);
         logger.info("Created user " + user.getResource() + " with username " + username);
         return Response.status(201).entity(user.getUsername().get().stringValue()).build();
@@ -156,7 +159,7 @@ public class UserRestImpl implements UserRest {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
         user.clearPassword();
         String json = groupedModelToString(user.getModel().filter(user.getResource(), null, null),
@@ -188,6 +191,12 @@ public class UserRestImpl implements UserRest {
         }
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (!savedUser.getUsername().isPresent()) {
+            throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        if (!savedUser.getPassword().isPresent()) {
+            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+        }
         if (!savedUser.getUsername().get().equals(newUsername)) {
             throw ErrorUtils.sendError("Usernames must match", Response.Status.BAD_REQUEST);
         }
@@ -251,9 +260,10 @@ public class UserRestImpl implements UserRest {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+        // TODO: Change to do exception handling instead of two calls
+        User user = engineManager.retrieveUser(username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Set<Role> roles = includeGroups ? engineManager.getUserRoles(rdfEngine.getEngineName(), username)
+        Set<Role> roles = includeGroups ? engineManager.getUserRoles(username)
                 : user.getHasUserRole();
         JSONArray result = JSONArray.fromObject(roles.stream()
                 .map(role -> role.getModel().filter(role.getResource(), null, null))
@@ -303,9 +313,9 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
 
-        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Set<Group> groups = engineManager.getGroups(rdfEngine.getEngineName()).stream()
+        Set<Group> groups = engineManager.getGroups().stream()
                 .filter(group -> {
                     Set<Agent> members = group.getMember();
                     return members.stream()
@@ -414,8 +424,14 @@ public class UserRestImpl implements UserRest {
     private Response changePassword(String username, String newPassword) {
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (!savedUser.getPassword().isPresent()) {
+            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+        }
         User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
                 new UserConfig.Builder("", newPassword, new HashSet<>()).build());
+        if (!tempUser.getPassword().isPresent()) {
+            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+        }
         savedUser.setPassword(tempUser.getPassword().get());
         engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
         return Response.ok().build();

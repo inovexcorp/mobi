@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
@@ -107,7 +108,7 @@ public class GroupRestImpl implements GroupRest {
     @Override
     public Response getGroups() {
         try {
-            JSONArray result = JSONArray.fromObject(engineManager.getGroups(rdfEngine.getEngineName()).stream()
+            JSONArray result = JSONArray.fromObject(engineManager.getGroups().stream()
                     .map(group -> group.getModel().filter(group.getResource(), null, null))
                     .map(groupModel -> modelToJsonld(groupModel, transformer))
                     .map(RestUtils::getObjectFromJsonld)
@@ -129,13 +130,13 @@ public class GroupRestImpl implements GroupRest {
         GroupConfig.Builder builder = new GroupConfig.Builder(title);
 
         if (members != null && members.size() > 0) {
-            builder.members(members.stream().map(member -> member.getValue()).collect(Collectors.toSet()));
+            builder.members(members.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
         }
         if (description != null) {
             builder.description(description);
         }
         if (roles != null && roles.size() > 0) {
-            Set<String> roleSet = roles.stream().map(role -> role.getValue()).collect(Collectors.toSet());
+            Set<String> roleSet = roles.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
             builder.roles(roleSet);
         }
 
@@ -153,7 +154,7 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group group = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+        Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
 
         String json = groupedModelToString(group.getModel().filter(group.getResource(), null, null),
@@ -183,7 +184,11 @@ public class GroupRestImpl implements GroupRest {
         }
         Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        if (!savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {
+        Optional<Value> savedGroupTitle = savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue()));
+        if (!savedGroupTitle.isPresent()) {
+            throw ErrorUtils.sendError("Group must have a title", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        if (!savedGroupTitle.get().equals(title)) {
             throw ErrorUtils.sendError("Group titles must match", Response.Status.BAD_REQUEST);
         }
         if (!savedGroup.getHasGroupRole().isEmpty()) {
@@ -217,7 +222,7 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group group = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+        Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
 
         JSONArray result = JSONArray.fromObject(group.getHasGroupRole().stream()
@@ -268,7 +273,7 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+        Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         Set<User> members = savedGroup.getMember().stream()
                 .map(agent -> userFactory.getExisting(agent.getResource(), agent.getModel()).orElseThrow(() ->

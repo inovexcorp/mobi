@@ -16,7 +16,7 @@
     rdfs:comment "The Mobi user management ontology describes how users are expressed within the Mobi framework."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
-    dct:modified "2017-10-06"^^xsd:date.
+    dct:modified "2019-04-16"^^xsd:date.
 
 # User
 
@@ -43,12 +43,26 @@
     rdfs:domain :User;
     rdfs:range :Settings.
 
+# External User
+
+:ExternalUser a owl:Class;
+    rdfs:subClassOf :User ;
+    rdfs:label "External User"@en;
+    rdfs:comment "A person who is defined outside of the Mobi framework, but still uses it."@en.
+
 # Group
 
 :Group a owl:Class;
     rdfs:subClassOf foaf:Group;
     rdfs:label "Group"@en;
     rdfs:comment "A group defined within the Mobi framework."@en.
+
+# External Group
+
+:ExternalGroup a owl:Class;
+    rdfs:subClassOf :Group;
+    rdfs:label "External Group"@en;
+    rdfs:comment "A group that is defined outside of the Mobi framework."@en.
 
 # Settings
 

@@ -236,6 +236,13 @@ public class SimpleEngineManagerTest {
     }
 
     @Test
+    public void testGetGroupsForAllEngines() throws Exception {
+        Set<Group> groups = engineManager.getGroups();
+        verify(engine).getGroups();
+        assertEquals(1, groups.size());
+    }
+
+    @Test
     public void testCreateGroup() throws Exception {
         Group result = engineManager.createGroup("error", groupConfig);
         verify(engine, times(0)).createGroup(groupConfig);
@@ -257,12 +264,27 @@ public class SimpleEngineManagerTest {
     }
 
     @Test
-    public void testRetrieveGroup() throws Exception {
+    public void testRetrieveGroupFromEngine() throws Exception {
         Optional<Group> result = engineManager.retrieveGroup("error", "group");
         verify(engine, times(0)).retrieveGroup("group");
         assertFalse(result.isPresent());
 
         result = engineManager.retrieveGroup(engine.getEngineName(), "group");
+        verify(engine).retrieveGroup("group");
+        assertTrue(result.isPresent());
+        assertEquals(group, result.get());
+    }
+
+    @Test
+    public void testRetrieveGroup() throws Exception {
+        // Setup:
+        when(engine.retrieveGroup("error")).thenReturn(Optional.empty());
+
+        Optional<Group> result = engineManager.retrieveGroup("error");
+        verify(engine).retrieveGroup("error");
+        assertFalse(result.isPresent());
+
+        result = engineManager.retrieveGroup("group");
         verify(engine).retrieveGroup("group");
         assertTrue(result.isPresent());
         assertEquals(group, result.get());
