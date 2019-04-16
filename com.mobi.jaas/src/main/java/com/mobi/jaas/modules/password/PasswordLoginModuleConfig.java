@@ -1,6 +1,4 @@
-@Version("1.1.0.${build}")
-
-package com.mobi.jaas.api.config;
+package com.mobi.jaas.modules.password;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package com.mobi.jaas.api.config;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,17 @@ package com.mobi.jaas.api.config;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+
+@Meta.OCD
+public interface PasswordLoginModuleConfig {
+
+    /**
+     * The name of the {@link com.mobi.jaas.api.engines.Engine} to be used for the
+     * {@link com.mobi.jaas.api.modules.password.PasswordLoginModule}.
+     *
+     * @return The {@link Class#getName() name} of an {@link com.mobi.jaas.api.engines.Engine}
+     */
+    @Meta.AD(required = false)
+    String engineName();
+}
