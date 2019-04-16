@@ -23,6 +23,8 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
+import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.ontology.core.utils.MobiOntologyCreationException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -52,6 +54,34 @@ public interface OntologyManager {
      * @throws MobiOntologyCreationException - if the ontology can't be created.
      */
     Ontology createOntology(Model model);
+
+    /**
+     * Applies the Difference to the provided Ontology and returns a new Ontology object.
+     *
+     * @param ontology the Ontology to apply the Difference to
+     * @param difference the Difference with changes made to the ontology
+     * @return An Ontology with the applied changes
+     */
+    Ontology applyChanges(Ontology ontology, Difference difference);
+
+    /**
+     * Applies the changes in the InProgressCommit associated with the Resource to the provided Ontology and returns a
+     * new Ontology object.
+     *
+     * @param ontology the Ontology to apply the Difference to
+     * @param inProgressCommitId the Resource for the InProgressCommit that has the changes made to the ontology
+     * @return An Ontology with the applied changes
+     */
+    Ontology applyChanges(Ontology ontology, Resource inProgressCommitId);
+
+    /**
+     * Applies the changes in the InProgressCommit to the provided Ontology and returns a new Ontology object.
+     *
+     * @param ontology the Ontology to apply the Difference to
+     * @param inProgressCommit the InProgressCommit with changes made to the ontology
+     * @return An Ontology with the applied changes
+     */
+    Ontology applyChanges(Ontology ontology, InProgressCommit inProgressCommit);
 
     /**
      * Tests whether an OntologyRecord with the provided OntologyIRI Resource exists in the Catalog.
