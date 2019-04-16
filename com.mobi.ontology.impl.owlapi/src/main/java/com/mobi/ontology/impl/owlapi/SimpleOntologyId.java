@@ -93,31 +93,25 @@ public class SimpleOntologyId implements OntologyId {
         this.factory = builder.factory;
 
         if (builder.model != null) {
+            builder.ontologyIRI = null;
+            builder.versionIRI = null;
+            builder.identifier = null;
             Model ontologyIriModel = builder.model.filter(null, factory.createIRI(RDF.TYPE.stringValue()),
                     factory.createIRI(OWL.ONTOLOGY.stringValue()));
             if (ontologyIriModel.size() > 0) {
                 Optional<Statement> ontologyStatementOpt = ontologyIriModel.stream().findFirst();
-                ontologyStatementOpt.ifPresent(ontologyStatement -> {
-                    builder.ontologyIRI = factory.createIRI(ontologyStatement.getSubject().stringValue());
-                });
-            } else {
-                builder.ontologyIRI = factory.createIRI(DEFAULT_PREFIX + UUID.randomUUID());
+                ontologyStatementOpt.ifPresent(ontologyStatement
+                        -> builder.ontologyIRI = factory.createIRI(ontologyStatement.getSubject().stringValue()));
             }
 
-            Model versionIriModel = builder.model.filter(null, factory.createIRI(OWL.VERSIONIRI.stringValue()), null);
-            if (versionIriModel.size() == 1) {
-                if (ontologyIriModel.size() == 0) {
-                    throw new MobiOntologyException("Ontology must have an ontologyIRI defined when a versionIRI "
-                            + "is present");
+            if (builder.ontologyIRI != null) {
+                Model versionIriModel = builder.model.filter(builder.ontologyIRI,
+                        factory.createIRI(OWL.VERSIONIRI.stringValue()), null);
+                if (versionIriModel.size() > 0) {
+                    Optional<Statement> versionStatementOpt = versionIriModel.stream().findFirst();
+                    versionStatementOpt.ifPresent(versionStatement
+                            -> builder.versionIRI = factory.createIRI(versionStatement.getObject().stringValue()));
                 }
-                Optional<Statement> versionStatementOpt = versionIriModel.stream().findFirst();
-                versionStatementOpt.ifPresent(versionStatement -> {
-                    builder.versionIRI = factory.createIRI(versionStatement.getObject().stringValue());
-                });
-            } else if (versionIriModel.size() > 1) {
-                throw new MobiOntologyException("Ontology cannot have more than one versionIRI.");
-            } else {
-                builder.versionIRI = null;
             }
         }
 

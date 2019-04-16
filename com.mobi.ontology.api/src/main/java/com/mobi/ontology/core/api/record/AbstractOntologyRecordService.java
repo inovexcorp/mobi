@@ -125,7 +125,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         IRI ontologyType = valueFactory.createIRI(OWL.ONTOLOGY.stringValue());
         Model ontologyIriModel = ontology.filter(null, typeIri, ontologyType);
         OntologyId id = ontologyManager.createOntologyId(ontology);
-        IRI ontologyIRI = id.getOntologyIRI().orElseThrow(() -> new IllegalStateException("OntologyIRI must exist"));
+        IRI ontologyIRI = id.getOntologyIRI().orElse((IRI) id.getOntologyIdentifier());
         if (ontologyIriModel.size() == 0) {
             ontology.add(ontologyIRI, typeIri, ontologyType);
         }
