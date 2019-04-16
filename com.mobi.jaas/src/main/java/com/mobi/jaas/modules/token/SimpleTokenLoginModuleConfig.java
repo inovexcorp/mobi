@@ -28,6 +28,12 @@ import aQute.bnd.annotation.metatype.Meta;
 @Meta.OCD
 public interface SimpleTokenLoginModuleConfig {
 
+    /**
+     * The name of the {@link com.mobi.jaas.api.engines.Engine} to be used for the
+     * {@link com.mobi.jaas.api.modules.token.SimpleTokenLoginModule}.
+     *
+     * @return The {@link Class#getName() name} of an {@link com.mobi.jaas.api.engines.Engine}
+     */
     @Meta.AD(required = false)
     String engineName();
 }

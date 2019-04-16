@@ -27,7 +27,21 @@ import java.util.Map;
 
 public interface AppConfigEntryProvider {
 
+    /**
+     * Returns the name of the {@link javax.security.auth.spi.LoginModule} provided by this AppConfigEntryProvider.
+     *
+     * @return The {@link Class#getName() name} of the provided {@link javax.security.auth.spi.LoginModule}
+     */
     String getModuleName();
 
+    /**
+     * The configuration object necessary for configuring the provided {@link javax.security.auth.spi.LoginModule} as a
+     * {@link javax.security.auth.login.AppConfigurationEntry}. Expects a minimum of these properties:
+     * {@link com.mobi.jaas.api.config.LoginModuleConfig#ENGINE_MANAGER},
+     * {@link com.mobi.jaas.api.config.LoginModuleConfig#ENGINE}, `ProxyLoginModule.BUNDLE_ID`,
+     * `ProxyLoginModule.MODULE`, and `BundleContext.class.getName()`.
+     *
+     * @return A {@link Map} of configuration properties for a {@link javax.security.auth.login.AppConfigurationEntry}
+     */
     Map<String, Object> getModuleConfig();
 }
