@@ -54,7 +54,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -178,9 +177,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private MergeRequestManager mergeRequestManager;
 
     @Mock
-    private Ontology ontology;
-
-    @Mock
     private OntologyId ontologyId1;
 
     @Mock
@@ -203,7 +199,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private SesameTransformer sesameTransformer;
-
 
     @Before
     public void setUp() throws Exception {
@@ -247,8 +242,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setOntologyIRI(testIRI);
 
         MockitoAnnotations.initMocks(this);
-        when(ontology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
-        when(ontology.getOntologyId()).thenReturn(ontologyId1);
         when(ontologyId1.getOntologyIRI()).thenReturn(Optional.empty());
         when(ontologyId1.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
         when(ontologyId2.getOntologyIRI()).thenReturn(Optional.of(importedOntologyIRI));
@@ -384,7 +377,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
-        when(ontology.getOntologyId()).thenReturn(ontologyId2);
         when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId2);
 
         OntologyRecord ontologyRecord = recordService.create(user, config, connection);

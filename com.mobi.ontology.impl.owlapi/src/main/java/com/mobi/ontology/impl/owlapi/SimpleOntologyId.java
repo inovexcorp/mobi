@@ -103,7 +103,6 @@ public class SimpleOntologyId implements OntologyId {
                 ontologyStatementOpt.ifPresent(ontologyStatement
                         -> builder.ontologyIRI = factory.createIRI(ontologyStatement.getSubject().stringValue()));
             }
-
             if (builder.ontologyIRI != null) {
                 Model versionIriModel = builder.model.filter(builder.ontologyIRI,
                         factory.createIRI(OWL.VERSIONIRI.stringValue()), null);
@@ -116,7 +115,7 @@ public class SimpleOntologyId implements OntologyId {
         }
 
         if (builder.versionIRI != null && builder.ontologyIRI == null) {
-            throw new MobiOntologyException("ontologyIRI must not be null if versionIRI is not null");
+            throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
         }
 
         org.semanticweb.owlapi.model.IRI ontologyIRI = null;
