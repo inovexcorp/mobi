@@ -51,6 +51,7 @@
         dvm.entityName = '';
         dvm.hoverEdit = false;
         dvm.closeTimeout = undefined;
+        dvm.resetStateTimeout = undefined;
 
         dvm.$onInit = function() {
             dvm.entityName = dvm.os.getEntityNameByIndex(dvm.iri);
@@ -67,8 +68,12 @@
             }
         }
         dvm.$onDestroy = function() {
-            dvm.os.listItem.goTo.active = false;
-            dvm.os.listItem.goTo.entityIRI = '';
+            $timeout.cancel(dvm.closeTimeout);
+            $timeout.cancel(dvm.resetStateTimeout);
+            if (dvm.os.listItem.goTo) {
+                dvm.os.listItem.goTo.active = false;
+                dvm.os.listItem.goTo.entityIRI = '';
+            }
         }
         dvm.openEntity = function() {
             dvm.os.goTo(dvm.iri);
@@ -94,9 +99,11 @@
         function closeSnackbar() {
             if (!dvm.hoverEdit) {
                 dvm.show = false;
-                $timeout(() => {
-                    dvm.os.listItem.goTo.active = false;
-                    dvm.os.listItem.goTo.entityIRI = '';
+                dvm.resetStateTimeout = $timeout(() => {
+                    if (dvm.os.listItem.goTo) {
+                        dvm.os.listItem.goTo.active = false;
+                        dvm.os.listItem.goTo.entityIRI = '';
+                    }
                 }, 500);
             }
         }
