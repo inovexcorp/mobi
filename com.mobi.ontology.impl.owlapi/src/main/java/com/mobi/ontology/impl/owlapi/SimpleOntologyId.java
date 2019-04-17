@@ -25,7 +25,7 @@ package com.mobi.ontology.impl.owlapi;
 
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.persistence.utils.Models;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -94,10 +94,10 @@ public class SimpleOntologyId implements OntologyId {
             builder.ontologyIRI = null;
             builder.versionIRI = null;
             builder.identifier = null;
-            Models.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
+            OntologyModels.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
                     -> builder.ontologyIRI = ontologyIRI);
             if (builder.ontologyIRI != null) {
-                Models.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI
+                OntologyModels.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI
                         -> builder.versionIRI = versionIRI);
             }
         }

@@ -34,11 +34,8 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
@@ -191,38 +188,6 @@ public class Models {
             if (optionalStatement.isPresent()) {
                 return Optional.of(optionalStatement.get().getObject());
             }
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Finds the first OntologyIRI in the provided Model.
-     *
-     * @param model The Model to filter
-     * @param vf The ValueFactory used to create an IRI
-     * @return An Optional IRI of the first OntologyIRI found in the Model
-     */
-    public static Optional<IRI> findFirstOntologyIRI(Model model, ValueFactory vf) {
-        Optional<Resource> optionalResource = findFirstSubject(model, vf.createIRI(RDF.TYPE.stringValue()),
-                vf.createIRI(OWL.ONTOLOGY.stringValue()));
-        if (optionalResource.isPresent() && optionalResource.get() instanceof IRI) {
-            return Optional.of((IRI) optionalResource.get());
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Finds the first VersionIRI in the provided Model with the given OntologyIRI.
-     *
-     * @param model The Model to filter
-     * @param ontologyIRI The OntologyIRI used to filter
-     * @param vf The ValueFactory used to create an IRI
-     * @return An Optional IRI of the first VersionIRI found for the given OntologyIRI
-     */
-    public static Optional<IRI> findFirstVersionIRI(Model model, IRI ontologyIRI, ValueFactory vf) {
-        Optional<Value> optionalValue = findFirstObject(model, ontologyIRI, vf.createIRI(OWL.VERSIONIRI.stringValue()));
-        if (optionalValue.isPresent() && optionalValue.get() instanceof IRI) {
-            return Optional.of((IRI) optionalValue.get());
         }
         return Optional.empty();
     }

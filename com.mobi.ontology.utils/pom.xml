@@ -93,6 +93,7 @@
                         <Bundle-Name>Mobi Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
+                            com.mobi.ontology.utils;
                             com.mobi.ontology.utils.cache; provide:=true
                             com.mobi.cache.config; provide:=true
                         </Export-Package>
