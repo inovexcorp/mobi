@@ -23,8 +23,6 @@ package com.mobi.cache.impl.repository.jcache;
  * #L%
  */
 
-import static java.util.Objects.requireNonNull;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.cache.api.repository.CacheFactory;
@@ -54,12 +52,12 @@ import javax.cache.spi.CachingProvider;
 @Component
 public class RepositoryCacheManager implements CacheManager {
 
-    private Map<String, CacheFactory<?, ?>> cacheFactoryMap = new HashMap<>();
+    private final Map<String, CacheFactory<?, ?>> cacheFactoryMap = new HashMap<>();
+
     private RepositoryManager repositoryManager;
     private Map<String, Cache<?, ?>> caches;
     private CachingProvider cachingProvider;
     private Set<CachingProvider> cachingProviders = new HashSet<>();
-
     private WeakReference<ClassLoader> classLoaderReference;
     private Properties properties;
     private URI uri;
@@ -68,14 +66,23 @@ public class RepositoryCacheManager implements CacheManager {
 
     @Reference(type = '*', dynamic = true, optional = true)
     public void addCachingProvider(CachingProvider cachingProvider) {
+        if (cachingProvider == null) {
+            throw new IllegalArgumentException("CachingProvider must not be null");
+        } else if (cachingProvider.getDefaultClassLoader() == null) {
+            throw new IllegalArgumentException("CachingProvider default ClassLoader must not be null");
+        } else if (cachingProvider.getDefaultProperties() == null) {
+            throw new IllegalArgumentException("CachingProvider default Properties must not be null");
+        } else if (cachingProvider.getDefaultURI() == null) {
+            throw new IllegalArgumentException("CachingProvider default URI must not be null");
+        }
+
         if (cachingProviders.size() == 0) {
             cachingProviders.add(cachingProvider);
             this.cachingProvider = cachingProvider;
-            this.classLoaderReference = new WeakReference<>(
-                    requireNonNull(cachingProvider.getDefaultClassLoader()));
-            this.properties = requireNonNull(cachingProvider.getDefaultProperties());
+            this.classLoaderReference = new WeakReference<>(cachingProvider.getDefaultClassLoader());
+            this.properties = cachingProvider.getDefaultProperties();
             this.caches = new ConcurrentHashMap<>();
-            this.uri = requireNonNull(cachingProvider.getDefaultURI());
+            this.uri = cachingProvider.getDefaultURI();
         }
     }
 
@@ -91,11 +98,11 @@ public class RepositoryCacheManager implements CacheManager {
 
     @Reference(type = '*', dynamic = true, optional = true)
     public void addCacheFactory(CacheFactory cacheFactory)  {
-        cacheFactoryMap.put(cacheFactory.getValueType().toString(), cacheFactory);
+        cacheFactoryMap.put(cacheFactory.getValueType().getName(), cacheFactory);
     }
 
     public void removeCacheFactory(CacheFactory cacheFactory) {
-        cacheFactoryMap.remove(cacheFactory.getValueType().toString());
+        cacheFactoryMap.remove(cacheFactory.getValueType().getName());
     }
 
     @Reference
@@ -127,7 +134,9 @@ public class RepositoryCacheManager implements CacheManager {
     public <K, V, C extends Configuration<K, V>> Cache<K, V> createCache(String cacheName, C configuration)
             throws IllegalArgumentException {
         requireNotClosed();
-        requireNonNull(configuration);
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration must not be null");
+        }
 
         RepositoryConfiguration<K, V> repoConfig;
         if (configuration instanceof RepositoryConfiguration<?, ?>) {
@@ -153,9 +162,6 @@ public class RepositoryCacheManager implements CacheManager {
             return cacheFactory.createCache(repoConfig ,repo);
         });
 
-        enableManagement(cache.getName(), repoConfig.isManagementEnabled());
-        enableStatistics(cache.getName(), repoConfig.isStatisticsEnabled());
-
         @SuppressWarnings("unchecked")
         Cache<K, V> castedCache = (Cache<K, V>) cache;
         return castedCache;
@@ -163,12 +169,20 @@ public class RepositoryCacheManager implements CacheManager {
 
     @Override
     public <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+        if (cacheName == null) {
+            throw new IllegalArgumentException("CacheName must not be null");
+        }
+        if (keyType == null) {
+            throw new IllegalArgumentException("KeyType must not be null");
+        }
+        if (valueType == null) {
+            throw new IllegalArgumentException("KeyType must not be null");
+        }
+
         Cache<K, V> cache = getCache(cacheName);
         if (cache == null) {
             return null;
         }
-        requireNonNull(keyType);
-        requireNonNull(valueType);
 
         Configuration<?, ?> config = cache.getConfiguration(CompleteConfiguration.class);
         if (keyType != config.getKeyType()) {
@@ -183,7 +197,9 @@ public class RepositoryCacheManager implements CacheManager {
 
     @Override
     public <K, V> Cache<K, V> getCache(String cacheName) {
-        requireNonNull(cacheName);
+        if (cacheName == null) {
+            throw new IllegalArgumentException("CacheName must not be null");
+        }
         requireNotClosed();
 
         @SuppressWarnings("unchecked")
@@ -207,13 +223,11 @@ public class RepositoryCacheManager implements CacheManager {
         }
     }
 
-    // TODO: Do we create a MXBean/StatisticsMXBean/JmxRegistration
     @Override
     public void enableManagement(String cacheName, boolean enabled) {
 
     }
 
-    // TODO: Do we create a MXBean/StatisticsMXBean/JmxRegistration
     @Override
     public void enableStatistics(String cacheName, boolean enabled) {
 

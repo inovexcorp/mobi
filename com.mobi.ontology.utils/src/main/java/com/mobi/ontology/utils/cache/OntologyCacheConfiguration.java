@@ -80,7 +80,7 @@ public class OntologyCacheConfiguration implements CacheConfiguration {
     @Override
     public Configuration getCacheConfiguration() {
         if (!StringUtils.isEmpty(repoId)) {
-            return new RepositoryConfiguration(repoId);
+            return new RepositoryConfiguration(String.class, Ontology.class, repoId);
         } else {
             return Eh107Configuration.fromEhcacheCacheConfiguration(CacheConfigurationBuilder
                     .newCacheConfigurationBuilder(String.class, Ontology.class, ResourcePoolsBuilder.heap(numEntries))

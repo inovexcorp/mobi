@@ -37,8 +37,9 @@ public class RepositoryConfiguration<K, V> implements CompleteConfiguration<K, V
     private final MutableConfiguration<K, V> delegate;
     private String repoId;
 
-    public RepositoryConfiguration(String repoId) {
+    public RepositoryConfiguration(Class<K> keyType, Class<V> valueType, String repoId) {
         delegate = new MutableConfiguration<>();
+        delegate.setTypes(keyType, valueType);
         this.repoId = repoId;
     }
 
