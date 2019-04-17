@@ -139,6 +139,15 @@ describe('Individual Tree directive', function() {
             expect(this.controller.isImported('iri')).toBe(false);
             expect(this.controller.isImported('other')).toBe(true);
         });
+        it('toggleOpen should set the correct values', function() {
+            spyOn(this.controller, 'isShown').and.returnValue(false);
+            var node = {isOpened: false, path: ['a', 'b']};
+            this.controller.toggleOpen(node);
+            expect(node.isOpened).toEqual(true);
+            expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('a.b', true);
+            expect(this.controller.isShown).toHaveBeenCalled();
+            expect(this.controller.filteredHierarchy).toEqual([]);
+        });
         describe('searchFilter', function() {
             beforeEach(function() {
                 this.filterNode = {

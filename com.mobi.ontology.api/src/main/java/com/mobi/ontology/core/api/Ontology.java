@@ -125,6 +125,11 @@ public interface Ontology {
      */
     boolean containsClass(IRI iri);
 
+    /**
+     * Gets all classes explicitly defined within the ontology (excluding imports).
+     *
+     * @return A {@link Set} of {@link OClass} objects representing defined classes in the ontology
+     */
     Set<OClass> getAllClasses();
 
     /**
@@ -132,14 +137,14 @@ public interface Ontology {
      * IRI in the ontology.
      *
      * @param iri the IRI of the class
-     * @return a Set of all class object properties
+     * @return a {@link Set} of all class object properties
      */
     Set<ObjectProperty> getAllClassObjectProperties(IRI iri);
 
     /**
      * Attempts to get all of the object properties that have no domain set.
      *
-     * @return a Set of all object properties without a domain
+     * @return a {@link Set} of all object properties without a domain
      */
     Set<ObjectProperty> getAllNoDomainObjectProperties();
 
@@ -148,39 +153,49 @@ public interface Ontology {
      * IRI in the ontology.
      *
      * @param iri the IRI of the class
-     * @return a Set of all class data properties
+     * @return a {@link Set} of all class data properties
      */
     Set<DataProperty> getAllClassDataProperties(IRI iri);
 
     /**
      * Attempts to get all of the data properties that have no domain set.
      *
-     * @return a Set of all data properties without a domain
+     * @return a {@link Set} of all data properties without a domain
      */
     Set<DataProperty> getAllNoDomainDataProperties();
 
     Set<Datatype> getAllDatatypes();
 
+    /**
+     * Gets all object properties explicitly defined within the ontology (excluding imports).
+     *
+     * @return A {@link Set} of {@link ObjectProperty} objects representing defined object properties in the ontology
+     */
     Set<ObjectProperty> getAllObjectProperties();
 
     /**
      * Attempts to get a specific object property in the ontology by its IRI.
      *
      * @param iri the IRI of an object property
-     * @return an Optional with the object property if found
+     * @return an {@link Optional} with the {@link ObjectProperty} if found
      */
     Optional<ObjectProperty> getObjectProperty(IRI iri);
 
     /**
-     * Retrieves a Set of Resources corresponding to the range of the passed object property within the ontology.
-     * Set will be empty if the object property cannot be found in the ontology, has no ranges set, or if none of the
-     * ranges can be represented as a Resource.
+     * Retrieves a {@link Set} of Resources corresponding to the range of the passed object property within the
+     * ontology. Set will be empty if the object property cannot be found in the ontology, has no ranges set, or if none
+     * of the ranges can be represented as a Resource.
      *
      * @param objectProperty an object property from the ontology
-     * @return a Set of Resources representing all the range values of the object property
+     * @return a {@link Set} of Resources representing all the range values of the object property
      */
     Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty);
 
+    /**
+     * Gets all data properties explicitly defined within the ontology (excluding imports).
+     *
+     * @return A {@link Set} of {@link DataProperty} objects representing defined data properties in the ontology
+     */
     Set<DataProperty> getAllDataProperties();
 
     /**
@@ -192,9 +207,9 @@ public interface Ontology {
     Optional<DataProperty> getDataProperty(IRI iri);
 
     /**
-     * Retrieves a Set of Resources corresponding to the range of the passed data property within the ontology. Set will
-     * be empty if the data property cannot be found in the ontology, has no ranges set, or if none of the ranges can be
-     * represented as a Resource.
+     * Retrieves a {@link Set} of Resources corresponding to the range of the passed data property within the ontology.
+     * Set will be empty if the data property cannot be found in the ontology, has no ranges set, or if none of the
+     * ranges can be represented as a Resource.
      *
      * @param dataProperty a data property from the ontology
      * @return a {@link Set} of {@link Resource}s representing all the range values of the data property
@@ -202,14 +217,14 @@ public interface Ontology {
     Set<Resource> getDataPropertyRange(DataProperty dataProperty);
 
     /**
-     * Retrieves a {@link Set} of all Individuals which includes NamedIndividuals and AnonymousIndividuals.
+     * Retrieves a {@link Set} of all Individuals explicitly defined in the ontology.
      *
      * @return a {@link Set} of all {@link Individual}s in the {@link Ontology}
      */
     Set<Individual> getAllIndividuals();
 
     /**
-     * Searches for all individuals of a particular class or any sub-classes of the provided class.
+     * Searches for all explicitly defined individuals of a particular class or any sub-classes of the provided class.
      *
      * @param classIRI The {@link IRI} of the class of individuals to find.
      * @return The {@link Set} of {@link Individual}s.
@@ -217,7 +232,7 @@ public interface Ontology {
     Set<Individual> getIndividualsOfType(IRI classIRI);
 
     /**
-     * Searches for all individuals of a particular class or any sub-classes of the provided class.
+     * Searches for all explicitly defined individuals of a particular class or any sub-classes of the provided class.
      *
      * @param clazz The {@link OClass} of individuals to find.
      * @return The {@link Set} of {@link Individual}s.

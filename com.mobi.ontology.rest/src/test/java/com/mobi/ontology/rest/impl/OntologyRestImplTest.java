@@ -72,13 +72,13 @@ import com.mobi.ontology.core.api.AnnotationProperty;
 import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
-import com.mobi.ontology.core.impl.owlapi.SimpleAnnotation;
-import com.mobi.ontology.core.impl.owlapi.SimpleIndividual;
-import com.mobi.ontology.core.impl.owlapi.SimpleClass;
-import com.mobi.ontology.core.impl.owlapi.SimpleDatatype;
-import com.mobi.ontology.core.impl.owlapi.SimpleAnnotationProperty;
-import com.mobi.ontology.core.impl.owlapi.SimpleDataProperty;
-import com.mobi.ontology.core.impl.owlapi.SimpleObjectProperty;
+import com.mobi.ontology.impl.owlapi.SimpleAnnotation;
+import com.mobi.ontology.impl.owlapi.SimpleIndividual;
+import com.mobi.ontology.impl.owlapi.SimpleClass;
+import com.mobi.ontology.impl.owlapi.SimpleDatatype;
+import com.mobi.ontology.impl.owlapi.SimpleAnnotationProperty;
+import com.mobi.ontology.impl.owlapi.SimpleDataProperty;
+import com.mobi.ontology.impl.owlapi.SimpleObjectProperty;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.exception.MalformedQueryException;
@@ -416,6 +416,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.retrieveOntology(eq(importedOntologyIRI), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(importedOntology));
         when(ontologyManager.retrieveOntology(eq(importedOntologyIRI), any(Resource.class))).thenReturn(Optional.of(importedOntology));
         when(ontologyManager.retrieveOntology(importedOntologyIRI)).thenReturn(Optional.of(importedOntology));
+        when(ontologyManager.applyChanges(eq(ontology), eq(inProgressCommit))).thenReturn(ontology);
 
         when(ontology.getSubClassesFor(any(IRI.class))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
         when(importedOntology.getSubClassesFor(any(IRI.class))).thenReturn(Collections.singleton(vf.createIRI("https://mobi.com/values#Value1")));
@@ -488,8 +489,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetUserFromContext();
         verify(catalogManager, atLeastOnce()).getInProgressCommit(any(Resource.class), any(Resource.class), any(User.class));
         if (hasInProgressCommit) {
-            verify(catalogManager).applyInProgressCommit(any(Resource.class), any(Model.class));
-            verify(ontologyManager).createOntology(any(Model.class));
+            verify(ontologyManager).applyChanges(any(Ontology.class), any(InProgressCommit.class));
         }
     }
 

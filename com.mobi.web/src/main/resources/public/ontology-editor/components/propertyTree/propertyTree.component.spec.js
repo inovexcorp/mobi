@@ -138,12 +138,21 @@ describe('Property Tree component', function() {
             this.controller.annotationProps = [{prop: 'annotation'}];
             this.controller.$onInit();
             var copy = angular.copy(this.controller.flatPropertyTree);
-            expect(copy).toContain({title: 'Data Properties', get: ontologyStateSvc.getDataPropertiesOpened, set: ontologyStateSvc.setDataPropertiesOpened});
-            expect(copy).toContain({title: 'Object Properties', get: ontologyStateSvc.getObjectPropertiesOpened, set: ontologyStateSvc.setObjectPropertiesOpened});
-            expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateSvc.getAnnotationPropertiesOpened, set: ontologyStateSvc.setAnnotationPropertiesOpened});
-            expect(copy).toContain({get: ontologyStateSvc.getDataPropertiesOpened, prop: 'data'});
-            expect(copy).toContain({get: ontologyStateSvc.getObjectPropertiesOpened, prop: 'object'});
-            expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation'});
+            expect(copy).toContain({title: 'Data Properties', get: ontologyStateSvc.getDataPropertiesOpened, set: ontologyStateSvc.setDataPropertiesOpened, isOpened: undefined});
+            expect(copy).toContain({title: 'Object Properties', get: ontologyStateSvc.getObjectPropertiesOpened, set: ontologyStateSvc.setObjectPropertiesOpened, isOpened: undefined});
+            expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateSvc.getAnnotationPropertiesOpened, set: ontologyStateSvc.setAnnotationPropertiesOpened, isOpened: undefined});
+            expect(copy).toContain({get: ontologyStateSvc.getDataPropertiesOpened, prop: 'data', entity: undefined, isOpened: false});
+            expect(copy).toContain({get: ontologyStateSvc.getObjectPropertiesOpened, prop: 'object', entity: undefined, isOpened: false});
+            expect(copy).toContain({get: ontologyStateSvc.getAnnotationPropertiesOpened, prop: 'annotation', entity: undefined, isOpened: false});
+        });
+        it('toggleOpen should set the correct values', function() {
+            spyOn(this.controller, 'isShown').and.returnValue(false);
+            var node = {isOpened: false, path: ['a', 'b']};
+            this.controller.toggleOpen(node);
+            expect(node.isOpened).toEqual(true);
+            expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('a.b', true);
+            expect(this.controller.isShown).toHaveBeenCalled();
+            expect(this.controller.filteredHierarchy).toEqual([]);
         });
         describe('searchFilter', function() {
             beforeEach(function() {
