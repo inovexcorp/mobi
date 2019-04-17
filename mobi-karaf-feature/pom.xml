@@ -234,6 +234,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>cache.impl.repository</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>explorable.dataset.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
