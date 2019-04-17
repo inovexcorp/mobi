@@ -159,7 +159,7 @@ public class RepositoryCacheManager implements CacheManager {
             @SuppressWarnings("unchecked")
             CacheFactory<K, V> cacheFactory = cacheFactoryOpt.orElseThrow(
                     () -> new CacheException("CacheFactory does not exist for " + repoConfig.getValueType().getName()));
-            return cacheFactory.createCache(repoConfig ,repo);
+            return cacheFactory.createCache(repoConfig, repo);
         });
 
         @SuppressWarnings("unchecked")
