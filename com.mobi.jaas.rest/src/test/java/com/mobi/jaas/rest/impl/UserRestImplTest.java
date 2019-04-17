@@ -71,7 +71,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -192,6 +191,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         when(engineManager.retrieveGroup(anyString())).thenReturn(Optional.of(group));
         when(engineManager.retrieveGroup("error")).thenReturn(Optional.empty());
         when(engineManager.getRole(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(role));
+        when(engineManager.getRole(anyString())).thenReturn(Optional.of(role));
         when(engineManager.getUserRoles(eq(ENGINE_NAME), anyString())).thenReturn(Stream.concat(roles.stream(),
                 group.getHasGroupRole().stream()).collect(Collectors.toSet()));
         when(engineManager.getUserRoles(UsernameTestFilter.USERNAME)).thenReturn(Stream.concat(roles.stream(),
@@ -469,20 +469,19 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void addUserRolesTest() {
         // Setup:
-        Map<String, Role> roles = new HashMap<>();
-        IntStream.range(1, 3)
+        Map<String, Role> roles = IntStream.range(1, 3)
                 .mapToObj(Integer::toString)
-                .forEach(s -> roles.put(s, roleFactory.createNew(vf.createIRI("http://mobi.com/roles/" + s))));
+                .collect(Collectors.toMap(s -> s, s -> roleFactory.createNew(vf.createIRI("http://mobi.com/roles/" + s))));
         User newUser = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
-        when(engineManager.getRole(anyString(), anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(1, String.class))));
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(newUser));
+        when(engineManager.getRole( anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(0, String.class))));
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(newUser));
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
-        roles.keySet().forEach(s -> verify(engineManager).getRole(ENGINE_NAME, s));
-        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
+        roles.keySet().forEach(s -> verify(engineManager).getRole(s));
+        verify(engineManager).updateUser(any(User.class));
     }
 
     @Test
@@ -498,7 +497,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void addRolesThatDoNotExistToUserTest() {
         //Setup:
-        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.getRole(anyString())).thenReturn(Optional.empty());
         String[] roles = {"testRole"};
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles)
@@ -518,8 +517,8 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(engineManager).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
-        verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
+        verify(engineManager).updateUser(any(User.class));
     }
 
     @Test
@@ -532,7 +531,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @Test
     public void removeRoleThatDoesNotExistFromUserTest() {
         //Setup:
-        when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.empty());
+        when(engineManager.getRole(anyString())).thenReturn(Optional.empty());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
                 .request().delete();

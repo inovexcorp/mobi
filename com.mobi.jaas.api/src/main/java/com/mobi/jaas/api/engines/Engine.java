@@ -26,6 +26,7 @@ package com.mobi.jaas.api.engines;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.rdf.api.Resource;
 
 import java.util.Optional;
 import java.util.Set;
@@ -101,6 +102,15 @@ public interface Engine {
     boolean userExists(String username);
 
     /**
+     * Returns a boolean indicating whether a {@link User} with the passed IRI exists in the
+     * {@link Engine Engine's} data source.
+     *
+     * @param userId the IRI {@link Resource} to look for in the {@link Engine Engine's} data source
+     * @return true if a {@link User} exists with the passed IRI; false otherwise
+     */
+    boolean userExists(Resource userId);
+
+    /**
      * Returns the {@link Set} of all {@link Group Groups} accessible by the {@link Engine Engine's} data source.
      *
      * @return a {@link Set} of {@link Group Groups} accessible by the {@link Engine}
@@ -159,6 +169,15 @@ public interface Engine {
      * @return true if a {@link Group} exists with the passed name; false otherwise
      */
     boolean groupExists(String groupTitle);
+
+    /**
+     * Returns a boolean indicating whether a {@link Group} with the passed IRI exists in the {@link Engine Engine's}
+     * data source.
+     *
+     * @param groupId the IRI {@link Resource} to look for in the {@link Engine Engine's} data source
+     * @return true if a {@link Group} exists with the passed IRI; false otherwise
+     */
+    boolean groupExists(Resource groupId);
 
     /**
      * Retrieves the {@link Set} of all {@link Role Roles} that the {@link User} with the passed username embodies.

@@ -259,6 +259,15 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testUserExistsWithResource() {
+        boolean result = engine.userExists(VALUE_FACTORY.createIRI(userId));
+        assertTrue(result);
+
+        result = engine.userExists(VALUE_FACTORY.createIRI("http://mobi.com/users/error"));
+        assertFalse(result);
+    }
+
+    @Test
     public void testRetrieveUser() {
         Optional<User> userOptional = engine.retrieveUser(username);
 
@@ -374,6 +383,15 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         assertTrue(result);
 
         result = engine.groupExists("http://mobi.com/groups/error");
+        assertFalse(result);
+    }
+
+    @Test
+    public void testGroupExistsWithResource() {
+        boolean result = engine.groupExists(VALUE_FACTORY.createIRI(groupId1));
+        assertTrue(result);
+
+        result = engine.groupExists(VALUE_FACTORY.createIRI("http://mobi.com/groups/error"));
         assertFalse(result);
     }
 

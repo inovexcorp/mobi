@@ -51,6 +51,15 @@ public interface EngineManager {
     Optional<Role> getRole(String engine, String roleName);
 
     /**
+     * Attempts to retrieve the {@link Role} with the provided name from one of the {@link Engine Engines} the
+     * {@link EngineManager} manages. Returns an {@link Optional} with the {@link Role} if it was found.
+     *
+     * @param roleName the name of the {@link Role} to retrieve
+     * @return an {@link Optional} containing the {@link Role} if present; {@link Optional#empty()} otherwise
+     */
+    Optional<Role> getRole(String roleName);
+
+    /**
      * Returns the {@link Set} of {@link User Users} accessible by the {@link Engine} with the provided name.
      *
      * @param engine the name of the {@link Engine} to collect {@link User Users} from
@@ -121,6 +130,14 @@ public interface EngineManager {
      * @param newUser the new {@link User} object to replace the existing one
      */
     void updateUser(String engine, User newUser);
+
+    /**
+     * Replaces the matching {@link User} with the provided {@link User} using the {@link Engine} that manages the
+     * {@link User}. If not {@link Engine} manages the {@link User}, does nothing.
+     *
+     * @param newUser the new {@link User} object to replace the existing one
+     */
+    void updateUser(User newUser);
 
     /**
      * Returns a boolean indicating whether a {@link User} with the provided username exists using the {@link Engine}
@@ -212,6 +229,14 @@ public interface EngineManager {
      * @param newGroup the new {@link Group} object to replace the existing one
      */
     void updateGroup(String engine, Group newGroup);
+
+    /**
+     * Replaces the matching {@link Group} with the provided {@link Group} using the {@link Engine} that manages the
+     * {@link Group}. If not {@link Engine} manages the {@link Group}, does nothing.
+     *
+     * @param newGroup the new {@link Group} object to replace the existing one
+     */
+    void updateGroup(Group newGroup);
 
     /**
      * Returns a boolean indicating whether a {@link Group} with the provided name exists using the {@link Engine} with

@@ -699,6 +699,34 @@
         }
         /**
          * @ngdoc method
+         * @name isExternalUser
+         * @methodOf shared.service:userManagerService
+         *
+         * @description
+         * Determines whether the provided JSON-LD object is an ExternalUser or not.
+         *
+         * @param {Object} jsonld a JSON-LD object
+         * @return {boolean} true if the JSON-LD object is an ExternalUser; false otherwise
+         */
+        self.isExternalUser = function(jsonld) {
+            return _.get(jsonld, '@type', []).includes(prefixes.user + 'ExternalUser');
+        }
+        /**
+         * @ngdoc method
+         * @name isExternalGroup
+         * @methodOf shared.service:userManagerService
+         *
+         * @description
+         * Determines whether the provided JSON-LD object is an ExternalGroup or not.
+         *
+         * @param {Object} jsonld a JSON-LD object
+         * @return {boolean} true if the JSON-LD object is ExternalGroup; false otherwise
+         */
+        self.isExternalGroup = function(jsonld) {
+            return _.get(jsonld, '@type', []).includes(prefixes.user + 'ExternalGroup');
+        }
+        /**
+         * @ngdoc method
          * @name getUserDisplay
          * @methodOf shared.service:userManagerService
          *
@@ -737,6 +765,7 @@
         self.getUserObj = function(jsonld) {
             return {
                 jsonld,
+                external: self.isExternalUser(jsonld),
                 iri: jsonld['@id'],
                 username: util.getPropertyValue(jsonld, prefixes.user + 'username'),
                 firstName: util.getPropertyValue(jsonld, prefixes.foaf + 'firstName'),
@@ -767,6 +796,7 @@
         self.getGroupObj = function(jsonld) {
             return {
                 jsonld,
+                external: self.isExternalGroup(jsonld),
                 iri: jsonld['@id'],
                 title: util.getDctermsValue(jsonld, 'title'),
                 description: util.getDctermsValue(jsonld, 'description'),
@@ -778,21 +808,6 @@
                 }),
                 roles: _.map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
             }
-        }
-
-        function listUserRoles(username) {
-            return $http.get(userPrefix + '/' + encodeURIComponent(username) + '/roles')
-                .then(response => response.data, util.rejectError);
-        }
-
-        function listUserGroups(username) {
-            return $http.get(userPrefix + '/' + encodeURIComponent(username) + '/groups')
-                .then(response => response.data, util.rejectError);
-        }
-
-        function listGroupRoles(groupTitle) {
-            return $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles')
-                .then(response => response.data, util.rejectError);
         }
     }
 

@@ -70,6 +70,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public Optional<Role> getRole(String roleName) {
+        for (Engine engine : engines.values()) {
+            Optional<Role> optional = engine.getRole(roleName);
+            if (optional.isPresent()) {
+                return optional;
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Set<User> getUsers(String engine) {
         if (engines.containsKey(engine)) {
             return engines.get(engine).getUsers();
@@ -131,6 +142,19 @@ public class SimpleEngineManager implements EngineManager {
     public void updateUser(String engine, User newUser) {
         if (containsEngine(engine)) {
             engines.get(engine).updateUser(newUser);
+        }
+    }
+
+    @Override
+    public void updateUser(User newUser) {
+        Engine foundEngine = null;
+        for (Engine engine : engines.values()) {
+            if (engine.userExists(newUser.getResource())) {
+                foundEngine = engine;
+            }
+        }
+        if (foundEngine != null) {
+            foundEngine.updateUser(newUser);
         }
     }
 
@@ -215,6 +239,19 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public void updateGroup(Group newGroup) {
+        Engine foundEngine = null;
+        for (Engine engine : engines.values()) {
+            if (engine.groupExists(newGroup.getResource())) {
+                foundEngine = engine;
+            }
+        }
+        if (foundEngine != null) {
+            foundEngine.updateGroup(newGroup);
+        }
+    }
+
+    @Override
     public boolean groupExists(String engine, String groupTitle) {
         return engines.containsKey(engine) && engines.get(engine).groupExists(groupTitle);
     }
@@ -241,12 +278,13 @@ public class SimpleEngineManager implements EngineManager {
     public Set<Role> getUserRoles(String username) {
         Set<Role> roles = new HashSet<>();
         for (Engine engine : engines.values()) {
-            engine.getUserRoles(username).stream()
-                    .filter(role -> !roles.stream()
-                            .map(Thing::getResource)
-                            .collect(Collectors.toSet()).contains(role.getResource()))
-                    .forEach(roles::add);
-
+            if (engine.userExists(username)) {
+                engine.getUserRoles(username).stream()
+                        .filter(role -> !roles.stream()
+                                .map(Thing::getResource)
+                                .collect(Collectors.toSet()).contains(role.getResource()))
+                        .forEach(roles::add);
+            }
         }
         return roles;
     }

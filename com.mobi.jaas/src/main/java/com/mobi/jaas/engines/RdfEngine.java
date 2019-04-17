@@ -282,7 +282,8 @@ public class RdfEngine implements Engine {
         return userExists(createUserIri(username));
     }
 
-    private boolean userExists(Resource userId) {
+    @Override
+    public boolean userExists(Resource userId) {
         return resourceExists(userId, User.TYPE) && !resourceExists(userId, ExternalUser.TYPE);
     }
 
@@ -387,9 +388,9 @@ public class RdfEngine implements Engine {
         return groupExists(createGroupIri(groupTitle));
     }
 
-    private boolean groupExists(Resource groupId) {
+    @Override
+    public boolean groupExists(Resource groupId) {
         return resourceExists(groupId, Group.TYPE) && !resourceExists(groupId, ExternalGroup.TYPE);
-
     }
 
     @Override
