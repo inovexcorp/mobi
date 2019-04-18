@@ -32,6 +32,7 @@ import org.apache.karaf.shell.api.console.SessionFactory;
 import org.junit.Assert;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.CoreOptions;
+import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
@@ -129,6 +130,7 @@ public class KarafTestSupport {
         MavenArtifactUrlReference karafUrl = CoreOptions.maven()
                 .groupId("com.mobi")
                 .artifactId("mobi-distribution")
+                .version(MavenUtils.getArtifactVersion("com.mobi", "mobi-distribution"))
                 .type("tar.gz");
 
         List<Option> options = new ArrayList<>(Arrays.asList(
@@ -147,6 +149,7 @@ public class KarafTestSupport {
                 CoreOptions.mavenBundle()
                         .groupId("com.mobi")
                         .artifactId("itests-support")
+                        .version(MavenUtils.getArtifactVersion("com.mobi", "itests-support"))
         ));
 
         Files.list(getFileResource("/etc").toPath()).forEach(path ->

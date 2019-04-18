@@ -82,6 +82,10 @@
                         var previousListItem = dvm.os.listItem;
                         if (previousListItem) {
                             previousListItem.active = false;
+                            if (previousListItem.goTo) {
+                                previousListItem.goTo.active = false;
+                                previousListItem.goTo.entityIRI = '';
+                            }
                         }
                         if (listItem && !_.isEmpty(listItem)) {
                             listItem.active = true;
