@@ -23,12 +23,10 @@ package com.mobi.ontology.impl.owlapi;
  * #L%
  */
 
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.expect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.replay;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
@@ -37,13 +35,12 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -79,15 +76,13 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         typeIRI = vf.createIRI(RDF.TYPE.stringValue());
         versionIRIPred = vf.createIRI(OWL.VERSIONIRI.stringValue());
 
-        Capture<IRI> mobiIRI = EasyMock.newCapture();
-        Capture<org.semanticweb.owlapi.model.IRI> owlapiIRI = EasyMock.newCapture();
+        ArgumentCaptor<IRI> mobiIRI = ArgumentCaptor.forClass(IRI.class);
+        ArgumentCaptor<org.semanticweb.owlapi.model.IRI> owlapiIRI = ArgumentCaptor.forClass(org.semanticweb.owlapi.model.IRI.class);
 
 
         mockStatic(SimpleOntologyValues.class);
-        expect(SimpleOntologyValues.owlapiIRI(capture(mobiIRI))).andAnswer(() -> org.semanticweb.owlapi.model.IRI.create(mobiIRI.getValue().stringValue())).anyTimes();
-        expect(SimpleOntologyValues.mobiIRI(capture(owlapiIRI))).andAnswer(() -> vf.createIRI(owlapiIRI.getValue().getIRIString())).anyTimes();
-
-        replay(SimpleOntologyValues.class);
+        when(SimpleOntologyValues.owlapiIRI(mobiIRI.capture())).thenAnswer(invocation -> org.semanticweb.owlapi.model.IRI.create(mobiIRI.getValue().stringValue()));
+        when(SimpleOntologyValues.mobiIRI(owlapiIRI.capture())).thenAnswer(invocation -> vf.createIRI(owlapiIRI.getValue().getIRIString()));
     }
     
     @Test
@@ -185,8 +180,8 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(vf.createIRI("urn:thirdIRI"), typeIRI, ontologyType);
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
-        assertEquals(ontologyIRI, ontologyId.getOntologyIdentifier());
-        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+        assertTrue(ontologyId.getOntologyIRI().isPresent());
+        assertEquals(ontologyId.getOntologyIRI().get(), ontologyId.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
 
@@ -211,9 +206,15 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(ontologyIRI, versionIRIPred, versionIRI);
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
-        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
-        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
-        assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
+        if (ontologyId.getVersionIRI().isPresent()) {
+            assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
+            assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+            assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
+        } else {
+            assertTrue(ontologyId.getOntologyIRI().isPresent());
+            assertEquals(ontologyId.getOntologyIRI().get(), ontologyId.getOntologyIdentifier());
+            assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+        }
     }
 
     @Test
@@ -224,23 +225,32 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         model.add(ontologyIRI, versionIRIPred, vf.createIRI("urn:secondIRI"));
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
-        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
+        assertTrue(ontologyId.getVersionIRI().isPresent());
+        assertEquals(ontologyId.getVersionIRI().get(), ontologyId.getOntologyIdentifier());
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
-        assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
     }
 
     @Test
     public void testConstructorWithModelMultipleOntologyIRIsMultipleVersionIRIs() {
+        IRI ontologyIRI2 = vf.createIRI("urn:secondOntIRI");
+        IRI versionIRI2 = vf.createIRI("urn:secondVersIRI");
         Model model = mf.createModel();
         model.add(ontologyIRI, typeIRI, ontologyType);
-        model.add(vf.createIRI("urn:secondIRI"), typeIRI, ontologyType);
         model.add(ontologyIRI, versionIRIPred, versionIRI);
-        model.add(ontologyIRI, versionIRIPred, vf.createIRI("urn:secondIRI"));
+        model.add(ontologyIRI2, typeIRI, ontologyType);
+        model.add(ontologyIRI2, versionIRIPred, versionIRI2);
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
-        assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
-        assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
-        assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
+        assertTrue(ontologyId.getVersionIRI().isPresent());
+        if (ontologyId.getVersionIRI().get().equals(versionIRI)) {
+            assertEquals(versionIRI, ontologyId.getOntologyIdentifier());
+            assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
+            assertEquals(Optional.of(versionIRI), ontologyId.getVersionIRI());
+        } else if (ontologyId.getVersionIRI().get().equals(versionIRI2)) {
+            assertEquals(versionIRI2, ontologyId.getOntologyIdentifier());
+            assertEquals(Optional.of(ontologyIRI2), ontologyId.getOntologyIRI());
+            assertEquals(Optional.of(versionIRI2), ontologyId.getVersionIRI());
+        }
     }
 
     @Test

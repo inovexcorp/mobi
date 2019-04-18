@@ -327,5 +327,5 @@ Lists of 328 third-party dependencies.
      (The Apache Software License, Version 2.0) WSO2 Balana Utils (org.wso2.balana:org.wso2.balana.utils:1.1.3 - http://wso2.org)
      (The Apache Software License, Version 2.0) StAX API (stax:stax-api:1.0.1 - http://stax.codehaus.org/)
      (The Apache Software License, Version 2.0) standard (taglibs:standard:1.1.2 - no url defined)
-     (Unknown license) xercesImpl (xerces.wso2:xercesImpl:2.8.1.wso2v2 - no url defined)
+     (Unknown license) xerces.wso2 (xerces.wso2:xercesImpl:2.8.1.wso2v2 - http://wso2.org)
      (The Apache Software License, Version 2.0) (The SAX License) (The W3C License) XML Commons External Components XML APIs (xml-apis:xml-apis:1.4.01 - http://xml.apache.org/commons/components/external/)
