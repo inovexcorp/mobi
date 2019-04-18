@@ -31,8 +31,6 @@ import com.mobi.cache.api.CacheManager;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.config.CacheConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import javax.cache.Cache;
@@ -42,7 +40,6 @@ import javax.cache.spi.CachingProvider;
 @Component(immediate = true)
 public class SimpleCacheManager implements CacheManager {
 
-    private List<CachingProvider> cachingProviders = new ArrayList<>();
     private CachingProvider provider;
     private CachingProvider repoProvider;
     private javax.cache.CacheManager cacheManager;
@@ -68,13 +65,9 @@ public class SimpleCacheManager implements CacheManager {
         }
     }
 
-    @Reference(dynamic = true)
-    public void addCachingProvider(CachingProvider cachingProvider)  {
-        cachingProviders.add(cachingProvider);
-    }
-
-    public void removeCachingProvider(CachingProvider cachingProvider) {
-        cachingProviders.remove(cachingProvider);
+    @Reference
+    public void setCachingProvider(CachingProvider cachingProvider)  {
+        repoProvider = cachingProvider;
     }
 
     @Activate
@@ -115,8 +108,7 @@ public class SimpleCacheManager implements CacheManager {
                     this.getClass().getClassLoader());
             cacheManager = provider.getCacheManager();
         }
-        if (repoCacheManager == null && cachingProviders.size() > 0) {
-            repoProvider = cachingProviders.get(0);
+        if (repoCacheManager == null && repoProvider != null) {
             repoCacheManager = repoProvider.getCacheManager();
         }
         mutex.release();

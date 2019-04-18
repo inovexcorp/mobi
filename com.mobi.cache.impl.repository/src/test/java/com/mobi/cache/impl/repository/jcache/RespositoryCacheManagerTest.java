@@ -94,7 +94,7 @@ public class RespositoryCacheManagerTest {
         when(repoCache.getConfiguration(eq(CompleteConfiguration.class))).thenReturn(repositoryConfiguration);
         when(repositoryManager.getRepository(eq(REPO_ID))).thenReturn(Optional.of(repository));
 
-        repositoryCacheManager.addCachingProvider(repositoryCachingProvider);
+        repositoryCacheManager.setCachingProvider(repositoryCachingProvider);
         repositoryCacheManager.setRepositoryManager(repositoryManager);
         repositoryCacheManager.addCacheFactory(cacheFactory);
     }

@@ -36,11 +36,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.cache.Cache;
 import javax.cache.CacheException;
@@ -53,19 +51,18 @@ import javax.cache.spi.CachingProvider;
 public class RepositoryCacheManager implements CacheManager {
 
     private final Map<String, CacheFactory<?, ?>> cacheFactoryMap = new HashMap<>();
+    private final Map<String, Cache<?, ?>> caches = new ConcurrentHashMap<>();
 
     private RepositoryManager repositoryManager;
-    private Map<String, Cache<?, ?>> caches;
     private CachingProvider cachingProvider;
-    private Set<CachingProvider> cachingProviders = new HashSet<>();
     private WeakReference<ClassLoader> classLoaderReference;
     private Properties properties;
     private URI uri;
 
     private volatile boolean closed;
 
-    @Reference(type = '*', dynamic = true, optional = true)
-    public void addCachingProvider(CachingProvider cachingProvider) {
+    @Reference(optional = true)
+    public void setCachingProvider(CachingProvider cachingProvider) {
         if (cachingProvider == null) {
             throw new IllegalArgumentException("CachingProvider must not be null");
         } else if (cachingProvider.getDefaultClassLoader() == null) {
@@ -76,24 +73,10 @@ public class RepositoryCacheManager implements CacheManager {
             throw new IllegalArgumentException("CachingProvider default URI must not be null");
         }
 
-        if (cachingProviders.size() == 0) {
-            cachingProviders.add(cachingProvider);
-            this.cachingProvider = cachingProvider;
-            this.classLoaderReference = new WeakReference<>(cachingProvider.getDefaultClassLoader());
-            this.properties = cachingProvider.getDefaultProperties();
-            this.caches = new ConcurrentHashMap<>();
-            this.uri = cachingProvider.getDefaultURI();
-        }
-    }
-
-    public void removeCachingProvider(CachingProvider cachingProvider) {
-        cachingProviders.removeIf(cachingProvider1
-                -> cachingProvider1.getDefaultURI() == cachingProvider.getDefaultURI());
-        this.cachingProvider = null;
-        this.classLoaderReference = null;
-        this.properties = null;
-        this.caches = null;
-        this.uri = null;
+        this.cachingProvider = cachingProvider;
+        this.classLoaderReference = new WeakReference<>(cachingProvider.getDefaultClassLoader());
+        this.properties = cachingProvider.getDefaultProperties();
+        this.uri = cachingProvider.getDefaultURI();
     }
 
     @Reference(type = '*', dynamic = true, optional = true)

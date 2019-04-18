@@ -34,14 +34,14 @@ public interface CacheServiceConfig {
     /**
      * The Cache ID.
      *
-     * @return The String the Cache ID.
+     * @return The String representing the Cache ID.
      */
     String id();
 
     /**
      * The Repository ID.
      *
-     * @return The String the Repository ID.
+     * @return The String representing the Repository ID.
      */
     String repoId();
 
