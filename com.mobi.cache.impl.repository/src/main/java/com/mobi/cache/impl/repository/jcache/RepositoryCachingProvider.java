@@ -89,10 +89,7 @@ public class RepositoryCachingProvider implements CachingProvider {
         synchronized (cacheManagers) {
             Map<URI, CacheManager> cacheManagersByURI = cacheManagers.get(managerClassLoader);
             if (cacheManagersByURI != null) {
-                CacheManager cacheManager = cacheManagersByURI.get(managerURI);
-                if (cacheManager != null) {
-                    return cacheManager;
-                }
+                return cacheManagersByURI.get(managerURI);
             }
             return null;
         }
