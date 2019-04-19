@@ -38,7 +38,11 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
 
-@Component
+@Component(
+        properties = {
+                "provider=RepositoryCachingProvider"
+        }
+)
 public class RepositoryCachingProvider implements CachingProvider {
 
     private Map<ClassLoader, Map<URI, CacheManager>> cacheManagers = new WeakHashMap<>(1);

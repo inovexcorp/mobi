@@ -65,7 +65,7 @@ public class SimpleCacheManager implements CacheManager {
         }
     }
 
-    @Reference
+    @Reference(target = "(provider=RepositoryCachingProvider)")
     public void setCachingProvider(CachingProvider cachingProvider)  {
         repoProvider = cachingProvider;
     }
