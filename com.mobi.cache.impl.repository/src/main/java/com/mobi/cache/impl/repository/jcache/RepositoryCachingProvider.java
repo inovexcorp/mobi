@@ -45,7 +45,7 @@ import javax.cache.spi.CachingProvider;
 )
 public class RepositoryCachingProvider implements CachingProvider {
 
-    private Map<ClassLoader, Map<URI, CacheManager>> cacheManagers = new WeakHashMap<>(1);
+    private final Map<ClassLoader, Map<URI, CacheManager>> cacheManagers = new WeakHashMap<>(1);
 
     @Reference
     void setCacheManager(CacheManager cacheManager) {

@@ -62,7 +62,7 @@ public class RepositoryCacheManager implements CacheManager {
     private volatile boolean closed;
 
     @Reference(optional = true)
-    public void setCachingProvider(CachingProvider cachingProvider) {
+    void setCachingProvider(CachingProvider cachingProvider) {
         if (cachingProvider == null) {
             throw new IllegalArgumentException("CachingProvider must not be null");
         } else if (cachingProvider.getDefaultClassLoader() == null) {
@@ -80,11 +80,11 @@ public class RepositoryCacheManager implements CacheManager {
     }
 
     @Reference(type = '*', dynamic = true, optional = true)
-    public void addCacheFactory(CacheFactory cacheFactory)  {
+    void addCacheFactory(CacheFactory cacheFactory)  {
         cacheFactoryMap.put(cacheFactory.getValueType().getName(), cacheFactory);
     }
 
-    public void removeCacheFactory(CacheFactory cacheFactory) {
+    void removeCacheFactory(CacheFactory cacheFactory) {
         cacheFactoryMap.remove(cacheFactory.getValueType().getName());
     }
 
@@ -114,6 +114,7 @@ public class RepositoryCacheManager implements CacheManager {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <K, V, C extends Configuration<K, V>> Cache<K, V> createCache(String cacheName, C configuration)
             throws IllegalArgumentException {
         requireNotClosed();
@@ -139,18 +140,16 @@ public class RepositoryCacheManager implements CacheManager {
                     () -> new CacheException("Repository " + repoConfig.getRepoId() + " must exist for " + cacheName));
             Optional<CacheFactory> cacheFactoryOpt = Optional.of(cacheFactoryMap.get(
                     repoConfig.getValueType().getName()));
-            @SuppressWarnings("unchecked")
             CacheFactory<K, V> cacheFactory = cacheFactoryOpt.orElseThrow(
                     () -> new CacheException("CacheFactory does not exist for " + repoConfig.getValueType().getName()));
             return cacheFactory.createCache(repoConfig, repo);
         });
 
-        @SuppressWarnings("unchecked")
-        Cache<K, V> castedCache = (Cache<K, V>) cache;
-        return castedCache;
+        return (Cache<K, V>) cache;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
         if (cacheName == null) {
             throw new IllegalArgumentException("CacheName must not be null");
@@ -179,15 +178,14 @@ public class RepositoryCacheManager implements CacheManager {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <K, V> Cache<K, V> getCache(String cacheName) {
         if (cacheName == null) {
             throw new IllegalArgumentException("CacheName must not be null");
         }
         requireNotClosed();
 
-        @SuppressWarnings("unchecked")
-        Cache<K, V> cache = (Cache<K, V>) caches.get(cacheName);
-        return cache;
+        return (Cache<K, V>) caches.get(cacheName);
     }
 
     @Override
