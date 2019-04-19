@@ -557,6 +557,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
@@ -580,6 +581,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().delete();
         assertEquals(response.getStatus(), 200);
+        verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }

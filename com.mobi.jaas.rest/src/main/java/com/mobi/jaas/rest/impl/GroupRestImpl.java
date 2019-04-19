@@ -133,7 +133,11 @@ public class GroupRestImpl implements GroupRest {
             GroupConfig.Builder builder = new GroupConfig.Builder(title);
 
             if (members != null && members.size() > 0) {
-                builder.members(members.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet()));
+                builder.members(members.stream()
+                        .map(part -> engineManager.retrieveUser(part.getValue()))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toSet()));
             }
             if (description != null) {
                 builder.description(description);
@@ -340,7 +344,7 @@ public class GroupRestImpl implements GroupRest {
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
             Set<User> users = new HashSet<>();
             for (String username : usernames) {
-                users.add(engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+                users.add(engineManager.retrieveUser(username).orElseThrow(() ->
                         ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)));
             }
             Set<Agent> newMembers = savedGroup.getMember();
@@ -363,7 +367,7 @@ public class GroupRestImpl implements GroupRest {
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-            User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);

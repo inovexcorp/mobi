@@ -337,7 +337,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
 
     @Test
     public void testCreateGroup() {
-        Set<String> members = Stream.of("tester").collect(Collectors.toSet());
+        Set<User> members = Stream.of(userFactory.createNew(VALUE_FACTORY.createIRI(userId))).collect(Collectors.toSet());
         Set<String> roles = Stream.of("user").collect(Collectors.toSet());
         GroupConfig config = new GroupConfig.Builder(groupName1).description("Test")
                 .members(members).roles(roles).build();

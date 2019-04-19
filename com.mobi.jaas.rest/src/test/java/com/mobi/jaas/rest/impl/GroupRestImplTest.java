@@ -429,14 +429,14 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .mapToObj(Integer::toString)
                 .forEach(s -> users.put(s, userFactory.createNew(vf.createIRI("http://mobi.com/users/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
-        when(engineManager.retrieveUser(eq(ENGINE_NAME), anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(1, String.class))));
+        when(engineManager.retrieveUser(anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(0, String.class))));
         when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(newGroup));
 
         Response response = target().path("groups/testGroup/users").queryParam("users", users.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
-        users.keySet().forEach(s -> verify(engineManager).retrieveUser(ENGINE_NAME, s));
+        users.keySet().forEach(s -> verify(engineManager).retrieveUser(s));
         verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
@@ -462,7 +462,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
-        verify(engineManager).retrieveUser(ENGINE_NAME, "tester");
+        verify(engineManager).retrieveUser("tester");
         verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
 

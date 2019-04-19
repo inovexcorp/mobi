@@ -345,10 +345,7 @@ public class RdfEngine implements Engine {
                 vf.createIRI(DCTERMS.TITLE.stringValue()));
 
         if (groupConfig.getMembers() != null) {
-            Set<Agent> members = groupConfig.getMembers().stream()
-                    .filter(this::userExists)
-                    .map(username -> userFactory.createNew(createUserIri(username)))
-                    .collect(Collectors.toSet());
+            Set<Agent> members = new HashSet<>(groupConfig.getMembers());
             if (!members.isEmpty()) {
                 group.setMember(members);
             }

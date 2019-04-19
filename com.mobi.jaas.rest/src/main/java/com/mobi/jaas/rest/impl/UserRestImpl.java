@@ -374,7 +374,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
         try {
-            User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
@@ -395,7 +395,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
         try {
-            User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
