@@ -196,7 +196,7 @@ class ModelsSpec extends Specification{
         subIRI == result
     }
 
-    def "findFirstSubject an empty optional when provided a matching predicate and non matching object"(){
+    def "findFirstSubject returns an empty optional when provided a matching predicate and non matching object"(){
         when:
         def result = Models.findFirstSubject(model1, predIRI, objIRI2).isPresent()
 
@@ -204,7 +204,7 @@ class ModelsSpec extends Specification{
         !result
     }
 
-    def "findFirstSubject an empty optional when provided a non matching predicate and matching object"(){
+    def "findFirstSubject returns an empty optional when provided a non matching predicate and matching object"(){
         when:
         def result = Models.findFirstSubject(model1, predIRI2, objIRI).isPresent()
 
@@ -220,7 +220,7 @@ class ModelsSpec extends Specification{
         objIRI == result
     }
 
-    def "findFirstObject an empty optional when provided a matching subject and non matching predicate"(){
+    def "findFirstObject returns an empty optional when provided a matching subject and non matching predicate"(){
         when:
         def result = Models.findFirstObject(model1, subIRI, predIRI2).isPresent()
 
@@ -228,7 +228,7 @@ class ModelsSpec extends Specification{
         !result
     }
 
-    def "findFirstObject an empty optional when provided a non matching subject and matching predicate"(){
+    def "findFirstObject returns an empty optional when provided a non matching subject and matching predicate"(){
         when:
         def result = Models.findFirstObject(model1, subIRI2, predIRI).isPresent()
 

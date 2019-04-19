@@ -181,6 +181,9 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
         assertTrue(ontologyId.getOntologyIRI().isPresent());
+        assertTrue(ontologyId.getOntologyIRI().get().equals(ontologyIRI)
+                || ontologyId.getOntologyIRI().get().equals(vf.createIRI("urn:secondIRI"))
+                || ontologyId.getOntologyIRI().get().equals(vf.createIRI("urn:thirdIRI")));
         assertEquals(ontologyId.getOntologyIRI().get(), ontologyId.getOntologyIdentifier());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
@@ -218,7 +221,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
     }
 
     @Test
-    public void testConstructorWithModelSingleOntologyIRIsMultipleVersionIRIs() {
+    public void testConstructorWithModelSingleOntologyIRIMultipleVersionIRIs() {
         Model model = mf.createModel();
         model.add(ontologyIRI, typeIRI, ontologyType);
         model.add(ontologyIRI, versionIRIPred, versionIRI);
@@ -226,6 +229,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
 
         OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
         assertTrue(ontologyId.getVersionIRI().isPresent());
+        assertTrue(ontologyId.getVersionIRI().get().equals(versionIRI) || ontologyId.getVersionIRI().get().equals(vf.createIRI("urn:secondIRI")));
         assertEquals(ontologyId.getVersionIRI().get(), ontologyId.getOntologyIdentifier());
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
     }

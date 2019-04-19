@@ -78,6 +78,9 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
         Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model, vf);
         assertTrue(ontologyIRIOpt.isPresent());
+        assertTrue(ontologyIRIOpt.get().equals(ontologyIRI)
+                || ontologyIRIOpt.get().equals(vf.createIRI("urn:ontologyIRI2"))
+                || ontologyIRIOpt.get().equals(vf.createIRI("urn:ontologyIRI3")));
     }
 
     @Test
@@ -109,6 +112,9 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
 
         Optional<IRI> versionIRIOpt = OntologyModels.findFirstVersionIRI(model, ontologyIRI, vf);
         assertTrue(versionIRIOpt.isPresent());
+        assertTrue(versionIRIOpt.get().equals(versionIRI)
+                || versionIRIOpt.get().equals(vf.createIRI("urn:versionIRI2"))
+                || versionIRIOpt.get().equals(vf.createIRI("urn:versionIRI3")));
     }
 
     @Test
