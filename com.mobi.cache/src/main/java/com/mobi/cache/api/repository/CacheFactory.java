@@ -1,4 +1,4 @@
-package com.mobi.cache.config;
+package com.mobi.cache.api.repository;
 
 /*-
  * #%L
@@ -6,7 +6,7 @@ package com.mobi.cache.config;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,33 +23,24 @@ package com.mobi.cache.config;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
+import com.mobi.repository.api.Repository;
 
-/**
- * Base configuration for Repository Objects.
- */
-@Meta.OCD
-public interface CacheServiceConfig {
+import javax.cache.Cache;
 
-    /**
-     * The Cache ID.
-     *
-     * @return The String representing the Cache ID.
-     */
-    String id();
+public interface CacheFactory<K, V> {
 
     /**
-     * The Repository ID.
-     *
-     * @return The String representing the Repository ID.
+     * Retrieve the Value Type of the Cache.
+     * @return the Class of the Value Type
      */
-    String repoId();
+    Class<V> getValueType();
 
     /**
-     * The number of entries to track in the cache. NOTE: This is an optional property.
-     *
-     * @return The String representing the number of entries to track in the cache.
+     * Create a Cache using the provided configuration
+     * @param configuration the {@link RepositoryConfiguration} to create the cache from
+     * @param repository the {@link Repository} backing the cache
+     * @return A JSR-107 Cache object
      */
-    @Meta.AD(required = false)
-    int numEntries();
+    Cache<K, V> createCache(RepositoryConfiguration<K, V> configuration, Repository repository);
 }

@@ -229,7 +229,12 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>cache.impl.ehcache</artifactId>
+            <artifactId>cache.impl.core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>cache.impl.repository</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
