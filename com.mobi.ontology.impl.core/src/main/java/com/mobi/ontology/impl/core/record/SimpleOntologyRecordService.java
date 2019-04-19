@@ -41,6 +41,7 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
@@ -96,6 +97,11 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Reference
     void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
+    }
+
+    @Reference
+    void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
     }
 
     @Reference
