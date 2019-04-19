@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.9</version>
+        <version>1.16.10</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,6 +38,11 @@
     <packaging>bundle</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>persistence.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
@@ -65,7 +70,9 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.cache.api,
-                            com.mobi.cache.config
+                            com.mobi.cache.config,
+                            com.mobi.cache.api.repository,
+                            com.mobi.cache.api.repository.jcache.config
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
