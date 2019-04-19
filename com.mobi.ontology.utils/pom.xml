@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.9-SNAPSHOT</version>
+        <version>1.16.10-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -79,6 +79,10 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf-orm-test</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -93,6 +97,7 @@
                         <Bundle-Name>Mobi Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
+                            com.mobi.ontology.utils;
                             com.mobi.ontology.utils.cache; provide:=true
                             com.mobi.cache.config; provide:=true
                         </Export-Package>

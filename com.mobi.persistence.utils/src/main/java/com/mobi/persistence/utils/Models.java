@@ -23,6 +23,10 @@ package com.mobi.persistence.utils;
  * #L%
  */
 
+import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOf;
+
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -30,8 +34,20 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
 
 public class Models {
 
@@ -136,6 +152,108 @@ public class Models {
      */
     public static Optional<IRI> predicate(Model m) {
         return m.stream().map(Statement::getPredicate).findAny();
+    }
+
+    /**
+     * Finds the first subject in the provided Model that has the given predicate and object.
+     *
+     * @param model The Model to filter
+     * @param predicate The predicate to filter by
+     * @param object The object to filter by
+     * @return An Optional Resource of the first subject found with the given predicate and object
+     */
+    public static Optional<Resource> findFirstSubject(Model model, IRI predicate, IRI object) {
+        Model filteredModel = model.filter(null, predicate, object);
+        if (filteredModel.size() > 0) {
+            Optional<Statement> optionalStatement = filteredModel.stream().findFirst();
+            if (optionalStatement.isPresent()) {
+                return Optional.of(optionalStatement.get().getSubject());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Finds the first object in the provided Model that has the given subject and predicate.
+     *
+     * @param model The Model to filter
+     * @param subject The subject to filter by
+     * @param predicate The predicate to filter by
+     * @return An Optional Value of the first object found with the given subject and predicate
+     */
+    public static Optional<Value> findFirstObject(Model model, IRI subject, IRI predicate) {
+        Model filteredModel = model.filter(subject, predicate, null);
+        if (filteredModel.size() > 0) {
+            Optional<Statement> optionalStatement = filteredModel.stream().findFirst();
+            if (optionalStatement.isPresent()) {
+                return Optional.of(optionalStatement.get().getObject());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Create a Mobi Model from an InputStream. Will attempt to parse the stream as different RDFFormats.
+     *
+     * @param inputStream the InputStream to parse
+     * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
+     * @return a Mobi Model from the parsed InputStream
+     * @throws IOException if a error occurs when accessing the InputStream contents
+     */
+    public static Model createModel(InputStream inputStream, SesameTransformer transformer) throws IOException {
+        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
+
+        Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
+                RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
+
+        Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
+        ByteArrayInputStream ontologyData = toByteArrayInputStream(inputStream);
+
+        try {
+            ontologyData.mark(0);
+
+            while (rdfFormatIterator.hasNext()) {
+                RDFFormat format = rdfFormatIterator.next();
+                try {
+                    model = Rio.parse(ontologyData, "", format);
+                    break;
+                } catch (RDFParseException | UnsupportedRDFormatException e) {
+                    ontologyData.reset();
+                }
+            }
+        } finally {
+            IOUtils.closeQuietly(ontologyData);
+        }
+
+        if (model.isEmpty()) {
+            throw new IllegalArgumentException("InputStream was invalid for all formats.");
+        }
+
+        return transformer.mobiModel(model);
+    }
+
+    /**
+     * Reads the provided {@link InputStream} into a {@link ByteArrayInputStream}.
+     *
+     * @param inputStream the InputStream to convert
+     * @return a ByteArrayInputStream
+     */
+    private static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException,
+            NegativeArraySizeException {
+        int size = 8192;
+        byte[] bytes = new byte[0];
+        try {
+            while (size == 8192) {
+                byte[] read = new byte[size];
+                size = inputStream.read(read);
+                int offset = bytes.length;
+                bytes = copyOf(bytes, offset + size);
+                System.arraycopy(read, 0, bytes, offset, size);
+            }
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        return new ByteArrayInputStream(bytes);
     }
 
 //    public static boolean isomorphic(Iterable<? extends Statement> model1,

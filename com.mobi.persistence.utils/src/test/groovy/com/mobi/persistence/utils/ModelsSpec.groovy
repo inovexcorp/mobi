@@ -37,6 +37,7 @@ class ModelsSpec extends Specification{
     def model2 = Mock(Model)
     def model3 = Mock(Model)
     def model4 = Mock(Model)
+    def model5 = Mock(Model)
 
     def stmtOIRI = Mock(Statement)
     def stmtOLit = Mock(Statement)
@@ -47,6 +48,10 @@ class ModelsSpec extends Specification{
     def predIRI = Mock(IRI)
     def objIRI = Mock(IRI)
     def objLit = Mock(Literal)
+
+    def subIRI2 = Mock(IRI)
+    def predIRI2 = Mock(IRI)
+    def objIRI2 = Mock(IRI)
 
     def sub = "http://test.com/sub"
     def pred = "http://test.com/pred"
@@ -81,6 +86,18 @@ class ModelsSpec extends Specification{
         model2.stream() >> Stream.of(stmtOLit)
         model3.stream() >> Stream.of(stmtOIRI, stmtOLit)
         model4.stream() >> Stream.of(stmtSBNode)
+        model5.stream() >> Stream.empty()
+
+        model1.filter(null, predIRI, objIRI) >> model1
+        model1.filter(subIRI, predIRI, null) >> model1
+        model1.filter(null, predIRI, objIRI2) >> model5
+        model1.filter(null, predIRI2, objIRI) >> model5
+        model1.filter(subIRI, predIRI2, null) >> model5
+        model1.filter(subIRI2, predIRI, null) >> model5
+
+        model1.size() >> 1
+        model5.size() >> 0
+
     }
 
     def "objectString returns object string from only statement in model"(){
@@ -169,5 +186,53 @@ class ModelsSpec extends Specification{
 
         then:
         subIRI == result
+    }
+
+    def "findFirstSubject returns the subject (IRI) when provided a matching predicate and object"(){
+        when:
+        def result = Models.findFirstSubject(model1, predIRI, objIRI).get()
+
+        then:
+        subIRI == result
+    }
+
+    def "findFirstSubject returns an empty optional when provided a matching predicate and non matching object"(){
+        when:
+        def result = Models.findFirstSubject(model1, predIRI, objIRI2).isPresent()
+
+        then:
+        !result
+    }
+
+    def "findFirstSubject returns an empty optional when provided a non matching predicate and matching object"(){
+        when:
+        def result = Models.findFirstSubject(model1, predIRI2, objIRI).isPresent()
+
+        then:
+        !result
+    }
+
+    def "findFirstObject returns the object (IRI) when provided a matching subject and predicate"(){
+        when:
+        def result = Models.findFirstObject(model1, subIRI, predIRI).get()
+
+        then:
+        objIRI == result
+    }
+
+    def "findFirstObject returns an empty optional when provided a matching subject and non matching predicate"(){
+        when:
+        def result = Models.findFirstObject(model1, subIRI, predIRI2).isPresent()
+
+        then:
+        !result
+    }
+
+    def "findFirstObject returns an empty optional when provided a non matching subject and matching predicate"(){
+        when:
+        def result = Models.findFirstObject(model1, subIRI2, predIRI).isPresent()
+
+        then:
+        !result
     }
 }
