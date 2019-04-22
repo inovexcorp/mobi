@@ -257,6 +257,14 @@ describe('Groups Page component', function() {
             expect(createButton.attr('disabled')).toBeFalsy();
             expect(editButton.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether a group is external', function() {
+            userStateSvc.selectedGroup = {title: 'group', members: [], external: true};
+            scope.$digest();
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
+            var editButton = angular.element(this.element.querySelectorAll('.col-8 block-header button.btn-link')[0]);
+            expect(deleteButton.attr('disabled')).toBeTruthy();
+            expect(editButton.attr('disabled')).toBeTruthy();            
+        });
     });
     it('should call createGroup when the button is clicked', function() {
         spyOn(this.controller, 'createGroup');

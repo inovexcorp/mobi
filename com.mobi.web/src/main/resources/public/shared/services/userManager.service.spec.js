@@ -610,6 +610,18 @@ describe('User Manager service', function() {
             expect(result).toBe(false);
         });
     });
+    it('should determine whether a user is external', function() {
+        expect(userManagerSvc.isExternalUser({'@type': [prefixes.user + 'User', prefixes.user + 'ExternalUser']})).toEqual(true);
+        expect(userManagerSvc.isExternalUser({'@type': [prefixes.user + 'User']})).toEqual(false);
+        expect(userManagerSvc.isExternalUser({'@type': [prefixes.user + 'Group']})).toEqual(false);
+        expect(userManagerSvc.isExternalUser({})).toEqual(false);
+    });
+    it('should determine whether a group is external', function() {
+        expect(userManagerSvc.isExternalGroup({'@type': [prefixes.user + 'Group', prefixes.user + 'ExternalGroup']})).toEqual(true);
+        expect(userManagerSvc.isExternalGroup({'@type': [prefixes.user + 'Group']})).toEqual(false);
+        expect(userManagerSvc.isExternalGroup({'@type': [prefixes.user + 'User']})).toEqual(false);
+        expect(userManagerSvc.isExternalGroup({})).toEqual(false);
+    });
     describe('getUserDisplay should return the correct value', function() {
         it('when there is a first and last', function() {
             var userObject = {
@@ -627,5 +639,58 @@ describe('User Manager service', function() {
         it('when there is not a first, last, or username', function() {
             expect(userManagerSvc.getUserDisplay({})).toEqual('[Not Available]');
         });
+    });
+    it('should create a user object', function() {
+        utilSvc.getBeautifulIRI.and.callFake(_.identity);
+        utilSvc.getPropertyId.and.returnValue('email');
+        utilSvc.getPropertyValue.and.callFake((obj, prop) => {
+            if (prop === prefixes.foaf + 'firstName') {
+                return 'first name';
+            } else if (prop === prefixes.foaf + 'lastName') {
+                return 'last name';
+            } else if (prop === prefixes.user + 'username') {
+                return 'username';
+            } else {
+                return '';
+            }
+        });
+        spyOn(userManagerSvc, 'isExternalUser').and.returnValue(false);
+        var jsonld = {'@id': 'user', [prefixes.user + 'hasUserRole']: [{'@id': 'role'}]};
+        var result = userManagerSvc.getUserObj(jsonld);
+        expect(result.jsonld).toEqual(jsonld);
+        expect(result.external).toEqual(false);
+        expect(result.iri).toEqual(jsonld['@id']);
+        expect(result.username).toEqual('username');
+        expect(result.firstName).toEqual('first name');
+        expect(result.lastName).toEqual('last name');
+        expect(result.email).toEqual('email');
+        expect(result.roles).toEqual(['role']);
+    });
+    it('should create a group object', function() {
+        utilSvc.getBeautifulIRI.and.callFake(_.identity);
+        utilSvc.getDctermsValue.and.callFake((obj, prop) => {
+            if (prop === 'title') {
+                return 'title';
+            } else if (prop === 'description') {
+                return 'description';
+            } else {
+                return '';
+            }
+        });
+        spyOn(userManagerSvc, 'isExternalGroup').and.returnValue(false);
+        var jsonld = {
+            '@id': 'user',
+            [prefixes.user + 'hasGroupRole']: [{'@id': 'role'}],
+            [prefixes.foaf + 'member']: [{'@id': 'user'}]
+        };
+        userManagerSvc.users = [{iri: 'user', username: 'user'}];
+        var result = userManagerSvc.getGroupObj(jsonld);
+        expect(result.jsonld).toEqual(jsonld);
+        expect(result.external).toEqual(false);
+        expect(result.iri).toEqual(jsonld['@id']);
+        expect(result.title).toEqual('title');
+        expect(result.description).toEqual('description');
+        expect(result.members).toEqual(['user']);
+        expect(result.roles).toEqual(['role']);
     });
 });

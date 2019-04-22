@@ -22,9 +22,9 @@
   -->
 <div class="groups-list tree scroll-without-buttons">
     <ul>
-        <li ng-repeat="group in dvm.filteredGroups track by group.title">
+        <li ng-repeat="group in dvm.filteredGroups track by group.title" ng-class="{'external': group.external}">
             <a ng-click="dvm.clickEvent({group: group})" class="d-flex" ng-class="{'active': group.title === dvm.selectedGroup.title}">
-                <span class="text-truncate" ng-bind-html="group.title | highlight:dvm.searchText | trusted"></span>
+                <span class="group-title text-truncate" ng-bind-html="group.title | highlight:dvm.searchText | trusted"></span>
                 <span class="member-count pl-1"><i class="fa fa-users"></i> {{group.members.length}}</span>
             </a>
         </li>
