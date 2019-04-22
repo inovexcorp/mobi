@@ -2079,6 +2079,19 @@ public class CatalogRestImplTest extends MobiRestTestNg {
     }
 
     @Test
+    public void createBranchWithCommitNotInRecordTest() {
+        //Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("type", Branch.TYPE);
+        fd.field("title", "Title");
+        fd.field("commitId", COMMIT_IRIS[1]);
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void createBranchWithInvalidTypeTest() {
         //Setup:
         FormDataMultiPart fd = new FormDataMultiPart();

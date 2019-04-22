@@ -751,7 +751,7 @@ public class CatalogRestImpl implements CatalogRest {
             newBranch.setProperty(getActiveUser(context, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
             Commit newCommit = catalogManager.getCommit(commitIri).orElseThrow(() -> ErrorUtils.sendError("Commit "
-                    + commitId + " could not be found", Response.Status.BAD_REQUEST));;
+                    + commitId + " could not be found", Response.Status.BAD_REQUEST));
             newBranch.setHead(newCommit);
             catalogManager.addBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch);
             return Response.status(201).entity(newBranch.getResource().stringValue()).build();
