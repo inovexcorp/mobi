@@ -24,19 +24,8 @@
 @import "./src/main/resources/public/css/variables";
 
 .groups-list {
-    .groups {
-        tr {
-            &:hover {
-                cursor: pointer;
-            }
-            td {
-                &:first-child {
-                    width: 15%;
-                }
-                &:last-child {
-                    text-align: right;
-                }
-            }
-        }
+    li.external {
+        font-style: italic;
+        color: var(--grey);
     }
 }

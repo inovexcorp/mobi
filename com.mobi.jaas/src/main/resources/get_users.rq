@@ -1,0 +1,8 @@
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+
+CONSTRUCT { ?userId ?p ?o }
+WHERE {
+    ?userId a um:User ;
+        ?p ?o .
+    FILTER NOT EXISTS { ?userId a um:ExternalUser }
+}
