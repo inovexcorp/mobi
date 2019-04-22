@@ -902,12 +902,7 @@
          */
         self.createRecordBranch = function(recordId, catalogId, branchConfig, commitId) {
             branchConfig.type = prefixes.catalog + 'Branch';
-            return createBranch(recordId, catalogId, branchConfig)
-                .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
-                .then(branch => {
-                    branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-                    return self.updateRecordBranch(branch['@id'], recordId, catalogId, branch);
-                }, $q.reject);
+            return createBranch(recordId, catalogId, branchConfig, commitId);
         }
 
         /**
@@ -932,7 +927,7 @@
          */
         self.createRecordUserBranch = function(recordId, catalogId, branchConfig, commitId, parentBranchId) {
             branchConfig.type = prefixes.catalog + 'UserBranch';
-            return createBranch(recordId, catalogId, branchConfig)
+            return createBranch(recordId, catalogId, branchConfig, commitId)
                 .then(iri => self.getRecordBranch(iri, recordId, catalogId), $q.reject)
                 .then(branch => {
                     branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
@@ -1558,7 +1553,7 @@
                 .then(response => response.data, util.rejectError);
         }
 
-        function createBranch(recordId, catalogId, branchConfig) {
+        function createBranch(recordId, catalogId, branchConfig, commitId) {
             var fd = new FormData(),
                 config = {
                     transformRequest: _.identity,
@@ -1568,6 +1563,7 @@
                 };
             fd.append('title', branchConfig.title);
             fd.append('type', branchConfig.type);
+            fd.append('commitId', commitId);
             if (_.has(branchConfig, 'description')) {
                 fd.append('description', branchConfig.description);
             }
