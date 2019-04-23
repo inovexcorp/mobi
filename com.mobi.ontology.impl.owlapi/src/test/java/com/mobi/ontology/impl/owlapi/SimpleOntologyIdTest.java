@@ -79,7 +79,6 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         ArgumentCaptor<IRI> mobiIRI = ArgumentCaptor.forClass(IRI.class);
         ArgumentCaptor<org.semanticweb.owlapi.model.IRI> owlapiIRI = ArgumentCaptor.forClass(org.semanticweb.owlapi.model.IRI.class);
 
-
         mockStatic(SimpleOntologyValues.class);
         when(SimpleOntologyValues.owlapiIRI(mobiIRI.capture())).thenAnswer(invocation -> org.semanticweb.owlapi.model.IRI.create(mobiIRI.getValue().stringValue()));
         when(SimpleOntologyValues.mobiIRI(owlapiIRI.capture())).thenAnswer(invocation -> vf.createIRI(owlapiIRI.getValue().getIRIString()));

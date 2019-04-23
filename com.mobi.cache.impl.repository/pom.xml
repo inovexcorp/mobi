@@ -45,7 +45,22 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>ontology.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>persistence.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>ontology.impl.owlapi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -59,12 +74,39 @@
 
         <!-- Test Dependencies -->
         <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>dataset.impl</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>repository.impl.sesame</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf-orm-test</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -80,7 +122,8 @@
                         <Bundle-Name>Mobi Cache - Repository Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.cache.api; provide:=true
+                            com.mobi.cache.api; provide:=true,
+                            com.mobi.cache.api.repository; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

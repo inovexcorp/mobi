@@ -88,11 +88,11 @@ public class OntologyCacheImpl implements OntologyCache {
 
     @Override
     public void removeFromCache(String recordIdStr, String commitIdStr) {
-        Cache<String, Ontology> cache;
-        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
         String key = generateKey(recordIdStr, commitIdStr);
-        if (optCache.isPresent() && (cache = optCache.get()).containsKey(key)) {
-            cache.remove(key);
-        }
+        getOntologyCache().ifPresent(cache -> {
+            if (cache.containsKey(key)) {
+                cache.remove(key);
+            }
+        });
     }
 }

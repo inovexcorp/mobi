@@ -754,22 +754,6 @@ class SimpleDatasetManagerSpec extends Specification {
         dsConn.getRepositoryId() == repo
     }
 
-    def "getConnection(dataset, repository) throws an Exception if the DatasetRecord does not exist"() {
-        setup:
-        def repo = "system"
-        def datasetIRI = vf.createIRI("http://test.com/dataset1")
-
-        resultsMock.hasNext() >> false
-        configProviderMock.getRepository() >> repositoryMock
-
-        when:
-        service.getConnection(datasetIRI, repo)
-
-        then:
-        0 * catalogManagerMock.getRecord(*_)
-        thrown(IllegalArgumentException)
-    }
-
     def "getConnection(record) throws an Exception if the DatasetRecord does not exist"() {
         setup:
         def recordIRI = vf.createIRI("http://test.com/record/dataset1")

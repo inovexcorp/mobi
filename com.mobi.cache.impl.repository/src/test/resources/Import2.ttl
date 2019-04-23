@@ -1,0 +1,22 @@
+
+<https://mobi.com/ontologies/4/2019/Import2#Individual1> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <https://mobi.com/ontologies/4/2019/Import2#Class1> .
+
+<https://mobi.com/ontologies/4/2019/Import2> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/description> "This is an ontology that is used as an import.";
+  <http://purl.org/dc/terms/title> "Import 2" .
+
+<https://mobi.com/ontologies/4/2019/Import2#Class1> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Class1" .
+
+<https://mobi.com/ontologies/4/2019/Import2#Class2> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Class2" .
+
+<https://mobi.com/ontologies/4/2019/Import2#objectProp1> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <http://purl.org/dc/terms/title> "ObjectProp1" .
+
+<https://mobi.com/ontologies/4/2019/Import2#dataProp1> a <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+  <http://purl.org/dc/terms/title> "DataProp1" .
+
+<https://mobi.com/ontologies/4/2019/Import2#annotationProp1> a <http://www.w3.org/2002/07/owl#AnnotationProperty>;
+  <http://purl.org/dc/terms/title> "AnnotationProp1" .

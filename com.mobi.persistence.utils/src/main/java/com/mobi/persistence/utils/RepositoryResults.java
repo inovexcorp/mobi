@@ -47,6 +47,20 @@ public class RepositoryResults {
     }
 
     /**
+     * Returns the Model containing all the Statements from a RepositoryResult with the contexts removed.
+     *
+     * @param results - The RepositoryResult containing Statements for the Model
+     * @param factory - The ModelFactory from which to create an empty Model
+     * @return the Model containing all the Statements from a RepositoryResult with the context removed.
+     */
+    public static Model asModelNoContext(RepositoryResult<Statement> results, ModelFactory factory) {
+        Model model = factory.createModel();
+        results.forEach(statement
+                -> model.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return model;
+    }
+
+    /**
      * Returns the List containing all the Objects from a RepositoryResult.
      *
      * @param results - The RepositoryResult containing the Objects for the List

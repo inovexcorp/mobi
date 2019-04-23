@@ -1,0 +1,22 @@
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports#Individual1> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <https://mobi.com/ontologies/4/2019/OntologyNoImports#Class1> .
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/description> "This is an ontology that does not have imports.";
+  <http://purl.org/dc/terms/title> "Ontology No Imports" .
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports#Class1> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Class1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports#Class2> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Class2" .
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports#objectProp1> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <http://purl.org/dc/terms/title> "ObjectProp1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports#dataProp1> a <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+  <http://purl.org/dc/terms/title> "DataProp1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyNoImports#annotationProp1> a <http://www.w3.org/2002/07/owl#AnnotationProperty>;
+  <http://purl.org/dc/terms/title> "AnnotationProp1" .

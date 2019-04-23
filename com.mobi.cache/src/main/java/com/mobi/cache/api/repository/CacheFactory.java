@@ -27,20 +27,25 @@ import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.repository.api.Repository;
 
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 
 public interface CacheFactory<K, V> {
 
     /**
      * Retrieve the Value Type of the Cache.
+     *
      * @return the Class of the Value Type
      */
     Class<V> getValueType();
 
     /**
-     * Create a Cache using the provided configuration
+     * Create a Cache using the provided configuration.
+     *
      * @param configuration the {@link RepositoryConfiguration} to create the cache from
+     * @param cacheManager the {@link CacheManager} associated with the cache
      * @param repository the {@link Repository} backing the cache
      * @return A JSR-107 Cache object
      */
-    Cache<K, V> createCache(RepositoryConfiguration<K, V> configuration, Repository repository);
+    Cache<K, V> createCache(RepositoryConfiguration<K, V> configuration, CacheManager cacheManager,
+                            Repository repository);
 }

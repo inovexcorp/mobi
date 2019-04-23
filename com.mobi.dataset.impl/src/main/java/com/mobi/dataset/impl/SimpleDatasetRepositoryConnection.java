@@ -498,7 +498,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      */
     private void addGraphStatements(String predicate, Resource... contexts) {
         for (Resource context : contexts) {
-            getDelegate().add(dataset, valueFactory.createIRI(predicate), context, dataset);
+            IRI predIRI = valueFactory.createIRI(predicate);
+            if (!getDelegate().contains(dataset, predIRI, context, dataset)) {
+                getDelegate().add(dataset, predIRI, context, dataset);
+            }
         }
     }
 

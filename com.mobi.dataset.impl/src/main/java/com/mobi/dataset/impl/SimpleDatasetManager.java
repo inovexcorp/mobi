@@ -293,10 +293,6 @@ public class SimpleDatasetManager implements DatasetManager {
 
     @Override
     public DatasetConnection getConnection(Resource dataset, String repositoryId) {
-        if (!getRecordResource(dataset, repositoryId).isPresent()) {
-            throw new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog with this "
-                    + "dataset/repository combination.");
-        }
         Repository dsRepo = getDatasetRepo(repositoryId);
 
         return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);

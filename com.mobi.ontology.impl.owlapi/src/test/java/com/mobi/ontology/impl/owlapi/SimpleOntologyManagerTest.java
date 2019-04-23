@@ -224,7 +224,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.setCatalogManager(catalogManager);
         manager.setUtilsService(catalogUtilsService);
         manager.setRepositoryManager(mockRepoManager);
-        manager.setOntologyCache(ontologyCache);
+        manager.addOntologyCache(ontologyCache);
         manager.setbNodeService(bNodeService);
     }
 

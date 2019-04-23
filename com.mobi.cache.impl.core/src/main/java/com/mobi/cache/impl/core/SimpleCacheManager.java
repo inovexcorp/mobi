@@ -31,10 +31,13 @@ import com.mobi.cache.api.CacheManager;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.config.CacheConfiguration;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import javax.cache.Cache;
 import javax.cache.Caching;
+import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
 
 @Component(immediate = true)
@@ -44,19 +47,23 @@ public class SimpleCacheManager implements CacheManager {
     private CachingProvider repoProvider;
     private javax.cache.CacheManager cacheManager;
     private javax.cache.CacheManager repoCacheManager;
+    private Map<String, CacheConfiguration<?, ?>> cacheConfigurations = new HashMap<>();
     private final Semaphore mutex = new Semaphore(1);
 
     @Reference(type = '*', dynamic = true, optional = true)
     private <K, V> void addCache(CacheConfiguration<K, V> configuration) throws InterruptedException {
-        checkCacheManager();
-        if (configuration instanceof RepositoryConfiguration && repoCacheManager != null) {
-            repoCacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
-        } else {
-            cacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
+        cacheConfigurations.put(configuration.getCacheId(), configuration);
+        if (cacheManager != null && repoCacheManager != null) {
+            if (configuration.getCacheConfiguration() instanceof RepositoryConfiguration && repoCacheManager != null) {
+                repoCacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
+            } else {
+                cacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
+            }
         }
     }
 
     private <K, V> void removeCache(CacheConfiguration<K, V> configuration) {
+        cacheConfigurations.remove(configuration.getCacheId());
         if (configuration instanceof RepositoryConfiguration && repoCacheManager != null
                 && !repoCacheManager.isClosed()) {
             repoCacheManager.destroyCache(configuration.getCacheId());
@@ -73,6 +80,14 @@ public class SimpleCacheManager implements CacheManager {
     @Activate
     public void start() throws InterruptedException {
         checkCacheManager();
+        cacheConfigurations.forEach((cacheId, configuration) -> {
+            Configuration jCacheConfig = configuration.getCacheConfiguration();
+            if (jCacheConfig instanceof RepositoryConfiguration && repoCacheManager != null && repoCacheManager.getCache(cacheId) == null) {
+                repoCacheManager.createCache(cacheId, jCacheConfig);
+            } else if (cacheManager.getCache(cacheId) == null) {
+                cacheManager.createCache(cacheId, jCacheConfig);
+            }
+        });
     }
 
     @Deactivate

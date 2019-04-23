@@ -155,9 +155,12 @@ public class SimpleOntologyManager implements OntologyManager {
         this.branchFactory = branchFactory;
     }
 
-    @Reference
-    public void setOntologyCache(OntologyCache ontologyCache) {
+    @Reference(type = '*', dynamic = true, optional = true)
+    public void addOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
+    }
+
+    public void removeOntologyCache(OntologyCache ontologyCache) {
     }
 
     @Reference

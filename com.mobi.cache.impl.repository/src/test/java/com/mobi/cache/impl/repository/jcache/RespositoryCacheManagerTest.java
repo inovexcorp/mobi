@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.spi.CachingProvider;
 
@@ -90,7 +91,7 @@ public class RespositoryCacheManagerTest {
         when(repositoryCachingProvider.getDefaultProperties()).thenReturn(new Properties());
         when(repositoryCachingProvider.getDefaultClassLoader()).thenReturn(providerClassLoader);
         when(cacheFactory.getValueType()).thenReturn(String.class);
-        when(cacheFactory.createCache(any(RepositoryConfiguration.class), any(Repository.class))).thenReturn(repoCache);
+        when(cacheFactory.createCache(any(RepositoryConfiguration.class), any(CacheManager.class), any(Repository.class))).thenReturn(repoCache);
         when(repoCache.getConfiguration(eq(CompleteConfiguration.class))).thenReturn(repositoryConfiguration);
         when(repositoryManager.getRepository(eq(REPO_ID))).thenReturn(Optional.of(repository));
 

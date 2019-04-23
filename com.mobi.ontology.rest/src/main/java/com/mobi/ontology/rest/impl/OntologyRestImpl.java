@@ -62,6 +62,7 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.rest.OntologyRest;
+import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
@@ -464,8 +465,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private StreamingOutput getOntologyStuffStream(Ontology ontology) {
-        Set<Ontology> importedOntologies = ontology.getImportsClosure();
-        Set<Ontology> onlyImports = getImportedOntologies(importedOntologies, ontology.getOntologyId());
+        Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
 
         return outputStream -> {
             StopWatch watch = new StopWatch();
@@ -1317,23 +1317,10 @@ public class OntologyRestImpl implements OntologyRest {
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
-            return getImportedOntologies(baseOntology.getImportsClosure(), baseOntology.getOntologyId());
+            return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology.getOntologyId());
         } else {
             throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
         }
-    }
-
-    /**
-     * Gets the imported ontologies for the Ontology identified, excluding the base Ontology.
-     *
-     * @param importedOntologies set of ontologies from the imports closure which includes the base ontology.
-     * @param baseOntologyId     the {@link OntologyId} for the base Ontology to exclude from the {@link Set}.
-     * @return the Set of imported Ontologies without the base Ontology.
-     */
-    private Set<Ontology> getImportedOntologies(Set<Ontology> importedOntologies, OntologyId baseOntologyId) {
-        return importedOntologies.stream()
-                .filter(ontology -> !ontology.getOntologyId().equals(baseOntologyId))
-                .collect(Collectors.toSet());
     }
 
     /**
