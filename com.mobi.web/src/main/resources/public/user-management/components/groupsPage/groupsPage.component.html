@@ -35,7 +35,7 @@
                     <groups-list groups="dvm.um.groups" selected-group="dvm.state.selectedGroup" click-event="dvm.selectGroup(group)" search-text="dvm.state.groupSearchString"></groups-list>
                 </block-content>
                 <block-footer class="centered">
-                    <button class="btn btn-link" ng-click="dvm.confirmDeleteGroup()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                    <button class="btn btn-link" ng-click="dvm.confirmDeleteGroup()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedGroup.external">
                         <i class="fa fa-trash"></i>Delete Group
                     </button>
                 </block-footer>
@@ -52,7 +52,7 @@
                             <block class="h-100">
                                 <block-header>
                                     <span>Description</span>
-                                    <button class="btn btn-link float-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                                    <button class="btn btn-link float-right" ng-click="dvm.editDescription()" ng-disabled="!dvm.state.selectedGroup || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedGroup.external">
                                         <i class="fa fa-pencil"></i>Edit
                                     </button>
                                 </block-header>
@@ -81,7 +81,7 @@
                                     <span>Members</span>
                                 </block-header>
                                 <block-content>
-                                    <member-table ng-if="dvm.state.selectedGroup" members="dvm.state.selectedGroup.members" add-member="dvm.addMember(member)" remove-member="dvm.confirmRemoveMember(member)" link-to-user="true"></member-table>
+                                    <member-table ng-if="dvm.state.selectedGroup" read-only="dvm.state.selectedGroup.external" members="dvm.state.selectedGroup.members" add-member="dvm.addMember(member)" remove-member="dvm.confirmRemoveMember(member)" link-to-user="true"></member-table>
                                 </block-content>
                             </block>
                         </div>

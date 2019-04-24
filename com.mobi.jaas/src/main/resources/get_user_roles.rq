@@ -1,0 +1,18 @@
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+CONSTRUCT { ?roleId ?p ?o }
+WHERE {
+    {
+        ?userId um:hasUserRole ?roleId .
+        ?roleId ?p ?o
+        FILTER NOT EXISTS { ?userId a um:ExternalUser }
+    }
+    UNION
+    {
+        ?groupId foaf:member ?userId ;
+            um:hasGroupRole ?roleId .
+        ?roleId ?p ?o
+        FILTER NOT EXISTS { ?groupId a um:ExternalGroup }
+    }
+}
