@@ -119,6 +119,17 @@ public interface DatasetManager {
     DatasetRecord safeDeleteDataset(Resource dataset, String repositoryId);
 
     /**
+     * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
+     * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
+     *
+     * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
+     * @param datasetRecord Whether or not the Resource IRI has a DatasetRecord associated with it
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
+     */
+    void safeDeleteDataset(Resource dataset, String repositoryId, boolean datasetRecord);
+
+    /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
      * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
      *
@@ -182,6 +193,19 @@ public interface DatasetManager {
      * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
     DatasetConnection getConnection(Resource dataset, String repositoryId);
+
+    /**
+     * Returns a DatasetConnection for the specified Dataset in the specified repository.
+     *
+     * @param dataset The Resource of the Dataset for which to return a DatasetConnection.
+     * @param repositoryId The ID of the Repository where the Dataset is stored.
+     * @param datasetRecord Whether or not the Resource IRI has a DatasetRecord associated with it
+     * @return A DatasetConnection for the specified Dataset.
+     * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog with this
+     *      Dataset/Repository combination.
+     * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
+     */
+    DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord);
 
     /**
      * Returns a DatasetConnection for the specified DatasetRecord. The DatasetConnection is associated with the

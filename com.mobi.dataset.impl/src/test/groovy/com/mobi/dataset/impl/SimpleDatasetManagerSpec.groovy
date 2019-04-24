@@ -653,6 +653,48 @@ class SimpleDatasetManagerSpec extends Specification {
                 []
         ]
     }
+    
+    def "safeDeleteDataset() Dataset, and associated graphs in a #repo repository for #datasetIRI"() {
+        setup:
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        dynamicConn = repos.get(repo).getConnection()
+
+        when:
+        service.safeDeleteDataset(testDatasetIRI, repo, false)
+
+        then:
+        // Mock Verifications
+        repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
+        // Assertions
+        !dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()
+        deletedGraphs.forEach   { assert !dynamicConn.getStatements(null, null, null, it).hasNext() }
+
+        where:
+        repo | testDatasetIRI | testRecordIRI
+        "system" | datasetsInFile[1] | recordsInFile[1]
+        "system" | datasetsInFile[2] | recordsInFile[2]
+        "system" | datasetsInFile[3] | recordsInFile[3]
+        "test" | datasetsInFile[5] | recordsInFile[5]
+        "test" | datasetsInFile[6] | recordsInFile[6]
+
+        // Named graphs that should have been deleted after test
+        deletedGraphs << [
+                ( defaultNamedGraphsPerDS[1] + namedGraphsPerDS[1] + sysDefNamedGraphsPerDS[1] ),
+                ( defaultNamedGraphsPerDS[2] + namedGraphsPerDS[2] + sysDefNamedGraphsPerDS[2] ),
+                [ vf.createIRI("http://mobi.com/dataset/test3/graph1"), vf.createIRI("http://mobi.com/dataset/test3/graph2"), vf.createIRI("http://mobi.com/dataset/test3/graph3") ],
+                ( defaultNamedGraphsPerDS[5] + namedGraphsPerDS[5] + sysDefNamedGraphsPerDS[5] ),
+                ( defaultNamedGraphsPerDS[6] + namedGraphsPerDS[6] + sysDefNamedGraphsPerDS[6] )
+        ]
+
+        // Named graphs that should be in repo after test
+        remainingGraphs << [
+                [],
+                [],
+                [ vf.createIRI("http://mobi.com/dataset/test3/graph4"), vf.createIRI("http://mobi.com/dataset/test3/graph5") ],
+                [],
+                []
+        ]
+    }
 
     def "clearDataset() correctly removes associated graphs in a #repo repository"() {
         setup:
@@ -752,6 +794,22 @@ class SimpleDatasetManagerSpec extends Specification {
         then:
         dsConn.getDataset() == datasetIRI
         dsConn.getRepositoryId() == repo
+    }
+
+    def "getConnection(dataset, repository) throws an Exception if the DatasetRecord does not exist"() {
+        setup:
+        def repo = "system"
+        def datasetIRI = vf.createIRI("http://test.com/dataset1")
+
+        resultsMock.hasNext() >> false
+        configProviderMock.getRepository() >> repositoryMock
+
+        when:
+        service.getConnection(datasetIRI, repo)
+
+        then:
+        0 * catalogManagerMock.getRecord(*_)
+        thrown(IllegalArgumentException)
     }
 
     def "getConnection(record) throws an Exception if the DatasetRecord does not exist"() {

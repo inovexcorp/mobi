@@ -64,7 +64,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                 }
             }
         }
-        return datasetManager.getConnection(datasetIRI, repository.getConfig().id());
+        return datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
     }
 
     protected void updateNamedGraphTimestamps(Resource datasetIRI) {
@@ -80,9 +80,14 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
             conn.remove(namedGraph, pred, null, namedGraph);
             conn.add(namedGraph, pred, timestamp, namedGraph);
         });
+
         Resource sdNg = conn.getSystemDefaultNamedGraph();
         conn.remove(sdNg, pred, null, sdNg);
         conn.add(sdNg, pred, timestamp, sdNg);
+
+        Resource dataset = conn.getDataset();
+        conn.remove(dataset, pred, null, dataset);
+        conn.add(dataset, pred, timestamp, dataset);
     }
 
     protected void requireNotClosed() {

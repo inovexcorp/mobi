@@ -41,7 +41,6 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
@@ -171,23 +170,17 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public boolean remove(String key) {
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
-        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
-                RepositoryConnection repoConn = repository.getConnection()) {
-            return removeValueFromRepo(datasetIRI, dsConn, repoConn);
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
+        return removeValueFromRepo(datasetIRI);
     }
 
     @Override
     public boolean remove(String key, Ontology ontology) {
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
-        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
-                RepositoryConnection repoConn = repository.getConnection()) {
+        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             Ontology repoOntology = getValueFromRepo(dsConn);
             if (ontology.equals(repoOntology)) {
-                return removeValueFromRepo(datasetIRI, dsConn, repoConn);
+                return removeValueFromRepo(datasetIRI);
             }
         }
         return false;
@@ -203,11 +196,10 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         boolean success = false;
-        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
-                RepositoryConnection repoConn = repository.getConnection()) {
+        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             Ontology repoOntology = getValueFromRepo(dsConn);
             if (ontology.equals(repoOntology)) {
-                success = removeValueFromRepo(datasetIRI, dsConn, repoConn);
+                success = removeValueFromRepo(datasetIRI);
             }
         } catch (IllegalArgumentException e) {
             return false;
@@ -224,9 +216,8 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         boolean success;
-        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
-                RepositoryConnection repoConn = repository.getConnection()) {
-            success = removeValueFromRepo(datasetIRI, dsConn, repoConn);
+        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
+            success = removeValueFromRepo(datasetIRI);
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -343,7 +334,6 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
                     .map(resourceStr -> StringUtils.removeStart(resourceStr, DEFAULT_DS_NAMESPACE))
                     .map(ResourceUtils::decode)
                     .collect(Collectors.toSet());
-            System.out.println(keys);
             return getAll(keys)
                     .entrySet()
                     .stream()
@@ -387,18 +377,13 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         updateNamedGraphTimestamps(dsConn);
     }
 
-    private boolean removeValueFromRepo(IRI datasetIRI, DatasetConnection dsConn, RepositoryConnection repoConn) {
-        RepositoryResult<Resource> namedGraphs = dsConn.getNamedGraphs();
-        repoConn.clear(datasetIRI);
-        namedGraphs.forEach(namedGraphResource -> {
-            if (!repoConn.contains(null, vf.createIRI(Dataset.namedGraph_IRI), namedGraphResource)
-                    && !repoConn.contains(null, vf.createIRI(Dataset.defaultNamedGraph_IRI), namedGraphResource)
-                    && !repoConn.contains(null, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI),
-                    namedGraphResource)) {
-                repoConn.clear(namedGraphResource);
-            }
-        });
-        return true;
+    private boolean removeValueFromRepo(IRI datasetIRI) {
+        try {
+            datasetManager.safeDeleteDataset(datasetIRI, repository.getConfig().id(), false);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private IRI createDatasetIRIFromKey(String key) {
