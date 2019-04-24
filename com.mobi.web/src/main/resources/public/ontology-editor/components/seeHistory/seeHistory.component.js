@@ -75,6 +75,14 @@
                 dvm.os.listItem.selectedCommit = dvm.commits[0];
             }
         }
+
+        dvm.createLabel = function (commit) {
+            var label = dvm.util.condenseCommitId(commit.id);
+            if(commit.id == dvm.commits[0].id){
+                label = label + " (latest)"
+            }
+            return label;
+        }
     }
 
     angular.module('ontology-editor')
