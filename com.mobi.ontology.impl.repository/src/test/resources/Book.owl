@@ -1,0 +1,55 @@
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.daml.org/services/owl-s/AmazonWS/1.1/Book.owl#">
+<owl:Ontology rdf:about="">
+<owl:versionInfo></owl:versionInfo>
+<rdfs:comment></rdfs:comment>
+<owl:imports rdf:resource="http://www.w3.org/2002/07/owl"/>
+</owl:Ontology>
+<!--  Created: Mon Mar 24 14:13:17 2003  -->
+<owl:Class rdf:ID="Book"></owl:Class>
+<owl:DatatypeProperty rdf:ID="title">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="authorList">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="#AuthorList"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="isbn">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="publisher">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="publicationDate">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="price">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="format">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:DatatypeProperty rdf:ID="edition">
+<rdfs:domain rdf:resource="#Book"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+<owl:Class rdf:ID="AuthorList">
+<owl:intersectionOf rdf:parseType="owl:collection">
+<owl:Class rdf:about="http://www.w3.org/2002/07/owl#List"/>
+<owl:Restriction>
+<owl:onProperty rdf:resource="http://www.w3.org/2002/07/owl#item"/>
+<owl:toClass rdf:resource="#Author"/>
+</owl:Restriction>
+</owl:intersectionOf>
+</owl:Class>
+<owl:Class rdf:ID="Author"></owl:Class>
+<owl:DatatypeProperty rdf:ID="name">
+<rdfs:domain rdf:resource="#Author"/>
+<rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+</rdf:RDF>

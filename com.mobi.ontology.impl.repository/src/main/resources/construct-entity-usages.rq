@@ -1,0 +1,12 @@
+construct { ?s ?p ?o }
+where {
+    {
+        ?s ?p ?entity .
+        bind(?entity as ?o)
+    }
+    union
+    {
+        ?s ?entity ?o .
+        bind(?entity as ?p)
+    }
+}
