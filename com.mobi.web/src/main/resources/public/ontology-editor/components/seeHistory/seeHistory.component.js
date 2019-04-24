@@ -69,6 +69,12 @@
         dvm.getEntityNameDisplay = function(iri) {
             return dvm.om.isBlankNodeId(iri) ? dvm.ontoUtils.getBlankNodeValue(iri) : dvm.ontoUtils.getLabelForIRI(iri);
         }
+        dvm.recieveCommits = function (commits) {
+            dvm.commits = commits;
+            if(dvm.commits[0] != null) {
+                dvm.os.listItem.selectedCommit = dvm.commits[0];
+            }
+        }
     }
 
     angular.module('ontology-editor')

@@ -37,7 +37,7 @@
                     </div>
                     <div class="form-group">
                         <select class="form-control" ng-model="dvm.os.listItem.selectedCommit" ng-disabled="dvm.commits.length === 0" ng-options="commit as dvm.util.condenseCommitId(commit.id) for commit in dvm.commits">
-                            <option value="" disabled>- Commit Id -</option>
+                            <option value="" disabled>- Select Commit -</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -50,7 +50,7 @@
                 </div>
             </div>
             <div class="col remove-min-width h-100 vertical-scroll">
-                <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" receive-commits="dvm.commits = commits" entity-name-func="dvm.getEntityNameDisplay"></commit-history-table>
+                <commit-history-table commit-id="dvm.os.listItem.ontologyRecord.commitId" entity-id="dvm.os.listItem.selected['@id']" head-title="dvm.getHeadTitle()" receive-commits="dvm.recieveCommits(commits)" entity-name-func="dvm.getEntityNameDisplay"></commit-history-table>
             </div>
         </div>
     </div>
