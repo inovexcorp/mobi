@@ -37,16 +37,20 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.time.OffsetDateTime;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
 import javax.cache.configuration.Configuration;
@@ -59,18 +63,18 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     // TODO: Remove ontology manager & change Ontology usages to new Repository Ontology
     private OntologyManager ontologyManager;
-    final String name;
-    final CacheManager cacheManager;
-    final Configuration configuration;
+    private final String name;
+    private final CacheManager cacheManager;
+    private final Configuration configuration;
 
-    volatile boolean closed;
+    private volatile boolean closed;
 
-    public OntologyRepositoryCache(String name, Repository repository, CacheManager cacheManager, Configuration configuration) {
+    public OntologyRepositoryCache(String name, Repository repository, CacheManager cacheManager,
+                                   Configuration configuration) {
         this.name = name;
         this.repository = repository;
         this.cacheManager = cacheManager;
         this.configuration = configuration;
-        // TODO: Use configuration & cachemanager
     }
 
     public void setOntologyManager(OntologyManager ontologyManager) {
@@ -98,7 +102,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            return getValueFromRepo(datasetIRI, dsConn);
+            return getValueFromRepo(dsConn);
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -109,7 +113,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         return keys.stream()
                 .map(key -> Maps.immutableEntry(key, get(key)))
                 .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @Override
@@ -133,9 +137,9 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public void put(String key, Ontology ontology) {
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
-        try (DatasetConnection datasetConnection = getDatasetConnection(datasetIRI, true)) {
+        try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, true)) {
             IRI ontNamedGraphIRI = createSystemDefaultNamedGraphIRIFromKey(key);
-            putValueInRepo(ontology, ontNamedGraphIRI, datasetConnection);
+            putValueInRepo(ontology, ontNamedGraphIRI, dsConn);
         }
 
     }
@@ -181,7 +185,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         IRI datasetIRI = createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
                 RepositoryConnection repoConn = repository.getConnection()) {
-            Ontology repoOntology = getValueFromRepo(datasetIRI, dsConn);
+            Ontology repoOntology = getValueFromRepo(dsConn);
             if (ontology.equals(repoOntology)) {
                 return removeValueFromRepo(datasetIRI, dsConn, repoConn);
             }
@@ -201,7 +205,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         boolean success = false;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
                 RepositoryConnection repoConn = repository.getConnection()) {
-            Ontology repoOntology = getValueFromRepo(datasetIRI, dsConn);
+            Ontology repoOntology = getValueFromRepo(dsConn);
             if (ontology.equals(repoOntology)) {
                 success = removeValueFromRepo(datasetIRI, dsConn, repoConn);
             }
@@ -219,7 +223,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public boolean replace(String key, Ontology ontology) {
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
-        boolean success = false;
+        boolean success;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false);
                 RepositoryConnection repoConn = repository.getConnection()) {
             success = removeValueFromRepo(datasetIRI, dsConn, repoConn);
@@ -267,12 +271,15 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     }
 
     @Override
-    public <T> T invoke(String key, EntryProcessor<String, Ontology, T> entryProcessor, Object... objects) throws EntryProcessorException {
+    public <T> T invoke(String key, EntryProcessor<String, Ontology, T> entryProcessor, Object... objects)
+            throws EntryProcessorException {
         throw new UnsupportedOperationException("Invoke not supported in implementation.");
     }
 
     @Override
-    public <T> Map<String, EntryProcessorResult<T>> invokeAll(Set<? extends String> set, EntryProcessor<String, Ontology, T> entryProcessor, Object... objects) {
+    public <T> Map<String, EntryProcessorResult<T>> invokeAll(Set<? extends String> set,
+                                                              EntryProcessor<String, Ontology, T> entryProcessor,
+                                                              Object... objects) {
         throw new UnsupportedOperationException("Invoke not supported in implementation.");
     }
 
@@ -314,22 +321,40 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     }
 
     @Override
-    public void registerCacheEntryListener(CacheEntryListenerConfiguration<String, Ontology> cacheEntryListenerConfiguration) {
+    public void registerCacheEntryListener(CacheEntryListenerConfiguration<String,
+            Ontology> cacheEntryListenerConfiguration) {
         throw new UnsupportedOperationException("CacheEntryListener not supported in implementation.");
     }
 
     @Override
-    public void deregisterCacheEntryListener(CacheEntryListenerConfiguration<String, Ontology> cacheEntryListenerConfiguration) {
+    public void deregisterCacheEntryListener(CacheEntryListenerConfiguration<String,
+            Ontology> cacheEntryListenerConfiguration) {
         throw new UnsupportedOperationException("CacheEntryListener not supported in implementation.");
     }
 
     @Override
-    public Iterator<Entry<String, Ontology>> iterator() {
-        throw new UnsupportedOperationException("Iterator not supported in implementation.");
+    public Iterator<Cache.Entry<String, Ontology>> iterator() {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Set<String> keys = RepositoryResults.asList(
+                    conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(Dataset.TYPE)))
+                    .stream()
+                    .map(Statement::getSubject)
+                    .map(Resource::stringValue)
+                    .map(resourceStr -> StringUtils.removeStart(resourceStr, DEFAULT_DS_NAMESPACE))
+                    .map(ResourceUtils::decode)
+                    .collect(Collectors.toSet());
+            System.out.println(keys);
+            return getAll(keys)
+                    .entrySet()
+                    .stream()
+                    .map(entry -> cacheEntryFor(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toSet())
+                    .iterator();
+        }
     }
 
-    private Ontology getValueFromRepo(IRI datasetIRI, DatasetConnection dsConn) {
-        updateNamedGraphTimestamps(datasetIRI);
+    private Ontology getValueFromRepo(DatasetConnection dsConn) {
+        updateNamedGraphTimestamps(dsConn);
         Resource sdNamedGraphIRI = dsConn.getSystemDefaultNamedGraph();
         Model ontologyModel = RepositoryResults.asModelNoContext(
                 dsConn.getStatements(null, null, null, sdNamedGraphIRI), mf);
@@ -340,10 +365,10 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         return ontologyManager.createOntology(ontologyModel);
     }
 
-    private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection datasetConnection) {
+    private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
         Model ontologyModel = ontology.asModel(mf);
-        datasetConnection.add(ontologyModel, ontNamedGraphIRI);
-        datasetConnection.add(ontNamedGraphIRI, vf.createIRI(TIMESTAMP_IRI_STRING),
+        dsConn.add(ontologyModel, ontNamedGraphIRI);
+        dsConn.add(ontNamedGraphIRI, vf.createIRI(TIMESTAMP_IRI_STRING),
                 vf.createLiteral(OffsetDateTime.now()), ontNamedGraphIRI);
         Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
 
@@ -354,12 +379,12 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
             // TODO: Is this the correct ID??
             IRI ontId = importedOntology.getOntologyId().getOntologyIRI()
                     .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier());
-            if (!datasetConnection.containsContext(ontId)) {
-                datasetConnection.add(importedModel, ontId);
+            if (!dsConn.containsContext(ontId)) {
+                dsConn.add(importedModel, ontId);
             }
-            datasetConnection.addNamedGraph(ontId);
+            dsConn.addNamedGraph(ontId);
         });
-        updateNamedGraphTimestamps(datasetConnection);
+        updateNamedGraphTimestamps(dsConn);
     }
 
     private boolean removeValueFromRepo(IRI datasetIRI, DatasetConnection dsConn, RepositoryConnection repoConn) {
@@ -382,5 +407,56 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private IRI createSystemDefaultNamedGraphIRIFromKey(String key) {
         return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key) + SYSTEM_DEFAULT_NG_SUFFIX);
+    }
+
+    private static <K, V> Cache.Entry<K, V> cacheEntryFor(K key, V value) {
+        return new Entry<>(key, value);
+    }
+
+    static class Entry<K, V> implements Cache.Entry<K, V> {
+
+        private final K key;
+        private final V value;
+
+        Entry(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public K getKey() {
+            return key;
+        }
+
+        @Override
+        public V getValue() {
+            return value;
+        }
+
+        @Override
+        public <T> T unwrap(Class<T> clazz) {
+            throw new IllegalArgumentException();
+        }
+
+        @Override
+        public int hashCode() {
+            return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Entry) {
+                Entry<?, ?> other = (Entry<?, ?>) obj;
+
+                Object key1 = getKey();
+                Object key2 = other.getKey();
+                if (key1 == key2 || (key1 != null && key1.equals(key2))) {
+                    Object value1 = getValue();
+                    Object value2 = other.getValue();
+                    return (value1 == value2 || (value1 != null && value1.equals(value2)));
+                }
+            }
+            return false;
+        }
     }
 }

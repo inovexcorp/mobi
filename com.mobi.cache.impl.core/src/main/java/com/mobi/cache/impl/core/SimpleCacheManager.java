@@ -54,7 +54,7 @@ public class SimpleCacheManager implements CacheManager {
     private <K, V> void addCache(CacheConfiguration<K, V> configuration) throws InterruptedException {
         cacheConfigurations.put(configuration.getCacheId(), configuration);
         if (cacheManager != null && repoCacheManager != null) {
-            if (configuration.getCacheConfiguration() instanceof RepositoryConfiguration && repoCacheManager != null) {
+            if (configuration.getCacheConfiguration() instanceof RepositoryConfiguration) {
                 repoCacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
             } else {
                 cacheManager.createCache(configuration.getCacheId(), configuration.getCacheConfiguration());
@@ -82,7 +82,8 @@ public class SimpleCacheManager implements CacheManager {
         checkCacheManager();
         cacheConfigurations.forEach((cacheId, configuration) -> {
             Configuration jCacheConfig = configuration.getCacheConfiguration();
-            if (jCacheConfig instanceof RepositoryConfiguration && repoCacheManager != null && repoCacheManager.getCache(cacheId) == null) {
+            if (jCacheConfig instanceof RepositoryConfiguration && repoCacheManager != null
+                    && repoCacheManager.getCache(cacheId) == null) {
                 repoCacheManager.createCache(cacheId, jCacheConfig);
             } else if (cacheManager.getCache(cacheId) == null) {
                 cacheManager.createCache(cacheId, jCacheConfig);

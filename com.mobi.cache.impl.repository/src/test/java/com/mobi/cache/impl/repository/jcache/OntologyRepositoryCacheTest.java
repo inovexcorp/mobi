@@ -67,11 +67,14 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.configuration.Configuration;
 
@@ -808,8 +811,24 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
 
     /* iterator() */
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void iteratorTest() {
-        cache.iterator();
+        cache.put(key1, ontNoImports);
+        cache.put(key2, ontOneImport);
+        cache.put(key3, ontMultipleImports);
+        Map<String, Ontology> map = new HashMap<>();
+        for (Cache.Entry<String, Ontology> entry : cache) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+
+        assertEquals(ontNoImports, map.get(key1));
+        assertEquals(ontOneImport, map.get(key2));
+        assertEquals(ontMultipleImports, map.get(key3));
+    }
+
+    @Test
+    public void iteratorEmptyTest() {
+        Iterator it = cache.iterator();
+        assertFalse(it.hasNext());
     }
 }
