@@ -58,7 +58,8 @@ class OntologyImportServiceImplSpec extends Specification {
         def committedData = service.importOntology(ontologyIRI, branchIRI, false, mappedData, user, "")
 
         then:
-        committedData as Set == expectedCommit as Set
+        committedData.getAdditions() as Set == expectedCommit as Set
+        committedData.getDeletions() == null
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", expectedCommit, null)
     }
 
@@ -72,7 +73,8 @@ class OntologyImportServiceImplSpec extends Specification {
         def committedData = service.importOntology(ontologyIRI, branchIRI, false, mappedData, user, "")
 
         then:
-        committedData as Set == expectedCommit as Set
+        committedData.getAdditions() as Set == expectedCommit as Set
+        committedData.getDeletions() == null
         0 * versioningManager.commit(*_)
     }
 
@@ -82,7 +84,6 @@ class OntologyImportServiceImplSpec extends Specification {
         def existingData = mf.createModel([stmt1])
         def additions = mf.createModel([stmt2])
         def deletions = mf.createModel()
-        def expectedCommit = mf.createModel(additions + deletions as List)
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
         catalogManager.getDiff(existingData, mappedData) >> new Difference.Builder()
                 .additions(additions)
@@ -93,7 +94,8 @@ class OntologyImportServiceImplSpec extends Specification {
         def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
 
         then:
-        committedData as Set == expectedCommit as Set
+        committedData.getAdditions() as Set == additions as Set
+        committedData.getDeletions() as Set == deletions as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", additions, deletions)
     }
 
@@ -103,7 +105,6 @@ class OntologyImportServiceImplSpec extends Specification {
         def existingData = mf.createModel([stmt1, stmt2])
         def additions = mf.createModel()
         def deletions = mf.createModel()
-        def expectedCommit = mf.createModel(additions + deletions as List)
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
         catalogManager.getDiff(existingData, mappedData) >> new Difference.Builder()
                 .additions(additions)
@@ -114,7 +115,8 @@ class OntologyImportServiceImplSpec extends Specification {
         def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
 
         then:
-        committedData as Set == expectedCommit as Set
+        committedData.getAdditions() as Set == additions as Set
+        committedData.getDeletions() as Set == deletions as Set
         0 * versioningManager.commit(*_)
     }
 
@@ -124,7 +126,6 @@ class OntologyImportServiceImplSpec extends Specification {
         def existingData = mf.createModel([stmt1, ontStmt1])
         def additions = mf.createModel([stmt2])
         def deletions = mf.createModel()
-        def expectedCommit = mf.createModel(additions + deletions as List)
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
         catalogManager.getDiff(existingData, mf.createModel([stmt1, stmt2, ontStmt1])) >> new Difference.Builder()
                 .additions(additions)
@@ -135,7 +136,8 @@ class OntologyImportServiceImplSpec extends Specification {
         def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
 
         then:
-        committedData as Set == expectedCommit as Set
+        committedData.getAdditions() as Set == additions as Set
+        committedData.getDeletions() as Set == deletions as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", additions, deletions)
     }
 
@@ -145,7 +147,6 @@ class OntologyImportServiceImplSpec extends Specification {
         def existingData = mf.createModel([stmt1, ontStmt1, ontStmt2, stmt3])
         def additions = mf.createModel([stmt2])
         def deletions = mf.createModel([stmt3])
-        def expectedCommit = mf.createModel(additions + deletions as List)
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> existingData
         catalogManager.getDiff(existingData, mf.createModel([stmt1, stmt2, ontStmt1, ontStmt2])) >> new Difference.Builder()
                 .additions(additions)
@@ -156,7 +157,8 @@ class OntologyImportServiceImplSpec extends Specification {
         def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
 
         then:
-        committedData as Set == expectedCommit as Set
+        committedData.getAdditions() as Set == additions as Set
+        committedData.getDeletions() as Set == deletions as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", additions, deletions)
     }
 }

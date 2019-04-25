@@ -56,7 +56,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
     }
 
     @Override
-    public Model importOntology(IRI ontologyRecord, IRI branch, boolean update, Model ontologyData, User user, String commitMsg) {
+    public Difference importOntology(IRI ontologyRecord, IRI branch, boolean update, Model ontologyData, User user, String commitMsg) {
         Model newData = mf.createModel(ontologyData);
         Model existingData = ontologyManager.getOntologyModel(ontologyRecord, branch);
 
@@ -71,9 +71,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
                 versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user, commitMsg,
                         diff.getAdditions(), diff.getDeletions());
             }
-            Model result = diff.getAdditions();
-            result.addAll(diff.getDeletions());
-            return result;
+            return diff;
         } else {
             newData.removeAll(existingData);
 
@@ -81,7 +79,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
                 versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user, commitMsg,
                         newData, null);
             }
-            return newData;
+            return new Difference.Builder().additions(newData).build();
         }
     }
 }
