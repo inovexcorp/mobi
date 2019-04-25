@@ -32,6 +32,8 @@ import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.api.rdf.export.RDFExportService;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
@@ -102,12 +104,12 @@ public class CLITransform implements Action {
         this.ontologyImportService = ontologyImportService;
     }
 
-//    @Reference
-//    private EngineManager engineManager;
-//
-//    void setEngineManager(EngineManager engineManager) {
-//        this.engineManager = engineManager;
-//    }
+    @Reference
+    private EngineManager engineManager;
+
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
 
     // Command Parameters
 
@@ -207,9 +209,9 @@ public class CLITransform implements Action {
             if (ontology != null) {
                 IRI ontologyIri = vf.createIRI(ontology);
                 IRI branchIri = vf.createIRI(branch);
-//                engineManager.retrieveUser("admin")
+                User adminUser = engineManager.retrieveUser("RdfEngine", "admin").get();
                 String commitMsg = "Mapping data from " + mappingRecordIRI;
-                ontologyImportService.importOntology(ontologyIri, branchIri, update, model, null, commitMsg);
+                ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
