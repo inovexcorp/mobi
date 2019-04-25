@@ -37,6 +37,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
@@ -683,7 +684,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
-                .thenReturn(committedModel);
+                .thenReturn(new Difference.Builder().additions(committedModel).build());
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
@@ -704,7 +705,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
-                .thenReturn(committedModel);
+                .thenReturn(new Difference.Builder().build());
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
@@ -725,7 +726,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
-                .thenReturn(committedModel);
+                .thenReturn(new Difference.Builder().additions(committedModel).build());
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 

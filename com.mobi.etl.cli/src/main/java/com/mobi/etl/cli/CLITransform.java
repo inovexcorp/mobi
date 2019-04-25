@@ -23,17 +23,17 @@ package com.mobi.etl.cli;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
+import com.mobi.etl.api.delimited.MappingManager;
+import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.api.rdf.export.RDFExportService;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -89,11 +89,25 @@ public class CLITransform implements Action {
     }
 
     @Reference
-    private CatalogManager catalogManager;
+    private MappingManager mappingManager;
 
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
+    void setMappingManager(MappingManager mappingManager) {
+        this.mappingManager = mappingManager;
     }
+
+    @Reference
+    private OntologyImportService ontologyImportService;
+
+    void setOntologyImportService(OntologyImportService ontologyImportService) {
+        this.ontologyImportService = ontologyImportService;
+    }
+
+//    @Reference
+//    private EngineManager engineManager;
+//
+//    void setEngineManager(EngineManager engineManager) {
+//        this.engineManager = engineManager;
+//    }
 
     // Command Parameters
 
@@ -111,9 +125,22 @@ public class CLITransform implements Action {
     private String outputFile = null;
 
     @Option(name = "-d", aliases = "--dataset",
-            description = "The dataset to store the resulting triples. (Required if no output file given). NOTE: Any % "
-                    + "symbols as a result of URL encoding must be escaped.")
+            description = "The dataset in which to store the resulting triples. (Required if no output file given)." +
+                    "NOTE: Any % symbols as a result of URL encoding must be escaped.")
     private String dataset = null;
+
+    @Option(name = "-ont", aliases = "--ontology",
+            description = "The ontology in which to store the resulting triples. (Required if no output file given)." +
+                    "NOTE: Any % symbols as a result of URL encoding must be escaped.")
+    private String ontology = null;
+
+    @Option(name = "-b", aliases = "--branch",
+            description = "The ontology in which to store the resulting triples. (defaults to MASTER)")
+    private String branch = null;
+
+    @Option(name = "-u", aliases = "--update",
+            description = "The ontology in which to store the resulting triples. (defaults to false)")
+    private boolean update = false;
 
     @Option(name = "-h", aliases = "--headers", description = "The file contains headers.")
     private boolean containsHeaders = false;
@@ -139,20 +166,17 @@ public class CLITransform implements Action {
             return null;
         }
 
-        if (outputFile == null && dataset == null) {
-            System.out.println("No output file or dataset provided. Please supply one or more options.");
+        if (outputFile == null && dataset == null && ontology == null) {
+            System.out.println("No output file, dataset, or ontology provided. Please supply one or more options.");
             return null;
         }
 
         try {
             String extension = FilenameUtils.getExtension(newFile.getName());
 
-            Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalog().getResource(),
-                    vf.createIRI(mappingRecordIRI));
-            Resource headCommit = masterBranch.getHead_resource()
-                    .orElseThrow(() -> new IllegalStateException("Mapping record master branch does not have a "
-                            + "head commit."));
-            Model mapping = catalogManager.getCompiledResource(headCommit);
+            Model mapping = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI))
+                    .orElseThrow(() -> new IllegalArgumentException("Mapping record not found"))
+                    .getModel();
 
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
@@ -178,6 +202,14 @@ public class CLITransform implements Action {
                 RDFFormat outputFormat = Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
                 RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
                 rdfExportService.export(config, model);
+            }
+
+            if (ontology != null) {
+                IRI ontologyIri = vf.createIRI(ontology);
+                IRI branchIri = vf.createIRI(branch);
+//                engineManager.retrieveUser("admin")
+                String commitMsg = "Mapping data from " + mappingRecordIRI;
+                ontologyImportService.importOntology(ontologyIri, branchIri, update, model, null, commitMsg);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

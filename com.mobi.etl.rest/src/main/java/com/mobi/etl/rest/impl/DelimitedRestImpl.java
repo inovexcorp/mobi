@@ -34,6 +34,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
@@ -282,10 +283,10 @@ public class DelimitedRestImpl implements DelimitedRest {
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
         User user = getActiveUser(context, engineManager);
         String commitMsg = "Mapping data from " + mappingRecordIRI;
-        Model committedData = ontologyImportService.importOntology(recordIRI, branchId, update, mappingData, user, commitMsg);
+        Difference committedData = ontologyImportService.importOntology(recordIRI, branchId, update, mappingData, user, commitMsg);
 
         Response response;
-        if (committedData.isEmpty()) {
+        if (committedData.getAdditions() == null && committedData.getDeletions() == null) {
             response = Response.status(204).entity("No data committed. Possible duplicate data.").build();
         } else {
             response = Response.ok().build();
