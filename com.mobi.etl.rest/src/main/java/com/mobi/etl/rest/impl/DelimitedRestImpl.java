@@ -39,14 +39,13 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.rest.DelimitedRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -61,10 +60,6 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.base.RepositoryResult;
 import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
@@ -119,14 +114,13 @@ public class DelimitedRestImpl implements DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
     private ValueFactory vf;
-    private DatasetManager datasetManager;
-    private RepositoryManager repositoryManager;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private OntologyManager ontologyManager;
     private VersioningManager versioningManager;
     private EngineManager engineManager;
+    private RDFImportService rdfImportService;
 
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
     private SesameTransformer transformer;
@@ -153,16 +147,6 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     protected void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
-    }
-
-    @Reference
-    protected void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
-
-    @Reference
-    protected void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
     }
 
     @Reference
@@ -193,6 +177,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
+    }
+
+    @Reference
+    void setRdfImportService(RDFImportService rdfImportService) {
+        this.rdfImportService = rdfImportService;
     }
 
     @Activate
@@ -284,31 +273,16 @@ public class DelimitedRestImpl implements DelimitedRest {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
 
-        // Collect the DatasetRecord
-        DatasetRecord record = datasetManager.getDatasetRecord(vf.createIRI(datasetRecordIRI)).orElseThrow(() ->
-                ErrorUtils.sendError("Dataset " + datasetRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
-
         // Convert the data
         Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
         // Add data to the dataset
-        String repositoryId = record.getRepository().orElseThrow(() ->
-                ErrorUtils.sendError("Record has no repository set", Response.Status.INTERNAL_SERVER_ERROR));
-        Resource datasetIri = record.getDataset_resource().orElseThrow(() ->
-                ErrorUtils.sendError("Record has no Dataset set", Response.Status.INTERNAL_SERVER_ERROR));
-        Repository repository = repositoryManager.getRepository(repositoryId)
-                .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
-        try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(datasetIri,
-                    vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
-            if (statements.hasNext()) {
-                Resource context = (Resource) statements.next().getObject();
-                conn.add(data, context);
-            } else {
-                throw ErrorUtils.sendError("Dataset has no system default named graph",
-                        Response.Status.INTERNAL_SERVER_ERROR);
-            }
+        ImportServiceConfig config = new ImportServiceConfig.Builder().dataset(vf.createIRI(datasetRecordIRI))
+                .logOutput(true)
+                .build();
+        try {
+            rdfImportService.importModel(config, data);
         } catch (RepositoryException ex) {
             throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
         }

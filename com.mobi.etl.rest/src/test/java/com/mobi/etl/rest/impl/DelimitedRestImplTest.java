@@ -29,6 +29,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,7 +42,6 @@ import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
@@ -50,6 +50,7 @@ import com.mobi.etl.api.delimited.DelimitedConverter;
 import com.mobi.etl.api.delimited.MappingId;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.owl.Ontology;
@@ -64,10 +65,6 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
-import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
@@ -81,8 +78,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -117,7 +112,6 @@ import javax.ws.rs.core.Response;
 
 public class DelimitedRestImplTest extends MobiRestTestNg {
     private DelimitedRestImpl rest;
-    private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
     private User user;
@@ -128,7 +122,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     private static final String ONTOLOGY_RECORD_BRANCH_IRI = "http://test.org/ontology-record-branch";
     private static final String MASTER_BRANCH_IRI = "http://test.org/master-branch";
     private static final String DATASET_IRI = "http://test.org/dataset";
-    private static final String NAMED_GRAPH_IRI = "http://test.org/named-graph";
     private static final String REPOSITORY_ID = "test";
     private static final String ERROR_IRI = "http://error.org";
 
@@ -143,12 +136,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     @Mock
     private SesameTransformer transformer;
-
-    @Mock
-    private DatasetManager datasetManager;
-
-    @Mock
-    private RepositoryManager repositoryManager;
 
     @Mock
     private CatalogConfigProvider configProvider;
@@ -175,14 +162,15 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     private DatasetRecord datasetRecord;
 
     @Mock
+    private RDFImportService rdfImportService;
+
+    @Mock
     private Dataset dataset;
 
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
         mf = getModelFactory();
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        repo.initialize();
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
@@ -192,8 +180,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         rest = new DelimitedRestImpl();
         rest.setDelimitedConverter(converter);
         rest.setMappingManager(mappingManager);
-        rest.setDatasetManager(datasetManager);
-        rest.setRepositoryManager(repositoryManager);
         rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
         rest.setOntologyRecordFactory(ontologyRecordFactory);
@@ -202,6 +188,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         rest.setOntologyManager(ontologyManager);
         rest.setVf(vf);
         rest.setTransformer(transformer);
+        rest.setRdfImportService(rdfImportService);
         rest.start();
 
         return new ResourceConfig()
@@ -217,11 +204,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() throws Exception {
-        RepositoryConnection conn = repo.getConnection();
-        conn.clear();
-        conn.add(vf.createIRI(DATASET_IRI), vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), vf.createIRI(NAMED_GRAPH_IRI));
-        conn.close();
-
         when(transformer.mobiModel(any(Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
@@ -230,12 +212,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
         when(mappingWrapper.getModel()).thenReturn(mf.createModel());
-
-        when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.empty());
-        when(datasetManager.getDatasetRecord(vf.createIRI(DATASET_RECORD_IRI))).thenReturn(Optional.of(datasetRecord));
-
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
-        when(repositoryManager.getRepository(REPOSITORY_ID)).thenReturn(Optional.of(repo));
 
         when(mappingManager.retrieveMapping(any(Resource.class))).thenReturn(Optional.empty());
         when(mappingManager.retrieveMapping(vf.createIRI(MAPPING_RECORD_IRI))).thenReturn(Optional.of(mappingWrapper));
@@ -277,8 +253,9 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     @AfterMethod
     public void resetMocks() {
-        reset(converter, mappingManager, mappingWrapper, transformer, datasetManager, repositoryManager, configProvider,
-                catalogManager, ontologyRecordFactory, ontologyRecord, versioningManager, engineManager, ontologyManager, datasetRecord, dataset);
+        reset(converter, mappingManager, mappingWrapper, transformer, configProvider, catalogManager,
+                ontologyRecordFactory, ontologyRecord, versioningManager, engineManager, ontologyManager, datasetRecord,
+                dataset, rdfImportService);
     }
 
     @Test
@@ -627,45 +604,9 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
     }
 
     @Test
-    public void mapIntoDatasetThatIsNotSetTest() throws Exception {
+    public void mapIntoDatasetWithDatasetOrRepoIssue() throws Exception {
         // Setup:
-        when(datasetRecord.getDataset_resource()).thenReturn(Optional.empty());
-        String fileName = UUID.randomUUID().toString() + ".csv";
-        copyResourceToTemp("test.csv", fileName);
-
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 500);
-    }
-
-    @Test
-    public void mapIntoDatasetWithMissingRepositoryTest() throws Exception {
-        // Setup:
-        when(datasetRecord.getRepository()).thenReturn(Optional.empty());
-        String fileName = UUID.randomUUID().toString() + ".csv";
-        copyResourceToTemp("test.csv", fileName);
-
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 500);
-    }
-
-    @Test
-    public void mapIntoDatasetWithUnavailableRepositoryTest() throws Exception {
-        // Setup:
-        when(datasetRecord.getRepository()).thenReturn(Optional.of("error"));
-        String fileName = UUID.randomUUID().toString() + ".csv";
-        copyResourceToTemp("test.csv", fileName);
-
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
-                .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
-    public void mapIntoDatasetWithNoSystemNamedGraphTest() throws Exception {
-        // Setup:
-        when(datasetRecord.getDataset_resource()).thenReturn(Optional.of(vf.createIRI(ERROR_IRI)));
+        doThrow(new IllegalArgumentException("Dataset does not exist")).when(rdfImportService).importModel(any(), any());
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
@@ -686,9 +627,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(data.getSubject(), data.getPredicate(), data.getObject(), vf.createIRI(NAMED_GRAPH_IRI)).hasNext());
-        conn.close();
     }
 
     @Test
@@ -703,9 +641,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
-        RepositoryConnection conn = repo.getConnection();
-        assertTrue(conn.getStatements(data.getSubject(), data.getPredicate(), data.getObject(), vf.createIRI(NAMED_GRAPH_IRI)).hasNext());
-        conn.close();
     }
 
     @Test
