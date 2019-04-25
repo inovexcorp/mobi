@@ -22,5 +22,5 @@
   -->
 <div class="form-group">
     <custom-label muted-text="dvm.mutedText">{{dvm.displayText}}</custom-label>
-    <input type="text" name="{{dvm.inputName}}" class="form-control" ng-class="{'is-invalid': dvm.isInvalid, 'is-valid': dvm.isValid}" ng-model="dvm.bindModel" ng-trim="false" ng-change="dvm.changeEvent({value: dvm.bindModel})" ng-required="dvm.required" focus-me="dvm.isFocusMe">
+    <input type="text" name="{{dvm.inputName}}" class="form-control" ng-class="{'is-invalid': dvm.isInvalid, 'is-valid': dvm.isValid}" ng-model="dvm.bindModel" ng-trim="false" ng-change="dvm.changeEvent({value: dvm.bindModel})" ng-required="dvm.required" focus-me="dvm.isFocusMe" ng-disabled="dvm.isDisabledWhen">
 </div>

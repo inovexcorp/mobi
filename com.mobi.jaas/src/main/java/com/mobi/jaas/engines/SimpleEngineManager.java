@@ -295,6 +295,16 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public boolean checkPassword(String username, String password) {
+        for (Engine engine : engines.values()) {
+            if (engine.checkPassword(username, password)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public Optional<String> getUsername(Resource userIri) {
         for (User user: getUsers()) {
             if (user.getResource().equals(userIri)) {

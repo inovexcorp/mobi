@@ -115,7 +115,7 @@ describe('Login Manager service', function() {
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
-                    expect(response).toBe('An error has occured. Please try again later.');
+                    expect(response).toBe('An error has occurred. Please try again later.');
                 });
             flushAndVerify($httpBackend);
         });
@@ -149,7 +149,7 @@ describe('Login Manager service', function() {
             var params = this.params;
             var user = {
                 iri: 'userIRI'
-            }
+            };
             userManagerSvc.getUser.and.returnValue($q.when(user));
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
             loginManagerSvc.login(params.username, params.password)
@@ -242,28 +242,52 @@ describe('Login Manager service', function() {
             expect(loginManagerSvc.currentUserIRI).toBe('');
             expect(state.go).toHaveBeenCalledWith('login');
         });
-        it('if a user is logged in', function() {
-            var user = {
-                iri: 'userIRI'
-            }
-            spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
-            userManagerSvc.getUser.and.returnValue($q.when(user));
-            loginManagerSvc.isAuthenticated()
-                .then(_.noop, () => {
-                    fail('Promise should have resolved');
-                });
-            scope.$apply();
-            expect(loginManagerSvc.currentUser).toBe('user');
-            expect(loginManagerSvc.currentUserIRI).toBe('userIRI');
-            expect(catalogManagerSvc.initialize).toHaveBeenCalled();
-            expect(catalogStateSvc.initialize).toHaveBeenCalled();
-            expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
-            expect(ontologyStateSvc.initialize).toHaveBeenCalled();
-            expect(mergeRequestsStateSvc.initialize).toHaveBeenCalled();
-            expect(userManagerSvc.initialize).toHaveBeenCalled();
-            expect(stateManagerSvc.initialize).toHaveBeenCalled();
-            expect(datasetManagerSvc.initialize).toHaveBeenCalled();
-            expect(state.go).not.toHaveBeenCalled();
+        describe('if a user is logged in', function() {
+            beforeEach(function() {
+                this.user = {
+                    iri: 'userIRI'
+                };
+                spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
+                userManagerSvc.getUser.and.returnValue($q.when(this.user));
+            });
+            it('and this is the first time the method is called', function() {
+                
+                loginManagerSvc.isAuthenticated()
+                    .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(loginManagerSvc.currentUser).toBe('user');
+                expect(loginManagerSvc.currentUserIRI).toBe('userIRI');
+                expect(catalogManagerSvc.initialize).toHaveBeenCalled();
+                expect(catalogStateSvc.initialize).toHaveBeenCalled();
+                expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
+                expect(ontologyStateSvc.initialize).toHaveBeenCalled();
+                expect(mergeRequestsStateSvc.initialize).toHaveBeenCalled();
+                expect(userManagerSvc.initialize).toHaveBeenCalled();
+                expect(stateManagerSvc.initialize).toHaveBeenCalled();
+                expect(datasetManagerSvc.initialize).toHaveBeenCalled();
+                expect(state.go).not.toHaveBeenCalled();
+            });
+            it('and this is not the first time the method is called', function() {
+                loginManagerSvc.weGood = true;
+                loginManagerSvc.isAuthenticated()
+                    .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(loginManagerSvc.currentUser).toBe('user');
+                expect(loginManagerSvc.currentUserIRI).toBe('userIRI');
+                expect(catalogManagerSvc.initialize).not.toHaveBeenCalled();
+                expect(catalogStateSvc.initialize).not.toHaveBeenCalled();
+                expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.initialize).not.toHaveBeenCalled();
+                expect(mergeRequestsStateSvc.initialize).not.toHaveBeenCalled();
+                expect(userManagerSvc.initialize).toHaveBeenCalled();
+                expect(stateManagerSvc.initialize).toHaveBeenCalled();
+                expect(datasetManagerSvc.initialize).not.toHaveBeenCalled();
+                expect(state.go).not.toHaveBeenCalled();
+            });
         });
     });
 });

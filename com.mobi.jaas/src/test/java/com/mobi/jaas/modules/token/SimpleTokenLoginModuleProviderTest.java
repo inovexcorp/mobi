@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
-import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.proxy.ProxyLoginModule;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +38,6 @@ import org.mockito.MockitoAnnotations;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class SimpleTokenLoginModuleProviderTest {
@@ -67,19 +65,8 @@ public class SimpleTokenLoginModuleProviderTest {
     }
 
     @Test
-    public void setupWithoutEngineTest() throws Exception {
-        Map<String, Object> props = new HashMap<>();
-        provider.start(props, context);
-        assertEquals(RdfEngine.ENGINE_NAME, provider.engineName);
-        assertEquals(context, provider.context);
-    }
-
-    @Test
-    public void setupWithEngineTest() throws Exception {
-        Map<String, Object> props = new HashMap<>();
-        props.put("engineName", "Test");
-        provider.start(props, context);
-        assertEquals("Test", provider.engineName);
+    public void setupTest() throws Exception {
+        provider.start(context);
         assertEquals(context, provider.context);
     }
 
@@ -90,11 +77,8 @@ public class SimpleTokenLoginModuleProviderTest {
 
     @Test
     public void getModuleConfigTest() throws Exception {
-        provider.engineName = "Test";
         provider.context = context;
         Map<String, Object> config = provider.getModuleConfig();
-        assertTrue(config.containsKey(LoginModuleConfig.ENGINE));
-        assertEquals("Test", config.get(LoginModuleConfig.ENGINE));
         assertTrue(config.containsKey(LoginModuleConfig.ENGINE_MANAGER));
         assertEquals(engineManager, config.get(LoginModuleConfig.ENGINE_MANAGER));
         assertTrue(config.containsKey(BundleContext.class.getName()));

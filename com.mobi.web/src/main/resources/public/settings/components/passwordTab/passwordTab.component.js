@@ -48,7 +48,11 @@
         var util = utilService;
         dvm.um = userManagerService;
         dvm.lm = loginManagerService;
+        dvm.currentUser = undefined;
 
+        dvm.$onInit = function() {
+            dvm.currentUser = angular.copy(_.find(dvm.um.users, {username: dvm.lm.currentUser}));
+        }
         dvm.save = function() {
             dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password)
                 .then(response => {

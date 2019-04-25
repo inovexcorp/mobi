@@ -22,5 +22,5 @@
   -->
 <div class="form-group">
     <custom-label muted-text="dvm.mutedText">Email</custom-label>
-    <input email-iri type="text" class="form-control" name="{{dvm.inputName}}" ng-model="dvm.bindModel" ng-change="dvm.changeEvent({value: dvm.bindModel})" ng-required="dvm.required" ng-pattern="/^[a-zA-Z0-9.!#$%&’*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*$/" ng-class="{'is-invalid': dvm.isInvalid, 'is-valid': dvm.isValid}" />
+    <input email-iri type="text" class="form-control" name="{{dvm.inputName}}" ng-model="dvm.bindModel" ng-change="dvm.changeEvent({value: dvm.bindModel})" ng-required="dvm.required" ng-pattern="/^[a-zA-Z0-9.!#$%&’*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*$/" ng-class="{'is-invalid': dvm.isInvalid, 'is-valid': dvm.isValid}" ng-disabled="dvm.isDisabledWhen" />
 </div>

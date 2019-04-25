@@ -36,9 +36,10 @@ describe('Password Confirm Input component', function() {
         scope.confirmPassword = '';
         scope.required = '';
         scope.label = '';
+        scope.isDisabledWhen = false;
         scope.changeEvent = jasmine.createSpy('changeEvent');
         var form = $compile('<form></form>')(scope);
-        this.element = angular.element('<password-confirm-input password="password" change-event="changeEvent(value)" label="label" confirm-password="confirmPassword" required="required"></password-confirm-input>');
+        this.element = angular.element('<password-confirm-input password="password" change-event="changeEvent(value)" label="label" confirm-password="confirmPassword" required="required" is-disabled-when="isDisabledWhen"></password-confirm-input>');
         form.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
@@ -75,6 +76,11 @@ describe('Password Confirm Input component', function() {
         it('changeEvent should be called in the parent scope', function() {
             this.controller.changeEvent({value: 'Test'});
             expect(scope.changeEvent).toHaveBeenCalledWith('Test');
+        });
+        it('isDisabledWhen should be one way bound', function() {
+            this.controller.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toEqual(false);
         });
     });
     describe('contains the correct html', function() {
@@ -124,6 +130,17 @@ describe('Password Confirm Input component', function() {
             this.controller.password = 'test';
             scope.$digest();
             expect(confirmInput.attr('required')).toBeTruthy();
+        });
+        it('depending on whether the inputs should be disabled', function() {
+            var passwordInput = angular.element(this.element.querySelectorAll('.password input')[0]);
+            var confirmInput = angular.element(this.element.querySelectorAll('.confirm-password input')[0]);
+            expect(passwordInput.attr('disabled')).toBeFalsy();
+            expect(confirmInput.attr('disabled')).toBeFalsy();
+
+            scope.isDisabledWhen = true;
+            scope.$digest();
+            expect(passwordInput.attr('disabled')).toBeTruthy();
+            expect(confirmInput.attr('disabled')).toBeTruthy();
         });
     });
     it('should validate whether the passwords match', function() {

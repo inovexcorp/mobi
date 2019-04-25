@@ -30,13 +30,13 @@
                     <i class="fa fa-check fa-fw"></i><span>Profile successfully saved</span>
                 </p>
                 <form name="dvm.form">
-                    <text-input bind-model="dvm.currentUser.firstName" change-event="dvm.currentUser.firstName = value" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" is-valid="dvm.form.firstName.$dirty && dvm.form.firstName.$valid" is-invalid="dvm.form.firstName.$dirty && dvm.form.firstName.$invalid"></text-input>
-                    <text-input bind-model="dvm.currentUser.lastName" change-event="dvm.currentUser.lastName = value" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" is-valid="dvm.form.lastName.$dirty && dvm.form.lastName.$valid" is-invalid="dvm.form.lastName.$dirty && dvm.form.lastName.$invalid"></text-input>
-                    <email-input bind-model="dvm.currentUser.email" change-event="dvm.currentUser.email = value" input-name="'email'" is-valid="dvm.form.email.$dirty && dvm.form.email.$valid" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'"></email-input>
+                    <text-input bind-model="dvm.currentUser.firstName" change-event="dvm.currentUser.firstName = value" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" is-valid="dvm.form.firstName.$dirty && dvm.form.firstName.$valid" is-invalid="dvm.form.firstName.$dirty && dvm.form.firstName.$invalid" is-disabled-when="dvm.currentUser.external"></text-input>
+                    <text-input bind-model="dvm.currentUser.lastName" change-event="dvm.currentUser.lastName = value" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" is-valid="dvm.form.lastName.$dirty && dvm.form.lastName.$valid" is-invalid="dvm.form.lastName.$dirty && dvm.form.lastName.$invalid" is-disabled-when="dvm.currentUser.external"></text-input>
+                    <email-input bind-model="dvm.currentUser.email" change-event="dvm.currentUser.email = value" input-name="'email'" is-valid="dvm.form.email.$dirty && dvm.form.email.$valid" is-invalid="dvm.form.email.$dirty && dvm.form.email.$invalid" muted-text="'(Optional)'" is-disabled-when="dvm.currentUser.external"></email-input>
                 </form>
             </block-content>
             <block-footer>
-                <button class="btn btn-primary" ng-click="dvm.save()" ng-disabled="dvm.form.$pristine || dvm.form.$invalid">Save</button>
+                <button class="btn btn-primary" ng-click="dvm.save()" ng-disabled="dvm.form.$pristine || dvm.form.$invalid || dvm.currentUser.external">Save</button>
             </block-footer>
         </block>
     </div>

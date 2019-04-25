@@ -31,6 +31,7 @@ import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +48,7 @@ import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
@@ -109,6 +111,7 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
         when(engine.groupExists(ERROR_IRI)).thenReturn(false);
         when(engine.getUserRoles(anyString())).thenReturn(Collections.singleton(role));
         when(engine.checkPassword(anyString(), anyString())).thenReturn(true);
+        when(engine.checkPassword(eq(ERROR), anyString())).thenReturn(false);
 
         when(user.getResource()).thenReturn(USER_IRI);
         when(user.getUsername()).thenReturn(Optional.of(VALUE_FACTORY.createLiteral(USERNAME)));
@@ -406,6 +409,34 @@ public class SimpleEngineManagerTest extends OrmEnabledTestCase {
 
         result = engineManager.checkPassword(engine.getEngineName(), "user", "password");
         verify(engine).checkPassword("user", "password");
+        assertTrue(result);
+    }
+
+    @Test
+    public void testCheckPasswordErrorUserInAllEngines() {
+        // Setup:
+        Engine secondEngine = Mockito.mock(Engine.class);
+        when(secondEngine.checkPassword(anyString(), anyString())).thenReturn(false);
+        when(secondEngine.getEngineName()).thenReturn("Second Engine");
+        engineManager.addEngine(secondEngine);
+
+        boolean result = engineManager.checkPassword(ERROR, "password");
+        verify(engine).checkPassword(ERROR, "password");
+        verify(secondEngine).checkPassword(ERROR, "password");
+        assertFalse(result);
+    }
+
+    @Test
+    public void testCheckPasswordInAllEngines() {
+        // Setup:
+        Engine secondEngine = Mockito.mock(Engine.class);
+        when(secondEngine.checkPassword(anyString(), anyString())).thenReturn(false);
+        when(secondEngine.getEngineName()).thenReturn("Second Engine");
+        engineManager.addEngine(secondEngine);
+
+        boolean result = engineManager.checkPassword(USERNAME, "password");
+        verify(engine).checkPassword(USERNAME, "password");
+        verify(secondEngine, times(0)).checkPassword(USERNAME, "password");
         assertTrue(result);
     }
 
