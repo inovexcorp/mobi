@@ -39,6 +39,7 @@ import static org.mockito.Mockito.when;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
+import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -53,6 +54,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.utils.Values;
+import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -86,6 +88,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     private ValueFactory vf;
     private Repository repo;
     private OntologyRepositoryCache cache;
+    private OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
 
     private IRI timestampIRI;
     private Model ontNoImportsModel;
@@ -240,6 +243,16 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf));
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
+        ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
+        when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
+            try (RepositoryConnection conn = repo.getConnection()) {
+                Resource datasetIRI = vf.createIRI(datasetIRIStr.getValue());
+                Dataset dataset = datasetFactory.createNew(datasetIRI);
+                dataset.setSystemDefaultNamedGraph(vf.createIRI(datasetIRIStr.getValue() + SYSTEM_DEFAULT_NG_SUFFIX));
+                conn.add(dataset.getModel(), datasetIRI);
+            }
+            return true;
+        });
 
         cache = new OntologyRepositoryCache("Ontology Repository Cache", repo, cacheManager, configuration);
         injectOrmFactoryReferencesIntoService(cache);

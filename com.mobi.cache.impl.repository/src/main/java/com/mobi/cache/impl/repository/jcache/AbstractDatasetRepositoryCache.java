@@ -25,7 +25,6 @@ package com.mobi.cache.impl.repository.jcache;
 
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -55,9 +54,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
         try (RepositoryConnection conn = repository.getConnection()) {
             if (!conn.getStatements(datasetIRI, null, null).hasNext()) {
                 if (createNotExists) {
-                    Dataset dataset = datasetFactory.createNew(datasetIRI);
-                    dataset.setSystemDefaultNamedGraph(vf.createIRI(datasetIRI + SYSTEM_DEFAULT_NG_SUFFIX));
-                    conn.add(dataset.getModel(), datasetIRI);
+                    datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());
                 } else {
                     throw new IllegalArgumentException("The dataset " + datasetIRI
                             + " does not exist in the specified repository.");

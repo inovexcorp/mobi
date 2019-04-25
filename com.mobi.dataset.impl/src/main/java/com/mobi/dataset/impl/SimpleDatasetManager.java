@@ -202,6 +202,29 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
+    public boolean createDataset(String dataset, String repositoryId) {
+        Repository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
+                new IllegalArgumentException("Dataset target repository does not exist."));
+
+        IRI datasetIRI = vf.createIRI(dataset);
+        IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
+
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
+            if (conn.getStatements(datasetIRI, null, null).hasNext()) {
+                throw new IllegalArgumentException("The dataset already exists in the specified repository.");
+            }
+        }
+        Dataset newDataset = dsFactory.createNew(datasetIRI);
+        newDataset.setSystemDefaultNamedGraph(sdgIRI);
+
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
+            conn.add(newDataset.getModel(), datasetIRI);
+        }
+
+        return true;
+    }
+
+    @Override
     public DatasetRecord deleteDataset(Resource dataset, String repositoryId) {
         Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));

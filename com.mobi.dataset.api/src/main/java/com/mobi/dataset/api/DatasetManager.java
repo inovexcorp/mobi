@@ -86,6 +86,18 @@ public interface DatasetManager {
     DatasetRecord createDataset(DatasetRecordConfig config);
 
     /**
+     * Creates a dataset according to the specified configuration. Initial dataset structure is created in the specified
+     * repository. No DatasetRecord is created.
+     *
+     * @param dataset The String representation of the Dataset IRI.
+     * @param repositoryId The ID of the repository to store the dataset.
+     * @return A boolean indicating the success of the dataset creation.
+     * @throws IllegalArgumentException if the target dataset repository does not exist.
+     * @throws IllegalStateException if the target dataset already exists in the target repository.
+     */
+    boolean createDataset(String dataset, String repositoryId);
+
+    /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
      * removes all graphs from the specified dataset even if they are associated with other datasets.
      *
