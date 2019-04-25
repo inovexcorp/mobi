@@ -34,31 +34,23 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
-import com.mobi.catalog.api.versioning.VersioningManager;
-import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.rest.DelimitedRest;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.owl.Ontology;
-import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.security.annotations.ActionAttributes;
@@ -101,7 +93,6 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -114,13 +105,9 @@ public class DelimitedRestImpl implements DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
     private ValueFactory vf;
-    private CatalogConfigProvider configProvider;
-    private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
-    private OntologyManager ontologyManager;
-    private VersioningManager versioningManager;
     private EngineManager engineManager;
     private RDFImportService rdfImportService;
+    private OntologyImportService ontologyImportService;
 
     private final Logger logger = LoggerFactory.getLogger(DelimitedRestImpl.class);
     private SesameTransformer transformer;
@@ -150,31 +137,6 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Reference
-    void setConfigProvider(CatalogConfigProvider configProvider) {
-        this.configProvider = configProvider;
-    }
-
-    @Reference
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    void setOntologyManager(OntologyManager ontologyManager) {
-        this.ontologyManager = ontologyManager;
-    }
-
-    @Reference
-    void setVersioningManager(VersioningManager versioningManager) {
-        this.versioningManager = versioningManager;
-    }
-
-    @Reference
     void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
@@ -182,6 +144,11 @@ public class DelimitedRestImpl implements DelimitedRest {
     @Reference
     void setRdfImportService(RDFImportService rdfImportService) {
         this.rdfImportService = rdfImportService;
+    }
+
+    @Reference
+    void setOntologyImportService(OntologyImportService ontologyImportService) {
+        this.ontologyImportService = ontologyImportService;
     }
 
     @Activate
@@ -306,53 +273,24 @@ public class DelimitedRestImpl implements DelimitedRest {
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
         checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
 
-        User user = getActiveUser(context, engineManager);
-
-        OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
-                vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
-                ErrorUtils.sendError("OntologyRecord " + ontologyRecordIRI + " does not exist",
-                        Response.Status.BAD_REQUEST));
-
         // Convert the data
         Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
-        Resource branchId = vf.createIRI(branchIRI);
+        // Commit converted data
+        IRI branchId = vf.createIRI(branchIRI);
         IRI recordIRI = vf.createIRI(ontologyRecordIRI);
-        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI, branchId);
+        User user = getActiveUser(context, engineManager);
+        String commitMsg = "Mapping data from " + mappingRecordIRI;
+        Model committedData = ontologyImportService.importOntology(recordIRI, branchId, update, mappingData, user, commitMsg);
 
         Response response;
-        if (update) {
-            Iterator<Statement> ontologyObjectIterator = ontologyData.filter(null,
-                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE)).iterator();
-            if (ontologyObjectIterator.hasNext()) {
-                mappingData.addAll(ontologyData.filter(ontologyObjectIterator.next().getSubject(), null, null));
-            } else {
-                logger.info("OntologyRecord " + ontologyRecordIRI + " does not have an ontology object. Continuing"
-                        + " with mapping update.");
-            }
-
-            Difference diff = catalogManager.getDiff(ontologyData, mappingData);
-            if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
-                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
-                        "Mapping data from " + mappingRecordIRI, diff.getAdditions(), diff.getDeletions());
-                response = Response.ok().build();
-            } else {
-                response = Response.status(204).entity("No commit was submitted. No differences detected between "
-                        + "mapping result data and ontology.").build();
-            }
+        if (committedData.isEmpty()) {
+            response = Response.status(204).entity("No data committed. Possible duplicate data.").build();
         } else {
-            mappingData.removeAll(ontologyData);
-
-            if (!mappingData.isEmpty()) {
-                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
-                        "Mapping data from " + mappingRecordIRI, mappingData, null);
-                response = Response.ok().build();
-            } else {
-                response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates")
-                        .build();
-            }
+            response = Response.ok().build();
         }
+
         // Remove temp file
         removeTempFile(fileName);
 
