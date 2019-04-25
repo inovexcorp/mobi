@@ -58,7 +58,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
     @Override
     public Model importOntology(IRI ontologyRecord, IRI branch, boolean update, Model ontologyData, User user, String commitMsg) {
         Model newData = mf.createModel(ontologyData);
-        Model existingData =  ontologyManager.getOntologyModel(ontologyRecord, branch);
+        Model existingData = ontologyManager.getOntologyModel(ontologyRecord, branch);
 
         if (update) {
             existingData.filter(null,
