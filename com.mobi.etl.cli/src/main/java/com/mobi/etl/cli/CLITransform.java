@@ -140,11 +140,12 @@ public class CLITransform implements Action {
     private String ontology = null;
 
     @Option(name = "-b", aliases = "--branch",
-            description = "The ontology in which to store the resulting triples. (defaults to MASTER)")
+            description = "The branch for the ontology in which to store the resulting triples. (defaults to MASTER)")
     private String branch = null;
 
     @Option(name = "-u", aliases = "--update",
-            description = "The ontology in which to store the resulting triples. (defaults to false)")
+            description = "Calculate the differences between the mapped data and the data on the head of the ontology" +
+                    "branch. (defaults to false)")
     private boolean update = false;
 
     @Option(name = "-h", aliases = "--headers", description = "The file contains headers.")
