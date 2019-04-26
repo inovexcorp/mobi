@@ -103,12 +103,17 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
     private IRI import1IRI;
     private IRI import2IRI;
     private IRI import3IRI;
+    private IRI ontNoImportsSdNgIRI;
+    private IRI ontOneImportSdNgIRI;
+    private IRI ontMultipleImportsSdNgIRI;
+    private IRI import1SdNgIRI;
+    private IRI import2SdNgIRI;
+    private IRI import3SdNgIRI;
     private String key1;
     private String key2;
     private String key3;
 
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
-
 
     @Mock
     private Ontology ontNoImports;
@@ -182,6 +187,13 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         import1IRI = vf.createIRI("urn:import1");
         import2IRI = vf.createIRI("urn:import2");
         import3IRI = vf.createIRI("urn:import3");
+
+        ontNoImportsSdNgIRI = vf.createIRI("urn:ontNoImports" + SYSTEM_DEFAULT_NG_SUFFIX);
+        ontOneImportSdNgIRI = vf.createIRI("urn:ontOneImport" + SYSTEM_DEFAULT_NG_SUFFIX);
+        ontMultipleImportsSdNgIRI = vf.createIRI("urn:ontIdMultipleImports" + SYSTEM_DEFAULT_NG_SUFFIX);
+        import1SdNgIRI = vf.createIRI("urn:import1" + SYSTEM_DEFAULT_NG_SUFFIX);
+        import2SdNgIRI = vf.createIRI("urn:import2" + SYSTEM_DEFAULT_NG_SUFFIX);
+        import3SdNgIRI = vf.createIRI("urn:import3" + SYSTEM_DEFAULT_NG_SUFFIX);
 
         repo = spy(new SesameRepositoryWrapper(new SailRepository(new MemoryStore())));
         repo.initialize();
@@ -408,7 +420,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertEquals(ontologyModel.size(), ontOneImportModel.size());
             assertEquals(ontologyModel, ontOneImportModel);
 
-            statements = dc.getStatements(null, null, null, import1IRI);
+            statements = dc.getStatements(null, null, null, import1SdNgIRI);
             ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
             ontologyModel.remove(null, timestampIRI, null);
             assertEquals(ontologyModel.size(), import1Model.size());
@@ -426,19 +438,19 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertEquals(ontologyModel.size(), ontMultipleImportsModel.size());
             assertEquals(ontologyModel, ontMultipleImportsModel);
 
-            statements = dc.getStatements(null, null, null, import1IRI);
+            statements = dc.getStatements(null, null, null, import1SdNgIRI);
             ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
             ontologyModel.remove(null, timestampIRI, null);
             assertEquals(ontologyModel.size(), import1Model.size());
             assertEquals(ontologyModel, import1Model);
 
-            statements = dc.getStatements(null, null, null, import2IRI);
+            statements = dc.getStatements(null, null, null, import2SdNgIRI);
             ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
             ontologyModel.remove(null, timestampIRI, null);
             assertEquals(ontologyModel.size(), import2Model.size());
             assertEquals(ontologyModel, import2Model);
 
-            statements = dc.getStatements(null, null, null, import3IRI);
+            statements = dc.getStatements(null, null, null, import3SdNgIRI);
             ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
             ontologyModel.remove(null, timestampIRI, null);
             assertEquals(ontologyModel.size(), import3Model.size());
@@ -457,9 +469,9 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3) + SYSTEM_DEFAULT_NG_SUFFIX)));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2) + SYSTEM_DEFAULT_NG_SUFFIX)));
-            assertTrue(contexts.contains(import1IRI));
-            assertTrue(contexts.contains(import2IRI));
-            assertTrue(contexts.contains(import3IRI));
+            assertTrue(contexts.contains(import1SdNgIRI));
+            assertTrue(contexts.contains(import2SdNgIRI));
+            assertTrue(contexts.contains(import3SdNgIRI));
         }
     }
 
@@ -495,7 +507,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertEquals(ontologyModel.size(), ontOneImportModel.size());
             assertEquals(ontologyModel, ontOneImportModel);
 
-            statements = dc.getStatements(null, null, null, import1IRI);
+            statements = dc.getStatements(null, null, null, import1SdNgIRI);
             ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
             ontologyModel.remove(null, timestampIRI, null);
             assertEquals(ontologyModel.size(), import1Model.size());
@@ -547,7 +559,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertEquals(3, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2) + SYSTEM_DEFAULT_NG_SUFFIX)));
-            assertTrue(contexts.contains(import1IRI));
+            assertTrue(contexts.contains(import1SdNgIRI));
         }
 
         assertTrue(cache.remove(key2));
@@ -562,9 +574,9 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertEquals(5, contexts.size());
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3) + SYSTEM_DEFAULT_NG_SUFFIX)));
-            assertTrue(contexts.contains(import1IRI));
-            assertTrue(contexts.contains(import2IRI));
-            assertTrue(contexts.contains(import3IRI));
+            assertTrue(contexts.contains(import1SdNgIRI));
+            assertTrue(contexts.contains(import2SdNgIRI));
+            assertTrue(contexts.contains(import3SdNgIRI));
         }
 
         assertTrue(cache.remove(key3));
@@ -582,9 +594,9 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2))));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3) + SYSTEM_DEFAULT_NG_SUFFIX)));
             assertTrue(contexts.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2) + SYSTEM_DEFAULT_NG_SUFFIX)));
-            assertTrue(contexts.contains(import1IRI));
-            assertTrue(contexts.contains(import2IRI));
-            assertTrue(contexts.contains(import3IRI));
+            assertTrue(contexts.contains(import1SdNgIRI));
+            assertTrue(contexts.contains(import2SdNgIRI));
+            assertTrue(contexts.contains(import3SdNgIRI));
         }
 
         assertTrue(cache.remove(key3));

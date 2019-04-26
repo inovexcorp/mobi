@@ -367,12 +367,13 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
             Model importedModel = importedOntology.asModel(mf);
 
             // TODO: Is this the correct ID??
-            IRI ontId = importedOntology.getOntologyId().getOntologyIRI()
-                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier());
-            if (!dsConn.containsContext(ontId)) {
-                dsConn.add(importedModel, ontId);
+            IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
+                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
+                    + SYSTEM_DEFAULT_NG_SUFFIX);
+            if (!dsConn.containsContext(ontSdNg)) {
+                dsConn.add(importedModel, ontSdNg);
             }
-            dsConn.addNamedGraph(ontId);
+            dsConn.addNamedGraph(ontSdNg);
         });
         updateNamedGraphTimestamps(dsConn);
     }
