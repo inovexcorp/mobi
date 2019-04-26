@@ -35,7 +35,7 @@ public class SimpleDatatype implements Datatype {
     private boolean builtin;
 
 
-    public SimpleDatatype(@Nonnull IRI iri) {
+    public SimpleDatatype(@Nonnull IRI iri) {//TODO:
 //        this.iri = iri;
 //        org.semanticweb.owlapi.model.IRI owlIri = SimpleOntologyValues.owlapiIRI(iri);
 //        owlDatatype = new OWLDatatypeImpl(owlIri);

@@ -23,12 +23,9 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -45,7 +42,6 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactor
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
@@ -61,9 +57,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ForkJoinPool;
 import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
@@ -76,7 +70,6 @@ public class SimpleOntologyManager implements OntologyManager {
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
-    private SesameTransformer sesameTransformer;
     private OntologyRecordFactory ontologyRecordFactory;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
@@ -85,8 +78,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private BranchFactory branchFactory;
     private OntologyCache ontologyCache;
     private BNodeService bNodeService;
-
-    private ForkJoinPool threadPool;
 
     static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
@@ -118,11 +109,6 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    public void setSesameTransformer(SesameTransformer sesameTransformer) {
-        this.sesameTransformer = sesameTransformer;
     }
 
     @Reference
@@ -168,34 +154,26 @@ public class SimpleOntologyManager implements OntologyManager {
         this.bNodeService = bNodeService;
     }
 
-    @Activate
-    protected void start(Map<String, Object> props) {
-        OntologyManagerConfig config = Configurable.createConfigurable(OntologyManagerConfig.class, props);
-        if (config.poolSize() == 0) {
-            int cpus = Runtime.getRuntime().availableProcessors();
-            log.debug("OntologyManager pool size: " + (cpus / 2));
-            threadPool = new ForkJoinPool(cpus / 2);
-        } else {
-            log.debug("OntologyManager pool size: " + config.poolSize());
-            threadPool = new ForkJoinPool(config.poolSize());
-        }
-    }
-
-    @Modified
-    protected void modified(Map<String, Object> props) {
-        start(props);
-    }
-
     @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
-        return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService, repositoryManager,
-                resolveImports, threadPool);
+//        try {
+            return null;
+//            return new SimpleOntology(Models.createModel(inputStream, sesameTransformer));
+//        } catch (IOException e) {
+//            throw new MobiException(e);
+//        }
     }
 
     @Override
     public Ontology createOntology(Model model) {
-        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool);
+        return null;
+//        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool);
     }
+
+//    private Ontology createOntology(Model model, Resource recordId, Resource commitId) {
+//        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
+//        new SimpleOntology(key, model, repository, datasetManager, valueFactory);
+//    }
 
     @Override
     public Ontology applyChanges(Ontology ontology, Difference difference) {
@@ -373,9 +351,10 @@ public class SimpleOntologyManager implements OntologyManager {
             result = Optional.ofNullable(optCache.get().get(key));
         } else {
             log.trace("cache miss");
-            final Ontology ontology = createOntologyFromCommit(commitId);
+            // Operation puts the ontology in the cache on construction
+            final Ontology ontology = createOntologyFromCommit(recordId, commitId);
             result = Optional.of(ontology);
-            ontologyCache.getOntologyCache().ifPresent(cache -> cache.put(key, ontology));
+//            ontologyCache.getOntologyCache().ifPresent(cache -> cache.put(key, ontology));
         }
         return result;
     }
@@ -388,11 +367,12 @@ public class SimpleOntologyManager implements OntologyManager {
     /**
      * Creates an Ontology using the provided Commit.
      *
-     * @param commit the Commit identifying the version of the Ontology that you want to create.
+     * @param recordId the Commit identifying the version of the Ontology that you want to create.
+     * @param commitId the Commit identifying the version of the Ontology that you want to create.
      * @return an Ontology built at the time identified by the Commit.
      */
-    private Ontology createOntologyFromCommit(Resource commit) {
-        Model ontologyModel = catalogManager.getCompiledResource(commit);
+    private Ontology createOntologyFromCommit(Resource recordId, Resource commitId) {
+        Model ontologyModel = catalogManager.getCompiledResource(commitId);
         return createOntology(ontologyModel);
     }
 
