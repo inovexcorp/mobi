@@ -227,7 +227,7 @@ public class CLITransform implements Action {
                 } else {
                     int additionSize = difference.getAdditions() != null ? difference.getAdditions().size() : 0;
                     int deletionSize = difference.getDeletions() != null ? difference.getDeletions().size() : 0;
-                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize) + "statements changed.");
+                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize) + " statements changed.");
                 }
             }
         } catch (Exception e) {
