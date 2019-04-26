@@ -223,11 +223,11 @@ public class CLITransform implements Action {
                     difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
                 }
 
-                if (difference.getAdditions() == null && difference.getDeletions() == null) {
+                if (difference.getAdditions().isEmpty() && difference.getDeletions().isEmpty()) {
                     System.out.println("Ontology transform complete. No commit required.");
                 } else {
-                    int additionSize = difference.getAdditions() != null ? difference.getAdditions().size() : 0;
-                    int deletionSize = difference.getDeletions() != null ? difference.getDeletions().size() : 0;
+                    int additionSize = difference.getAdditions().size();
+                    int deletionSize = difference.getDeletions().size();
                     System.out.println("Ontology transform complete. " + (additionSize + deletionSize) + " statements changed.");
                 }
             }

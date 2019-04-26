@@ -286,7 +286,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Difference committedData = ontologyImportService.importOntology(recordIRI, branchId, update, mappingData, user, commitMsg);
 
         Response response;
-        if (committedData.getAdditions() == null && committedData.getDeletions() == null) {
+        if (committedData.getAdditions().isEmpty() && committedData.getDeletions().isEmpty()) {
             response = Response.status(204).entity("No data committed. Possible duplicate data.").build();
         } else {
             response = Response.ok().build();

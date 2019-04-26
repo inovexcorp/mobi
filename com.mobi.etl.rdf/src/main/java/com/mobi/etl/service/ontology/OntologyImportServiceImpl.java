@@ -109,7 +109,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
                 versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user, commitMsg,
                         newData, null);
             }
-            return new Difference.Builder().additions(newData).build();
+            return new Difference.Builder().additions(newData).deletions(mf.createModel()).build();
         }
     }
 }
