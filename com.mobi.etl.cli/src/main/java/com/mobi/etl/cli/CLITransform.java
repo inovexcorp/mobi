@@ -35,10 +35,12 @@ import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.api.rdf.export.RDFExportService;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -209,10 +211,17 @@ public class CLITransform implements Action {
 
             if (ontology != null) {
                 IRI ontologyIri = vf.createIRI(ontology);
-                IRI branchIri = vf.createIRI(branch);
-                User adminUser = engineManager.retrieveUser("RdfEngine", "admin").get();
+                User adminUser = engineManager.retrieveUser(RdfEngine.ENGINE_NAME, "admin").get();
                 String commitMsg = "Mapping data from " + mappingRecordIRI;
-                Difference difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
+
+                Difference difference;
+                if (StringUtils.isEmpty(branch)) {
+                    difference = ontologyImportService.importOntology(ontologyIri, update, model, adminUser, commitMsg);
+                } else {
+                    IRI branchIri = vf.createIRI(branch);
+                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
+                }
+
                 if (difference.getAdditions() == null && difference.getDeletions() == null) {
                     System.out.println("Ontology transform complete. No commit required.");
                 } else {
