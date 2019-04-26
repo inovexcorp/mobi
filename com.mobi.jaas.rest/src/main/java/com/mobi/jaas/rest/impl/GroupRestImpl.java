@@ -42,7 +42,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.jaas.rest.GroupRest;
-import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -58,7 +57,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -268,12 +266,10 @@ public class GroupRestImpl implements GroupRest {
         try {
             Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-            Set<Role> roleObjs = new HashSet<>();
-            roles.forEach(s -> roleObjs.add(engineManager.getRole(s).orElseThrow(() ->
-                    ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
-            Set<Role> allRoles = savedGroup.getHasGroupRole();
-            allRoles.addAll(roleObjs);
-            savedGroup.setHasGroupRole(allRoles);
+            roles.stream()
+                    .map(s -> engineManager.getRole(s).orElseThrow(() ->
+                        ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST)))
+                    .forEach(savedGroup::addHasGroupRole);
             engineManager.updateGroup(savedGroup);
             logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
             return Response.ok().build();
@@ -293,7 +289,7 @@ public class GroupRestImpl implements GroupRest {
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
             Role roleObj = engineManager.getRole(role).orElseThrow(() ->
                     ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
-            savedGroup.removeProperty(roleObj.getResource(), vf.createIRI(Group.hasGroupRole_IRI));
+            savedGroup.removeHasGroupRole(roleObj);
             engineManager.updateGroup(savedGroup);
             logger.info("Removed role " + role + " from group " + groupTitle);
             return Response.ok().build();
@@ -342,14 +338,10 @@ public class GroupRestImpl implements GroupRest {
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-            Set<User> users = new HashSet<>();
-            for (String username : usernames) {
-                users.add(engineManager.retrieveUser(username).orElseThrow(() ->
-                        ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)));
-            }
-            Set<Agent> newMembers = savedGroup.getMember();
-            newMembers.addAll(users);
-            savedGroup.setMember(newMembers);
+            usernames.stream()
+                .map(username -> engineManager.retrieveUser(username).orElseThrow(() ->
+                        ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)))
+                .forEach(savedGroup::addMember);
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
             logger.info("Added user(s) " + String.join(", ", usernames) + " to group " + groupTitle);
             return Response.ok().build();
@@ -369,7 +361,7 @@ public class GroupRestImpl implements GroupRest {
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-            savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
+            savedGroup.removeMember(savedUser);
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
             logger.info("Removed user " + username + " from group " + groupTitle);
             return Response.ok().build();

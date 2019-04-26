@@ -64,6 +64,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -329,6 +330,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .mapToObj(Integer::toString)
                 .collect(Collectors.toMap(s -> s, s -> roleFactory.createNew(vf.createIRI("http://mobi.com/roles/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
+        newGroup.setHasGroupRole(Collections.singleton(role));
         when(engineManager.getRole(anyString())).thenAnswer(i -> Optional.of(roles.get(i.getArgumentAt(0, String.class))));
         when(engineManager.retrieveGroup(anyString())).thenReturn(Optional.of(newGroup));
 
@@ -337,7 +339,14 @@ public class GroupRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup("testGroup");
         roles.keySet().forEach(s -> verify(engineManager).getRole(s));
-        verify(engineManager).updateGroup(any(Group.class));
+        ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
+        verify(engineManager).updateGroup(captor.capture());
+        Group updatedGroup = captor.getValue();
+        assertEquals(newGroup.getResource(), updatedGroup.getResource());
+        Set<Resource> updatedRoles = updatedGroup.getHasGroupRole_resource();
+        assertEquals(roles.size() + 1, updatedRoles.size());
+        assertTrue(updatedRoles.contains(role.getResource()));
+        roles.values().forEach(role -> assertTrue(updatedRoles.contains(role.getResource())));
     }
 
     @Test
@@ -374,7 +383,11 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup("testGroup");
-        verify(engineManager).updateGroup(any(Group.class));
+        ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
+        verify(engineManager).updateGroup(captor.capture());
+        Group updatedGroup = captor.getValue();
+        assertEquals(group.getResource(), updatedGroup.getResource());
+        assertEquals(0, updatedGroup.getHasGroupRole_resource().size());
     }
 
     @Test
@@ -429,6 +442,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
                 .mapToObj(Integer::toString)
                 .forEach(s -> users.put(s, userFactory.createNew(vf.createIRI("http://mobi.com/users/" + s))));
         Group newGroup = groupFactory.createNew(vf.createIRI("http://mobi.com/groups/testGroup"));
+        newGroup.setMember(Collections.singleton(user));
         when(engineManager.retrieveUser(anyString())).thenAnswer(i -> Optional.of(users.get(i.getArgumentAt(0, String.class))));
         when(engineManager.retrieveGroup(eq(ENGINE_NAME), anyString())).thenReturn(Optional.of(newGroup));
 
@@ -437,7 +451,14 @@ public class GroupRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         users.keySet().forEach(s -> verify(engineManager).retrieveUser(s));
-        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
+        ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), captor.capture());
+        Group updatedGroup = captor.getValue();
+        assertEquals(newGroup.getResource(), updatedGroup.getResource());
+        Set<Resource> updatedMembers = updatedGroup.getMember_resource();
+        assertEquals(users.size() + 1, updatedMembers.size());
+        assertTrue(updatedMembers.contains(user.getResource()));
+        users.values().forEach(user -> assertTrue(updatedMembers.contains(user.getResource())));
     }
 
     @Test
@@ -463,7 +484,11 @@ public class GroupRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         verify(engineManager).retrieveUser("tester");
-        verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
+        ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
+        verify(engineManager).updateGroup(eq(ENGINE_NAME), captor.capture());
+        Group updatedGroup = captor.getValue();
+        assertEquals(group.getResource(), updatedGroup.getResource());
+        assertEquals(0, updatedGroup.getMember_resource().size());
     }
 
     @Test
