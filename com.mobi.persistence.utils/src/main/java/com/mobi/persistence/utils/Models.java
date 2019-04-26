@@ -24,7 +24,6 @@ package com.mobi.persistence.utils;
  */
 
 import static java.util.Arrays.asList;
-import static java.util.Arrays.copyOf;
 
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.BNode;
@@ -42,6 +41,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -238,22 +238,16 @@ public class Models {
      * @param inputStream the InputStream to convert
      * @return a ByteArrayInputStream
      */
-    private static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException,
-            NegativeArraySizeException {
-        int size = 8192;
-        byte[] bytes = new byte[0];
-        try {
-            while (size == 8192) {
-                byte[] read = new byte[size];
-                size = inputStream.read(read);
-                int offset = bytes.length;
-                bytes = copyOf(bytes, offset + size);
-                System.arraycopy(read, 0, bytes, offset, size);
-            }
-        } finally {
-            IOUtils.closeQuietly(inputStream);
+    private static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException {
+        byte[] buff = new byte[8000];
+        int bytesRead = 0;
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        while ((bytesRead = inputStream.read(buff)) != -1) {
+            bao.write(buff, 0, bytesRead);
         }
-        return new ByteArrayInputStream(bytes);
+        byte[] data = bao.toByteArray();
+
+        return new ByteArrayInputStream(data);
     }
 
 //    public static boolean isomorphic(Iterable<? extends Statement> model1,
