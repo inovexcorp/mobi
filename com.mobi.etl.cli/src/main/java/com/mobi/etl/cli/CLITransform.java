@@ -23,6 +23,7 @@ package com.mobi.etl.cli;
  * #L%
  */
 
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
@@ -211,7 +212,14 @@ public class CLITransform implements Action {
                 IRI branchIri = vf.createIRI(branch);
                 User adminUser = engineManager.retrieveUser("RdfEngine", "admin").get();
                 String commitMsg = "Mapping data from " + mappingRecordIRI;
-                ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
+                Difference difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
+                if (difference.getAdditions() == null && difference.getDeletions() == null) {
+                    System.out.println("Ontology transform complete. No commit required.");
+                } else {
+                    int additionSize = difference.getAdditions() != null ? difference.getAdditions().size() : 0;
+                    int deletionSize = difference.getDeletions() != null ? difference.getDeletions().size() : 0;
+                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize) + "statements changed.");
+                }
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
