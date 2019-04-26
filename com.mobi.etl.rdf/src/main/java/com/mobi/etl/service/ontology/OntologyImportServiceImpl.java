@@ -33,9 +33,9 @@ import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.owl.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component
@@ -78,8 +78,15 @@ public class OntologyImportServiceImpl implements OntologyImportService {
         this.configProvider = catalogConfigProvider;
     }
 
+
     @Override
-    public Difference importOntology(IRI ontologyRecord, IRI branch, boolean update, Model ontologyData, User user, String commitMsg) {
+    public Difference importOntology(Resource ontologyRecord, boolean update, Model ontologyData, User user, String commitMsg) {
+        Resource masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), ontologyRecord).getResource();
+        return importOntology(ontologyRecord, masterBranch, update, ontologyData, user, commitMsg);
+    }
+
+    @Override
+    public Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, Model ontologyData, User user, String commitMsg) {
         Model newData = mf.createModel(ontologyData);
         Model existingData = ontologyManager.getOntologyModel(ontologyRecord, branch);
 

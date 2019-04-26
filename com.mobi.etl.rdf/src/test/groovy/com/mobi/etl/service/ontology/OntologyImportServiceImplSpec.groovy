@@ -24,6 +24,7 @@ package com.mobi.etl.service.ontology
 
 import com.mobi.catalog.api.CatalogManager
 import com.mobi.catalog.api.builder.Difference
+import com.mobi.catalog.api.ontologies.mcat.Branch
 import com.mobi.catalog.api.versioning.VersioningManager
 import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.jaas.api.ontologies.usermanagement.User
@@ -47,6 +48,7 @@ class OntologyImportServiceImplSpec extends Specification {
     def configProivder = Mock(CatalogConfigProvider)
 
     def ontologyIRI = Mock(IRI)
+    def branch = Mock(Branch)
     def branchIRI = Mock(IRI)
     def user = Mock(User)
 
@@ -98,6 +100,23 @@ class OntologyImportServiceImplSpec extends Specification {
         committedData.getAdditions() as Set == expectedCommit as Set
         committedData.getDeletions() == null
         0 * versioningManager.commit(*_)
+    }
+
+    def "Service commits addition data to master branch"() {
+        setup:
+        def mappedData = mf.createModel([stmt1, stmt2])
+        def expectedCommit = mf.createModel([stmt2])
+        catalogManager.getMasterBranch(_, ontologyIRI) >> branch
+        branch.getResource() >> branchIRI
+        ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> mf.createModel([stmt1])
+
+        when:
+        def committedData = service.importOntology(ontologyIRI, false, mappedData, user, "")
+
+        then:
+        committedData.getAdditions() as Set == expectedCommit as Set
+        committedData.getDeletions() == null
+        1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", expectedCommit, null)
     }
 
     def "Service commits update data"() {

@@ -701,7 +701,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
         com.mobi.rdf.api.Model model = mf.createModel(Stream.of(statement1, statement2).collect(Collectors.toList()));
-        com.mobi.rdf.api.Model committedModel = mf.createModel();
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
