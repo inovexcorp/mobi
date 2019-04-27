@@ -1,5 +1,28 @@
 package com.mobi.ontology.utils.cache.impl;
 
+/*-
+ * #%L
+ * com.mobi.ontology.utils
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -96,20 +119,23 @@ public class CacheImportsResolverImpl implements CacheImportsResolver {
                 Model model;
                 if (i == 0) {
                     model = ontModel;
-                    IRI sdNg = createSystemDefaultNamedGraphIRIFromKey(key);
                     if (!cacheConn.getStatements(datasetKey, null, null).hasNext()) {
                         datasetManager.createDataset(datasetKey.stringValue(), cacheRepo.getConfig().id());
                     }
-                    addOntologyToRepo(cacheRepo, model, datasetKey, sdNg);
+                    addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
                 } else {
-                    Optional<Model> modelOpt = retrieveOntologyLocal(ontologyIRI, ontologyManager);
-                    if (modelOpt.isPresent()) {
-                        model = modelOpt.get();
+                    Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+                    if (recordIRI.isPresent()) {
+                        Optional<Resource> headCommit = catalogManager.getMasterBranch(
+                                catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
+                        model = catalogManager.getCompiledResource(headCommit.get());
+                        String headKey = recordIRI.get().stringValue() + "&" + headCommit.get().stringValue();
+                        addOntologyToRepo(cacheRepo, model, datasetKey, createDatasetIRIFromKey(headKey), false);
                     } else {
-                        modelOpt = retrieveOntologyFromWeb(ontologyIRI);
+                        Optional<Model> modelOpt = retrieveOntologyFromWeb(ontologyIRI);
                         if (modelOpt.isPresent()) {
                             model = modelOpt.get();
-                            addOntologyToRepo(cacheRepo, model, datasetKey, ontologyIRI);
+                            addOntologyToRepo(cacheRepo, model, datasetKey, ontologyIRI, false);
                         } else {
                             unresolvedImports.add(ontologyIRI);
                             processedImports.add(ontologyIRI);
@@ -166,9 +192,9 @@ public class CacheImportsResolverImpl implements CacheImportsResolver {
     }
 
     @Override
-    public Optional<Model> retrieveOntologyLocal(Resource resource, OntologyManager ontologyManager) {
+    public Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager) {
         Model model = mf.createModel();
-        Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(resource);
+        Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
         if (recordIRIOpt.isPresent()) {
             Resource recordIRI = recordIRIOpt.get();
             Optional<Resource> masterHead = catalogManager.getMasterBranch(
@@ -181,14 +207,16 @@ public class CacheImportsResolverImpl implements CacheImportsResolver {
     }
 
     private void addOntologyToRepo(Repository repository, Model ontologyModel, Resource datasetIRI,
-                                   Resource ontologyIRI) {
+                                   Resource ontologyIRI, boolean addTimestamp) {
         try (DatasetConnection dsConn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(),
                 false)) {
             IRI ontNamedGraphIRI = vf.createIRI(ontologyIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX);
             dsConn.addNamedGraph(ontNamedGraphIRI);
             dsConn.add(ontologyModel, ontNamedGraphIRI);
-            dsConn.add(ontNamedGraphIRI, vf.createIRI(TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()),
-                    ontNamedGraphIRI);
+            if (addTimestamp) {
+                dsConn.add(ontNamedGraphIRI, vf.createIRI(TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()),
+                        ontNamedGraphIRI);
+            }
         }
     }
 
@@ -201,9 +229,5 @@ public class CacheImportsResolverImpl implements CacheImportsResolver {
 
     private IRI createDatasetIRIFromKey(String key) {
         return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key));
-    }
-
-    private IRI createSystemDefaultNamedGraphIRIFromKey(String key) {
-        return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key) + SYSTEM_DEFAULT_NG_SUFFIX);
     }
 }
