@@ -44,7 +44,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
-import java.time.OffsetDateTime;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -344,11 +343,10 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     }
 
     private Ontology getValueFromRepo(DatasetConnection dsConn) {
-        updateNamedGraphTimestamps(dsConn);
+        updateDatasetTimestamp(dsConn);
         Resource sdNamedGraphIRI = dsConn.getSystemDefaultNamedGraph();
         Model ontologyModel = RepositoryResults.asModelNoContext(
                 dsConn.getStatements(null, null, null, sdNamedGraphIRI), mf);
-        ontologyModel.remove(null, vf.createIRI(TIMESTAMP_IRI_STRING), null);
         if (ontologyModel.size() == 0) {
             return null;
         }
@@ -358,8 +356,6 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
         Model ontologyModel = ontology.asModel(mf);
         dsConn.add(ontologyModel, ontNamedGraphIRI);
-        dsConn.add(ontNamedGraphIRI, vf.createIRI(TIMESTAMP_IRI_STRING),
-                vf.createLiteral(OffsetDateTime.now()), ontNamedGraphIRI);
         Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
 
         // TODO: how do i identify if it is a mobi ontology?
@@ -375,7 +371,6 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
             }
             dsConn.addNamedGraph(ontSdNg);
         });
-        updateNamedGraphTimestamps(dsConn);
     }
 
     private boolean removeValueFromRepo(IRI datasetIRI) {

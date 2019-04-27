@@ -33,7 +33,6 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.base.RepositoryResult;
 
 import java.time.OffsetDateTime;
 import javax.cache.Cache;
@@ -61,30 +60,24 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                 }
             }
         }
-        return datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
+        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
+        updateDatasetTimestamp(conn);
+        return conn;
     }
 
-    protected void updateNamedGraphTimestamps(Resource datasetIRI) {
+    protected void updateDatasetTimestamp(Resource datasetIRI) {
         DatasetConnection conn = getDatasetConnection(datasetIRI, false);
-        updateNamedGraphTimestamps(conn);
+        updateDatasetTimestamp(conn);
     }
 
-    protected void updateNamedGraphTimestamps(DatasetConnection conn) {
+    protected void updateDatasetTimestamp(DatasetConnection conn) {
         IRI pred = vf.createIRI(TIMESTAMP_IRI_STRING);
         Literal timestamp = vf.createLiteral(OffsetDateTime.now());
-        RepositoryResult<Resource> namedGraphs = conn.getNamedGraphs();
-        namedGraphs.forEach(namedGraph -> {
-            conn.remove(namedGraph, pred, null, namedGraph);
-            conn.add(namedGraph, pred, timestamp, namedGraph);
-        });
-
-        Resource sdNg = conn.getSystemDefaultNamedGraph();
-        conn.remove(sdNg, pred, null, sdNg);
-        conn.add(sdNg, pred, timestamp, sdNg);
 
         Resource dataset = conn.getDataset();
         conn.remove(dataset, pred, null, dataset);
         conn.add(dataset, pred, timestamp, dataset);
+        conn.removeGraph(dataset);
     }
 
     protected void requireNotClosed() {
