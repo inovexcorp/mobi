@@ -1,5 +1,28 @@
 package com.mobi.ontology.utils.cache.impl;
 
+/*-
+ * #%L
+ * com.mobi.ontology.utils
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +59,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
@@ -45,7 +69,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
 
@@ -54,9 +80,12 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
     private ValueFactory vf;
     private Repository repo;
     private IRI headCommitIRI;
+    private IRI circularHeadCommitIRI;
     private IRI recordIRI;
     private IRI catalogIRI;
     private IRI ontologyIRI;
+    private IRI circular1IRI;
+    private IRI circular2IRI;
     private Model localModel;
     private Model circular1Model;
     private Model circular2Model;
@@ -84,7 +113,14 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
     private OntologyId ontologyId;
 
     @Mock
+    private OntologyId circular1OntologyId;
+
+
+    @Mock
     private Branch masterBranch;
+
+    @Mock
+    private Branch circularMasterBranch;
 
     @Mock
     private Catalog catalog;
@@ -97,13 +133,21 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
         resolver = new CacheImportsResolverImpl();
 
         headCommitIRI = vf.createIRI("urn:headCommit");
+        circularHeadCommitIRI = vf.createIRI("urn:circularHeadCommit");
         catalogIRI = vf.createIRI("urn:catalog");
         recordIRI = vf.createIRI("urn:recordIRI");
         ontologyIRI = vf.createIRI("urn:recordIRI");
+        circular1IRI = vf.createIRI("https://mobi.com/ontologies/4/2019/OntologyCircular1");
+        circular2IRI = vf.createIRI("https://mobi.com/ontologies/4/2019/OntologyCircular2");
+
+        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+        when(transformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
+        when(transformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
         localModel = Models.createModel(getClass().getResourceAsStream("/Ontology.ttl"), transformer);
-        circular1Model = Models.createModel(getClass().getResourceAsStream("/Circular1.ttl"), transformer);
-        circular2Model = Models.createModel(getClass().getResourceAsStream("/Circular2.ttl"), transformer);
+        circular1Model = Models.createModel(getClass().getResourceAsStream("/OntologyCircular1.ttl"), transformer);
+        circular2Model = Models.createModel(getClass().getResourceAsStream("/OntologyCircular2.ttl"), transformer);
 
         repo = spy(new SesameRepositoryWrapper(new SailRepository(new MemoryStore())));
         repo.initialize();
@@ -111,22 +155,23 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
         when(repositoryConfig.id()).thenReturn("repoCacheId");
 
         when(masterBranch.getHead_resource()).thenReturn(Optional.of(headCommitIRI));
+        when(circularMasterBranch.getHead_resource()).thenReturn(Optional.of(circularHeadCommitIRI));
         when(catalog.getResource()).thenReturn(catalogIRI);
 
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.getMasterBranch(eq(catalogIRI), eq(recordIRI))).thenReturn(masterBranch);
+        when(catalogManager.getMasterBranch(eq(catalogIRI), eq(circular2IRI))).thenReturn(circularMasterBranch);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyManager.getOntologyRecordResource(eq(recordIRI))).thenReturn(Optional.of(recordIRI));
+        when(ontologyManager.getOntologyRecordResource(eq(circular2IRI))).thenReturn(Optional.of(circular2IRI));
         when(ontologyManager.getOntologyRecordResource(eq(vf.createIRI("urn:localOntology")))).thenReturn(Optional.of(recordIRI));
 
-        when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
-        when(transformer.mobiIRI(any(org.eclipse.rdf4j.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.eclipse.rdf4j.model.IRI.class)));
-        when(transformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-
         when(catalogManager.getCompiledResource(eq(headCommitIRI))).thenReturn(localModel);
+        when(catalogManager.getCompiledResource(eq(circularHeadCommitIRI))).thenReturn(circular2Model);
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
+        when(circular1OntologyId.getOntologyIRI()).thenReturn(Optional.of(circular1IRI));
+        when(circular1OntologyId.getOntologyIdentifier()).thenReturn(circular1IRI);
 
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf));
@@ -217,24 +262,73 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void loadOntologyWithSkosImportIntoCache() {
-        resolver.loadOntologyIntoCache(ontologyId, "record1&commit2", localModel, repo, ontologyManager);
+    public void loadOntologyWithWebImportIntoCache() {
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyId, "record1&commit2", localModel, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
             List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2" + SYSTEM_DEFAULT_NG_SUFFIX))));
             assertTrue(namedGraphs.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core" + SYSTEM_DEFAULT_NG_SUFFIX)));
         }
+        Set<Resource> closure = map.get("closure");
+        assertEquals(2, closure.size());
+        assertTrue(closure.contains(ontologyIRI));
+        assertTrue(closure.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core")));
+        assertEquals(0, map.get("unresolved").size());
+    }
+
+    @Test
+    public void loadOntologyWithBadWebImportIntoCache() {
+        localModel.remove(null, vf.createIRI(OWL.IMPORTS.stringValue()), null);
+        localModel.add(circular2IRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:importThatDoesNotResolve"));
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyId, "record1&commit2", localModel, repo, ontologyManager);
+        try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            assertEquals(1, namedGraphs.size());
+            assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2" + SYSTEM_DEFAULT_NG_SUFFIX))));
+        }
+        Set<Resource> closure = map.get("closure");
+        assertEquals(2, closure.size());
+        assertTrue(closure.contains(ontologyIRI));
+        assertTrue(closure.contains(vf.createIRI("urn:importThatDoesNotResolve")));
+        Set<Resource> unresolved = map.get("unresolved");
+        assertEquals(1, unresolved.size());
+        assertTrue(unresolved.contains(vf.createIRI("urn:importThatDoesNotResolve")));
     }
 
     @Test
     public void loadOntologyWithCircularImportIntoCache() {
-        resolver.loadOntologyIntoCache(ontologyId, "record1&commit2", localModel, repo, ontologyManager);
-//        try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
-//            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
-//            assertEquals(2, namedGraphs.size());
-//            assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2" + SYSTEM_DEFAULT_NG_SUFFIX))));
-//            assertTrue(namedGraphs.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core" + SYSTEM_DEFAULT_NG_SUFFIX)));
-//        }
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1OntologyId, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
+        try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3")), repo.getConfig().id(), false)) {
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            assertEquals(2, namedGraphs.size());
+            assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3" + SYSTEM_DEFAULT_NG_SUFFIX))));
+            assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode( circular2IRI.stringValue() + "&" + circularHeadCommitIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX))));
+        }
+        Set<Resource> closure = map.get("closure");
+        assertEquals(2, closure.size());
+        assertTrue(closure.contains(circular1IRI));
+        assertTrue(closure.contains(circular2IRI));
+        assertEquals(0, map.get("unresolved").size());
+    }
+
+    @Test
+    public void loadOntologyWithCircularImportAndBadImportIntoCache() {
+        circular2Model.add(circular2IRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:importThatDoesNotResolve"));
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1OntologyId, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
+        try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3")), repo.getConfig().id(), false)) {
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            assertEquals(2, namedGraphs.size());
+            assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3" + SYSTEM_DEFAULT_NG_SUFFIX))));
+            assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode( circular2IRI.stringValue() + "&" + circularHeadCommitIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX))));
+        }
+        Set<Resource> closure = map.get("closure");
+        assertEquals(3, closure.size());
+        assertTrue(closure.contains(circular1IRI));
+        assertTrue(closure.contains(circular2IRI));
+        assertTrue(closure.contains(vf.createIRI("urn:importThatDoesNotResolve")));
+        Set<Resource> unresolved = map.get("unresolved");
+        assertEquals(1, unresolved.size());
+        assertTrue(unresolved.contains(vf.createIRI("urn:importThatDoesNotResolve")));
     }
 }
