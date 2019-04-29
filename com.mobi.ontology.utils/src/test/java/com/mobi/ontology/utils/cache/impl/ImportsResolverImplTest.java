@@ -40,7 +40,6 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RepositoryResults;
@@ -73,9 +72,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
+public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
-    private CacheImportsResolverImpl resolver;
+    private ImportsResolverImpl resolver;
     private ModelFactory mf;
     private ValueFactory vf;
     private Repository repo;
@@ -110,13 +109,6 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
     private OntologyManager ontologyManager;
 
     @Mock
-    private OntologyId ontologyId;
-
-    @Mock
-    private OntologyId circular1OntologyId;
-
-
-    @Mock
     private Branch masterBranch;
 
     @Mock
@@ -130,7 +122,7 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
         MockitoAnnotations.initMocks(this);
         mf = getModelFactory();
         vf = getValueFactory();
-        resolver = new CacheImportsResolverImpl();
+        resolver = new ImportsResolverImpl();
 
         headCommitIRI = vf.createIRI("urn:headCommit");
         circularHeadCommitIRI = vf.createIRI("urn:circularHeadCommit");
@@ -168,10 +160,6 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
 
         when(catalogManager.getCompiledResource(eq(headCommitIRI))).thenReturn(localModel);
         when(catalogManager.getCompiledResource(eq(circularHeadCommitIRI))).thenReturn(circular2Model);
-        when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
-        when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
-        when(circular1OntologyId.getOntologyIRI()).thenReturn(Optional.of(circular1IRI));
-        when(circular1OntologyId.getOntologyIdentifier()).thenReturn(circular1IRI);
 
         ArgumentCaptor<Resource> resource = ArgumentCaptor.forClass(Resource.class);
         when(datasetManager.getConnection(resource.capture(), anyString(), anyBoolean())).thenAnswer(invocation -> new SimpleDatasetRepositoryConnection(repo.getConnection(), resource.getValue(), repositoryConfig.id(), vf));
@@ -263,7 +251,7 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Test
     public void loadOntologyWithWebImportIntoCache() {
-        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyId, "record1&commit2", localModel, repo, ontologyManager);
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyIRI, "record1&commit2", localModel, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
             List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
             assertEquals(2, namedGraphs.size());
@@ -281,7 +269,7 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
     public void loadOntologyWithBadWebImportIntoCache() {
         localModel.remove(null, vf.createIRI(OWL.IMPORTS.stringValue()), null);
         localModel.add(circular2IRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:importThatDoesNotResolve"));
-        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyId, "record1&commit2", localModel, repo, ontologyManager);
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyIRI, "record1&commit2", localModel, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
             List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
             assertEquals(1, namedGraphs.size());
@@ -298,7 +286,7 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Test
     public void loadOntologyWithCircularImportIntoCache() {
-        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1OntologyId, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1IRI, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3")), repo.getConfig().id(), false)) {
             List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
             assertEquals(2, namedGraphs.size());
@@ -315,7 +303,7 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
     @Test
     public void loadOntologyWithCircularImportAndBadImportIntoCache() {
         circular2Model.add(circular2IRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:importThatDoesNotResolve"));
-        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1OntologyId, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1IRI, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3")), repo.getConfig().id(), false)) {
             List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
             assertEquals(2, namedGraphs.size());
@@ -330,5 +318,21 @@ public class CacheImportsResolverImplTest extends OrmEnabledTestCase {
         Set<Resource> unresolved = map.get("unresolved");
         assertEquals(1, unresolved.size());
         assertTrue(unresolved.contains(vf.createIRI("urn:importThatDoesNotResolve")));
+    }
+
+    @Test
+    public void loadOntologyWithoutKeyIntoCache() {
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyIRI, null, localModel, repo, ontologyManager);
+        try (DatasetConnection conn = datasetManager.getConnection(ontologyIRI, repo.getConfig().id(), false)) {
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            assertEquals(2, namedGraphs.size());
+            assertTrue(namedGraphs.contains(vf.createIRI(ontologyIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX)));
+            assertTrue(namedGraphs.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core" + SYSTEM_DEFAULT_NG_SUFFIX)));
+        }
+        Set<Resource> closure = map.get("closure");
+        assertEquals(2, closure.size());
+        assertTrue(closure.contains(ontologyIRI));
+        assertTrue(closure.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core")));
+        assertEquals(0, map.get("unresolved").size());
     }
 }

@@ -28,9 +28,8 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
-import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.utils.cache.CacheImportsResolver;
+import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -58,9 +57,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 @Component
-public class CacheImportsResolverImpl implements CacheImportsResolver {
+public class ImportsResolverImpl implements ImportsResolver {
 
     private CatalogManager catalogManager;
     private DatasetManager datasetManager;
@@ -100,13 +100,13 @@ public class CacheImportsResolverImpl implements CacheImportsResolver {
     }
 
     @Override
-    public Map<String, Set<Resource>> loadOntologyIntoCache(OntologyId ontologyId, String key, Model ontModel,
+    public Map<String, Set<Resource>> loadOntologyIntoCache(Resource ontologyId, @Nullable String key, Model ontModel,
                                                             Repository cacheRepo, OntologyManager ontologyManager) {
         Set<Resource> unresolvedImports = new HashSet<>();
         Set<Resource> processedImports = new HashSet<>();
         List<Resource> importsToProcess = new ArrayList<>();
-        importsToProcess.add(ontologyId.getOntologyIRI().orElse((IRI) ontologyId.getOntologyIdentifier()));
-        IRI datasetKey = createDatasetIRIFromKey(key);
+        importsToProcess.add(ontologyId);
+        Resource datasetKey = key == null ? ontologyId : createDatasetIRIFromKey(key);
 
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
             for (int i = 0; i < importsToProcess.size(); i++) {
