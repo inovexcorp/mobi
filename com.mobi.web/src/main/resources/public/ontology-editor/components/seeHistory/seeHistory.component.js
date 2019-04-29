@@ -76,9 +76,9 @@
             }
         }
 
-        dvm.createLabel = function (commit) {
-            var label = dvm.util.condenseCommitId(commit.id);
-            if(commit.id == dvm.commits[0].id){
+        dvm.createLabel = function (commitId) {
+            var label = dvm.util.condenseCommitId(commitId);
+            if(commitId == dvm.commits[0].id){
                 label = label + " (latest)"
             }
             return label;

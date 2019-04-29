@@ -36,8 +36,8 @@
                         <span>View entity at</span>
                     </div>
                     <div class="form-group">
-                        <select class="form-control" ng-model="dvm.os.listItem.selectedCommit" ng-disabled="dvm.commits.length === 0" ng-options="commit as dvm.createLabel(commit) for commit in dvm.commits">
-                            <option value="" disabled>- Select Commit -</option>
+                        <select class="form-control" ng-model="dvm.os.listItem.selectedCommit" ng-disabled="dvm.commits.length === 0" ng-options="commit as dvm.createLabel(commit.id) for commit in dvm.commits">
+                            <option value="" disabled>- Commit Id -</option>
                         </select>
                     </div>
                     <div class="form-group">
