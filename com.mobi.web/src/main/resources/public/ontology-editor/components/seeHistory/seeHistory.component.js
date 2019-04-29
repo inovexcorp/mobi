@@ -79,7 +79,7 @@
         dvm.createLabel = function (commitId) {
             var label = dvm.util.condenseCommitId(commitId);
             if(commitId == dvm.commits[0].id) {
-                label = label + " (latest)"
+                label = label + " (latest)";
             }
             return label;
         }
