@@ -30,7 +30,6 @@ import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
@@ -100,7 +99,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            return getValueFromRepo(dsConn);
+            return getValueFromRepo(dsConn, key);
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -177,7 +176,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            Ontology repoOntology = getValueFromRepo(dsConn);
+            Ontology repoOntology = getValueFromRepo(dsConn, key);
             if (ontology.equals(repoOntology)) {
                 return removeValueFromRepo(datasetIRI);
             }
@@ -196,7 +195,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         IRI datasetIRI = createDatasetIRIFromKey(key);
         boolean success = false;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            Ontology repoOntology = getValueFromRepo(dsConn);
+            Ontology repoOntology = getValueFromRepo(dsConn, key);
             if (ontology.equals(repoOntology)) {
                 success = removeValueFromRepo(datasetIRI);
             }
@@ -342,7 +341,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         }
     }
 
-    private Ontology getValueFromRepo(DatasetConnection dsConn) {
+    private Ontology getValueFromRepo(DatasetConnection dsConn, String key) {
         updateDatasetTimestamp(dsConn);
         Resource sdNamedGraphIRI = dsConn.getSystemDefaultNamedGraph();
         Model ontologyModel = RepositoryResults.asModelNoContext(
@@ -350,27 +349,25 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         if (ontologyModel.size() == 0) {
             return null;
         }
-        return ontologyManager.createOntology(ontologyModel);
+        String[] ids = key.split("&");
+        return ontologyManager.retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1])).get();
     }
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
-        Model ontologyModel = ontology.asModel(mf);
-        dsConn.add(ontologyModel, ontNamedGraphIRI);
-        Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
-
-        // TODO: how do i identify if it is a mobi ontology?
-        importedOntologies.forEach(importedOntology -> {
-            Model importedModel = importedOntology.asModel(mf);
-
-            // TODO: Is this the correct ID??
-            IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
-                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
-                    + SYSTEM_DEFAULT_NG_SUFFIX);
-            if (!dsConn.containsContext(ontSdNg)) {
-                dsConn.add(importedModel, ontSdNg);
-            }
-            dsConn.addNamedGraph(ontSdNg);
-        });
+//        Model ontologyModel = ontology.asModel(mf);
+//        dsConn.add(ontologyModel, ontNamedGraphIRI);
+//        Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
+//
+//        importedOntologies.forEach(importedOntology -> {
+//            IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
+//                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
+//                    + SYSTEM_DEFAULT_NG_SUFFIX);
+//            if (!dsConn.containsContext(ontSdNg)) {
+//                Model importedModel = importedOntology.asModel(mf);
+//                dsConn.add(importedModel, ontSdNg);
+//            }
+//            dsConn.addNamedGraph(ontSdNg);
+//        });
     }
 
     private boolean removeValueFromRepo(IRI datasetIRI) {

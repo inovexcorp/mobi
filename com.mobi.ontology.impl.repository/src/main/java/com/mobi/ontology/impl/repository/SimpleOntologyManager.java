@@ -2,7 +2,7 @@ package com.mobi.ontology.impl.repository;
 
 /*-
  * #%L
- * com.mobi.ontology.impl.owlapi
+ * com.mobi.ontology.impl.repository
  * $Id:$
  * $HeadURL:$
  * %%
@@ -33,15 +33,19 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.config.OntologyManagerConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
@@ -49,6 +53,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
@@ -64,12 +69,18 @@ import javax.cache.Cache;
 @Component(
         configurationPolicy = ConfigurationPolicy.optional,
         designateFactory = OntologyManagerConfig.class,
-        name = SimpleOntologyManager.COMPONENT_NAME
+        name = SimpleOntologyManager.COMPONENT_NAME,
+        properties = {
+                "service.ranking:Integer=10"
+        }
 )
 public class SimpleOntologyManager implements OntologyManager {
 
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
+    private SesameTransformer sesameTransformer;
+
+    private DatasetManager datasetManager;
     private OntologyRecordFactory ontologyRecordFactory;
     private CatalogConfigProvider configProvider;
     private CatalogManager catalogManager;
@@ -77,6 +88,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private RepositoryManager repositoryManager;
     private BranchFactory branchFactory;
     private OntologyCache ontologyCache;
+    private ImportsResolver importsResolver;
     private BNodeService bNodeService;
 
     static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
@@ -109,6 +121,16 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
+    }
+
+    @Reference
+    public void setSesameTransformer(SesameTransformer sesameTransformer) {
+        this.sesameTransformer = sesameTransformer;
+    }
+
+    @Reference
+    public void setDatasetManager(DatasetManager datasetManager) {
+        this.datasetManager = datasetManager;
     }
 
     @Reference
@@ -150,30 +172,48 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
+    public void setImportsResolver(ImportsResolver importsResolver) {
+        this.importsResolver = importsResolver;
+    }
+
+    @Reference
     public void setbNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
     }
 
     @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
-//        try {
-            return null;
-//            return new SimpleOntology(Models.createModel(inputStream, sesameTransformer));
-//        } catch (IOException e) {
-//            throw new MobiException(e);
-//        }
+        // TODO: Only used in upload changes. Won't have ontologyID associated with it.....
+        try {
+            return createOntology(Models.createModel(inputStream, sesameTransformer));
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
     }
 
     @Override
     public Ontology createOntology(Model model) {
-        return null;
-//        return new SimpleOntology(model, this, sesameTransformer, bNodeService, repositoryManager, threadPool);
+        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+                () -> new IllegalStateException("ontologyCache repository does not exist"));
+
+        return new SimpleOntology(model, repository, this, datasetManager, importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
     }
 
-//    private Ontology createOntology(Model model, Resource recordId, Resource commitId) {
-//        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-//        new SimpleOntology(key, model, repository, datasetManager, valueFactory);
-//    }
+    private Ontology createOntology(Model model, Resource recordId, Resource commitId) {
+        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+                () -> new IllegalStateException("ontologyCache repository does not exist"));
+
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
+        return new SimpleOntology(key, model, repository, this, datasetManager, importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+    }
+
+    private Ontology createOntology(Resource recordId, Resource commitId) {
+        Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
+                () -> new IllegalStateException("ontologyCache repository does not exist"));
+
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
+        return new SimpleOntology(key, repository, this, datasetManager, importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+    }
 
     @Override
     public Ontology applyChanges(Ontology ontology, Difference difference) {
@@ -191,8 +231,8 @@ public class SimpleOntologyManager implements OntologyManager {
                             + " is not associated with an OntologyRecord"));
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(
                     configProvider.getLocalCatalogIRI(), recordId, inProgressCommitId).orElseThrow(
-                            () -> new IllegalStateException("InProgressCommit for " + inProgressCommitId
-                                    + " could not be found"));
+                    () -> new IllegalStateException("InProgressCommit for " + inProgressCommitId
+                            + " could not be found"));
             return applyInProgressCommitChanges(ontology, inProgressCommit, conn);
         }
     }
@@ -348,7 +388,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
         if (optCache.isPresent() && optCache.get().containsKey(key)) {
             log.trace("cache hit");
-            result = Optional.ofNullable(optCache.get().get(key));
+            result = Optional.of(createOntology(recordId, commitId));
         } else {
             log.trace("cache miss");
             // Operation puts the ontology in the cache on construction
@@ -373,7 +413,7 @@ public class SimpleOntologyManager implements OntologyManager {
      */
     private Ontology createOntologyFromCommit(Resource recordId, Resource commitId) {
         Model ontologyModel = catalogManager.getCompiledResource(commitId);
-        return createOntology(ontologyModel);
+        return createOntology(ontologyModel, recordId, commitId);
     }
 
     private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {

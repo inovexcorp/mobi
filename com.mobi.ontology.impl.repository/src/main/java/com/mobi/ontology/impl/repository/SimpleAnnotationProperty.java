@@ -2,7 +2,7 @@ package com.mobi.ontology.impl.repository;
 
 /*-
  * #%L
- * com.mobi.ontology.impl.owlapi
+ * com.mobi.ontology.impl.repository
  * $Id:$
  * $HeadURL:$
  * %%

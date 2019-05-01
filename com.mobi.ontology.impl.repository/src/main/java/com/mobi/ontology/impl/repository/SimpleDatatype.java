@@ -2,7 +2,7 @@ package com.mobi.ontology.impl.repository;
 
 /*-
  * #%L
- * com.mobi.ontology.impl.owlapi
+ * com.mobi.ontology.impl.repository
  * $Id:$
  * $HeadURL:$
  * %%
@@ -36,7 +36,7 @@ public class SimpleDatatype implements Datatype {
 
 
     public SimpleDatatype(@Nonnull IRI iri) {//TODO:
-//        this.iri = iri;
+        this.iri = iri;
 //        org.semanticweb.owlapi.model.IRI owlIri = SimpleOntologyValues.owlapiIRI(iri);
 //        owlDatatype = new OWLDatatypeImpl(owlIri);
 //        builtin = owlDatatype.isBuiltIn();
@@ -135,12 +135,5 @@ public class SimpleDatatype implements Datatype {
         }
 
         return false;
-    }
-
-
-    @Override
-    public int hashCode() {
-        return 0;
-//        return owlDatatype.hashCode();
     }
 }

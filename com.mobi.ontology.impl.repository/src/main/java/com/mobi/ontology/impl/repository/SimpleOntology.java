@@ -1,5 +1,28 @@
 package com.mobi.ontology.impl.repository;
 
+/*-
+ * #%L
+ * com.mobi.ontology.impl.repository
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import com.google.common.collect.Iterables;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
@@ -16,7 +39,8 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.utils.cache.CacheImportsResolver;
+import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
@@ -40,6 +64,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -52,7 +77,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +94,7 @@ public class SimpleOntology implements Ontology {
     private OntologyId ontologyId;
     private DatasetManager datasetManager;
     private OntologyManager ontologyManager;
+    private ImportsResolver importsResolver;
     private ModelFactory mf;
     private ValueFactory vf;
     private SesameTransformer transformer;
@@ -79,7 +104,8 @@ public class SimpleOntology implements Ontology {
     private Set<Resource> unresolvedImports;
 
     private static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
-    private static final String TIMESTAMP_IRI_STRING = "http://mobi.com/ontologies/graph#lastAccessed";
+    private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
+    private static final String UNRESOLVED_IRI_STRING = "http://mobi.com/ontologies/graph#unresolved";
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_CLASSES_FOR;
@@ -151,24 +177,93 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    public SimpleOntology(Model model, Repository repository, OntologyManager ontologyManager, CacheImportsResolver importsResolver, ValueFactory vf) {
-
-    }
-
-    public SimpleOntology(String recordCommitKey, Model model, Repository repository, OntologyManager ontologyManager, CacheImportsResolver importsResolver, ValueFactory vf) {
-        this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
-        this.repository = repository;
+    public SimpleOntology(Model model, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        this.mf = mf;
         this.vf = vf;
+        this.datasetIRI = OntologyModels.findFirstOntologyIRI(model, vf).orElseThrow(
+                () -> new IllegalStateException("")); // TODO: Should it require an ontology IRI?
+        this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
+        this.datasetManager = datasetManager;
+        this.importsResolver = importsResolver;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
+
         this.ontologyId = ontologyManager.createOntologyId(model);
-        Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyId, recordCommitKey, model,
+        Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(this.datasetIRI, null, model,
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
         this.unresolvedImports = imports.get("unresolved");
     }
 
-    public SimpleOntology(String recordCommitKey, Repository repository, OntologyManager ontologyManager, CacheImportsResolver importsResolver, ValueFactory vf) {
+    // If exists in catalog but ontology and imports dont exist in cache yet
+    public SimpleOntology(String recordCommitKey, Model model, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf).orElseThrow(
+                () -> new IllegalStateException("")); // TODO: Should it require an ontology IRI?
+        this.mf = mf;
+        this.vf = vf;
+        this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
+        this.repository = cacheRepo;
+        this.ontologyManager = ontologyManager;
+        this.datasetManager = datasetManager;
+        this.importsResolver = importsResolver;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
 
+        this.ontologyId = ontologyManager.createOntologyId(model);
+        Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyIRI, recordCommitKey, model,
+                repository, ontologyManager);
+        this.importsClosure = imports.get("closure");
+        this.unresolvedImports = imports.get("unresolved");
+    }
+
+    // If it already exists in cache
+    public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        this.mf = mf;
+        this.vf = vf;
+        this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
+        this.repository = cacheRepo;
+        this.ontologyManager = ontologyManager;
+        this.datasetManager = datasetManager;
+        this.importsResolver = importsResolver;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
+
+        importsClosure = new HashSet<>();
+        unresolvedImports = new HashSet<>();
+
+        try (DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false)) {
+            List<Statement> imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
+                    vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI));
+            imports.forEach(imported -> importsClosure.add((Resource) imported.getObject()));
+            imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
+                    vf.createIRI(UNRESOLVED_IRI_STRING), null, datasetIRI));
+            imports.forEach(imported -> unresolvedImports.add((Resource) imported.getObject()));
+
+            Model model = RepositoryResults.asModelNoContext(conn.getStatements(
+                    null, null, null,  conn.getSystemDefaultNamedGraph()), mf);
+            this.ontologyId = ontologyManager.createOntologyId(model);
+        }
+    }
+
+    private SimpleOntology(IRI datasetIRI, Model model, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf).orElseThrow(
+                () -> new IllegalStateException("")); // TODO: Should it require an ontology IRI?
+        this.mf = mf;
+        this.vf = vf;
+        this.datasetIRI = datasetIRI;
+        this.repository = cacheRepo;
+        this.ontologyManager = ontologyManager;
+        this.datasetManager = datasetManager;
+        this.importsResolver = importsResolver;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
+
+        this.ontologyId = ontologyManager.createOntologyId(model);
+        Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyIRI, null, model,
+                repository, ontologyManager);
+        this.importsClosure = imports.get("closure");
+        this.unresolvedImports = imports.get("unresolved");
     }
 
     @Override
@@ -176,7 +271,6 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             Model ontologyModel = RepositoryResults.asModelNoContext(
                     conn.getStatements(null, null, null, conn.getSystemDefaultNamedGraph()), factory);
-            ontologyModel.remove(null, vf.createIRI(TIMESTAMP_IRI_STRING), null);
             return ontologyModel;
         }
     }
@@ -239,7 +333,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OntologyId getOntologyId() {
-        return ontologyManager.createOntologyId(asModel(mf));
+        return ontologyId;
     }
 
     @Override
@@ -249,7 +343,21 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Ontology> getImportsClosure() {
-        return null;
+        try (DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false)) {
+            Resource sdNg = conn.getSystemDefaultNamedGraph();
+            Set<Ontology> closure = new HashSet<>();
+            conn.getNamedGraphs().forEach(ng -> {
+                if (ng.stringValue().equals(sdNg.stringValue())) {
+                    closure.add(this);
+                } else {
+                    IRI ontIRI = vf.createIRI(ng.stringValue().substring(0, ng.stringValue().lastIndexOf(SYSTEM_DEFAULT_NG_SUFFIX)));
+                    IRI ontDatasetIRI = importsResolver.getDatasetIRI(ontIRI, ontologyManager);
+                    Model importModel = RepositoryResults.asModel(conn.getStatements(null, null, null, ng), mf);
+                    closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager, datasetManager, importsResolver, transformer, bNodeService, vf, mf));
+                }
+            });
+            return closure;
+        }
     }
 
     @Override
@@ -259,12 +367,21 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Annotation> getOntologyAnnotations() {
-        return null;
+        return new HashSet<>(); //TODO:!!!!!!!!!!!!!!!!!!!!
     }
 
     @Override
     public Set<Annotation> getAllAnnotations() {
-        return null;
+//        try (DatasetConnection conn = getDatasetConnection()) {
+//            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
+//                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATION.stringValue()),
+//                    conn.getSystemDefaultNamedGraph()));
+//            return statements.stream()
+//                    .map(Statement::getSubject)
+//                    .map(subject -> new SimpleAnnotationProperty((IRI) subject))
+//                    .collect(Collectors.toSet());
+//        }
+        return new HashSet<>(); // TODO:!!!!!!!!!!!!!!!!!!!!
     }
 
     @Override
@@ -295,6 +412,7 @@ public class SimpleOntology implements Ontology {
                     conn.getSystemDefaultNamedGraph()));
             return statements.stream()
                     .map(Statement::getSubject)
+                    .filter(subject -> subject instanceof IRI)
                     .map(subject -> new SimpleClass((IRI) subject))
                     .collect(Collectors.toSet());
         }
@@ -302,29 +420,29 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<ObjectProperty> getAllClassObjectProperties(IRI iri) {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public Set<ObjectProperty> getAllNoDomainObjectProperties() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public Set<DataProperty> getAllClassDataProperties(IRI iri) {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public Set<DataProperty> getAllNoDomainDataProperties() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public Set<Datatype> getAllDatatypes() {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    null, null, conn.getSystemDefaultNamedGraph())); // TODO: Seems expensive grabbing everything. Can we optimize? Query?
+                    null, null, conn.getSystemDefaultNamedGraph()));
             return statements.stream()
                     .map(Statement::getObject)
                     .filter(s -> s instanceof Literal)
@@ -349,19 +467,35 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Optional<ObjectProperty> getObjectProperty(IRI iri) {
+        try (DatasetConnection conn = getDatasetConnection()) {
+            List<Statement> statements = RepositoryResults.asList(conn.getStatements(iri,
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
+            if (statements.size() > 0) {
+                return Optional.of(new SimpleObjectProperty((IRI) statements.get(0).getSubject()));
+            }
+        }
         return Optional.empty();
     }
 
     @Override
     public Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty) {
-        return null;
+        try (DatasetConnection conn = getDatasetConnection()) {
+            List<Statement> statements = RepositoryResults.asList(conn.getStatements(objectProperty.getIRI(),
+                    vf.createIRI(RDFS.RANGE.stringValue()), null, conn.getSystemDefaultNamedGraph()));
+            return statements.stream()
+                    .map(Statement::getObject)
+                    .map(value -> (Resource) value)
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override
     public Set<DataProperty> getAllDataProperties() {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue())));
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
             return statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleDataProperty((IRI) subject))
@@ -371,12 +505,27 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Optional<DataProperty> getDataProperty(IRI iri) {
+        try (DatasetConnection conn = getDatasetConnection()) {
+            List<Statement> statements = RepositoryResults.asList(conn.getStatements(iri,
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
+            if (statements.size() > 0) {
+                return Optional.of(new SimpleDataProperty((IRI) statements.get(0).getSubject()));
+            }
+        }
         return Optional.empty();
     }
 
     @Override
     public Set<Resource> getDataPropertyRange(DataProperty dataProperty) {
-        return null;
+        try (DatasetConnection conn = getDatasetConnection()) {
+            List<Statement> statements = RepositoryResults.asList(conn.getStatements(dataProperty.getIRI(),
+                    vf.createIRI(RDFS.RANGE.stringValue()), null, conn.getSystemDefaultNamedGraph()));
+            return statements.stream()
+                    .map(Statement::getObject)
+                    .map(value -> (Resource) value)
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override
@@ -394,16 +543,14 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Individual> getIndividualsOfType(IRI classIRI) {
-//        try (DatasetConnection conn = getDatasetConnection()) {
-//            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-//                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.NAMEDINDIVIDUAL.stringValue()),
-//                    conn.getSystemDefaultNamedGraph()));
-//            return statements.stream()
-//                    .map(Statement::getSubject)
-//                    .map(subject -> new SimpleIndividual((IRI) subject))
-//                    .collect(Collectors.toSet());
-//        }
-        return null;
+        try (DatasetConnection conn = getDatasetConnection()) {
+            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
+                    vf.createIRI(RDF.TYPE.stringValue()), classIRI, conn.getSystemDefaultNamedGraph()));
+            return statements.stream()
+                    .map(Statement::getSubject)
+                    .map(subject -> new SimpleIndividual((IRI) subject))
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override
@@ -413,47 +560,47 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true); //TODO
-        return null;
+        TupleQueryResult result = runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true); //TODO
+        return getHierarchy(result);
     }
 
     @Override
     public Set<IRI> getSubClassesFor(IRI iri) {
-        runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
+        TupleQueryResult result = runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
                 "getSubClassesFor(ontology, iri)", true); //TODO:
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public Set<IRI> getSubPropertiesFor(IRI iri) {
-        runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
+        TupleQueryResult result = runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
                 "getSubPropertiesFor(ontology, iri)", true); //TODO:
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(ontology)", true); //TODO
-        return null;
+        TupleQueryResult result = runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(ontology)", true); //TODO
+        return getHierarchy(result);
     }
 
     @Override
     public Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(ontology)",
+        TupleQueryResult result = runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(ontology)",
                 true); // TODO:
-        return null;
+        return getHierarchy(result);
     }
 
     @Override
     public Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true); //TODO:
-        return null;
+        TupleQueryResult result = runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true); //TODO:
+        return getHierarchy(result);
     }
 
     @Override
     public Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true); //TODO
-        return null;
+        TupleQueryResult result = runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true); //TODO
+        return getHierarchy(result);
     }
 
     @Override
@@ -480,15 +627,15 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true); //TODO:
-        return null;
+        TupleQueryResult result = runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true); //TODO:
+        return getHierarchy(result);
     }
 
     @Override
     public Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf) {
-        runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null, "getConceptSchemeRelationships(ontology)",
+        TupleQueryResult result = runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null, "getConceptSchemeRelationships(ontology)",
                 true); //TODO:
-        return null;
+        return getHierarchy(result);
     }
 
     @Override
@@ -599,6 +746,7 @@ public class SimpleOntology implements Ontology {
                 return runQueryOnOntology(queryString, addBinding, methodName, conn);
             }
         } else {
+            // TODO: ONLY QUERY SDNG...
             try (RepositoryConnection conn = repository.getConnection()) {
                 return runQueryOnOntology(queryString, addBinding, methodName, conn);
             }
@@ -638,59 +786,19 @@ public class SimpleOntology implements Ontology {
      * @return a Hierarchy containing the hierarchy of the entities provided.
      */
     private Hierarchy getHierarchy(TupleQueryResult tupleQueryResult) {
-        Map<String, Set<String>> results = new HashMap<>();
-        Map<String, Set<String>> index = new HashMap<>();
-        Set<String> topLevel = new HashSet<>();
-        Set<String> lowerLevel = new HashSet<>();
         Hierarchy hierarchy = new Hierarchy(vf, mf); // TODO: Factory shouldn't be added with constructor?
         tupleQueryResult.forEach(queryResult -> {
             Value key = Iterables.get(queryResult, 0).getValue();
             Binding value = Iterables.get(queryResult, 1, null);
-            if (!(key instanceof BNode)) {
-                String keyString = key.stringValue();
-                topLevel.add(keyString);
-                if (value != null && !(value.getValue() instanceof BNode)) {
-                    String valueString = value.getValue().stringValue();
-                    lowerLevel.add(valueString);
-                    if (results.containsKey(keyString)) {
-                        results.get(keyString).add(valueString);
-                    } else {
-                        Set<String> newSet = new HashSet<>();
-                        newSet.add(valueString);
-                        results.put(keyString, newSet);
-                    }
-                    if (index.containsKey(valueString)) {
-                        index.get(valueString).add(keyString);
-                    } else {
-                        Set<String> newSet = new HashSet<>();
-                        newSet.add(keyString);
-                        index.put(valueString, newSet);
-                    }
-                } else {
-                    results.put(key.stringValue(), new HashSet<>());
+            if (!(key instanceof BNode) && key instanceof IRI) {
+                hierarchy.addIRI((IRI) key);
+                if (value != null && !(value.getValue() instanceof BNode) && value.getValue() instanceof IRI) {
+                    hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
                 }
             }
         });
-        topLevel.removeAll(lowerLevel);
-//        Set<String> hierarchy = createHierarchy(topLevel, results).stream()
-//                .map(Object::toString)
-//                .collect(Collectors.toSet());
         return hierarchy;
     }
-
-//    private Set<HierarchyNode> createHierarchy(Set<String> topLevel, Map<String, Set<String>> results) {
-//        Map<String, HierarchyNode> nodes = new HashMap<>();
-//        results.forEach((key, children) -> {
-//            HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
-//            children.forEach(child -> {
-//                HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
-//                node.addChild(obj);
-//                nodes.put(child, obj);
-//            });
-//            nodes.put(key, node);
-//        });
-//        return topLevel.stream().map(nodes::get).collect(Collectors.toSet());
-//    }
 
     private IRI createDatasetIRIFromKey(String key) {
         return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key));

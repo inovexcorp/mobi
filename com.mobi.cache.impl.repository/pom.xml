@@ -50,17 +50,12 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>persistence.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.impl.owlapi</artifactId>
+            <artifactId>ontology.impl.repository</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
