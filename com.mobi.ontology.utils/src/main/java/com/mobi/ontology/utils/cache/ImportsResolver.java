@@ -24,6 +24,7 @@ package com.mobi.ontology.utils.cache;
  */
 
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.Repository;
@@ -63,4 +64,15 @@ public interface ImportsResolver {
      * @return An Optional of the Model representing the ontology of the provided IRI
      */
     Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager);
+
+    /**
+     * Checks the Catalog if an ontologyIRI exists. If so, creates a datasetIRI from the recordIRI and head commitIRI.
+     * Otherwise, returns the provided ontologyIRI.
+     *
+     * @param ontologyIRI The IRI of the Ontology to check in the catalog
+     * @param ontologyManager THe OntologyManager used to check if the IRI exists in the catalog.
+     *
+     * @return A datasetIRI of the recordIRI and commitIRI or the ontologyIRI if no record exists in catalog
+     */
+    IRI getDatasetIRI(Resource ontologyIRI, OntologyManager ontologyManager);
 }

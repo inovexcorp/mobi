@@ -128,7 +128,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         circularHeadCommitIRI = vf.createIRI("urn:circularHeadCommit");
         catalogIRI = vf.createIRI("urn:catalog");
         recordIRI = vf.createIRI("urn:recordIRI");
-        ontologyIRI = vf.createIRI("urn:recordIRI");
+        ontologyIRI = vf.createIRI("urn:ontologyIRI");
         circular1IRI = vf.createIRI("https://mobi.com/ontologies/4/2019/OntologyCircular1");
         circular2IRI = vf.createIRI("https://mobi.com/ontologies/4/2019/OntologyCircular2");
 
@@ -154,7 +154,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         when(catalogManager.getMasterBranch(eq(catalogIRI), eq(recordIRI))).thenReturn(masterBranch);
         when(catalogManager.getMasterBranch(eq(catalogIRI), eq(circular2IRI))).thenReturn(circularMasterBranch);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
-        when(ontologyManager.getOntologyRecordResource(eq(recordIRI))).thenReturn(Optional.of(recordIRI));
+        when(ontologyManager.getOntologyRecordResource(eq(ontologyIRI))).thenReturn(Optional.of(recordIRI));
         when(ontologyManager.getOntologyRecordResource(eq(circular2IRI))).thenReturn(Optional.of(circular2IRI));
         when(ontologyManager.getOntologyRecordResource(eq(vf.createIRI("urn:localOntology")))).thenReturn(Optional.of(recordIRI));
 
@@ -322,17 +322,30 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Test
     public void loadOntologyWithoutKeyIntoCache() {
-        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyIRI, null, localModel, repo, ontologyManager);
-        try (DatasetConnection conn = datasetManager.getConnection(ontologyIRI, repo.getConfig().id(), false)) {
+        IRI resource = vf.createIRI("urn:otherOnt");
+        Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(resource, null, localModel, repo, ontologyManager);
+        try (DatasetConnection conn = datasetManager.getConnection(resource, repo.getConfig().id(), false)) {
             List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
             assertEquals(2, namedGraphs.size());
-            assertTrue(namedGraphs.contains(vf.createIRI(ontologyIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX)));
+            assertTrue(namedGraphs.contains(vf.createIRI(resource.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX)));
             assertTrue(namedGraphs.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core" + SYSTEM_DEFAULT_NG_SUFFIX)));
         }
         Set<Resource> closure = map.get("closure");
         assertEquals(2, closure.size());
-        assertTrue(closure.contains(ontologyIRI));
+        assertTrue(closure.contains(resource));
         assertTrue(closure.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core")));
         assertEquals(0, map.get("unresolved").size());
+    }
+
+    @Test
+    public void getDatasetIRITest() {
+        IRI iri = resolver.getDatasetIRI(circular2IRI, ontologyManager);
+        assertEquals(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular2IRI.stringValue() + "&" + circularHeadCommitIRI.stringValue())), iri);
+    }
+
+    @Test
+    public void getDatasetIRINoRecordTest() {
+        IRI iri = resolver.getDatasetIRI(circular1IRI, ontologyManager);
+        assertEquals(circular1IRI, iri);
     }
 }

@@ -210,7 +210,7 @@ public class SimpleDatasetManager implements DatasetManager {
         IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
 
         try (RepositoryConnection conn = dsRepo.getConnection()) {
-            if (conn.getStatements(datasetIRI, null, null).hasNext()) {
+            if (conn.getStatements(null, null, null, datasetIRI).hasNext()) {
                 throw new IllegalArgumentException("The dataset already exists in the specified repository.");
             }
         }
