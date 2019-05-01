@@ -24,11 +24,18 @@ package com.mobi.web.authentication.context;
  */
 
 
+import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
+import com.mobi.jaas.api.config.MobiConfiguration;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.utils.TokenUtils;
+import com.mobi.web.authentication.utils.UserCredentials;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.codec.binary.Base64;
-import com.mobi.jaas.api.utils.TokenUtils;
-import com.mobi.web.authentication.AuthHttpContext;
-import com.mobi.web.authentication.utils.UserCredentials;
+import org.ops4j.pax.web.extender.whiteboard.ExtenderConstants;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.http.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +44,32 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+@Component(
+        provide = { UserLoginTokenContext.class, HttpContext.class },
+        properties = {
+                ExtenderConstants.PROPERTY_HTTP_CONTEXT_ID + "=" + UserLoginTokenContext.CONTEXT_ID
+        }
+)
 public class UserLoginTokenContext extends AuthHttpContext {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
+    public static final String CONTEXT_ID = "userLoginCtxId";
+
+    @Activate
+    void setup(BundleContext context) {
+        log.trace("Starting UserLoginTokenContext");
+        this.setBundle(context.getBundle());
+    }
+
+    @Reference
+    public void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    @Reference
+    public void setConfiguration(MobiConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
     @Override
     protected boolean handleAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {

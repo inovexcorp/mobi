@@ -1,4 +1,4 @@
-package com.mobi.web.authentication;
+package com.mobi.web.authentication.context;
 
 /*-
  * #%L
@@ -42,7 +42,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -63,14 +62,6 @@ public abstract class AuthHttpContext implements HttpContext {
     protected EngineManager engineManager;
 
     private final static String REQUIRED_ROLE = "user";
-
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    public void setConfiguration(MobiConfiguration configuration) {
-        this.configuration = configuration;
-    }
 
     /**
      * The bundle that registered the service.
