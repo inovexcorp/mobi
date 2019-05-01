@@ -34,7 +34,6 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -42,6 +41,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 
 import java.io.IOException;
@@ -73,6 +73,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     private static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
     private static final String TIMESTAMP_IRI_STRING = "http://mobi.com/ontologies/graph#lastAccessed";
+    private static final String UNRESOLVED_IRI_STRING = "http://mobi.com/ontologies/graph#unresolved";
 
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
@@ -106,41 +107,39 @@ public class ImportsResolverImpl implements ImportsResolver {
         Set<Resource> processedImports = new HashSet<>();
         List<Resource> importsToProcess = new ArrayList<>();
         importsToProcess.add(ontologyId);
-        Resource datasetKey = key == null ? ontologyId : createDatasetIRIFromKey(key);
+        Resource datasetKey = key == null ? getDatasetIRI(ontologyId, ontologyManager) : createDatasetIRIFromKey(key);
 
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
             for (int i = 0; i < importsToProcess.size(); i++) {
                 Resource ontologyIRI = importsToProcess.get(i);
-                if (cacheConn.containsContext(ontologyIRI)) {
-                    updateTimestamp(cacheConn, ontologyIRI);
-                    continue;
-                }
 
                 Model model;
                 if (i == 0) {
                     model = ontModel;
-                    if (!cacheConn.getStatements(datasetKey, null, null).hasNext()) {
+                    if (!cacheConn.getStatements(null, null, null, datasetKey).hasNext()) {
                         datasetManager.createDataset(datasetKey.stringValue(), cacheRepo.getConfig().id());
                     }
                     addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
                 } else {
-                    Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
-                    if (recordIRI.isPresent()) {
-                        Optional<Resource> headCommit = catalogManager.getMasterBranch(
-                                catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
-                        model = catalogManager.getCompiledResource(headCommit.get());
-                        String headKey = recordIRI.get().stringValue() + "&" + headCommit.get().stringValue();
-                        addOntologyToRepo(cacheRepo, model, datasetKey, createDatasetIRIFromKey(headKey), false);
-                    } else {
+                    IRI iri = getDatasetIRI(ontologyIRI, ontologyManager);
+
+                    if (iri.stringValue().equals(ontologyIRI.stringValue())) {
                         Optional<Model> modelOpt = retrieveOntologyFromWeb(ontologyIRI);
                         if (modelOpt.isPresent()) {
                             model = modelOpt.get();
-                            addOntologyToRepo(cacheRepo, model, datasetKey, ontologyIRI, false);
+                            addOntologyToRepo(cacheRepo, model, datasetKey, iri, false);
                         } else {
                             unresolvedImports.add(ontologyIRI);
                             processedImports.add(ontologyIRI);
                             continue;
                         }
+                    } else {
+                        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+                        Optional<Resource> headCommit = catalogManager.getMasterBranch(
+                                catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
+                        model = catalogManager.getCompiledResource(headCommit.get());
+                        String headKey = recordIRI.get().stringValue() + "&" + headCommit.get().stringValue();
+                        addOntologyToRepo(cacheRepo, model, datasetKey, createDatasetIRIFromKey(headKey), false);
                     }
                 }
 
@@ -153,11 +152,15 @@ public class ImportsResolverImpl implements ImportsResolver {
 
                 processedImports.add(ontologyIRI);
                 imports.forEach(imported -> {
-                    if (!processedImports.contains(imported)) {
+                    if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
                         importsToProcess.add(imported);
                     }
                 });
             }
+            processedImports.forEach(imported
+                    -> cacheConn.add(datasetKey, vf.createIRI(OWL.IMPORTS.stringValue()), imported, datasetKey));
+            unresolvedImports.forEach(imported
+                    -> cacheConn.add(datasetKey, vf.createIRI(UNRESOLVED_IRI_STRING), imported, datasetKey));
         }
 
         Map<String, Set<Resource>> imports = new HashMap<>();
@@ -174,15 +177,23 @@ public class ImportsResolverImpl implements ImportsResolver {
             urlStr = urlStr.substring(0, urlStr.lastIndexOf("/"));
         }
         try {
-            for (String format : formats) {
-                URL url = new URL(urlStr + format);
-                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                httpURLConnection.setRequestMethod("HEAD");
-                httpURLConnection.setRequestProperty("User-Agent","Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; "
-                        + "rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)");
-                if (httpURLConnection.getResponseCode() == 200) {
-                    model = Models.createModel(new URL(urlStr + format).openStream(), transformer);
-                    break;
+            if (StringUtils.endsWithAny(urlStr, formats.stream().toArray(String[]::new))) {
+                model = Models.createModel(new URL(urlStr).openStream(), transformer);
+            } else {
+                for (String format : formats) {
+                    URL url = new URL(urlStr + format);
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("HEAD");
+                    httpURLConnection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; "
+                            + "rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)");
+                    if (httpURLConnection.getResponseCode() == 200) {
+                        try {
+                            model = Models.createModel(new URL(urlStr + format).openStream(), transformer);
+                            break;
+                        } catch (IOException e) {
+                            continue;
+                        }
+                    }
                 }
             }
         } catch (IOException | IllegalArgumentException e) {
@@ -206,25 +217,36 @@ public class ImportsResolverImpl implements ImportsResolver {
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
+    @Override
+    public IRI getDatasetIRI(Resource ontologyIRI, OntologyManager ontologyManager) {
+        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+        if (recordIRI.isPresent()) {
+            Optional<Resource> headCommit = catalogManager.getMasterBranch(
+                    catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
+            if (headCommit.isPresent()) {
+                String headKey = recordIRI.get().stringValue() + "&" + headCommit.get().stringValue();
+                return createDatasetIRIFromKey(headKey);
+            }
+        }
+        return (IRI) ontologyIRI;
+    }
+
     private void addOntologyToRepo(Repository repository, Model ontologyModel, Resource datasetIRI,
                                    Resource ontologyIRI, boolean addTimestamp) {
         try (DatasetConnection dsConn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(),
                 false)) {
             IRI ontNamedGraphIRI = vf.createIRI(ontologyIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX);
             dsConn.addNamedGraph(ontNamedGraphIRI);
-            dsConn.add(ontologyModel, ontNamedGraphIRI);
+
+            if (!dsConn.contains(null, null, null, ontNamedGraphIRI)) {
+                dsConn.add(ontologyModel, ontNamedGraphIRI);
+            }
             if (addTimestamp) {
-                dsConn.add(ontNamedGraphIRI, vf.createIRI(TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()),
-                        ontNamedGraphIRI);
+                dsConn.add(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()),
+                        datasetIRI);
+                dsConn.removeGraph(datasetIRI);
             }
         }
-    }
-
-    private void updateTimestamp(RepositoryConnection conn, Resource namedGraphIRI) {
-        IRI pred = vf.createIRI(TIMESTAMP_IRI_STRING);
-        Literal timestamp = vf.createLiteral(OffsetDateTime.now());
-        conn.remove(namedGraphIRI, pred, null, namedGraphIRI);
-        conn.add(namedGraphIRI, pred, timestamp, namedGraphIRI);
     }
 
     private IRI createDatasetIRIFromKey(String key) {
