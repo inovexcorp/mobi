@@ -47,6 +47,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 
 public class TokenUtils {
     private static final Logger LOG = LoggerFactory.getLogger(TokenUtils.class.getName());
@@ -161,8 +162,16 @@ public class TokenUtils {
         return generateToken(res, "anon", ANON_SCOPE, KEY, null);
     }
 
+    public static SignedJWT generateUnauthToken() throws IOException, JOSEException {
+        return generateToken("anon", ANON_SCOPE, KEY, null);
+    }
+
     public static SignedJWT generateauthToken(HttpServletResponse res, String username) throws IOException {
         return generateToken(res, username, AUTH_SCOPE, KEY, null);
+    }
+
+    public static SignedJWT generateauthToken(String username) throws IOException, JOSEException {
+        return generateToken(username, AUTH_SCOPE, KEY, null);
     }
 
     public static Cookie createSecureTokenCookie(SignedJWT signedJWT) {
@@ -171,6 +180,10 @@ public class TokenUtils {
         cookie.setPath("/");
 
         return cookie;
+    }
+
+    public static NewCookie createSecureTokenNewCookie(SignedJWT signedJWT) {
+        return new NewCookie(TOKEN_NAME, signedJWT.serialize(), "/", "", "", -1, true);
     }
 
     public static void writePayload(HttpServletResponse response, SignedJWT token) throws IOException {
@@ -192,6 +205,11 @@ public class TokenUtils {
         }
 
         return authToken;
+    }
+
+    public static SignedJWT generateToken(String username, String scope, byte[] key,
+                                          @Nullable Map<String, Object> claims) throws IOException, JOSEException {
+        return createJWT(username, scope, key, claims);
     }
 
     /**

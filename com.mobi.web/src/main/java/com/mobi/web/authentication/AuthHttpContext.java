@@ -1,4 +1,4 @@
-package com.mobi.web.authentication.context;
+package com.mobi.web.authentication;
 
 /*-
  * #%L

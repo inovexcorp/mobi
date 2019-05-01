@@ -1,4 +1,4 @@
-package com.mobi.web.authentication.context;
+package com.mobi.web.authentication;
 
 /*-
  * #%L
@@ -26,9 +26,6 @@ package com.mobi.web.authentication.context;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
-import com.mobi.jaas.api.config.MobiConfiguration;
-import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.nimbusds.jwt.SignedJWT;
 import org.ops4j.pax.web.extender.whiteboard.ExtenderConstants;
@@ -38,44 +35,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @Component(
-        provide = { UserLogoutTokenContext.class, HttpContext.class },
+        provide = { UITokenContext.class, HttpContext.class },
         properties = {
-                ExtenderConstants.PROPERTY_HTTP_CONTEXT_ID + "=" + UserLogoutTokenContext.CONTEXT_ID
+                ExtenderConstants.PROPERTY_HTTP_CONTEXT_ID + "=" + UITokenContext.CONTEXT_ID
         }
 )
-public class UserLogoutTokenContext extends AuthHttpContext {
+public class UITokenContext extends AuthHttpContext {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
-    public static final String CONTEXT_ID = "userLogoutCtxId";
+    static final String CONTEXT_ID = "uiCtxId";
 
     @Activate
     void setup(BundleContext context) {
-        log.trace("Starting UserLogoutTokenContext");
         this.setBundle(context.getBundle());
-    }
-
-    @Reference
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    @Reference
-    public void setConfiguration(MobiConfiguration configuration) {
-        this.configuration = configuration;
     }
 
     @Override
     protected boolean handleAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        log.debug("Requested logout. Generating unauthenticated token.");
-        SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
-        response.addCookie(TokenUtils.createSecureTokenCookie(unauthToken));
+        String token = TokenUtils.getTokenString(request);
+        Optional<SignedJWT> tokenOptional = TokenUtils.verifyToken(token, response);
 
-        TokenUtils.writePayload(response, unauthToken);
-
+        if (tokenOptional.isPresent()) {
+            log.debug("Token found and verified.");
+        } else {
+            log.debug("Token missing or unverified. Generating unauthenticated token.");
+            SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
+            response.addCookie(TokenUtils.createSecureTokenCookie(unauthToken));
+        }
         return true;
     }
 

@@ -1,4 +1,4 @@
-package com.mobi.web.authentication.servlet;
+package com.mobi.web.authentication;
 
 /*-
  * #%L
@@ -26,7 +26,6 @@ package com.mobi.web.authentication.servlet;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
-import com.mobi.web.authentication.context.UITokenContext;
 import org.ops4j.pax.web.service.whiteboard.ResourceMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
