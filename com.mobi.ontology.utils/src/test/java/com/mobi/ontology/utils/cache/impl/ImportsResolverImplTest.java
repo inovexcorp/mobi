@@ -200,12 +200,6 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         assertTrue(owlModel.isPresent());
         assertTrue(owlModel.get().size() > 0);
 
-        // .jsonld
-        IRI jsonld = vf.createIRI("https://raw.githubusercontent.com/GeoscienceAustralia/geosciml.org/master/resource/static/ontology/timescale/thors/w3c");
-        Optional<Model> jsonldModel = resolver.retrieveOntologyFromWeb(jsonld);
-        assertTrue(jsonldModel.isPresent());
-        assertTrue(jsonldModel.get().size() > 0);
-
         // .trig
         IRI trig = vf.createIRI("https://www.w3.org/2013/TrigTests/IRI_subject");
         Optional<Model> trigModel = resolver.retrieveOntologyFromWeb(trig);
@@ -230,6 +224,22 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         // .rdf
         IRI rdf = vf.createIRI("http://www.w3.org/2004/02/skos/core/");
         Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(rdf);
+        assertTrue(rdfModel.isPresent());
+        assertTrue(rdfModel.get().size() > 0);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebWithExtensionTest() {
+        IRI rdf = vf.createIRI("http://www.w3.org/2004/02/skos/core.rdf");
+        Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(rdf);
+        assertTrue(rdfModel.isPresent());
+        assertTrue(rdfModel.get().size() > 0);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRedirectTest() {
+        IRI iri = vf.createIRI("http://purl.obolibrary.org/obo/bfo.owl");
+        Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(iri);
         assertTrue(rdfModel.isPresent());
         assertTrue(rdfModel.get().size() > 0);
     }

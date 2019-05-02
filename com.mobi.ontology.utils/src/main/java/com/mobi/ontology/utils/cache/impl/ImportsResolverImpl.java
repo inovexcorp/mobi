@@ -178,21 +178,20 @@ public class ImportsResolverImpl implements ImportsResolver {
         }
         try {
             if (StringUtils.endsWithAny(urlStr, formats.stream().toArray(String[]::new))) {
-                model = Models.createModel(new URL(urlStr).openStream(), transformer);
+                Optional<URL> urlOpt = getURL(urlStr);
+                if (urlOpt.isPresent()) {
+                    model = Models.createModel(urlOpt.get().openStream(), transformer);
+                }
             } else {
                 for (String format : formats) {
-                    URL url = new URL(urlStr + format);
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    httpURLConnection.setRequestMethod("HEAD");
-                    httpURLConnection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; "
-                            + "rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)");
-                    if (httpURLConnection.getResponseCode() == 200) {
-                        try {
-                            model = Models.createModel(new URL(urlStr + format).openStream(), transformer);
+                    try {
+                        Optional<URL> urlOpt = getURL(urlStr + format);
+                        if (urlOpt.isPresent()) {
+                            model = Models.createModel(urlOpt.get().openStream(), transformer);
                             break;
-                        } catch (IOException e) {
-                            continue;
                         }
+                    } catch (IOException e) {
+                        continue;
                     }
                 }
             }
@@ -200,6 +199,25 @@ public class ImportsResolverImpl implements ImportsResolver {
             model = mf.createModel();
         }
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
+    }
+
+    private Optional<URL> getURL(String urlStr) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("HEAD");
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; "
+                + "rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)");
+        conn.setInstanceFollowRedirects(true);
+        conn.setConnectTimeout(3000);
+
+        int status = conn.getResponseCode();
+        if (status == 200) {
+            return Optional.of(url);
+        } else if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM
+                || status == HttpURLConnection.HTTP_SEE_OTHER) {
+            return Optional.of(new URL(conn.getHeaderField("Location")));
+        }
+        return Optional.empty();
     }
 
     @Override
