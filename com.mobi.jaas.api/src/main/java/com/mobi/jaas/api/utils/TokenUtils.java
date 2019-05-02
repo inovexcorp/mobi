@@ -183,7 +183,7 @@ public class TokenUtils {
     }
 
     public static NewCookie createSecureTokenNewCookie(SignedJWT signedJWT) {
-        return new NewCookie(TOKEN_NAME, signedJWT.serialize(), "/", "", "", -1, true);
+        return new NewCookie(TOKEN_NAME, signedJWT.serialize(), "/", null, null, -1, true);
     }
 
     public static void writePayload(HttpServletResponse response, SignedJWT token) throws IOException {

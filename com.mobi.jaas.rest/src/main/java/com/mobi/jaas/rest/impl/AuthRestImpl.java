@@ -46,6 +46,7 @@ import java.security.Principal;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -54,7 +55,7 @@ import javax.ws.rs.core.Response;
 @Component(immediate = true)
 public class AuthRestImpl implements AuthRest {
 
-    private static final String REQUIRED_ROLE = "user";
+    static final String REQUIRED_ROLE = "user";
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -76,16 +77,17 @@ public class AuthRestImpl implements AuthRest {
         String token = TokenUtils.getTokenString(context);
         try {
             Optional<SignedJWT> tokenOptional = TokenUtils.verifyToken(token);
-            SignedJWT signedToken;
             if (tokenOptional.isPresent()) {
                 log.debug("Token found and verified.");
-                signedToken = tokenOptional.get();
+                log.debug("Writing payload to response.");
+                SignedJWT signedToken = tokenOptional.get();
+                return Response.ok(signedToken.getPayload().toString()).build();
             } else {
                 log.debug("Token missing or unverified. Generating unauthenticated token.");
-                signedToken = TokenUtils.generateUnauthToken();
+                SignedJWT signedToken = TokenUtils.generateUnauthToken();
+                log.debug("Writing payload to response.");
+                return createResponse(signedToken);
             }
-            log.debug("Writing payload to response.");
-            return createResponse(signedToken);
         } catch (ParseException ex) {
             throw handleParseError(ex);
         } catch (JOSEException ex) {
@@ -145,8 +147,7 @@ public class AuthRestImpl implements AuthRest {
     }
 
     private boolean authenticated(String username, String password) {
-        Optional<Subject> subjectOptional = doAuthenticate(username, password);
-        return subjectOptional.isPresent();
+        return doAuthenticate(username, password).isPresent();
     }
 
     private Optional<UserCredentials> processBasicAuth(ContainerRequestContext context) {
@@ -157,11 +158,16 @@ public class AuthRestImpl implements AuthRest {
             return Optional.empty();
         }
 
-        String usernameAndPassword = new String(Base64.decodeBase64(authzHeader.substring(6).getBytes()));
+        String encodedUsernameAndPassword = authzHeader.replaceAll("Basic ", "");
+        String usernameAndPassword = new String(Base64.decodeBase64(encodedUsernameAndPassword.getBytes()));
 
-        int userNameIndex = usernameAndPassword.indexOf(":");
-        String username = usernameAndPassword.substring(0, userNameIndex);
-        String password = usernameAndPassword.substring(userNameIndex + 1);
+        StringTokenizer tokenizer = new StringTokenizer(usernameAndPassword, ":");
+        if (tokenizer.countTokens() < 2) {
+            log.debug("Missing authorization information.");
+            return Optional.empty();
+        }
+        String username = tokenizer.nextToken();
+        String password = tokenizer.nextToken();
 
         return Optional.of(new UserCredentials(username, password));
     }
