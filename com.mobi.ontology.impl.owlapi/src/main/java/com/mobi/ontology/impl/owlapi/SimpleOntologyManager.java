@@ -70,7 +70,10 @@ import javax.cache.Cache;
 @Component(
         configurationPolicy = ConfigurationPolicy.optional,
         designateFactory = OntologyManagerConfig.class,
-        name = SimpleOntologyManager.COMPONENT_NAME
+        name = SimpleOntologyManager.COMPONENT_NAME,
+        properties = {
+                "service.ranking:Integer=-2147483647"
+        }
 )
 public class SimpleOntologyManager implements OntologyManager {
 

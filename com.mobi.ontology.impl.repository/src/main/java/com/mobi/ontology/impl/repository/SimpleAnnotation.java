@@ -35,9 +35,6 @@ public class SimpleAnnotation implements Annotation {
     private AnnotationProperty property;
     private Value value;
 
-    /**
-     * .
-     */
     public SimpleAnnotation(@Nonnull AnnotationProperty property, Value value) {
         this.property = property;
         this.value = value;

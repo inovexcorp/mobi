@@ -33,7 +33,6 @@ public class SimpleClass implements OClass {
 
     private IRI iri;
 
-    
     public SimpleClass(@Nonnull IRI iri) {
         this.iri = iri;
     }

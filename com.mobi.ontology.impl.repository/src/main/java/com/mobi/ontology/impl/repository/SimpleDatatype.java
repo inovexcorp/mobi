@@ -25,6 +25,8 @@ package com.mobi.ontology.impl.repository;
 
 import com.mobi.ontology.core.api.Datatype;
 import com.mobi.rdf.api.IRI;
+import com.mobi.vocabularies.xsd.XSD;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 
 import javax.annotation.Nonnull;
 
@@ -32,50 +34,45 @@ import javax.annotation.Nonnull;
 public class SimpleDatatype implements Datatype {
 
     private IRI iri;
-    private boolean builtin;
 
-
-    public SimpleDatatype(@Nonnull IRI iri) {//TODO:
+    public SimpleDatatype(@Nonnull IRI iri) {
         this.iri = iri;
-//        org.semanticweb.owlapi.model.IRI owlIri = SimpleOntologyValues.owlapiIRI(iri);
-//        owlDatatype = new OWLDatatypeImpl(owlIri);
-//        builtin = owlDatatype.isBuiltIn();
     }
 
 
     @Override
     public boolean isString() {
-        return false;
+        return iri.stringValue().equals(XSD.STRING);
     }
 
 
     @Override
     public boolean isInteger() {
-        return false;
+        return iri.stringValue().equals(XSD.INTEGER);
     }
 
 
     @Override
     public boolean isFloat()   {
-        return false;
+        return iri.stringValue().equals(XSD.FLOAT);
     }
 
 
     @Override
     public boolean isDouble() {
-        return false;
+        return iri.stringValue().equals(XSD.DOUBLE);
     }
 
 
     @Override
     public boolean isBoolean() {
-        return false;
+        return iri.stringValue().equals(XSD.BOOLEAN);
     }
 
 
     @Override
     public boolean isRDFPlainLiteral() {
-        return false;
+        return iri.stringValue().equals(RDFS.LITERAL.stringValue());
     }
 
 
@@ -83,45 +80,6 @@ public class SimpleDatatype implements Datatype {
     public IRI getIRI() {
         return iri;
     }
-
-//    public static Set<IRI> getDatatypeIRIs() {
-//        Set<IRI> iris = new HashSet<>();
-//        Set<org.semanticweb.owlapi.model.IRI> owlapiIris = OWL2Datatype.getDatatypeIRIs();
-//        for (org.semanticweb.owlapi.model.IRI i : owlapiIris) {
-//            iris.add(SimpleOntologyValues.mobiIRI(i));
-//        }
-//
-//        return iris;
-//    }
-//
-//
-//    public String getShortForm() {
-//        if (builtin) {
-//            return owlDatatype.getBuiltInDatatype().getShortForm();
-//
-//        } else {
-//            throw new MobiOntologyException(iri + " is not a built in datatype");
-//        }
-//    }
-//
-//
-//    public String getPatternString() {
-//        if (builtin) {
-//            return owlDatatype.getBuiltInDatatype().getPatternString();
-//        } else {
-//            throw new MobiOntologyException(iri + " is not a built in datatype");
-//        }
-//    }
-//
-//
-//    public String getPrefixedName() {
-//        if (builtin) {
-//            return owlDatatype.getBuiltInDatatype().getPrefixedName();
-//        } else {
-//            throw new MobiOntologyException(iri + " is not a built in datatype");
-//        }
-//    }
-
 
     @Override
     public boolean equals(Object obj) {

@@ -71,7 +71,7 @@ import javax.cache.Cache;
         designateFactory = OntologyManagerConfig.class,
         name = SimpleOntologyManager.COMPONENT_NAME,
         properties = {
-                "service.ranking:Integer=10"
+                "service.ranking:Integer=2147483647"
         }
 )
 public class SimpleOntologyManager implements OntologyManager {

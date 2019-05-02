@@ -31,7 +31,7 @@ import javax.annotation.Nonnull;
 
 public class SimpleIndividual implements Individual {
 
-    private static final long serialVersionUID = -7290404615930440920L;
+    private static final long serialVersionUID = 1405337040974427704L;
 
     private IRI iri;
 

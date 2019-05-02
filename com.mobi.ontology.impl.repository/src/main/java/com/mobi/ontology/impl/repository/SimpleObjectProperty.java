@@ -47,7 +47,7 @@ public class SimpleObjectProperty implements ObjectProperty {
             return true;
         }
         
-        if(obj instanceof ObjectProperty) {
+        if (obj instanceof ObjectProperty) {
             IRI otherIri = ((ObjectProperty) obj).getIRI();
             return otherIri.equals(iri);
         }

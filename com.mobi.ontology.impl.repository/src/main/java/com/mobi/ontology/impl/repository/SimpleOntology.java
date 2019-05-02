@@ -177,11 +177,13 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    public SimpleOntology(Model model, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+    public SimpleOntology(Model model, Repository cacheRepo, OntologyManager ontologyManager,
+                          DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
+                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         this.mf = mf;
         this.vf = vf;
-        this.datasetIRI = OntologyModels.findFirstOntologyIRI(model, vf).orElseThrow(
-                () -> new IllegalStateException("")); // TODO: Should it require an ontology IRI?
+        this.datasetIRI = OntologyModels.findFirstOntologyIRI(model, vf)
+                .orElseThrow(() -> new IllegalStateException("Ontology must have an identifier."));
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
         this.datasetManager = datasetManager;
@@ -197,9 +199,9 @@ public class SimpleOntology implements Ontology {
     }
 
     // If exists in catalog but ontology and imports dont exist in cache yet
-    public SimpleOntology(String recordCommitKey, Model model, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
-        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf).orElseThrow(
-                () -> new IllegalStateException("")); // TODO: Should it require an ontology IRI?
+    public SimpleOntology(String recordCommitKey, Model model, Repository cacheRepo, OntologyManager ontologyManager,
+                          DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
+                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
@@ -211,6 +213,8 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
 
         this.ontologyId = ontologyManager.createOntologyId(model);
+        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf)
+                .orElseThrow(() -> new IllegalStateException("Ontology must have an identifier."));
         Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyIRI, recordCommitKey, model,
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
@@ -218,7 +222,9 @@ public class SimpleOntology implements Ontology {
     }
 
     // If it already exists in cache
-    public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+    public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager,
+                          DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
+                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
@@ -246,9 +252,9 @@ public class SimpleOntology implements Ontology {
         }
     }
 
-    private SimpleOntology(IRI datasetIRI, Model model, Repository cacheRepo, OntologyManager ontologyManager, DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
-        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf).orElseThrow(
-                () -> new IllegalStateException("")); // TODO: Should it require an ontology IRI?
+    private SimpleOntology(IRI datasetIRI, Model model, Repository cacheRepo, OntologyManager ontologyManager,
+                           DatasetManager datasetManager, ImportsResolver importsResolver,
+                           SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = datasetIRI;
@@ -260,6 +266,8 @@ public class SimpleOntology implements Ontology {
         this.bNodeService = bNodeService;
 
         this.ontologyId = ontologyManager.createOntologyId(model);
+        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf)
+                .orElseThrow(() -> new IllegalStateException("Ontology must have an identifier."));
         Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyIRI, null, model,
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
@@ -568,14 +576,14 @@ public class SimpleOntology implements Ontology {
     public Set<IRI> getSubClassesFor(IRI iri) {
         TupleQueryResult result = runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
                 "getSubClassesFor(ontology, iri)", true); //TODO:
-        return new HashSet<>();
+        return getIRISet(result);
     }
 
     @Override
     public Set<IRI> getSubPropertiesFor(IRI iri) {
         TupleQueryResult result = runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
                 "getSubPropertiesFor(ontology, iri)", true); //TODO:
-        return new HashSet<>();
+        return getIRISet(result);
     }
 
     @Override
@@ -656,34 +664,27 @@ public class SimpleOntology implements Ontology {
     public Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory) {
         return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)", includeImports,
                 modelFactory);
-
     }
 
     @Override
     public boolean equals(Object obj) {
-//        if (this == obj) {
-//            return true;
-//        }
-//
-//        if (obj instanceof SimpleOntology) {
-//            SimpleOntology simpleOntology = (SimpleOntology) obj;
-//            OntologyId ontologyId = simpleOntology.getOntologyId();
-//            if (this.ontologyId.equals(ontologyId)) {
-//                org.eclipse.rdf4j.model.Model thisSesameModel = this.asSesameModel();
-//                org.eclipse.rdf4j.model.Model otherSesameModel = simpleOntology.asSesameModel();
-//                return Models.isomorphic(thisSesameModel, otherSesameModel);
-//            }
-//        }
-//
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj instanceof SimpleOntology) {
+            SimpleOntology simpleOntology = (SimpleOntology) obj;
+            OntologyId ontologyId = simpleOntology.getOntologyId();
+            if (this.ontologyId.equals(ontologyId)) {
+                return this.datasetIRI.equals(simpleOntology.datasetIRI);
+            }
+        }
         return false;
     }
 
     @Override
     public int hashCode() {
-//        // TODO: This looks like an expensive operation
-//        org.eclipse.rdf4j.model.Model sesameModel = this.asSesameModel();
-//        return this.ontologyId.hashCode() + sesameModel.hashCode();
-        return 1;
+        return this.ontologyId.hashCode() + datasetIRI.hashCode();
     }
 
     /**
@@ -786,7 +787,7 @@ public class SimpleOntology implements Ontology {
      * @return a Hierarchy containing the hierarchy of the entities provided.
      */
     private Hierarchy getHierarchy(TupleQueryResult tupleQueryResult) {
-        Hierarchy hierarchy = new Hierarchy(vf, mf); // TODO: Factory shouldn't be added with constructor?
+        Hierarchy hierarchy = new Hierarchy(vf, mf);
         tupleQueryResult.forEach(queryResult -> {
             Value key = Iterables.get(queryResult, 0).getValue();
             Binding value = Iterables.get(queryResult, 1, null);
@@ -798,6 +799,19 @@ public class SimpleOntology implements Ontology {
             }
         });
         return hierarchy;
+    }
+
+    /**
+     * Uses the provided TupleQueryResult to construct a set of the entities provided.
+     *
+     * @param tupleQueryResult the TupleQueryResult that contains //TODO
+     * @return a Hierarchy containing the hierarchy of the entities provided.
+     */
+    private Set<IRI> getIRISet(TupleQueryResult tupleQueryResult) {
+        Set<IRI> iris = new HashSet<>();
+        tupleQueryResult.forEach(r -> r.getBinding("s")
+                .ifPresent(b -> iris.add(vf.createIRI(b.getValue().stringValue()))));
+        return iris;
     }
 
     private IRI createDatasetIRIFromKey(String key) {

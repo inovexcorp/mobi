@@ -33,7 +33,6 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -343,12 +342,6 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private Ontology getValueFromRepo(DatasetConnection dsConn, String key) {
         updateDatasetTimestamp(dsConn);
-        Resource sdNamedGraphIRI = dsConn.getSystemDefaultNamedGraph();
-        Model ontologyModel = RepositoryResults.asModelNoContext(
-                dsConn.getStatements(null, null, null, sdNamedGraphIRI), mf);
-        if (ontologyModel.size() == 0) {
-            return null;
-        }
         String[] ids = key.split("&");
         return ontologyManager.retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1])).get();
     }
