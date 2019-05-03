@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="merge-block h-100 d-flex flex-column">
-    <div class="row justify-content-center">
+    <div class="row justify-content-center m-0">
         <form name="dvm.form" novalidate autocomplete="off">
             <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
             <branch-select bind-model="dvm.os.listItem.merge.target" required="true" class="select-branch" is-disabled-when="dvm.os.listItem.userBranch" change-event="dvm.changeTarget(value)" branches="dvm.branches"></branch-select>

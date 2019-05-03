@@ -209,9 +209,7 @@ public class OntologyRestImpl implements OntologyRest {
         RecordOperationConfig config = new OperationConfig();
         Model jsonModel = getModelFromJson(ontologyJson);
         config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-        Response response = createOntologyRecord(context, title, description, markdown, keywordSet, config);
-
-        return response;
+        return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
     @Override

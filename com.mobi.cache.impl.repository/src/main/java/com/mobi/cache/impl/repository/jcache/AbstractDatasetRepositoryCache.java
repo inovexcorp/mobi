@@ -33,11 +33,15 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import javax.cache.Cache;
 
 public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V> {
+
+    private final Logger LOG = LoggerFactory.getLogger(AbstractDatasetRepositoryCache.class);
 
     protected static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
     protected static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
@@ -50,11 +54,14 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
     protected DatasetManager datasetManager;
 
     protected DatasetConnection getDatasetConnection(Resource datasetIRI, boolean createNotExists) {
+        LOG.debug("Retrieving cache dataset connection for " + datasetIRI.stringValue());
         try (RepositoryConnection conn = repository.getConnection()) {
             if (!conn.getStatements(datasetIRI, null, null).hasNext()) {
                 if (createNotExists) {
+                    LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
                     datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());
                 } else {
+                    LOG.error("The dataset " + datasetIRI + " does not exist in the specified repository.");
                     throw new IllegalArgumentException("The dataset " + datasetIRI
                             + " does not exist in the specified repository.");
                 }
@@ -75,6 +82,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
         Literal timestamp = vf.createLiteral(OffsetDateTime.now());
 
         Resource dataset = conn.getDataset();
+        LOG.debug("Updating cache dataset last accessed property for " + dataset);
         conn.remove(dataset, pred, null, dataset);
         conn.add(dataset, pred, timestamp, dataset);
         conn.removeGraph(dataset);
@@ -82,6 +90,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
 
     protected void requireNotClosed() {
         if (isClosed()) {
+            LOG.error("Cache is closed. Cannot perform operation");
             throw new IllegalStateException("Cache is closed. Cannot perform operation.");
         }
     }

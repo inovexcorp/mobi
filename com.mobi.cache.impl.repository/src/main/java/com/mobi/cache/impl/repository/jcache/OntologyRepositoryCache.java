@@ -41,6 +41,8 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -57,7 +59,8 @@ import javax.cache.processor.EntryProcessorResult;
 
 public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<String, Ontology> {
 
-    // TODO: Remove ontology manager & change Ontology usages to new Repository Ontology
+    private final Logger LOG = LoggerFactory.getLogger(OntologyRepositoryCache.class);
+
     private OntologyManager ontologyManager;
     private final String name;
     private final CacheManager cacheManager;
@@ -93,13 +96,22 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         this.datasetManager = datasetManager;
     }
 
+    /**
+     * Retrieve an ontology from cache using a key comprised of the RecordIRI and CommitIRI in the format of
+     * recordIRI&commitIRI.
+     *
+     * @param key The String of the combined RecordIRI and CommitIRI
+     * @return The Ontology in the cache associated with the key
+     */
     @Override
     public Ontology get(String key) {
+        LOG.debug("Retrieving ontology from cache for key " + key);
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             return getValueFromRepo(dsConn, key);
         } catch (IllegalArgumentException e) {
+            LOG.debug("Cache does not contain ontology for key " + key);
             return null;
         }
     }
@@ -131,6 +143,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     @Override
     public void put(String key, Ontology ontology) {
+        LOG.debug("Putting ontology in cache for key " + key);
         requireNotClosed();
         IRI datasetIRI = createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, true)) {
@@ -227,7 +240,8 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     @Override
     public Ontology getAndReplace(String key, Ontology ontology) {
-        throw new UnsupportedOperationException("Cannot remove ontology. It must exist in the cache when accessed.");
+        throw new UnsupportedOperationException("Cannot replace ontology. Retrieved ontology must exist in the cache"
+                + " when accessed.");
     }
 
     @Override
@@ -347,24 +361,26 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     }
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
+        LOG.debug("Adding ontology to cache dataset " + ontNamedGraphIRI.stringValue());
 //        Model ontologyModel = ontology.asModel(mf);
-//        dsConn.add(ontologyModel, ontNamedGraphIRI);
+//        dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
 //        Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
 //
 //        importedOntologies.forEach(importedOntology -> {
+//            Model importedModel = importedOntology.asModel(mf);
 //            IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
 //                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
 //                    + SYSTEM_DEFAULT_NG_SUFFIX);
 //            if (!dsConn.containsContext(ontSdNg)) {
-//                Model importedModel = importedOntology.asModel(mf);
-//                dsConn.add(importedModel, ontSdNg);
+//                dsConn.addDefault(importedModel, ontSdNg);
 //            }
-//            dsConn.addNamedGraph(ontSdNg);
+//            dsConn.addDefaultNamedGraph(ontSdNg);
 //        });
     }
 
     private boolean removeValueFromRepo(IRI datasetIRI) {
         try {
+            LOG.debug("Removing cache dataset " + datasetIRI.stringValue());
             datasetManager.safeDeleteDataset(datasetIRI, repository.getConfig().id(), false);
             return true;
         } catch (Exception e) {

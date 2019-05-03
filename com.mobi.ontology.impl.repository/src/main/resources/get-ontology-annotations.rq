@@ -3,7 +3,7 @@ prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?prop ?value
 WHERE {
-        ?prop a owl:AnnotationProperty .
+        ?s a owl:AnnotationProperty .
 
-        ?s ?prop ?value .
+        <%1$s> ?prop ?value .
 }

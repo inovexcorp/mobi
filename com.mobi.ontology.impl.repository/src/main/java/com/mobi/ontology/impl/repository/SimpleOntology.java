@@ -41,6 +41,7 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.cache.ImportsResolver;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
@@ -119,6 +120,10 @@ public class SimpleOntology implements Ontology {
     private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
     private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
+    private static final String GET_CLASS_DATA_PROPERTIES;
+    private static final String GET_CLASS_OBJECT_PROPERTIES;
+    private static final String GET_ALL_ANNOTATIONS;
+    private static final String GET_ONTOLOGY_ANNOTATIONS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -172,6 +177,22 @@ public class SimpleOntology implements Ontology {
                     SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
                     "UTF-8"
             );
+            GET_CLASS_DATA_PROPERTIES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-class-data-properties.rq"),
+                    "UTF-8"
+            );
+            GET_CLASS_OBJECT_PROPERTIES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-class-object-properties.rq"),
+                    "UTF-8"
+            );
+            GET_ALL_ANNOTATIONS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-all-annotations.rq"),
+                    "UTF-8"
+            );
+            GET_ONTOLOGY_ANNOTATIONS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-ontology-annotations.rq"),
+                    "UTF-8"
+            );
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -198,7 +219,7 @@ public class SimpleOntology implements Ontology {
         this.unresolvedImports = imports.get("unresolved");
     }
 
-    // If exists in catalog but ontology and imports dont exist in cache yet
+    // If exists in catalog but ontology and imports don't exist in cache yet
     public SimpleOntology(String recordCommitKey, Model model, Repository cacheRepo, OntologyManager ontologyManager,
                           DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
                           BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
@@ -277,50 +298,24 @@ public class SimpleOntology implements Ontology {
     @Override
     public Model asModel(ModelFactory factory) throws MobiOntologyException {
         try (DatasetConnection conn = getDatasetConnection()) {
-            Model ontologyModel = RepositoryResults.asModelNoContext(
+            return RepositoryResults.asModelNoContext(
                     conn.getStatements(null, null, null, conn.getSystemDefaultNamedGraph()), factory);
-            return ontologyModel;
         }
     }
 
     @Override
     public OutputStream asTurtle() throws MobiOntologyException {
-        OutputStream outputStream = new ByteArrayOutputStream();
-
-        try {
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, outputStream));
-            org.eclipse.rdf4j.model.Model sesameModel = transformer.sesameModel(asModel(mf));
-            Rio.write(sesameModel, rdfWriter);
-        } catch (RDFHandlerException e) {
-            throw new MobiOntologyException("Error while writing Ontology.");
-        }
-        return outputStream;
+        return getOntologyOutputStream(RDFFormat.TURTLE);
     }
 
     @Override
     public OutputStream asRdfXml() throws MobiOntologyException {
-        OutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.RDFXML, outputStream));
-            org.eclipse.rdf4j.model.Model sesameModel = transformer.sesameModel(asModel(mf));
-            Rio.write(sesameModel, rdfWriter);
-        } catch (RDFHandlerException e) {
-            throw new MobiOntologyException("Error while writing Ontology.");
-        }
-        return outputStream;
+        return getOntologyOutputStream(RDFFormat.RDFXML);
     }
 
     @Override
-    public OutputStream asOwlXml() throws MobiOntologyException {
-        OutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.RDFXML, outputStream)); //TODO FIGURE OUT OWLXML.....
-            org.eclipse.rdf4j.model.Model sesameModel = transformer.sesameModel(asModel(mf));
-            Rio.write(sesameModel, rdfWriter);
-        } catch (RDFHandlerException e) {
-            throw new MobiOntologyException("Error while writing Ontology.");
-        }
-        return outputStream;
+    public OutputStream asOwlXml() throws MobiOntologyException { // TODO:!!!!!! OWLAPIRDFFormat has OWLXML.....
+        return getOntologyOutputStream(RDFFormat.RDFXML);
     }
 
     @Override
@@ -335,6 +330,18 @@ public class SimpleOntology implements Ontology {
             Rio.write(sesameModel, outputStream, RDFFormat.JSONLD, config);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while parsing Ontology.");
+        }
+        return outputStream;
+    }
+
+    private OutputStream getOntologyOutputStream(RDFFormat format) {
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
+            org.eclipse.rdf4j.model.Model sesameModel = transformer.sesameModel(asModel(mf));
+            Rio.write(sesameModel, rdfWriter);
+        } catch (RDFHandlerException e) {
+            throw new MobiOntologyException("Error while writing Ontology.");
         }
         return outputStream;
     }
@@ -354,14 +361,16 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false)) {
             Resource sdNg = conn.getSystemDefaultNamedGraph();
             Set<Ontology> closure = new HashSet<>();
-            conn.getNamedGraphs().forEach(ng -> {
+            conn.getDefaultNamedGraphs().forEach(ng -> {
                 if (ng.stringValue().equals(sdNg.stringValue())) {
                     closure.add(this);
                 } else {
-                    IRI ontIRI = vf.createIRI(ng.stringValue().substring(0, ng.stringValue().lastIndexOf(SYSTEM_DEFAULT_NG_SUFFIX)));
+                    IRI ontIRI = vf.createIRI(ng.stringValue().substring(0, ng.stringValue()
+                            .lastIndexOf(SYSTEM_DEFAULT_NG_SUFFIX)));
                     IRI ontDatasetIRI = importsResolver.getDatasetIRI(ontIRI, ontologyManager);
                     Model importModel = RepositoryResults.asModel(conn.getStatements(null, null, null, ng), mf);
-                    closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager, datasetManager, importsResolver, transformer, bNodeService, vf, mf));
+                    closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager,
+                            datasetManager, importsResolver, transformer, bNodeService, vf, mf));
                 }
             });
             return closure;
@@ -375,21 +384,15 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Annotation> getOntologyAnnotations() {
-        return new HashSet<>(); //TODO:!!!!!!!!!!!!!!!!!!!!
+        IRI ontologyIRI = ontologyId.getOntologyIRI().orElse((IRI) ontologyId.getOntologyIdentifier());
+        return getAnnotationSet(runQueryOnOntology(String.format(GET_ONTOLOGY_ANNOTATIONS,
+                ontologyIRI.stringValue()), null, "getOntologyAnnotations()", false));
     }
 
     @Override
     public Set<Annotation> getAllAnnotations() {
-//        try (DatasetConnection conn = getDatasetConnection()) {
-//            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-//                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATION.stringValue()),
-//                    conn.getSystemDefaultNamedGraph()));
-//            return statements.stream()
-//                    .map(Statement::getSubject)
-//                    .map(subject -> new SimpleAnnotationProperty((IRI) subject))
-//                    .collect(Collectors.toSet());
-//        }
-        return new HashSet<>(); // TODO:!!!!!!!!!!!!!!!!!!!!
+        return getAnnotationSet(runQueryOnOntology(GET_ALL_ANNOTATIONS, null,
+                "getAllAnnotations()", false));
     }
 
     @Override
@@ -428,7 +431,11 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<ObjectProperty> getAllClassObjectProperties(IRI iri) {
-        return new HashSet<>();
+        return getIRISet(runQueryOnOntology(String.format(GET_CLASS_OBJECT_PROPERTIES, iri.stringValue()), null,
+                "getAllClassObjectProperties(iri)", true))
+                .stream()
+                .map(SimpleObjectProperty::new)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -438,7 +445,11 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<DataProperty> getAllClassDataProperties(IRI iri) {
-        return new HashSet<>();
+        return getIRISet(runQueryOnOntology(String.format(GET_CLASS_DATA_PROPERTIES, iri.stringValue()), null,
+                "getAllClassDataProperties(iri)", true))
+                .stream()
+                .map(SimpleDataProperty::new)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -568,47 +579,43 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true); //TODO
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", true));
     }
 
     @Override
     public Set<IRI> getSubClassesFor(IRI iri) {
-        TupleQueryResult result = runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
-                "getSubClassesFor(ontology, iri)", true); //TODO:
-        return getIRISet(result);
+        return getIRISet(runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
+                "getSubClassesFor(ontology, iri)", true));
     }
 
     @Override
     public Set<IRI> getSubPropertiesFor(IRI iri) {
-        TupleQueryResult result = runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
-                "getSubPropertiesFor(ontology, iri)", true); //TODO:
-        return getIRISet(result);
+        return getIRISet(runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
+                "getSubPropertiesFor(ontology, iri)", true));
     }
 
     @Override
     public Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(ontology)", true); //TODO
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null,
+                "getSubDatatypePropertiesOf(ontology)", true));
     }
 
     @Override
     public Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(ontology)",
-                true); // TODO:
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null,
+                "getSubAnnotationPropertiesOf(ontology)", true));
     }
 
     @Override
     public Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", true); //TODO:
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null,
+                "getSubObjectPropertiesOf(ontology)", true));
     }
 
     @Override
     public Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)", true); //TODO
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null,
+                "getClassesWithIndividuals(ontology)", true));
     }
 
     @Override
@@ -635,15 +642,14 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", true); //TODO:
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null,
+                "getConceptRelationships(ontology)", true));
     }
 
     @Override
     public Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf) {
-        TupleQueryResult result = runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null, "getConceptSchemeRelationships(ontology)",
-                true); //TODO:
-        return getHierarchy(result);
+        return getHierarchy(runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null,
+                "getConceptSchemeRelationships(ontology)", true));
     }
 
     @Override
@@ -657,7 +663,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports) {
-        return runQueryOnOntology(queryString, null, "getTupleQueryResults(ontology, queryString)", includeImports);
+        return runQueryOnOntology(queryString, null,"getTupleQueryResults(ontology, queryString)", includeImports);
     }
 
     @Override
@@ -740,7 +746,8 @@ public class SimpleOntology implements Ontology {
      * @param includeImports
      * @return
      */
-    private TupleQueryResult runQueryOnOntology(String queryString, @Nullable Function<TupleQuery, TupleQuery> addBinding,
+    private TupleQueryResult runQueryOnOntology(String queryString,
+                                                @Nullable Function<TupleQuery, TupleQuery> addBinding,
                                                 String methodName, boolean includeImports) {
         if (includeImports) {
             try (DatasetConnection conn = getDatasetConnection()) {
@@ -812,6 +819,24 @@ public class SimpleOntology implements Ontology {
         tupleQueryResult.forEach(r -> r.getBinding("s")
                 .ifPresent(b -> iris.add(vf.createIRI(b.getValue().stringValue()))));
         return iris;
+    }
+
+    /**
+     * Uses the provided TupleQueryResult to construct a set of the entities provided.
+     *
+     * @param tupleQueryResult the TupleQueryResult that contains //TODO
+     * @return a Hierarchy containing the hierarchy of the entities provided.
+     */
+    private Set<Annotation> getAnnotationSet(TupleQueryResult tupleQueryResult) {
+        Set<Annotation> annotations = new HashSet<>();
+        tupleQueryResult.forEach(queryResult -> {
+            Value prop = Bindings.requiredResource(queryResult, "prop");
+            Value value = Bindings.requiredResource(queryResult, "value");
+            if (!(prop instanceof BNode) && !(value instanceof BNode)) {
+                annotations.add(new SimpleAnnotation(new SimpleAnnotationProperty((IRI) prop), value));
+            }
+        });
+        return annotations;
     }
 
     private IRI createDatasetIRIFromKey(String key) {

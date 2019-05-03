@@ -196,7 +196,8 @@ public class SimpleOntologyManager implements OntologyManager {
         Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
-        return new SimpleOntology(model, repository, this, datasetManager, importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(model, repository, this, datasetManager, importsResolver, sesameTransformer,
+                bNodeService, valueFactory, modelFactory);
     }
 
     private Ontology createOntology(Model model, Resource recordId, Resource commitId) {
@@ -204,7 +205,8 @@ public class SimpleOntologyManager implements OntologyManager {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, model, repository, this, datasetManager, importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(key, model, repository, this, datasetManager, importsResolver, sesameTransformer,
+                bNodeService, valueFactory, modelFactory);
     }
 
     private Ontology createOntology(Resource recordId, Resource commitId) {
@@ -212,7 +214,8 @@ public class SimpleOntologyManager implements OntologyManager {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, repository, this, datasetManager, importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(key, repository, this, datasetManager, importsResolver, sesameTransformer,
+                bNodeService, valueFactory, modelFactory);
     }
 
     @Override
