@@ -24,6 +24,7 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.google.common.collect.Iterables;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
@@ -103,6 +104,7 @@ public class SimpleOntology implements Ontology {
     private IRI datasetIRI;
     private Set<Resource> importsClosure;
     private Set<Resource> unresolvedImports;
+    private Difference difference;
 
     private static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
     private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
@@ -259,7 +261,7 @@ public class SimpleOntology implements Ontology {
         importsClosure = new HashSet<>();
         unresolvedImports = new HashSet<>();
 
-        try (DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false)) {
+        try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
                     vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI));
             imports.forEach(imported -> importsClosure.add((Resource) imported.getObject()));
@@ -295,11 +297,17 @@ public class SimpleOntology implements Ontology {
         this.unresolvedImports = imports.get("unresolved");
     }
 
+    public void setDifference(Difference difference) {
+        this.difference = difference;
+    }
+
     @Override
     public Model asModel(ModelFactory factory) throws MobiOntologyException {
         try (DatasetConnection conn = getDatasetConnection()) {
-            return RepositoryResults.asModelNoContext(
+            Model model = RepositoryResults.asModelNoContext(
                     conn.getStatements(null, null, null, conn.getSystemDefaultNamedGraph()), factory);
+            undoApplyDifferenceIfPresent(conn);
+            return model;
         }
     }
 
@@ -358,7 +366,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Ontology> getImportsClosure() {
-        try (DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false)) {
+        try (DatasetConnection conn = getDatasetConnection()) {
             Resource sdNg = conn.getSystemDefaultNamedGraph();
             Set<Ontology> closure = new HashSet<>();
             conn.getDefaultNamedGraphs().forEach(ng -> {
@@ -369,10 +377,15 @@ public class SimpleOntology implements Ontology {
                             .lastIndexOf(SYSTEM_DEFAULT_NG_SUFFIX)));
                     IRI ontDatasetIRI = importsResolver.getDatasetIRI(ontIRI, ontologyManager);
                     Model importModel = RepositoryResults.asModel(conn.getStatements(null, null, null, ng), mf);
-                    closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager,
-                            datasetManager, importsResolver, transformer, bNodeService, vf, mf));
+                    OntologyId importId = ontologyManager.createOntologyId(importModel);
+                    IRI importIRI = importId.getOntologyIRI().orElse((IRI) importId.getOntologyIdentifier());
+                    if (conn.contains(null, vf.createIRI(OWL.IMPORTS.stringValue()), importIRI)) {
+                        closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager,
+                                datasetManager, importsResolver, transformer, bNodeService, vf, mf));
+                    }
                 }
             });
+            undoApplyDifferenceIfPresent(conn);
             return closure;
         }
     }
@@ -401,17 +414,22 @@ public class SimpleOntology implements Ontology {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<AnnotationProperty> annotationProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleAnnotationProperty((IRI) subject))
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return annotationProperties;
         }
     }
 
     @Override
     public boolean containsClass(IRI iri) {
         try (DatasetConnection conn = getDatasetConnection()) {
-            return conn.contains(iri, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()));
+            boolean contains = conn.contains(iri, vf.createIRI(RDF.TYPE.stringValue()),
+                    vf.createIRI(OWL.CLASS.stringValue()));
+            undoApplyDifferenceIfPresent(conn);
+            return contains;
         }
     }
 
@@ -421,11 +439,13 @@ public class SimpleOntology implements Ontology {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<OClass> oClasses = statements.stream()
                     .map(Statement::getSubject)
                     .filter(subject -> subject instanceof IRI)
                     .map(subject -> new SimpleClass((IRI) subject))
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return oClasses;
         }
     }
 
@@ -462,12 +482,14 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     null, null, conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<Datatype> datatypes = statements.stream()
                     .map(Statement::getObject)
                     .filter(s -> s instanceof Literal)
                     .map(literal -> ((Literal) literal).getDatatype())
                     .map(SimpleDatatype::new)
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return datatypes;
         }
     }
 
@@ -477,10 +499,12 @@ public class SimpleOntology implements Ontology {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<ObjectProperty> objectProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleObjectProperty((IRI) subject))
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return objectProperties;
         }
     }
 
@@ -491,8 +515,12 @@ public class SimpleOntology implements Ontology {
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
             if (statements.size() > 0) {
-                return Optional.of(new SimpleObjectProperty((IRI) statements.get(0).getSubject()));
+                Optional<ObjectProperty> objPropOpt = Optional.of(
+                        new SimpleObjectProperty((IRI) statements.get(0).getSubject()));
+                undoApplyDifferenceIfPresent(conn);
+                return objPropOpt;
             }
+            undoApplyDifferenceIfPresent(conn);
         }
         return Optional.empty();
     }
@@ -502,10 +530,12 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(objectProperty.getIRI(),
                     vf.createIRI(RDFS.RANGE.stringValue()), null, conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<Resource> resources = statements.stream()
                     .map(Statement::getObject)
                     .map(value -> (Resource) value)
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return resources;
         }
     }
 
@@ -515,10 +545,12 @@ public class SimpleOntology implements Ontology {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<DataProperty> dataProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleDataProperty((IRI) subject))
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return dataProperties;
         }
     }
 
@@ -529,8 +561,12 @@ public class SimpleOntology implements Ontology {
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
             if (statements.size() > 0) {
-                return Optional.of(new SimpleDataProperty((IRI) statements.get(0).getSubject()));
+                Optional<DataProperty> dataPropOpt = Optional.of(
+                        new SimpleDataProperty((IRI) statements.get(0).getSubject()));
+                undoApplyDifferenceIfPresent(conn);
+                return dataPropOpt;
             }
+            undoApplyDifferenceIfPresent(conn);
         }
         return Optional.empty();
     }
@@ -540,10 +576,12 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(dataProperty.getIRI(),
                     vf.createIRI(RDFS.RANGE.stringValue()), null, conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<Resource> resources = statements.stream()
                     .map(Statement::getObject)
                     .map(value -> (Resource) value)
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return resources;
         }
     }
 
@@ -553,10 +591,12 @@ public class SimpleOntology implements Ontology {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.NAMEDINDIVIDUAL.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<Individual> individuals = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleIndividual((IRI) subject))
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return individuals;
         }
     }
 
@@ -565,10 +605,12 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), classIRI, conn.getSystemDefaultNamedGraph()));
-            return statements.stream()
+            Set<Individual> individuals = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleIndividual((IRI) subject))
                     .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return individuals;
         }
     }
 
@@ -633,7 +675,9 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             GraphQuery query = conn.prepareGraphQuery(CONSTRUCT_ENTITY_USAGES);
             query.setBinding(ENTITY_BINDING, entity);
-            return QueryResults.asModel(query.evaluate(), modelFactory);
+            Model model = QueryResults.asModel(query.evaluate(), modelFactory);
+            undoApplyDifferenceIfPresent(conn);
+            return model;
         } finally {
             logTrace("constructEntityUsages(entity, conn)", start);
         }
@@ -706,9 +750,12 @@ public class SimpleOntology implements Ontology {
                                           String methodName, boolean includeImports, ModelFactory modelFactory) {
         if (includeImports) {
             try (DatasetConnection conn = getDatasetConnection()) {
-                return runGraphQueryOnOntology(queryString, addBinding, methodName, conn, modelFactory);
+                Model model = runGraphQueryOnOntology(queryString, addBinding, methodName, conn, modelFactory);
+                undoApplyDifferenceIfPresent(conn);
+                return model;
             }
         } else {
+            // TODO: ONLY QUERY SDNG && apply diff
             try (RepositoryConnection conn = repository.getConnection()) {
                 return runGraphQueryOnOntology(queryString, addBinding, methodName, conn, modelFactory);
             }
@@ -751,10 +798,12 @@ public class SimpleOntology implements Ontology {
                                                 String methodName, boolean includeImports) {
         if (includeImports) {
             try (DatasetConnection conn = getDatasetConnection()) {
-                return runQueryOnOntology(queryString, addBinding, methodName, conn);
+                TupleQueryResult result = runQueryOnOntology(queryString, addBinding, methodName, conn);
+                undoApplyDifferenceIfPresent(conn);
+                return result;
             }
         } else {
-            // TODO: ONLY QUERY SDNG...
+            // TODO: QUERY ONLY QUERY SDNG... && apply diff
             try (RepositoryConnection conn = repository.getConnection()) {
                 return runQueryOnOntology(queryString, addBinding, methodName, conn);
             }
@@ -844,7 +893,33 @@ public class SimpleOntology implements Ontology {
     }
 
     private DatasetConnection getDatasetConnection() {
-        return datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
+        DatasetConnection conn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(), false);
+        applyDifferenceIfPresent(conn);
+        return conn;
+    }
+
+    private void applyDifferenceIfPresent(DatasetConnection conn) {
+        if (difference != null) {
+            conn.begin();
+            conn.add(difference.getAdditions(), conn.getSystemDefaultNamedGraph());
+            conn.remove(difference.getDeletions(), conn.getSystemDefaultNamedGraph());
+
+            List<IRI> removedImports = difference.getDeletions().filter(null, vf.createIRI(OWL.IMPORTS.stringValue()),
+                    null)
+                    .stream()
+                    .map(Statement::getObject)
+                    .filter(iri -> iri instanceof IRI)
+                    .map(iri -> (IRI) iri)
+                    .collect(Collectors.toList());
+            removedImports.forEach(imported
+                    -> conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), imported));
+        }
+    }
+
+    private void undoApplyDifferenceIfPresent(RepositoryConnection conn) {
+        if (difference != null) {
+            conn.rollback();
+        }
     }
 
     private long getStartTime() {

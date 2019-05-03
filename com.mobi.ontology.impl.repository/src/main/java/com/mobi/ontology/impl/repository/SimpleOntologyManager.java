@@ -76,6 +76,9 @@ import javax.cache.Cache;
 )
 public class SimpleOntologyManager implements OntologyManager {
 
+    static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
+    private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
+
     private ValueFactory valueFactory;
     private ModelFactory modelFactory;
     private SesameTransformer sesameTransformer;
@@ -90,9 +93,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private OntologyCache ontologyCache;
     private ImportsResolver importsResolver;
     private BNodeService bNodeService;
-
-    static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
-    private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String FIND_ONTOLOGY;
     private static final String ONTOLOGY_IRI = "ontologyIRI";
@@ -220,8 +220,14 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Ontology applyChanges(Ontology ontology, Difference difference) {
-        Model changedOntologyModel = utilsService.applyDifference(ontology.asModel(modelFactory), difference);
-        return createOntology(changedOntologyModel);
+        if (ontology instanceof SimpleOntology) {
+            SimpleOntology simpleOntology = (SimpleOntology) ontology;
+            simpleOntology.setDifference(difference);
+            return simpleOntology;
+        } else {
+            Model changedOntologyModel = utilsService.applyDifference(ontology.asModel(modelFactory), difference);
+            return createOntology(changedOntologyModel);
+        }
     }
 
     @Override
