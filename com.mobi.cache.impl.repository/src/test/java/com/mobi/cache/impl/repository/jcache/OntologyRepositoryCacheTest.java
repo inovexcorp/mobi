@@ -288,7 +288,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         OffsetDateTime timestamp;
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(dc.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(dc.getDefaultNamedGraphs());
             assertEquals(1, namedGraphs.size());
             assertTrue(namedGraphs.contains(ontNoImportsSdNgIRI));
             List<Statement> statements = RepositoryResults.asList(dc.getStatements(dc.getDataset(), timestampIRI, null, dc.getDataset()));
@@ -311,7 +311,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key2, ontOneImport);
         OffsetDateTime timestamp;
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key2)), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(dc.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(dc.getDefaultNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(ontOneImportSdNgIRI));
             assertTrue(namedGraphs.contains(import1SdNgIRI));
@@ -335,7 +335,7 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key3, ontMultipleImports);
         OffsetDateTime timestamp;
         try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key3)), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(dc.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(dc.getDefaultNamedGraphs());
             assertEquals(4, namedGraphs.size());
             assertTrue(namedGraphs.contains(ontMultipleImportsSdNgIRI));
             assertTrue(namedGraphs.contains(import1SdNgIRI));
@@ -629,6 +629,13 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         assertTrue(cache.replace(key1, ontOneImport));
         verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
+
+        try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
+            RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
+            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
+            assertEquals(ontologyModel.size(), ontOneImportModel.size());
+            assertEquals(ontologyModel, ontOneImportModel);
+        }
     }
 
     @Test
