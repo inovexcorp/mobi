@@ -263,7 +263,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     public void loadOntologyWithWebImportIntoCache() {
         Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyIRI, "record1&commit2", localModel, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2" + SYSTEM_DEFAULT_NG_SUFFIX))));
             assertTrue(namedGraphs.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core" + SYSTEM_DEFAULT_NG_SUFFIX)));
@@ -281,7 +281,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         localModel.add(circular2IRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:importThatDoesNotResolve"));
         Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(ontologyIRI, "record1&commit2", localModel, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2")), repo.getConfig().id(), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
             assertEquals(1, namedGraphs.size());
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode("record1&commit2" + SYSTEM_DEFAULT_NG_SUFFIX))));
         }
@@ -298,7 +298,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     public void loadOntologyWithCircularImportIntoCache() {
         Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1IRI, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3")), repo.getConfig().id(), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3" + SYSTEM_DEFAULT_NG_SUFFIX))));
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode( circular2IRI.stringValue() + "&" + circularHeadCommitIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX))));
@@ -315,7 +315,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         circular2Model.add(circular2IRI, vf.createIRI(OWL.IMPORTS.stringValue()), vf.createIRI("urn:importThatDoesNotResolve"));
         Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(circular1IRI, circular1IRI.stringValue() + "&commit3", circular1Model, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3")), repo.getConfig().id(), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(circular1IRI.stringValue() + "&commit3" + SYSTEM_DEFAULT_NG_SUFFIX))));
             assertTrue(namedGraphs.contains(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode( circular2IRI.stringValue() + "&" + circularHeadCommitIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX))));
@@ -335,7 +335,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         IRI resource = vf.createIRI("urn:otherOnt");
         Map<String, Set<Resource>> map = resolver.loadOntologyIntoCache(resource, null, localModel, repo, ontologyManager);
         try (DatasetConnection conn = datasetManager.getConnection(resource, repo.getConfig().id(), false)) {
-            List<Resource> namedGraphs = RepositoryResults.asList(conn.getNamedGraphs());
+            List<Resource> namedGraphs = RepositoryResults.asList(conn.getDefaultNamedGraphs());
             assertEquals(2, namedGraphs.size());
             assertTrue(namedGraphs.contains(vf.createIRI(resource.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX)));
             assertTrue(namedGraphs.contains(vf.createIRI("http://www.w3.org/2004/02/skos/core" + SYSTEM_DEFAULT_NG_SUFFIX)));
