@@ -161,6 +161,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     public void removeOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = null;
     }
 
     @Reference
