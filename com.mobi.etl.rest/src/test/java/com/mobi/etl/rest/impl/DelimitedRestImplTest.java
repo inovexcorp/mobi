@@ -704,7 +704,10 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
-                .thenReturn(new Difference.Builder().build());
+                .thenReturn(new Difference.Builder()
+                        .additions(mf.createModel())
+                        .deletions(mf.createModel())
+                        .build());
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
