@@ -83,7 +83,7 @@ class OntologyImportServiceImplSpec extends Specification {
 
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
-        committedData.getDeletions() == null
+        committedData.getDeletions() as Set == [] as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", expectedCommit, null)
     }
 
@@ -98,7 +98,7 @@ class OntologyImportServiceImplSpec extends Specification {
 
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
-        committedData.getDeletions() == null
+        committedData.getDeletions() as Set == [] as Set
         0 * versioningManager.commit(*_)
     }
 
@@ -115,7 +115,7 @@ class OntologyImportServiceImplSpec extends Specification {
 
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
-        committedData.getDeletions() == null
+        committedData.getDeletions() as Set == [] as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", expectedCommit, null)
     }
 
