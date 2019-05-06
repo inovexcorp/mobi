@@ -69,16 +69,16 @@
         dvm.getEntityNameDisplay = function(iri) {
             return dvm.om.isBlankNodeId(iri) ? dvm.ontoUtils.getBlankNodeValue(iri) : dvm.ontoUtils.getLabelForIRI(iri);
         }
-        dvm.recieveCommits = function (commits) {
+        dvm.receiveCommits = function(commits) {
             dvm.commits = commits;
-            if(dvm.commits[0] != null) {
+            if (dvm.commits[0] != null) {
                 dvm.os.listItem.selectedCommit = dvm.commits[0];
             }
         }
 
-        dvm.createLabel = function (commitId) {
+        dvm.createLabel = function(commitId) {
             var label = dvm.util.condenseCommitId(commitId);
-            if(commitId == dvm.commits[0].id) {
+            if (commitId == dvm.commits[0].id) {
                 label = label + " (latest)";
             }
             return label;

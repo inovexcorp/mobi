@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('See History component', function() {
-    var $compile, scope, ontologyStateSvc;
+fdescribe('See History component', function() {
+    var $compile, scope, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,10 +36,11 @@ describe('See History component', function() {
         mockOntologyUtilsManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            utilSvc = _utilService_;
         });
 
         this.commits = [{id: 'commit1'}, {id: 'commit2'}];
@@ -52,6 +53,7 @@ describe('See History component', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
+        utilSvc = null;
         this.element.remove();
     });
 
@@ -106,5 +108,26 @@ describe('See History component', function() {
         var button = angular.element(this.element.querySelectorAll('button.next-btn')[0]);
         button.triggerHandler('click');
         expect(this.controller.next).toHaveBeenCalled();
+    });
+    it('should add `(latest)` to the label for the latest commit in commits', function() {
+        this.controller.commits = this.commits;
+        utilSvc.condenseCommitId.and.returnValue('1234');
+        var label = this.controller.createLabel(this.commits[0].id);
+        expect(label).toEqual('1234 (latest)');
+
+    });
+    it('should assign condensed commitId as the label for any other commit', function() {
+        this.controller.commits = this.commits;
+        utilSvc.condenseCommitId.and.returnValue('1234');
+        var label = this.controller.createLabel(this.commits[1].id);
+        expect(label).toEqual('1234');        
+    });
+    it('should assign an array of commits to `commits` in the controller when receiveCommits is called', function() {
+        this.controller.receiveCommits(this.commits);
+        expect(this.controller.commits).toBe(this.commits);
+    });
+    it('should set the default value in the dropdown to the latest commit for an entity', function() {
+        this.controller.receiveCommits(this.commits);
+        expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
     });
 });
