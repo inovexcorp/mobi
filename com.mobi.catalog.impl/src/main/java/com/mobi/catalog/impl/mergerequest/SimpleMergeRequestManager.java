@@ -482,6 +482,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void updateComment(Resource commentId, Comment comment) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Optional<com.mobi.rdf.api.Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
+            if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
+                throw new IllegalArgumentException("Comment string length must be less than " + MAX_COMMENT_STRING_LENGTH);
+            }
             catalogUtils.validateResource(commentId, commentFactory.getTypeIRI(), conn);
             catalogUtils.updateObject(comment, conn);
         }

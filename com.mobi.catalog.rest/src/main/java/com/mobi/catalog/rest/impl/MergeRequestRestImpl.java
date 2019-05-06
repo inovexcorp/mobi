@@ -289,10 +289,15 @@ public class MergeRequestRestImpl implements MergeRequestRest {
     }
 
     @Override
-    public Response updateComment(String commentId, String newComment) {
+    public Response updateComment(String commentId, String newCommentStr) {
         Resource commentIdResource = createIRI(commentId, vf);
+        Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
+                ErrorUtils.sendError("Comment " + commentId + " could not be found",
+                        Response.Status.BAD_REQUEST));
+        checkStringParam(newCommentStr, "Comment string is required");
+        comment.setProperty(vf.createLiteral(newCommentStr), vf.createIRI(_Thing.description_IRI));
         try {
-            manager.updateComment(commentIdResource, jsonToComment(commentIdResource, newComment));
+            manager.updateComment(commentIdResource, comment);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

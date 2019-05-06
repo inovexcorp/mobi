@@ -231,7 +231,7 @@ public interface MergeRequestRest {
      */
     @PUT
     @Path("{requestId}/comments/{commentId}")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Updates a Comment by its ID using the provided JSON-LD")
     Response updateComment(@PathParam("commentId") String commentId, String newComment);
