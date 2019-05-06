@@ -424,10 +424,10 @@ public class UserRestImpl implements UserRest {
     private void isAuthorizedUser(ContainerRequestContext context, String username) {
         String activeUsername = getActiveUsername(context);
         if (!engineManager.userExists(activeUsername)) {
-            throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED);
         }
         if (!isAdminUser(activeUsername) && !activeUsername.equals(username)) {
-            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.UNAUTHORIZED);
         }
     }
 
@@ -452,7 +452,7 @@ public class UserRestImpl implements UserRest {
      */
     private void checkCurrentUser(String username, String currentUsername) {
         if (!username.equals(currentUsername)) {
-            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.UNAUTHORIZED);
         }
     }
 

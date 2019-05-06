@@ -247,7 +247,7 @@ public class StateRestImplTest extends MobiRestTestNg {
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 403);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -313,7 +313,7 @@ public class StateRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 403);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test
@@ -343,7 +343,7 @@ public class StateRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 403);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test

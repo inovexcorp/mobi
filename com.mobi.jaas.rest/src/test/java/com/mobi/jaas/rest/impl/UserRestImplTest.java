@@ -352,7 +352,7 @@ public class UserRestImplTest extends MobiRestTestNg {
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 403);
+        assertEquals(response.getStatus(), 401);
     }
 
     @Test

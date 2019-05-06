@@ -903,7 +903,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 403);
+        assertEquals(response.getStatus(), 401);
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
     }
