@@ -80,13 +80,16 @@ public class OntologyImportServiceImpl implements OntologyImportService {
 
 
     @Override
-    public Difference importOntology(Resource ontologyRecord, boolean update, Model ontologyData, User user, String commitMsg) {
-        Resource masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), ontologyRecord).getResource();
+    public Difference importOntology(Resource ontologyRecord, boolean update, Model ontologyData, User user,
+                                     String commitMsg) {
+        Resource masterBranch = catalogManager.getMasterBranch(configProvider.getLocalCatalogIRI(), ontologyRecord)
+                .getResource();
         return importOntology(ontologyRecord, masterBranch, update, ontologyData, user, commitMsg);
     }
 
     @Override
-    public Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, Model ontologyData, User user, String commitMsg) {
+    public Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, Model ontologyData,
+                                     User user, String commitMsg) {
         Model newData = mf.createModel(ontologyData);
         Model existingData = ontologyManager.getOntologyModel(ontologyRecord, branch);
 

@@ -125,18 +125,18 @@ public class CLITransform implements Action {
     private String mappingRecordIRI = null;
 
     @Completion(FileCompleter.class)
-    @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no dataset "
-            + "given)")
+    @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no other output "
+            + "is given)")
     private String outputFile = null;
 
     @Option(name = "-d", aliases = "--dataset",
-            description = "The dataset in which to store the resulting triples. (Required if no output file given)." +
-                    "NOTE: Any % symbols as a result of URL encoding must be escaped.")
+            description = "The dataset in which to store the resulting triples. (Required if no other output is given)."
+                    + "NOTE: Any % symbols as a result of URL encoding must be escaped.")
     private String dataset = null;
 
     @Option(name = "-ont", aliases = "--ontology",
-            description = "The ontology in which to store the resulting triples. (Required if no output file given)." +
-                    "NOTE: Any % symbols as a result of URL encoding must be escaped.")
+            description = "The ontology in which to store the resulting triples. (Required if no other output is "
+                    + "given). NOTE: Any % symbols as a result of URL encoding must be escaped.")
     private String ontology = null;
 
     @Option(name = "-b", aliases = "--branch",
@@ -144,8 +144,8 @@ public class CLITransform implements Action {
     private String branch = null;
 
     @Option(name = "-u", aliases = "--update",
-            description = "Calculate the differences between the mapped data and the data on the head of the ontology" +
-                    "branch. (defaults to false)")
+            description = "Calculate the differences between the mapped data and the data on the head of the ontology"
+                    + "branch. (defaults to false)")
     private boolean update = false;
 
     @Option(name = "-h", aliases = "--headers", description = "The file contains headers.")
@@ -212,7 +212,8 @@ public class CLITransform implements Action {
 
             if (ontology != null) {
                 IRI ontologyIri = vf.createIRI(ontology);
-                User adminUser = engineManager.retrieveUser(RdfEngine.ENGINE_NAME, "admin").get();
+                User adminUser = engineManager.retrieveUser(RdfEngine.ENGINE_NAME, "admin").orElseThrow(() ->
+                        new IllegalStateException("Admin user could not be found"));
                 String commitMsg = "Mapping data from " + mappingRecordIRI;
 
                 Difference difference;
@@ -220,7 +221,8 @@ public class CLITransform implements Action {
                     difference = ontologyImportService.importOntology(ontologyIri, update, model, adminUser, commitMsg);
                 } else {
                     IRI branchIri = vf.createIRI(branch);
-                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser, commitMsg);
+                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser,
+                            commitMsg);
                 }
 
                 if (difference.getAdditions().isEmpty() && difference.getDeletions().isEmpty()) {
@@ -228,12 +230,13 @@ public class CLITransform implements Action {
                 } else {
                     int additionSize = difference.getAdditions().size();
                     int deletionSize = difference.getDeletions().size();
-                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize) + " statements changed.");
+                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize)
+                            + " statements changed.");
                 }
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            LOGGER.error("Unspecified error in transformation.", e);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            LOGGER.error("Unspecified error in transformation.", ex);
         }
 
         return null;
