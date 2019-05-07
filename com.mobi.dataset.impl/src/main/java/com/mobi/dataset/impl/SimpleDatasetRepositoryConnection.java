@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -341,6 +342,11 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
+    public TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException, MalformedQueryException {
+        return getDelegate().prepareTupleQuery(rewriteQuery(query, contexts));
+    }
+
+    @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
         return getDelegate().prepareGraphQuery(rewriteQuery(query));
     }
@@ -348,6 +354,11 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     @Override
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
         return getDelegate().prepareGraphQuery(rewriteQuery(query), baseURI);
+    }
+
+    @Override
+    public GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException, MalformedQueryException {
+        return getDelegate().prepareGraphQuery(rewriteQuery(query, contexts));
     }
 
     @Override
@@ -547,12 +558,19 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
      * @param query The query to rewrite.
      * @return A String representing the query rewritten with dataset clauses appropriate for this dataset.
      */
-    private String rewriteQuery(String query) {
+    private String rewriteQuery(String query, Resource... contexts) {
         Sparql11Parser parser = Query.getParser(query);
         Sparql11Parser.QueryContext queryContext = parser.query();
         TokenStreamRewriter rewriter = new TokenStreamRewriter(parser.getTokenStream());
         ParseTreeWalker walker = new ParseTreeWalker();
-        DatasetListener listener = new DatasetListener(rewriter);
+
+        DatasetListener listener;
+        if (varargsPresent(contexts)) {
+            listener = new DatasetListener(rewriter, Arrays.asList(contexts));
+        } else {
+            listener = new DatasetListener(rewriter);
+        }
+
         walker.walk(listener, queryContext);
 
         String processedQuery = rewriter.getText();
@@ -592,9 +610,15 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private class DatasetListener extends Sparql11BaseListener {
         private TokenStreamRewriter rewriter;
         private String datasetClause;
+        private Set<Resource> contexts;
 
         DatasetListener(TokenStreamRewriter rewriter) {
             this.rewriter = rewriter;
+        }
+
+        DatasetListener(TokenStreamRewriter rewriter, Collection<Resource> contexts) {
+            this.rewriter = rewriter;
+            this.contexts = new HashSet<>(contexts);
         }
 
         @Override
@@ -614,22 +638,47 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         private String getDatasetClause() {
             if (datasetClause == null) {
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(FROM);
-                stringBuilder.append(getSystemDefaultNamedGraph().stringValue());
-                stringBuilder.append(GREATER);
-                getNamedGraphs().forEach(resource -> {
-                    stringBuilder.append(FROM_NAMED);
+                getFilteredDefaultGraphs().forEach(resource -> {
+                    stringBuilder.append(FROM);
                     stringBuilder.append(resource.stringValue());
                     stringBuilder.append(GREATER);
                 });
-                getDefaultNamedGraphs().forEach(resource -> {
-                    stringBuilder.append(FROM);
+                getFilteredNamedGraphs().forEach(resource -> {
+                    stringBuilder.append(FROM_NAMED);
                     stringBuilder.append(resource.stringValue());
                     stringBuilder.append(GREATER);
                 });
                 this.datasetClause = stringBuilder.toString();
             }
             return datasetClause;
+        }
+
+        private Set<Resource> getFilteredDefaultGraphs() {
+            Set<Resource> defaultGraphs = new HashSet<>();
+
+            if (contexts == null || contexts.contains(getSystemDefaultNamedGraph())) {
+                defaultGraphs.add(getSystemDefaultNamedGraph());
+            }
+
+            getDefaultNamedGraphs().forEach(resource -> {
+                if (contexts == null || contexts.contains(resource)) {
+                    defaultGraphs.add(resource);
+                }
+            });
+
+            return defaultGraphs;
+        }
+
+        private Set<Resource> getFilteredNamedGraphs() {
+            Set<Resource> namedGraphs = new HashSet<>();
+
+            getNamedGraphs().forEach(resource -> {
+                if (contexts == null || contexts.contains(resource)) {
+                    namedGraphs.add(resource);
+                }
+            });
+
+            return namedGraphs;
         }
     }
 }

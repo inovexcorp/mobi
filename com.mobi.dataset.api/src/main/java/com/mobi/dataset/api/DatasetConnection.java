@@ -23,6 +23,9 @@ package com.mobi.dataset.api;
  * #L%
  */
 
+import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
+import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -242,6 +245,26 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      */
     @Override
     RepositoryResult<Resource> getContextIDs() throws RepositoryException;
+
+    /**
+     *
+     * @param query
+     * @param contexts
+     * @return
+     * @throws RepositoryException
+     * @throws MalformedQueryException
+     */
+    TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException, MalformedQueryException;
+
+    /**
+     *
+     * @param query
+     * @param contexts
+     * @return
+     * @throws RepositoryException
+     * @throws MalformedQueryException
+     */
+    GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException, MalformedQueryException;
 
     /**
      * Gets the resources that are used as named graphs in the dataset. Care should be taken that the returned
