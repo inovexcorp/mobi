@@ -115,23 +115,23 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public void addDefault(Statement stmt, Resource... contexts) throws RepositoryException {
-        addStatement(stmt, Dataset.defaultNamedGraph_IRI, contexts);
-    }
-
-    @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         addStatements(statements, Dataset.namedGraph_IRI, contexts);
     }
 
     @Override
-    public void addDefault(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        addStatements(statements, Dataset.defaultNamedGraph_IRI, contexts);
+    public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+        add(valueFactory.createStatement(subject, predicate, object), contexts);
     }
 
     @Override
-    public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-        add(valueFactory.createStatement(subject, predicate, object), contexts);
+    public void addDefault(Statement stmt, Resource... contexts) throws RepositoryException {
+        addStatement(stmt, Dataset.defaultNamedGraph_IRI, contexts);
+    }
+
+    @Override
+    public void addDefault(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
+        addStatements(statements, Dataset.defaultNamedGraph_IRI, contexts);
     }
 
     @Override
@@ -282,7 +282,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+    public RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object,
+                                                     Resource... contexts) throws RepositoryException {
         // TODO: Trivial Implementation
         // Maybe I can wrap a query result like in the getContextIDs impl
         Set<Resource> graphs = new HashSet<>();
@@ -337,12 +338,14 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
+    public TupleQuery prepareTupleQuery(String query, String baseURI) throws RepositoryException,
+            MalformedQueryException {
         return getDelegate().prepareTupleQuery(rewriteQuery(query), baseURI);
     }
 
     @Override
-    public TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException, MalformedQueryException {
+    public TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException,
+            MalformedQueryException {
         return getDelegate().prepareTupleQuery(rewriteQuery(query, contexts));
     }
 
@@ -352,12 +355,14 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
+    public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException,
+            MalformedQueryException {
         return getDelegate().prepareGraphQuery(rewriteQuery(query), baseURI);
     }
 
     @Override
-    public GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException, MalformedQueryException {
+    public GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException,
+            MalformedQueryException {
         return getDelegate().prepareGraphQuery(rewriteQuery(query, contexts));
     }
 
@@ -367,7 +372,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
+    public BooleanQuery prepareBooleanQuery(String query, String baseURI) throws RepositoryException,
+            MalformedQueryException {
         throw new NotImplementedException("Not yet implemented.");
     }
 
@@ -629,8 +635,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         @Override
         public void enterWhereClause(Sparql11Parser.WhereClauseContext ctx) {
             // Only add a dataset clause to the root select query, not a subselect
-            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext ||
-                    ctx.getParent() instanceof Sparql11Parser.ConstructQueryContext) {
+            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext
+                    || ctx.getParent() instanceof Sparql11Parser.ConstructQueryContext) {
                 rewriter.insertBefore(ctx.getStart(), getDatasetClause());
             }
         }
