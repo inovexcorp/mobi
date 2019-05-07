@@ -182,6 +182,28 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
     }
 
+    def "add(s) with a dataset context will add data to a dataset graph"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def dataset = datasetsInFile[1]
+        def stmt = vf.createStatement(s, p, o, dataset)
+        def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(stmt)
+
+        then:
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
+        systemConn.size(dataset) == originalSize + 1
+        systemConn.size(sdng) == 0
+    }
+
     def "add(s, c) will add the necessary graph statement"() {
         setup:
         def s = vf.createIRI("urn:s")
@@ -200,6 +222,28 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(c) == 1
         systemConn.size(graph) == 1
         systemConn.getStatements(dataset, namedGraphPred, graph).hasNext()
+    }
+
+    def "add(s, c) with dataset context will not add the graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("http://mobi.com/dataset/test2/graph2")
+        def stmt = vf.createStatement(s, p, o, c)
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(stmt, dataset)
+
+        then:
+        systemConn.size(c) == 1
+        systemConn.size(dataset) == 1 + originalSize
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
     }
 
     def "add(s, c...) will add the necessary graph statements"() {
@@ -224,6 +268,25 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
     }
 
+    def "add(s, p, o, c) with dataset context will not add the graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(s, p, o, dataset)
+
+        then:
+        systemConn.size(dataset) == 1 + originalSize
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
+    }
+
     def "add(s, p, o, c...) will add the necessary graph statements"() {
         setup:
         def s = vf.createIRI("urn:s")
@@ -241,6 +304,38 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(graphs[1]) == 1
         systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
+    }
+
+    def "add(model, c) with dataset context will not ass the graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def s2 = vf.createIRI("urn:s2")
+        def p2 = vf.createIRI("urn:p2")
+        def o2 = vf.createLiteral("object2")
+        def model1 = LinkedHashModelFactory.getInstance().createModel()
+        def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
+        model1.add(s, p, o)
+        model1.add(s2, p2, o2)
+
+        def dataset = datasetsInFile[1]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(model1, dataset)
+
+        then:
+        systemConn.size(dataset) == originalSize + model1.size()
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
+
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
     }
 
     def "add(model, c...) will add the necessary graph statements"() {
@@ -1068,7 +1163,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def dataset = datasetsInFile[2]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = query
-        Resource[] contextArr = contexts
+        def Resource[] contextArr = contexts as Resource[]
         def tupleQuery = conn.prepareTupleQuery(queryString, contextArr)
 
         when:
@@ -1133,7 +1228,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         def dataset = datasetsInFile[2]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
         def queryString = query
-        Resource[] contextArr = contexts
+        def contextArr = contexts as Resource[]
         def graphQuery = conn.prepareGraphQuery(queryString, contextArr)
 
         when:
