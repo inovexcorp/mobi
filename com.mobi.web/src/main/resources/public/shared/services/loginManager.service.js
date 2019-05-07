@@ -68,7 +68,7 @@
     function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
         var self = this,
             anon = 'self anon',
-            prefix = REST_PREFIX + 'user/',
+            prefix = REST_PREFIX + 'session',
             weGood = false;
 
         /**
@@ -99,9 +99,8 @@
          * @methodOf shared.service:loginManagerService
          *
          * @description
-         * Makes a call to GET /mobirest/user/login to attempt to log into Mobi using the
-         * passed credentials. Returns a Promise with the success of the log in attempt.
-         * If failed, contains an appropriate error message.
+         * Makes a call to POST /mobirest/session to attempt to log into Mobi using the passed credentials. Returns a
+         * Promise with the success of the log in attempt. If failed, contains an appropriate error message.
          *
          * @param {string} username the username to attempt to log in with
          * @param {string} password the password to attempt to log in with
@@ -117,7 +116,7 @@
                 },
                 deferred = $q.defer();
 
-            $http.get(prefix + 'login', config)
+            $http.post(prefix, null, config)
                 .then(response => {
                     if (response.status === 200 && response.data.scope !== anon) {
                         self.currentUser = response.data.sub;
@@ -146,8 +145,8 @@
          * @methodOf shared.service:loginManagerService
          *
          * @description
-         * Makes a call to GET /mobirest/user/logout to log out of which ever user account
-         * is current. Navigates back to the login page.
+         * Makes a call to DELETE /mobirest/session to log out of which ever user account is current. Navigates back to
+         * the login page.
          */
         self.logout = function() {
             datasetStateService.reset();
@@ -160,7 +159,7 @@
             ontologyStateService.reset();
             sparqlManagerService.reset();
             catalogStateService.reset();
-            $http.get(prefix + 'logout')
+            $http.delete(prefix)
                 .then(response => {
                     self.currentUser = '';
                     self.currentUserIRI = '';
@@ -176,7 +175,7 @@
          *
          * @description
          * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-         * is logged in, intitializes the {@link shared.service:catalogManagerService},
+         * is logged in, initializes the {@link shared.service:catalogManagerService},
          * {@link shared.service:catalogStateService},
          * {@link shared.service:mergeRequestsStateService},
          * {@link shared.service:ontologyManagerService},
@@ -231,16 +230,16 @@
          * @methodOf shared.service:loginManagerService
          *
          * @description
-         * Makes a call to GET /mobirest/user/current to retrieve the user that is currently logged
-         * in. Returns a Promise with the result of the call.
+         * Makes a call to GET /mobirest/session to retrieve the user that is currently logged in. Returns a Promise
+         * with the result of the call.
          *
-         * @return {Promise} A Promise with the response data that resolves if the request was successful;
-         * rejects if unsuccessful
+         * @return {Promise} A Promise with the response data that resolves if the request was successful; rejects if
+         * unsuccessful
          */
         self.getCurrentLogin = function () {
             var deferred = $q.defer();
 
-            $http.get(prefix + 'current').then(response => {
+            $http.get(prefix).then(response => {
                 if (response.status === 200) {
                     deferred.resolve(response.data);
                 } else {
