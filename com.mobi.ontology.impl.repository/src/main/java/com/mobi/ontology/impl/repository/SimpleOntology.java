@@ -67,6 +67,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
+import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -126,6 +127,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_CLASS_OBJECT_PROPERTIES;
     private static final String GET_ALL_ANNOTATIONS;
     private static final String GET_ONTOLOGY_ANNOTATIONS;
+    private static final String GET_INDIVIDUALS_OF_TYPE;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -193,6 +195,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_ONTOLOGY_ANNOTATIONS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-ontology-annotations.rq"),
+                    "UTF-8"
+            );
+            GET_INDIVIDUALS_OF_TYPE = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-individuals-of-type.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -377,12 +383,8 @@ public class SimpleOntology implements Ontology {
                             .lastIndexOf(SYSTEM_DEFAULT_NG_SUFFIX)));
                     IRI ontDatasetIRI = importsResolver.getDatasetIRI(ontIRI, ontologyManager);
                     Model importModel = RepositoryResults.asModel(conn.getStatements(null, null, null, ng), mf);
-                    OntologyId importId = ontologyManager.createOntologyId(importModel);
-                    IRI importIRI = importId.getOntologyIRI().orElse((IRI) importId.getOntologyIdentifier());
-                    if (conn.contains(null, vf.createIRI(OWL.IMPORTS.stringValue()), importIRI)) {
-                        closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager,
-                                datasetManager, importsResolver, transformer, bNodeService, vf, mf));
-                    }
+                    closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager,
+                            datasetManager, importsResolver, transformer, bNodeService, vf, mf));
                 }
             });
             undoApplyDifferenceIfPresent(conn);
@@ -596,22 +598,18 @@ public class SimpleOntology implements Ontology {
                     .map(subject -> new SimpleIndividual((IRI) subject))
                     .collect(Collectors.toSet());
             undoApplyDifferenceIfPresent(conn);
+            individuals.addAll(getIndividualsOfType(vf.createIRI(SKOS.CONCEPT.stringValue())));
             return individuals;
         }
     }
 
     @Override
     public Set<Individual> getIndividualsOfType(IRI classIRI) {
-        try (DatasetConnection conn = getDatasetConnection()) {
-            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), classIRI, conn.getSystemDefaultNamedGraph()));
-            Set<Individual> individuals = statements.stream()
-                    .map(Statement::getSubject)
-                    .map(subject -> new SimpleIndividual((IRI) subject))
-                    .collect(Collectors.toSet());
-            undoApplyDifferenceIfPresent(conn);
-            return individuals;
-        }
+        return getIRISet(runQueryOnOntology(String.format(GET_INDIVIDUALS_OF_TYPE, classIRI.stringValue()), null,
+                "getIndividualsOfType(iri)", true))
+                .stream()
+                .map(SimpleIndividual::new)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -904,6 +902,39 @@ public class SimpleOntology implements Ontology {
             conn.add(difference.getAdditions(), conn.getSystemDefaultNamedGraph());
             conn.remove(difference.getDeletions(), conn.getSystemDefaultNamedGraph());
 
+            List<IRI> addedImports = difference.getAdditions().filter(null, vf.createIRI(OWL.IMPORTS.stringValue()),
+                    null)
+                    .stream()
+                    .map(Statement::getObject)
+                    .filter(iri -> iri instanceof IRI)
+                    .map(iri -> (IRI) iri)
+                    .collect(Collectors.toList());
+            try (RepositoryConnection repoConn = repository.getConnection()) {
+                addedImports.forEach(imported -> {
+                    IRI importedDatasetIRI = importsResolver.getDatasetIRI(imported, ontologyManager);
+                    IRI importedDatasetSdNgIRI = vf.createIRI(importedDatasetIRI.stringValue()
+                            + SYSTEM_DEFAULT_NG_SUFFIX);
+                    if (repoConn.containsContext(importedDatasetSdNgIRI)) {
+                        Model importModel = RepositoryResults.asModel(repoConn.getStatements(null, null,
+                                null, importedDatasetSdNgIRI), mf);
+                        createTempImport(importedDatasetIRI, importModel, conn);
+                    } else {
+                        Optional<Model> localModel = importsResolver.retrieveOntologyLocal(imported, ontologyManager);
+                        if (localModel.isPresent()) {
+                            createTempImport(importedDatasetIRI, localModel.get(), conn);
+                        } else {
+                            Optional<Model> webModel = importsResolver.retrieveOntologyFromWeb(imported);
+                            if (webModel.isPresent()) {
+                                repoConn.add(webModel.get(), importedDatasetSdNgIRI);
+                                createTempImport(importedDatasetIRI, webModel.get(), conn);
+                            } else {
+                                conn.add(datasetIRI, vf.createIRI(UNRESOLVED_IRI_STRING), imported, datasetIRI);
+                            }
+                        }
+                    }
+                });
+            }
+
             List<IRI> removedImports = difference.getDeletions().filter(null, vf.createIRI(OWL.IMPORTS.stringValue()),
                     null)
                     .stream()
@@ -911,9 +942,27 @@ public class SimpleOntology implements Ontology {
                     .filter(iri -> iri instanceof IRI)
                     .map(iri -> (IRI) iri)
                     .collect(Collectors.toList());
-            removedImports.forEach(imported
-                    -> conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), imported));
+            removedImports.forEach(imported -> {
+                IRI importDatasetIRI = vf.createIRI(
+                        importsResolver.getDatasetIRI(imported, ontologyManager).stringValue()
+                                + SYSTEM_DEFAULT_NG_SUFFIX);
+                conn.removeGraph(importDatasetIRI);
+                conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), imported);
+            });
+
         }
+    }
+
+    private void createTempImport(IRI importedDatasetIRI, Model model, DatasetConnection conn) {
+        Ontology importedOntology = new SimpleOntology(importedDatasetIRI, model, repository,
+                ontologyManager, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
+        importedOntology.getImportedOntologyIRIs().forEach(importedImport -> {
+            conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), importedImport, datasetIRI);
+            conn.addDefaultNamedGraph(
+                    vf.createIRI(importsResolver.getDatasetIRI(importedImport, ontologyManager)
+                            .stringValue() + SYSTEM_DEFAULT_NG_SUFFIX));
+        });
+        conn.removeGraph(datasetIRI);
     }
 
     private void undoApplyDifferenceIfPresent(RepositoryConnection conn) {

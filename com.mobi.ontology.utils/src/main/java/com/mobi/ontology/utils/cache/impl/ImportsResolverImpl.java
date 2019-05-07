@@ -111,7 +111,7 @@ public class ImportsResolverImpl implements ImportsResolver {
 
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
             for (int i = 0; i < importsToProcess.size(); i++) {
-                Resource ontologyIRI = importsToProcess.get(i);
+                Resource importIRI = importsToProcess.get(i);
 
                 Model model;
                 if (i == 0) {
@@ -121,20 +121,20 @@ public class ImportsResolverImpl implements ImportsResolver {
                     }
                     addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
                 } else {
-                    IRI iri = getDatasetIRI(ontologyIRI, ontologyManager);
+                    IRI iri = getDatasetIRI(importIRI, ontologyManager);
 
-                    if (iri.stringValue().equals(ontologyIRI.stringValue())) {
-                        Optional<Model> modelOpt = retrieveOntologyFromWeb(ontologyIRI);
+                    if (iri.stringValue().equals(importIRI.stringValue())) {
+                        Optional<Model> modelOpt = retrieveOntologyFromWeb(importIRI);
                         if (modelOpt.isPresent()) {
                             model = modelOpt.get();
                             addOntologyToRepo(cacheRepo, model, datasetKey, iri, false);
                         } else {
-                            unresolvedImports.add(ontologyIRI);
-                            processedImports.add(ontologyIRI);
+                            unresolvedImports.add(importIRI);
+                            processedImports.add(importIRI);
                             continue;
                         }
                     } else {
-                        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+                        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(importIRI);
                         Optional<Resource> headCommit = catalogManager.getMasterBranch(
                                 catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
                         model = catalogManager.getCompiledResource(headCommit.get());
@@ -150,7 +150,7 @@ public class ImportsResolverImpl implements ImportsResolver {
                         .map(r -> (IRI) r)
                         .collect(Collectors.toList());
 
-                processedImports.add(ontologyIRI);
+                processedImports.add(importIRI);
                 imports.forEach(imported -> {
                     if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
                         importsToProcess.add(imported);
@@ -260,8 +260,9 @@ public class ImportsResolverImpl implements ImportsResolver {
                 dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
             }
             if (addTimestamp) {
-                dsConn.addDefault(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()),
-                        datasetIRI);
+                dsConn.remove(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), null, datasetIRI);
+                dsConn.addDefault(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING),
+                        vf.createLiteral(OffsetDateTime.now()), datasetIRI);
                 dsConn.removeGraph(datasetIRI);
             }
         }
