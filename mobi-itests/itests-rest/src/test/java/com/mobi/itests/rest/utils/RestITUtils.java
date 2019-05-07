@@ -24,12 +24,12 @@ package com.mobi.itests.rest.utils;
  */
 
 import static com.mobi.itests.support.KarafTestSupport.HTTPS_PORT;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -57,11 +57,11 @@ public class RestITUtils {
     public static void authenticateUser(HttpClientContext context)
             throws IOException, GeneralSecurityException {
         try (CloseableHttpClient client = createHttpClient()) {
-            HttpGet get = new HttpGet(baseUrl + "/user/login?password="
+            HttpPost post = new HttpPost(baseUrl + "/session?password="
                     + URLEncoder.encode(password, "UTF-8") + "&username=" + URLEncoder.encode(username, "UTF-8"));
-            CloseableHttpResponse response = client.execute(get, context);
+            CloseableHttpResponse response = client.execute(post, context);
             assertNotNull(response);
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
+            assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
         }
     }
 }
