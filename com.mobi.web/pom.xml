@@ -47,6 +47,16 @@
             <version>1.1.0</version>
         </dependency>
         <dependency>
+            <groupId>org.ops4j.pax.web</groupId>
+            <artifactId>pax-web-extender-whiteboard</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.web</groupId>
+            <artifactId>pax-web-api</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
         </dependency>
@@ -104,6 +114,7 @@
             <artifactId>etl.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>
