@@ -1,9 +1,10 @@
 prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 prefix owl: <http://www.w3.org/2002/07/owl#>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
 
- select distinct ?parent ?individual
- where {
+select distinct ?parent ?individual
+where {
     ?parent rdf:type owl:Class .
     optional {
         ?child rdfs:subClassOf ?parent ;
@@ -11,10 +12,25 @@ prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     }
     {
         ?individual rdf:type owl:NamedIndividual ;
-            rdf:type ?parent .
+                    rdf:type ?parent .
         filter ( ?parent != owl:NamedIndividual )
         filter ( !isBlank ( ?parent ) )
         filter ( !isBlank ( ?individual ) )
     }
- }
-
+    UNION
+    {
+        ?individual rdf:type skos:Concept ;
+                    rdf:type ?parent .
+        filter ( ?parent != owl:NamedIndividual )
+        filter ( !isBlank ( ?parent ) )
+        filter ( !isBlank ( ?individual ) )
+    }
+    UNION
+    {
+        ?individual rdf:type skos:ConceptScheme ;
+                    rdf:type ?parent .
+        filter ( ?parent != owl:NamedIndividual )
+        filter ( !isBlank ( ?parent ) )
+        filter ( !isBlank ( ?individual ) )
+    }
+}

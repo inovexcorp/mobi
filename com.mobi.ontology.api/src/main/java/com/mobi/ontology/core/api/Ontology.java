@@ -103,7 +103,7 @@ public interface Ontology {
     Set<Annotation> getOntologyAnnotations();
 
     /**
-     * Gets all the annotations in the ontology, excluding ontology annotations, annotations for other objects such
+     * Gets all the annotations in the ontology import closure, excuding annotations for other objects such
      * as classes and entities.
      *
      * @return ontology annotations
@@ -126,7 +126,7 @@ public interface Ontology {
     boolean containsClass(IRI iri);
 
     /**
-     * Gets all classes explicitly defined within the ontology (excluding imports).
+     * Gets all classes explicitly defined within the ontology import closure.
      *
      * @return A {@link Set} of {@link OClass} objects representing defined classes in the ontology
      */
@@ -164,10 +164,15 @@ public interface Ontology {
      */
     Set<DataProperty> getAllNoDomainDataProperties();
 
+    /**
+     * Gets all datatypes explicitly defined within the ontology import closure.
+     *
+     * @return A {@link Set} of {@link Datatype} objects representing defined classes in the ontology
+     */
     Set<Datatype> getAllDatatypes();
 
     /**
-     * Gets all object properties explicitly defined within the ontology (excluding imports).
+     * Gets all object properties explicitly defined within the ontology import closure.
      *
      * @return A {@link Set} of {@link ObjectProperty} objects representing defined object properties in the ontology
      */
@@ -192,7 +197,7 @@ public interface Ontology {
     Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty);
 
     /**
-     * Gets all data properties explicitly defined within the ontology (excluding imports).
+     * Gets all data properties explicitly defined within the ontology import closure.
      *
      * @return A {@link Set} of {@link DataProperty} objects representing defined data properties in the ontology
      */
