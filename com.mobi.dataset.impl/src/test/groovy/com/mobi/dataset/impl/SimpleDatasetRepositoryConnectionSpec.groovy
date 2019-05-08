@@ -182,6 +182,28 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.getStatements(dataset, namedGraphPred, c).hasNext()
     }
 
+    def "add(s) with a dataset context will add data to a dataset graph"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def dataset = datasetsInFile[1]
+        def stmt = vf.createStatement(s, p, o, dataset)
+        def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(stmt)
+
+        then:
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
+        systemConn.size(dataset) == originalSize + 1
+        systemConn.size(sdng) == 0
+    }
+
     def "add(s, c) will add the necessary graph statement"() {
         setup:
         def s = vf.createIRI("urn:s")
@@ -200,6 +222,28 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(c) == 1
         systemConn.size(graph) == 1
         systemConn.getStatements(dataset, namedGraphPred, graph).hasNext()
+    }
+
+    def "add(s, c) with dataset context will not add the graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def c = vf.createIRI("http://mobi.com/dataset/test2/graph2")
+        def stmt = vf.createStatement(s, p, o, c)
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(stmt, dataset)
+
+        then:
+        systemConn.size(c) == 1
+        systemConn.size(dataset) == 1 + originalSize
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
     }
 
     def "add(s, c...) will add the necessary graph statements"() {
@@ -224,6 +268,25 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
     }
 
+    def "add(s, p, o, c) with dataset context will not add the graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(s, p, o, dataset)
+
+        then:
+        systemConn.size(dataset) == 1 + originalSize
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
+    }
+
     def "add(s, p, o, c...) will add the necessary graph statements"() {
         setup:
         def s = vf.createIRI("urn:s")
@@ -241,6 +304,38 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         systemConn.size(graphs[1]) == 1
         systemConn.getStatements(dataset, namedGraphPred, graphs[0]).hasNext()
         systemConn.getStatements(dataset, namedGraphPred, graphs[1]).hasNext()
+    }
+
+    def "add(model, c) with dataset context will not ass the graph statement"() {
+        setup:
+        def s = vf.createIRI("urn:s")
+        def p = vf.createIRI("urn:p")
+        def o = vf.createLiteral("object")
+        def s2 = vf.createIRI("urn:s2")
+        def p2 = vf.createIRI("urn:p2")
+        def o2 = vf.createLiteral("object2")
+        def model1 = LinkedHashModelFactory.getInstance().createModel()
+        def sdng = vf.createIRI("http://mobi.com/dataset/test1_system_dng")
+        model1.add(s, p, o)
+        model1.add(s2, p2, o2)
+
+        def dataset = datasetsInFile[1]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def originalSize = systemConn.size(dataset)
+
+        when:
+        conn.add(model1, dataset)
+
+        then:
+        systemConn.size(dataset) == originalSize + model1.size()
+
+        !systemConn.getStatements(dataset, sdNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, dataset).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, dataset).hasNext()
+
+        systemConn.getStatements(dataset, sdNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, defNamedGraphPred, sdng).hasNext()
+        !systemConn.getStatements(dataset, namedGraphPred, sdng).hasNext()
     }
 
     def "add(model, c...) will add the necessary graph statements"() {
@@ -1063,6 +1158,34 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         "works with a subquery and dataset clause"                                      | "SELECT * from <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
     }
 
+    def "prepareTupleQuery(query, contexts...) #msg"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = query
+        def Resource[] contextArr = contexts as Resource[]
+        def tupleQuery = conn.prepareTupleQuery(queryString, contextArr)
+
+        when:
+        def results = tupleQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == expectedSize
+
+        where:
+        msg                                                                                        | query                                                       | contexts                                                                                                                                                               | expectedSize
+        "without contexts or graph pattern properly queries the dataset graphs"                    | "SELECT * WHERE { ?s ?p ?o }"                               | new Resource[0]                                                                                                                                                        | 2
+        "without contexts and with graph pattern properly queries the dataset graphs"              | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | new Resource[0]                                                                                                                                                        | 4
+        "with system default named graph and without graph pattern properly queries the dataset"   | "SELECT * WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2_system_dng")]                                                                                                             | 1
+        "with system default named graph and with graph pattern properly queries the dataset"      | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2_system_dng")]                                                                                                             | 1
+        "with a named graph and without graph pattern properly queries the dataset"                | "SELECT * WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2/graph2")]                                                                                                                 | 0
+        "with a named graph and with graph pattern properly queries the dataset"                   | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2/graph2")]                                                                                                                 | 1
+        "with a default named graph and without graph pattern properly queries the dataset graphs" | "SELECT * WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2/graph1")]                                                                                                                 | 1
+        "with a default named graph and with graph pattern properly queries the dataset graphs"    | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2/graph1")]                                                                                                                 | 1
+        "with multiple contexts and without graph pattern properly queries the dataset graphs"     | "SELECT * WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2_system_dng"), vf.createIRI("http://mobi.com/dataset/test2/graph1"), vf.createIRI("http://mobi.com/dataset/test2/graph2")] | 2
+        "with multiple contexts and graph pattern properly queries the dataset graphs"             | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2_system_dng"), vf.createIRI("http://mobi.com/dataset/test2/graph1"), vf.createIRI("http://mobi.com/dataset/test2/graph2")] | 3
+    }
+
     def "prepareTupleQuery(query, baseUri) works"() {
         setup:
         def dataset = datasetsInFile[2]
@@ -1098,6 +1221,34 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         "with a dataset declaration properly queries the dataset graphs with named"     | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
         "works regardless of case"                                                      | "CONSTRUCT { ?s ?p ?o } FroM <:g1> WHERE { {?s ?p ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
         "works with a subquery and dataset clause"                                      | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
+    }
+
+    def "prepareGraphQuery(query, contexts...) #msg"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = query
+        def contextArr = contexts as Resource[]
+        def graphQuery = conn.prepareGraphQuery(queryString, contextArr)
+
+        when:
+        def results = graphQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == expectedSize
+
+        where:
+        msg                                                                                        | query                                                                     | contexts                                                                                                                                                               | expectedSize
+        "without contexts or graph pattern properly queries the dataset graphs"                    | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                               | new Resource[0]                                                                                                                                                        | 2
+        "without contexts and with graph pattern properly queries the dataset graphs"              | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | new Resource[0]                                                                                                                                                        | 4
+        "with system default named graph and without graph pattern properly queries the dataset"   | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2_system_dng")]                                                                                                             | 1
+        "with system default named graph and with graph pattern properly queries the dataset"      | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2_system_dng")]                                                                                                             | 1
+        "with a named graph and without graph pattern properly queries the dataset"                | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2/graph2")]                                                                                                                 | 0
+        "with a named graph and with graph pattern properly queries the dataset"                   | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2/graph2")]                                                                                                                 | 1
+        "with a default named graph and without graph pattern properly queries the dataset graphs" | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2/graph1")]                                                                                                                 | 1
+        "with a default named graph and with graph pattern properly queries the dataset graphs"    | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2/graph1")]                                                                                                                 | 1
+        "with multiple contexts and without graph pattern properly queries the dataset graphs"     | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                               | [vf.createIRI("http://mobi.com/dataset/test2_system_dng"), vf.createIRI("http://mobi.com/dataset/test2/graph1"), vf.createIRI("http://mobi.com/dataset/test2/graph2")] | 2
+        "with multiple contexts and graph pattern properly queries the dataset graphs"             | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }" | [vf.createIRI("http://mobi.com/dataset/test2_system_dng"), vf.createIRI("http://mobi.com/dataset/test2/graph1"), vf.createIRI("http://mobi.com/dataset/test2/graph2")] | 3
     }
 
     def "prepareGraphQuery(query, baseUri) works"() {
