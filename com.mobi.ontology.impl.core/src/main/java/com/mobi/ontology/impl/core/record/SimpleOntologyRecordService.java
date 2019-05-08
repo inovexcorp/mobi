@@ -33,6 +33,8 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -40,14 +42,23 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.core.api.record.AbstractOntologyRecordService;
+import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
+import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 @Component(
         immediate = true,
@@ -162,6 +173,26 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         deleteVersionedRDFData(record, conn);
         clearOntologyCache(record);
         logTrace("deleteOntology(recordId)", start);
+    }
+
+    @Override
+    protected Model createOntologyModel(RecordOperationConfig config) {
+        Model ontologyModel;
+        if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
+            try {
+                ontologyModel = Models.createModel(config.get(OntologyRecordCreateSettings.INPUT_STREAM),
+                        sesameTransformer, new RioFunctionalSyntaxParserFactory().getParser(),
+                        new RioManchesterSyntaxParserFactory().getParser(),
+                        new RioOWLXMLParserFactory().getParser());
+            } catch (IOException e) {
+                throw new MobiOntologyException("Could not parse Ontology input stream.", e);
+            }
+        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
+            ontologyModel = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
+        } else {
+            throw new IllegalArgumentException("Ontology config does not have initial data.");
+        }
+        return ontologyModel;
     }
 
     /**

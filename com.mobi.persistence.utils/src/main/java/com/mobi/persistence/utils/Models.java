@@ -35,10 +35,14 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -200,7 +204,7 @@ public class Models {
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(InputStream inputStream, SesameTransformer transformer) throws IOException {
+    public static Model createModel(InputStream inputStream, SesameTransformer transformer, RDFParser... parsers) throws IOException {
         org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
@@ -219,6 +223,21 @@ public class Models {
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException e) {
                     ontologyData.reset();
+                }
+            }
+            if (model.isEmpty()) {
+                for (RDFParser parser : parsers) {
+                    try {
+                        final StatementCollector collector = new StatementCollector();
+                        parser.setRDFHandler(collector);
+                        parser.setParseErrorListener(new ParseErrorLogger());
+                        parser.setParserConfig(new ParserConfig());
+                        parser.parse(ontologyData, "");
+                        model = new LinkedHashModel(collector.getStatements());
+                        break;
+                    } catch (Exception e) {
+                        ontologyData.reset();
+                    }
                 }
             }
         } finally {

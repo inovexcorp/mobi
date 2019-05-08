@@ -85,7 +85,6 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
         LOG.debug("Updating cache dataset last accessed property for " + dataset);
         conn.remove(dataset, pred, null, dataset);
         conn.add(dataset, pred, timestamp, dataset);
-        conn.removeGraph(dataset);
     }
 
     protected void requireNotClosed() {

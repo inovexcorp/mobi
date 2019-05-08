@@ -23,19 +23,24 @@ package com.mobi.etl.cli;
  * #L%
  */
 
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
+import com.mobi.etl.api.delimited.MappingManager;
+import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.api.rdf.export.RDFExportService;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.engines.RdfEngine;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -89,10 +94,24 @@ public class CLITransform implements Action {
     }
 
     @Reference
-    private CatalogManager catalogManager;
+    private MappingManager mappingManager;
 
-    void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
+    void setMappingManager(MappingManager mappingManager) {
+        this.mappingManager = mappingManager;
+    }
+
+    @Reference
+    private OntologyImportService ontologyImportService;
+
+    void setOntologyImportService(OntologyImportService ontologyImportService) {
+        this.ontologyImportService = ontologyImportService;
+    }
+
+    @Reference
+    private EngineManager engineManager;
+
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
     // Command Parameters
@@ -106,14 +125,28 @@ public class CLITransform implements Action {
     private String mappingRecordIRI = null;
 
     @Completion(FileCompleter.class)
-    @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no dataset "
-            + "given)")
+    @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no other output "
+            + "is given)")
     private String outputFile = null;
 
     @Option(name = "-d", aliases = "--dataset",
-            description = "The dataset to store the resulting triples. (Required if no output file given). NOTE: Any % "
-                    + "symbols as a result of URL encoding must be escaped.")
+            description = "The dataset in which to store the resulting triples. (Required if no other output is given)."
+                    + "NOTE: Any % symbols as a result of URL encoding must be escaped.")
     private String dataset = null;
+
+    @Option(name = "-ont", aliases = "--ontology",
+            description = "The ontology in which to store the resulting triples. (Required if no other output is "
+                    + "given). NOTE: Any % symbols as a result of URL encoding must be escaped.")
+    private String ontology = null;
+
+    @Option(name = "-b", aliases = "--branch",
+            description = "The branch for the ontology in which to store the resulting triples. (defaults to MASTER)")
+    private String branch = null;
+
+    @Option(name = "-u", aliases = "--update",
+            description = "Calculate the differences between the mapped data and the data on the head of the ontology"
+                    + "branch. (defaults to false)")
+    private boolean update = false;
 
     @Option(name = "-h", aliases = "--headers", description = "The file contains headers.")
     private boolean containsHeaders = false;
@@ -139,20 +172,17 @@ public class CLITransform implements Action {
             return null;
         }
 
-        if (outputFile == null && dataset == null) {
-            System.out.println("No output file or dataset provided. Please supply one or more options.");
+        if (outputFile == null && dataset == null && ontology == null) {
+            System.out.println("No output file, dataset, or ontology provided. Please supply one or more options.");
             return null;
         }
 
         try {
             String extension = FilenameUtils.getExtension(newFile.getName());
 
-            Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalog().getResource(),
-                    vf.createIRI(mappingRecordIRI));
-            Resource headCommit = masterBranch.getHead_resource()
-                    .orElseThrow(() -> new IllegalStateException("Mapping record master branch does not have a "
-                            + "head commit."));
-            Model mapping = catalogManager.getCompiledResource(headCommit);
+            Model mapping = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI))
+                    .orElseThrow(() -> new IllegalArgumentException("Mapping record not found"))
+                    .getModel();
 
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
@@ -179,9 +209,34 @@ public class CLITransform implements Action {
                 RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
                 rdfExportService.export(config, model);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            LOGGER.error("Unspecified error in transformation.", e);
+
+            if (ontology != null) {
+                IRI ontologyIri = vf.createIRI(ontology);
+                User adminUser = engineManager.retrieveUser(RdfEngine.ENGINE_NAME, "admin").orElseThrow(() ->
+                        new IllegalStateException("Admin user could not be found"));
+                String commitMsg = "Mapping data from " + mappingRecordIRI;
+
+                Difference difference;
+                if (StringUtils.isEmpty(branch)) {
+                    difference = ontologyImportService.importOntology(ontologyIri, update, model, adminUser, commitMsg);
+                } else {
+                    IRI branchIri = vf.createIRI(branch);
+                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser,
+                            commitMsg);
+                }
+
+                if (difference.getAdditions().isEmpty() && difference.getDeletions().isEmpty()) {
+                    System.out.println("Ontology transform complete. No commit required.");
+                } else {
+                    int additionSize = difference.getAdditions().size();
+                    int deletionSize = difference.getDeletions().size();
+                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize)
+                            + " statements changed.");
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            LOGGER.error("Unspecified error in transformation.", ex);
         }
 
         return null;
