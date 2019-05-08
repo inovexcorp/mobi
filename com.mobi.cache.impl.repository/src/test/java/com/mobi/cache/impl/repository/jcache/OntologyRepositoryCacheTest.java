@@ -629,13 +629,6 @@ public class OntologyRepositoryCacheTest extends OrmEnabledTestCase {
         cache.put(key1, ontNoImports);
         assertTrue(cache.replace(key1, ontOneImport));
         verify(datasetManager).safeDeleteDataset(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), repo.getConfig().id(), false);
-
-        try (DatasetConnection dc = cache.getDatasetConnection(vf.createIRI("http://mobi.com/dataset/" + ResourceUtils.encode(key1)), false)) {
-            RepositoryResult<Statement> statements = dc.getStatements(null, null, null, dc.getSystemDefaultNamedGraph());
-            Model ontologyModel = RepositoryResults.asModelNoContext(statements, mf);
-            assertEquals(ontologyModel.size(), ontOneImportModel.size());
-            assertEquals(ontologyModel, ontOneImportModel);
-        }
     }
 
     @Test

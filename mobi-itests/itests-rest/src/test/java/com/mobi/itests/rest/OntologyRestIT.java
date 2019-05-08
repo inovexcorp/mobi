@@ -91,6 +91,7 @@ public class OntologyRestIT extends KarafTestSupport {
         Files.copy(getBundleEntry(thisBundleContext, "/" + vocabulary), Paths.get(vocabulary));
 
         waitForService("(&(objectClass=com.mobi.ontology.impl.core.record.SimpleOntologyRecordService))", 10000L);
+        waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.ontology.rest.OntologyRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);

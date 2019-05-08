@@ -100,7 +100,7 @@ describe('Login Manager service', function() {
             };
         });
         it('unless the credentials are wrong', function() {
-            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(401, {});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(401, {});
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(() => {
                     fail('Promise should have rejected');
@@ -110,7 +110,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(400, {});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(400, {});
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(() => {
                     fail('Promise should have rejected');
@@ -120,7 +120,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless something else went wrong', function() {
-            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(201, {});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(201, {});
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(response => {
                     expect(response).not.toBe(true);
@@ -133,7 +133,7 @@ describe('Login Manager service', function() {
             expect(loginManagerSvc.currentUserIRI).toBeFalsy();
         });
         it('unless the account is anonymous', function() {
-            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(200, {scope: 'self anon'});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(200, {scope: 'self anon'});
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(response => {
                     expect(response).not.toBe(true);
@@ -151,7 +151,7 @@ describe('Login Manager service', function() {
                 iri: 'userIRI'
             }
             userManagerSvc.getUser.and.returnValue($q.when(user));
-            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(params)).respond(200, {sub: params.username});
             loginManagerSvc.login(params.username, params.password)
                 .then(response => {
                     expect(response).toBe(true);
@@ -165,7 +165,7 @@ describe('Login Manager service', function() {
         });
     });
     it('should log a user out', function() {
-        $httpBackend.expectGET('/mobirest/user/logout').respond(200, {});
+        $httpBackend.expectDELETE('/mobirest/session').respond(200, {});
         loginManagerSvc.logout();
         flushAndVerify($httpBackend);
         expect(datasetStateSvc.reset).toHaveBeenCalled();
@@ -185,7 +185,7 @@ describe('Login Manager service', function() {
     });
     describe('should get the current login', function() {
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/user/current').respond(400, {});
+            $httpBackend.expectGET('/mobirest/session').respond(400, {});
             loginManagerSvc.getCurrentLogin()
                 .then(() => {
                     fail('Promise should have rejected');
@@ -195,7 +195,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless something else went wrong', function() {
-            $httpBackend.expectGET('/mobirest/user/current').respond(201, {});
+            $httpBackend.expectGET('/mobirest/session').respond(201, {});
             loginManagerSvc.getCurrentLogin()
                 .then(() => {
                     fail('Promise should have rejected');
@@ -205,7 +205,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/user/current').respond(200, {});
+            $httpBackend.expectGET('/mobirest/session').respond(200, {});
             loginManagerSvc.getCurrentLogin()
                 .then(response => {
                     expect(response).toEqual({});

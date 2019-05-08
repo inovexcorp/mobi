@@ -1,12 +1,14 @@
-package com.mobi.web.authentication.utils;
+@Version("1.0.0.${build}")
+
+package com.mobi.etl.api.ontology;
 
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.etl.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,22 +25,4 @@ package com.mobi.web.authentication.utils;
  * #L%
  */
 
-
-public class UserCredentials {
-
-    private String username;
-    private String password;
-
-    public UserCredentials(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-}
+import aQute.bnd.annotation.Version;
