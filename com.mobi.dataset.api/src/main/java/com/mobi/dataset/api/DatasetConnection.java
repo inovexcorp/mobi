@@ -23,6 +23,9 @@ package com.mobi.dataset.api;
  * #L%
  */
 
+import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
+import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -48,26 +51,10 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 named graph for that dataset. If one or more contexts are specified, the statement is added to
      *                 these contexts, ignoring any context information in the statement itself.
      * @throws RepositoryException - If the statement could not be added to the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     @Override
     void add(Statement stmt, Resource... contexts) throws RepositoryException;
-
-    /**
-     * Adds the supplied statement to this repository as a default named graph, optionally to one or more named
-     * contexts. Ensures that any necessary dataset default named graph statements are created. Any statement added
-     * without a context (or supplied context) will be added to the system default named graph for that dataset.
-     *
-     * @param stmt -  The statement to add.
-     * @param contexts - The contexts to add the statement to. Note that this parameter is a vararg and as such
-     *                 is optional. If no contexts are specified, the statement is added to any context specified
-     *                 in each statement, or if the statement contains no context, it is added to the system default
-     *                 named graph for that dataset. If one or more contexts are specified, the statement is added to
-     *                 these contexts, ignoring any context information in the statement itself.
-     * @throws RepositoryException - If the statement could not be added to the repository, for example because
-     * the repository is not writable.
-     */
-    void addDefault(Statement stmt, Resource... contexts) throws RepositoryException;
 
     /**
      * Adds the supplied statements to this repository as a named graph, optionally to one or more named contexts.
@@ -81,26 +68,10 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 named graph for that dataset. If one or more contexts are specified, the statements are added to
      *                 these contexts, ignoring any context information in the statements themselves.
      * @throws RepositoryException - If the statements could not be added to the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     @Override
     void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
-
-    /**
-     * Adds the supplied statements to this repository as a default named graph, optionally to one or more named
-     * contexts. Ensures that any necessary dataset default named graph statements are created. Any statement added
-     * without a context (or supplied context) will be added to the system default named graph for that dataset.
-     *
-     * @param statements - The statements that should be added.
-     * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
-     *                 is optional. If no contexts are specified, the statements are added to any context specified
-     *                 in each statement, or if the statement contains no context, it is added to the system default
-     *                 named graph for that dataset. If one or more contexts are specified, the statements are added to
-     *                 these contexts, ignoring any context information in the statements themselves.
-     * @throws RepositoryException - If the statements could not be added to the repository, for example because
-     * the repository is not writable.
-     */
-    void addDefault(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
 
     /**
      * Adds a statement with the specified subject, predicate and object to this repository, optionally
@@ -116,10 +87,42 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 named graph for that dataset. If one or more contexts are specified, the data are added to
      *                 these contexts.
      * @throws RepositoryException - If the data could not be added to the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     @Override
     void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Adds the supplied statement to this repository as a default named graph, optionally to one or more named
+     * contexts. Ensures that any necessary dataset default named graph statements are created. Any statement added
+     * without a context (or supplied context) will be added to the system default named graph for that dataset.
+     *
+     * @param stmt -  The statement to add.
+     * @param contexts - The contexts to add the statement to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statement is added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added to the system default
+     *                 named graph for that dataset. If one or more contexts are specified, the statement is added to
+     *                 these contexts, ignoring any context information in the statement itself.
+     * @throws RepositoryException - If the statement could not be added to the repository, for example because
+     *      the repository is not writable.
+     */
+    void addDefault(Statement stmt, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Adds the supplied statements to this repository as a default named graph, optionally to one or more named
+     * contexts. Ensures that any necessary dataset default named graph statements are created. Any statement added
+     * without a context (or supplied context) will be added to the system default named graph for that dataset.
+     *
+     * @param statements - The statements that should be added.
+     * @param contexts - The contexts to add the statements to. Note that this parameter is a vararg and as such
+     *                 is optional. If no contexts are specified, the statements are added to any context specified
+     *                 in each statement, or if the statement contains no context, it is added to the system default
+     *                 named graph for that dataset. If one or more contexts are specified, the statements are added to
+     *                 these contexts, ignoring any context information in the statements themselves.
+     * @throws RepositoryException - If the statements could not be added to the repository, for example because
+     *      the repository is not writable.
+     */
+    void addDefault(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
 
     /**
      * Adds a statement with the specified subject, predicate and object to this repository, optionally
@@ -135,7 +138,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 named graph for that dataset. If one or more contexts are specified, the data are added to
      *                 these contexts.
      * @throws RepositoryException - If the data could not be added to the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     void addDefault(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
 
@@ -150,23 +153,24 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 named graph. If one or more contexts are specified, the statement is removed from these contexts,
      *                 ignoring any context information in the statement itself.
      * @throws RepositoryException - If the statement could not be removed from the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     @Override
     void remove(Statement stmt, Resource... contexts) throws RepositoryException;
 
     /**
-     * Removes the supplied statements from this dataset, optionally from one or more named contexts. Ensures the removal
-     * operations only affect graphs in this dataset. This operation will not remove empty graphs from the dataset.
+     * Removes the supplied statements from this dataset, optionally from one or more named contexts. Ensures the
+     * removal operations only affect graphs in this dataset. This operation will not remove empty graphs from the
+     * dataset.
      *
      * @param statements - The statements that should be removed.
      * @param contexts - The contexts to remove the statements from. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, each statement is removed from any context specified
      *                 in the statement, or if the statement contains no context, it is removed from the system default
-     *                 named graph. If one or more contexts are specified, each statement is removed from those contexts,
-     *                 ignoring any context information in the statement itself.
+     *                 named graph. If one or more contexts are specified, each statement is removed from those
+     *                 contexts, ignoring any context information in the statement itself.
      * @throws RepositoryException - If the data could not be removed from the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     @Override
     void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException;
@@ -183,7 +187,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 is optional. If no contexts are specified, the data is removed from the system default
      *                 named graph.
      * @throws RepositoryException - If the data could not be removed from the repository, for example because
-     * the repository is not writable.
+     *      the repository is not writable.
      */
     @Override
     void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
@@ -196,7 +200,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @param contexts - The context(s) to remove the data from. Note that this parameter is a vararg and as
      *                 such is optional. If no contexts are supplied the method operates on the entire dataset.
      * @throws RepositoryException - If the statements could not be removed from the repository, for example
-     * because the repository is not writable.
+     *      because the repository is not writable.
      */
     @Override
     void clear(Resource... contexts) throws RepositoryException;
@@ -209,6 +213,8 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      *                 is optional. If no contexts are supplied the method operates on the entire dataset. Contexts that
      *                 are not graphs in this dataset will evaluate to a size of 0.
      * @return The number of explicit statements from the specified contexts that exist in this dataset.
+     * @throws RepositoryException - If the size could not be determined from the repository, for example because
+     *      the repository is not readable.
      */
     @Override
     long size(Resource... contexts) throws RepositoryException;
@@ -225,9 +231,9 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @param contexts - The context(s) to get the data from. Note that this parameter is a vararg and as such is
      *                 optional. If no contexts are supplied the method operates on the entire repository.
      * @return The statements matching the specified pattern. The result object is a RepositoryResult object, a lazy
-     * Iterator-like object containing Statements and optionally throwing a RepositoryException when an error
-     * when a problem occurs during retrieval.
-     * @throws RepositoryException when a problem occurs during retrieval.
+     *      Iterator-like object containing Statements and optionally throwing a RepositoryException when an error
+     *      when a problem occurs during retrieval.
+     * @throws RepositoryException If a problem occurs during retrieval.
      */
     @Override
     RepositoryResult<Statement> getStatements(Resource subject, IRI predicate, Value object, Resource... contexts)
@@ -238,10 +244,43 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * is closed to free any resources that it keeps hold of.
      *
      * @return a RepositoryResult object containing Resources that are used as context identifiers.
-     * @throws RepositoryException
+     * @throws RepositoryException - If the contexts could not be determined from the repository, for example because
+     *      the repository is not readable.
      */
     @Override
     RepositoryResult<Resource> getContextIDs() throws RepositoryException;
+
+    /**
+     * Prepares a SPARQL query against the specified contexts that produces sets of value tuples, that is a SPARQL
+     * SELECT query.
+     *
+     * @param query The query string, in SPARQL syntax.
+     * @param contexts The context(s) to query. Note that this parameter is a vararg and as such is optional. If no
+     *                 contexts are supplied the method operates on the entire dataset.
+     * @return a {@link TupleQuery} ready to be evaluated on this {@link DatasetConnection}.
+     * @throws IllegalArgumentException If the supplied query is not a tuple query.
+     * @throws MalformedQueryException If the supplied query is malformed.
+     * @throws RepositoryException - If the query could not be run against the repository, for example because
+     *      the repository is not readable.
+     */
+    TupleQuery prepareTupleQuery(String query, Resource... contexts) throws RepositoryException,
+            MalformedQueryException;
+
+    /**
+     * Prepares SPARQL queries against the specified contexts that produce RDF graphs, that is, SPARQL CONSTRUCT or
+     * DESCRIBE queries.
+     *
+     * @param query The query string, in SPARQL syntax.
+     * @param contexts The context(s) to query. Note that this parameter is a vararg and as such is optional. If no
+     *                 contexts are supplied the method operates on the entire dataset.
+     * @return a {@link GraphQuery} ready to be evaluated on this {@link DatasetConnection}.
+     * @throws IllegalArgumentException If the supplied query is not a graph query.
+     * @throws MalformedQueryException If the supplied query is malformed.
+     * @throws RepositoryException - If the query could not be run against the repository, for example because
+     *      the repository is not readable.
+     */
+    GraphQuery prepareGraphQuery(String query, Resource... contexts) throws RepositoryException,
+            MalformedQueryException;
 
     /**
      * Gets the resources that are used as named graphs in the dataset. Care should be taken that the returned
