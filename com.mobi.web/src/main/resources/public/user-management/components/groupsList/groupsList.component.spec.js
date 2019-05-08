@@ -115,6 +115,13 @@ describe('Groups List component', function() {
             scope.$digest();
             expect(groupLink.hasClass('active')).toEqual(true);
         });
+        it('depending on whether a group is external', function() {
+            var group = {title: 'group', members: [], external: true};
+            this.controller.filteredGroups = [group];
+            scope.$digest();
+            var title = angular.element(this.element.querySelectorAll('li')[0]);
+            expect(title.hasClass('external')).toEqual(true);
+        });
     });
     it('should call clickEvent when a group is clicked', function() {
         var group = {title: 'group', members: []};

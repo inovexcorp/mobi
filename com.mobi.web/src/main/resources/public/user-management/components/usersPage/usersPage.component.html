@@ -35,7 +35,7 @@
                     <users-list users="dvm.um.users" selected-user="dvm.state.selectedUser" click-event="dvm.selectUser(user)" search-text="dvm.state.userSearchString"></users-list>
                 </block-content>
                 <block-footer class="centered">
-                    <button class="btn btn-link" ng-click="dvm.confirmDeleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser">
+                    <button class="btn btn-link" ng-click="dvm.confirmDeleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser || dvm.state.selectedUser.external">
                         <i class="fa fa-trash"></i>Delete User
                     </button>
                 </block-footer>
@@ -52,7 +52,7 @@
                             <block class="h-100">
                                 <block-header>
                                     <span>Profile</span>
-                                    <button class="btn btn-link float-right" ng-click="dvm.editProfile()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                                    <button class="btn btn-link float-right" ng-click="dvm.editProfile()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.external">
                                         <i class="fa fa-pencil"></i>Edit
                                     </button>
                                 </block-header>
@@ -79,7 +79,7 @@
                                 </block-header>
                                 <block-content>
                                     <div class="padding">
-                                        <button class="btn btn-primary" ng-click="dvm.resetPassword()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser)">Reset Password</button>
+                                        <button class="btn btn-primary" ng-click="dvm.resetPassword()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.external">Reset Password</button>
                                     </div>
                                 </block-content>
                             </block>

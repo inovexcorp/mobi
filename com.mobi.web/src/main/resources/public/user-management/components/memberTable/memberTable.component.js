@@ -36,8 +36,9 @@
      * provided `addMember` and `removeMember` functions. When the "Add Member" link is clicked, a row is added to the
      * table contains a `ui-select` with the available users to add to the member list. Once a user has been
      * selected in the `ui-select`, it will be added to the list. If you click off of the `ui-select`, it will be
-     * removed.
+     * removed. The Add and Remove functionality is only available if the `readOnly` attribute is falsy.
      *
+     * @param {boolean} readOnly Whether the table should be read only (i.e. non-editable)
      * @param {string[]} members The list of members names to display in the table
      * @param {Function} removeMember The method to call when a member is removed from the list. Expects an argument
      * called `member`
@@ -49,6 +50,7 @@
     const memberTableComponent = {
         templateUrl: 'user-management/components/memberTable/memberTable.component.html',
         bindings: {
+            readOnly: '<',
             members: '<',
             removeMember: '&',
             addMember: '&',

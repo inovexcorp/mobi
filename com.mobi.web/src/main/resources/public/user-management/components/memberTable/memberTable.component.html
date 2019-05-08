@@ -24,11 +24,11 @@
     <tr ng-repeat="user in dvm.memberObjects track by user.username" class="member">
         <td ng-if="!dvm.linkToUser" class="username align-middle">{{user.username}}</td>
         <td ng-if="dvm.linkToUser" class="username align-middle"><a ng-click="dvm.goToUser(user)">{{user.username}}</a></td>
-      <td>
-        <span><button class="btn btn-link" ng-click="dvm.removeMember({member: user.username})" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
-          <i class="fa fa-trash-o"></i>
-        </button></span>
-      </td>
+        <td>
+            <span><button class="btn btn-link" ng-click="dvm.removeMember({member: user.username})" ng-disabled="user.username === dvm.lm.currentUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.readOnly">
+            <i class="fa fa-trash-o"></i>
+            </button></span>
+        </td>
     </tr>
     <tr ng-if="dvm.addingMember" class="adding-member">
         <td colspan="2">
@@ -43,6 +43,6 @@
         </td>
     </tr>
     <tr ng-if="dvm.availableUsers.length > 0 && dvm.um.isAdmin(dvm.lm.currentUser)" class="add-member">
-        <td colspan="2"><a ng-click="dvm.addingMember = true">+ Add Member</a></td>
+        <td colspan="2"><a a-disabled="dvm.readOnly" ng-click="dvm.addingMember = true">+ Add Member</a></td>
     </tr>
 </table>

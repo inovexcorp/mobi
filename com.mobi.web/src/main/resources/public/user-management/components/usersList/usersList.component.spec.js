@@ -171,6 +171,13 @@ describe('Users List component', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('li .admin').length).toBe(1);
         });
+        it('depending on whether a user is external', function() {
+            var user = {username: 'user', external: true};
+            this.controller.filteredUsers = [user];
+            scope.$digest();
+            var title = angular.element(this.element.querySelectorAll('li')[0]);
+            expect(title.hasClass('external')).toEqual(true);
+        });
     });
     it('should call clickEvent when a group is clicked', function() {
         var user = {username: 'user'};

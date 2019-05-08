@@ -54,12 +54,12 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.query.TupleQueryResult;
@@ -177,9 +177,6 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private MergeRequestManager mergeRequestManager;
 
     @Mock
-    private Ontology ontology;
-
-    @Mock
     private OntologyId ontologyId1;
 
     @Mock
@@ -200,10 +197,11 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     @Mock
     private EngineManager engineManager;
 
+    @Mock
+    private SesameTransformer sesameTransformer;
 
     @Before
     public void setUp() throws Exception {
-
         recordService = new SimpleOntologyRecordService();
         deleteActivity = deleteActivityFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/activity/delete"));
         WriterConfig config = new WriterConfig();
@@ -244,14 +242,11 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setOntologyIRI(testIRI);
 
         MockitoAnnotations.initMocks(this);
-        when(ontology.asModel(MODEL_FACTORY)).thenReturn(ontologyModel);
-        when(ontology.getOntologyId()).thenReturn(ontologyId1);
         when(ontologyId1.getOntologyIRI()).thenReturn(Optional.empty());
         when(ontologyId1.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
         when(ontologyId2.getOntologyIRI()).thenReturn(Optional.of(importedOntologyIRI));
-        when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
-        when(ontologyManager.createOntology(any(InputStream.class), any(Boolean.class))).thenReturn(ontology);
         when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(false);
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId1);
         when(versioningManager.commit(any(IRI.class), any(IRI.class), any(IRI.class), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitIRI);
         when(utilsService.optObject(any(IRI.class), any(OrmFactory.class), eq(connection))).thenReturn(Optional.of(testRecord));
         when(utilsService.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), eq(connection))).thenReturn(branch);
@@ -278,7 +273,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(bindingSet.getBinding(anyString())).thenReturn(Optional.of(binding));
         when(binding.getValue()).thenReturn(VALUE_FACTORY.createLiteral("urn:record"),
                 VALUE_FACTORY.createLiteral("urn:master"), VALUE_FACTORY.createLiteral("urn:user"));
-
+        when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setOntologyManager(ontologyManager);
@@ -292,6 +287,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         recordService.setPolicyManager(xacmlPolicyManager);
         recordService.setEngineManager(engineManager);
         recordService.setCatalogConfigProvider(configProvider);
+        recordService.setSesameTransformer(sesameTransformer);
     }
 
     /* activate() */
@@ -357,11 +353,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(ontology).asModel(eq(MODEL_FACTORY));
-        verify(ontology).getOntologyId();
         verify(ontologyId1).getOntologyIRI();
         verify(ontologyId1).getOntologyIdentifier();
-        verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
+        verify(ontologyManager).createOntologyId(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
@@ -383,7 +377,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
-        when(ontology.getOntologyId()).thenReturn(ontologyId2);
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId2);
 
         OntologyRecord ontologyRecord = recordService.create(user, config, connection);
         Optional<Value> optTitle = ontologyRecord.getProperty(VALUE_FACTORY.createIRI(_Thing.title_IRI));
@@ -408,11 +402,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(ontology).asModel(eq(MODEL_FACTORY));
-        verify(ontology).getOntologyId();
         verify(ontologyId2).getOntologyIRI();
-        verify(ontologyId2, times(0)).getOntologyIdentifier();
-        verify(ontologyManager).createOntology(any(InputStream.class), any(Boolean.class));
+        verify(ontologyId2).getOntologyIdentifier();
+        verify(ontologyManager).createOntologyId(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
@@ -457,10 +449,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(ontology).asModel(eq(MODEL_FACTORY));
-        verify(ontology).getOntologyId();
         verify(ontologyId1).getOntologyIdentifier();
-        verify(ontologyManager).createOntology(any(Model.class));
+        verify(ontologyManager).createOntologyId(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),

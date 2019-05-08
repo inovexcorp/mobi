@@ -42,7 +42,7 @@ public interface OntologyManager {
      * @param inputStream the InputStream which contains the ontology data.
      * @param resolveImports Whether or not imports should be resolved when creating this ontology
      * @return an Ontology created with the provided InputStream.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
+     * @throws MobiOntologyCreationException If the ontology can't be created.
      */
     Ontology createOntology(InputStream inputStream, boolean resolveImports);
 
@@ -51,7 +51,7 @@ public interface OntologyManager {
      *
      * @param model the Model of the ontology you want to create.
      * @return an Ontology created with the provided Model.
-     * @throws MobiOntologyCreationException - if the ontology can't be created.
+     * @throws MobiOntologyCreationException If the ontology can't be created.
      */
     Ontology createOntology(Model model);
 
@@ -96,7 +96,7 @@ public interface OntologyManager {
      *
      * @param ontologyIRI An ontology IRI that should be set on an OntologyRecord in the Catalog.
      * @return An Optional of the Record Resource id if found, otherwise Optional.empty()
-     * @throws IllegalStateException - the system Repository could not be found.
+     * @throws IllegalStateException If the system Repository could not be found.
      */
     Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI);
 
@@ -105,7 +105,7 @@ public interface OntologyManager {
      *
      * @param ontologyIRI The IRI of the ontology the OntologyRecord represents.
      * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
-     * @throws IllegalStateException - the system Repository could not be found.
+     * @throws IllegalStateException If the system Repository could not be found.
      */
     Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI);
 
@@ -114,7 +114,7 @@ public interface OntologyManager {
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
-     * @throws MobiOntologyCreationException - the ontology can't be created.
+     * @throws MobiOntologyCreationException If the ontology can't be created.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId);
 
@@ -124,8 +124,8 @@ public interface OntologyManager {
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
-     * @throws MobiOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the branch cannot be found.
+     * @throws MobiOntologyCreationException If the ontology can't be created.
+     * @throws IllegalArgumentException If the branch cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
@@ -136,8 +136,8 @@ public interface OntologyManager {
      * @param branchId the branch id for the Branch you want to retrieve.
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
-     * @throws MobiOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the branch or commit cannot be found.
+     * @throws MobiOntologyCreationException If the ontology can't be created.
+     * @throws IllegalArgumentException Id the branch or commit cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId);
@@ -148,8 +148,8 @@ public interface OntologyManager {
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
-     * @throws MobiOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the record cannot be found.
+     * @throws MobiOntologyCreationException If the ontology can't be created.
+     * @throws IllegalArgumentException If the record cannot be found.
      */
     Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId);
 
@@ -158,7 +158,7 @@ public interface OntologyManager {
      *
      * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
      * @param branchId The branch id of the ontology branch you want to delete.
-     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
+     * @throws IllegalArgumentException If the OntologyRecord can't be retrieved.
      */
     void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
@@ -195,6 +195,15 @@ public interface OntologyManager {
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
 
     /**
+     * Creates a new OntologyId using the provided Model to extract the OntologyIRI and VersionIRI to determine the
+     * identifier. If no OntologyIRI is on the Model, one is created and added to it.
+     *
+     * @param model the ontology Model you want to create the recordId for.
+     * @return an OntologyId using the ontologyIRI and/or versionIRI from the model to determine the proper identifier.
+     */
+    OntologyId createOntologyId(Model model);
+
+    /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
      * provided Resource.
      *
@@ -210,6 +219,8 @@ public interface OntologyManager {
      * @param recordId the record id for the OntologyRecord you want to get the Model for.
      * @param branchId the branch id for the OntologyRecord you want to get the Model for.
      * @return a Model containing the Ontology Statements.
+     * @throws IllegalArgumentException If the Catalog could not be found, the OntologyRecord could not be found, or the
+     *      Branch does not belong to the OntologyRecord
      */
     Model getOntologyModel(Resource recordId, Resource branchId);
 }

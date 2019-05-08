@@ -25,7 +25,9 @@ package com.mobi.ontology.impl.owlapi;
 
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
@@ -46,10 +48,23 @@ public class SimpleOntologyId implements OntologyId {
         private Resource identifier;
         private IRI ontologyIRI;
         private IRI versionIRI;
+        private Model model;
         private ValueFactory factory;
 
         public Builder(ValueFactory factory) {
             this.factory = factory;
+        }
+
+        /**
+         * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
+         * OntologyIRI and VersionIRI.
+         *
+         * @param model the Model to use to retrieve identifier information
+         * @return SimpleOntologyId Builder
+         */
+        public Builder model(Model model) {
+            this.model = model;
+            return this;
         }
 
         public Builder id(Resource identifier) {
@@ -73,10 +88,23 @@ public class SimpleOntologyId implements OntologyId {
     }
 
     private SimpleOntologyId(Builder builder) {
+        this.factory = builder.factory;
+
+        if (builder.model != null) {
+            builder.ontologyIRI = null;
+            builder.versionIRI = null;
+            builder.identifier = null;
+            OntologyModels.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
+                    -> builder.ontologyIRI = ontologyIRI);
+            if (builder.ontologyIRI != null) {
+                OntologyModels.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI
+                        -> builder.versionIRI = versionIRI);
+            }
+        }
+
         if (builder.versionIRI != null && builder.ontologyIRI == null) {
             throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
         }
-        this.factory = builder.factory;
 
         org.semanticweb.owlapi.model.IRI ontologyIRI = null;
         org.semanticweb.owlapi.model.IRI versionIRI = null;

@@ -39,7 +39,8 @@ com.mobi.prov.api
 com.mobi.prov.impl
 com.mobi.prov.rest
 com.mobi.cache
-com.mobi.cache.impl.ehcache
+com.mobi.cache.impl.core
+com.mobi.cache.impl.repository
 com.mobi.security.policy.api
 com.mobi.security.policy.api.xacml
 com.mobi.security.policy.impl.core

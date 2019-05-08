@@ -344,6 +344,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public OntologyId createOntologyId(Model model) {
+        return new SimpleOntologyId.Builder(valueFactory).model(model).build();
+    }
+
+    @Override
     public Model getOntologyModel(Resource recordId) {
         return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }
@@ -351,7 +356,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Model getOntologyModel(Resource recordId, Resource branchId) {
         Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory)
-                .get();
+                .orElseThrow(() -> new IllegalArgumentException("Branch does not belong to OntologyRecord"));
         return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
     }
 

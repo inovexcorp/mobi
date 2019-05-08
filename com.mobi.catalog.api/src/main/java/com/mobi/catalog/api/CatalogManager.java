@@ -524,8 +524,7 @@ public interface CatalogManager {
      * @param factory              The OrmFactory identifying the type of Branch you want to get.
      * @param <T>                  An Object which extends Branch.
      * @return The Branch if it exists.
-     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
-     *                                  Record does not belong to the Catalog.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found or the Record could not be found.
      * @throws IllegalStateException    Thrown if the Branch could not be found.
      */
     <T extends Branch> Optional<T> getBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,

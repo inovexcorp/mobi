@@ -46,7 +46,8 @@ describe('Member Table component', function() {
         scope.removeMember = jasmine.createSpy('removeMember');
         scope.addMember = jasmine.createSpy('addMember');
         scope.linkToUser = false;
-        this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember(member)" add-member="addMember(member)" link-to-user="linkToUser"></member-table>'))(scope);
+        scope.readOnly = false;
+        this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember(member)" add-member="addMember(member)" link-to-user="linkToUser" read-only="readOnly"></member-table>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('memberTable');
     });
@@ -78,6 +79,11 @@ describe('Member Table component', function() {
             this.controller.linkToUser = true;
             scope.$digest();
             expect(scope.linkToUser).toEqual(false);
+        });
+        it('readOnly should be one way bound', function() {
+            this.controller.readOnly = true;
+            scope.$digest();
+            expect(scope.readOnly).toEqual(false);
         });
     });
     describe('controller methods', function() {
@@ -160,7 +166,16 @@ describe('Member Table component', function() {
             expect(removeButton.attr('disabled')).toBeFalsy();
             expect(this.element.querySelectorAll('.add-member').length).toEqual(1);
         });
-        it('depending on users should be linked to', function() {
+        it('depending on whether the table is read only', function() {
+            this.controller.availableUsers = [{}];
+            this.controller.readOnly = true;
+            userManagerSvc.isAdmin.and.returnValue(true);
+            loginManagerSvc.currentUser = 'user';
+            scope.$digest();
+            var removeButton = angular.element(this.element.querySelectorAll('.member td:last-child button')[0]);
+            expect(removeButton.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether users should be linked to', function() {
             var users = this.element.querySelectorAll('.member-table > tbody > tr > td.username > a');
             expect(users.length).toEqual(0);
 

@@ -246,6 +246,17 @@ describe('Users Page component', function() {
             scope.$digest();
             expect(deleteButton.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the selected user is external', function() {
+            userStateSvc.selectedUser = {username: 'user', external: true};
+            userManagerSvc.isAdmin.and.returnValue(true);
+            scope.$digest();
+            var passwordButton = angular.element(this.element.querySelectorAll('.col-8 block-content button')[0]);
+            var editProfileButton = angular.element(this.element.querySelectorAll('.col-8 block-header button')[0]);
+            var deleteButton = angular.element(this.element.querySelectorAll('.col-4 block-footer button.btn-link')[0]);
+            expect(deleteButton.attr('disabled')).toBeTruthy();
+            expect(passwordButton.attr('disabled')).toBeTruthy();
+            expect(editProfileButton.attr('disabled')).toBeTruthy();
+        });
         it('depending on the number of groups a user is in', function() {
             userStateSvc.selectedUser = {username: 'user'};
             spyOn(this.controller, 'getUserGroups').and.returnValue([{title: 'group', roles: []}]);

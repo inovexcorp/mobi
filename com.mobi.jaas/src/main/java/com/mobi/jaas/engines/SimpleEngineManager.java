@@ -70,6 +70,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public Optional<Role> getRole(String roleName) {
+        for (Engine engine : engines.values()) {
+            Optional<Role> optional = engine.getRole(roleName);
+            if (optional.isPresent()) {
+                return optional;
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Set<User> getUsers(String engine) {
         if (engines.containsKey(engine)) {
             return engines.get(engine).getUsers();
@@ -135,6 +146,19 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public void updateUser(User newUser) {
+        Engine foundEngine = null;
+        for (Engine engine : engines.values()) {
+            if (engine.userExists(newUser.getResource())) {
+                foundEngine = engine;
+            }
+        }
+        if (foundEngine != null) {
+            foundEngine.updateUser(newUser);
+        }
+    }
+
+    @Override
     public boolean userExists(String engine, String username) {
         return engines.containsKey(engine) && engines.get(engine).userExists(username);
     }
@@ -155,6 +179,15 @@ public class SimpleEngineManager implements EngineManager {
             return engines.get(engine).getGroups();
         }
         return new HashSet<>();
+    }
+
+    @Override
+    public Set<Group> getGroups() {
+        Set<Group> groups = new HashSet<>();
+        for (Engine engine : engines.values()) {
+            groups.addAll(engine.getGroups());
+        }
+        return groups;
     }
 
     @Override
@@ -181,6 +214,17 @@ public class SimpleEngineManager implements EngineManager {
     }
 
     @Override
+    public Optional<Group> retrieveGroup(String groupTitle) {
+        for (Engine engine : engines.values()) {
+            Optional<Group> optional = engine.retrieveGroup(groupTitle);
+            if (optional.isPresent()) {
+                return optional;
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public void deleteGroup(String engine, String groupTitle) {
         if (containsEngine(engine)) {
             engines.get(engine).deleteGroup(groupTitle);
@@ -191,6 +235,19 @@ public class SimpleEngineManager implements EngineManager {
     public void updateGroup(String engine, Group newGroup) {
         if (containsEngine(engine)) {
             engines.get(engine).updateGroup(newGroup);
+        }
+    }
+
+    @Override
+    public void updateGroup(Group newGroup) {
+        Engine foundEngine = null;
+        for (Engine engine : engines.values()) {
+            if (engine.groupExists(newGroup.getResource())) {
+                foundEngine = engine;
+            }
+        }
+        if (foundEngine != null) {
+            foundEngine.updateGroup(newGroup);
         }
     }
 
@@ -221,12 +278,13 @@ public class SimpleEngineManager implements EngineManager {
     public Set<Role> getUserRoles(String username) {
         Set<Role> roles = new HashSet<>();
         for (Engine engine : engines.values()) {
-            engine.getUserRoles(username).stream()
-                    .filter(role -> !roles.stream()
-                            .map(Thing::getResource)
-                            .collect(Collectors.toSet()).contains(role.getResource()))
-                    .forEach(roles::add);
-
+            if (engine.userExists(username)) {
+                engine.getUserRoles(username).stream()
+                        .filter(role -> !roles.stream()
+                                .map(Thing::getResource)
+                                .collect(Collectors.toSet()).contains(role.getResource()))
+                        .forEach(roles::add);
+            }
         }
         return roles;
     }

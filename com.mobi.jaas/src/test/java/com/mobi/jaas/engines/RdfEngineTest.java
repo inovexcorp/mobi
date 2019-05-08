@@ -29,13 +29,15 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
-import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalGroup;
+import com.mobi.jaas.api.ontologies.usermanagement.ExternalUser;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.foaf.Agent;
+import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -77,18 +79,23 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     private Repository repo;
     private RdfEngine engine;
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private OrmFactory<ExternalUser> externalUserFactory = getRequiredOrmFactory(ExternalUser.class);
     private OrmFactory<Group> groupFactory = getRequiredOrmFactory(Group.class);
+    private OrmFactory<ExternalGroup> externalGroupFactory = getRequiredOrmFactory(ExternalGroup.class);
 
     private String username = "tester";
     private String userId = "http://mobi.com/users/" + DigestUtils.sha1Hex(username);
+    private String externalUsername = "externaluser";
+    private String externalUserId = "http://mobi.com/users/" + DigestUtils.sha1Hex(externalUsername);
     private String password = "test";
     private String groupName1 = "cats";
     private String groupId1 = "http://mobi.com/groups/" + DigestUtils.sha1Hex(groupName1);
     private String groupName2 = "dogs";
     private String groupId2 = "http://mobi.com/groups/" + DigestUtils.sha1Hex(groupName2);
+    private String externalGroupName = "externalgroup";
+    private String externalGroupId = "http://mobi.com/groups/" + DigestUtils.sha1Hex(externalGroupName);
     private String userRoleId = "http://mobi.com/roles/user";
     private String adminRoleId = "http://mobi.com/roles/admin";
-    private String context = "http://mobi.com/usermanagement";
     private boolean setUp = false;
     private Map<String, Object> options = new HashMap<>();
 
@@ -119,20 +126,29 @@ public class RdfEngineTest extends OrmEnabledTestCase {
             Role adminRole = roleFactory.createNew(VALUE_FACTORY.createIRI(adminRoleId));
             Set<Role> roles = Stream.of(userRole).collect(Collectors.toSet());
             User testUser = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
+            testUser.setUsername(VALUE_FACTORY.createLiteral(username));
             testUser.setPassword(VALUE_FACTORY.createLiteral(password));
             testUser.setHasUserRole(roles);
+            User externalUser = externalUserFactory.createNew(VALUE_FACTORY.createIRI(externalUserId));
+            externalUser.setUsername(VALUE_FACTORY.createLiteral(externalUsername));
             roles.add(adminRole);
             Set<Agent> members = Stream.of(testUser).collect(Collectors.toSet());
             Group testGroup1 = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
             Group testGroup2 = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId2));
+            Group externalGroup = externalGroupFactory.createNew(VALUE_FACTORY.createIRI(externalGroupId));
+            testGroup1.setProperty(VALUE_FACTORY.createLiteral(groupName1), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
+            testGroup2.setProperty(VALUE_FACTORY.createLiteral(groupName2), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
             testGroup1.setHasGroupRole(roles);
             testGroup2.setHasGroupRole(Collections.singleton(roleFactory.createNew(VALUE_FACTORY.createIRI(adminRoleId))));
             testGroup1.setMember(members);
             testGroup2.setMember(members);
             RepositoryConnection conn = repo.getConnection();
+            String context = "http://mobi.com/usermanagement";
             conn.add(testUser.getModel(), VALUE_FACTORY.createIRI(context));
+            conn.add(externalUser.getModel(), VALUE_FACTORY.createIRI(context));
             conn.add(testGroup1.getModel(), VALUE_FACTORY.createIRI(context));
             conn.add(testGroup2.getModel(), VALUE_FACTORY.createIRI(context));
+            conn.add(externalGroup.getModel(), VALUE_FACTORY.createIRI(context));
             conn.close();
             setUp = true;
         }
@@ -156,12 +172,12 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         repo.shutDown();
     }
 
     @Test
-    public void testGetRole() throws Exception {
+    public void testGetRole() {
         Optional<Role> roleOptional = engine.getRole("user");
 
         assertTrue(roleOptional.isPresent());
@@ -170,38 +186,46 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testGetRoleThatDoesNotExist() throws Exception {
+    public void testGetRoleThatDoesNotExist() {
         Optional<Role> roleOptional = engine.getRole("error");
         assertFalse(roleOptional.isPresent());
     }
 
     @Test
-    public void testGetUsers() throws Exception {
+    public void testGetUsers() {
+        // Setup:
+        Set<String> expectedUsernames = Stream.of("admin", username).collect(Collectors.toSet());
+
         Set<User> users = engine.getUsers();
-        assertTrue(!users.isEmpty());
+        assertEquals(expectedUsernames.size(), users.size());
+        users.forEach(user -> {
+            Optional<Literal> optUsername = user.getUsername();
+            assertTrue(optUsername.isPresent());
+            assertTrue(expectedUsernames.contains(optUsername.get().stringValue()));
+        });
     }
 
     @Test
-    public void testCreateUser() throws Exception {
+    public void testCreateUser() {
         Set<String> roles = Stream.of("user").collect(Collectors.toSet());
         UserConfig config = new UserConfig.Builder(username, password, roles).email("example@example.com")
                 .firstName("John").lastName("Doe").build();
         User user = engine.createUser(config);
 
-        assertTrue(user.getResource().stringValue().equals(userId));
+        assertEquals(user.getResource().stringValue(), userId);
         assertTrue(user.getUsername().isPresent() && user.getUsername().get().stringValue().equals(username));
         assertTrue(user.getPassword().isPresent() && user.getPassword().get().stringValue().equals(password));
         assertEquals(user.getHasUserRole_resource().size(), roles.size());
-        assertTrue(!user.getMbox_resource().isEmpty() && user.getMbox_resource().size() == 1);
-        assertTrue(user.getMbox_resource().stream().map(resource -> resource.stringValue()).collect(Collectors.toSet()).contains("mailto:example@example.com"));
-        assertTrue(!user.getFirstName().isEmpty() && user.getFirstName().size() == 1);
+        assertEquals(1, user.getMbox_resource().size());
+        assertTrue(user.getMbox_resource().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("mailto:example@example.com"));
+        assertEquals(1, user.getFirstName().size());
         assertTrue(user.getFirstName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("John"));
-        assertTrue(!user.getLastName().isEmpty() && user.getLastName().size() == 1);
+        assertEquals(1, user.getLastName().size());
         assertTrue(user.getLastName().stream().map(Value::stringValue).collect(Collectors.toSet()).contains("Doe"));
     }
 
     @Test
-    public void testStoreUser() throws Exception {
+    public void testStoreUser() {
         Resource newUserId = VALUE_FACTORY.createIRI("http://mobi.com/users/newuser");
         User newUser = userFactory.createNew(newUserId);
         newUser.setUsername(VALUE_FACTORY.createLiteral("newuser"));
@@ -212,21 +236,21 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         connection.close();
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testStoreUserWithNoUsername() {
         Resource newUserId = VALUE_FACTORY.createIRI("http://mobi.com/users/newuser");
         User newUser = userFactory.createNew(newUserId);
         engine.storeUser(newUser);
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testStoreUserThatAlreadyExists() {
         User user = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
         engine.storeUser(user);
     }
 
     @Test
-    public void testUserExists() throws Exception {
+    public void testUserExists() {
         boolean result = engine.userExists(username);
         assertTrue(result);
 
@@ -235,7 +259,16 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testRetrieveUser() throws Exception {
+    public void testUserExistsWithResource() {
+        boolean result = engine.userExists(VALUE_FACTORY.createIRI(userId));
+        assertTrue(result);
+
+        result = engine.userExists(VALUE_FACTORY.createIRI("http://mobi.com/users/error"));
+        assertFalse(result);
+    }
+
+    @Test
+    public void testRetrieveUser() {
         Optional<User> userOptional = engine.retrieveUser(username);
 
         assertTrue(userOptional.isPresent());
@@ -246,13 +279,13 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testRetrieveUserThatDoesNotExist() throws Exception {
+    public void testRetrieveUserThatDoesNotExist() {
         Optional<User> userOptional = engine.retrieveUser("http://mobi.com/users/error");
         assertFalse(userOptional.isPresent());
     }
 
     @Test
-    public void testUpdateUser() throws Exception {
+    public void testUpdateUser() {
         User newUser = userFactory.createNew(VALUE_FACTORY.createIRI(userId));
         newUser.setPassword(VALUE_FACTORY.createLiteral("123"));
         newUser.setUsername(VALUE_FACTORY.createLiteral("user"));
@@ -263,42 +296,48 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         statements.forEach(userModel::add);
         connection.close();
         assertFalse(userModel.isEmpty());
-        User savedUser = userFactory.getExisting(VALUE_FACTORY.createIRI(userId), userModel).get();
+        Optional<User> optUser = userFactory.getExisting(VALUE_FACTORY.createIRI(userId), userModel);
+        assertTrue(optUser.isPresent());
+        User savedUser = optUser.get();
         assertTrue(savedUser.getPassword().isPresent() && savedUser.getPassword().get().stringValue().equals("123"));
         assertTrue(savedUser.getUsername().isPresent() && savedUser.getUsername().get().stringValue().equals("user"));
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testUpdateUserThatDoesNotExist() {
         User newUser = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/users/error"));
         engine.updateUser(newUser);
     }
 
     @Test
-    public void testDeleteUser() throws Exception {
+    public void testDeleteUser() {
         engine.deleteUser(username);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(userId), null, null);
-        assertTrue(!statements.hasNext());
+        assertFalse(statements.hasNext());
         statements = connection.getStatements(null, null, VALUE_FACTORY.createIRI(userId));
-        assertTrue(!statements.hasNext());
+        assertFalse(statements.hasNext());
         connection.close();
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testDeleteUserThatDoesNotExist() {
         engine.deleteUser("http://mobi.com/users/error");
     }
 
     @Test
-    public void testGetGroups() throws Exception {
-        Set<Group> groups= engine.getGroups();
-        assertTrue(!groups.isEmpty());
+    public void testGetGroups() {
+        // Setup:
+        Set<String> expectedGroups = Stream.of(groupId1, groupId2).collect(Collectors.toSet());
+
+        Set<Group> groups = engine.getGroups();
+        assertEquals(expectedGroups.size(), groups.size());
+        groups.forEach(group -> assertTrue(expectedGroups.contains(group.getResource().stringValue())));
     }
 
     @Test
-    public void testCreateGroup() throws Exception {
-        Set<String> members = Stream.of("tester").collect(Collectors.toSet());
+    public void testCreateGroup() {
+        Set<User> members = Stream.of(userFactory.createNew(VALUE_FACTORY.createIRI(userId))).collect(Collectors.toSet());
         Set<String> roles = Stream.of("user").collect(Collectors.toSet());
         GroupConfig config = new GroupConfig.Builder(groupName1).description("Test")
                 .members(members).roles(roles).build();
@@ -314,7 +353,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testStoreGroup() throws Exception {
+    public void testStoreGroup() {
         Resource newGroupId = VALUE_FACTORY.createIRI("http://mobi.com/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
         newGroup.setProperty(VALUE_FACTORY.createLiteral("newgroup"), VALUE_FACTORY.createIRI(DCTERMS.TITLE.stringValue()));
@@ -325,21 +364,21 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         connection.close();
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testStoreGroupWithNoTitle() {
         Resource newGroupId = VALUE_FACTORY.createIRI("http://mobi.com/users/newgroup");
         Group newGroup = groupFactory.createNew(newGroupId);
         engine.storeGroup(newGroup);
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testStoreGroupThatAlreadyExists() {
         Group group= groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
         engine.storeGroup(group);
     }
 
     @Test
-    public void testGroupExists() throws Exception {
+    public void testGroupExists() {
         boolean result = engine.groupExists(groupName1);
         assertTrue(result);
 
@@ -348,7 +387,16 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testRetrieveGroup() throws Exception {
+    public void testGroupExistsWithResource() {
+        boolean result = engine.groupExists(VALUE_FACTORY.createIRI(groupId1));
+        assertTrue(result);
+
+        result = engine.groupExists(VALUE_FACTORY.createIRI("http://mobi.com/groups/error"));
+        assertFalse(result);
+    }
+
+    @Test
+    public void testRetrieveGroup() {
         Optional<Group> groupOptional = engine.retrieveGroup(groupName1);
 
         assertTrue(groupOptional.isPresent());
@@ -357,13 +405,13 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testRetrieveGroupThatDoesNotExist() throws Exception {
+    public void testRetrieveGroupThatDoesNotExist() {
         Optional<Group> groupOptional= engine.retrieveGroup("http://mobi.com/groups/error");
         assertFalse(groupOptional.isPresent());
     }
 
     @Test
-    public void testUpdateGroup() throws Exception {
+    public void testUpdateGroup() {
         Group newGroup = groupFactory.createNew(VALUE_FACTORY.createIRI(groupId1));
         engine.updateGroup(newGroup);
         Model groupModel = MODEL_FACTORY.createModel();
@@ -372,32 +420,34 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         statements.forEach(groupModel::add);
         connection.close();
         assertFalse(groupModel.isEmpty());
-        Group savedGroup = groupFactory.getExisting(VALUE_FACTORY.createIRI(groupId1), groupModel).get();
+        Optional<Group> optGroup = groupFactory.getExisting(VALUE_FACTORY.createIRI(groupId1), groupModel);
+        assertTrue(optGroup.isPresent());
+        Group savedGroup = optGroup.get();
         assertTrue(savedGroup.getMember().isEmpty());
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testUpdateGroupThatDoesNotExist() {
         Group newGroup = groupFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/groups/error"));
         engine.updateGroup(newGroup);
     }
 
     @Test
-    public void testDeleteGroup() throws Exception {
+    public void testDeleteGroup() {
         engine.deleteGroup(groupName1);
         RepositoryConnection connection = repo.getConnection();
         RepositoryResult<Statement> statements = connection.getStatements(VALUE_FACTORY.createIRI(groupId1), null, null);
-        assertTrue(!statements.hasNext());
+        assertFalse(statements.hasNext());
         connection.close();
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testDeleteGroupThatDoesNotExist() {
         engine.deleteGroup("http://mobi.com/group/error");
     }
 
     @Test
-    public void testGetUserRoles() throws Exception {
+    public void testGetUserRoles() {
         Set<Role> roles = engine.getUserRoles(username);
         assertFalse(roles.isEmpty());
         Set<Resource> roleIds = roles.stream()
@@ -407,13 +457,13 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         assertTrue(roleIds.contains(VALUE_FACTORY.createIRI(adminRoleId)));
     }
 
-    @Test(expected = MobiException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testGetUserRolesThatDoesNotExist() {
         engine.getUserRoles("http://mobi.com/users/error");
     }
 
     @Test
-    public void testCheckPasswordWithoutEncryption() throws Exception {
+    public void testCheckPasswordWithoutEncryption() {
         // Setup:
         when(encryptionSupport.getEncryption()).thenReturn(null);
 
@@ -425,7 +475,7 @@ public class RdfEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void testCheckPasswordWithEncryption() throws Exception {
+    public void testCheckPasswordWithEncryption() {
         boolean result = engine.checkPassword(username, password);
         assertTrue(result);
 
