@@ -24,6 +24,8 @@ package com.mobi.repository.base;
  */
 
 import java.util.Iterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * A RepositoryResult is a result collection of objects that can be iterated over. It keeps an open connection to
@@ -42,4 +44,8 @@ public abstract class RepositoryResult<T> implements Iterable<T>, Iterator<T> {
     }
 
     public abstract void close();
+
+    public Stream<T> stream() {
+        return StreamSupport.stream(this.spliterator(), false);
+    }
 }
