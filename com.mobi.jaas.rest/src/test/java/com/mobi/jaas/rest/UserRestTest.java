@@ -1,4 +1,4 @@
-package com.mobi.jaas.rest.impl;
+package com.mobi.jaas.rest;
 
 /*-
  * #%L
@@ -82,8 +82,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class UserRestImplTest extends MobiRestTestNg {
-    private UserRestImpl rest;
+public class UserRestTest extends MobiRestTestNg {
+    private UserRest rest;
     private ValueFactory vf;
     private ModelFactory mf;
     private OrmFactory<User> userFactory;
@@ -150,7 +150,7 @@ public class UserRestImplTest extends MobiRestTestNg {
 
         when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
-        rest = new UserRestImpl();
+        rest = new UserRest();
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);
         rest.setValueFactory(vf);

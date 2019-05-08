@@ -23,23 +23,203 @@ package com.mobi.etl.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static java.nio.file.FileVisitResult.CONTINUE;
+
+import com.mobi.catalog.api.CatalogManager;
+import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.versioning.VersioningManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.Dataset;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
+import com.mobi.etl.api.config.delimited.ExcelConfig;
+import com.mobi.etl.api.config.delimited.SVConfig;
+import com.mobi.etl.api.delimited.DelimitedConverter;
+import com.mobi.etl.api.delimited.MappingManager;
+import com.mobi.etl.api.delimited.MappingWrapper;
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontologies.owl.Ontology;
+import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.base.RepositoryResult;
+import com.mobi.repository.exception.RepositoryException;
+import com.mobi.rest.security.annotations.ActionAttributes;
+import com.mobi.rest.security.annotations.ActionId;
+import com.mobi.rest.security.annotations.AttributeValue;
+import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.ValueType;
+import com.mobi.rest.util.CharsetUtils;
+import com.mobi.rest.util.ErrorUtils;
+import com.opencsv.CSVReader;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import net.sf.json.JSONArray;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
-
-@Path("/delimited-files")
+@Component(service = DelimitedRest.class, immediate = true)
+@javax.ws.rs.Path("/delimited-files")
 @Api( value = "/delimited-files" )
-public interface DelimitedRest {
+public class DelimitedRest {
+    private DelimitedConverter converter;
+    private MappingManager mappingManager;
+    private ValueFactory vf;
+    private DatasetManager datasetManager;
+    private RepositoryManager repositoryManager;
+    private CatalogConfigProvider configProvider;
+    private CatalogManager catalogManager;
+    private OntologyRecordFactory ontologyRecordFactory;
+    private OntologyManager ontologyManager;
+    private VersioningManager versioningManager;
+    private EngineManager engineManager;
+
+    private final Logger logger = LoggerFactory.getLogger(DelimitedRest.class);
+    private SesameTransformer transformer;
+
+    private static final long NUM_LINE_PREVIEW = 10;
+
+    public static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/com.mobi.etl.rest.impl.tmp";
+
+    @Reference
+    public void setDelimitedConverter(DelimitedConverter delimitedConverter) {
+        this.converter = delimitedConverter;
+    }
+
+    @Reference
+    public void setMappingManager(MappingManager manager) {
+        this.mappingManager = manager;
+    }
+
+    @Reference
+    public void setVf(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    @Reference
+    protected void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
+    @Reference
+    protected void setDatasetManager(DatasetManager datasetManager) {
+        this.datasetManager = datasetManager;
+    }
+
+    @Reference
+    protected void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
+    }
+
+    @Reference
+    void setConfigProvider(CatalogConfigProvider configProvider) {
+        this.configProvider = configProvider;
+    }
+
+    @Reference
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
+    }
+
+    @Reference
+    void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    @Activate
+    protected void start() throws IOException {
+        deleteDirectory(Paths.get(TEMP_DIR));
+        Files.createDirectory(Paths.get(TEMP_DIR));
+    }
+
+    @Deactivate
+    protected void stop() throws IOException {
+        deleteDirectory(Paths.get(TEMP_DIR));
+    }
 
     /**
      * Uploads a delimited document to the temp directory.
@@ -47,13 +227,28 @@ public interface DelimitedRest {
      * @param fileInputStream an InputStream of a delimited document passed as form data
      * @param fileDetail information about the file being uploaded, including the name
      * @return a Response with the name of the file created on the server
-    */
+     */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Upload delimited file sent as form data.")
-    Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
-                    @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail);
+    public Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
+                    @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail) {
+        ByteArrayOutputStream fileOutput;
+        try {
+            fileOutput = toByteArrayOutputStream(fileInputStream);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+        }
+        getCharset(fileOutput.toByteArray());
+
+        String fileName = generateUuid();
+        String extension = FilenameUtils.getExtension(fileDetail.getFileName());
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName + "." + extension);
+
+        saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
+        return Response.status(201).entity(filePath.getFileName().toString()).build();
+    }
 
     /**
      * Replaces an uploaded delimited document in the temp directory with another
@@ -64,34 +259,24 @@ public interface DelimitedRest {
      * @return a Response with the name of the file replaced on the server
      */
     @PUT
-    @Path("{documentName}")
+    @javax.ws.rs.Path("{documentName}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @RolesAllowed("user")
     @ApiOperation("Replace an uploaded delimited file with another")
-    Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
-                    @PathParam("documentName") String fileName);
+    public Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
+                    @PathParam("documentName") String fileName) {
+        ByteArrayOutputStream fileOutput;
+        try {
+            fileOutput = toByteArrayOutputStream(fileInputStream);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+        }
+        getCharset(fileOutput.toByteArray());
 
-    /**
-     * Retrieves a preview of the first specified number of rows of an uploaded
-     * delimited document using the specified separator. The file must be present
-     * in the data/tmp/ directory.
-     *
-     * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
-     *               the default number of rows is 10
-     * @param separator the character the columns are separated by
-     * @return a Response with a JSON array. Each element in the array is a row in the
-     *         document. The row is an array of strings which are the cells in the row
-     *         in the document.
-     */
-    @GET
-    @Path("{documentName}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Gather rows from an uploaded delimited document.")
-    Response getRows(@PathParam("documentName") String fileName,
-                     @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
-                     @DefaultValue(",") @QueryParam("separator") String separator);
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
+        saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
+        return Response.ok(fileName).build();
+    }
 
     /**
      * Maps the data in an uploaded delimited document into RDF in the requested format
@@ -104,18 +289,25 @@ public interface DelimitedRest {
      * @param separator the character the columns are separated by if it is a CSV
      * @return a Response with a JSON object containing the mapping file name and a
      *      string containing the converted data in the requested format
-    */
+     */
     @POST
-    @Path("{documentName}/map-preview")
+    @javax.ws.rs.Path("{documentName}/map-preview")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using mapping JSON-LD")
-    Response etlFilePreview(@PathParam("documentName") String fileName,
-                    @FormDataParam("jsonld") String jsonld,
-                    @DefaultValue("jsonld") @QueryParam("format") String format,
-                    @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                    @DefaultValue(",") @QueryParam("separator") String separator);
+    public Response etlFilePreview(@PathParam("documentName") String fileName,
+                            @FormDataParam("jsonld") String jsonld,
+                            @DefaultValue("jsonld") @QueryParam("format") String format,
+                            @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
+                            @DefaultValue(",") @QueryParam("separator") String separator) {
+        checkStringParam(jsonld, "Must provide a JSON-LD string");
+
+        // Convert the data
+        Model data = etlFile(fileName, () -> jsonldToModel(jsonld, transformer), containsHeaders, separator, true);
+
+        return Response.ok(groupedModelToString(data, format, transformer)).build();
+    }
 
     /**
      * Maps the data in an uploaded delimited document into RDF in the requested format
@@ -131,16 +323,40 @@ public interface DelimitedRest {
      * @return a Response with the converted data in the requested format to download
      */
     @GET
-    @Path("{documentName}/map")
+    @javax.ws.rs.Path("{documentName}/map")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and download the data")
-    Response etlFile(@PathParam("documentName") String fileName,
+    public Response etlFile(@PathParam("documentName") String fileName,
                      @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                      @DefaultValue("jsonld") @QueryParam("format") String format,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                      @DefaultValue(",") @QueryParam("separator") String separator,
-                     @QueryParam("fileName") String downloadFileName);
+                     @QueryParam("fileName") String downloadFileName) {
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+
+        // Convert the data
+        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders, separator, false);
+        String result = groupedModelToString(data, format, transformer);
+
+        // Write data into a stream
+        StreamingOutput stream = os -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
+            writer.write(result);
+            writer.flush();
+            writer.close();
+        };
+        String fileExtension = getRDFFormat(format).getDefaultFileExtension();
+        String mimeType = getRDFFormat(format).getDefaultMIMEType();
+        String dataFileName = downloadFileName == null ? fileName : downloadFileName;
+        Response response = Response.ok(stream).header("Content-Disposition", "attachment;filename=" + dataFileName
+                +  "." + fileExtension).header("Content-Type", mimeType).build();
+
+        // Remove temp file
+        removeTempFile(fileName);
+
+        return response;
+    }
 
     /**
      * Maps the data in an uploaded delimited document into RDF using a MappingRecord's Mapping and
@@ -155,14 +371,51 @@ public interface DelimitedRest {
      * @return a Response indicating the success of the request
      */
     @POST
-    @Path("{documentName}/map")
+    @javax.ws.rs.Path("{documentName}/map")
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset")
-    Response etlFile(@PathParam("documentName") String fileName,
+    public Response etlFile(@PathParam("documentName") String fileName,
                      @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                      @QueryParam("datasetRecordIRI") String datasetRecordIRI,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                     @DefaultValue(",") @QueryParam("separator") String separator);
+                     @DefaultValue(",") @QueryParam("separator") String separator) {
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
+
+        // Collect the DatasetRecord
+        DatasetRecord record = datasetManager.getDatasetRecord(vf.createIRI(datasetRecordIRI)).orElseThrow(() ->
+                ErrorUtils.sendError("Dataset " + datasetRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
+
+        // Convert the data
+        Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                separator, false);
+
+        // Add data to the dataset
+        String repositoryId = record.getRepository().orElseThrow(() ->
+                ErrorUtils.sendError("Record has no repository set", Response.Status.INTERNAL_SERVER_ERROR));
+        Resource datasetIri = record.getDataset_resource().orElseThrow(() ->
+                ErrorUtils.sendError("Record has no Dataset set", Response.Status.INTERNAL_SERVER_ERROR));
+        Repository repository = repositoryManager.getRepository(repositoryId)
+                .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
+        try (RepositoryConnection conn = repository.getConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(datasetIri,
+                    vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+            if (statements.hasNext()) {
+                Resource context = (Resource) statements.next().getObject();
+                conn.add(data, context);
+            } else {
+                throw ErrorUtils.sendError("Dataset has no system default named graph",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        } catch (RepositoryException ex) {
+            throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        // Remove temp file
+        removeTempFile(fileName);
+
+        return Response.ok().build();
+    }
 
     /**
      * Maps the data in an uploaded delimited document into RDF using a MappingRecord's Mapping and
@@ -178,16 +431,389 @@ public interface DelimitedRest {
      * @return a Response indicating the success of the request
      */
     @POST
-    @Path("{documentName}/map-to-ontology")
+    @javax.ws.rs.Path("{documentName}/map-to-ontology")
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and commit it to an"
             + " OntologyRecord")
-    Response etlFileOntology(@Context ContainerRequestContext context,
+    @ActionId(value = Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(type = ValueType.QUERY, id = OntologyRecord.branch_IRI, value = "branchIRI")
+    )
+    @ResourceId(type = ValueType.QUERY, value = "ontologyRecordIRI")
+    public Response etlFileOntology(@Context ContainerRequestContext context,
                              @PathParam("documentName") String fileName,
                              @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                              @QueryParam("ontologyRecordIRI") String ontologyRecordIRI,
                              @QueryParam("branchIRI") String branchIRI,
                              @DefaultValue("false") @QueryParam("update") boolean update,
                              @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
-                             @DefaultValue(",") @QueryParam("separator") String separator);
+                             @DefaultValue(",") @QueryParam("separator") String separator) {
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
+        checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
+
+        User user = getActiveUser(context, engineManager);
+
+        OntologyRecord record = catalogManager.getRecord(configProvider.getLocalCatalogIRI(),
+                vf.createIRI(ontologyRecordIRI), ontologyRecordFactory).orElseThrow(() ->
+                ErrorUtils.sendError("OntologyRecord " + ontologyRecordIRI + " does not exist",
+                        Response.Status.BAD_REQUEST));
+
+        // Convert the data
+        Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                separator, false);
+
+        Resource branchId = vf.createIRI(branchIRI);
+        IRI recordIRI = vf.createIRI(ontologyRecordIRI);
+        Model ontologyData =  ontologyManager.getOntologyModel(recordIRI, branchId);
+
+        Response response;
+        if (update) {
+            Iterator<Statement> ontologyObjectIterator = ontologyData.filter(null,
+                    vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE)).iterator();
+            if (ontologyObjectIterator.hasNext()) {
+                mappingData.addAll(ontologyData.filter(ontologyObjectIterator.next().getSubject(), null, null));
+            } else {
+                logger.info("OntologyRecord " + ontologyRecordIRI + " does not have an ontology object. Continuing"
+                        + " with mapping update.");
+            }
+
+            Difference diff = catalogManager.getDiff(ontologyData, mappingData);
+            if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
+                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
+                        "Mapping data from " + mappingRecordIRI, diff.getAdditions(), diff.getDeletions());
+                response = Response.ok().build();
+            } else {
+                response = Response.status(204).entity("No commit was submitted. No differences detected between "
+                        + "mapping result data and ontology.").build();
+            }
+        } else {
+            mappingData.removeAll(ontologyData);
+
+            if (!mappingData.isEmpty()) {
+                versioningManager.commit(configProvider.getLocalCatalogIRI(), record.getResource(), branchId, user,
+                        "Mapping data from " + mappingRecordIRI, mappingData, null);
+                response = Response.ok().build();
+            } else {
+                response = Response.status(204).entity("No commit was submitted, commit was empty due to duplicates")
+                        .build();
+            }
+        }
+        // Remove temp file
+        removeTempFile(fileName);
+
+        return response;
+    }
+
+    /**
+     * Returns the result of an ETL operation against the file with the passed name using the mapping supplied by the
+     * passed function.
+     *
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param mappingSupplier the supplier for getting a mapping model
+     * @param containsHeaders whether the delimited file has headers
+     * @param separator the character the columns are separated by if it is a CSV
+     * @return a Mobi Model with the resulting mapped RDF data
+     */
+    private Model etlFile(String fileName, SupplierWithException<Model> mappingSupplier,
+                                              boolean containsHeaders, String separator, boolean limit) {
+        // Collect the delimited file and its extension
+        File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
+                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
+        String extension = FilenameUtils.getExtension(delimitedFile.getName());
+
+        // Collect the mapping model
+        Model mappingModel;
+        try {
+            mappingModel = mappingSupplier.get();
+        } catch (IOException e) {
+            throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
+        }
+
+        // Run the mapping against the delimited data
+        try (InputStream data = getDocumentInputStream(delimitedFile)) {
+            Model result;
+            if (extension.equals("xls") || extension.equals("xlsx")) {
+                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, mappingModel)
+                        .containsHeaders(containsHeaders);
+                if (limit) {
+                    config.limit(NUM_LINE_PREVIEW);
+                }
+                result = etlFile(() -> converter.convert(config.build()));
+            } else {
+                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, mappingModel)
+                        .separator(separator.charAt(0))
+                        .containsHeaders(containsHeaders);
+                if (limit) {
+                    config.limit(NUM_LINE_PREVIEW);
+                }
+                result = etlFile(() -> converter.convert(config.build()));
+            }
+            logger.info("File mapped: " + delimitedFile.getPath());
+            return result;
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Exception reading ETL file", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Converts delimited SV data in an InputStream into RDF.
+     *
+     * @param supplier the supplier for getting the result of running a conversion using a Config
+     * @return a Mobi Model with the delimited data converted into RDF
+     */
+    private Model etlFile(SupplierWithException<Model> supplier) {
+        try {
+            return supplier.get();
+        } catch (IOException | MobiException e) {
+            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Retrieves a preview of the first specified number of rows of an uploaded
+     * delimited document using the specified separator. The file must be present
+     * in the data/tmp/ directory.
+     *
+     * @param fileName the name of the delimited document in the data/tmp/ directory
+     * @param rowEnd the number of rows to retrieve from the delimited document. NOTE:
+     *               the default number of rows is 10
+     * @param separator the character the columns are separated by
+     * @return a Response with a JSON array. Each element in the array is a row in the
+     *         document. The row is an array of strings which are the cells in the row
+     *         in the document.
+     */
+    @GET
+    @javax.ws.rs.Path("{documentName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gather rows from an uploaded delimited document.")
+    public Response getRows(@PathParam("documentName") String fileName,
+                     @DefaultValue("10") @QueryParam("rowCount") int rowEnd,
+                     @DefaultValue(",") @QueryParam("separator") String separator) {
+        Optional<File> optFile = getUploadedFile(fileName);
+        if (optFile.isPresent()) {
+            File file = optFile.get();
+            String extension = FilenameUtils.getExtension(file.getName());
+            int numRows = (rowEnd <= 0) ? 10 : rowEnd;
+
+            logger.info("Getting " + numRows + " rows from " + file.getName());
+            String json;
+            try {
+                if (extension.equals("xls") || extension.equals("xlsx")) {
+                    json = convertExcelRows(file, numRows);
+                } else {
+                    char separatorChar = separator.charAt(0);
+                    json = convertCSVRows(file, numRows, separatorChar);
+                }
+            } catch (Exception e) {
+                throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
+            }
+
+            return Response.ok(json).build();
+        } else {
+            throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Finds the uploaded delimited file with the specified name.
+     *
+     * @param fileName the name of the uploaded delimited file
+     * @return the uploaded file if it was found
+     */
+    private Optional<File> getUploadedFile(String fileName) {
+        Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
+        if (Files.exists(filePath)) {
+            return Optional.of(new File(filePath.toUri()));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Saves the contents of the InputStream to the specified path.
+     *
+     * @param fileInputStream a file in an InputStream
+     * @param filePath the location to upload the file to
+     */
+    private void saveStreamToFile(InputStream fileInputStream, Path filePath) {
+        try {
+            Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+            fileInputStream.close();
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError(e, "Error writing delimited file", Response.Status.BAD_REQUEST);
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Error parsing delimited file", Response.Status.BAD_REQUEST);
+        }
+        logger.info("File Uploaded: " + filePath);
+    }
+
+    /**
+     * Converts the specified number rows of a CSV file into JSON and returns
+     * them as a String.
+     *
+     * @param input the CSV file to convert into JSON
+     * @param numRows the number of rows from the CSV file to convert
+     * @param separator a character with the character to separate the columns by
+     * @return a string with the JSON of the CSV rows
+     * @throws IOException csv file could not be read
+     */
+    private String convertCSVRows(File input, int numRows, char separator) throws IOException {
+        Charset charset = getCharset(Files.readAllBytes(input.toPath()));
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()),
+                separator)) {
+            List<String[]> csvRows = reader.readAll();
+            JSONArray returnRows = new JSONArray();
+            for (int i = 0; i <= numRows && i < csvRows.size(); i++) {
+                returnRows.add(i, csvRows.get(i));
+            }
+            return returnRows.toString();
+        }
+    }
+
+    /**
+     * Converts the specified number of rows of a Excel file into JSON and returns
+     * them as a String.
+     *
+     * @param input the Excel file to convert into JSON
+     * @param numRows the number of rows from the Excel file to convert
+     * @return a string with the JSON of the Excel rows
+     * @throws IOException excel file could not be read
+     * @throws InvalidFormatException file is not in a valid excel format
+     */
+    private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
+        try (Workbook wb = WorkbookFactory.create(input)) {
+            // Only support single sheet files for now
+            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter df = new DataFormatter();
+            JSONArray rowList = new JSONArray();
+            String[] columns;
+            for (Row row : sheet) {
+                if (row.getRowNum() <= numRows) {
+                    //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
+                    columns = new String[row.getLastCellNum()];
+                    for (int i = 0; i < row.getLastCellNum(); i++ ) {
+                        columns[i] = df.formatCellValue(row.getCell(i), evaluator);
+                    }
+                    rowList.add(columns);
+                }
+            }
+            return rowList.toString();
+        }
+    }
+
+    /**
+     * Creates a ByteArrayOutputStream from an InputStream so it can be reused.
+     *
+     * @param in the InputStream to convert
+     * @return a ByteArrayOutputStream with the contents of the InputStream
+     * @throws IOException if a error occurs when accessing the InputStream contents
+     */
+    private ByteArrayOutputStream toByteArrayOutputStream(InputStream in) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int read = 0;
+        while ((read = in.read(buffer, 0, buffer.length)) != -1) {
+            baos.write(buffer, 0, read);
+            baos.flush();
+        }
+        return baos;
+    }
+
+    /**
+     * Retrieves the supported charset of a file in byte array form.
+     *
+     * @param bytes the bytes from a file to grab the charset of
+     * @return the charset of the byte array
+     */
+    private Charset getCharset(byte[] bytes) {
+        Charset charset;
+        Optional<Charset> optCharset = CharsetUtils.getEncoding(bytes);
+        if (optCharset.isPresent()) {
+            charset = optCharset.get();
+        } else {
+            throw ErrorUtils.sendError("Delimited file is not in a supported encoding", Response.Status.BAD_REQUEST);
+        }
+
+        return charset;
+    }
+
+    /**
+     * Creates a UUID string.
+     *
+     * @return a string with a UUID
+     */
+    public String generateUuid() {
+        return UUID.randomUUID().toString();
+    }
+
+    /**
+     * Retrieves a Sesame Model of an uploaded mapping by its IRI.
+     *
+     * @param mappingRecordIRI the IRI of a mapping
+     * @return a Sesame Model with a mapping
+     */
+    private Model getUploadedMapping(String mappingRecordIRI) {
+        // Collect uploaded mapping model
+        Optional<MappingWrapper> mappingOpt = Optional.empty();
+        try {
+            mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
+        } catch (IllegalArgumentException e) {
+            ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST);
+        }
+        MappingWrapper mapping = mappingOpt.orElseThrow(() ->
+                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " could not be retrieved",
+                        Response.Status.BAD_REQUEST));
+        return mapping.getModel();
+    }
+
+    private void removeTempFile(String fileName) {
+        try {
+            Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private void deleteDirectory(Path dir) throws IOException {
+        if (Files.exists(dir)) {
+            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return CONTINUE;
+                }
+
+                            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    if (exc == null) {
+                        Files.delete(dir);
+                        return CONTINUE;
+                    } else {
+                        throw exc;
+                    }
+                }
+            });
+        }
+    }
+
+    private InputStream getDocumentInputStream(File delimited) {
+        // Get InputStream for data to convert
+        InputStream data;
+        try {
+            data = new FileInputStream(delimited);
+        } catch (FileNotFoundException e) {
+            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+        }
+        return data;
+    }
+
+    /**
+     * A supplier for the result of running a conversion using a ExcelConfig or a SVConfig.
+     *
+     * @param <T> The type of the result of the conversion
+     */
+    private interface SupplierWithException<T> {
+        T get() throws IOException;
+    }
 }

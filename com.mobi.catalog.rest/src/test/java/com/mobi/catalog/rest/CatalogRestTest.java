@@ -1,4 +1,4 @@
-package com.mobi.catalog.rest.impl;
+package com.mobi.catalog.rest;
 
 /*-
  * #%L
@@ -116,8 +116,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class CatalogRestImplTest extends MobiRestTestNg {
-    private CatalogRestImpl rest;
+public class CatalogRestTest extends MobiRestTestNg {
+    private CatalogRest rest;
     private ValueFactory vf;
     private ModelFactory mf;
     private OrmFactory<Record> recordFactory;
@@ -272,7 +272,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(repo.getConnection()).thenReturn(conn);
         when(configProvider.getRepository()).thenReturn(repo);
 
-        rest = new CatalogRestImpl();
+        rest = new CatalogRest();
         injectOrmFactoryReferencesIntoService(rest);
         rest.setVf(vf);
         rest.setEngineManager(engineManager);

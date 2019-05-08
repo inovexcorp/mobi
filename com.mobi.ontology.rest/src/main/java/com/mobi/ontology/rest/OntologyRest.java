@@ -1557,7 +1557,8 @@ public class OntologyRest {
                                                        @QueryParam("branchId") String branchIdStr,
                                                        @QueryParam("commitId") String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAnnotationIRIObject);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getAnnotationIRIObject);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2728,8 +2729,9 @@ public class OntologyRest {
      */
     private JSONObject getAllIRIs(Ontology ontology) {
         return combineJsonObjects(getAnnotationIRIObject(ontology), getClassIRIArray(ontology),
-                getDatatypeIRIObject(ontology), getObjectPropertyIRIObject(ontology), getDataPropertyIRIObject(ontology),
-                getNamedIndividualIRIObject(ontology), getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology),
+                getDatatypeIRIObject(ontology), getObjectPropertyIRIObject(ontology),
+                getDataPropertyIRIObject(ontology), getNamedIndividualIRIObject(ontology),
+                getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology),
                 getDerivedConceptTypeIRIObject(ontology), getDerivedConceptSchemeTypeIRIObject(ontology),
                 getDerivedSemanticRelationIRIObject(ontology));
     }
