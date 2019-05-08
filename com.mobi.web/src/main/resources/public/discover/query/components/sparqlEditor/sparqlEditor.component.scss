@@ -1,0 +1,69 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sparql-editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+
+    .top-section {
+        display: flex;
+        flex-direction: row;
+
+        .form-group {
+            flex: 1;
+            margin-right: 15px;
+            min-width: 0;
+        }
+
+        .btn-container {
+            margin-top: 24px;
+        }
+    }
+    dataset-form-group {
+        dataset-select {
+            width: 80%
+        }
+        .btn-clear {
+            line-height: 3;
+        }
+    }
+
+    .codemirror-wrapper {
+        flex: 1;
+        position: relative;
+
+        .CodeMirror {
+            border: 1px solid #ccc;
+            bottom: 0;
+            height: auto;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+    }
+}

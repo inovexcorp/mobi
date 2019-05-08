@@ -23,67 +23,39 @@ package com.mobi.jaas.config;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.jaas.api.config.LoginModuleConfig;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.modules.password.PasswordLoginModule;
-import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
-import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.jaas.proxy.ProxyLoginModule;
 import com.mobi.jaas.api.config.MobiConfiguration;
-import org.osgi.framework.BundleContext;
+import com.mobi.jaas.api.modules.provider.AppConfigEntryProvider;
+import com.mobi.jaas.proxy.ProxyLoginModule;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 
 @Component(provide = MobiConfiguration.class)
 public class MobiConfigurationImpl extends MobiConfiguration {
-    protected EngineManager engineManager;
-    private BundleContext context;
+    private Set<AppConfigEntryProvider> configEntryProviders = new HashSet<>();
 
-    @Activate
-    protected void start(BundleContext context) {
-        this.context = context;
+    @Reference(type = '*', dynamic = true)
+    void addConfigEntryProvider(AppConfigEntryProvider provider) {
+        configEntryProviders.add(provider);
     }
 
-    @Modified
-    protected void modified(BundleContext context) {
-        this.context = context;
-    }
-
-    @Reference
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
+    void removeConfigEntryProvider(AppConfigEntryProvider provider) {
+        configEntryProviders.removeIf(provider1 -> provider1.getModuleName().equals(provider.getModuleName()));
     }
 
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
         if (name.equals("mobi")) {
-            Map<String, Object> tokenOptions = new HashMap<>();
-            tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-            tokenOptions.put(LoginModuleConfig.ENGINE, RdfEngine.ENGINE_NAME);
-            tokenOptions.put(BundleContext.class.getName(), context);
-            tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            tokenOptions.put(ProxyLoginModule.MODULE, SimpleTokenLoginModule.class.getName());
+            return configEntryProviders.stream()
+                    .map(AppConfigEntryProvider::getModuleConfig)
+                    .map(map -> new AppConfigurationEntry(ProxyLoginModule.class.getName(),
+                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, map))
+                    .toArray(AppConfigurationEntry[]::new);
 
-            Map<String, Object> passwordOptions = new HashMap<>();
-            passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-            passwordOptions.put(LoginModuleConfig.ENGINE, RdfEngine.ENGINE_NAME);
-            passwordOptions.put(BundleContext.class.getName(), context);
-            passwordOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            passwordOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());
-
-            return new AppConfigurationEntry[] {
-                    new AppConfigurationEntry(ProxyLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, passwordOptions),
-                    new AppConfigurationEntry(ProxyLoginModule.class.getName(),
-                            AppConfigurationEntry.LoginModuleControlFlag.OPTIONAL, tokenOptions)
-            };
         } else {
             return Configuration.getConfiguration().getAppConfigurationEntry(name);
         }

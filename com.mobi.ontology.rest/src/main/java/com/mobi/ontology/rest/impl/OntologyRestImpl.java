@@ -32,8 +32,6 @@ import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.modelToString;
 
-import com.google.common.collect.Iterables;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -50,13 +48,17 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.Entity;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.Datatype;
+import com.mobi.ontology.core.api.Hierarchy;
+import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.rest.OntologyRest;
@@ -65,7 +67,6 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.Binding;
 import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
@@ -75,9 +76,7 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
@@ -93,6 +92,7 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -100,6 +100,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -110,11 +111,11 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
@@ -132,7 +133,6 @@ public class OntologyRestImpl implements OntologyRest {
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private OntologyCache ontologyCache;
-    private RepositoryManager repositoryManager;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -174,11 +174,6 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     void setOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
-    }
-
-    @Reference
-    void setRepositoryManager(RepositoryManager repositoryManager) {
-        this.repositoryManager = repositoryManager;
     }
 
     @Override
@@ -370,37 +365,85 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getVocabularyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                        String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getVocabularyStuff, true);
-            return Response.ok(result).build();
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private JSONObject getVocabularyStuff(Ontology ontology) {
-        Repository repo = repositoryManager.createMemoryRepository();
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            conn.begin();
-            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            conn.commit();
-            return getVocabularyStuff(conn);
-        } finally {
-            repo.shutDown();
-        }
-    }
+    private StreamingOutput getVocabularyStuffStream(Ontology ontology) {
+        return outputStream -> {
+            StopWatch watch = new StopWatch();
+            log.trace("Start concepts");
+            watch.start();
 
-    private JSONObject getVocabularyStuff(RepositoryConnection conn) {
-        JSONObject result = getDerivedConceptTypeArray(conn);
-        result.putAll(getDerivedConceptSchemeTypeArray(conn));
-        result.putAll(getDerivedSemanticRelationArray(conn));
-        TupleQueryResult conceptRelationships = ontologyManager.getConceptRelationships(conn);
-        result.put("concepts", getHierarchy(conceptRelationships));
-        TupleQueryResult conceptSchemeRelationships = ontologyManager.getConceptSchemeRelationships(conn);
-        result.put("conceptSchemes", getHierarchy(conceptSchemeRelationships));
-        return result;
+            outputStream.write("{\"concepts\": ".getBytes());
+            outputStream.write(irisToJsonArray(getConceptIRIs(ontology)).toString().getBytes());
+
+            watch.stop();
+            log.trace("End concepts: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptSchemes");
+            watch.start();
+
+            outputStream.write(", \"conceptSchemes\": ".getBytes());
+            outputStream.write(irisToJsonArray(getConceptSchemeIRIs(ontology)).toString().getBytes());
+
+            watch.stop();
+            log.trace("End conceptSchemes: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start derivedConcepts");
+            watch.start();
+
+            outputStream.write(", \"derivedConcepts\": ".getBytes());
+            outputStream.write(getDerivedConceptTypeIRIArray(ontology).toString().getBytes());
+
+            watch.stop();
+            log.trace("End derivedConcepts: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start derivedConceptSchemes");
+            watch.start();
+
+            outputStream.write(", \"derivedConceptSchemes\": ".getBytes());
+            outputStream.write(getDerivedConceptSchemeTypeIRIArray(ontology).toString().getBytes());
+
+            watch.stop();
+            log.trace("End derivedConceptSchemes: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start derivedSemanticRelations");
+            watch.start();
+
+            outputStream.write(", \"derivedSemanticRelations\": ".getBytes());
+            outputStream.write(getDerivedSemanticRelationIRIArray(ontology).toString().getBytes());
+
+            watch.stop();
+            log.trace("End derivedSemanticRelations: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptHierarchy");
+            watch.start();
+
+            outputStream.write(", \"conceptHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
+
+            watch.stop();
+            log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptSchemeHierarchy");
+            watch.start();
+
+            outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
+            outputStream.write("}".getBytes());
+
+            watch.stop();
+            log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+        };
     }
 
     @Override
@@ -408,43 +451,130 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getOntologyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                      String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getOntologyStuff, true);
-            return Response.ok(result).build();
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private JSONObject getOntologyStuff(Ontology ontology) {
-        Repository repo = repositoryManager.createMemoryRepository();
-        repo.initialize();
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Populate repository
-            Set<Ontology> importedOntologies = ontology.getImportsClosure();
-            conn.begin();
-            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
-            conn.commit();
-            // Get stuff
-            Set<Ontology> onlyImports = getImportedOntologies(importedOntologies, ontology.getOntologyId());
-            JSONObject result = new JSONObject();
-            result.put("iriList", getAllIRIs(ontology, conn));
-            result.put("importedIRIs", doWithOntologies(onlyImports, ont -> getAllIRIs(ont, conn)));
-            result.put("importedOntologies", onlyImports.stream()
+    private StreamingOutput getOntologyStuffStream(Ontology ontology) {
+        Set<Ontology> importedOntologies = ontology.getImportsClosure();
+        Set<Ontology> onlyImports = getImportedOntologies(importedOntologies, ontology.getOntologyId());
+
+        return outputStream -> {
+            StopWatch watch = new StopWatch();
+            log.trace("Start iriList");
+            watch.start();
+
+            outputStream.write("{ \"iriList\": ".getBytes());
+            outputStream.write(getAllIRIs(ontology).toString().getBytes());
+
+            watch.stop();
+            log.trace("End iriList: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start importedIRIs");
+            watch.start();
+
+            outputStream.write(", \"importedIRIs\": ".getBytes());
+            outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
+                    .getBytes());
+
+            watch.stop();
+            log.trace("End importedIRIs: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start importedOntologies");
+            watch.start();
+
+            outputStream.write(", \"importedOntologies\": ".getBytes());
+            JSONArray arr = onlyImports.stream()
                     .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
-                    .collect(JSONArray::new, JSONArray::add, JSONArray::add));
-            result.put("failedImports", getUnloadableImportIRIs(ontology));
-            result.put("classHierarchy", getHierarchy(ontologyManager.getSubClassesOf(conn)));
-            result.put("individuals", getClassIndividuals(ontologyManager.getClassesWithIndividuals(conn)));
-            result.put("dataPropertyHierarchy", getHierarchy(ontologyManager.getSubDatatypePropertiesOf(conn)));
-            result.put("objectPropertyHierarchy", getHierarchy(ontologyManager.getSubObjectPropertiesOf(conn)));
-            result.put("annotationHierarchy", getHierarchy(ontologyManager.getSubAnnotationPropertiesOf(conn)));
-            result.put("conceptHierarchy", getHierarchy(ontologyManager.getConceptRelationships(conn)));
-            result.put("conceptSchemeHierarchy", getHierarchy(ontologyManager.getConceptSchemeRelationships(conn)));
-            return result;
-        } finally {
-            repo.shutDown();
-        }
+                    .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+            outputStream.write(arr.toString().getBytes());
+
+            watch.stop();
+            log.trace("End importedOntologies: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start failedImports");
+            watch.start();
+
+            outputStream.write(", \"failedImports\": ".getBytes());
+            outputStream.write(JSONArray.fromObject(getUnloadableImportIRIs(ontology)).toString().getBytes());
+
+            watch.stop();
+            log.trace("End failedImports: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start classHierarchy");
+            watch.start();
+
+            outputStream.write(", \"classHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubClassesOf(valueFactory, modelFactory), outputStream);
+
+            watch.stop();
+            log.trace("End classHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start individuals");
+            watch.start();
+
+            outputStream.write(", \"individuals\": ".getBytes());
+            JSONObject classesWithIndividuals = JSONObject.fromObject(
+                    ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
+            outputStream.write(classesWithIndividuals.toString().getBytes());
+
+            watch.stop();
+            log.trace("End individuals: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start dataPropertyHierarchy");
+            watch.start();
+
+            outputStream.write(", \"dataPropertyHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory), outputStream);
+
+            watch.stop();
+            log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start objectPropertyHierarchy");
+            watch.start();
+
+            outputStream.write(", \"objectPropertyHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubObjectPropertiesOf(valueFactory, modelFactory), outputStream);
+
+            watch.stop();
+            log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start annotationHierarchy");
+            watch.start();
+
+            outputStream.write(", \"annotationHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory), outputStream);
+
+            watch.stop();
+            log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptHierarchy");
+            watch.start();
+
+            outputStream.write(", \"conceptHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
+
+            watch.stop();
+            log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start conceptSchemeHierarchy");
+            watch.start();
+
+            outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
+            writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
+            outputStream.write("}".getBytes());
+
+            watch.stop();
+            log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+        };
     }
 
     @Override
@@ -465,7 +595,7 @@ public class OntologyRestImpl implements OntologyRest {
                                              String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getAnnotationArray, true);
+                    this::getAnnotationIRIObject, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -544,7 +674,7 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDatatypeArray, true);
+                    this::getDatatypeIRIObject, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -664,7 +794,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                   String branchIdStr, String commitIdStr) {
         try {
             JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getNamedIndividualArray, true);
+                    this::getNamedIndividualIRIObject, true);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -729,7 +859,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getAnnotationsInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                        String branchIdStr, String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAnnotationArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getAnnotationIRIObject);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -751,7 +881,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDatatypesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                      String branchIdStr, String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDatatypeIRIObject);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -763,7 +893,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                             String branchIdStr, String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getObjectPropertyIRIArray);
+                    this::getObjectPropertyIRIObject);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -775,7 +905,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                           String branchIdStr, String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getDataPropertyIRIArray);
+                    this::getDataPropertyIRIObject);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -787,7 +917,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                             String branchIdStr, String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getNamedIndividualArray);
+                    this::getNamedIndividualIRIObject);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -796,12 +926,12 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyClassHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                              String commitIdStr) {
+                                              String commitIdStr, boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubClassesOf(ontology);
-            return Response.ok(getHierarchy(results)).build();
+            Hierarchy hierarchy = ontology.getSubClassesOf(valueFactory, modelFactory);
+            return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -810,12 +940,12 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyObjectPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
-                                                       String branchIdStr, String commitIdStr) {
+                                                       String branchIdStr, String commitIdStr, boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubObjectPropertiesOf(ontology);
-            return Response.ok(getHierarchy(results)).build();
+            Hierarchy hierarchy = ontology.getSubObjectPropertiesOf(valueFactory, modelFactory);
+            return Response.ok(getHierarchyStream(hierarchy, nested, getObjectPropertyIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -824,12 +954,12 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyDataPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
-                                                     String branchIdStr, String commitIdStr) {
+                                                     String branchIdStr, String commitIdStr, boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubDatatypePropertiesOf(ontology);
-            return Response.ok(getHierarchy(results)).build();
+            Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory);
+            return Response.ok(getHierarchyStream(hierarchy, nested, getDataPropertyIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -838,12 +968,12 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyAnnotationPropertyHierarchy(ContainerRequestContext context, String recordIdStr,
-                                                           String branchIdStr, String commitIdStr) {
+                                                           String branchIdStr, String commitIdStr, boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getSubAnnotationPropertiesOf(ontology);
-            return Response.ok(getHierarchy(results)).build();
+            Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory);
+            return Response.ok(getHierarchyStream(hierarchy, nested, getAnnotationIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -852,13 +982,12 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                        String commitIdStr) {
+                                        String commitIdStr, boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getConceptRelationships(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            Hierarchy hierarchy = ontology.getConceptRelationships(valueFactory, modelFactory);
+            return Response.ok(getHierarchyStream(hierarchy, nested, getConceptIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -867,13 +996,12 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptSchemeHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                              String commitIdStr) {
+                                              String commitIdStr, boolean nested) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getConceptSchemeRelationships(ontology);
-            JSONObject response = getHierarchy(results);
-            return Response.ok(response).build();
+            Hierarchy hierarchy = ontology.getConceptSchemeRelationships(valueFactory, modelFactory);
+            return Response.ok(getHierarchyStream(hierarchy, nested, getConceptSchemeIRIs(ontology))).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -886,9 +1014,8 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            TupleQueryResult results = ontologyManager.getClassesWithIndividuals(ontology);
-            Map<String, Set<String>> classIndividuals = getClassIndividuals(results);
-            JSONObject response = new JSONObject().element("individuals", classIndividuals);
+            JSONObject response = new JSONObject().element("individuals",
+                    ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
             return Response.ok(response).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -904,10 +1031,10 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
-                Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
+                Model results = ontology.constructEntityUsages(entityIRI, modelFactory);
                 return Response.ok(modelToJsonld(results, sesameTransformer)).build();
             } else if (queryType.equals("select")) {
-                TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
+                TupleQueryResult results = ontology.getEntityUsages(entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results)).build();
             } else {
                 throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
@@ -926,7 +1053,7 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             checkStringParam(searchText, "The searchText is missing.");
-            TupleQueryResult results = ontologyManager.getSearchResults(ontology, searchText);
+            TupleQueryResult results = ontology.getSearchResults(searchText, valueFactory);
             Map<String, Set<String>> response = new HashMap<>();
             results.forEach(queryResult -> {
                 Value entity = Bindings.requiredResource(queryResult, "entity");
@@ -976,7 +1103,7 @@ public class OntologyRestImpl implements OntologyRest {
             String queryType = Query.getQueryType(queryString);
             switch (queryType) {
                 case "select":
-                    TupleQueryResult tupResults = ontologyManager.getTupleQueryResults(ontology, queryString, includeImports);
+                    TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {
                         JSONObject json = JSONQueryResults.getResponse(tupResults);
                         return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
@@ -984,7 +1111,7 @@ public class OntologyRestImpl implements OntologyRest {
                         return Response.noContent().build();
                     }
                 case "construct":
-                    Model modelResult = ontologyManager.getGraphQueryResults(ontology, queryString, includeImports);
+                    Model modelResult = ontology.getGraphQueryResults(queryString, includeImports, modelFactory);
                     if (modelResult.size() >= 1) {
                         String modelStr = modelToString(modelResult, format, sesameTransformer);
                         MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE
@@ -1009,100 +1136,29 @@ public class OntologyRestImpl implements OntologyRest {
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * Uses the provided Set to construct a hierarchy of the entities provided. Each BindingSet in the Set must have the
-     * parent set as the first binding and the child set as the second binding.
-     *
-     * @param tupleQueryResult the TupleQueryResult that contains the parent-child relationships for creating the
-     *                         hierarchy.
-     * @return a JSONObject containing the hierarchy of the entities provided.
-     */
-    private JSONObject getHierarchy(TupleQueryResult tupleQueryResult) {
-        Map<String, Set<String>> results = new HashMap<>();
-        Map<String, Set<String>> index = new HashMap<>();
-        Set<String> topLevel = new HashSet<>();
-        Set<String> lowerLevel = new HashSet<>();
-        tupleQueryResult.forEach(queryResult -> {
-            Value key = Iterables.get(queryResult, 0).getValue();
-            Binding value = Iterables.get(queryResult, 1, null);
-            if (!(key instanceof BNode)) {
-                String keyString = key.stringValue();
-                topLevel.add(keyString);
-                if (value != null && !(value.getValue() instanceof BNode)) {
-                    String valueString = value.getValue().stringValue();
-                    lowerLevel.add(valueString);
-                    if (results.containsKey(keyString)) {
-                        results.get(keyString).add(valueString);
-                    } else {
-                        Set<String> newSet = new HashSet<>();
-                        newSet.add(valueString);
-                        results.put(keyString, newSet);
-                    }
-                    if (index.containsKey(valueString)) {
-                        index.get(valueString).add(keyString);
-                    } else {
-                        Set<String> newSet = new HashSet<>();
-                        newSet.add(keyString);
-                        index.put(valueString, newSet);
-                    }
-                } else {
-                    results.put(key.stringValue(), new HashSet<>());
-                }
-            }
-        });
-        topLevel.removeAll(lowerLevel);
-        Set<String> hierarchy = createHierarchy(topLevel, results).stream()
-                .map(Object::toString)
-                .collect(Collectors.toSet());
-        return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
+    private StreamingOutput getHierarchyStream(Hierarchy hierarchy, boolean includeNested, Set<IRI> iris) {
+        return outputStream -> writeHierarchyToStream(hierarchy, outputStream, includeNested, iris);
     }
 
-    /**
-     * Creates a Set of hierarchy items with their IRIs and lists of children based on the provided list of IRIs
-     * of entities without parents and map of IRIs to their Sets of children.
-     *
-     * @param topLevel a set of IRI strings of entities without parents
-     * @param results the results which contains a map of parents and their associated children.
-     * @return a Set of HierarchyNodes representing the top level entities and their children
-     */
-    private Set<HierarchyNode> createHierarchy(Set<String> topLevel, Map<String, Set<String>> results) {
-        Map<String, HierarchyNode> nodes = new HashMap<>();
-        results.forEach((key, children) -> {
-            HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
-            children.forEach(child -> {
-                if (!child.equals(key)) {
-                    HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
-                    node.addChild(obj);
-                    nodes.put(child, obj);
-                }
-            });
-            nodes.put(key, node);
-        });
-        return topLevel.stream().map(nodes::get).collect(Collectors.toSet());
+    private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream) throws IOException {
+        writeHierarchyToStream(hierarchy, outputStream, false, null);
     }
 
-    private class HierarchyNode {
-        private String iri;
-        private Set<HierarchyNode> children = new HashSet<>();
-
-        HierarchyNode(String iri) {
-            this.iri = iri;
+    private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream, boolean includeNested,
+                                        @Nullable Set<IRI> iris) throws IOException {
+        outputStream.write("{\"parentMap\": ".getBytes());
+        outputStream.write(JSONObject.fromObject(hierarchy.getParentMap()).toString().getBytes());
+        outputStream.write(", \"childMap\": ".getBytes());
+        outputStream.write(JSONObject.fromObject(hierarchy.getChildMap()).toString().getBytes());
+        if (iris != null) {
+            outputStream.write(", \"iris\": ".getBytes());
+            outputStream.write(irisToJsonArray(iris).toString().getBytes());
         }
-
-        void addChild(HierarchyNode node) {
-            children.add(node);
+        if (includeNested) {
+            outputStream.write(", \"hierarchy\": ".getBytes());
+            hierarchy.writeHierarchyString(sesameTransformer, outputStream);
         }
-
-        public String toString() {
-            StringBuilder builder = new StringBuilder(String.format("{\"entityIRI\": \"%s\"", iri));
-            if (children.size() > 0) {
-                builder.append(", \"subEntities\": [")
-                        .append(String.join(", ", children.stream().map(Object::toString).collect(Collectors.toSet())))
-                        .append("]");
-            }
-            builder.append("}");
-            return builder.toString();
-        }
+        outputStream.write("}".getBytes());
     }
 
     /**
@@ -1169,13 +1225,12 @@ public class OntologyRestImpl implements OntologyRest {
 
             if (optionalOntology.isPresent() && applyInProgressCommit) {
                 User user = getActiveUser(context, engineManager);
-                Optional<InProgressCommit> optional = catalogManager.getInProgressCommit(
+                Optional<InProgressCommit> inProgressCommitOpt = catalogManager.getInProgressCommit(
                         configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr), user);
 
-                if (optional.isPresent()) {
-                    Model ontologyModel = catalogManager.applyInProgressCommit(optional.get().getResource(),
-                            optionalOntology.get().asModel(modelFactory));
-                    optionalOntology = Optional.of(ontologyManager.createOntology(ontologyModel));
+                if (inProgressCommitOpt.isPresent()) {
+                    optionalOntology = Optional.of(ontologyManager.applyChanges(optionalOntology.get(),
+                            inProgressCommitOpt.get()));
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -1287,36 +1342,46 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of Annotations from the provided Ontology.
      */
-    private JSONObject getAnnotationArray(Ontology ontology) {
-        Set<IRI> iris = new HashSet<>();
-        iris.addAll(ontology.getAllAnnotations()
-                .stream()
-                .filter(Objects::nonNull)
-                .map(Annotation::getProperty)
-                .map(Entity::getIRI)
-                .collect(Collectors.toSet()));
-        iris.addAll(ontology.getAllAnnotationProperties()
+    private JSONObject getAnnotationIRIObject(Ontology ontology) {
+        Set<IRI> iris = getAnnotationIRIs(ontology);
+        return new JSONObject().element("annotationProperties", irisToJsonArray(iris));
+    }
+
+    /**
+     * Gets a Set of AnnotationProperty IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the AnnotationProperties from.
+     * @return a Set of AnnotationProperty IRIs from the provided Ontology.
+     */
+    private Set<IRI> getAnnotationIRIs(Ontology ontology) {
+        return ontology.getAllAnnotationProperties()
                 .stream()
                 .map(AnnotationProperty::getIRI)
-                .collect(Collectors.toSet()));
-        return new JSONObject().element("annotationProperties", irisToJsonArray(iris));
+                .collect(Collectors.toSet());
     }
 
     /**
      * Gets a JSONObject of Class IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Class IRIs from.
-     * @return a JSONObject of Class IRIs from the provided Ontology.
+     * @param ontology the Ontology to get the Classes from.
+     * @return a JSONObject with a classes key to an array of Class IRIs from the provided Ontology.
      */
     private JSONObject getClassIRIArray(Ontology ontology) {
-        Model model = ontology.asModel(modelFactory);
-        Set<IRI> iris = ontology.getAllClasses()
-                .stream()
-                .map(Entity::getIRI)
-                .filter(iri -> model.contains(iri, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
-                        null))
-                .collect(Collectors.toSet());
+        Set<IRI> iris = getClassIRIs(ontology);
         return new JSONObject().element("classes", irisToJsonArray(iris));
+    }
+
+    /**
+     * Gets a Set of Class IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Classes from.
+     * @return a Set of Class IRIs from the provided Ontology.
+     */
+    private Set<IRI> getClassIRIs(Ontology ontology) {
+        return ontology.getAllClasses()
+                .stream()
+                .map(OClass::getIRI)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -1328,8 +1393,6 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONArray getClassArray(Ontology ontology) {
         Model model = ontology.asModel(modelFactory);
         return ontology.getAllClasses().stream()
-                .filter(oClass -> model.contains(oClass.getIRI(),
-                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .map(oClass -> model.filter(oClass.getIRI(), null, null))
                 .filter(m -> !m.isEmpty())
                 .map(m -> getObjectFromJsonld(modelToJsonld(m, sesameTransformer)))
@@ -1337,15 +1400,15 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of Datatypes from the provided Ontology.
+     * Gets a JSONObject of Datatype IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Datatypes from.
-     * @return a JSONArray of Datatypes from the provided Ontology.
+     * @return a JSONObject with a datatypes key to an array of Datatype IRIs from the provided Ontology.
      */
-    private JSONObject getDatatypeArray(Ontology ontology) {
+    private JSONObject getDatatypeIRIObject(Ontology ontology) {
         Set<IRI> iris = ontology.getAllDatatypes()
                 .stream()
-                .map(Entity::getIRI)
+                .map(Datatype::getIRI)
                 .collect(Collectors.toSet());
         return new JSONObject().element("datatypes", irisToJsonArray(iris));
     }
@@ -1354,14 +1417,24 @@ public class OntologyRestImpl implements OntologyRest {
      * Gets a JSONObject of ObjectProperty IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the ObjectProperties from.
-     * @return a JSONObject of ObjectProperty IRIs from the provided Ontology.
+     * @return a JSONObject with a objectProperties key to an array of ObjectProperty IRIs from the provided Ontology.
      */
-    private JSONObject getObjectPropertyIRIArray(Ontology ontology) {
-        Set<IRI> iris = ontology.getAllObjectProperties()
-                .stream()
-                .map(Entity::getIRI)
-                .collect(Collectors.toSet());
+    private JSONObject getObjectPropertyIRIObject(Ontology ontology) {
+        Set<IRI> iris = getObjectPropertyIRIs(ontology);
         return new JSONObject().element("objectProperties", irisToJsonArray(iris));
+    }
+
+    /**
+     * Gets a Set of ObjectProperty IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the ObjectProperties from.
+     * @return a Set of ObjectProperty IRIs from the provided Ontology.
+     */
+    private Set<IRI> getObjectPropertyIRIs(Ontology ontology) {
+        return ontology.getAllObjectProperties()
+                .stream()
+                .map(ObjectProperty::getIRI)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -1381,15 +1454,25 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONObject of DatatypeProperty IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the DatatypeProperty from.
-     * @return a JSONArray of DatatypeProperties from the provided Ontology.
+     * @param ontology the Ontology to get the DatatypeProperties from.
+     * @return a JSONObject with a dataProperties key to an array of DatatypeProperty IRIs from the provided Ontology.
      */
-    private JSONObject getDataPropertyIRIArray(Ontology ontology) {
-        Set<IRI> iris = ontology.getAllDataProperties()
-                .stream()
-                .map(Entity::getIRI)
-                .collect(Collectors.toSet());
+    private JSONObject getDataPropertyIRIObject(Ontology ontology) {
+        Set<IRI> iris = getDataPropertyIRIs(ontology);
         return new JSONObject().element("dataProperties", irisToJsonArray(iris));
+    }
+
+    /**
+     * Gets a Set of DatatypeProperty IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the DatatypeProperties from.
+     * @return a Set of DatatypeProperty IRIs from the provided Ontology.
+     */
+    private Set<IRI> getDataPropertyIRIs(Ontology ontology) {
+        return ontology.getAllDataProperties()
+                .stream()
+                .map(DataProperty::getIRI)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -1412,64 +1495,94 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the NamedIndividuals from.
      * @return a JSONArray of NamedIndividuals from the provided Ontology.
      */
-    private JSONObject getNamedIndividualArray(Ontology ontology) {
-        Model model = ontology.asModel(modelFactory);
-        Set<IRI> iris = ontology.getAllNamedIndividuals().stream()
-                .filter(individual -> model.contains(individual.getIRI(),
-                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
-                .map(Entity::getIRI)
-                .collect(Collectors.toSet());
+    private JSONObject getNamedIndividualIRIObject(Ontology ontology) {
+        Set<IRI> iris = getNamedIndividualIRIs(ontology);
         return new JSONObject().element("namedIndividuals", irisToJsonArray(iris));
     }
 
-    private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
-        return getDerivedConceptTypeArray(ontologyManager.getSubClassesFor(ontology,
-                sesameTransformer.mobiIRI(SKOS.CONCEPT)));
+    /**
+     * Gets a Set of Individual IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Individuals from.
+     * @return a Set of Individual IRIs from the provided Ontology.
+     */
+    private Set<IRI> getNamedIndividualIRIs(Ontology ontology) {
+        Model model = ontology.asModel(modelFactory);
+        return ontology.getAllIndividuals().stream()
+                .filter(individual -> model.contains(individual.getIRI(),
+                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                .map(Individual::getIRI)
+                .collect(Collectors.toSet());
     }
 
-    private JSONObject getDerivedConceptTypeArray(RepositoryConnection conn) {
-        return getDerivedConceptTypeArray(ontologyManager.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT),
-                conn));
+    /**
+     * Gets a JSONObject of Concept IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Concepts from.
+     * @return a JSONObject with a concepts key to an array of Concept IRIs from the provided Ontology.
+     */
+    private JSONObject getConceptIRIObject(Ontology ontology) {
+        Set<IRI> iris = getConceptIRIs(ontology);
+        return new JSONObject().element("concepts", irisToJsonArray(iris));
     }
 
-    private JSONObject getDerivedConceptTypeArray(TupleQueryResult queryResult) {
-        Set<IRI> iris = new HashSet<>();
-        queryResult.forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
-        return new JSONObject().element("derivedConcepts", irisToJsonArray(iris));
+    /**
+     * Gets a Set of Concept IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Concepts from.
+     * @return a Set of Concept IRIs from the provided Ontology.
+     */
+    private Set<IRI> getConceptIRIs(Ontology ontology) {
+        return ontology.getIndividualsOfType(sesameTransformer.mobiIRI(SKOS.CONCEPT)).stream()
+                .map(Individual::getIRI)
+                .collect(Collectors.toSet());
     }
 
-    private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
-        return getDerivedConceptSchemeTypeArray(ontologyManager.getSubClassesFor(ontology,
-                sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)));
+    /**
+     * Gets a JSONObject of ConceptScheme IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the ConceptSchemes from.
+     * @return a JSONObject with a conceptSchemes key to an array of ConceptScheme IRIs from the provided Ontology.
+     */
+    private JSONObject getConceptSchemeIRIObject(Ontology ontology) {
+        Set<IRI> iris = getConceptSchemeIRIs(ontology);
+        return new JSONObject().element("conceptSchemes", irisToJsonArray(iris));
     }
 
-    private JSONObject getDerivedConceptSchemeTypeArray(RepositoryConnection conn) {
-        return getDerivedConceptSchemeTypeArray(ontologyManager.getSubClassesFor(sesameTransformer
-                .mobiIRI(SKOS.CONCEPT_SCHEME), conn));
+    /**
+     * Gets a Set of ConceptScheme IRIs from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the ConceptSchemes from.
+     * @return a Set of ConceptScheme IRIs from the provided Ontology.
+     */
+    private Set<IRI> getConceptSchemeIRIs(Ontology ontology) {
+        return ontology.getIndividualsOfType(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)).stream()
+                .map(Individual::getIRI)
+                .collect(Collectors.toSet());
     }
 
-    private JSONObject getDerivedConceptSchemeTypeArray(TupleQueryResult queryResult) {
-        Set<IRI> iris = new HashSet<>();
-        queryResult.forEach(r -> r.getBinding("s")
-                .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
-        return new JSONObject().element("derivedConceptSchemes", irisToJsonArray(iris));
+    private JSONObject getDerivedConceptTypeIRIObject(Ontology ontology) {
+        return new JSONObject().element("derivedConcepts", getDerivedConceptTypeIRIArray(ontology));
     }
 
-    private JSONObject getDerivedSemanticRelationArray(Ontology ontology) {
-        return getDerivedSemanticRelationArray(ontologyManager.getSubPropertiesFor(ontology,
-                sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION)));
+    private JSONArray getDerivedConceptTypeIRIArray(Ontology ontology) {
+        return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT)));
     }
 
-    private JSONObject getDerivedSemanticRelationArray(RepositoryConnection conn) {
-        return getDerivedSemanticRelationArray(ontologyManager.getSubPropertiesFor(sesameTransformer
-                .mobiIRI(SKOS.SEMANTIC_RELATION), conn));
+    private JSONObject getDerivedConceptSchemeTypeIRIObject(Ontology ontology) {
+        return new JSONObject().element("derivedConceptSchemes", getDerivedConceptSchemeTypeIRIArray(ontology));
     }
 
-    private JSONObject getDerivedSemanticRelationArray(TupleQueryResult queryResult) {
-        Set<IRI> iris = new HashSet<>();
-        queryResult.forEach(r -> r.getBinding("s")
-                .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
-        return new JSONObject().element("derivedSemanticRelations", irisToJsonArray(iris));
+    private JSONArray getDerivedConceptSchemeTypeIRIArray(Ontology ontology) {
+        return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)));
+    }
+
+    private JSONObject getDerivedSemanticRelationIRIObject(Ontology ontology) {
+        return new JSONObject().element("derivedSemanticRelations", getDerivedSemanticRelationIRIArray(ontology));
+    }
+
+    private JSONArray getDerivedSemanticRelationIRIArray(Ontology ontology) {
+        return irisToJsonArray(ontology.getSubPropertiesFor(sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION)));
     }
 
     /**
@@ -1529,24 +1642,15 @@ public class OntologyRestImpl implements OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private JSONObject getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationArray(ontology), getClassIRIArray(ontology),
-                getDatatypeArray(ontology), getObjectPropertyIRIArray(ontology), getDataPropertyIRIArray(ontology),
-                getNamedIndividualArray(ontology), getDerivedConceptTypeArray(ontology),
-                getDerivedConceptSchemeTypeArray(ontology), getDerivedSemanticRelationArray(ontology));
+        return combineJsonObjects(getAnnotationIRIObject(ontology), getClassIRIArray(ontology),
+                getDatatypeIRIObject(ontology), getObjectPropertyIRIObject(ontology), getDataPropertyIRIObject(ontology),
+                getNamedIndividualIRIObject(ontology), getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology),
+                getDerivedConceptTypeIRIObject(ontology), getDerivedConceptSchemeTypeIRIObject(ontology),
+                getDerivedSemanticRelationIRIObject(ontology));
     }
 
-    /**
-     * Return a JSONObject with the IRIs for all components of an ontology.
-     *
-     * @param ontology The Ontology from which to get component IRIs.
-     * @param conn     the {@link RepositoryConnection} to run the query on.
-     * @return the JSONObject with the IRIs for all components of an ontology.
-     */
-    private JSONObject getAllIRIs(Ontology ontology, RepositoryConnection conn) {
-        return combineJsonObjects(getAnnotationArray(ontology), getClassIRIArray(ontology),
-                getDatatypeArray(ontology), getObjectPropertyIRIArray(ontology), getDataPropertyIRIArray(ontology),
-                getNamedIndividualArray(ontology), getDerivedConceptTypeArray(conn),
-                getDerivedConceptSchemeTypeArray(conn), getDerivedSemanticRelationArray(conn));
+    private JSONObject getVocabularyIRIs(Ontology ontology) {
+        return combineJsonObjects(getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology));
     }
 
     /**
@@ -1704,32 +1808,5 @@ public class OntologyRestImpl implements OntologyRest {
         response.element("commitId", commitId.toString());
 
         return Response.status(Response.Status.CREATED).entity(response).build();
-    }
-
-    /**
-     * Parse the provided Set to provide a map with all the Individuals using their parent(class) as key.
-     *
-     * @param tupleQueryResult the TupleQueryResult that contains the parent-individuals relationships for creating the
-     *                         map.
-     * @return a JSONObject containing the map of the individuals provided.
-     */
-    private Map<String, Set<String>> getClassIndividuals(TupleQueryResult tupleQueryResult) {
-        Map<String, Set<String>> classIndividuals = new HashMap<>();
-        tupleQueryResult.forEach(queryResult -> {
-            Optional<Value> individual = queryResult.getValue("individual");
-            Optional<Value> parent = queryResult.getValue("parent");
-            if (individual.isPresent() && parent.isPresent()) {
-                String individualValue = individual.get().stringValue();
-                String keyString = parent.get().stringValue();
-                if (classIndividuals.containsKey(keyString)) {
-                    classIndividuals.get(keyString).add(individualValue);
-                } else {
-                    Set<String> individualsSet = new HashSet<>();
-                    individualsSet.add(individualValue);
-                    classIndividuals.put(keyString, individualsSet);
-                }
-            }
-        });
-        return classIndividuals;
     }
 }

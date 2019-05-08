@@ -23,9 +23,11 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-public interface Individual {
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Value;
 
-    boolean isNamed();
+public interface Individual extends Value {
 
-    boolean isAnonymous();
+    IRI getIRI();
+
 }

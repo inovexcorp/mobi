@@ -1,0 +1,53 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.drag-file-container {
+    position: relative;
+
+    .drag-file {
+        top: 0;
+        left: 0;
+        z-index: 9001;
+        background-color: rgba(224, 224, 224, 0.5);
+        opacity: 1;
+
+        &.ng-hide {
+            opacity: 0;
+        }
+        &.ng-hide-add, &.ng-hide-remove {
+            -webkit-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .drag-file-info {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            .fa {
+                font-size: 5rem;
+            }
+        }
+    }
+}

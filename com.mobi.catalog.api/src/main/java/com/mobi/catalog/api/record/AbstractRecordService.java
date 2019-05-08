@@ -43,6 +43,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.RepositoryConnection;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 
 import java.time.OffsetDateTime;
@@ -153,11 +154,13 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
         record.setProperty(issuedLiteral, valueFactory.createIRI(_Thing.issued_IRI));
         record.setProperty(modifiedLiteral, valueFactory.createIRI(_Thing.modified_IRI));
         record.setProperties(publishers, valueFactory.createIRI(_Thing.publisher_IRI));
-        if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null) {
+        if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null
+                && StringUtils.isNotEmpty(config.get(RecordCreateSettings.RECORD_DESCRIPTION))) {
             record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
                     valueFactory.createIRI(_Thing.description_IRI));
         }
-        if (config.get(RecordCreateSettings.RECORD_MARKDOWN) != null) {
+        if (config.get(RecordCreateSettings.RECORD_MARKDOWN) != null
+                && StringUtils.isNotEmpty(config.get(RecordCreateSettings.RECORD_MARKDOWN))) {
             record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_MARKDOWN)),
                     valueFactory.createIRI(DCTERMS.ABSTRACT.stringValue()));
         }

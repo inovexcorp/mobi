@@ -1,0 +1,47 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="commit-changes-display">
+    <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results">
+        <div class="clearfix prop-header d-flex align-items-center">
+            <p class="text text-truncate m-0" title="{{key}}">{{!!dvm.entityNameFunc ? dvm.entityNameFunc(key) : dvm.util.getBeautifulIRI(key)}}</p>
+            <small class="text-muted ml-1 text-truncate flex-1">&lt;{{key}}&gt;</small>
+        </div>
+        <div class="prop-value-container ml-3 mt-1 p-1">
+            <statement-container ng-if="value.additions.length" additions>
+                <statement-display
+                        ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
+                        predicate="addition.p" object="addition.o"></statement-display>
+            </statement-container>
+            <statement-container ng-if="value.deletions.length" deletions>
+                <statement-display
+                        ng-repeat="deletion in value.deletions | orderBy:dvm.util.getPredicateLocalName"
+                        predicate="deletion.p" object="deletion.o"></statement-display>
+            </statement-container>
+        </div>
+    </div>
+    <div class="text-center">
+        <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()">
+            <i class="fa fa-fw fa-plus"></i><span>Load More</span>
+        </a>
+    </div>
+</div>

@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
@@ -107,12 +108,14 @@ public class GroupRestImpl implements GroupRest {
     @Override
     public Response getGroups() {
         try {
-            JSONArray result = JSONArray.fromObject(engineManager.getGroups(rdfEngine.getEngineName()).stream()
+            JSONArray result = JSONArray.fromObject(engineManager.getGroups().stream()
                     .map(group -> group.getModel().filter(group.getResource(), null, null))
                     .map(groupModel -> modelToJsonld(groupModel, transformer))
                     .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
             return Response.ok(result).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -122,29 +125,37 @@ public class GroupRestImpl implements GroupRest {
     public Response createGroup(String title, String description, List<FormDataBodyPart> roles,
                                 List<FormDataBodyPart> members) {
         checkStringParam(title, "Group title is required");
-        if (engineManager.groupExists(title)) {
-            throw ErrorUtils.sendError("Group " + title + " already exists", Response.Status.BAD_REQUEST);
-        }
+        try {
+            if (engineManager.groupExists(title)) {
+                throw ErrorUtils.sendError("Group " + title + " already exists", Response.Status.BAD_REQUEST);
+            }
 
-        GroupConfig.Builder builder = new GroupConfig.Builder(title);
+            GroupConfig.Builder builder = new GroupConfig.Builder(title);
 
-        if (members != null && members.size() > 0) {
-            builder.members(members.stream().map(member -> member.getValue()).collect(Collectors.toSet()));
-        }
-        if (description != null) {
-            builder.description(description);
-        }
-        if (roles != null && roles.size() > 0) {
-            Set<String> roleSet = roles.stream().map(role -> role.getValue()).collect(Collectors.toSet());
-            builder.roles(roleSet);
-        }
+            if (members != null && members.size() > 0) {
+                builder.members(members.stream()
+                        .map(part -> engineManager.retrieveUser(part.getValue()))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toSet()));
+            }
+            if (description != null) {
+                builder.description(description);
+            }
+            if (roles != null && roles.size() > 0) {
+                Set<String> roleSet = roles.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
+                builder.roles(roleSet);
+            }
 
-        Group group = engineManager.createGroup(rdfEngine.getEngineName(), builder.build());
-        engineManager.storeGroup(rdfEngine.getEngineName(), group);
-        logger.info("Created group " + title);
-        Value createGroupTitle = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
-                ErrorUtils.sendError("Group title must be present in created group", Response.Status.BAD_REQUEST));
-        return Response.status(201).entity(createGroupTitle.stringValue()).build();
+            Group group = engineManager.createGroup(rdfEngine.getEngineName(), builder.build());
+            engineManager.storeGroup(rdfEngine.getEngineName(), group);
+            logger.info("Created group " + title);
+            Value createGroupTitle = group.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).orElseThrow(() ->
+                    ErrorUtils.sendError("Group title must be present in created group", Response.Status.BAD_REQUEST));
+            return Response.status(201).entity(createGroupTitle.stringValue()).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -153,12 +164,16 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group group = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
+        try {
+            Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
 
-        String json = groupedModelToString(group.getModel().filter(group.getResource(), null, null),
-                getRDFFormat("jsonld"), transformer);
-        return Response.ok(getObjectFromJsonld(json)).build();
+            String json = groupedModelToString(group.getModel().filter(group.getResource(), null, null),
+                    getRDFFormat("jsonld"), transformer);
+            return Response.ok(getObjectFromJsonld(json)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -181,20 +196,29 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Provided group title and the group title in the data must match",
                     Response.Status.BAD_REQUEST);
         }
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        if (!savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue())).get().equals(title)) {
-            throw ErrorUtils.sendError("Group titles must match", Response.Status.BAD_REQUEST);
-        }
-        if (!savedGroup.getHasGroupRole().isEmpty()) {
-            newGroup.setHasGroupRole(savedGroup.getHasGroupRole());
-        }
-        if (!savedGroup.getMember().isEmpty()) {
-            newGroup.setMember(savedGroup.getMember());
-        }
 
-        engineManager.updateGroup(rdfEngine.getEngineName(), newGroup);
-        return Response.ok().build();
+        try {
+            Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            Optional<Value> savedGroupTitle = savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue()));
+            if (!savedGroupTitle.isPresent()) {
+                throw ErrorUtils.sendError("Group must have a title", Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            if (!savedGroupTitle.get().equals(title)) {
+                throw ErrorUtils.sendError("Group titles must match", Response.Status.BAD_REQUEST);
+            }
+            if (!savedGroup.getHasGroupRole().isEmpty()) {
+                newGroup.setHasGroupRole(savedGroup.getHasGroupRole());
+            }
+            if (!savedGroup.getMember().isEmpty()) {
+                newGroup.setMember(savedGroup.getMember());
+            }
+
+            engineManager.updateGroup(rdfEngine.getEngineName(), newGroup);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -202,13 +226,17 @@ public class GroupRestImpl implements GroupRest {
         if (StringUtils.isEmpty(groupTitle)) {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
-        if (!engineManager.groupExists(groupTitle)) {
-            throw ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST);
-        }
+        try {
+            if (!engineManager.groupExists(groupTitle)) {
+                throw ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST);
+            }
 
-        engineManager.deleteGroup(rdfEngine.getEngineName(), groupTitle);
-        logger.info("Deleted group " + groupTitle);
-        return Response.ok().build();
+            engineManager.deleteGroup(rdfEngine.getEngineName(), groupTitle);
+            logger.info("Deleted group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -217,15 +245,19 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group group = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+        try {
+            Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
 
-        JSONArray result = JSONArray.fromObject(group.getHasGroupRole().stream()
-                .map(role -> role.getModel().filter(role.getResource(), null, null))
-                .map(roleModel -> modelToJsonld(roleModel, transformer))
-                .map(RestUtils::getObjectFromJsonld)
-                .collect(Collectors.toList()));
-        return Response.ok(result).build();
+            JSONArray result = JSONArray.fromObject(group.getHasGroupRole().stream()
+                    .map(role -> role.getModel().filter(role.getResource(), null, null))
+                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -233,17 +265,21 @@ public class GroupRestImpl implements GroupRest {
         if (StringUtils.isEmpty(groupTitle) || roles.isEmpty()) {
             throw ErrorUtils.sendError("Both group title and roles must be provided", Response.Status.BAD_REQUEST);
         }
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        Set<Role> roleObjs = new HashSet<>();
-        roles.forEach(s -> roleObjs.add(engineManager.getRole(rdfEngine.getEngineName(), s).orElseThrow(() ->
-                ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
-        Set<Role> allRoles = savedGroup.getHasGroupRole();
-        allRoles.addAll(roleObjs);
-        savedGroup.setHasGroupRole(allRoles);
-        engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
-        logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
-        return Response.ok().build();
+        try {
+            Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            Set<Role> roleObjs = new HashSet<>();
+            roles.forEach(s -> roleObjs.add(engineManager.getRole(s).orElseThrow(() ->
+                    ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
+            Set<Role> allRoles = savedGroup.getHasGroupRole();
+            allRoles.addAll(roleObjs);
+            savedGroup.setHasGroupRole(allRoles);
+            engineManager.updateGroup(savedGroup);
+            logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -252,14 +288,18 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Both group title and role must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        Role roleObj = engineManager.getRole(rdfEngine.getEngineName(), role).orElseThrow(() ->
-                ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
-        savedGroup.removeProperty(roleObj.getResource(), vf.createIRI(Group.hasGroupRole_IRI));
-        engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
-        logger.info("Removed role " + role + " from group " + groupTitle);
-        return Response.ok().build();
+        try {
+            Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            Role roleObj = engineManager.getRole(role).orElseThrow(() ->
+                    ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+            savedGroup.removeProperty(roleObj.getResource(), vf.createIRI(Group.hasGroupRole_IRI));
+            engineManager.updateGroup(savedGroup);
+            logger.info("Removed role " + role + " from group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -268,22 +308,29 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        Set<User> members = savedGroup.getMember().stream()
-                .map(agent -> userFactory.getExisting(agent.getResource(), agent.getModel()).orElseThrow(() ->
-                        new IllegalStateException("Unable to get User: " + agent.getResource().stringValue())))
-                .collect(Collectors.toSet());
+        try {
+            Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            Set<User> members = savedGroup.getMember_resource().stream()
+                    .map(iri -> engineManager.getUsername(iri).orElseThrow(() ->
+                            ErrorUtils.sendError("Unable to get User: " + iri, Response.Status.INTERNAL_SERVER_ERROR)))
+                    .map(username -> engineManager.retrieveUser(username).orElseThrow(() ->
+                            ErrorUtils.sendError("Unable to get User: " + username,
+                                    Response.Status.INTERNAL_SERVER_ERROR)))
+                    .collect(Collectors.toSet());
 
-        JSONArray result = JSONArray.fromObject(members.stream()
-                .map(member -> {
-                    member.clearPassword();
-                    return member.getModel().filter(member.getResource(), null, null);
-                })
-                .map(roleModel -> modelToJsonld(roleModel, transformer))
-                .map(RestUtils::getObjectFromJsonld)
-                .collect(Collectors.toList()));
-        return Response.ok(result).build();
+            JSONArray result = JSONArray.fromObject(members.stream()
+                    .map(member -> {
+                        member.clearPassword();
+                        return member.getModel().filter(member.getResource(), null, null);
+                    })
+                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -292,19 +339,23 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        Set<User> users = new HashSet<>();
-        for (String username : usernames) {
-            users.add(engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)));
+        try {
+            Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            Set<User> users = new HashSet<>();
+            for (String username : usernames) {
+                users.add(engineManager.retrieveUser(username).orElseThrow(() ->
+                        ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)));
+            }
+            Set<Agent> newMembers = savedGroup.getMember();
+            newMembers.addAll(users);
+            savedGroup.setMember(newMembers);
+            engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
+            logger.info("Added user(s) " + String.join(", ", usernames) + " to group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         }
-        Set<Agent> newMembers = savedGroup.getMember();
-        newMembers.addAll(users);
-        savedGroup.setMember(newMembers);
-        engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
-        logger.info("Added user(s) " + String.join(", ", usernames) + " to group " + groupTitle);
-        return Response.ok().build();
     }
 
     @Override
@@ -313,13 +364,17 @@ public class GroupRestImpl implements GroupRest {
             throw ErrorUtils.sendError("Both group title and username must be provided", Response.Status.BAD_REQUEST);
         }
 
-        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
-                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
-        engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
-        logger.info("Removed user " + username + " from group " + groupTitle);
-        return Response.ok().build();
+        try {
+            Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
+            engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
+            logger.info("Removed user " + username + " from group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 }

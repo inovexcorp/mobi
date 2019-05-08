@@ -10,7 +10,7 @@ import com.mobi.etl.api.exception.MobiETLException
 import com.mobi.etl.api.ontologies.delimited.ClassMapping
 import com.mobi.ontology.core.api.Ontology
 import com.mobi.ontology.core.api.OntologyManager
-import com.mobi.ontology.core.api.propertyexpression.DataProperty
+import com.mobi.ontology.core.api.DataProperty
 import com.mobi.rdf.api.Model
 import com.mobi.rdf.core.utils.Values
 import com.mobi.vocabularies.xsd.XSD

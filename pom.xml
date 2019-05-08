@@ -25,7 +25,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>1.15.19-SNAPSHOT</version>
+    <version>1.16.15-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -50,7 +50,8 @@
         <module>com.mobi.etl.rdf</module>
         <module>com.mobi.etl.rest</module>
         <module>com.mobi.ontology.api</module>
-        <module>com.mobi.ontology.core.impl.owlapi</module>
+        <module>com.mobi.ontology.impl.core</module>
+        <module>com.mobi.ontology.impl.owlapi</module>
         <module>com.mobi.ontology.rest</module>
         <module>com.mobi.web</module>
         <module>com.mobi.api</module>
@@ -71,10 +72,6 @@
         <module>com.mobi.jaas</module>
         <module>com.mobi.web.security</module>
         <module>com.mobi.jaas.rest</module>
-        <module>com.mobi.federation.api</module>
-        <module>com.mobi.federation.hazelcast</module>
-        <module>com.mobi.federation.cli</module>
-        <module>com.mobi.federation.utils</module>
         <module>mobi-karaf-feature</module>
         <module>com.mobi.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
@@ -83,12 +80,15 @@
         <module>com.mobi.platform.config.api</module>
         <module>com.mobi.platform.config.rest</module>
         <module>com.mobi.platform.config.impl</module>
+        <module>com.mobi.server.api</module>
+        <module>com.mobi.server.impl</module>
         <module>com.mobi.dataset.api</module>
         <module>com.mobi.dataset.impl</module>
         <module>com.mobi.dataset.rest</module>
         <module>com.mobi.sparql.utils</module>
         <module>com.mobi.cache</module>
-        <module>com.mobi.cache.impl.ehcache</module>
+        <module>com.mobi.cache.impl.core</module>
+        <module>com.mobi.cache.impl.repository</module>
         <module>com.mobi.explorable.dataset.rest</module>
         <module>com.mobi.etl.workflows</module>
         <module>mobi-itests</module>

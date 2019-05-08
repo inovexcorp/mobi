@@ -702,7 +702,8 @@ public interface CatalogRest {
                           @PathParam("recordId") String recordId,
                           @FormDataParam("type") String typeIRI,
                           @FormDataParam("title") String title,
-                          @FormDataParam("description") String description);
+                          @FormDataParam("description") String description,
+                          @FormDataParam("commitId") String commitId);
 
     /**
      * Gets the master Branch of a VersionedRDFRecord identified by the provided IDs.

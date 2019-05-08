@@ -1,0 +1,53 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.ontology-sidebar {
+    min-width: 180px;
+    max-width: 180px;
+    padding: 0;
+    background-color: var(--light-dark);
+
+    .nav-container {
+        flex: 1;
+        min-height: 0;
+    }
+    .nav-item {
+        .nav-link {
+            color: initial;
+            flex: 1;
+        }
+        span.close-icon {
+            padding: 10px 1rem 10px 0;
+            cursor: pointer;
+        }
+        &.active .nav-link,
+        &:hover .nav-link {
+            color: var(--primary);
+        }
+        &.active .nav-link {
+            font-weight: bold;
+        }
+    }
+}

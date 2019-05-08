@@ -6,7 +6,7 @@ package com.mobi.web.authentication;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,6 +22,7 @@ package com.mobi.web.authentication;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -41,7 +42,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.Principal;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -62,14 +62,6 @@ public abstract class AuthHttpContext implements HttpContext {
     protected EngineManager engineManager;
 
     private final static String REQUIRED_ROLE = "user";
-
-    public void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
-    }
-
-    public void setConfiguration(MobiConfiguration configuration) {
-        this.configuration = configuration;
-    }
 
     /**
      * The bundle that registered the service.

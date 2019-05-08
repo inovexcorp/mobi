@@ -1,0 +1,8 @@
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+
+CONSTRUCT { ?groupId ?p ?o }
+WHERE {
+    ?groupId a um:Group ;
+        ?p ?o .
+    FILTER NOT EXISTS { ?groupId a um:ExternalGroup }
+}

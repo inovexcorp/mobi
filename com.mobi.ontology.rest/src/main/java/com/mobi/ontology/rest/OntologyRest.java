@@ -982,7 +982,9 @@ public interface OntologyRest {
                                                      @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns the JSON class hierarchy for the ontology identified by the provided IDs.
+     * Returns the class hierarchy for the ontology identified by the provided IDs as a JSON object with keys for a
+     * map of parent class IRIs to arrays of children class IRIs and a map of child class IRIs to arrays of parent class
+     * IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -994,8 +996,8 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the class hierarchy for the ontology identified by the provided
-     *      IDs.
+     * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @return A JSON object that represents the class hierarchy for the ontology identified by the provided IDs.
      */
     @GET
     @Path("{recordId}/class-hierarchies")
@@ -1005,10 +1007,13 @@ public interface OntologyRest {
     Response getOntologyClassHierarchy(@Context ContainerRequestContext context,
                                        @PathParam("recordId") String recordIdStr,
                                        @QueryParam("branchId") String branchIdStr,
-                                       @QueryParam("commitId") String commitIdStr);
+                                       @QueryParam("commitId") String commitIdStr,
+                                       @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns the JSON object property hierarchy for the ontology identified by the provided IDs.
+     * Returns the object property hierarchy for the ontology identified by the provided IDs as a JSON object with keys
+     * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
+     * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -1020,8 +1025,9 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the object property hierarchy for the ontology with requested
-     *      record ID.
+     * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @return A JSON object that represents the object property hierarchy for the ontology identified by the provided
+     *         IDs.
      */
     @GET
     @Path("{recordId}/object-property-hierarchies")
@@ -1031,10 +1037,13 @@ public interface OntologyRest {
     Response getOntologyObjectPropertyHierarchy(@Context ContainerRequestContext context,
                                                 @PathParam("recordId") String recordIdStr,
                                                 @QueryParam("branchId") String branchIdStr,
-                                                @QueryParam("commitId") String commitIdStr);
+                                                @QueryParam("commitId") String commitIdStr,
+                                                @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns the JSON data property hierarchy for the ontology identified by the provided IDs.
+     * Returns the data property hierarchy for the ontology identified by the provided IDs as a JSON object with keys
+     * for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to arrays
+     * of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -1046,8 +1055,9 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the data property hierarchy for the ontology with requested
-     *      record ID.
+     * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @return A JSON object that represents the data property hierarchy for the ontology identified by the provided
+     *         IDs.
      */
     @GET
     @Path("{recordId}/data-property-hierarchies")
@@ -1057,10 +1067,14 @@ public interface OntologyRest {
     Response getOntologyDataPropertyHierarchy(@Context ContainerRequestContext context,
                                               @PathParam("recordId") String recordIdStr,
                                               @QueryParam("branchId") String branchIdStr,
-                                              @QueryParam("commitId") String commitIdStr);
+                                              @QueryParam("commitId") String commitIdStr,
+                                              @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns the JSON annotation property hierarchy for the ontology identified by the provided IDs.
+     * Returns the annotation property hierarchy for the ontology identified by the provided IDs as a JSON object with
+     * keys for a map of parent property IRIs to arrays of children property IRIs and a map of child property IRIs to
+     * arrays of parent property IRIs. Optionally can also have a key for a nested JSON-LD representation of the
+     * hierarchy.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -1072,8 +1086,9 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the annotation property hierarchy for the ontology with requested
-     *      record ID.
+     * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @return A JSON object that represents the annotation property hierarchy for the ontology identified by the
+     *         provided IDs.
      */
     @GET
     @Path("{recordId}/annotation-property-hierarchies")
@@ -1083,10 +1098,13 @@ public interface OntologyRest {
     Response getOntologyAnnotationPropertyHierarchy(@Context ContainerRequestContext context,
                                                     @PathParam("recordId") String recordIdStr,
                                                     @QueryParam("branchId") String branchIdStr,
-                                                    @QueryParam("commitId") String commitIdStr);
+                                                    @QueryParam("commitId") String commitIdStr,
+                                                    @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns the JSON SKOS concept hierarchy for the ontology identified by the provided IDs.
+     * Returns the SKOS concept hierarchy for the ontology identified by the provided IDs as a JSON object with keys for
+     * a map of parent concept IRIs to arrays of children concept IRIs and a map of child concept IRIs to arrays of
+     * parent concept IRIs. Optionally can also have a key for a nested JSON-LD representation of the hierarchy.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -1098,8 +1116,8 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the SKOS concept hierarchy for the ontology with requested
-     *      record ID.
+     * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @return A JSON object that represents the SKOS concept hierarchy for the ontology identified by the provided IDs.
      */
     @GET
     @Path("{recordId}/concept-hierarchies")
@@ -1109,10 +1127,14 @@ public interface OntologyRest {
     Response getConceptHierarchy(@Context ContainerRequestContext context,
                                  @PathParam("recordId") String recordIdStr,
                                  @QueryParam("branchId") String branchIdStr,
-                                 @QueryParam("commitId") String commitIdStr);
+                                 @QueryParam("commitId") String commitIdStr,
+                                 @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns the JSON SKOS concept scheme hierarchy for the ontology identified by the provided IDs.
+     * Returns the SKOS concept scheme hierarchy for the ontology identified by the provided IDs as a JSON object with
+     * keys for a map of parent concept scheme IRIs to arrays of children concept IRIs and a map of child concept IRIs
+     * to arrays of parent concept scheme IRIs. Optionally can also have a key for a nested JSON-LD representation of
+     * the hierarchy.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -1124,8 +1146,9 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the SKOS concept scheme hierarchy for the ontology with requested
-     *         record ID.
+     * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
+     * @return A JSON object that represents the SKOS concept scheme hierarchy for the ontology identified by the
+     *         provided IDs.
      */
     @GET
     @Path("{recordId}/concept-scheme-hierarchies")
@@ -1135,11 +1158,12 @@ public interface OntologyRest {
     Response getConceptSchemeHierarchy(@Context ContainerRequestContext context,
                                        @PathParam("recordId") String recordIdStr,
                                        @QueryParam("branchId") String branchIdStr,
-                                       @QueryParam("commitId") String commitIdStr);
+                                       @QueryParam("commitId") String commitIdStr,
+                                       @DefaultValue("false") @QueryParam("nested") boolean nested);
 
     /**
-     * Returns classes with individuals defined in the ontology in a hierarchical structure with the requested
-     * recordId.
+     * Returns classes with individuals defined in the ontology identified by the provided IDs as a JSON object with a
+     * key for a map of class IRIs to arrays of individual IRIs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -1151,8 +1175,8 @@ public interface OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @return nested JSON structure that represents the class hierarchy for classes with individuals in the ontology
-     *      identified by the provided IDs.
+     * @return A JSON object that represents the classes with individuals in the ontology identified by the provided
+     *         IDs.
      */
     @GET
     @Path("{recordId}/classes-with-individuals")

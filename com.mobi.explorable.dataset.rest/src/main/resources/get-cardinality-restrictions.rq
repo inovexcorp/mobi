@@ -1,0 +1,17 @@
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+
+select ?cardinalityType ?cardinality ?property
+where {
+    bind ( <%CLASSIRI%> as ?class )
+    values ?cardinalityType { owl:cardinality owl:minCardinality owl:maxCardinality }
+    values ?relation { rdfs:subClassOf owl:equivalentClass }
+    optional {
+        ?class ?relation ?restriction .
+        ?restriction a owl:Restriction ;
+            ?cardinalityType ?cardinality ;
+            owl:onProperty ?property .
+        filter (exists { ?property a owl:DatatypeProperty } || exists { ?property a owl:ObjectProperty } )
+    }
+    filter (bound(?restriction))
+}

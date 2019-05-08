@@ -37,7 +37,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
+import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;

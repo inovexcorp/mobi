@@ -33,229 +33,269 @@ import java.util.Set;
 
 public interface EngineManager {
     /**
-     * Returns a boolean indicating whether the EngineManager contains an Engine
-     * with the passed name.
+     * Returns a boolean indicating whether the {@link EngineManager} contains an {@link Engine} with the provided name.
      *
-     * @param engine the name of the Engine to test for
-     * @return true if the Engine is in the manager; false otherwise
+     * @param engine the name of the {@link Engine} to test for
+     * @return true if the {@link Engine} is in the manager; false otherwise
      */
     boolean containsEngine(String engine);
 
     /**
-     * Attempts to retrieve the Role with the passed name using the Engine with the passed name.
-     * Returns an Optional with the Role if it exists for the Engine.
+     * Attempts to retrieve the {@link Role} with the provided name using the {@link Engine} with the provided name.
+     * Returns an {@link Optional} with the {@link Role} if it exists for the {@link Engine}.
      *
-     * @param engine the name of the Engine to use when retrieving the Role
-     * @param roleName the name of the Role to retrieve
-     * @return an Optional containing the Role if present; empty otherwise
+     * @param engine the name of the {@link Engine} to use when retrieving the {@link Role}
+     * @param roleName the name of the {@link Role} to retrieve
+     * @return an {@link Optional} containing the {@link Role} if present; {@link Optional#empty()} otherwise
      */
     Optional<Role> getRole(String engine, String roleName);
 
     /**
-     * Returns the Set of Users accessible by the Engine with the passed name.
+     * Attempts to retrieve the {@link Role} with the provided name from one of the {@link Engine Engines} the
+     * {@link EngineManager} manages. Returns an {@link Optional} with the {@link Role} if it was found.
      *
-     * @param engine the name of the Engine to collect Users from
-     * @return the Set of Users accessible by the specified Engine
+     * @param roleName the name of the {@link Role} to retrieve
+     * @return an {@link Optional} containing the {@link Role} if present; {@link Optional#empty()} otherwise
+     */
+    Optional<Role> getRole(String roleName);
+
+    /**
+     * Returns the {@link Set} of {@link User Users} accessible by the {@link Engine} with the provided name.
+     *
+     * @param engine the name of the {@link Engine} to collect {@link User Users} from
+     * @return the {@link Set} of {@link User Users} accessible by the specified {@link Engine}
      */
     Set<User> getUsers(String engine);
 
     /**
-     * Returns the Set of Users accessible by all Engines managed by the EngineManager.
+     * Returns the {@link Set} of {@link User Users} accessible by all {@link Engine Engines} managed by the
+     * {@link EngineManager}.
      *
-     * @return the Set of all Users accessible by the EngineManager
+     * @return the {@link Set} of all {@link User Users} accessible by the {@link EngineManager}
      */
     Set<User> getUsers();
 
     /**
-     * Creates a new User object using the Engine with the passed name.
+     * Creates a new {@link User} object using the {@link Engine} with the provided name.
      *
-     * @param engine the name of the Engine to use when creating the User
-     * @param userConfig a configuration for the new User
-     * @return a User with properties set by the passed configuration object as determined
-     *      by the specified Engine
+     * @param engine the name of the {@link Engine} to use when creating the {@link User}
+     * @param userConfig a {@link UserConfig} for the new {@link User}
+     * @return a {@link User} with properties set by the provided configuration object as determined by the specified
+     *      {@link Engine}
      */
     User createUser(String engine, UserConfig userConfig);
 
     /**
-     * Stores the passed User using the Engine with the passed name. If the engine is not
-     * in the manager, does nothing.
+     * Stores the provided {@link User} using the {@link Engine} with the provided name. If the {@link Engine} is not in
+     * the manager, does nothing.
      *
-     * @param engine the name of the Engine to store the User with
-     * @param user the User to store
+     * @param engine the name of the {@link Engine} to store the {@link User} with
+     * @param user the {@link User} to store
      */
     void storeUser(String engine, User user);
 
     /**
-     * Attempts to retrieve the User with the passed username using the Engine with the
-     * passed name. Returns an Optional with the User if it was found or empty if it
-     * could not be found.
+     * Attempts to retrieve the {@link User} with the provided username using the {@link Engine} with the provided name.
+     * Returns an {@link Optional} with the {@link User} if it was found.
      *
-     * @param engine the name of the Engine to retrieve the User with
-     * @param username the username of the User to retrieve
-     * @return an Optional that contains the User if present; empty otherwise
+     * @param engine the name of the {@link Engine} to retrieve the {@link User} with
+     * @param username the username of the {@link User} to retrieve
+     * @return an {@link Optional} that contains the {@link User} if present; {@link Optional#empty()} otherwise
      */
     Optional<User> retrieveUser(String engine, String username);
 
     /**
-     * Attempts to retrieve the User with the passed username from one of the Engines the
-     * EngineManager manages. Returns an Optional with the User if it was found or empty if
-     * it could not be found.
+     * Attempts to retrieve the {@link User} with the provided username from one of the {@link Engine Engines} the
+     * {@link EngineManager} manages. Returns an {@link Optional} with the {@link User} if it was found.
      *
-     * @param username the username of the User to retrieve
-     * @return an Optional that contains the User if present; empty otherwise
+     * @param username the username of the {@link User} to retrieve
+     * @return an {@link Optional} that contains the {@link User} if present; {@link Optional#empty()} otherwise
      */
     Optional<User> retrieveUser(String username);
 
     /**
-     * Removes the User with the passed username using the Engine with the passed name.
-     * If the engine is not in the manager, does nothing.
+     * Removes the {@link User} with the provided username using the {@link Engine} with the provided name. If the
+     * {@link Engine} is not in the manager, does nothing.
      *
-     * @param engine the name of the Engine to delete the User with
-     * @param username the username of the User to delete
+     * @param engine the name of the {@link Engine} to delete the {@link User} with
+     * @param username the username of the {@link User} to delete
      */
     void deleteUser(String engine, String username);
 
     /**
-     * Replaces the User with the same identifier as the passed User with the new User object
-     * using the Engine with the passed name. If the engine is not in the manager, does nothing.
+     * Replaces the matching {@link User} with the provided {@link User} using the {@link Engine} with the provided
+     * name. If the {@link Engine} is not in the manager, does nothing.
      *
-     * @param engine the name of the Engine to update the User with
-     * @param newUser the new User object to replace the existing one
+     * @param engine the name of the {@link Engine} to update the {@link User} with
+     * @param newUser the new {@link User} object to replace the existing one
      */
     void updateUser(String engine, User newUser);
 
     /**
-     * Returns a boolean indicating whether a User with the passed username exists using the
-     * Engine with the passed name.
+     * Replaces the matching {@link User} with the provided {@link User} using the {@link Engine} that manages the
+     * {@link User}. If not {@link Engine} manages the {@link User}, does nothing.
      *
-     * @param engine the name of the Engine to test for the existence of the User with
+     * @param newUser the new {@link User} object to replace the existing one
+     */
+    void updateUser(User newUser);
+
+    /**
+     * Returns a boolean indicating whether a {@link User} with the provided username exists using the {@link Engine}
+     * with the provided name.
+     *
+     * @param engine the name of the {@link Engine} to test for the existence of the {@link User} with
      * @param username the username to look for
-     * @return true if a User exists with the passed username; false otherwise
+     * @return true if a {@link User} exists with the provided username; false otherwise
      */
     boolean userExists(String engine, String username);
 
     /**
-     * Returns a boolean indicating whether a User with the passed username exists using any
-     * of the Engines managed by the EngineManager.
+     * Returns a boolean indicating whether a {@link User} with the provided username exists using any of the
+     * {@link Engine Engines} managed by the {@link EngineManager}.
      *
      * @param username the username to look for
-     * @return true if a User exists with the passed username; false otherwise
+     * @return true if a {@link User} exists with the provided username; false otherwise
      */
     boolean userExists(String username);
 
     /**
-     * Returns the Set of Groups accessible by the Engine with the passed name.
+     * Returns the {@link Set} of {@link Group Groups} accessible by the {@link Engine} with the provided name.
      *
-     * @param engine the name of the Engine to collect Group from
-     * @return the Set of Groups accessible by the specified Engine
+     * @param engine the name of the {@link Engine} to collect {@link Group Groups} from
+     * @return the {@link Set} of {@link Group Groups} accessible by the specified {@link Engine}
      */
     Set<Group> getGroups(String engine);
 
     /**
-     * Creates a new Group object using the Engine with the passed name.
+     * Returns the {@link Set} of {@link Group Groups} accessible by all {@link Engine Engines} managed by the
+     * {@link EngineManager}.
      *
-     * @param engine the name of the Engine to use when creating the Group
-     * @param groupConfig a configuration for the new Group
-     * @return a Group with properties set by the passed configuration object as determined
-     *      by the specified Engine
+     * @return the {@link Set} of all {@link Group Groups} accessible by the {@link EngineManager}
+     */
+    Set<Group> getGroups();
+
+    /**
+     * Creates a new {@link Group} object using the {@link Engine} with the provided name.
+     *
+     * @param engine the name of the {@link Engine} to use when creating the {@link Group}
+     * @param groupConfig a {@link GroupConfig} for the new {@link Group}
+     * @return a {@link Group} with properties set by the provided configuration object as determined
+     *      by the specified {@link Engine}
      */
     Group createGroup(String engine, GroupConfig groupConfig);
 
     /**
-     * Stores the passed Group using the Engine with the passed name. If the engine is not
+     * Stores the provided {@link Group} using the {@link Engine} with the provided name. If the {@link Engine} is not
      * in the manager, does nothing.
      *
-     * @param engine the name of the Engine to store the Group with
-     * @param group the Group to store
+     * @param engine the name of the {@link Engine} to store the {@link Group} with
+     * @param group the {@link Group} to store
      */
     void storeGroup(String engine, Group group);
 
     /**
-     * Attempts to retrieve the Group with the passed username using the Engine with the
-     * passed username. Returns an Optional with the Group if it was found or empty if it
-     * could not be found.
+     * Attempts to retrieve the {@link Group} with the provided title using the {@link Engine} with the provided
+     * username. Returns an {@link Optional} with the {@link Group} if it was found.
      *
-     * @param engine the name of the Engine to retrieve the Group with
-     * @param groupTitle the title of the Group to retrieve
-     * @return an Optional that contains the Group if present; empty otherwise
+     * @param engine the name of the {@link Engine} to retrieve the {@link Group} with
+     * @param groupTitle the title of the {@link Group} to retrieve
+     * @return an {@link Optional} that contains the {@link Group} if present; {@link Optional#empty()} otherwise
      */
     Optional<Group> retrieveGroup(String engine, String groupTitle);
 
     /**
-     * Removes the Group with the passed name using the Engine with the passed name.
-     * If the engine is not in the manager, does nothing.
+     * Attempts to retrieve the {@link Group} with the provided title from one of the {@link Engine Engines} the
+     * {@link EngineManager} manages. Returns an {@link Optional} with the {@link Group} if it was found.
      *
-     * @param engine the name of the Engine to delete the Group with
-     * @param groupTitle the title of the Group to delete
+     * @param groupTitle the title of the {@link Group} to retrieve
+     * @return an {@link Optional} that contains the {@link Group} if present; {@link Optional#empty()} otherwise
+     */
+    Optional<Group> retrieveGroup(String groupTitle);
+
+    /**
+     * Removes the {@link Group} with the provided name using the {@link Engine} with the provided name.
+     * If the {@link Engine} is not in the manager, does nothing.
+     *
+     * @param engine the name of the {@link Engine} to delete the {@link Group} with
+     * @param groupTitle the title of the {@link Group} to delete
      */
     void deleteGroup(String engine, String groupTitle);
 
     /**
-     * Replaces the Group with the same identifier as the passed Group with the new Group object
-     * using the Engine with the passed name. If the engine is not in the manager, does nothing.
+     * Replaces the matching {@link Group} with the provided {@link Group} using the {@link Engine} with the provided
+     * name. If the {@link Engine} is not in the manager, does nothing.
      *
-     * @param engine the name of the Engine to update the Group with
-     * @param newGroup the new Group object to replace the existing one
+     * @param engine the name of the {@link Engine} to update the {@link Group} with
+     * @param newGroup the new {@link Group} object to replace the existing one
      */
     void updateGroup(String engine, Group newGroup);
 
     /**
-     * Returns a boolean indicating whether a Group with the passed name exists using the
-     * Engine with the passed name.
+     * Replaces the matching {@link Group} with the provided {@link Group} using the {@link Engine} that manages the
+     * {@link Group}. If not {@link Engine} manages the {@link Group}, does nothing.
      *
-     * @param engine the name of the Engine to test for the existence of the Group with
-     * @param groupTitle the title of the Group to look for
-     * @return true if a Group exists with the passed name; false otherwise
+     * @param newGroup the new {@link Group} object to replace the existing one
+     */
+    void updateGroup(Group newGroup);
+
+    /**
+     * Returns a boolean indicating whether a {@link Group} with the provided name exists using the {@link Engine} with
+     * the provided name.
+     *
+     * @param engine the name of the {@link Engine} to test for the existence of the {@link Group} with
+     * @param groupTitle the title of the {@link Group} to look for
+     * @return true if a {@link Group} exists with the provided name; false otherwise
      */
     boolean groupExists(String engine, String groupTitle);
 
     /**
-     * Returns a boolean indicating whether a Group with the passed name exists using any
-     * of the Engines managed by the EngineManager.
+     * Returns a boolean indicating whether a {@link Group} with the provided name exists using any of the
+     * {@link Engine Engines} managed by the {@link EngineManager}.
      *
-     * @param groupTitle the title of the Group to look for
-     * @return true if a Group exists with the passed name; false otherwise
+     * @param groupTitle the title of the {@link Group} to look for
+     * @return true if a {@link Group} exists with the provided name; false otherwise
      */
     boolean groupExists(String groupTitle);
 
     /**
-     * Retrieves the Set of all Roles that the User with the passed username embodies
-     * using the Engine with the passed name. This Set should contain all Roles from
-     * all the User's Groups as well.
+     * Retrieves the {@link Set} of all {@link Role Roles} that the {@link User} with the provided username embodies
+     * using the {@link Engine} with the provided name. This {@link Set} should contain all {@link Role Roles} from all
+     * the User's {@link Group Groups} as well.
      *
-     * @param engine the name of the Engine to collect User Roles from
-     * @param username the username of the User to collect the Roles for
-     * @return the Set of Roles that the User embodies
+     * @param engine the name of the {@link Engine} to collect {@link User} {@link Role Roles} from
+     * @param username the username of the {@link User} to collect the {@link Role Roles} for
+     * @return the {@link Set} of {@link Role Roles} that the {@link User} embodies
      */
     Set<Role> getUserRoles(String engine, String username);
 
     /**
-     * Retrieves the full set of all Roles that the User with the passed username embodies
-     * using all Engines managed by the EngineManager. This Set should contain all Roles from
-     * all the User's Groups as well.
+     * Retrieves the full {@link Set} of all {@link Role Roles} that the {@link User} with the provided username
+     * embodies using all {@link Engine Engines} managed by the {@link EngineManager}. This {@link Set} should contain
+     * all {@link Role Roles} from all the User's {@link Group Groups} as well.
      *
-     * @param username the username of the User to collect the Roles for
-     * @return the Set of Roles that the User embodies
+     * @param username the username of the {@link User} to collect the {@link Role Roles} for
+     * @return the {@link Set} of {@link Role Roles} that the {@link User} embodies
      */
     Set<Role> getUserRoles(String username);
 
     /**
-     * Returns a boolean indicating whether the passed password matches the saved password for
-     * the User with the passed username using the Engine with the passed name.
+     * Returns a boolean indicating whether the provided password matches the saved password for the {@link User} with
+     * the provided username using the {@link Engine} with the provided name.
      *
-     * @param engine the name of the Engine to use when testing passwords
-     * @param username the username for the User to test the password of
+     * @param engine the name of the {@link Engine} to use when testing passwords
+     * @param username the username for the {@link User} to test the password of
      * @param password the password to test
      * @return true if the passwords match; false otherwise
      */
     boolean checkPassword(String engine, String username, String password);
 
     /**
-     * Attempts to find the username of a User associated with the passed IRI using all the
-     * Engines managed by the EngineManager.
+     * Attempts to find the username of a {@link User} associated with the provided IRI using all the
+     * {@link Engine Engines} managed by the {@link EngineManager}.
      *
      * @param userIri the IRI to search for
-     * @return an Optional with the username of the associated User if found; empty otherwise
+     * @return an {@link Optional} with the username of the associated {@link User} if found;
+     *      {@link Optional#empty()} otherwise
      */
     Optional<String> getUsername(Resource userIri);
 }

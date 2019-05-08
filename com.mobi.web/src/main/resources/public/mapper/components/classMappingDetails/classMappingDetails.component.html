@@ -1,0 +1,54 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="class-mapping-details h-100">
+    <div class="iri-template">
+        <custom-label><small>IRI Template <button class="btn btn-link no-padding remove-min-width" ng-disabled="!dvm.classMappingId" ng-click="dvm.editIriTemplate()"><i class="fa fa-pencil"></i></button></small></custom-label>
+        <p><small class="text-muted">{{dvm.iriTemplate}}</small></p>
+    </div>
+    <div class="class-mapping-props">
+        <div class="properties-field-name">
+            <span class="field-name">Properties</span>
+            <button class="btn btn-link no-padding float-right add-prop-mapping-button" ng-disabled="!dvm.hasPropsToMap" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+        </div>
+        <div class="prop-list list-group">
+            <div ng-repeat="propMapping in dvm.propMappings track by propMapping['@id']" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': propMapping.isInvalid}" ng-click="dvm.clickProperty(propMapping)" ng-dblclick="dvm.switchClass(propMapping)" disable-animate>
+                <div class="prop-actions float-right">
+                    <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
+                    <a class="delete-prop" ng-click="dvm.confirmDeleteProp(propMapping)"><i class="fa fa-trash"></i></a>
+                </div>
+                <h4 class="list-group-item-heading">{{propMapping.title}}</h4>
+                <div class="list-group-item-text">
+                    <div ng-if="propMapping.dataMappingInfo" class="data-prop-value">
+                        <div><span class="field-name">Column: </span>{{propMapping.dataMappingInfo.value}}</div>
+                        <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': propMapping.dataMappingInfo.preview === '(None)'}">{{propMapping.dataMappingInfo.preview}}</span></div>
+                        <div><span class="field-name">Datatype: </span>{{propMapping.dataMappingInfo.datatype}}</div>
+                        <div ng-if="propMapping.dataMappingInfo.language"><span class="field-name">Language: </span>{{propMapping.dataMappingInfo.language.preview}}<small class="ml-1 text-muted">&#64;{{propMapping.dataMappingInfo.language.tag}}</small></div>
+                    </div>
+                    <div ng-if="propMapping.objectMappingInfo" class="object-prop-value">
+                        <p><span class="field-name">Class: </span>{{propMapping.objectMappingInfo.value}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

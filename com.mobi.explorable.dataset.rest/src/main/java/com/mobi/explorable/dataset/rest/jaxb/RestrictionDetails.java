@@ -23,15 +23,13 @@ package com.mobi.explorable.dataset.rest.jaxb;
  * #L%
  */
 
-import com.mobi.ontology.core.api.types.ClassExpressionType;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class RestrictionDetails {
     private int cardinality;
-    private ClassExpressionType classExpressionType;
+    private String cardinalityType;
 
     @XmlElement
     public int getCardinality() {
@@ -43,11 +41,11 @@ public class RestrictionDetails {
     }
 
     @XmlElement
-    public ClassExpressionType getClassExpressionType() {
-        return classExpressionType;
+    public String getCardinalityType() {
+        return cardinalityType;
     }
 
-    public void setClassExpressionType(ClassExpressionType classExpressionType) {
-        this.classExpressionType = classExpressionType;
+    public void setCardinalityType(String cardinalityType) {
+        this.cardinalityType = cardinalityType;
     }
 }

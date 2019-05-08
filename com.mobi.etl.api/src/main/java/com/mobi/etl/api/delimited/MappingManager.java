@@ -24,11 +24,11 @@ package com.mobi.etl.api.delimited;
  */
 
 import com.mobi.catalog.api.PaginatedSearchResults;
-import com.mobi.etl.api.config.delimited.MappingRecordConfig;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.etl.api.pagination.MappingPaginatedSearchParams;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
@@ -40,45 +40,35 @@ import javax.annotation.Nonnull;
 
 public interface MappingManager {
 
-    MappingRecord createMappingRecord(MappingRecordConfig config);
-
     /**
-     * Creates a MappingId using the passed Resource as the identifier.
+     * Creates a {@link MappingId} using the passed {@link Resource} as the identifier.
      *
-     * @param id a Resource to use as a identifier
-     * @return a MappingId with the passed identifier
+     * @param id a {@link Resource} to use as a identifier
+     * @return a {@link MappingId} with the passed identifier
      */
     MappingId createMappingId(Resource id);
 
     /**
-     * Creates a MappingId using the passed IRI as the mapping IRI.
+     * Creates a {@link MappingId} using the passed {@link IRI} as the mapping IRI.
      *
-     * @param mappingIRI an IRI to use as a mapping IRI
-     * @return a MappingId with the passed mapping IRI
+     * @param mappingIRI an {@link IRI} to use as a mapping IRI
+     * @return a {@link MappingId} with the passed mapping {@link IRI}
      */
     MappingId createMappingId(IRI mappingIRI);
 
     /**
-     * Creates a MappingId using the passed IRIs as the mapping and version IRIs.
+     * Creates a {@link MappingId} using the passed {@link IRI IRIs} as the mapping and version IRIs.
      *
-     * @param mappingIRI an IRI to use as a mapping IRI
-     * @param versionIRI an IRI to use as a version IRI
-     * @return a MappingId with the passed mapping and version IRIs
+     * @param mappingIRI an {@link IRI} to use as a mapping IRI
+     * @param versionIRI an {@link IRI} to use as a version IRI
+     * @return a {@link MappingId} with the passed mapping and version {@link IRI IRIs}
      */
     MappingId createMappingId(IRI mappingIRI, IRI versionIRI);
 
     /**
-     * Creates an empty mapping with the passed in MappingId.
+     * Creates a {@link MappingWrapper} with the mapping in the given {@link File}.
      *
-     * @param id a MappingId used to generate the mapping IRI and versionIRI
-     * @return an empty Mapping except for beginning statements
-     */
-    MappingWrapper createMapping(MappingId id);
-
-    /**
-     * Creates a Mobi Model with the mapping in the given file.
-     *
-     * @param mapping a file containing RDF with a mapping
+     * @param mapping a {@link File} containing RDF with a mapping
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
      * @throws MobiException if the file does not contain exactly one mapping resource
@@ -86,21 +76,30 @@ public interface MappingManager {
     MappingWrapper createMapping(File mapping) throws IOException, MobiException;
 
     /**
-     * Creates a Mobi Model with the mapping in the given JSON-LD string.
+     * Creates a {@link MappingWrapper} with the mapping in the given JSON-LD string.
      *
      * @param jsonld a string containing JSON-LD of a mapping
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
-     * @throws MobiException if the file does not contain exactly one mapping resource
+     * @throws MobiException if the data does not contain exactly one mapping resource
      */
     MappingWrapper createMapping(String jsonld) throws IOException, MobiException;
 
     /**
-     * Creates a Mobi Model with the mapping in the given InputStream in
-     * the given RDF format.
+     * Creates a {@link MappingWrapper} with the mapping in the given Mobi {@link Model}.
      *
-     * @param in an input stream containing mapping RDF
-     * @param format the RDF format the mapping is in
+     * @param model a {@link Model} containing the data of a mapping
+     * @return a Mapping with the mapping RDF and id pulled from the data
+     * @throws MobiException if the data does not contain exactly one mapping resource
+     */
+    MappingWrapper createMapping(Model model) throws MobiException;
+
+    /**
+     * Creates a {@link MappingWrapper} with the mapping in the given {@link InputStream} in the given
+     * {@link RDFFormat}.
+     *
+     * @param in an {@link InputStream} containing mapping RDF
+     * @param format the {@link RDFFormat} the mapping is in
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
      * @throws IllegalArgumentException if the file is not a valid RDF format
@@ -108,48 +107,44 @@ public interface MappingManager {
     MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MobiException;
 
     /**
-     * Retrieves a paginated list of MappingRecords in the local catalog based on the passed search and
-     * pagination parameters. Acceptable sort properties are http://purl.org/dc/terms/title,
+     * Retrieves a paginated list of {@link MappingRecord MappingRecords} in the local catalog based on the passed
+     * search and pagination parameters. Acceptable sort properties are http://purl.org/dc/terms/title,
      * http://purl.org/dc/terms/modified, and http://purl.org/dc/terms/issued.
      *
-     * @param searchParams Pagination configuration for MappingRecords
-     * @return The PaginatedSearchResults of MappingRecords in the local catalog
+     * @param searchParams Pagination configuration for {@link MappingRecord MappingRecords}
+     * @return The {@link PaginatedSearchResults} of {@link MappingRecord MappingRecords} in the local catalog
      */
     PaginatedSearchResults<MappingRecord> getMappingRecords(MappingPaginatedSearchParams searchParams);
 
     /**
-     * Collects a mapping Mobi Model specified by the passed mapping IRI Resource
-     * from the repository if it exists.
+     * Collects a {@link MappingWrapper} specified by the passed mapping IRI {@link Resource} from the repository if it
+     * exists.
      *
-     * @param recordId the IRI Resource for a mapping
-     * @return an Optional with a Mapping with the mapping RDF if it was found
+     * @param recordId the IRI {@link Resource} for a mapping
+     * @return an {@link Optional} with a Mapping with the mapping RDF if it was found
      */
     Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId);
 
     /**
-     * Collects a mapping Mobi Model specified by the passed mapping IRI Resource
-     * from the repository if it exists.
+     * Collects a {@link MappingWrapper} specified by the passed IRI {@link Resource Resources} for a
+     * {@link MappingRecord} and a {@link com.mobi.catalog.api.ontologies.mcat.Branch} from the repository if it exists.
      *
-     * @param recordId the IRI Resource for a mapping
-     * @return an Optional with a Mapping with the mapping RDF if it was found
+     * @param recordId the IRI {@link Resource} for a Mapping Record
+     * @param branchId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Branch}
+     * @return an {@link Optional} with a Mapping with the mapping RDF if it was found
      */
     Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
-     * Collects a mapping Mobi Model specified by the passed mapping IRI Resource
-     * from the repository if it exists.
+     * Collects a {@link MappingWrapper} specified by the passed mapping IRI {@link Resource Resources} for a
+     * {@link MappingRecord}, {@link com.mobi.catalog.api.ontologies.mcat.Branch}, and a
+     * {@link com.mobi.catalog.api.ontologies.mcat.Commit} from the repository if it exists.
      *
-     * @param recordId the IRI Resource for a mapping
-     * @return an Optional with a Mapping with the mapping RDF if it was found
+     * @param recordId the IRI {@link Resource} for a Mapping Record
+     * @param branchId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Branch}
+     * @param commitId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Commit}
+     * @return an {@link Optional} with a Mapping with the mapping RDF if it was found
      */
     Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                              @Nonnull Resource commitId);
-
-    /**
-     * Delete a mapping from the repository.
-     *
-     * @param recordId the id for a mapping
-     * @return The MappingRecord that was removed.
-     */
-    MappingRecord deleteMapping(@Nonnull Resource recordId);
 }

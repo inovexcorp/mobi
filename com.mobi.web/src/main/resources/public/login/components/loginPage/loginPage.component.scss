@@ -1,0 +1,56 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.login-page {
+    left: 0;
+    position: absolute;
+    width: 100%;
+
+    .center-section {
+        margin: 0 auto;
+        width: 425px;
+
+        /* Style for the image container */
+        .img-container {
+            padding: 1.5rem 1.5rem 5rem 1.5rem;
+        }
+        /* Style for the box around the login form */
+        .form-container {
+            border-radius: 10px;
+            padding: 20px 20px 30px;
+
+            /* Applies proper margins to the login header */
+            h1 {
+                margin: 0 0 15px;
+            }
+        }
+    }
+}
+
+@media (max-width: $screen-xs-max) {
+    .login-page .center-section {
+        width: 90%;
+    }
+}

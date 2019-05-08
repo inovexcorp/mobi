@@ -1,0 +1,77 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.open-ontology-select {
+    padding: 0 1rem;
+
+    input {
+        font-size: 12px;
+    }
+    .ui-select-bootstrap {
+        .ui-select-choices-row > span {
+            font-size: 12px;
+            padding: 3px 8px;
+        }
+        .ui-select-match-text span {
+            font-size: 12px;
+            line-height: 20px;
+        }
+        .ui-select-choices-group-label {
+            font-size: 12px;
+            padding: 3px 8px;
+        }
+    }
+    .entity-display {
+        display: flex;
+        flex-direction: row;
+
+        &.active {
+            font-weight: bold;
+        }
+        &.master .fa-fw {
+            display: none;
+        }
+        span {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .fa-fw {
+            line-height: 20px;
+            margin-left: 5px;
+            text-decoration: none;
+
+            &:hover {
+                color: var(--grey) !important;
+            }
+        }
+        .fa-fw-red {
+            color: var(--danger);
+            line-height: 20px;
+            margin-left: 5px;
+            text-decoration: none;
+        }
+    }
+}
