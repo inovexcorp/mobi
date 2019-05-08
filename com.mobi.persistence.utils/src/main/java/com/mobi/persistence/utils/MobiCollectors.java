@@ -24,11 +24,9 @@ public class MobiCollectors {
      * if more control over the returned {@code Model} is required, use {@link #toCollection(Supplier)}.
      *
      * @param modelFactory the ModelFactory used for creating the returned model
-     * @return a {@code Collector} which collects all the input statements
-     * {@code Model}, in encounter order
+     * @return a {@code Collector} which collects all the input statements {@code Model}, in encounter order
      */
-    public static
-    Collector<Statement, ?, Model> toModel(ModelFactory modelFactory) {
+    public static Collector<Statement, ?, Model> toModel(ModelFactory modelFactory) {
         return new CollectorImpl<>(modelFactory::createModel, Set::add,
                 (statements, statements2) -> {
                     statements.addAll(statements2);
