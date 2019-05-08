@@ -263,14 +263,13 @@ public class ImportsResolverImpl implements ImportsResolver {
             IRI ontNamedGraphIRI = vf.createIRI(ontologyIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX);
             dsConn.addDefaultNamedGraph(ontNamedGraphIRI);
 
-            if (!dsConn.contains(null, null, null, ontNamedGraphIRI)) {
+            if (!dsConn.containsContext(ontNamedGraphIRI)) {
                 dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
             }
             if (addTimestamp) {
                 dsConn.remove(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), null, datasetIRI);
                 dsConn.addDefault(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING),
                         vf.createLiteral(OffsetDateTime.now()), datasetIRI);
-                dsConn.removeGraph(datasetIRI);
             }
         }
     }
