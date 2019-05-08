@@ -12,12 +12,12 @@ package com.mobi.ontology.utils.cache.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -43,6 +43,10 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.rio.RDFParser;
+import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -111,30 +115,30 @@ public class ImportsResolverImpl implements ImportsResolver {
 
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
             for (int i = 0; i < importsToProcess.size(); i++) {
-                Resource ontologyIRI = importsToProcess.get(i);
+                Resource importIRI = importsToProcess.get(i);
 
                 Model model;
                 if (i == 0) {
                     model = ontModel;
-                    if (!cacheConn.getStatements(null, null, null, datasetKey).hasNext()) {
+                    if (!cacheConn.containsContext(datasetKey)) {
                         datasetManager.createDataset(datasetKey.stringValue(), cacheRepo.getConfig().id());
                     }
                     addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
                 } else {
-                    IRI iri = getDatasetIRI(ontologyIRI, ontologyManager);
+                    IRI iri = getDatasetIRI(importIRI, ontologyManager);
 
-                    if (iri.stringValue().equals(ontologyIRI.stringValue())) {
-                        Optional<Model> modelOpt = retrieveOntologyFromWeb(ontologyIRI);
+                    if (iri.equals(importIRI)) {
+                        Optional<Model> modelOpt = retrieveOntologyFromWeb(importIRI);
                         if (modelOpt.isPresent()) {
                             model = modelOpt.get();
                             addOntologyToRepo(cacheRepo, model, datasetKey, iri, false);
                         } else {
-                            unresolvedImports.add(ontologyIRI);
-                            processedImports.add(ontologyIRI);
+                            unresolvedImports.add(importIRI);
+                            processedImports.add(importIRI);
                             continue;
                         }
                     } else {
-                        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+                        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(importIRI);
                         Optional<Resource> headCommit = catalogManager.getMasterBranch(
                                 catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
                         model = catalogManager.getCompiledResource(headCommit.get());
@@ -150,7 +154,7 @@ public class ImportsResolverImpl implements ImportsResolver {
                         .map(r -> (IRI) r)
                         .collect(Collectors.toList());
 
-                processedImports.add(ontologyIRI);
+                processedImports.add(importIRI);
                 imports.forEach(imported -> {
                     if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
                         importsToProcess.add(imported);
@@ -171,6 +175,9 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Override
     public Optional<Model> retrieveOntologyFromWeb(Resource resource) {
+        RDFParser[] parsers = {new RioFunctionalSyntaxParserFactory().getParser(),
+                new RioManchesterSyntaxParserFactory().getParser(),
+                new RioOWLXMLParserFactory().getParser()};
         Model model = mf.createModel();
         String urlStr = resource.stringValue();
         if (urlStr.endsWith("/")) {
@@ -180,14 +187,14 @@ public class ImportsResolverImpl implements ImportsResolver {
             if (StringUtils.endsWithAny(urlStr, formats.stream().toArray(String[]::new))) {
                 Optional<URL> urlOpt = getURL(urlStr);
                 if (urlOpt.isPresent()) {
-                    model = Models.createModel(urlOpt.get().openStream(), transformer);
+                    model = Models.createModel(urlOpt.get().openStream(), transformer, parsers);
                 }
             } else {
                 for (String format : formats) {
                     try {
                         Optional<URL> urlOpt = getURL(urlStr + format);
                         if (urlOpt.isPresent()) {
-                            model = Models.createModel(urlOpt.get().openStream(), transformer);
+                            model = Models.createModel(urlOpt.get().openStream(), transformer, parsers);
                             break;
                         }
                     } catch (IOException e) {
@@ -260,8 +267,9 @@ public class ImportsResolverImpl implements ImportsResolver {
                 dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
             }
             if (addTimestamp) {
-                dsConn.addDefault(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), vf.createLiteral(OffsetDateTime.now()),
-                        datasetIRI);
+                dsConn.remove(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), null, datasetIRI);
+                dsConn.addDefault(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING),
+                        vf.createLiteral(OffsetDateTime.now()), datasetIRI);
                 dsConn.removeGraph(datasetIRI);
             }
         }
