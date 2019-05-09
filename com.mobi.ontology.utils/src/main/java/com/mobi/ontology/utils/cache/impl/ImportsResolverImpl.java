@@ -12,12 +12,12 @@ package com.mobi.ontology.utils.cache.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -47,6 +47,8 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -65,6 +67,7 @@ import javax.annotation.Nullable;
 
 @Component
 public class ImportsResolverImpl implements ImportsResolver {
+    private final Logger log = LoggerFactory.getLogger(ImportsResolverImpl.class);
 
     private CatalogManager catalogManager;
     private DatasetManager datasetManager;
@@ -126,7 +129,10 @@ public class ImportsResolverImpl implements ImportsResolver {
                     addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
                 } else {
                     IRI iri = getDatasetIRI(importIRI, ontologyManager);
-
+                    if (cacheConn.containsContext(iri)
+                            || cacheConn.containsContext(vf.createIRI(iri + SYSTEM_DEFAULT_NG_SUFFIX))) {
+                        continue;
+                    }
                     if (iri.equals(importIRI)) {
                         Optional<Model> modelOpt = retrieveOntologyFromWeb(importIRI);
                         if (modelOpt.isPresent()) {
@@ -175,6 +181,7 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Override
     public Optional<Model> retrieveOntologyFromWeb(Resource resource) {
+        long startTime = getStartTime();
         RDFParser[] parsers = {new RioFunctionalSyntaxParserFactory().getParser(),
                 new RioManchesterSyntaxParserFactory().getParser(),
                 new RioOWLXMLParserFactory().getParser()};
@@ -205,6 +212,7 @@ public class ImportsResolverImpl implements ImportsResolver {
         } catch (IOException | IllegalArgumentException e) {
             model = mf.createModel();
         }
+        logDebug("Retrieving " + resource + " from web", startTime);
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
@@ -222,13 +230,16 @@ public class ImportsResolverImpl implements ImportsResolver {
             return Optional.of(url);
         } else if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM
                 || status == HttpURLConnection.HTTP_SEE_OTHER) {
-            return Optional.of(new URL(conn.getHeaderField("Location")));
+            String redirectUrl = conn.getHeaderField("Location");
+            log.debug("URL " + urlStr + " redirected to " + redirectUrl);
+            return Optional.of(new URL(redirectUrl));
         }
         return Optional.empty();
     }
 
     @Override
     public Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager) {
+        Long startTime = getStartTime();
         Model model = mf.createModel();
         Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
         if (recordIRIOpt.isPresent()) {
@@ -239,6 +250,7 @@ public class ImportsResolverImpl implements ImportsResolver {
                 model = catalogManager.getCompiledResource(masterHead.get());
             }
         }
+        logDebug("Retrieving ontology from local catalog", startTime);
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
@@ -262,9 +274,10 @@ public class ImportsResolverImpl implements ImportsResolver {
                 false)) {
             IRI ontNamedGraphIRI = vf.createIRI(ontologyIRI.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX);
             dsConn.addDefaultNamedGraph(ontNamedGraphIRI);
-
-            if (!dsConn.containsContext(ontNamedGraphIRI)) {
+            if (!dsConn.contains(null, null, null, ontNamedGraphIRI)) {
+                Long startTime = getStartTime();
                 dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
+                logDebug("Adding " + ontNamedGraphIRI + " to " + datasetIRI + " dataset", startTime);
             }
             if (addTimestamp) {
                 dsConn.remove(datasetIRI, vf.createIRI(TIMESTAMP_IRI_STRING), null, datasetIRI);
@@ -276,5 +289,13 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     private IRI createDatasetIRIFromKey(String key) {
         return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key));
+    }
+
+    private Long getStartTime() {
+        return System.currentTimeMillis();
+    }
+
+    private void logDebug(String operationDescription, Long start) {
+        log.debug(operationDescription + " complete in " + (System.currentTimeMillis() - start) + " ms");
     }
 }
