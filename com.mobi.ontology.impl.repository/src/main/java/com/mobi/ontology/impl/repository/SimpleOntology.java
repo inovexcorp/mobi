@@ -74,6 +74,7 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.semanticweb.owlapi.rio.OWLAPIRDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,6 +210,7 @@ public class SimpleOntology implements Ontology {
     public SimpleOntology(Model model, Repository cacheRepo, OntologyManager ontologyManager,
                           DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
                           BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = OntologyModels.findFirstOntologyIRI(model, vf)
@@ -225,12 +227,14 @@ public class SimpleOntology implements Ontology {
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
         this.unresolvedImports = imports.get("unresolved");
+        logTrace("SimpleOntology constructor from Model", startTime);
     }
 
     // If exists in catalog but ontology and imports don't exist in cache yet
     public SimpleOntology(String recordCommitKey, Model model, Repository cacheRepo, OntologyManager ontologyManager,
                           DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
                           BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
@@ -248,12 +252,14 @@ public class SimpleOntology implements Ontology {
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
         this.unresolvedImports = imports.get("unresolved");
+        logTrace("SimpleOntology constructor in catalog but not in cache", startTime);
     }
 
     // If it already exists in cache
     public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager,
                           DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
                           BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
@@ -279,11 +285,13 @@ public class SimpleOntology implements Ontology {
                     null, null, null,  conn.getSystemDefaultNamedGraph()), mf);
             this.ontologyId = ontologyManager.createOntologyId(model);
         }
+        logTrace("SimpleOntology constructor from cache", startTime);
     }
 
     private SimpleOntology(IRI datasetIRI, Model model, Repository cacheRepo, OntologyManager ontologyManager,
                            DatasetManager datasetManager, ImportsResolver importsResolver,
                            SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+        long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = datasetIRI;
@@ -318,8 +326,8 @@ public class SimpleOntology implements Ontology {
                         .map(imported -> (IRI) imported)
                         .forEach(unresolvedImports::add);
             }
-
         }
+        logTrace("SimpleOntology constructor from import in cache", startTime);
     }
 
     public void setDifference(Difference difference) {
@@ -329,8 +337,10 @@ public class SimpleOntology implements Ontology {
     @Override
     public Model asModel(ModelFactory factory) throws MobiOntologyException {
         try (DatasetConnection conn = getDatasetConnection()) {
-            Model model = RepositoryResults.asModelNoContext(
-                    conn.getStatements(null, null, null, conn.getSystemDefaultNamedGraph()), factory);
+            long startTime = getStartTime();
+            Model model = RepositoryResults.asModelNoContext(conn.getStatements(null, null, null,
+                    conn.getSystemDefaultNamedGraph()), factory);
+            logTrace("asModel(factory)", startTime);
             undoApplyDifferenceIfPresent(conn);
             return model;
         }
@@ -347,8 +357,8 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public OutputStream asOwlXml() throws MobiOntologyException { // TODO:!!!!!! OWLAPIRDFFormat has OWLXML.....
-        return getOntologyOutputStream(RDFFormat.RDFXML);
+    public OutputStream asOwlXml() throws MobiOntologyException {
+        return getOntologyOutputStream(OWLAPIRDFFormat.OWL_XML);
     }
 
     @Override
@@ -356,11 +366,13 @@ public class SimpleOntology implements Ontology {
         OutputStream outputStream = new ByteArrayOutputStream();
         WriterConfig config = new WriterConfig();
         try {
-            org.eclipse.rdf4j.model.Model sesameModel = transformer.sesameModel(asModel(mf));
+            long startTime = getStartTime();
+            Model model = asModel(mf);
             if (skolemize) {
-                sesameModel = transformer.sesameModel(bNodeService.skolemize(transformer.mobiModel(sesameModel)));
+                model = bNodeService.skolemize(model);
             }
-            Rio.write(sesameModel, outputStream, RDFFormat.JSONLD, config);
+            Rio.write(transformer.sesameModel(model), outputStream, RDFFormat.JSONLD, config);
+            logTrace("asJsonLD(skolemize)", startTime);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while parsing Ontology.");
         }
@@ -368,14 +380,15 @@ public class SimpleOntology implements Ontology {
     }
 
     private OutputStream getOntologyOutputStream(RDFFormat format) {
+        long startTime = getStartTime();
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
-            org.eclipse.rdf4j.model.Model sesameModel = transformer.sesameModel(asModel(mf));
-            Rio.write(sesameModel, rdfWriter);
+            Rio.write(transformer.sesameModel(asModel(mf)), rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
+        logTrace("getOntologyOutputStream(" + format.getName() + ")", startTime);
         return outputStream;
     }
 
