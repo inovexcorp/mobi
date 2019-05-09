@@ -288,6 +288,7 @@ public class SimpleOntology implements Ontology {
         logTrace("SimpleOntology constructor from cache", startTime);
     }
 
+    // If it is an import. Used for generating the closure
     private SimpleOntology(IRI datasetIRI, Model model, Repository cacheRepo, OntologyManager ontologyManager,
                            DatasetManager datasetManager, ImportsResolver importsResolver,
                            SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
@@ -614,7 +615,6 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Individual> getAllIndividuals() {
-        // TODO: SKOS??
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.NAMEDINDIVIDUAL.stringValue())));
@@ -763,97 +763,67 @@ public class SimpleOntology implements Ontology {
     /**
      * Executes the provided Graph query on the provided Ontology.
      *
-     * @param queryString the query string that you wish to run.
-     * @param addBinding  the binding to add to the query, if needed.
-     * @param methodName  the name of the method to provide more accurate logging messages.
-     * @return the results of the query as a model.
+     * @param queryString the query string that you wish to run
+     * @param addBinding  the binding to add to the query, if needed
+     * @param methodName  the name of the method to provide more accurate logging messages
+     * @param includeImports whether to include imported ontologies in the query
+     * @param modelFactory {@link ModelFactory} used for generating the returned model
+     * @return the results of the query as a model
      */
     private Model runGraphQueryOnOntology(String queryString,
                                           @Nullable Function<GraphQuery, GraphQuery> addBinding,
                                           String methodName, boolean includeImports, ModelFactory modelFactory) {
-        if (includeImports) {
-            try (DatasetConnection conn = getDatasetConnection()) {
-                Model model = runGraphQueryOnOntology(queryString, addBinding, methodName, conn, modelFactory);
+        try (DatasetConnection conn = getDatasetConnection()) {
+            long start = getStartTime();
+            try {
+                GraphQuery query;
+                if (includeImports) {
+                    query = conn.prepareGraphQuery(queryString);
+                } else {
+                    query = conn.prepareGraphQuery(queryString, conn.getSystemDefaultNamedGraph());
+                }
+                if (addBinding != null) {
+                    query = addBinding.apply(query);
+                }
+                Model model = QueryResults.asModel(query.evaluate(), modelFactory);
                 undoApplyDifferenceIfPresent(conn);
                 return model;
-            }
-        } else {
-            // TODO: ONLY QUERY SDNG && apply diff
-            try (RepositoryConnection conn = repository.getConnection()) {
-                return runGraphQueryOnOntology(queryString, addBinding, methodName, conn, modelFactory);
+            } finally {
+                logTrace(methodName, start);
             }
         }
     }
 
     /**
-     * Executes the provided Graph query on the provided RepositoryConnection.
+     * Executes the provided Graph query on the provided Ontology.
      *
-     * @param queryString the query string that you wish to run.
-     * @param addBinding  the binding to add to the query, if needed.
-     * @param methodName  the name of the method to provide more accurate logging messages.
-     * @param conn        the {@link RepositoryConnection} to run the query against.
-     * @return the results of the query as a model.
-     */
-    private Model runGraphQueryOnOntology(String queryString, @Nullable Function<GraphQuery, GraphQuery> addBinding,
-                                          String methodName, RepositoryConnection conn, ModelFactory modelFactory) {
-        long start = getStartTime();
-        try {
-            GraphQuery query = conn.prepareGraphQuery(queryString);
-            if (addBinding != null) {
-                query = addBinding.apply(query);
-            }
-            return QueryResults.asModel(query.evaluate(), modelFactory);
-        } finally {
-            logTrace(methodName, start);
-        }
-    }
-
-    /**
-     * TODO: FILL IN
-     * @param queryString
-     * @param addBinding
-     * @param methodName
-     * @param includeImports
-     * @return
+     * @param queryString the query string that you wish to run
+     * @param addBinding  the binding to add to the query, if needed
+     * @param methodName  the name of the method to provide more accurate logging messages
+     * @param includeImports whether to include imported ontologies in the query
+     * @return the results of the query as a TupleQueryResult
      */
     private TupleQueryResult runQueryOnOntology(String queryString,
                                                 @Nullable Function<TupleQuery, TupleQuery> addBinding,
                                                 String methodName, boolean includeImports) {
-        if (includeImports) {
-            try (DatasetConnection conn = getDatasetConnection()) {
-                TupleQueryResult result = runQueryOnOntology(queryString, addBinding, methodName, conn);
+        try (DatasetConnection conn = getDatasetConnection()) {
+            long start = getStartTime();
+            try {
+                TupleQuery query;
+                if (includeImports) {
+                    query = conn.prepareTupleQuery(queryString);
+                } else {
+                    query = conn.prepareTupleQuery(queryString, conn.getSystemDefaultNamedGraph());
+                }
+                if (addBinding != null) {
+                    query = addBinding.apply(query);
+                }
+                TupleQueryResult result = query.evaluateAndReturn();
                 undoApplyDifferenceIfPresent(conn);
                 return result;
+            } finally {
+                logTrace(methodName, start);
             }
-        } else {
-            // TODO: QUERY ONLY QUERY SDNG... && apply diff
-            try (RepositoryConnection conn = repository.getConnection()) {
-                return runQueryOnOntology(queryString, addBinding, methodName, conn);
-            }
-        }
-    }
-
-    /**
-     * Executes the provided query on the provided RepositoryConnection.
-     *
-     * @param queryString the query string that you wish to run.
-     * @param addBinding  the binding to add to the query, if needed.
-     * @param methodName  the name of the method to provide more accurate logging messages.
-     * @param conn        the {@link RepositoryConnection} to run the query against.
-     * @return the results of the query.
-     */
-    private TupleQueryResult runQueryOnOntology(String queryString,
-                                                @Nullable Function<TupleQuery, TupleQuery> addBinding,
-                                                String methodName, RepositoryConnection conn) {
-        long start = getStartTime();
-        try {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            if (addBinding != null) {
-                query = addBinding.apply(query);
-            }
-            return query.evaluateAndReturn();
-        } finally {
-            logTrace(methodName, start);
         }
     }
 
@@ -883,8 +853,8 @@ public class SimpleOntology implements Ontology {
     /**
      * Uses the provided TupleQueryResult to construct a set of the entities provided.
      *
-     * @param tupleQueryResult the TupleQueryResult that contains //TODO
-     * @return a Hierarchy containing the hierarchy of the entities provided.
+     * @param tupleQueryResult the TupleQueryResult that contains IRIs
+     * @return a Set of IRIs from the TupleQueryResult
      */
     private Set<IRI> getIRISet(TupleQueryResult tupleQueryResult) {
         Set<IRI> iris = new HashSet<>();
@@ -894,10 +864,10 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * Uses the provided TupleQueryResult to construct a set of the entities provided.
+     * Uses the provided TupleQueryResult to construct a set of {@link Annotation}s.
      *
-     * @param tupleQueryResult the TupleQueryResult that contains //TODO
-     * @return a Hierarchy containing the hierarchy of the entities provided.
+     * @param tupleQueryResult the TupleQueryResult that contains properties and values
+     * @return a Set of Annotations from the TupleQueryResult
      */
     private Set<Annotation> getAnnotationSet(TupleQueryResult tupleQueryResult) {
         Set<Annotation> annotations = new HashSet<>();
