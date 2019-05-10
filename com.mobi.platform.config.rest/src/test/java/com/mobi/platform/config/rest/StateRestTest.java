@@ -1,4 +1,4 @@
-package com.mobi.platform.config.rest.impl;
+package com.mobi.platform.config.rest;
 
 /*-
  * #%L
@@ -73,8 +73,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class StateRestImplTest extends MobiRestTestNg {
-    private StateRestImpl rest;
+public class StateRestTest extends MobiRestTestNg {
+    private StateRest rest;
     private ValueFactory vf;
     private ModelFactory mf;
 
@@ -106,7 +106,7 @@ public class StateRestImplTest extends MobiRestTestNg {
         when(transformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
-        rest = new StateRestImpl();
+        rest = new StateRest();
         rest.setStateManager(stateManager);
         rest.setModelFactory(mf);
         rest.setValueFactory(vf);
