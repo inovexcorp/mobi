@@ -1,5 +1,5 @@
 
-Lists of 342 third-party dependencies.
+Lists of 345 third-party dependencies.
      (Revised BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
@@ -283,9 +283,12 @@ Lists of 342 third-party dependencies.
      (The Apache Software License, Version 2.0) OPS4J Pax Url - aether: - support library (org.ops4j.pax.url:pax-url-aether-support:2.5.4 - http://team.ops4j.org/wiki/display/paxurl/pax-url-aether-support)
      (The Apache Software License, Version 2.0) OPS4J Pax Web - API (org.ops4j.pax.web:pax-web-api:7.0.0 - http://team.ops4j.org/wiki/display/paxweb/pax-web-api/)
      (The Apache Software License, Version 2.0) OPS4J Pax Web - Extender - Whiteboard (org.ops4j.pax.web:pax-web-extender-whiteboard:7.0.0 - http://team.ops4j.org/wiki/display/paxweb/pax-web-extender-whiteboard/)
+     (The Apache Software License, Version 2.0) org.osgi.annotation (org.osgi:org.osgi.annotation:6.0.0 - http://www.osgi.org)
      (The Apache Software License, Version 2.0) osgi.cmpn (org.osgi:org.osgi.compendium:4.3.1 - http://www.osgi.org)
      (The Apache Software License, Version 2.0) osgi.cmpn (org.osgi:org.osgi.compendium:5.0.0 - http://www.osgi.org)
      (The Apache Software License, Version 2.0) org.osgi.core (org.osgi:org.osgi.core:6.0.0 - http://www.osgi.org)
+     (The Apache Software License, Version 2.0) org.osgi:org.osgi.service.component.annotations (org.osgi:org.osgi.service.component.annotations:1.3.0 - http://www.osgi.org/)
+     (The Apache Software License, Version 2.0) org.osgi:org.osgi.service.metatype.annotations (org.osgi:org.osgi.service.metatype.annotations:1.3.0 - http://www.osgi.org/)
      (The Apache Software License, Version 2.0) org.osgi:osgi.cmpn (org.osgi:osgi.cmpn:6.0.0 - http://www.osgi.org/)
      (Revised BSD License) ASM Core (org.ow2.asm:asm:4.2 - http://asm.objectweb.org/asm/)
      (The Apache Software License, Version 2.0) powermock-api-easymock (org.powermock:powermock-api-easymock:1.6.5 - http://www.powermock.org/powermock-api/powermock-api-easymock)
