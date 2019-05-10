@@ -1,4 +1,4 @@
-package com.mobi.security.policy.rest.impl;
+package com.mobi.security.policy.rest;
 
 /*-
  * #%L
@@ -62,8 +62,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class RecordPermissionsRestImplTest extends MobiRestTestNg {
-    private RecordPermissionsRestImpl rest;
+public class RecordPermissionsRestTest extends MobiRestTestNg {
+    private RecordPermissionsRest rest;
     private ValueFactory vf;
 
     private String recordJson;
@@ -110,7 +110,7 @@ public class RecordPermissionsRestImplTest extends MobiRestTestNg {
         recordStatement = vf.createStatement(recordPolicyIRI, type, policyType);
         policyStatement = vf.createStatement(policyPolicyIRI, type, policyType);
 
-        rest = new RecordPermissionsRestImpl();
+        rest = new RecordPermissionsRest();
         rest.setVf(vf);
         rest.setPolicyManager(policyManager);
         rest.setRepo(repo);

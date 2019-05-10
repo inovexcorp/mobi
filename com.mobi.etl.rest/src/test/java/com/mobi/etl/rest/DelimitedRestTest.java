@@ -1,4 +1,4 @@
-package com.mobi.etl.rest.impl;
+package com.mobi.etl.rest;
 
 /*-
  * #%L
@@ -104,8 +104,9 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class DelimitedRestImplTest extends MobiRestTestNg {
-    private DelimitedRestImpl rest;
+public class DelimitedRestTest extends MobiRestTestNg {
+    private DelimitedRest rest;
+//    private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
     private User user;
@@ -157,7 +158,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
 
         MockitoAnnotations.initMocks(this);
-        rest = new DelimitedRestImpl();
+        rest = new DelimitedRest();
         rest.setDelimitedConverter(converter);
         rest.setMappingManager(mappingManager);
         rest.setEngineManager(engineManager);
@@ -239,7 +240,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
             String filename = response.readEntity(String.class);
 
             assertEquals(response.getStatus(), 201);
-            assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + filename)));
+            assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + filename)));
         }
     }
 
@@ -250,7 +251,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
-        assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
+        assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -264,7 +265,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         assertEquals(response.readEntity(String.class), fileName);
-        List<String> resultLines = Files.readAllLines(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName));
+        List<String> resultLines = Files.readAllLines(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName));
         assertEquals(resultLines.size(), expectedLines.size());
         for (int i = 0; i < resultLines.size(); i++) {
             assertEquals(resultLines.get(i), expectedLines.get(i));
@@ -448,10 +449,10 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
+        assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
 
         testMapDownload(fileName, MAPPING_RECORD_IRI, params);
-        assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
+        assertFalse(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
     }
 
     @Test
@@ -830,6 +831,6 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
 
     private void copyResourceToTemp(String resourceName, String newName) throws IOException {
         Files.copy(getClass().getResourceAsStream("/" + resourceName),
-                Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
+                Paths.get(DelimitedRest.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
     }
 }

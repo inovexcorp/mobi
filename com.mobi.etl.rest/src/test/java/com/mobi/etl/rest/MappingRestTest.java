@@ -1,4 +1,4 @@
-package com.mobi.etl.rest.impl;
+package com.mobi.etl.rest;
 
 /*-
  * #%L
@@ -84,8 +84,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class MappingRestImplTest extends MobiRestTestNg {
-    private MappingRestImpl rest;
+public class MappingRestTest extends MobiRestTestNg {
+    private MappingRest rest;
     private static final String CATALOG_IRI = "http://test.org/catalog";
     private static final String MAPPING_IRI = "http://test.org/test";
     private static final String MAPPING_RECORD_IRI = "http://test.org/record";
@@ -146,7 +146,7 @@ public class MappingRestImplTest extends MobiRestTestNg {
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
-        rest = new MappingRestImpl();
+        rest = new MappingRest();
         rest.setManager(manager);
         rest.setVf(vf);
         rest.setTransformer(sesameTransformer);

@@ -1,4 +1,4 @@
-package com.mobi.ontology.rest.impl;
+package com.mobi.ontology.rest;
 
 /*-
  * #%L
@@ -59,25 +59,25 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Annotation;
+import com.mobi.ontology.core.api.AnnotationProperty;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.Hierarchy;
 import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.OClass;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.OClass;
-import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import com.mobi.ontology.core.api.AnnotationProperty;
-import com.mobi.ontology.core.api.DataProperty;
-import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.impl.owlapi.SimpleAnnotation;
-import com.mobi.ontology.impl.owlapi.SimpleIndividual;
-import com.mobi.ontology.impl.owlapi.SimpleClass;
-import com.mobi.ontology.impl.owlapi.SimpleDatatype;
 import com.mobi.ontology.impl.owlapi.SimpleAnnotationProperty;
+import com.mobi.ontology.impl.owlapi.SimpleClass;
 import com.mobi.ontology.impl.owlapi.SimpleDataProperty;
+import com.mobi.ontology.impl.owlapi.SimpleDatatype;
+import com.mobi.ontology.impl.owlapi.SimpleIndividual;
 import com.mobi.ontology.impl.owlapi.SimpleObjectProperty;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -140,7 +140,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MobiRestTestNg {
-    private OntologyRestImpl rest;
+    private OntologyRest rest;
 
     @Mock
     private OntologyManager ontologyManager;
@@ -327,7 +327,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(configProvider.getRepository()).thenReturn(repo);
 
-        rest = new OntologyRestImpl();
+        rest = new OntologyRest();
         rest.setModelFactory(mf);
         rest.setValueFactory(vf);
         rest.setOntologyManager(ontologyManager);
