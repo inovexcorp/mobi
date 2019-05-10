@@ -95,7 +95,6 @@ public class SimpleOntology implements Ontology {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
 
     private Repository repository;
-    private OntologyId ontologyId;
     private DatasetManager datasetManager;
     private OntologyManager ontologyManager;
     private ImportsResolver importsResolver;
@@ -222,7 +221,6 @@ public class SimpleOntology implements Ontology {
         this.transformer = transformer;
         this.bNodeService = bNodeService;
 
-        this.ontologyId = ontologyManager.createOntologyId(model);
         Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(this.datasetIRI, null, model,
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
@@ -245,7 +243,6 @@ public class SimpleOntology implements Ontology {
         this.transformer = transformer;
         this.bNodeService = bNodeService;
 
-        this.ontologyId = ontologyManager.createOntologyId(model);
         Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf)
                 .orElseThrow(() -> new IllegalStateException("Ontology must have an identifier."));
         Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyIRI, recordCommitKey, model,
@@ -280,10 +277,6 @@ public class SimpleOntology implements Ontology {
             imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
                     vf.createIRI(UNRESOLVED_IRI_STRING), null, datasetIRI));
             imports.forEach(imported -> unresolvedImports.add((Resource) imported.getObject()));
-
-            Model model = RepositoryResults.asModelNoContext(conn.getStatements(
-                    null, null, null,  conn.getSystemDefaultNamedGraph()), mf);
-            this.ontologyId = ontologyManager.createOntologyId(model);
         }
         logTrace("SimpleOntology constructor from cache", startTime);
     }
@@ -302,8 +295,6 @@ public class SimpleOntology implements Ontology {
         this.importsResolver = importsResolver;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-
-        this.ontologyId = ontologyManager.createOntologyId(model);
 
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
             if (!cacheConn.containsContext(datasetIRI)) {
@@ -395,7 +386,17 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OntologyId getOntologyId() {
-        return ontologyId;
+        try (DatasetConnection conn = getDatasetConnection()) {
+            Model iris = RepositoryResults.asModelNoContext(
+                    conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
+                            vf.createIRI(OWL.ONTOLOGY.stringValue()), conn.getSystemDefaultNamedGraph()), mf);
+            iris.addAll(RepositoryResults.asModelNoContext(
+                    conn.getStatements(null, vf.createIRI(OWL.VERSIONIRI.stringValue()),
+                            null, conn.getSystemDefaultNamedGraph()), mf));
+            OntologyId id = ontologyManager.createOntologyId(iris);
+            undoApplyDifferenceIfPresent(conn);
+            return id;
+        }
     }
 
     @Override
@@ -432,6 +433,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Annotation> getOntologyAnnotations() {
+        OntologyId ontologyId = getOntologyId();
         IRI ontologyIRI = ontologyId.getOntologyIRI().orElse((IRI) ontologyId.getOntologyIdentifier());
         return getAnnotationSet(runQueryOnOntology(String.format(GET_ONTOLOGY_ANNOTATIONS,
                 ontologyIRI.stringValue()), null, "getOntologyAnnotations()", false));
@@ -747,17 +749,14 @@ public class SimpleOntology implements Ontology {
 
         if (obj instanceof SimpleOntology) {
             SimpleOntology simpleOntology = (SimpleOntology) obj;
-            OntologyId ontologyId = simpleOntology.getOntologyId();
-            if (this.ontologyId.equals(ontologyId)) {
-                return this.datasetIRI.equals(simpleOntology.datasetIRI);
-            }
+            return this.datasetIRI.equals(simpleOntology.datasetIRI);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return this.ontologyId.hashCode() + datasetIRI.hashCode();
+        return datasetIRI.hashCode();
     }
 
     /**

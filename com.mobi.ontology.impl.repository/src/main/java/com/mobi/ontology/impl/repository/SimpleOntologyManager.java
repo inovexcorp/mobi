@@ -40,6 +40,7 @@ import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.config.OntologyManagerConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
@@ -57,6 +58,11 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,9 +189,18 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Ontology createOntology(InputStream inputStream, boolean resolveImports) {
-        // TODO: Only used in upload changes. Won't have ontologyID associated with it.....
         try {
-            return createOntology(Models.createModel(inputStream, sesameTransformer));
+            Model model = Models.createModel(inputStream, sesameTransformer,
+                    new RioFunctionalSyntaxParserFactory().getParser(),
+                    new RioManchesterSyntaxParserFactory().getParser(),
+                    new RioOWLXMLParserFactory().getParser());
+            if (!OntologyModels.findFirstOntologyIRI(model, valueFactory).isPresent()) {
+                OntologyId id = createOntologyId(model);
+                IRI iri = id.getOntologyIRI().orElse((IRI) id.getOntologyIdentifier());
+                model.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
+                        valueFactory.createIRI(OWL.ONTOLOGY.stringValue()));
+            }
+            return createOntology(model);
         } catch (IOException e) {
             throw new MobiException(e);
         }

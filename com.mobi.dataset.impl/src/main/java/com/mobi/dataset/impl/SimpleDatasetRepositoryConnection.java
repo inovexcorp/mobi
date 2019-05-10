@@ -51,6 +51,7 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +67,9 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private Resource dataset;
     private String repositoryId;
     private ValueFactory valueFactory;
-
     private Resource systemDefaultNG;
+
+    private long batchSize = 10000;
 
     private static final String GET_GRAPHS_QUERY;
     private static final String GET_NAMED_GRAPHS_QUERY;
@@ -107,6 +109,16 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
         this.systemDefaultNG = getSystemDefaultNG();
+    }
+
+    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
+                                             ValueFactory valueFactory, long batchSize) {
+        setDelegate(delegate);
+        this.dataset = dataset;
+        this.repositoryId = repositoryId;
+        this.valueFactory = valueFactory;
+        this.systemDefaultNG = getSystemDefaultNG();
+        this.batchSize = batchSize;
     }
 
     @Override
@@ -465,7 +477,26 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         if (varargsPresent(contexts)) {
-            getDelegate().add(statements, contexts);
+            if (startedTransaction) {
+                int count = 0;
+                for (Statement statement : statements) {
+                    getDelegate().add(statement, contexts);
+                    count++;
+                    if (count % batchSize == 0) {
+                        try {
+                            getDelegate().commit();
+                            if (log != null) {
+                                log.debug(batchSize + " statements imported");
+                            }
+                            getDelegate().begin();
+                        } catch (RepositoryException e) {
+                            throw new RDFHandlerException(e);
+                        }
+                    }
+                }
+            } else {
+                getDelegate().add(statements, contexts);
+            }
             addGraphStatements(predicate, contexts);
         } else {
             statements.forEach(stmt -> addSingleStatement(stmt, predicate));

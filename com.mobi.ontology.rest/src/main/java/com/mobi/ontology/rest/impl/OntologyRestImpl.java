@@ -62,10 +62,12 @@ import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.rest.OntologyRest;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.exception.MalformedQueryException;
@@ -95,8 +97,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
+import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -326,17 +332,24 @@ public class OntologyRestImpl implements OntologyRest {
                 }
             }
 
-            Model changedOnt = ontologyManager.createOntology(fileInputStream, false).asModel(modelFactory);
+            Model changedOnt = Models.createModel(fileInputStream, sesameTransformer,
+                    new RioFunctionalSyntaxParserFactory().getParser(),
+                    new RioManchesterSyntaxParserFactory().getParser(),
+                    new RioOWLXMLParserFactory().getParser());
             Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
+            if (!OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory).isPresent()) {
+                OntologyModels.findFirstOntologyIRI(changedOnt, valueFactory)
+                        .ifPresent(iri -> changedOnt.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
+                                valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
+            }
 
             Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
-
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
             return Response.ok().build();
 
-        } catch (IllegalArgumentException | MobiException e) {
+        } catch (IllegalArgumentException | MobiException | IOException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
