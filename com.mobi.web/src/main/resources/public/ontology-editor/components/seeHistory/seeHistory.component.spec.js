@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('See History component', function() {
+describe('See History component', function() {
     var $compile, scope, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
@@ -109,18 +109,20 @@ fdescribe('See History component', function() {
         button.triggerHandler('click');
         expect(this.controller.next).toHaveBeenCalled();
     });
-    it('should add `(latest)` to the label for the latest commit in commits', function() {
+    it('assigns the correct label for each commit', function() {
         this.controller.commits = this.commits;
         utilSvc.condenseCommitId.and.returnValue('1234');
-        var label = this.controller.createLabel(this.commits[0].id);
-        expect(label).toEqual('1234 (latest)');
+        var label1 = this.controller.createLabel(this.commits[0].id);
+        var label2 = this.controller.createLabel(this.commits[1].id);
+        expect(label1).toEqual('1234 (latest)');
+        expect(label2).toEqual('1234');  
+
 
     });
     it('should assign condensed commitId as the label for any other commit', function() {
         this.controller.commits = this.commits;
         utilSvc.condenseCommitId.and.returnValue('1234');
-        var label = this.controller.createLabel(this.commits[1].id);
-        expect(label).toEqual('1234');        
+              
     });
     it('should assign an array of commits to `commits` in the controller when receiveCommits is called', function() {
         this.controller.receiveCommits(this.commits);
