@@ -1,4 +1,4 @@
-package com.mobi.prov.rest.impl;
+package com.mobi.prov.rest;
 
 /*-
  * #%L
@@ -86,8 +86,8 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class ProvRestImplTest extends MobiRestTestNg {
-    private ProvRestImpl rest;
+public class ProvRestTest extends MobiRestTestNg {
+    private ProvRest rest;
 
     private ValueFactory vf;
     private OrmFactory<Activity> activityFactory;
@@ -152,7 +152,7 @@ public class ProvRestImplTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
-        rest = new ProvRestImpl();
+        rest = new ProvRest();
         rest.setMf(getModelFactory());
         rest.setVf(vf);
         rest.setProvService(provService);

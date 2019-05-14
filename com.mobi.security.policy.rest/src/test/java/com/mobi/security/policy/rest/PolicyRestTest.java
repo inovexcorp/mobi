@@ -1,4 +1,4 @@
-package com.mobi.security.policy.rest.impl;
+package com.mobi.security.policy.rest;
 
 /*-
  * #%L
@@ -45,6 +45,7 @@ import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
+import com.mobi.security.policy.rest.PolicyRest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -62,8 +63,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class PolicyRestImplTest extends MobiRestTestNg {
-    private PolicyRestImpl rest;
+public class PolicyRestTest extends MobiRestTestNg {
+    private PolicyRest rest;
     private ValueFactory vf;
 
     private String xml;
@@ -84,7 +85,7 @@ public class PolicyRestImplTest extends MobiRestTestNg {
         policy = new XACMLPolicy(xml, vf);
         policyId = vf.createIRI("http://mobi.com/policies/policy1");
 
-        rest = new PolicyRestImpl();
+        rest = new PolicyRest();
         rest.setVf(vf);
         rest.setPolicyManager(policyManager);
 

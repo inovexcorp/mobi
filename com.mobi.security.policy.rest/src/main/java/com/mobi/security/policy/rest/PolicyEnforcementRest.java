@@ -23,10 +23,30 @@ package com.mobi.security.policy.rest;
  * #L%
  */
 
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
 
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -37,9 +57,31 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Component(service = PolicyEnforcementRest.class, immediate = true)
 @Path("/pep")
 @Api(value = "/pep")
-public interface PolicyEnforcementRest {
+public class PolicyEnforcementRest {
+
+    private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
+
+    private PDP pdp;
+    private ValueFactory vf;
+    private EngineManager engineManager;
+
+    @Reference
+    void setPdp(PDP pdp) {
+        this.pdp = pdp;
+    }
+
+    @Reference
+    void setVf(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
 
     /**
      * Converts a user provided JSON object string into a XACML request. Evaluates the request and returns the decision
@@ -61,5 +103,50 @@ public interface PolicyEnforcementRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Converts user provided request into XACML and evaluates.")
-    Response evaluateRequest(@Context ContainerRequestContext context, String jsonRequest);
+    public Response evaluateRequest(@Context ContainerRequestContext context, String jsonRequest) {
+        log.debug("Authorizing...");
+        long start = System.currentTimeMillis();
+
+        try {
+            JSONObject json = JSONObject.fromObject(jsonRequest);
+            IRI subjectId = (IRI) RestUtils.optActiveUser(context, engineManager).map(User::getResource)
+                    .orElse(vf.createIRI(ANON_USER));
+
+            String actionIdStr = json.optString("actionId");
+            String resourceIdStr = json.optString("resourceId");
+            if (StringUtils.isEmpty(actionIdStr) || StringUtils.isEmpty(resourceIdStr)) {
+                throw ErrorUtils.sendError("ID is required.", Response.Status.BAD_REQUEST);
+            }
+
+            IRI actionId = vf.createIRI(actionIdStr);
+            IRI resourceId = vf.createIRI(resourceIdStr);
+
+            Map<String, String> attributes = json.getJSONObject("subjectAttrs");
+            Map<String, Literal> subjectAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+            attributes = json.getJSONObject("resourceAttrs");
+            Map<String, Literal> resourceAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+            attributes = json.getJSONObject("actionAttrs");
+            Map<String, Literal> actionAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
+                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+
+            Request request = pdp.createRequest(subjectId, subjectAttrs, resourceId, resourceAttrs,
+                    actionId, actionAttrs);
+
+            log.debug(request.toString());
+            com.mobi.security.policy.api.Response response = pdp.evaluate(request,
+                    vf.createIRI(POLICY_PERMIT_OVERRIDES));
+            log.debug(response.toString());
+            log.debug(String.format("Request Evaluated. %dms", System.currentTimeMillis() - start));
+
+            return Response.ok(response.getDecision().toString()).build();
+        } catch (IllegalArgumentException | MobiException ex) {
+            throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private String getMessageOrDefault(com.mobi.security.policy.api.Response response, String defaultMessage) {
+        return StringUtils.isEmpty(response.getStatusMessage()) ? defaultMessage : response.getStatusMessage();
+    }
 }

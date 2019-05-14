@@ -1,4 +1,4 @@
-package com.mobi.dataset.rest.impl;
+package com.mobi.dataset.rest;
 
 /*-
  * #%L
@@ -23,10 +23,10 @@ package com.mobi.dataset.rest.impl;
  * #L%
  */
 
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
-import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -99,8 +99,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class DatasetRestImplTest extends MobiRestTestNg {
-    private DatasetRestImpl rest;
+public class DatasetRestTest extends MobiRestTestNg {
+    private DatasetRest rest;
     private ValueFactory vf;
     private ModelFactory mf;
     private OrmFactory<Branch> branchFactory;
@@ -180,7 +180,7 @@ public class DatasetRestImplTest extends MobiRestTestNg {
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(localIRI);
 
-        rest = new DatasetRestImpl();
+        rest = new DatasetRest();
         rest.setManager(datasetManager);
         rest.setVf(vf);
         rest.setMf(mf);

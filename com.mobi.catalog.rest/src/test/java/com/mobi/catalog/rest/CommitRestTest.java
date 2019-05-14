@@ -1,4 +1,4 @@
-package com.mobi.catalog.rest.impl;
+package com.mobi.catalog.rest;
 
 /*-
  * #%L
@@ -23,15 +23,14 @@ package com.mobi.catalog.rest.impl;
  * #L%
  */
 
+import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
-import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -84,7 +83,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class CommitRestImplTest extends MobiRestTestNg {
+public class CommitRestTest extends MobiRestTestNg {
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final String RECORD_IRI = "http://mobi.com/records/test";
     private static final String ERROR_IRI = "http://mobi.com/error";
@@ -97,7 +96,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
             "http://mobi.com/commits/1"
     };
 
-    private CommitRestImpl rest;
+    private CommitRest rest;
     private ValueFactory vf;
     private ModelFactory mf;
     private OrmFactory<Record> recordFactory;
@@ -154,7 +153,7 @@ public class CommitRestImplTest extends MobiRestTestNg {
         MockitoAnnotations.initMocks(this);
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
 
-        rest = new CommitRestImpl();
+        rest = new CommitRest();
         injectOrmFactoryReferencesIntoService(rest);
         rest.setVf(vf);
         rest.setEngineManager(engineManager);

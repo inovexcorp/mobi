@@ -1,4 +1,4 @@
-package com.mobi.ontology.rest.impl;
+package com.mobi.ontology.rest;
 
 /*-
  * #%L
@@ -23,19 +23,19 @@ package com.mobi.ontology.rest.impl;
  * #L%
  */
 
+import com.mobi.rest.util.MobiRestTestNg;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import com.mobi.rest.util.MobiRestTestNg;
 
 import javax.ws.rs.core.Application;
 
 public class ImportedOntologyRestImplTest extends MobiRestTestNg {
-    private ImportedOntologyRestImpl rest;
+    private ImportedOntologyRest rest;
 
     @Override
     protected Application configureApp() throws Exception {
-        rest = new ImportedOntologyRestImpl();
+        rest = new ImportedOntologyRest();
         return new ResourceConfig().register(rest);
     }
 
