@@ -48,7 +48,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import com.mobi.rest.util.MobiRestTestNg;
-import com.mobi.rest.util.RestUtils;
+import com.mobi.sparql.rest.SparqlRest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -73,8 +73,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-public class SparqlRestImplTest extends MobiRestTestNg {
-    private SparqlRestImpl rest;
+public class SparqlRestTest extends MobiRestTestNg {
+    private SparqlRest rest;
     private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
@@ -110,7 +110,7 @@ public class SparqlRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
 
-        rest = new SparqlRestImpl();
+        rest = new SparqlRest();
         rest.setRepository(repositoryManager);
         rest.setDatasetManager(datasetManager);
         rest.setValueFactory(vf);

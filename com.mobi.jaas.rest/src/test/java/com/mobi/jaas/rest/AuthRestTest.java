@@ -1,4 +1,4 @@
-package com.mobi.jaas.rest.impl;
+package com.mobi.jaas.rest;
 
 /*-
  * #%L
@@ -75,7 +75,7 @@ import javax.ws.rs.core.Response;
 
 @PowerMockIgnore({"javax.ws.*", "org.glassfish.*"})
 @PrepareForTest({TokenUtils.class, RestSecurityUtils.class})
-public class AuthRestImplTest extends MobiRestTestNg {
+public class AuthRestTest extends MobiRestTestNg {
 
     private NewCookie authCookie;
     private NewCookie unauthCookie;
@@ -140,12 +140,12 @@ public class AuthRestImplTest extends MobiRestTestNg {
         authCookie = new NewCookie(TOKEN_NAME, USERNAME);
         unauthCookie = new NewCookie(TOKEN_NAME, ANON);
 
-        when(requiredRole.getResource()).thenReturn(vf.createIRI("http://test.com/" + AuthRestImpl.REQUIRED_ROLE));
+        when(requiredRole.getResource()).thenReturn(vf.createIRI("http://test.com/" + AuthRest.REQUIRED_ROLE));
         when(otherRole.getResource()).thenReturn(vf.createIRI("http://test.com/other"));
         when(signedJWT.getPayload()).thenReturn(new Payload(VALID_USER));
         when(unauthSignedJWT.getPayload()).thenReturn(new Payload(ANON_USER));
 
-        AuthRestImpl rest = new AuthRestImpl();
+        AuthRest rest = new AuthRest();
         rest.setConfiguration(mobiConfiguration);
         rest.setEngineManager(engineManager);
 

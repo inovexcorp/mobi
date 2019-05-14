@@ -1,4 +1,4 @@
-package com.mobi.explorable.dataset.rest.impl;
+package com.mobi.explorable.dataset.rest;
 
 /*-
  * #%L
@@ -46,11 +46,11 @@ import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.DataProperty;
-import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
@@ -93,8 +93,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
-public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
-    private ExplorableDatasetRestImpl rest;
+public class ExplorableDatasetRestTest extends MobiRestTestNg {
+    private ExplorableDatasetRest rest;
 
     private ValueFactory vf;
     private ModelFactory mf;
@@ -202,7 +202,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
         when(ontologyManager.retrieveOntology(ontologyRecordId, vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology));
 
-        rest = new ExplorableDatasetRestImpl();
+        rest = new ExplorableDatasetRest();
         injectOrmFactoryReferencesIntoService(rest);
         rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
