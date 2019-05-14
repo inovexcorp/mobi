@@ -1,4 +1,4 @@
-package com.mobi.security.policy.rest.impl;
+package com.mobi.security.policy.rest;
 
 /*-
  * #%L
@@ -52,10 +52,10 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 
-public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
+public class PolicyEnforcementRestTest extends MobiRestTestNg {
     private static final String USER_IRI = "http://mobi.com/users/tester";
 
-    private PolicyEnforcementRestImpl rest;
+    private PolicyEnforcementRest rest;
     private ValueFactory vf;
     private JSONObject json;
 
@@ -79,7 +79,7 @@ public class PolicyEnforcementRestImplTest extends MobiRestTestNg {
         MockitoAnnotations.initMocks(this);
         vf = getValueFactory();
 
-        rest = new PolicyEnforcementRestImpl();
+        rest = new PolicyEnforcementRest();
         rest.setEngineManager(engineManager);
         rest.setPdp(pdp);
         rest.setVf(vf);

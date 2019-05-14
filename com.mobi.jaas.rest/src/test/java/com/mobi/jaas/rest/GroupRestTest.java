@@ -1,4 +1,4 @@
-package com.mobi.jaas.rest.impl;
+package com.mobi.jaas.rest;
 
 /*-
  * #%L
@@ -81,8 +81,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class GroupRestImplTest extends MobiRestTestNg {
-    private GroupRestImpl rest;
+public class GroupRestTest extends MobiRestTestNg {
+    private GroupRest rest;
     private ValueFactory vf;
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
@@ -142,7 +142,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
         when(rdfEngine.getEngineName()).thenReturn(ENGINE_NAME);
 
-        rest = spy(new GroupRestImpl());
+        rest = spy(new GroupRest());
         injectOrmFactoryReferencesIntoService(rest);
         rest.setEngineManager(engineManager);
         rest.setRdfEngine(rdfEngine);

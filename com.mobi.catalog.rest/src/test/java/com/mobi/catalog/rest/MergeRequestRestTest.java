@@ -1,4 +1,4 @@
-package com.mobi.catalog.rest.impl;
+package com.mobi.catalog.rest;
 
 /*-
  * #%L
@@ -99,8 +99,8 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-public class MergeRequestRestImplTest extends MobiRestTestNg {
-    private MergeRequestRestImpl rest;
+public class MergeRequestRestTest extends MobiRestTestNg {
+    private MergeRequestRest rest;
     private MergeRequestFactory mergeRequestFactory;
     private CommentFactory commentFactory;
     private UserFactory userFactory;
@@ -205,7 +205,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
 
         commentChains = Arrays.asList(Arrays.asList(comment1, comment2), Arrays.asList(comment3));
 
-        rest = new MergeRequestRestImpl();
+        rest = new MergeRequestRest();
         rest.setManager(requestManager);
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);

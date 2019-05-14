@@ -23,13 +23,46 @@ package com.mobi.jaas.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.getActiveUsername;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.jsonldToModel;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
+
+import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.Engine;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.engines.UserConfig;
+import com.mobi.jaas.api.ontologies.usermanagement.Group;
+import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.ontologies.foaf.Agent;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.orm.Thing;
+import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import net.sf.json.JSONArray;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -46,9 +79,42 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Component(service = UserRest.class, immediate = true)
 @Path("/users")
 @Api( value = "/users")
-public interface UserRest {
+public class UserRest {
+    private EngineManager engineManager;
+    private ValueFactory vf;
+    private UserFactory userFactory;
+    private SesameTransformer transformer;
+    private Engine rdfEngine;
+    private final Logger logger = LoggerFactory.getLogger(UserRest.class);
+
+    @Reference
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
+    }
+
+    @Reference
+    void setValueFactory(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    @Reference
+    void setUserFactory(UserFactory userFactory) {
+        this.userFactory = userFactory;
+    }
+
+    @Reference
+    void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
+    @Reference(target = "(engineName=RdfEngine)")
+    void setRdfEngine(Engine engine) {
+        this.rdfEngine = engine;
+    }
+
     /**
      * Retrieves a list of all the {@link User}s in Mobi.
      *
@@ -58,7 +124,24 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get all Mobi Users")
-    Response getUsers();
+    public Response getUsers() {
+        try {
+            Set<User> users = engineManager.getUsers();
+            JSONArray result = JSONArray.fromObject(users.stream()
+                    .map(user -> {
+                        user.clearPassword();
+                        return user.getModel().filter(user.getResource(), null, null);
+                    })
+                    .map(userModel -> modelToJsonld(userModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     /**
      * Creates a User in Mobi with the passed username and password. Both are required in order
@@ -77,12 +160,50 @@ public interface UserRest {
     @ApiOperation("Create a Mobi User account")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    Response createUser(@FormDataParam("username") String username,
+    public Response createUser(@FormDataParam("username") String username,
                         @FormDataParam("password") String password,
                         @FormDataParam("roles") List<FormDataBodyPart> roles,
                         @FormDataParam("firstName") String firstName,
                         @FormDataParam("lastName") String lastName,
-                        @FormDataParam("email") String email);
+                        @FormDataParam("email") String email) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+        }
+        if (StringUtils.isEmpty(password)) {
+            throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            if (engineManager.userExists(username)) {
+                throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
+            }
+
+            Set<String> roleSet = new HashSet<>();
+            if (roles != null && roles.size() > 0) {
+                roleSet = roles.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
+            }
+
+            UserConfig.Builder builder = new UserConfig.Builder(username, password, roleSet);
+            if (firstName != null) {
+                builder.firstName(firstName);
+            }
+            if (lastName != null) {
+                builder.lastName(lastName);
+            }
+            if (email != null) {
+                builder.email(email);
+            }
+
+            User user = engineManager.createUser(rdfEngine.getEngineName(), builder.build());
+            if (!user.getUsername().isPresent()) {
+                throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            engineManager.storeUser(rdfEngine.getEngineName(), user);
+            logger.info("Created user " + user.getResource() + " with username " + username);
+            return Response.status(201).entity(user.getUsername().get().stringValue()).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Retrieves the specified User in Mobi.
@@ -95,7 +216,21 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Get a single Mobi User")
-    Response getUser(@PathParam("username") String username);
+    public Response getUser(@PathParam("username") String username) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            User user = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
+            user.clearPassword();
+            String json = groupedModelToString(user.getModel().filter(user.getResource(), null, null),
+                    getRDFFormat("jsonld"), transformer);
+            return Response.ok(getObjectFromJsonld(json)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Updates the information of the specified User in Mobi. Only the User being updated or an admin can make
@@ -103,7 +238,7 @@ public interface UserRest {
      *
      * @param context the context of the request
      * @param username the current username of the user to update
-     * @param newUser a JSON-LD string representation of a User with the new information to update
+     * @param newUserStr a JSON-LD string representation of a User with the new information to update
      * @return a Response indicating the success or failure of the request
      */
     @PUT
@@ -111,25 +246,52 @@ public interface UserRest {
     @RolesAllowed("user")
     @ApiOperation("Update a Mobi user's information")
     @Consumes(MediaType.APPLICATION_JSON)
-    Response updateUser(@Context ContainerRequestContext context,
+    public Response updateUser(@Context ContainerRequestContext context,
                         @PathParam("username") String username,
-                        String newUser);
+                        String newUserStr) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+        }
+        isAuthorizedUser(context, username);
 
-    /**
-     * Resets the password of the specified User in Mobi. This action is only allowed by admin Users.
-     *
-     * @param context the context of the request
-     * @param username the current username of the User to update
-     * @param newPassword a new password for the User
-     * @return a Response indicating the success or failure of the request
-     */
-    @PUT
-    @Path("{username}/password")
-    @RolesAllowed("admin")
-    @ApiOperation("Resets a Mobi User's password if User making request is the admin")
-    Response resetPassword(@Context ContainerRequestContext context,
-                           @PathParam("username") String username,
-                           @QueryParam("newPassword") String newPassword);
+        try {
+            Model userModel = jsonldToModel(newUserStr, transformer);
+            Set<Resource> subjects = userModel.filter(null, vf.createIRI(RDF.TYPE.stringValue()),
+                    vf.createIRI(User.TYPE)).subjects();
+            if (subjects.size() < 1) {
+                throw ErrorUtils.sendError("User must have an ID", Response.Status.BAD_REQUEST);
+            }
+            User newUser = userFactory.createNew(subjects.iterator().next(), userModel);
+
+            Value newUsername = newUser.getUsername().orElseThrow(() ->
+                    ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
+            if (!username.equals(newUsername.stringValue())) {
+                throw ErrorUtils.sendError("Provided username and the username in the data must match",
+                        Response.Status.BAD_REQUEST);
+            }
+            User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            if (!savedUser.getUsername().isPresent()) {
+                throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            if (!savedUser.getPassword().isPresent()) {
+                throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            if (!savedUser.getUsername().get().equals(newUsername)) {
+                throw ErrorUtils.sendError("Usernames must match", Response.Status.BAD_REQUEST);
+            }
+
+            if (!savedUser.getHasUserRole().isEmpty()) {
+                newUser.setHasUserRole(savedUser.getHasUserRole());
+            }
+            newUser.setPassword(savedUser.getPassword().get());
+
+            engineManager.updateUser(rdfEngine.getEngineName(), newUser);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Changes the password of the specified user in Mobi. In order to change the User's password,
@@ -145,10 +307,57 @@ public interface UserRest {
     @Path("{username}/password")
     @RolesAllowed("user")
     @ApiOperation("Changes a Mobi User's password if it is the User making the request")
-    Response changePassword(@Context ContainerRequestContext context,
+    public Response changePassword(@Context ContainerRequestContext context,
                             @PathParam("username") String username,
                             @QueryParam("currentPassword") String currentPassword,
-                            @QueryParam("newPassword") String newPassword);
+                            @QueryParam("newPassword") String newPassword) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+        }
+        checkCurrentUser(getActiveUsername(context), username);
+        if (StringUtils.isEmpty(currentPassword)) {
+            throw ErrorUtils.sendError("Current password must be provided", Response.Status.BAD_REQUEST);
+        }
+        if (StringUtils.isEmpty(newPassword)) {
+            throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            if (!engineManager.checkPassword(rdfEngine.getEngineName(), username, currentPassword)) {
+                throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
+            }
+            return changePassword(username, newPassword);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Resets the password of the specified User in Mobi. This action is only allowed by admin Users.
+     *
+     * @param context the context of the request
+     * @param username the current username of the User to update
+     * @param newPassword a new password for the User
+     * @return a Response indicating the success or failure of the request
+     */
+    @PUT
+    @Path("{username}/password")
+    @RolesAllowed("admin")
+    @ApiOperation("Resets a Mobi User's password if User making request is the admin")
+    public Response resetPassword(@Context ContainerRequestContext context,
+                           @PathParam("username") String username,
+                           @QueryParam("newPassword") String newPassword) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+        }
+        if (StringUtils.isEmpty(newPassword)) {
+            throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            return changePassword(username, newPassword);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Removes the specified User from Mobi. Only the User being deleted or an admin
@@ -162,8 +371,24 @@ public interface UserRest {
     @Path("{username}")
     @RolesAllowed("user")
     @ApiOperation("Remove a Mobi user's account")
-    Response deleteUser(@Context ContainerRequestContext context,
-                        @PathParam("username") String username);
+    public Response deleteUser(@Context ContainerRequestContext context,
+                        @PathParam("username") String username) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+        }
+        isAuthorizedUser(context, username);
+        try {
+            if (!engineManager.userExists(username)) {
+                throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
+            }
+
+            engineManager.deleteUser(rdfEngine.getEngineName(), username);
+            logger.info("Deleted user " + username);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Retrieves the list of roles of a User in Mobi. By default, this list only includes
@@ -179,8 +404,26 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List roles of a Mobi User")
-    Response getUserRoles(@PathParam("username") String username,
-                          @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups);
+    public Response getUserRoles(@PathParam("username") String username,
+                          @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            User user = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            Set<Role> roles = includeGroups ? engineManager.getUserRoles(username)
+                    : user.getHasUserRole();
+            JSONArray result = JSONArray.fromObject(roles.stream()
+                    .map(role -> role.getModel().filter(role.getResource(), null, null))
+                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Adds roles to the specified User in Mobi.
@@ -193,7 +436,27 @@ public interface UserRest {
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @ApiOperation("Add roles to a Mobi User")
-    Response addUserRoles(@PathParam("username") String username, @QueryParam("roles") List<String> roles);
+    public Response addUserRoles(@PathParam("username") String username, @QueryParam("roles") List<String> roles) {
+        if (StringUtils.isEmpty(username) || roles.isEmpty()) {
+            throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        try {
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            Set<Role> roleObjs = new HashSet<>();
+            roles.forEach(s -> roleObjs.add(engineManager.getRole(s).orElseThrow(() ->
+                    ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
+            Set<Role> allRoles = savedUser.getHasUserRole();
+            allRoles.addAll(roleObjs);
+            savedUser.setHasUserRole(allRoles);
+            engineManager.updateUser(savedUser);
+            logger.info("Role(s) " + String.join(", ", roles) + " added to user " + username);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Removes a role from the specified User in Mobi.
@@ -206,7 +469,23 @@ public interface UserRest {
     @Path("{username}/roles")
     @RolesAllowed("admin")
     @ApiOperation("Remove role from a Mobi User")
-    Response removeUserRole(@PathParam("username") String username, @QueryParam("role") String role);
+    public Response removeUserRole(@PathParam("username") String username, @QueryParam("role") String role) {
+        if (StringUtils.isEmpty(username) || role == null) {
+            throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            Role roleObj = engineManager.getRole(role).orElseThrow(() ->
+                    ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+            savedUser.removeProperty(roleObj.getResource(), vf.createIRI(User.hasUserRole_IRI));
+            engineManager.updateUser(savedUser);
+            logger.info("Role " + role + " removed from user " + username);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Retrieves the list of groups a User is a member of in Mobi.
@@ -219,7 +498,29 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("List groups of a Mobi User")
-    Response listUserGroups(@PathParam("username") String username);
+    public Response listUserGroups(@PathParam("username") String username) {
+        if (StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+        }
+
+        try {
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            Set<Group> groups = engineManager.getGroups().stream()
+                    .filter(group -> group.getMember_resource().stream()
+                        .anyMatch(resource -> resource.equals(savedUser.getResource())))
+                    .collect(Collectors.toSet());
+
+            JSONArray result = JSONArray.fromObject(groups.stream()
+                    .map(group -> group.getModel().filter(group.getResource(), null, null))
+                    .map(roleModel -> modelToJsonld(roleModel, transformer))
+                    .map(RestUtils::getObjectFromJsonld)
+                    .collect(Collectors.toList()));
+            return Response.ok(result).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Adds the specified User to a group in Mobi. If the group does not exist,
@@ -233,7 +534,25 @@ public interface UserRest {
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @ApiOperation("Add a Mobi user to a group")
-    Response addUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle);
+    public Response addUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle) {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(groupTitle)) {
+            throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            Set<Agent> newMembers = savedGroup.getMember();
+            newMembers.add(savedUser);
+            savedGroup.setMember(newMembers);
+            engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
+            logger.info("Added user " + username + " to group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Removes the specified User from a group in Mobi. If this is the only User in the
@@ -247,7 +566,23 @@ public interface UserRest {
     @Path("{username}/groups")
     @RolesAllowed("admin")
     @ApiOperation("Remove a Mobi User from a group")
-    Response removeUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle);
+    public Response removeUserGroup(@PathParam("username") String username, @QueryParam("group") String groupTitle) {
+        if (StringUtils.isEmpty(username) || StringUtils.isEmpty(username)) {
+            throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
+        }
+        try {
+            User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
+                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+            Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
+                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+            savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
+            engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
+            logger.info("Removed user " + username + " from group " + groupTitle);
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
 
     /**
      * Attempts to retrieve the username for the User associated with the passed User IRI. Returns a 404 if
@@ -261,5 +596,79 @@ public interface UserRest {
     @RolesAllowed("user")
     @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation("Retrieve a username based on the passed User IRI")
-    Response getUsername(@QueryParam("iri") String userIri);
+    public Response getUsername(@QueryParam("iri") String userIri) {
+        try {
+            String username = engineManager.getUsername(vf.createIRI(userIri)).orElseThrow(() ->
+                    ErrorUtils.sendError("User not found", Response.Status.NOT_FOUND));
+            return Response.ok(username).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Checks if the user is authorized to make this request. The requesting user must be an admin or have a matching
+     * username.
+     *
+     * @param context The request context
+     * @param username The required username if the user is not an admin
+     */
+    private void isAuthorizedUser(ContainerRequestContext context, String username) {
+        String activeUsername = getActiveUsername(context);
+        if (!engineManager.userExists(activeUsername)) {
+            throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
+        }
+        if (!isAdminUser(activeUsername) && !activeUsername.equals(username)) {
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+        }
+    }
+
+    /**
+     * Determines whether or not the User with the passed username is an admin.
+     *
+     * @param username The username of a User
+     * @return true if the identified User is an admin; false otherwise
+     */
+    private boolean isAdminUser(String username) {
+        return engineManager.getUserRoles(username).stream()
+                .map(Thing::getResource)
+                .anyMatch(resource -> resource.stringValue().contains("admin"));
+    }
+
+    /**
+     * Checks whether the User with the passed username is the same as the User with the other passed
+     * username.
+     *
+     * @param username The username of a User
+     * @param currentUsername The username of another User
+     */
+    private void checkCurrentUser(String username, String currentUsername) {
+        if (!username.equals(currentUsername)) {
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+        }
+    }
+
+    /**
+     * Changes the password of the User with the passed username to the passed new password. Returns a Response
+     * if the update was successful.
+     *
+     * @param username The username of a User
+     * @param newPassword The new password for the identified User
+     * @return A Response indicating the success of the request
+     */
+    private Response changePassword(String username, String newPassword) {
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
+                ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+        if (!savedUser.getPassword().isPresent()) {
+            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
+                new UserConfig.Builder("", newPassword, new HashSet<>()).build());
+        if (!tempUser.getPassword().isPresent()) {
+            throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        savedUser.setPassword(tempUser.getPassword().get());
+        engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
+        return Response.ok().build();
+    }
 }
