@@ -4353,7 +4353,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
-        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
@@ -4377,7 +4376,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
-        verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
@@ -4402,7 +4400,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
         verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
-        verify(ontologyManager).createOntology(any(FileInputStream.class), eq(false));
         verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
