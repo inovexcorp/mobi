@@ -12,12 +12,12 @@ package com.mobi.ontology.utils.cache.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -28,6 +28,7 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.persistence.utils.Models;
@@ -129,8 +130,23 @@ public class ImportsResolverImpl implements ImportsResolver {
                     addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
                 } else {
                     IRI iri = getDatasetIRI(importIRI, ontologyManager);
-                    if (cacheConn.containsContext(iri)
-                            || cacheConn.containsContext(vf.createIRI(iri + SYSTEM_DEFAULT_NG_SUFFIX))) {
+                    IRI sdngIRI = vf.createIRI(iri.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX);
+                    if (cacheConn.containsContext(iri) || cacheConn.containsContext(sdngIRI)) {
+                        List<Resource> imports = cacheConn.getStatements(null,
+                                vf.createIRI(OWL.IMPORTS.stringValue()), null, sdngIRI)
+                                .stream()
+                                .map(Statement::getObject)
+                                .filter(o -> o instanceof IRI)
+                                .map(r -> (IRI) r)
+                                .collect(Collectors.toList());
+
+                        processedImports.add(importIRI);
+                        imports.forEach(imported -> {
+                            if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
+                                importsToProcess.add(imported);
+                            }
+                        });
+                        cacheConn.add(datasetKey, vf.createIRI(Dataset.defaultNamedGraph_IRI), sdngIRI, datasetKey);
                         continue;
                     }
                     if (iri.equals(importIRI)) {
