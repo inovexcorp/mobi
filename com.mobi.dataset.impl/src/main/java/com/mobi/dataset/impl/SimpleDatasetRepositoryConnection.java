@@ -49,6 +49,7 @@ import com.mobi.sparql.utils.Sparql11BaseListener;
 import com.mobi.sparql.utils.Sparql11Parser;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
@@ -619,6 +620,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         private TokenStreamRewriter rewriter;
         private String datasetClause;
         private Set<Resource> contexts;
+        private boolean constructWhere = false;
 
         DatasetListener(TokenStreamRewriter rewriter) {
             this.rewriter = rewriter;
@@ -632,6 +634,10 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         @Override
         public void enterDatasetClause(Sparql11Parser.DatasetClauseContext ctx) {
             rewriter.delete(ctx.getStart(), ctx.getStop());
+            // If short CONSTRUCT WHERE {...} case, insert dataset clause
+            if (constructWhere) {
+                rewriter.insertBefore(ctx.getStart(), getDatasetClause());
+            }
         }
 
         @Override
@@ -640,6 +646,18 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext
                     || ctx.getParent() instanceof Sparql11Parser.ConstructQueryContext) {
                 rewriter.insertBefore(ctx.getStart(), getDatasetClause());
+            }
+        }
+
+        @Override
+        public void enterConstructQuery(Sparql11Parser.ConstructQueryContext ctx) {
+            // Handle short CONSTRUCT WHERE {...} case
+            if (ctx.constructTemplate() == null) {
+                constructWhere = true;
+                // If there is no dataset clause, insert
+                if (ctx.datasetClause() == null || ctx.datasetClause().size() == 0) {
+                    rewriter.insertBefore(((TerminalNodeImpl) ctx.getChild(1)).getSymbol(), getDatasetClause());
+                }
             }
         }
 
