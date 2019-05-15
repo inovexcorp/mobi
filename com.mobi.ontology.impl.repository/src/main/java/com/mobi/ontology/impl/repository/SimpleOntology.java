@@ -128,6 +128,8 @@ public class SimpleOntology implements Ontology {
     private static final String GET_ALL_ANNOTATIONS;
     private static final String GET_ONTOLOGY_ANNOTATIONS;
     private static final String GET_INDIVIDUALS_OF_TYPE;
+    private static final String GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES;
+    private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -199,6 +201,14 @@ public class SimpleOntology implements Ontology {
             );
             GET_INDIVIDUALS_OF_TYPE = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-individuals-of-type.rq"),
+                    "UTF-8"
+            );
+            GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-all-no-domain-object-properties.rq"),
+                    "UTF-8"
+            );
+            GET_ALL_NO_DOMAIN_DATA_PROPERTIES = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-all-no-domain-data-properties.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -449,7 +459,8 @@ public class SimpleOntology implements Ontology {
     public Set<AnnotationProperty> getAllAnnotationProperties() {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue())));
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.ANNOTATIONPROPERTY.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
             Set<AnnotationProperty> annotationProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleAnnotationProperty((IRI) subject))
@@ -473,7 +484,8 @@ public class SimpleOntology implements Ontology {
     public Set<OClass> getAllClasses() {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue())));
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
             Set<OClass> oClasses = statements.stream()
                     .map(Statement::getSubject)
                     .filter(subject -> subject instanceof IRI)
@@ -486,30 +498,42 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<ObjectProperty> getAllClassObjectProperties(IRI iri) {
-        return getIRISet(runQueryOnOntology(String.format(GET_CLASS_OBJECT_PROPERTIES, iri.stringValue()), null,
+        Set<ObjectProperty> properties = getIRISet(runQueryOnOntology(String.format(GET_CLASS_OBJECT_PROPERTIES, iri.stringValue()), null,
                 "getAllClassObjectProperties(iri)", true))
+                .stream()
+                .map(SimpleObjectProperty::new)
+                .collect(Collectors.toSet());
+        properties.addAll(getAllNoDomainObjectProperties());
+        return properties;
+    }
+
+    @Override
+    public Set<ObjectProperty> getAllNoDomainObjectProperties() {
+        return getIRISet(runQueryOnOntology(GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES, null,
+                "getAllNoDomainObjectProperties()", true))
                 .stream()
                 .map(SimpleObjectProperty::new)
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public Set<ObjectProperty> getAllNoDomainObjectProperties() {
-        return new HashSet<>();
-    }
-
-    @Override
     public Set<DataProperty> getAllClassDataProperties(IRI iri) {
-        return getIRISet(runQueryOnOntology(String.format(GET_CLASS_DATA_PROPERTIES, iri.stringValue()), null,
+        Set<DataProperty> properties = getIRISet(runQueryOnOntology(String.format(GET_CLASS_DATA_PROPERTIES, iri.stringValue()), null,
                 "getAllClassDataProperties(iri)", true))
                 .stream()
                 .map(SimpleDataProperty::new)
                 .collect(Collectors.toSet());
+        properties.addAll(getAllNoDomainDataProperties());
+        return properties;
     }
 
     @Override
     public Set<DataProperty> getAllNoDomainDataProperties() {
-        return new HashSet<>();
+        return getIRISet(runQueryOnOntology(GET_ALL_NO_DOMAIN_DATA_PROPERTIES, null,
+                "getAllNoDomainDataProperties()", true))
+                .stream()
+                .map(SimpleDataProperty::new)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -531,7 +555,8 @@ public class SimpleOntology implements Ontology {
     public Set<ObjectProperty> getAllObjectProperties() {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue())));
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.OBJECTPROPERTY.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
             Set<ObjectProperty> objectProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleObjectProperty((IRI) subject))
@@ -564,6 +589,7 @@ public class SimpleOntology implements Ontology {
                     vf.createIRI(RDFS.RANGE.stringValue()), null));
             Set<Resource> resources = statements.stream()
                     .map(Statement::getObject)
+                    .filter(iri -> iri instanceof IRI)
                     .map(value -> (Resource) value)
                     .collect(Collectors.toSet());
             undoApplyDifferenceIfPresent(conn);
@@ -575,7 +601,8 @@ public class SimpleOntology implements Ontology {
     public Set<DataProperty> getAllDataProperties() {
         try (DatasetConnection conn = getDatasetConnection()) {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue())));
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.DATATYPEPROPERTY.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
             Set<DataProperty> dataProperties = statements.stream()
                     .map(Statement::getSubject)
                     .map(subject -> new SimpleDataProperty((IRI) subject))
@@ -608,6 +635,7 @@ public class SimpleOntology implements Ontology {
                     vf.createIRI(RDFS.RANGE.stringValue()), null));
             Set<Resource> resources = statements.stream()
                     .map(Statement::getObject)
+                    .filter(iri -> iri instanceof IRI)
                     .map(value -> (Resource) value)
                     .collect(Collectors.toSet());
             undoApplyDifferenceIfPresent(conn);

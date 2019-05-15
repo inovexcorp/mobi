@@ -4,6 +4,28 @@ prefix owl: <http://www.w3.org/2002/07/owl#>
 
 select *
 where {
-    ?s rdfs:domain <%1$s> ;
-           rdf:type owl:ObjectProperty .
+    OPTIONAL {
+        {
+            ?s rdfs:domain <%1$s> ;
+                rdf:type owl:ObjectProperty .
+        }
+        UNION
+        {
+            <%1$s> owl:equivalentClass ?otherClass .
+            ?s rdfs:domain ?otherClass ;
+                rdf:type owl:ObjectProperty .
+        }
+        UNION
+        {
+            ?otherClass owl:equivalentClass <%1$s> .
+            ?s rdfs:domain ?otherClass ;
+                rdf:type owl:ObjectProperty .
+        }
+        UNION
+        {
+            <%1$s> rdfs:subClassOf+ ?parentClass .
+            ?s rdfs:domain ?parentClass ;
+                rdf:type owl:ObjectProperty .
+        }
+    }
 }

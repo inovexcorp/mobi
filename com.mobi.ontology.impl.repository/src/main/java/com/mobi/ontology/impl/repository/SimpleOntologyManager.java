@@ -418,7 +418,6 @@ public class SimpleOntologyManager implements OntologyManager {
             // Operation puts the ontology in the cache on construction
             final Ontology ontology = createOntologyFromCommit(recordId, commitId);
             result = Optional.of(ontology);
-//            ontologyCache.getOntologyCache().ifPresent(cache -> cache.put(key, ontology));
         }
         return result;
     }

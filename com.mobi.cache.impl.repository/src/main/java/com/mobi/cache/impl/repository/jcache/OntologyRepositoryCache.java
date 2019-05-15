@@ -30,9 +30,11 @@ import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
+import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
@@ -362,20 +364,20 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
         LOG.debug("Adding ontology to cache dataset " + ontNamedGraphIRI.stringValue());
-//        Model ontologyModel = ontology.asModel(mf);
-//        dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
-//        Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
-//
-//        importedOntologies.forEach(importedOntology -> {
-//            Model importedModel = importedOntology.asModel(mf);
-//            IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
-//                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
-//                    + SYSTEM_DEFAULT_NG_SUFFIX);
-//            if (!dsConn.containsContext(ontSdNg)) {
-//                dsConn.addDefault(importedModel, ontSdNg);
-//            }
-//            dsConn.addDefaultNamedGraph(ontSdNg);
-//        });
+        Model ontologyModel = ontology.asModel(mf);
+        dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
+        Set<Ontology> importedOntologies = OntologyUtils.getImportedOntologies(ontology);
+
+        importedOntologies.forEach(importedOntology -> {
+            Model importedModel = importedOntology.asModel(mf);
+            IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
+                    .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
+                    + SYSTEM_DEFAULT_NG_SUFFIX);
+            if (!dsConn.containsContext(ontSdNg)) {
+                dsConn.addDefault(importedModel, ontSdNg);
+            }
+            dsConn.addDefaultNamedGraph(ontSdNg);
+        });
     }
 
     private boolean removeValueFromRepo(IRI datasetIRI) {
