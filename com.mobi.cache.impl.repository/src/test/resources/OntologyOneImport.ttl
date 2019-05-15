@@ -1,0 +1,22 @@
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/title> "Ontology One Import";
+  <http://www.w3.org/2002/07/owl#imports> <https://mobi.com/ontologies/4/2019/Import1> .
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport#annotationProperty1> a <http://www.w3.org/2002/07/owl#AnnotationProperty>;
+  <http://purl.org/dc/terms/title> "AnnotationProperty1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport#Class2> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Class2" .
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport#dataProperty1> a <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+  <http://purl.org/dc/terms/title> "DataProperty1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport#objectProperty1> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <http://purl.org/dc/terms/title> "ObjectProperty1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport#Class1> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "Class1" .
+
+<https://mobi.com/ontologies/4/2019/OntologyOneImport#Individual1> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <https://mobi.com/ontologies/4/2019/OntologyOneImport#Class1> .
