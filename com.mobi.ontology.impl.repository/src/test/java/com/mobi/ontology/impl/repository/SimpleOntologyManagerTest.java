@@ -52,7 +52,6 @@ import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.ontology.utils.cache.OntologyCache;
@@ -84,11 +83,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import javax.cache.Cache;
 
 public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
@@ -237,15 +232,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(sesameTransformer.sesameResource(any(Resource.class))).thenReturn(new SimpleIRI("http://test.com/ontology1"));
 
-        ArgumentCaptor<Resource> ontIRI = ArgumentCaptor.forClass(Resource.class);
-        when(importsResolver.getDatasetIRI(ontIRI.capture(), any(OntologyManager.class))).thenAnswer(invocation -> VALUE_FACTORY.createIRI("http://mobi.com/dataset/" + ontIRI.getValue().stringValue()));
-
-        Map<String, Set<Resource>> map = new HashMap<>();
-        map.put("unresolved", new HashSet<>());
-        map.put("closure", new HashSet<>());
-        when(importsResolver.loadOntologyIntoCache(ontIRI.capture(), anyString(), any(Model.class), any(Repository.class), any(OntologyManager.class))).thenReturn(map);
-
-
         doNothing().when(datasetManager).safeDeleteDataset(any(Resource.class), anyString(), anyBoolean());
         ArgumentCaptor<String> datasetIRIStr = ArgumentCaptor.forClass(String.class);
         when(datasetManager.createDataset(datasetIRIStr.capture(), anyString())).thenAnswer(invocation -> {
@@ -361,7 +347,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotEquals(ontology, result.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
-        verify(importsResolver).loadOntologyIntoCache(eq(VALUE_FACTORY.createIRI("urn:ontologyIRI")), eq("test"), eq(model), eq(cacheRepo), eq(manager));
     }
 
     @Test
@@ -429,7 +414,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
-        verify(importsResolver).loadOntologyIntoCache(eq(VALUE_FACTORY.createIRI("urn:ontologyIRI")), eq("test"), eq(model), eq(cacheRepo), eq(manager));
     }
 
     @Test
@@ -507,7 +491,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
-        verify(importsResolver).loadOntologyIntoCache(eq(VALUE_FACTORY.createIRI("urn:ontologyIRI")), eq("test"), eq(model), eq(cacheRepo), eq(manager));
     }
 
     @Test
@@ -574,7 +557,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache, times(2)).containsKey(eq(key));
-        verify(importsResolver).loadOntologyIntoCache(eq(VALUE_FACTORY.createIRI("urn:ontologyIRI")), eq("test"), eq(model), eq(cacheRepo), eq(manager));
     }
 
     @Test

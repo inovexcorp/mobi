@@ -24,9 +24,11 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.google.common.collect.Iterables;
+import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.AnnotationProperty;
@@ -42,10 +44,10 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.cache.ImportsResolver;
+import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
@@ -81,6 +83,9 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +102,7 @@ public class SimpleOntology implements Ontology {
     private Repository repository;
     private DatasetManager datasetManager;
     private OntologyManager ontologyManager;
+    private CatalogManager catalogManager;
     private ImportsResolver importsResolver;
     private ModelFactory mf;
     private ValueFactory vf;
@@ -106,10 +112,6 @@ public class SimpleOntology implements Ontology {
     private Set<Resource> importsClosure;
     private Set<Resource> unresolvedImports;
     private Difference difference;
-
-    private static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
-    private static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
-    private static final String UNRESOLVED_IRI_STRING = "http://mobi.com/ontologies/graph#unresolved";
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_CLASSES_FOR;
@@ -217,8 +219,8 @@ public class SimpleOntology implements Ontology {
     }
 
     public SimpleOntology(Model model, Repository cacheRepo, OntologyManager ontologyManager,
-                          DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
-                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                          CatalogManager catalogManager, DatasetManager datasetManager, ImportsResolver importsResolver,
+                          SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
@@ -226,12 +228,13 @@ public class SimpleOntology implements Ontology {
                 .orElseThrow(() -> new IllegalStateException("Ontology must have an identifier."));
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
+        this.catalogManager = catalogManager;
         this.datasetManager = datasetManager;
         this.importsResolver = importsResolver;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
 
-        Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(this.datasetIRI, null, model,
+        Map<String, Set<Resource>> imports = loadOntologyIntoCache(this.datasetIRI, null, model,
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
         this.unresolvedImports = imports.get("unresolved");
@@ -240,14 +243,15 @@ public class SimpleOntology implements Ontology {
 
     // If exists in catalog but ontology and imports don't exist in cache yet
     public SimpleOntology(String recordCommitKey, Model model, Repository cacheRepo, OntologyManager ontologyManager,
-                          DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
-                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                          CatalogManager catalogManager, DatasetManager datasetManager, ImportsResolver importsResolver,
+                          SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
-        this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
+        this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey, vf);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
+        this.catalogManager = catalogManager;
         this.datasetManager = datasetManager;
         this.importsResolver = importsResolver;
         this.transformer = transformer;
@@ -255,7 +259,7 @@ public class SimpleOntology implements Ontology {
 
         Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(model, vf)
                 .orElseThrow(() -> new IllegalStateException("Ontology must have an identifier."));
-        Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(ontologyIRI, recordCommitKey, model,
+        Map<String, Set<Resource>> imports = loadOntologyIntoCache(ontologyIRI, recordCommitKey, model,
                 repository, ontologyManager);
         this.importsClosure = imports.get("closure");
         this.unresolvedImports = imports.get("unresolved");
@@ -264,14 +268,15 @@ public class SimpleOntology implements Ontology {
 
     // If it already exists in cache
     public SimpleOntology(String recordCommitKey, Repository cacheRepo, OntologyManager ontologyManager,
-                          DatasetManager datasetManager, ImportsResolver importsResolver, SesameTransformer transformer,
-                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                          CatalogManager catalogManager, DatasetManager datasetManager, ImportsResolver importsResolver,
+                          SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
-        this.datasetIRI = createDatasetIRIFromKey(recordCommitKey);
+        this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey, vf);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
+        this.catalogManager = catalogManager;
         this.datasetManager = datasetManager;
         this.importsResolver = importsResolver;
         this.transformer = transformer;
@@ -285,7 +290,7 @@ public class SimpleOntology implements Ontology {
                     vf.createIRI(OWL.IMPORTS.stringValue()), null, datasetIRI));
             imports.forEach(imported -> importsClosure.add((Resource) imported.getObject()));
             imports = RepositoryResults.asList(conn.getStatements(datasetIRI,
-                    vf.createIRI(UNRESOLVED_IRI_STRING), null, datasetIRI));
+                    vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI));
             imports.forEach(imported -> unresolvedImports.add((Resource) imported.getObject()));
         }
         logTrace("SimpleOntology constructor from cache", startTime);
@@ -293,14 +298,16 @@ public class SimpleOntology implements Ontology {
 
     // If it is an import. Used for generating the closure
     private SimpleOntology(IRI datasetIRI, Model model, Repository cacheRepo, OntologyManager ontologyManager,
-                           DatasetManager datasetManager, ImportsResolver importsResolver,
-                           SesameTransformer transformer, BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                           CatalogManager catalogManager, DatasetManager datasetManager,
+                           ImportsResolver importsResolver, SesameTransformer transformer, BNodeService bNodeService,
+                           ValueFactory vf, ModelFactory mf) {
         long startTime = getStartTime();
         this.mf = mf;
         this.vf = vf;
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
+        this.catalogManager = catalogManager;
         this.datasetManager = datasetManager;
         this.importsResolver = importsResolver;
         this.transformer = transformer;
@@ -308,7 +315,7 @@ public class SimpleOntology implements Ontology {
 
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
             if (!cacheConn.containsContext(datasetIRI)) {
-                Map<String, Set<Resource>> imports = importsResolver.loadOntologyIntoCache(datasetIRI, null, model,
+                Map<String, Set<Resource>> imports = loadOntologyIntoCache(datasetIRI, null, model,
                         repository, ontologyManager);
                 this.importsClosure = imports.get("closure");
                 this.unresolvedImports = imports.get("unresolved");
@@ -322,7 +329,7 @@ public class SimpleOntology implements Ontology {
                         .map(imported -> (IRI) imported)
                         .forEach(importsClosure::add);
                 RepositoryResults.asList(cacheConn.getStatements(datasetIRI,
-                        vf.createIRI(UNRESOLVED_IRI_STRING), null, datasetIRI))
+                        vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI))
                         .stream()
                         .map(Statement::getObject)
                         .map(imported -> (IRI) imported)
@@ -423,12 +430,11 @@ public class SimpleOntology implements Ontology {
                 if (ng.stringValue().equals(sdNg.stringValue())) {
                     closure.add(this);
                 } else {
-                    IRI ontIRI = vf.createIRI(ng.stringValue().substring(0, ng.stringValue()
-                            .lastIndexOf(SYSTEM_DEFAULT_NG_SUFFIX)));
-                    IRI ontDatasetIRI = importsResolver.getDatasetIRI(ontIRI, ontologyManager);
+                    IRI ontIRI = OntologyDatasets.getDatasetIriFromSystemDefaultNamedGraph(ng, vf);
+                    IRI ontDatasetIRI = getDatasetIRI(ontIRI, ontologyManager);
                     Model importModel = RepositoryResults.asModel(conn.getStatements(null, null, null, ng), mf);
                     closure.add(new SimpleOntology(ontDatasetIRI, importModel, repository, ontologyManager,
-                            datasetManager, importsResolver, transformer, bNodeService, vf, mf));
+                            catalogManager, datasetManager, importsResolver, transformer, bNodeService, vf, mf));
                 }
             });
             undoApplyDifferenceIfPresent(conn);
@@ -908,8 +914,125 @@ public class SimpleOntology implements Ontology {
         return annotations;
     }
 
-    private IRI createDatasetIRIFromKey(String key) {
-        return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key));
+    private Map<String, Set<Resource>> loadOntologyIntoCache(Resource ontologyId, @Nullable String key, Model ontModel,
+                                                            Repository cacheRepo, OntologyManager ontologyManager) {
+        Set<Resource> unresolvedImports = new HashSet<>();
+        Set<Resource> processedImports = new HashSet<>();
+        List<Resource> importsToProcess = new ArrayList<>();
+        importsToProcess.add(ontologyId);
+        Resource datasetKey = key == null
+                ? getDatasetIRI(ontologyId, ontologyManager) : OntologyDatasets.createDatasetIRIFromKey(key, vf);
+
+        try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
+            for (int i = 0; i < importsToProcess.size(); i++) {
+                Resource importIRI = importsToProcess.get(i);
+
+                Model model;
+                if (i == 0) {
+                    model = ontModel;
+                    if (!cacheConn.containsContext(datasetKey)) {
+                        datasetManager.createDataset(datasetKey.stringValue(), cacheRepo.getConfig().id());
+                    }
+                    addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
+                } else {
+                    IRI iri = getDatasetIRI(importIRI, ontologyManager);
+                    IRI sdngIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(iri, vf);
+                    if (cacheConn.containsContext(iri) || cacheConn.containsContext(sdngIRI)) {
+                        List<Resource> imports = cacheConn.getStatements(null,
+                                vf.createIRI(OWL.IMPORTS.stringValue()), null, sdngIRI)
+                                .stream()
+                                .map(Statement::getObject)
+                                .filter(o -> o instanceof IRI)
+                                .map(r -> (IRI) r)
+                                .collect(Collectors.toList());
+
+                        processedImports.add(importIRI);
+                        imports.forEach(imported -> {
+                            if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
+                                importsToProcess.add(imported);
+                            }
+                        });
+                        cacheConn.add(datasetKey, vf.createIRI(Dataset.defaultNamedGraph_IRI), sdngIRI, datasetKey);
+                        continue;
+                    }
+                    if (iri.equals(importIRI)) {
+                        Optional<Model> modelOpt = importsResolver.retrieveOntologyFromWeb(importIRI);
+                        if (modelOpt.isPresent()) {
+                            model = modelOpt.get();
+                            addOntologyToRepo(cacheRepo, model, datasetKey, iri, false);
+                        } else {
+                            unresolvedImports.add(importIRI);
+                            processedImports.add(importIRI);
+                            continue;
+                        }
+                    } else {
+                        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(importIRI);
+                        Optional<Resource> headCommit = catalogManager.getMasterBranch(
+                                catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
+                        model = catalogManager.getCompiledResource(headCommit.get());
+                        String headKey = recordIRI.get().stringValue() + "&" + headCommit.get().stringValue();
+                        addOntologyToRepo(cacheRepo, model, datasetKey,
+                                OntologyDatasets.createDatasetIRIFromKey(headKey, vf), false);
+                    }
+                }
+
+                List<Resource> imports = model.filter(null, vf.createIRI(OWL.IMPORTS.stringValue()), null)
+                        .stream()
+                        .map(Statement::getObject)
+                        .filter(o -> o instanceof IRI)
+                        .map(r -> (IRI) r)
+                        .collect(Collectors.toList());
+
+                processedImports.add(importIRI);
+                imports.forEach(imported -> {
+                    if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
+                        importsToProcess.add(imported);
+                    }
+                });
+            }
+            processedImports.forEach(imported
+                    -> cacheConn.add(datasetKey, vf.createIRI(OWL.IMPORTS.stringValue()), imported, datasetKey));
+            unresolvedImports.forEach(imported
+                    -> cacheConn.add(datasetKey, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING),
+                    imported, datasetKey));
+        }
+
+        Map<String, Set<Resource>> imports = new HashMap<>();
+        imports.put("unresolved", unresolvedImports);
+        imports.put("closure", processedImports);
+        return imports;
+    }
+
+    private void addOntologyToRepo(Repository repository, Model ontologyModel, Resource datasetIRI,
+                                   Resource ontologyIRI, boolean addTimestamp) {
+        try (DatasetConnection dsConn = datasetManager.getConnection(datasetIRI, repository.getConfig().id(),
+                false)) {
+            IRI ontNamedGraphIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(ontologyIRI, vf);
+            dsConn.addDefaultNamedGraph(ontNamedGraphIRI);
+            if (!dsConn.contains(null, null, null, ontNamedGraphIRI)) {
+                Long startTime = getStartTime();
+                dsConn.addDefault(ontologyModel, ontNamedGraphIRI);
+                logTrace("Adding " + ontNamedGraphIRI + " to " + datasetIRI + " dataset", startTime);
+            }
+            if (addTimestamp) {
+                dsConn.remove(datasetIRI, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING), null, datasetIRI);
+                dsConn.addDefault(datasetIRI, vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING),
+                        vf.createLiteral(OffsetDateTime.now()), datasetIRI);
+            }
+        }
+    }
+
+    private IRI getDatasetIRI(Resource ontologyIRI, OntologyManager ontologyManager) {
+        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+        if (recordIRI.isPresent()) {
+            Optional<Resource> headCommit = catalogManager.getMasterBranch(
+                    catalogManager.getLocalCatalog().getResource(), recordIRI.get()).getHead_resource();
+            if (headCommit.isPresent()) {
+                String headKey = recordIRI.get().stringValue() + "&" + headCommit.get().stringValue();
+                return OntologyDatasets.createDatasetIRIFromKey(headKey, vf);
+            }
+        }
+        return (IRI) ontologyIRI;
     }
 
     private DatasetConnection getDatasetConnection() {
@@ -933,9 +1056,9 @@ public class SimpleOntology implements Ontology {
                     .collect(Collectors.toList());
             try (RepositoryConnection repoConn = repository.getConnection()) {
                 addedImports.forEach(imported -> {
-                    IRI importedDatasetIRI = importsResolver.getDatasetIRI(imported, ontologyManager);
-                    IRI importedDatasetSdNgIRI = vf.createIRI(importedDatasetIRI.stringValue()
-                            + SYSTEM_DEFAULT_NG_SUFFIX);
+                    IRI importedDatasetIRI = getDatasetIRI(imported, ontologyManager);
+                    IRI importedDatasetSdNgIRI =
+                            OntologyDatasets.createSystemDefaultNamedGraphIRI(importedDatasetIRI, vf);
                     if (repoConn.containsContext(importedDatasetSdNgIRI)) {
                         Model importModel = RepositoryResults.asModel(repoConn.getStatements(null, null,
                                 null, importedDatasetSdNgIRI), mf);
@@ -950,7 +1073,8 @@ public class SimpleOntology implements Ontology {
                                 repoConn.add(webModel.get(), importedDatasetSdNgIRI);
                                 createTempImport(importedDatasetIRI, webModel.get(), conn);
                             } else {
-                                conn.add(datasetIRI, vf.createIRI(UNRESOLVED_IRI_STRING), imported, datasetIRI);
+                                conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING),
+                                        imported, datasetIRI);
                             }
                         }
                     }
@@ -965,9 +1089,8 @@ public class SimpleOntology implements Ontology {
                     .map(iri -> (IRI) iri)
                     .collect(Collectors.toList());
             removedImports.forEach(imported -> {
-                IRI importDatasetIRI = vf.createIRI(
-                        importsResolver.getDatasetIRI(imported, ontologyManager).stringValue()
-                                + SYSTEM_DEFAULT_NG_SUFFIX);
+                IRI importDatasetIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(
+                        getDatasetIRI(imported, ontologyManager), vf);
                 conn.removeGraph(importDatasetIRI);
                 conn.remove(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), imported);
             });
@@ -977,12 +1100,11 @@ public class SimpleOntology implements Ontology {
 
     private void createTempImport(IRI importedDatasetIRI, Model model, DatasetConnection conn) {
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, model, repository,
-                ontologyManager, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
+                ontologyManager, catalogManager, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
         importedOntology.getImportedOntologyIRIs().forEach(importedImport -> {
             conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), importedImport, datasetIRI);
-            conn.addDefaultNamedGraph(
-                    vf.createIRI(importsResolver.getDatasetIRI(importedImport, ontologyManager)
-                            .stringValue() + SYSTEM_DEFAULT_NG_SUFFIX));
+            conn.addDefaultNamedGraph(OntologyDatasets.createSystemDefaultNamedGraphIRI(
+                    getDatasetIRI(importedImport, ontologyManager), vf));
         });
         conn.removeGraph(datasetIRI);
     }
