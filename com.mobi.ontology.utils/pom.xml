@@ -127,6 +127,7 @@
                             com.mobi.ontology.utils;
                             com.mobi.ontology.utils.cache; provide:=true
                             com.mobi.cache.config; provide:=true
+                            com.mobi.ontology.utils.imports; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
