@@ -105,14 +105,14 @@ public class ImportsResolverImpl implements ImportsResolver {
             if (StringUtils.endsWithAny(urlStr, formats.stream().toArray(String[]::new))) {
                 Optional<URL> urlOpt = getURL(urlStr);
                 if (urlOpt.isPresent()) {
-                    model = Models.createModel(urlOpt.get().openStream(), transformer, parsers);
+                    model = Models.createModel(urlOpt.get().openConnection().getInputStream(), transformer, parsers);
                 }
             } else {
                 for (String format : formats) {
                     try {
                         Optional<URL> urlOpt = getURL(urlStr + format);
                         if (urlOpt.isPresent()) {
-                            model = Models.createModel(urlOpt.get().openStream(), transformer, parsers);
+                            model = Models.createModel(urlOpt.get().openConnection().getInputStream(), transformer, parsers);
                             break;
                         }
                     } catch (IOException e) {

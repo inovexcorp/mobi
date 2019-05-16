@@ -26,7 +26,12 @@ package com.mobi.ontology.utils.imports.impl;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -49,13 +54,27 @@ import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
@@ -68,6 +87,10 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private IRI catalogIRI;
     private IRI ontologyIRI;
     private Model localModel;
+    private Set<String> formats = Stream.of(".rdf", ".ttl", ".owl", ".xml", ".jsonld", ".trig", ".json", ".n3", ".nq",
+            ".nt").collect(Collectors.toSet());
+
+    private static HttpUrlStreamHandler httpUrlStreamHandler;
 
     @Mock
     private CatalogManager catalogManager;
@@ -86,6 +109,16 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Mock
     private Catalog catalog;
+
+    @BeforeClass
+    public static void setupURLStreamHandlerFactory() {
+        // Allows for mocking URL connections
+        URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
+        URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+
+        httpUrlStreamHandler = new HttpUrlStreamHandler();
+        when(urlStreamHandlerFactory.createURLStreamHandler("http")).thenReturn(httpUrlStreamHandler);
+    }
 
     @Before
     public void setUp() throws Exception{
@@ -128,75 +161,107 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         resolver.activate(Collections.singletonMap("userAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0"));
     }
 
-    @Test
-    public void retrieveOntologyFromWebTest() {
-        // .rdf
-        IRI rdf = vf.createIRI("http://www.w3.org/2004/02/skos/core");
-        Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(rdf);
-        assertTrue(rdfModel.isPresent());
-        assertTrue(rdfModel.get().size() > 0);
-
-        // .ttl
-        IRI ttl = vf.createIRI("https://www.w3.org/2013/TurtleTests/Literal2");
-        Optional<Model> ttlModel = resolver.retrieveOntologyFromWeb(ttl);
-        assertTrue(ttlModel.isPresent());
-        assertTrue(ttlModel.get().size() > 0);
-
-        // .owl
-        IRI owl = vf.createIRI("https://protege.stanford.edu/ontologies/pizza/pizza");
-        Optional<Model> owlModel = resolver.retrieveOntologyFromWeb(owl);
-        assertTrue(owlModel.isPresent());
-        assertTrue(owlModel.get().size() > 0);
-
-        // .trig
-        IRI trig = vf.createIRI("https://www.w3.org/2013/TrigTests/IRI_subject");
-        Optional<Model> trigModel = resolver.retrieveOntologyFromWeb(trig);
-        assertTrue(trigModel.isPresent());
-        assertTrue(trigModel.get().size() > 0);
-
-        // .nq
-        IRI nq = vf.createIRI("https://www.w3.org/2013/N-QuadsTests/literal");
-        Optional<Model> nqModel = resolver.retrieveOntologyFromWeb(nq);
-        assertTrue(nqModel.isPresent());
-        assertTrue(nqModel.get().size() > 0);
-
-        // .nt
-        IRI nt = vf.createIRI("https://www.w3.org/2013/N-TriplesTests/literal");
-        Optional<Model> ntModel = resolver.retrieveOntologyFromWeb(nt);
-        assertTrue(ntModel.isPresent());
-        assertTrue(ntModel.get().size() > 0);
+    @After
+    public void reset() {
+        httpUrlStreamHandler.resetConnections();
     }
 
     @Test
-    public void retrieveOntologyFromWebWithEndSlashTest() {
-        // .rdf
-        IRI rdf = vf.createIRI("http://www.w3.org/2004/02/skos/core/");
-        Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(rdf);
-        assertTrue(rdfModel.isPresent());
-        assertTrue(rdfModel.get().size() > 0);
+    public void retrieveOntologyFromWebRdfTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".rdf", getClass().getResourceAsStream("/skos.rdf"));
+        assertModelFromWebPresent(url);
     }
 
     @Test
-    public void retrieveOntologyFromWebWithExtensionTest() {
-        IRI rdf = vf.createIRI("http://www.w3.org/2004/02/skos/core.rdf");
-        Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(rdf);
-        assertTrue(rdfModel.isPresent());
-        assertTrue(rdfModel.get().size() > 0);
+    public void retrieveOntologyFromWebTtlTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".ttl", getClass().getResourceAsStream("/skos.ttl"));
+        assertModelFromWebPresent(url);
     }
 
     @Test
-    public void retrieveOntologyFromWebRedirectTest() {
-        IRI iri = vf.createIRI("http://purl.obolibrary.org/obo/bfo.owl");
-        Optional<Model> rdfModel = resolver.retrieveOntologyFromWeb(iri);
-        assertTrue(rdfModel.isPresent());
-        assertTrue(rdfModel.get().size() > 0);
+    public void retrieveOntologyFromWebOwlTest() throws Exception {
+        String url = "http://protege.stanford.edu/ontologies/pizza/pizza";
+        addMockConnections(url, ".owl", getClass().getResourceAsStream("/pizza.owl"));
+        assertModelFromWebPresent(url);
     }
 
     @Test
-    public void retrieveOntologyFromWebFailureTest() {
-        IRI failure = vf.createIRI("http://www.w3.org/2004/02/skos/core/INVALID/URL/");
-        Optional<Model> failureModel = resolver.retrieveOntologyFromWeb(failure);
-        assertFalse(failureModel.isPresent());
+    public void retrieveOntologyFromWebJsonLDTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".jsonld", getClass().getResourceAsStream("/skos.jsonld"));
+        assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebTrigTest() throws Exception {
+        String url = "http://www.w3.org/2013/TrigTests/IRI_subject";
+        addMockConnections(url, ".trig", getClass().getResourceAsStream("/IRI_subject.trig"));
+        assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebNqTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".nq", getClass().getResourceAsStream("/output.nq"));
+        assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebNtTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".nt", getClass().getResourceAsStream("/ResourceTypes.nt"));
+        assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebWithEndSlashTest()  throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".rdf", getClass().getResourceAsStream("/skos.rdf"));
+        assertModelFromWebPresent(url + "/");
+    }
+
+    @Test
+    public void retrieveOntologyFromWebWithExtensionTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core";
+        addMockConnections(url, ".rdf", getClass().getResourceAsStream("/skos.rdf"));
+        assertModelFromWebPresent(url + ".rdf");
+    }
+
+    @Test
+    public void retrieveOntologyFromWebWithWrongExtensionTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core.bleh";
+        addMockConnections(url, "", null);
+        HttpURLConnection connection = getMockConnection();
+        when(connection.getResponseCode()).thenReturn(400);
+        httpUrlStreamHandler.addConnection(new URL(url), connection);
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRedirectTest() throws Exception {
+        String url = "http://mobi.com/redirects/to/skos";
+        addMockConnections(url, "", null);
+
+        HttpURLConnection connection = getMockConnection();
+        when(connection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
+        when(connection.getHeaderField("Location")).thenReturn("http://www.w3.org/2004/02/skos/core.rdf");
+        httpUrlStreamHandler.addConnection(new URL(url + ".rdf"), connection);
+
+        HttpURLConnection skosConn = getMockConnection();
+        when(skosConn.getResponseCode()).thenReturn(200);
+        when(skosConn.getInputStream()).thenReturn(getClass().getResourceAsStream("/skos.rdf"));
+        httpUrlStreamHandler.addConnection(new URL("http://www.w3.org/2004/02/skos/core.rdf"), skosConn);
+
+        assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebFailureTest() throws Exception {
+        String url = "http://www.w3.org/2004/02/skos/core/INVALID/URL";
+        addMockConnections(url, "", null);
+        assertModelFromWebEmpty(url);
     }
 
     @Test
@@ -205,5 +270,81 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         Optional<Model> local = resolver.retrieveOntologyLocal(iri, ontologyManager);
         assertTrue(local.isPresent());
         assertTrue(local.get().size() > 0);
+    }
+
+    @Test
+    public void retrieveOntologyLocalDoesNotExistTest() {
+        IRI iri = vf.createIRI("urn:localOntology1");
+        Optional<Model> local = resolver.retrieveOntologyLocal(iri, ontologyManager);
+        assertFalse(local.isPresent());
+    }
+
+    private void assertModelFromWebPresent(String url) {
+        IRI iri = vf.createIRI(url);
+        Optional<Model> model = resolver.retrieveOntologyFromWeb(iri);
+        assertTrue(model.isPresent());
+        assertTrue(model.get().size() > 0);
+    }
+
+    private void assertModelFromWebEmpty(String url) {
+        IRI iri = vf.createIRI(url);
+        Optional<Model> model = resolver.retrieveOntologyFromWeb(iri);
+        assertFalse(model.isPresent());
+    }
+
+    /**
+     * Adds mock connections that return 400 for formats that do not match the provided format. If the format matches
+     * the provided format, adds a mock connection that returns a 200.
+     * @param url the URL to create mock connections for
+     * @param fileFormat the format to create a connection with a 200 return
+     * @param inputStream the inputStream to return for the 200 connection
+     */
+    private void addMockConnections(String url, String fileFormat, InputStream inputStream) throws Exception {
+        for (String format : formats) {
+            HttpURLConnection httpURLConnection = getMockConnection();
+            if (format.equals(fileFormat)) {
+                when(httpURLConnection.getResponseCode()).thenReturn(200);
+                when(httpURLConnection.getInputStream()).thenReturn(inputStream);
+            } else {
+                when(httpURLConnection.getResponseCode()).thenReturn(400);
+            }
+            httpUrlStreamHandler.addConnection(new URL(url + format), httpURLConnection);
+        }
+    }
+
+    private HttpURLConnection getMockConnection() throws Exception {
+        HttpURLConnection urlConnection = mock(HttpURLConnection.class);
+        doNothing().when(urlConnection).setRequestMethod(anyString());
+        doNothing().when(urlConnection).setRequestProperty(anyString(), anyString());
+        doNothing().when(urlConnection).setInstanceFollowRedirects(anyBoolean());
+        doNothing().when(urlConnection).setConnectTimeout(anyInt());
+        return urlConnection;
+    }
+
+    /**
+     * {@link URLStreamHandler} that allows us to control the {@link URLConnection URLConnections} that are returned
+     * by {@link URL URLs} in the code under test.
+     */
+    public static class HttpUrlStreamHandler extends URLStreamHandler {
+
+        private Map<String, HttpURLConnection> connections = new HashMap<>();
+
+        @Override
+        protected HttpURLConnection openConnection(URL url) {
+            try {
+                return connections.get(url.toURI().toString());
+            } catch (URISyntaxException e) {
+                return null;
+            }
+        }
+
+        public void resetConnections() {
+            connections = new HashMap();
+        }
+
+        public HttpUrlStreamHandler addConnection(URL url, HttpURLConnection urlConnection) throws URISyntaxException {
+            connections.put(url.toURI().toString(), urlConnection);
+            return this;
+        }
     }
 }
