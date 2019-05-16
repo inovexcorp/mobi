@@ -1,4 +1,4 @@
-package com.mobi.ontology.utils.cache;
+package com.mobi.ontology.utils.imports;
 
 /*-
  * #%L
@@ -24,30 +24,12 @@ package com.mobi.ontology.utils.cache;
  */
 
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
-import com.mobi.repository.api.Repository;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 public interface ImportsResolver {
-
-    /**
-     * Loads the provided Ontology Model and imports into the provided cache Repository as a dataset. If a key is
-     * provided, will add the ontology into a dataset with the key. Otherwise, will use the ontologyIRI.
-     *
-     * @param ontologyIRI The IRI of the ontology to add to the cache
-     * @param key The recordId and commitId key associated with the provided Model
-     * @param ontModel The Model of the ontology
-     * @param cacheRepo The Repository used as the cache
-     * @param ontologyManager The OntologyManager used to check if a ontologyIRI exists in the catalog
-     * @return A map of the set of the imports closure and the set of unresolved imports
-     */
-    Map<String, Set<Resource>> loadOntologyIntoCache(Resource ontologyIRI, String key, Model ontModel,
-                                                     Repository cacheRepo, OntologyManager ontologyManager);
 
     /**
      * Attempts to retrieve an ontology from the web given an IRI.
@@ -64,15 +46,4 @@ public interface ImportsResolver {
      * @return An Optional of the Model representing the ontology of the provided IRI
      */
     Optional<Model> retrieveOntologyLocal(Resource ontologyIRI, OntologyManager ontologyManager);
-
-    /**
-     * Checks the Catalog if an ontologyIRI exists. If so, creates a datasetIRI from the recordIRI and head commitIRI.
-     * Otherwise, returns the provided ontologyIRI.
-     *
-     * @param ontologyIRI The IRI of the Ontology to check in the catalog
-     * @param ontologyManager THe OntologyManager used to check if the IRI exists in the catalog.
-     *
-     * @return A datasetIRI of the recordIRI and commitIRI or the ontologyIRI if no record exists in catalog
-     */
-    IRI getDatasetIRI(Resource ontologyIRI, OntologyManager ontologyManager);
 }
