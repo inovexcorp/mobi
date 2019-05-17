@@ -26,7 +26,7 @@ describe('See History component', function() {
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('staticIri', 'staticIri');
+        mockComponent('ontology-editor', 'staticIri');
         injectTrustedFilter();
         injectHighlightFilter();
         injectPrefixationFilter();

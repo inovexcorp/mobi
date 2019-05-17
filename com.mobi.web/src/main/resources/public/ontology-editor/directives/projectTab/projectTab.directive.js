@@ -43,18 +43,25 @@
          * `projectTab` is a directive that creates a page containing information about the current
          * {@link shared.service:ontologyStateService selected ontology}. The display includes a
          * {@link selectedDetails.directive:selectedDetails}, an
-         * {@link ontologyPropertiesBlock.directive:ontologyPropertiesBlock}, an
-         * {@link importsBlock.directive:importsBlock}, and a {@link previewBlock.directive:previewBlock}. The
+         * {@link ontology-editor.component:ontologyPropertiesBlock}, an
+         * {@link ontology-editor.component:importsBlock}, and a {@link previewBlock.directive:previewBlock}. The
          * directive is replaced by the contents of its template.
          */
         .directive('projectTab', projectTab);
 
-        function projectTab() {
+        projectTab.$inject = ['ontologyStateService'];
+
+        function projectTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 scope: {},
-                templateUrl: 'ontology-editor/directives/projectTab/projectTab.directive.html'
+                templateUrl: 'ontology-editor/directives/projectTab/projectTab.directive.html',
+                controllerAs: 'dvm',
+                controller: function() {
+                    var dvm = this;
+                    dvm.os = ontologyStateService;
+                }
             }
         }
 })();

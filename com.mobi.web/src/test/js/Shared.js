@@ -746,6 +746,7 @@ function mockOntologyState() {
             this.unSelectItem = jasmine.createSpy('unSelectItem');
             this.hasChanges = jasmine.createSpy('hasChanges').and.returnValue(true);
             this.isCommittable = jasmine.createSpy('isCommittable');
+            this.updateIsSaved = jasmine.createSpy('updateIsSaved');
             this.addEntityToHierarchy = jasmine.createSpy('addEntityToHierarchy');
             this.deleteEntityFromParentInHierarchy = jasmine.createSpy('deleteEntityFromParentInHierarchy');
             this.deleteEntityFromHierarchy = jasmine.createSpy('deleteEntityFromHierarchy');

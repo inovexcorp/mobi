@@ -26,6 +26,9 @@ describe('Project Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('projectTab');
+        mockComponent('ontology-editor', 'ontologyPropertiesBlock');
+        mockComponent('ontology-editor', 'importsBlock');
+        mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

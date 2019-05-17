@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Properties Block directive', function() {
+describe('Ontology Properties Block component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyPropertiesBlock');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'propertyValues')
         injectShowPropertiesFilter();
         mockOntologyState();
         mockPropertyManager();
@@ -41,11 +42,11 @@ describe('Ontology Properties Block directive', function() {
             modalSvc = _modalService_;
         });
 
-        ontologyStateSvc.listItem.selected = {
+        scope.ontology = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        this.element = $compile(angular.element('<ontology-properties-block></ontology-properties-block>'))(scope);
+        this.element = $compile(angular.element('<ontology-properties-block ontology="ontology"></ontology-properties-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyPropertiesBlock');
     });
@@ -65,21 +66,29 @@ describe('Ontology Properties Block directive', function() {
         propertyManagerSvc.ontologyProperties = ['ont1', 'ont2'];
         propertyManagerSvc.defaultAnnotations = ['default1', 'default2'];
         propertyManagerSvc.owlAnnotations = ['owl1', 'owl2'];
-        this.controller.$onInit();
+        this.controller.$onChanges();
         expect(this.controller.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', 'annotation1']);
     });
-    describe('replaces the element with the correct html', function() {
+    describe('controller bound variable', function() {
+        it('ontology should be one way bound', function() {
+            var original = angular.copy(scope.ontology);
+            this.controller.ontology = {};
+            scope.$digest();
+            expect(scope.ontology).toEqual(original);
+        });
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('ontology-properties-block')).toBe(true);
-            expect(this.element.hasClass('annotation-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('ONTOLOGY-PROPERTIES-BLOCK');
+            expect(this.element.querySelectorAll('.ontology-properties-block').length).toBe(1);
+            expect(this.element.querySelectorAll('.annotation-block').length).toBe(1);
         });
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toBe(1);
         });
         it('depending on how many ontology properties there are', function() {
             expect(this.element.find('property-values').length).toBe(2);
-            ontologyStateSvc.listItem.selected = undefined;
+            this.controller.ontology = undefined;
             scope.$digest();
             expect(this.element.find('property-values').length).toBe(0);
         });
@@ -112,7 +121,7 @@ describe('Ontology Properties Block directive', function() {
         });
         it('should set the correct manager values when editing an ontology property', function() {
             var propertyIRI = 'prop1';
-            ontologyStateSvc.listItem.selected = {
+            this.controller.ontology = {
                 'prop1': [{'@value': 'value', '@type': 'type', '@id': 'id', '@language': 'lang'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];

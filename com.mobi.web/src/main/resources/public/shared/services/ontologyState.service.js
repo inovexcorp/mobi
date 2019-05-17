@@ -1461,6 +1461,9 @@
         self.isCommittable = function(listItem) {
             return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
         }
+        self.updateIsSaved = function() {
+            self.listItem.isSaved = self.isCommittable(self.listItem);
+        }
         self.addEntityToHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
             if (parentIRI && _.has(hierarchyInfo.iris, parentIRI)) {
                 hierarchyInfo.parentMap[parentIRI] = _.union(_.get(hierarchyInfo.parentMap, parentIRI), [entityIRI]);
