@@ -24,7 +24,6 @@ package com.mobi.persistence.utils;
  */
 
 import static java.util.Arrays.asList;
-import static java.util.Arrays.copyOf;
 
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.BNode;
@@ -36,12 +35,17 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -200,29 +204,44 @@ public class Models {
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
-    public static Model createModel(InputStream inputStream, SesameTransformer transformer) throws IOException {
+    public static Model createModel(InputStream inputStream, SesameTransformer transformer, RDFParser... parsers) throws IOException {
         org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
 
         Set<RDFFormat> formats = new HashSet<>(asList(RDFFormat.JSONLD, RDFFormat.TRIG, RDFFormat.TURTLE,
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
 
         Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
-        ByteArrayInputStream ontologyData = toByteArrayInputStream(inputStream);
+        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
         try {
-            ontologyData.mark(0);
+            rdfData.mark(0);
 
             while (rdfFormatIterator.hasNext()) {
                 RDFFormat format = rdfFormatIterator.next();
                 try {
-                    model = Rio.parse(ontologyData, "", format);
+                    model = Rio.parse(rdfData, "", format);
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException e) {
-                    ontologyData.reset();
+                    rdfData.reset();
+                }
+            }
+            if (model.isEmpty()) {
+                for (RDFParser parser : parsers) {
+                    try {
+                        final StatementCollector collector = new StatementCollector();
+                        parser.setRDFHandler(collector);
+                        parser.setParseErrorListener(new ParseErrorLogger());
+                        parser.setParserConfig(new ParserConfig());
+                        parser.parse(rdfData, "");
+                        model = new LinkedHashModel(collector.getStatements());
+                        break;
+                    } catch (Exception e) {
+                        rdfData.reset();
+                    }
                 }
             }
         } finally {
-            IOUtils.closeQuietly(ontologyData);
+            IOUtils.closeQuietly(rdfData);
         }
 
         if (model.isEmpty()) {
@@ -238,22 +257,16 @@ public class Models {
      * @param inputStream the InputStream to convert
      * @return a ByteArrayInputStream
      */
-    private static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException,
-            NegativeArraySizeException {
-        int size = 8192;
-        byte[] bytes = new byte[0];
-        try {
-            while (size == 8192) {
-                byte[] read = new byte[size];
-                size = inputStream.read(read);
-                int offset = bytes.length;
-                bytes = copyOf(bytes, offset + size);
-                System.arraycopy(read, 0, bytes, offset, size);
-            }
-        } finally {
-            IOUtils.closeQuietly(inputStream);
+    private static ByteArrayInputStream toByteArrayInputStream(InputStream inputStream) throws IOException {
+        byte[] buff = new byte[8000];
+        int bytesRead = 0;
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        while ((bytesRead = inputStream.read(buff)) != -1) {
+            bao.write(buff, 0, bytesRead);
         }
-        return new ByteArrayInputStream(bytes);
+        byte[] data = bao.toByteArray();
+
+        return new ByteArrayInputStream(data);
     }
 
 //    public static boolean isomorphic(Iterable<? extends Statement> model1,

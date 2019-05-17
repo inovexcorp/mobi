@@ -1,14 +1,14 @@
-@Version("1.4.0.${build}")
+@Version("1.0.0.${build}")
 
-package com.mobi.ontology.core.api.record;
+package com.mobi.ontology.utils.imports;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by

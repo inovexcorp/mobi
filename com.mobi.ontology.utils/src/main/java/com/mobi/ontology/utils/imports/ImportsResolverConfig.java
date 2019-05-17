@@ -1,14 +1,12 @@
-@Version("1.4.0.${build}")
-
-package com.mobi.ontology.core.api.record;
+package com.mobi.ontology.utils.imports;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,16 @@ package com.mobi.ontology.core.api.record;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+
+@Meta.OCD
+public interface ImportsResolverConfig {
+
+    /**
+     * The user agent used to make requests to resolve imports
+     *
+     * @return The user agent string
+     */
+    @Meta.AD(deflt = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0")
+    String userAgent();
+}
