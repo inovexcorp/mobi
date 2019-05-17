@@ -37,7 +37,6 @@ import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
@@ -47,9 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -68,7 +65,8 @@ public class ImportsResolverImpl implements ImportsResolver {
     private ModelFactory mf;
     private SesameTransformer transformer;
     private String userAgent;
-
+    private static final String ACCEPT_HEADERS = "application/rdf+xml, application/xml; q=0.7, text/xml; q=0.6,"
+            + " text/plain; q=0.1, */*; q=0.09";
     protected static Set<String> formats = Stream.of(".rdf", ".ttl", ".owl", ".xml", ".jsonld", ".trig", ".json", ".n3",
             ".nq", ".nt").collect(Collectors.toSet());
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
@@ -113,87 +111,46 @@ public class ImportsResolverImpl implements ImportsResolver {
             if (modelOpt.isPresent()) {
                 model = modelOpt.get();
             }
-        } catch (IOException | IllegalArgumentException | URISyntaxException e) {
+        } catch (IOException | IllegalArgumentException e) {
+            log.debug("");
             model = mf.createModel();
         }
         logDebug("Retrieving " + resource + " from web", startTime);
         return model.size() > 0 ? Optional.of(model) : Optional.empty();
     }
 
-    private Optional<Model> getModel(String urlStr, RDFParser... parsers) throws IOException, URISyntaxException {
-        Set<String> processedURLs = new HashSet<>();
-        processedURLs.add(urlStr);
+    private Optional<Model> getModel(String urlStr, RDFParser... parsers) throws IOException {
+        String actualUrlStr = urlStr.endsWith("/") ? urlStr.substring(0, urlStr.lastIndexOf("/")) : urlStr;
+        URL url = new URL(actualUrlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("User-Agent", userAgent);
+        conn.setConnectTimeout(3000);
+        conn.setRequestProperty("Accept", ACCEPT_HEADERS);
+        conn.connect();
 
-        Optional<Model> returnOpt = getModelFromUrl(urlStr, parsers);
-        if (returnOpt.isPresent()) {
-            return returnOpt;
-        } else {
-            int status = 0;
-            do {
-                URL url = new URL(urlStr);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("HEAD");
-                conn.setRequestProperty("User-Agent", userAgent);
-                conn.setInstanceFollowRedirects(false);
-                conn.setConnectTimeout(3000);
-
-                status = conn.getResponseCode();
-                if (status == 200) {
-                    returnOpt = getModelFromUrl(urlStr, parsers);
-                    if (returnOpt.isPresent()) {
-                        break;
-                    }
-                } else if (status == HttpURLConnection.HTTP_MOVED_TEMP
-                        || status == HttpURLConnection.HTTP_MOVED_PERM
-                        || status == HttpURLConnection.HTTP_SEE_OTHER
-                        || status == 307 || status == 308) {
-                    String redirectUrl = conn.getHeaderField("Location");
-                    log.debug("URL " + url.toURI().toString() + " redirected to " + redirectUrl);
-                    returnOpt = getModelFromUrl(redirectUrl, parsers);
-                    if (returnOpt.isPresent()) {
-                        break;
-                    }
-                    if (processedURLs.contains(redirectUrl)) {
-                        returnOpt = Optional.empty();
-                        log.debug("Redirect loop detected. Ending attempt to resolve url.");
-                        break;
-                    }
-                    processedURLs.add(redirectUrl);
-                    urlStr = redirectUrl;
-                } else {
-                    returnOpt = Optional.empty();
-                    break;
-                }
-            } while (status >= 300 && status < 400);
-        }
-        return returnOpt;
-    }
-
-    private Optional<Model> getModelFromUrl(String urlStr, RDFParser... parsers) throws IOException {
         Model model = mf.createModel();
-        if (urlStr.endsWith("/")) {
-            urlStr = urlStr.substring(0, urlStr.lastIndexOf("/"));
-        }
-        if (StringUtils.endsWithAny(urlStr, formats.stream().toArray(String[]::new))) {
-            URL url = new URL(urlStr);
-            try {
-                model = Models.createModel(url.openConnection().getInputStream(), transformer, parsers);
-            } catch (IOException | IllegalArgumentException e) {
-                log.debug("Could not parse inputstream to model from URL ending in a valid rdf extension.");
-            }
-        } else {
-            for (String format : formats) {
-                try {
-                    URL url = new URL(urlStr + format);
-                    model = Models.createModel(url.openConnection().getInputStream(), transformer,
-                            parsers);
-                    log.debug("Model parsed from URL: " + urlStr + format);
-                    break;
-                } catch (IOException | IllegalArgumentException e) {
-                    log.debug("Could not parse inputstream to model from URL: " + urlStr + format);
-                }
+        String originalProtocol = url.getProtocol();
+        int status = conn.getResponseCode();
+        if (status == HttpURLConnection.HTTP_MOVED_TEMP
+                || status == HttpURLConnection.HTTP_MOVED_PERM
+                || status == HttpURLConnection.HTTP_SEE_OTHER
+                || status == 307 || status == 308) {
+            String location = conn.getHeaderField("Location");
+            URL newURL = new URL(location);
+            String newProtocol = newURL.getProtocol();
+            if (!originalProtocol.equals(newProtocol)) {
+                conn = (HttpURLConnection) newURL.openConnection();
+                conn.addRequestProperty("Accept", ACCEPT_HEADERS);
+                conn.setConnectTimeout(3000);
             }
         }
+        try {
+            model = Models.createModel(conn.getInputStream(), transformer,
+                    parsers);
+        } catch (IOException | IllegalArgumentException e) {
+            log.debug("Could not parse inputstream to model from URL: " + urlStr);
+        }
+
         return model.isEmpty() ? Optional.empty() : Optional.of(model);
     }
 
