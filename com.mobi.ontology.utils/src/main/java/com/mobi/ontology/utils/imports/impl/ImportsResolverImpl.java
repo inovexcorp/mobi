@@ -66,7 +66,8 @@ public class ImportsResolverImpl implements ImportsResolver {
     private SesameTransformer transformer;
     private String userAgent;
     private static final String ACCEPT_HEADERS = "application/rdf+xml, application/xml; q=0.7, text/xml; q=0.6,"
-            + " text/plain; q=0.1, */*; q=0.09";
+            + "text/turtle; q=0.5, application/ld+json; q=0.4, application/trig; q=0.3, application/n-triples; q=0.2,"
+            + " application/n-quads; q=0.19, text/n3; q=0.18, text/plain; q=0.1, */*; q=0.09";
     protected static Set<String> formats = Stream.of(".rdf", ".ttl", ".owl", ".xml", ".jsonld", ".trig", ".json", ".n3",
             ".nq", ".nt").collect(Collectors.toSet());
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
@@ -112,7 +113,7 @@ public class ImportsResolverImpl implements ImportsResolver {
                 model = modelOpt.get();
             }
         } catch (IOException | IllegalArgumentException e) {
-            log.debug("");
+            log.debug("Could not retrieve resource " + resource.stringValue() + " from web");
             model = mf.createModel();
         }
         logDebug("Retrieving " + resource + " from web", startTime);
@@ -136,9 +137,11 @@ public class ImportsResolverImpl implements ImportsResolver {
                 || status == HttpURLConnection.HTTP_SEE_OTHER
                 || status == 307 || status == 308) {
             String location = conn.getHeaderField("Location");
+            log.trace(actualUrlStr + " redirected to " + location);
             URL newURL = new URL(location);
             String newProtocol = newURL.getProtocol();
             if (!originalProtocol.equals(newProtocol)) {
+                log.trace("Protocol changed during redirect from " + originalProtocol + " to " + newProtocol);
                 conn = (HttpURLConnection) newURL.openConnection();
                 conn.addRequestProperty("Accept", ACCEPT_HEADERS);
                 conn.setConnectTimeout(3000);
