@@ -211,18 +211,18 @@ public class Models {
                 RDFFormat.RDFJSON, RDFFormat.RDFXML, RDFFormat.NTRIPLES, RDFFormat.NQUADS));
 
         Iterator<RDFFormat> rdfFormatIterator = formats.iterator();
-        ByteArrayInputStream ontologyData = toByteArrayInputStream(inputStream);
+        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
 
         try {
-            ontologyData.mark(0);
+            rdfData.mark(0);
 
             while (rdfFormatIterator.hasNext()) {
                 RDFFormat format = rdfFormatIterator.next();
                 try {
-                    model = Rio.parse(ontologyData, "", format);
+                    model = Rio.parse(rdfData, "", format);
                     break;
                 } catch (RDFParseException | UnsupportedRDFormatException e) {
-                    ontologyData.reset();
+                    rdfData.reset();
                 }
             }
             if (model.isEmpty()) {
@@ -232,16 +232,16 @@ public class Models {
                         parser.setRDFHandler(collector);
                         parser.setParseErrorListener(new ParseErrorLogger());
                         parser.setParserConfig(new ParserConfig());
-                        parser.parse(ontologyData, "");
+                        parser.parse(rdfData, "");
                         model = new LinkedHashModel(collector.getStatements());
                         break;
                     } catch (Exception e) {
-                        ontologyData.reset();
+                        rdfData.reset();
                     }
                 }
             }
         } finally {
-            IOUtils.closeQuietly(ontologyData);
+            IOUtils.closeQuietly(rdfData);
         }
 
         if (model.isEmpty()) {
