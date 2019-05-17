@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -61,6 +61,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -72,9 +73,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
@@ -87,11 +85,11 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     private IRI catalogIRI;
     private IRI ontologyIRI;
     private Model localModel;
-    private Set<String> formats = Stream.of(".rdf", ".ttl", ".owl", ".xml", ".jsonld", ".trig", ".json", ".n3", ".nq",
-            ".nt").collect(Collectors.toSet());
 
     private static HttpUrlStreamHandler httpUrlStreamHandler;
 
+    @Mock
+    private CatalogConfigProvider configProvider;
     @Mock
     private CatalogManager catalogManager;
 
@@ -106,9 +104,6 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
     @Mock
     private Branch masterBranch;
-
-    @Mock
-    private Catalog catalog;
 
     @BeforeClass
     public static void setupURLStreamHandlerFactory() {
@@ -145,9 +140,8 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         when(repositoryConfig.id()).thenReturn("repoCacheId");
 
         when(masterBranch.getHead_resource()).thenReturn(Optional.of(headCommitIRI));
-        when(catalog.getResource()).thenReturn(catalogIRI);
 
-        when(catalogManager.getLocalCatalog()).thenReturn(catalog);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getMasterBranch(eq(catalogIRI), eq(recordIRI))).thenReturn(masterBranch);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyManager.getOntologyRecordResource(eq(ontologyIRI))).thenReturn(Optional.of(recordIRI));
@@ -157,6 +151,7 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
 
         resolver.setModelFactory(mf);
         resolver.setTransformer(transformer);
+        resolver.setCatalogConfigProvider(configProvider);
         resolver.setCatalogManager(catalogManager);
         resolver.activate(Collections.singletonMap("userAgent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0"));
     }
@@ -242,19 +237,65 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     @Test
     public void retrieveOntologyFromWebRedirectTest() throws Exception {
         String url = "http://mobi.com/redirects/to/skos";
-        addMockConnections(url, "", null);
+        addMockConnections(url, "", new ByteArrayInputStream("invalid rdf".getBytes()));
 
         HttpURLConnection connection = getMockConnection();
         when(connection.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
         when(connection.getHeaderField("Location")).thenReturn("http://www.w3.org/2004/02/skos/core.rdf");
-        httpUrlStreamHandler.addConnection(new URL(url + ".rdf"), connection);
+        when(connection.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL(url), connection);
 
-        HttpURLConnection skosConn = getMockConnection();
-        when(skosConn.getResponseCode()).thenReturn(200);
-        when(skosConn.getInputStream()).thenReturn(getClass().getResourceAsStream("/skos.rdf"));
-        httpUrlStreamHandler.addConnection(new URL("http://www.w3.org/2004/02/skos/core.rdf"), skosConn);
+        addMockConnections("http://www.w3.org/2004/02/skos/core", ".rdf", getClass().getResourceAsStream("/skos.rdf"));
+        assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveDcTermsFromWeb() throws Exception {
+        String url = "http://purl.org/dc/terms";
+        addMockConnections(url, "", null);
+        addMockConnections(url + "/", "", null);
+        addMockConnections("http://dublincore.org/2012/06/14/dcterms", ".rdf", getClass().getResourceAsStream("/dcterms.rdf"));
+
+        HttpURLConnection connection1 = getMockConnection();
+        when(connection1.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
+        when(connection1.getHeaderField("Location")).thenReturn(url + "/");
+        when(connection1.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL(url), connection1);
+
+        HttpURLConnection connection2 = getMockConnection();
+        when(connection2.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
+        when(connection2.getHeaderField("Location")).thenReturn("http://dublincore.org/2012/06/14/dcterms");
+        when(connection2.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL(url + "/"), connection2);
+
+        HttpURLConnection connection3 = getMockConnection();
+        when(connection3.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
+        when(connection3.getHeaderField("Location")).thenReturn("http://dublincore.org/specifications/dublin-core/dcmi-terms/2012-06-14?v=terms");
+        when(connection3.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL("http://dublincore.org/2012/06/14/dcterms"), connection3);
 
         assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveFromWebRedirectLoop() throws Exception {
+        String url = "http://purl.org/dc/terms";
+        addMockConnections(url, "", null);
+        addMockConnections(url + "/", "", null);
+
+        HttpURLConnection connection1 = getMockConnection();
+        when(connection1.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
+        when(connection1.getHeaderField("Location")).thenReturn(url + "/");
+        when(connection1.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL(url), connection1);
+
+        HttpURLConnection connection2 = getMockConnection();
+        when(connection2.getResponseCode()).thenReturn(HttpURLConnection.HTTP_MOVED_PERM);
+        when(connection2.getHeaderField("Location")).thenReturn(url);
+        when(connection2.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL(url + "/"), connection2);
+
+        assertModelFromWebEmpty(url);
     }
 
     @Test
@@ -275,6 +316,15 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     @Test
     public void retrieveOntologyLocalDoesNotExistTest() {
         IRI iri = vf.createIRI("urn:localOntology1");
+        Optional<Model> local = resolver.retrieveOntologyLocal(iri, ontologyManager);
+        assertFalse(local.isPresent());
+    }
+
+    @Test
+    public void retrieveOntologyLocalMasterDoesNotExistTest() {
+        when(masterBranch.getHead_resource()).thenReturn(Optional.empty());
+
+        IRI iri = vf.createIRI("urn:localOntology");
         Optional<Model> local = resolver.retrieveOntologyLocal(iri, ontologyManager);
         assertFalse(local.isPresent());
     }
@@ -300,16 +350,18 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
      * @param inputStream the inputStream to return for the 200 connection
      */
     private void addMockConnections(String url, String fileFormat, InputStream inputStream) throws Exception {
-        for (String format : formats) {
+        for (String format : ImportsResolverImpl.formats) {
             HttpURLConnection httpURLConnection = getMockConnection();
             if (format.equals(fileFormat)) {
-                when(httpURLConnection.getResponseCode()).thenReturn(200);
                 when(httpURLConnection.getInputStream()).thenReturn(inputStream);
             } else {
-                when(httpURLConnection.getResponseCode()).thenReturn(400);
+                when(httpURLConnection.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
             }
             httpUrlStreamHandler.addConnection(new URL(url + format), httpURLConnection);
         }
+        HttpURLConnection httpURLConnection = getMockConnection();
+        when(httpURLConnection.getInputStream()).thenReturn(new ByteArrayInputStream("invalid rdf".getBytes()));
+        httpUrlStreamHandler.addConnection(new URL(url), httpURLConnection);
     }
 
     private HttpURLConnection getMockConnection() throws Exception {
