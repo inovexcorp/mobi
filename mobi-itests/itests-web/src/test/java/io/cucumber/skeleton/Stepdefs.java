@@ -28,14 +28,12 @@ import static io.cucumber.skeleton.Hooks.driver;
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.When;
-import net.masterthought.cucumber.json.Hook;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 
 
 public class Stepdefs {
-
 
     @Given("I navigate to the Mobi login page")
     public void INavigateToTheMobiLoginPage() {

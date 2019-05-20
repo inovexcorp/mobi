@@ -40,42 +40,45 @@ import java.util.Date;
 
 public class Selenide {
     private static WebDriverWait wait;
+
     public Selenide(WebDriver driver) {
         wait = new WebDriverWait(driver, 5);
     }
-    public static void WaitTillElementIsVisible(By by){
+
+    public static void WaitTillElementIsVisible(By by) {
         wait.until(ExpectedConditions.visibilityOfElementLocated(by));
     }
 
-    public static void WaitTillElementIsNotVisible(By by){
+    public static void WaitTillElementIsNotVisible(By by) {
         wait.until(ExpectedConditions.invisibilityOfElementLocated(by) );
     }
+
     public static void JavascriptClick(WebDriver driver, WebElement element) {
         JavascriptExecutor executor = (JavascriptExecutor)driver;
         executor.executeScript("arguments[0].click();", element);
     }
 
-    public static void JavascriptLeaveSiteAlert(WebDriver driver){
+    public static void JavascriptLeaveSiteAlert(WebDriver driver) {
         JavascriptExecutor executor = (JavascriptExecutor)driver;
         executor.executeScript("window.alert = function() {};");
     }
 
-    public static void takeTestScreenshot(WebDriver driver){
-    File screenshotFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
-    String test_screenshot_timestamp = new SimpleDateFormat("yyyy_MM_dd-HH:mm:ss").format(new Date());
+    public static void takeTestScreenshot(WebDriver driver) {
+        File screenshotFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
+        String testScreenshotTimestamp = new SimpleDateFormat("yyyy_MM_dd-HH:mm:ss").format(new Date());
         try {
-            FileUtils.copyFile(screenshotFile, new File("test_"+test_screenshot_timestamp+".png"));
+            FileUtils.copyFile(screenshotFile, new File("test_" + testScreenshotTimestamp + ".png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void InputDropdownField(WebElement element, String inputText){
+    public void InputDropdownField(WebElement element, String inputText) {
         //@TODO Implement InputDropdownField
     }
 
-    public void WaitTillTableLoad(){
+    public void WaitTillTableLoad() {
         //@TODO Implement WaitTillTableLoad
-        String progressBarID= "secondaryProgress";
+        String progressBarID = "secondaryProgress";
     }
 }

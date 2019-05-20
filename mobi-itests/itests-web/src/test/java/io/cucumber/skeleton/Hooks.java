@@ -35,9 +35,6 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -56,15 +53,14 @@ public class Hooks {
 
     @Before
     public void beforeAll(){
-        if(!dunit) {
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> setupCucumberReporting()));
+        if (!dunit) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::setupCucumberReporting));
             dunit = true;
         }
     }
 
     @Before
     public void beforeBrowserScenario() {
-
         ChromeOptions chromeOptions = new ChromeOptions();
         chromeOptions.addArguments("--headless");
         chromeOptions.addArguments("--no-sandbox");
@@ -79,23 +75,20 @@ public class Hooks {
 //        firefoxOptions.addArguments("--width=1920 --height=1080");
 //        firefoxOptions.setProfile(firefoxProfile);
 
-
         driver = new ChromeDriver(chromeOptions);
         driver.manage().timeouts().implicitlyWait(implicitWaitTimeout, TimeUnit.SECONDS); //set overall implicit wait to 10 seconds
         driver.get("about:blank");
         driver.manage().window().fullscreen();
         selenide = new Selenide(driver);
-
     }
 
     @After
     public void afterBrowserScenario(Scenario scenario) {
-
         if (scenario.isFailed()) {
             try {
-                File screenshotFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
-                String failure_screenshot_timestamp = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss").format(new Date());
-                FileUtils.copyFile(screenshotFile, new File("failure_"+failure_screenshot_timestamp+".png"));
+                File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+                String failureScreenshotTimestamp = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss").format(new Date());
+                FileUtils.copyFile(screenshotFile, new File("failure_" + failureScreenshotTimestamp + ".png"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -116,15 +109,15 @@ public class Hooks {
         boolean runWithJenkins = false;
 
         Configuration configuration = new Configuration(reportOutputDirectory, projectName);
-// optional configuration - check javadoc
+        // optional configuration - check javadoc
         configuration.setRunWithJenkins(runWithJenkins);
         configuration.setBuildNumber(buildNumber);
-// additional metadata presented on main page
+        // additional metadata presented on main page
         configuration.addClassifications("Platform", "Windows");
         configuration.addClassifications("Browser", "Firefox");
         configuration.addClassifications("Branch", "release/1.0");
 
-// optionally add metadata presented on main page via properties file
+        // optionally add metadata presented on main page via properties file
         List<String> classificationFiles = new ArrayList<>();
         classificationFiles.add("properties-1.properties");
         classificationFiles.add("properties-2.properties");
@@ -133,5 +126,4 @@ public class Hooks {
         ReportBuilder reportBuilder = new ReportBuilder(jsonFiles, configuration);
         Reportable result = reportBuilder.generateReports();
     }
-
 }
