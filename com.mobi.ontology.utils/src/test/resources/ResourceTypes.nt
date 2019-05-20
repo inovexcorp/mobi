@@ -1,0 +1,7 @@
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Ontology> . 
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/2002/07/owl#imports> <http://id.loc.gov/vocabulary/resourceTypes/collection_ResourceTypes.nt> . 
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/2002/07/owl#imports> <http://id.loc.gov/vocabulary/resourceTypes/Res.nt> . 
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/2000/01/rdf-schema#label> "Ontology for Resource Types"@en . 
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/2000/01/rdf-schema#comment> "This mini-ontology provides a way to efficiently make use of Resource Types classes."^^<http://www.w3.org/2000/01/rdf-schema#Literal> . 
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/2002/07/owl#imports> <http://id.loc.gov/vocabulary/resourceTypes/collection_ResourceTypes.nt> . 
+<http://id.loc.gov/ontologies/ResourceTypes> <http://www.w3.org/2002/07/owl#imports> <http://id.loc.gov/vocabulary/resourceTypes/Res.nt> . 

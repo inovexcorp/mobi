@@ -79,12 +79,12 @@ public class RepositoryCacheManager implements CacheManager {
         this.uri = cachingProvider.getDefaultURI();
     }
 
-    @Reference(type = '*', dynamic = true, optional = true)
-    void addCacheFactory(CacheFactory cacheFactory)  {
+    @Reference(multiple = true, dynamic = true)
+    void addCacheFactory(CacheFactory<?, ?> cacheFactory)  {
         cacheFactoryMap.put(cacheFactory.getValueType().getName(), cacheFactory);
     }
 
-    void removeCacheFactory(CacheFactory cacheFactory) {
+    void removeCacheFactory(CacheFactory<?, ?> cacheFactory) {
         cacheFactoryMap.remove(cacheFactory.getValueType().getName());
     }
 
@@ -138,11 +138,11 @@ public class RepositoryCacheManager implements CacheManager {
             }
             Repository repo = repositoryManager.getRepository(repoConfig.getRepoId()).orElseThrow(
                     () -> new CacheException("Repository " + repoConfig.getRepoId() + " must exist for " + cacheName));
-            Optional<CacheFactory> cacheFactoryOpt = Optional.of(cacheFactoryMap.get(
+            Optional<CacheFactory> cacheFactoryOpt = Optional.ofNullable(cacheFactoryMap.get(
                     repoConfig.getValueType().getName()));
             CacheFactory<K, V> cacheFactory = cacheFactoryOpt.orElseThrow(
                     () -> new CacheException("CacheFactory does not exist for " + repoConfig.getValueType().getName()));
-            return cacheFactory.createCache(repoConfig, repo);
+            return cacheFactory.createCache(repoConfig, this, repo);
         });
 
         return (Cache<K, V>) cache;

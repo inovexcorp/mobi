@@ -155,9 +155,13 @@ public class SimpleOntologyManager implements OntologyManager {
         this.branchFactory = branchFactory;
     }
 
-    @Reference
-    public void setOntologyCache(OntologyCache ontologyCache) {
+    @Reference(type = '*', dynamic = true, optional = true)
+    public void addOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
+    }
+
+    public void removeOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = null;
     }
 
     @Reference
@@ -356,7 +360,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Model getOntologyModel(Resource recordId, Resource branchId) {
         Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory)
-                .get();
+                .orElseThrow(() -> new IllegalArgumentException("Branch does not belong to OntologyRecord"));
         return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
     }
 

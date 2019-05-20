@@ -202,6 +202,29 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
+    public boolean createDataset(String dataset, String repositoryId) {
+        Repository dsRepo = repoManager.getRepository(repositoryId).orElseThrow(() ->
+                new IllegalArgumentException("Dataset target repository does not exist."));
+
+        IRI datasetIRI = vf.createIRI(dataset);
+        IRI sdgIRI = vf.createIRI(dataset + SYSTEM_DEFAULT_NG_SUFFIX);
+
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
+            if (conn.getStatements(null, null, null, datasetIRI).hasNext()) {
+                throw new IllegalArgumentException("The dataset already exists in the specified repository.");
+            }
+        }
+        Dataset newDataset = dsFactory.createNew(datasetIRI);
+        newDataset.setSystemDefaultNamedGraph(sdgIRI);
+
+        try (RepositoryConnection conn = dsRepo.getConnection()) {
+            conn.add(newDataset.getModel(), datasetIRI);
+        }
+
+        return true;
+    }
+
+    @Override
     public DatasetRecord deleteDataset(Resource dataset, String repositoryId) {
         Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
@@ -232,6 +255,15 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
+    public void safeDeleteDataset(Resource dataset, String repositoryId, boolean datasetRecord) {
+        if (datasetRecord) {
+            safeDeleteDataset(dataset, repositoryId);
+        }
+        Repository dsRepo = getDatasetRepo(repositoryId);
+        safeDeleteDataset(dataset, dsRepo);
+    }
+
+    @Override
     public DatasetRecord safeDeleteDataset(Resource record) {
         DatasetRecord datasetRecord = catalogManager.removeRecord(configProvider.getLocalCatalogIRI(), record,
                 dsRecFactory);
@@ -240,11 +272,15 @@ public class SimpleDatasetManager implements DatasetManager {
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
                 -> new IllegalStateException("Could not retrieve the Dataset IRI from the DatasetRecord."));
 
+        safeDeleteDataset(dataset, dsRepo);
+        return datasetRecord;
+    }
+
+    private void safeDeleteDataset(Resource dataset, Repository dsRepo) {
         try (RepositoryConnection conn = dsRepo.getConnection()) {
             safeDeleteGraphs(conn, dataset);
             conn.remove(dataset, null, null);
         }
-        return datasetRecord;
     }
 
     @Override
@@ -303,6 +339,15 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
+    public DatasetConnection getConnection(Resource dataset, String repositoryId, boolean datasetRecord) {
+        if (datasetRecord) {
+            return getConnection(dataset, repositoryId);
+        }
+        Repository dsRepo = getDatasetRepo(repositoryId);
+        return getConnection(dataset, repositoryId, dsRepo);
+    }
+
+    @Override
     public DatasetConnection getConnection(Resource record) {
         DatasetRecord datasetRecord = getDatasetRecord(record).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
@@ -312,7 +357,11 @@ public class SimpleDatasetManager implements DatasetManager {
                 new IllegalStateException("Could not retrieve the Repository ID from the DatasetRecord."));
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
-        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repositoryId, vf);
+        return getConnection(dataset, repositoryId, dsRepo);
+    }
+
+    private DatasetConnection getConnection(Resource dataset, String repoId, Repository dsRepo) {
+        return new SimpleDatasetRepositoryConnection(dsRepo.getConnection(), dataset, repoId, vf);
     }
 
     /**
