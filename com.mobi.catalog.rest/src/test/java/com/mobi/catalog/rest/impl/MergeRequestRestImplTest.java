@@ -85,6 +85,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -126,7 +127,6 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     private final String commentText = "This is a comment";
     private final String updateCommentText = "updated comment";
     private final String largeComment = StringUtils.repeat("*", 2000000);
-
 
     @Mock
     private MergeRequestManager requestManager;
@@ -781,8 +781,10 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 + encode(comment1.getResource().stringValue()))
                 .request()
                 .put(Entity.text(updateCommentText));
-        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
-
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
         assertEquals(response.getStatus(), 200);
     }
 
@@ -799,12 +801,14 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     @Test
     public void updateCommentWithInvalidCommentSizeTest() {
         doThrow(new IllegalArgumentException()).when(requestManager).updateComment(any(Resource.class), any(Comment.class));
-
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
                 .put(Entity.text(largeComment));
-        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), largeComment);
         assertEquals(response.getStatus(), 400);
     }
 
@@ -815,7 +819,10 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
                 + encode(comment1.getResource().stringValue()))
                 .request()
                 .put(Entity.text(updateCommentText));
-        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
         assertEquals(response.getStatus(), 500);
     }
 
