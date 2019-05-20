@@ -75,6 +75,22 @@ describe('See History component', function() {
             expect(ontologyStateSvc.listItem.seeHistory).toBeUndefined();
             expect(ontologyStateSvc.listItem.selectedCommit).toBeUndefined();
         });
+        it('should assign the correct label for each commit', function() {
+            this.controller.commits = this.commits;
+            utilSvc.condenseCommitId.and.returnValue('1234');
+            var label1 = this.controller.createLabel(this.commits[0].id);
+            var label2 = this.controller.createLabel(this.commits[1].id);
+            expect(label1).toEqual('1234 (latest)');
+            expect(label2).toEqual('1234');  
+        });
+        it('should assign an array of commits to `commits` in the controller when receiveCommits is called', function() {
+            this.controller.receiveCommits(this.commits);
+            expect(this.controller.commits).toBe(this.commits);
+        });
+        it('should set the default value in the dropdown to the latest commit for an entity', function() {
+            this.controller.receiveCommits(this.commits);
+            expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -108,28 +124,5 @@ describe('See History component', function() {
         var button = angular.element(this.element.querySelectorAll('button.next-btn')[0]);
         button.triggerHandler('click');
         expect(this.controller.next).toHaveBeenCalled();
-    });
-    it('assigns the correct label for each commit', function() {
-        this.controller.commits = this.commits;
-        utilSvc.condenseCommitId.and.returnValue('1234');
-        var label1 = this.controller.createLabel(this.commits[0].id);
-        var label2 = this.controller.createLabel(this.commits[1].id);
-        expect(label1).toEqual('1234 (latest)');
-        expect(label2).toEqual('1234');  
-
-
-    });
-    it('should assign condensed commitId as the label for any other commit', function() {
-        this.controller.commits = this.commits;
-        utilSvc.condenseCommitId.and.returnValue('1234');
-              
-    });
-    it('should assign an array of commits to `commits` in the controller when receiveCommits is called', function() {
-        this.controller.receiveCommits(this.commits);
-        expect(this.controller.commits).toBe(this.commits);
-    });
-    it('should set the default value in the dropdown to the latest commit for an entity', function() {
-        this.controller.receiveCommits(this.commits);
-        expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
     });
 });
