@@ -80,6 +80,7 @@ import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -123,6 +124,9 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
     private final String doesNotExist = "urn:doesNotExist";
     private final String invalidIRIString = "invalidIRI";
     private final String commentText = "This is a comment";
+    private final String updateCommentText = "updated comment";
+    private final String largeComment = StringUtils.repeat("*", 2000000);
+
 
     @Mock
     private MergeRequestManager requestManager;
@@ -776,38 +780,31 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.text(updateCommentText));
         verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void updateCommentEmptyJsonTest() {
+    public void updateCommentEmptyStringTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.json("[]"));
+                .put(Entity.text(""));
         verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updateCommentWithInvalidJsonTest() {
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
-                + encode(comment1.getResource().stringValue()))
-                .request()
-                .put(Entity.json("['test': true]"));
-        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
-        assertEquals(response.getStatus(), 400);
-    }
+    public void updateCommentWithInvalidCommentSizeTest() {
+        doThrow(new IllegalArgumentException()).when(requestManager).updateComment(any(Resource.class), any(Comment.class));
 
-    @Test
-    public void updateCommentThatDoesNotMatchTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment2.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
-        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
+                .put(Entity.text(largeComment));
+        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -817,7 +814,7 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/"+ encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.text(updateCommentText));
         verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
         assertEquals(response.getStatus(), 500);
     }
@@ -827,9 +824,10 @@ public class MergeRequestRestImplTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(invalidIRIString))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.text(updateCommentText));
         assertEquals(response.getStatus(), 400);
     }
+
 
     /* DELETE merge-requests/{requestId}/comments/{commentId} */
 
