@@ -112,6 +112,7 @@ public class AuthRestImpl implements AuthRest {
         }
 
         UserCredentials userCreds = userCredsOptional.get();
+        log.debug("Attempting to login in as " + username);
         try {
             if (authenticated(userCreds.getUsername(), userCreds.getPassword())) {
                 SignedJWT token = TokenUtils.generateauthToken(userCreds.getUsername());
@@ -186,6 +187,7 @@ public class AuthRestImpl implements AuthRest {
             return Optional.empty();
         }
 
+        log.debug("Authentication successful, retrieving UserPrincipals");
         List<Principal> principals = subject.getPrincipals().stream()
                 .filter(p -> p instanceof UserPrincipal)
                 .collect(Collectors.toList());
@@ -204,6 +206,7 @@ public class AuthRestImpl implements AuthRest {
             log.debug("User does not have the required role " + REQUIRED_ROLE);
             return Optional.empty();
         }
+        log.debug("User has required role");
         return Optional.of(subject);
     }
 
