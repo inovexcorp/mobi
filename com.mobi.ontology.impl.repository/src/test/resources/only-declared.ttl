@@ -8,7 +8,7 @@
 @base <http://mobi.com/ontology/only-declared> .
 
 <http://mobi.com/ontology/only-declared> a owl:Ontology ;
-    owl:imports <http://www.w3.org/2004/02/skos/core#> .
+    owl:imports <http://www.w3.org/2004/02/skos/core> .
 
 :ConceptA a skos:Concept ;
           skos:narrower :ConceptB ;

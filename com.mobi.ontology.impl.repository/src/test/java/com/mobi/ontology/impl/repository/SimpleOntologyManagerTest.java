@@ -53,8 +53,8 @@ import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
@@ -274,13 +274,19 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     /* applyChanges */
 
     @Test
-    public void testApplyChangesDifference() {
+    public void testApplyChangesDifference() {Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
         manager.applyChanges(ontology, difference);
         verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
     }
 
     @Test
     public void testApplyChangesInProgressCommit() {
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+
         manager.applyChanges(ontology, inProgressCommit);
         verify(catalogUtilsService).getCommitDifference(eq(inProgressCommit.getResource()), any(RepositoryConnection.class));
         verify(catalogUtilsService).applyDifference(eq(ontologyModel), eq(difference));
@@ -294,6 +300,10 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testApplyChangesInProgressCommitId() {
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+
         manager.applyChanges(ontology, inProgressCommit.getResource());
         verify(ontologyId).getOntologyIRI();
         verify(ontologyId).getOntologyIdentifier();
@@ -304,6 +314,10 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testApplyChangesInProgressCommitIdOntologyIRINotSet() {
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.empty());
         manager.applyChanges(ontology, inProgressCommit.getResource());
         verify(ontologyId).getOntologyIRI();

@@ -94,4 +94,9 @@ public class SimpleDatatype implements Datatype {
 
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        return iri.hashCode();
+    }
 }

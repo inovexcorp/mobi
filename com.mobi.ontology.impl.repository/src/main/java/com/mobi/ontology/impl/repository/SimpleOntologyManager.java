@@ -24,7 +24,6 @@ package com.mobi.ontology.impl.repository;
  */
 
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -38,11 +37,10 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.config.OntologyManagerConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.OntologyModels;
-import com.mobi.ontology.utils.cache.ImportsResolver;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -73,8 +71,6 @@ import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
 @Component(
-        configurationPolicy = ConfigurationPolicy.optional,
-        designateFactory = OntologyManagerConfig.class,
         name = SimpleOntologyManager.COMPONENT_NAME,
         properties = {
                 "service.ranking:Integer=2147483647"
@@ -211,7 +207,7 @@ public class SimpleOntologyManager implements OntologyManager {
         Repository repository = repositoryManager.getRepository("ontologyCache").orElseThrow(
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
-        return new SimpleOntology(model, repository, this, catalogManager, datasetManager,
+        return new SimpleOntology(model, repository, this, catalogManager, configProvider, datasetManager,
                 importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
     }
 
@@ -220,7 +216,7 @@ public class SimpleOntologyManager implements OntologyManager {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, model, repository, this, catalogManager, datasetManager,
+        return new SimpleOntology(key, model, repository, this, catalogManager, configProvider, datasetManager,
                 importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
     }
 
@@ -229,7 +225,7 @@ public class SimpleOntologyManager implements OntologyManager {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, repository, this, catalogManager, datasetManager, importsResolver,
+        return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager, importsResolver,
                 sesameTransformer, bNodeService, valueFactory, modelFactory);
     }
 

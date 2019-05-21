@@ -60,5 +60,5 @@ public class SimpleAnnotationProperty implements AnnotationProperty {
         
         return false;
     }
-    
+
 }
