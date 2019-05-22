@@ -486,7 +486,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
                 throw new IllegalArgumentException("Comment string length must be less than " + MAX_COMMENT_STRING_LENGTH);
             }
-            if (description.isPresent() && StringUtils.isBlank(description.get().stringValue())) {
+            if (!description.isPresent() || StringUtils.isBlank(description.get().stringValue())) {
                 throw new IllegalArgumentException("Comment string is required");
             }
             OffsetDateTime now = OffsetDateTime.now();

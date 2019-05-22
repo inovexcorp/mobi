@@ -839,21 +839,6 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 400);
     }
 
-    @Test
-    public void updateCommentTimeTest() {
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
-                + encode(comment1.getResource().stringValue()))
-                .request()
-                .put(Entity.text(updateCommentText));
-        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
-        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
-        Comment comment = commentArgumentCaptor.getValue();
-        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
-        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
-
-        assertEquals(response.getStatus(), 200);
-    }
-
 
     /* DELETE merge-requests/{requestId}/comments/{commentId} */
 
