@@ -70,10 +70,7 @@ import javax.cache.Cache;
 @Component(
         configurationPolicy = ConfigurationPolicy.optional,
         designateFactory = OntologyManagerConfig.class,
-        name = SimpleOntologyManager.COMPONENT_NAME,
-        properties = {
-                "service.ranking:Integer=-2147483647"
-        }
+        name = SimpleOntologyManager.COMPONENT_NAME
 )
 public class SimpleOntologyManager implements OntologyManager {
 
@@ -91,7 +88,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     private ForkJoinPool threadPool;
 
-    static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
+    static final String COMPONENT_NAME = "com.mobi.ontology.impl.owlapi.OntologyManager";
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String FIND_ONTOLOGY;

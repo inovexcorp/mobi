@@ -70,15 +70,10 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
-@Component(
-        name = SimpleOntologyManager.COMPONENT_NAME,
-        properties = {
-                "service.ranking:Integer=2147483647"
-        }
-)
+@Component(name = SimpleOntologyManager.COMPONENT_NAME)
 public class SimpleOntologyManager implements OntologyManager {
 
-    static final String COMPONENT_NAME = "com.mobi.ontology.core.api.OntologyManager";
+    static final String COMPONENT_NAME = "com.mobi.ontology.impl.repository.OntologyManager";
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private ValueFactory valueFactory;

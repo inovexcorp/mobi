@@ -30,6 +30,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -270,53 +271,45 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         onlyDeclared = new SimpleOntology(Models.createModel(streamOnlyDeclared, transformer), repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
     }
 
-//    @Test
-//    public void withAndWithoutImportsEqualsTest() throws Exception {
-//        InputStream stream = getClass().getResourceAsStream("/test-imports.owl");
-//        Ontology withImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
-//        stream = getClass().getResourceAsStream("/test-imports.owl");
-//        Ontology withoutImports = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, false, threadPool);
-//        assertEquals(withImports, withoutImports);
-//    }
-//
-//    @Test
-//    public void getImportedOntologyIRIsTest() throws Exception {
-//        // Setup:
-//        InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
-//        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
-//
-//        Set<IRI> iris = ont.getImportedOntologyIRIs();
-//        assertEquals(2, iris.size());
-//        assertTrue(iris.contains(vf.createIRI("http://xmlns.com/foaf/0.1")));
-//    }
-//
-//    @Test
-//    public void getImportsClosureWithLocalImportsTest() throws Exception {
-//        Set<Ontology> ontologies = ont1.getImportsClosure();
-//        assertEquals(3, ontologies.size());
-//    }
-//
-//    @Test
-//    public void withDctermsImport() throws Exception {
-//        // Setup:
-//        InputStream stream = this.getClass().getResourceAsStream("/skos-kgaa.ttl");
-//        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
-//        Set<String> expectedClasses = Stream.of("http://www.w3.org/2004/02/skos/core#ConceptScheme",
-//                "http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#Collection",
-//                "http://www.w3.org/2004/02/skos/core#OrderedCollection").collect(Collectors.toSet());
-//
-//        verify(ontologyManager, atLeastOnce()).getOntologyModel(vf.createIRI("https://mobi.com/record/dcterms"));
-//        Set<Ontology> ontologies = ont.getImportsClosure();
-//        assertEquals(2, ontologies.size());
-//        Set<IRI> iris = ont.getImportedOntologyIRIs();
-//        assertEquals(1, iris.size());
-//        assertTrue(iris.contains(vf.createIRI("http://purl.org/dc/terms/")));
-//        Set<OClass> classes = ont.getAllClasses();
-//        assertEquals(expectedClasses.size(), classes.size());
-//        classes.stream()
-//                .map(oClass -> oClass.getIRI().stringValue())
-//                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
-//    }
+    @Test
+    public void getImportedOntologyIRIsTest() throws Exception {
+        Set<IRI> iris = ont1.getImportedOntologyIRIs();
+        assertEquals(3, iris.size());
+    }
+
+    @Test
+    public void getImportsClosureWithLocalImportsTest() throws Exception {
+        Set<Ontology> ontologies = ont1.getImportsClosure();
+        assertEquals(3, ontologies.size());
+    }
+
+    @Test
+    public void withDctermsImport() throws Exception {
+        // Setup:
+        IRI masterHead = vf.createIRI("urn:masterHead");
+        Branch branch = mock(Branch.class);
+        when(branch.getHead_resource()).thenReturn(Optional.of(masterHead));
+        when(catalogManager.getMasterBranch(catalogIRI, vf.createIRI("https://mobi.com/record/dcterms"))).thenReturn(branch);
+        Model dcTermsModel = Models.createModel(getClass().getResourceAsStream("/dcterms.rdf"), transformer);
+        when(catalogManager.getCompiledResource(masterHead)).thenReturn(dcTermsModel);
+
+        InputStream stream = getClass().getResourceAsStream("/skos-kgaa.ttl");
+        Ontology ont = new SimpleOntology(Models.createModel(stream, transformer), repo, ontologyManager, catalogManager, catalogConfigProvider, datasetManager, importsResolver, transformer, bNodeService, vf, mf);
+        Set<String> expectedClasses = Stream.of("http://www.w3.org/2004/02/skos/core#ConceptScheme",
+                "http://www.w3.org/2004/02/skos/core#Concept", "http://www.w3.org/2004/02/skos/core#Collection",
+                "http://www.w3.org/2004/02/skos/core#OrderedCollection").collect(Collectors.toSet());
+
+        Set<Ontology> ontologies = ont.getImportsClosure();
+        assertEquals(2, ontologies.size());
+        Set<IRI> iris = ont.getImportedOntologyIRIs();
+        assertEquals(2, iris.size());
+        assertTrue(iris.contains(vf.createIRI("http://purl.org/dc/terms/")));
+        Set<OClass> classes = ont.getAllClasses();
+        assertEquals(expectedClasses.size(), classes.size());
+        classes.stream()
+                .map(oClass -> oClass.getIRI().stringValue())
+                .forEach(iri -> assertTrue(expectedClasses.contains(iri)));
+    }
 
     @Test
     public void getAllClassesTest() throws Exception {
