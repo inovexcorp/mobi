@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -784,6 +785,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
         verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
         Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
         assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
         assertEquals(response.getStatus(), 200);
     }
@@ -808,6 +810,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
         verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
         Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
         assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), largeComment);
         assertEquals(response.getStatus(), 400);
     }
@@ -822,6 +825,7 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
         verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
         Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
         assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
         assertEquals(response.getStatus(), 500);
     }
@@ -833,6 +837,21 @@ public class MergeRequestRestTest extends MobiRestTestNg {
                 .request()
                 .put(Entity.text(updateCommentText));
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateCommentTimeTest() {
+        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
+                + encode(comment1.getResource().stringValue()))
+                .request()
+                .put(Entity.text(updateCommentText));
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
+
+        assertEquals(response.getStatus(), 200);
     }
 
 
