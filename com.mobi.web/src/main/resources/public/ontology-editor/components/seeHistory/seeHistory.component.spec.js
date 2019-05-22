@@ -83,13 +83,15 @@ describe('See History component', function() {
             expect(label1).toEqual('1234 (latest)');
             expect(label2).toEqual('1234');  
         });
-        it('should assign an array of commits to `commits` in the controller when receiveCommits is called', function() {
-            this.controller.receiveCommits(this.commits);
-            expect(this.controller.commits).toBe(this.commits);
-        });
-        it('should set the default value in the dropdown to the latest commit for an entity', function() {
-            this.controller.receiveCommits(this.commits);
-            expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
+        describe('should load a list of commits', function() {
+            it('to `commits` in the controller when receiveCommits is called', function() {
+                this.controller.receiveCommits(this.commits);
+                expect(this.controller.commits).toBe(this.commits);
+            });
+            it('and set the default value in the dropdown to the latest commit for an entity', function() {
+                this.controller.receiveCommits(this.commits);
+                expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
+            });
         });
     });
     describe('contains the correct html', function() {
