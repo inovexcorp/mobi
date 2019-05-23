@@ -42,7 +42,9 @@ public class Stepdefs {
 
     @When("I log in with the {string} username and {string} password")
     public void ILogInWithTheUsernameAndPassword(String username, String password){
-        WebElement usernameElement = driver.findElement(By.id("username"));
+        By usernameField = By.id("username");
+        Selenide.WaitTillElementIsVisible(usernameField);
+        WebElement usernameElement = driver.findElement(usernameField);
         usernameElement.sendKeys(username);
         WebElement passwordElement = driver.findElement(By.id("password"));
         passwordElement.sendKeys(password);
@@ -66,7 +68,7 @@ public class Stepdefs {
                 Selenide.WaitTillElementIsVisible(By.xpath("//a[@class='nav-link active'][text()[contains(.,'Recent Activity')]]"));
                 break;
             case "Catalog":
-                Selenide.WaitTillElementIsVisible(By.xpath("//div[@class='input-group']/input"));
+                Selenide.WaitTillElementIsVisible(By.xpath("//div[contains(@class,'input-group')]/input"));
                 break;
             case "Ontology Editor":
                 Selenide.WaitTillElementIsVisible(By.xpath("//div[contains(@class, 'ontology-sidebar')]/div/button[text()[contains(.,'Ontologies')]]"));
@@ -86,9 +88,9 @@ public class Stepdefs {
                 Selenide.WaitTillElementIsVisible(By.xpath("//button[text()[contains(.,'New Dataset')]]"));
                 break;
             case "Discover":
-                Selenide.WaitTillElementIsVisible(By.xpath("//*[contains(@class, 'tabset-headings')]/a/span[text()[contains(.,'Explore')]]"));
-                Selenide.WaitTillElementIsVisible(By.xpath("//*[contains(@class, 'tabset-headings')]/a/span[text()[contains(.,'Search')]]"));
-                Selenide.WaitTillElementIsVisible(By.xpath("//*[contains(@class, 'tabset-headings')]/a/span[text()[contains(.,'Query')]]"));
+                Selenide.WaitTillElementIsVisible(By.xpath("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Explore')]]"));
+                Selenide.WaitTillElementIsVisible(By.xpath("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Search')]]"));
+                Selenide.WaitTillElementIsVisible(By.xpath("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Query')]]"));
                 break;
             default:
                 System.out.println("No Sidebar Link given!");

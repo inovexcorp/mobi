@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
   itests-web
@@ -139,7 +140,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>2.18.1</version>
                 <configuration>
                     <skipTests>${skipSelenium}</skipTests>
                     <systemPropertyVariables>

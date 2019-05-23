@@ -67,7 +67,8 @@ public class Selenide {
         File screenshotFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
         String testScreenshotTimestamp = new SimpleDateFormat("yyyy_MM_dd-HH:mm:ss").format(new Date());
         try {
-            FileUtils.copyFile(screenshotFile, new File("test_" + testScreenshotTimestamp + ".png"));
+            FileUtils.copyFile(screenshotFile, new File("target/cucumber-screenshots/test_"
+                    + testScreenshotTimestamp + ".png"));
         } catch (IOException e) {
             e.printStackTrace();
         }

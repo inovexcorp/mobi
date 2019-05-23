@@ -22,15 +22,40 @@ package io.cucumber.skeleton;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import static org.junit.Assert.assertTrue;
+
 import com.mobi.itests.support.KarafTestSupport;
 import cucumber.api.CucumberOptions;
 import cucumber.api.junit.Cucumber;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.JUnitCore;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.junit.PaxExamServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@RunWith(Cucumber.class)
-@CucumberOptions(
+public class RunCucumberTestIT extends KarafTestSupport {
+
+    public static Boolean setupComplete = false;
+    private static Logger logger = LoggerFactory.getLogger(RunCucumberTestIT.class);
+
+    @Rule
+    public PaxExamServer exam = new PaxExamServer();
+
+    @Test
+    public void runAcceptanceTests() throws Exception {
+        logger.debug("System-under-test created. Running acceptance tests.");
+        assertTrue(JUnitCore.runClasses(InnerCucumberTestRunner.class).wasSuccessful());
+    }
+
+    @RunWith(Cucumber.class)
+    @CucumberOptions(
         plugin = {"pretty"},
         monochrome = true)
-public class RunCucumberTestIT extends KarafTestSupport {
+    public static class InnerCucumberTestRunner {
+
+    }
 
 }

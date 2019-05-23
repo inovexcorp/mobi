@@ -23,6 +23,7 @@ package io.cucumber.skeleton;
  * #L%
  */
 
+import com.mobi.itests.support.KarafTestSupport;
 import cucumber.api.Scenario;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
@@ -46,14 +47,14 @@ import java.util.concurrent.TimeUnit;
 public class Hooks {
 
     public static WebDriver driver;
-    public static String testURL = "https://localhost:8443/mobi/index.html#/login";
+    public static String testURL = "https://localhost:" + KarafTestSupport.HTTPS_PORT + "/mobi/index.html#/login";
     public int implicitWaitTimeout = 5;
     public Selenide selenide;
     private static boolean dunit;
 
     @Before
     public void beforeAll(){
-        if (!dunit) {
+        if(!dunit) {
             Runtime.getRuntime().addShutdownHook(new Thread(this::setupCucumberReporting));
             dunit = true;
         }
@@ -76,7 +77,7 @@ public class Hooks {
 //        firefoxOptions.setProfile(firefoxProfile);
 
         driver = new ChromeDriver(chromeOptions);
-        driver.manage().timeouts().implicitlyWait(implicitWaitTimeout, TimeUnit.SECONDS); //set overall implicit wait to 10 seconds
+        driver.manage().timeouts().implicitlyWait(implicitWaitTimeout, TimeUnit.SECONDS); //set overall implicit wait to 5 seconds
         driver.get("about:blank");
         driver.manage().window().fullscreen();
         selenide = new Selenide(driver);
@@ -88,7 +89,8 @@ public class Hooks {
             try {
                 File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
                 String failureScreenshotTimestamp = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss").format(new Date());
-                FileUtils.copyFile(screenshotFile, new File("failure_" + failureScreenshotTimestamp + ".png"));
+                FileUtils.copyFile(screenshotFile, new File("target/cucumber-screenshots/failure_"
+                        + failureScreenshotTimestamp + ".png"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -98,7 +100,7 @@ public class Hooks {
         driver.quit();
     }
 
-    public void setupCucumberReporting () {
+    public void setupCucumberReporting() {
         File reportOutputDirectory = new File("target");
         List<String> jsonFiles = new ArrayList<>();
         jsonFiles.add("cucumber-report-1.json");
