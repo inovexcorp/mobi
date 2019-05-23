@@ -66,6 +66,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -76,7 +77,6 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
-import org.semanticweb.owlapi.rio.OWLAPIRDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -383,7 +383,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OutputStream asOwlXml() throws MobiOntologyException {
-        return getOntologyOutputStream(OWLAPIRDFFormat.OWL_XML);
+        throw new NotImplementedException("OWL/XML format is not yet implemented.");
     }
 
     @Override
