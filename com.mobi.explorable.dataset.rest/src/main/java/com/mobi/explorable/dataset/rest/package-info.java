@@ -1,4 +1,4 @@
-@Version("1.2.1.${build}")
+@Version("1.2.2.${build}")
 
 package com.mobi.explorable.dataset.rest;
 
