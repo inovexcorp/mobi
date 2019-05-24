@@ -42,7 +42,7 @@
          *
          * @description
          * `ontologyEditorPage` is a directive that creates a `div` containing the main components of the Ontology
-         * Editor. These components are {@link ontologySidebar.directive:ontologySidebar},
+         * Editor. These components are {@link ontology-editor.component:ontologySidebar},
          * {@link ontologyTab.directive:ontologyTab} with the
          * {@link shared.service:ontologyStateService currently selected open ontology}, and
          * {@link openOntologyTab.directive:openOntologyTab}. The directive is replaced by the contents of

@@ -26,6 +26,20 @@ describe('Ontology Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('ontologyTab');
+        mockComponent('ontology-editor', 'seeHistory');
+        mockComponent('mergeTab', 'mergeTab');
+        mockComponent('ontology-editor', 'projectTab');
+        mockComponent('overviewTab', 'overviewTab');
+        mockComponent('classesTab', 'classesTab');
+        mockComponent('propertiesTab', 'propertiesTab');
+        mockComponent('individualsTab', 'individualsTab');
+        mockComponent('conceptSchemesTab', 'conceptSchemesTab');
+        mockComponent('conceptsTab', 'conceptsTab');
+        mockComponent('ontology-editor', 'searchTab');
+        mockComponent('savedChangesTab', 'savedChangesTab');
+        mockComponent('commitsTab', 'commitsTab');
+        mockComponent('ontologyButtonStack', 'ontologyButtonStack');
+        mockComponent('ontology-editor', 'openEntitySnackbar');
         mockOntologyState();
         mockCatalogManager();
         mockUtil();
@@ -138,7 +152,7 @@ describe('Ontology Tab directive', function() {
         it('with a material-tabset', function() {
             expect(this.element.find('material-tabset').length).toBe(1);
         });
-        it('with mateiral-tabs', function() {
+        it('with material-tabs', function() {
             expect(this.element.find('material-tab').length).toBe(10);
         });
         ['ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(function(tag) {

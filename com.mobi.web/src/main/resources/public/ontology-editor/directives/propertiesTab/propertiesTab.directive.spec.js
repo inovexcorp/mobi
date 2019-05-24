@@ -26,6 +26,12 @@ describe('Properties Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('propertiesTab');
+        mockComponent('ontology-editor', 'selectedDetails');
+        mockComponent('propertyHierarchyBlock', 'propertyHierarchyBlock');
+        mockComponent('axiomBlock', 'axiomBlock');
+        mockComponent('annotationBlock', 'annotationBlock');
+        mockComponent('characteristicsRow', 'characteristicsRow');
+        mockComponent('usagesBlock', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

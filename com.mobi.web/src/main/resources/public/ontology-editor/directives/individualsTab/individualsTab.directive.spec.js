@@ -26,6 +26,11 @@ describe('Individuals Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('individualsTab');
+        mockComponent('ontology-editor', 'selectedDetails');
+        mockComponent('individualHierarchyBlock', 'individualHierarchyBlock');
+        mockComponent('datatypePropertyBlock', 'datatypePropertyBlock');
+        mockComponent('objectPropertyBlock', 'objectPropertyBlock');
+        mockComponent('annotationBlock', 'annotationBlock');
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();

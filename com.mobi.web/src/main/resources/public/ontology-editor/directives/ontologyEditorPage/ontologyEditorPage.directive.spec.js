@@ -26,6 +26,9 @@ describe('Ontology Editor Page directive', function() {
     beforeEach(function() {
         module('templates');
         module('ontologyEditorPage');
+        mockComponent('ontology-editor', 'ontologySidebar');
+        mockComponent('ontologyTab', 'ontologyTab');
+        mockComponent('openOntologyTab', 'openOntologyTab');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {

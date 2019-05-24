@@ -26,6 +26,11 @@ describe('Concept Schemes Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('conceptSchemesTab');
+        mockComponent('ontology-editor', 'selectedDetails');
+        mockComponent('conceptSchemeHierarchyBlock', 'conceptSchemeHierarchyBlock');
+        mockComponent('annotationBlock', 'annotationBlock');
+        mockComponent('relationshipsBlock', 'relationshipsBlock');
+        mockComponent('usagesBlock', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

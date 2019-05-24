@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Serialization Select directive', function() {
+describe('Serialization Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
         module('templates');
-        module('serializationSelect');
+        module('ontology-editor');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -33,8 +33,10 @@ describe('Serialization Select directive', function() {
         });
 
         scope.bindModel = '';
-        this.element = $compile(angular.element('<serialization-select ng-model="bindModel"></serialization-select>'))(scope);
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        this.element = $compile(angular.element('<serialization-select bind-model="bindModel" change-event="changeEvent(value)"></serialization-select>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('serializationSelect');
     });
 
     afterEach(function() {
@@ -43,25 +45,28 @@ describe('Serialization Select directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        it('bindModel should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.bindModel = 'turtle';
+    describe('controller bound variable', function() {
+        it('bindModel should be one way bound', function() {
+            this.controller.bindModel = 'turtle';
             scope.$digest();
-            expect(scope.bindModel).toEqual('turtle');
+            expect(scope.bindModel).toEqual('');
+        });
+        it('changeEvent should be called in parent scope', function() {
+            this.controller.changeEvent({value: 'test'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('test');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('serialization-select')).toBe(true);
-            expect(this.element.hasClass('form-group')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('SERIALIZATION-SELECT');
+            expect(this.element.querySelectorAll('.serialization-select').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
         it('with a select', function() {
-            expect(this.element.find('select').length).toBe(1);
+            expect(this.element.find('select').length).toEqual(1);
         });
         it('with options', function() {
-            expect(this.element.find('option').length).toBe(5);
+            expect(this.element.find('option').length).toEqual(5);
         });
     });
 });

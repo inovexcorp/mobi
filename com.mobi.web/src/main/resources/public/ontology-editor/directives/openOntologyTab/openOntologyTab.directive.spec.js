@@ -26,6 +26,7 @@ describe('Open Ontology Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('openOntologyTab');
+        mockComponent('ontology-editor', 'uploadSnackbar');
         injectHighlightFilter();
         injectTrustedFilter();
         mockOntologyManager();

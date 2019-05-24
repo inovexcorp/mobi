@@ -49,7 +49,7 @@
          * {@link conceptHierarchyBlock.directive:conceptHierarchyBlock} of the current
          * {@link shared.service:ontologyStateService selected ontology/vocabulary} and information about a
          * selected concept from that list. The selected concept display includes a
-         * {@link selectedDetails.directive:selectedDetails}, a button to delete the concept, an
+         * {@link ontology-editor.component:selectedDetails}, a button to delete the concept, an
          * {@link annotationBlock.directive:annotationBlock}, a
          * {@link relationshipsBlock.directive:relationshipsBlock}, and a {@link usagesBlock.directive:usagesBlock}.
          * The directive houses the method for opening a modal for deleting concepts. The directive is replaced by the

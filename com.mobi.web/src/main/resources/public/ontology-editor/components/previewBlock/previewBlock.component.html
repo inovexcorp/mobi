@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="preview-block">
+<div class="preview-block h-100">
     <div class="card h-100">
         <div class="card-header">
             <form class="form-inline justify-content-end" name="dvm.form">
-                <serialization-select ng-model="dvm.activePage.serialization"></serialization-select>
+                <serialization-select bind-model="dvm.activePage.serialization" change-event="dvm.changeSerialization(value)"></serialization-select>
                 <button type="button" class="btn btn-primary refresh-button ml-2" ng-click="dvm.getPreview()" ng-disabled="!dvm.activePage.serialization">Refresh</button>
-                <button type="button" class="btn btn-primary download-button remove-min-width ml-2" ng-click="dvm.showDownloadOverlay()"><i class="fa fa-fw fa-download"></i></button>
+                <button type="button" class="btn btn-primary download-button remove-min-width ml-2" ng-click="dvm.download()" ng-disabled="!dvm.activePage.serialization"><i class="fa fa-fw fa-download"></i></button>
             </form>
         </div>
         <div class="card-body position-relative">

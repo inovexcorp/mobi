@@ -26,6 +26,11 @@ describe('Concepts Tab directive', function() {
     beforeEach(function() {
         module('templates');
         module('conceptsTab');
+        mockComponent('ontology-editor', 'selectedDetails');
+        mockComponent('conceptHierarchyBlock', 'conceptHierarchyBlock');
+        mockComponent('annotationBlock', 'annotationBlock');
+        mockComponent('relationshipsBlock', 'relationshipsBlock');
+        mockComponent('usagesBlock', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

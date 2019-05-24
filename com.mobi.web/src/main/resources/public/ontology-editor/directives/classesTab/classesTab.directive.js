@@ -48,7 +48,7 @@
          * {@link classHierarchyBlock.directive:classHierarchyBlock} of the current
          * {@link shared.service:ontologyStateService selected ontology} and information about a
          * selected class from that list. The selected class display includes a
-         * {@link selectedDetails.directive:selectedDetails}, a button to delete the class, an
+         * {@link ontology-editor.component:selectedDetails}, a button to delete the class, an
          * {@link annotationBlock.directive:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, and a
          * {@link usagesBlock.directive:usagesBlock}. The directive houses the method for opening a modal for deleting
          * classes. The directive is replaced by the contents of its template.

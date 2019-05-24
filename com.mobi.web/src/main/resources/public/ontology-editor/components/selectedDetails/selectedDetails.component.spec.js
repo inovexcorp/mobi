@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Selected Details directive', function() {
-    var $compile, scope, $q, $filter, ontologyStateSvc, ontologyManagerSvc, ontoUtils, manchesterConverterSvc, modalSvc;
+describe('Selected Details component', function() {
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, ontoUtils, manchesterConverterSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('selectedDetails');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'staticIri');
         mockOntologyManager();
         mockOntologyState();
         injectPrefixationFilter();
@@ -33,11 +34,10 @@ describe('Selected Details directive', function() {
         mockManchesterConverter();
         mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _$filter_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _manchesterConverterService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _manchesterConverterService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
-            $filter = _$filter_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             manchesterConverterSvc = _manchesterConverterService_;
@@ -57,7 +57,6 @@ describe('Selected Details directive', function() {
         $compile = null;
         scope = null;
         $q = null;
-        $filter = null;
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         ontoUtils = null;
@@ -78,19 +77,19 @@ describe('Selected Details directive', function() {
             expect(scope.highlightText).toEqual('');
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('selected-details')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('SELECTED-DETAILS');
+            expect(this.element.querySelectorAll('.selected-details').length).toEqual(1);
         });
         it('depending on whether something is selected', function() {
-            expect(this.element.find('div').length).toBe(1);
-            expect(this.element.find('static-iri').length).toBe(1);
+            expect(this.element.querySelectorAll('.selected-heading').length).toEqual(1);
+            expect(this.element.find('static-iri').length).toEqual(1);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.find('div').length).toBe(0);
-            expect(this.element.find('static-iri').length).toBe(0);
+            expect(this.element.querySelectorAll('.selected-heading').length).toEqual(0);
+            expect(this.element.find('static-iri').length).toEqual(0);
         });
         it('depending on whether the selected entity has types', function() {
             expect(this.element.querySelectorAll('.type-wrapper').length).toEqual(0);
@@ -102,21 +101,21 @@ describe('Selected Details directive', function() {
             ontologyManagerSvc.isIndividual.and.returnValue(true);
             ontologyStateSvc.listItem.selected['@type'] = ['test'];
             scope.$digest();
-            expect(this.element.find('static-iri').length).toBe(1);
-            expect(this.element.find('a').length).toBe(1);
+            expect(this.element.find('static-iri').length).toEqual(1);
+            expect(this.element.find('a').length).toEqual(1);
             scope.readOnly = true;
             scope.$digest();
-            expect(this.element.find('static-iri').length).toBe(1);
-            expect(this.element.find('a').length).toBe(0);
+            expect(this.element.find('static-iri').length).toEqual(1);
+            expect(this.element.find('a').length).toEqual(0);
         });
         it('depending on whether the entity is an individual', function() {
             ontologyManagerSvc.isIndividual.and.returnValue(false);
             ontologyStateSvc.listItem.selected['@type'] = ['test'];
             scope.$digest();
-            expect(this.element.find('a').length).toBe(0);
+            expect(this.element.find('a').length).toEqual(0);
             ontologyManagerSvc.isIndividual.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('a').length).toBe(1);
+            expect(this.element.find('a').length).toEqual(1);
         });
     });
     describe('controller methods', function() {

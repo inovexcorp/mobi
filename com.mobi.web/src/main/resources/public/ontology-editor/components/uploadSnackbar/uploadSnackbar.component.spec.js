@@ -20,20 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Upload Snackbar directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, httpSvc, modalSvc;
+describe('Upload Snackbar component', function() {
+    var $compile, scope, ontologyStateSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('uploadSnackbar');
+        module('ontology-editor');
         mockOntologyState();
         mockHttpService();
         mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _httpService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _httpService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             httpSvc = _httpService_;
             modalSvc = _modalService_;
@@ -50,7 +49,8 @@ describe('Upload Snackbar directive', function() {
             title: 'title'
         }];
         scope.showSnackbar = true;
-        this.element = $compile(angular.element('<upload-snackbar show-snackbar="showSnackbar"></upload-snackbar>'))(scope);
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        this.element = $compile(angular.element('<upload-snackbar show-snackbar="showSnackbar" change-event="changeEvent(value)"></upload-snackbar>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('uploadSnackbar');
     });
@@ -58,7 +58,6 @@ describe('Upload Snackbar directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         ontologyStateSvc = null;
         httpSvc = null;
         modalSvc = null;
@@ -66,17 +65,21 @@ describe('Upload Snackbar directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('showSnackbar is two way bound', function() {
+        it('showSnackbar is one way bound', function() {
             this.controller.showSnackbar = false;
             scope.$digest();
-            expect(scope.showSnackbar).toEqual(false);
+            expect(scope.showSnackbar).toEqual(true);
+        });
+        it('changeEvent is called in the parent scope', function() {
+            this.controller.changeEvent({value: false});
+            expect(scope.changeEvent).toHaveBeenCalledWith(false);
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('upload-snackbar')).toBe(true);
-            expect(this.element.hasClass('snackbar')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('UPLOAD-SNACKBAR');
+            expect(this.element.querySelectorAll('.upload-snackbar').length).toBe(1);
+            expect(this.element.querySelectorAll('.snackbar').length).toBe(1);
         });
         _.forEach(['snackbar-header', 'snackbar-body'], function(item) {
             it('with a .' + item, function() {
@@ -87,11 +90,11 @@ describe('Upload Snackbar directive', function() {
             expect(this.element.querySelectorAll('.snackbar-header button').length).toBe(2);
         });
         it('depending on whether the snackbar should be shown', function() {
-            expect(this.element.hasClass('show')).toBe(true);
+            expect(this.element.querySelectorAll('.snackbar.show').length).toBe(1);
 
             this.controller.showSnackbar = false;
             scope.$digest();
-            expect(this.element.hasClass('show')).toBe(false);
+            expect(this.element.querySelectorAll('.snackbar.show').length).toEqual(0);
         });
         it('depending on whether the snackbar body should be collapsed', function() {
             var button = angular.element(this.element.querySelectorAll('.snackbar-header button.collapse-button')[0]);
@@ -157,7 +160,8 @@ describe('Upload Snackbar directive', function() {
             ontologyStateSvc.uploadList = [item];
             ontologyStateSvc.uploadFiles = [{}];
             this.controller.close();
-            expect(this.controller.showSnackbar).toBe(false);
+            expect(scope.changeEvent).toHaveBeenCalledWith(false);
+            // expect(this.controller.showSnackbar).toBe(false);
             expect(httpSvc.cancel).toHaveBeenCalledWith(item.id);
             expect(ontologyStateSvc.uploadList).toEqual([]);
             expect(ontologyStateSvc.uploadFiles).toEqual([]);

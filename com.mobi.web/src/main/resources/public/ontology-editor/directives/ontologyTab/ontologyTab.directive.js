@@ -40,10 +40,10 @@
          * displaying an ontology. This includes a {@link mergeTab.directive:mergeTab},
          * {@link ontologyButtonStack.directive:ontologyButtonStack}, and
          * {@link shared.component:materialTabset}. The `materialTabset` contains tabs for the
-         * {@link projectTab.directive:projectTab}, {@link overviewTab.directive:overviewTab},
+         * {@link ontology-editor.component:projectTab}, {@link overviewTab.directive:overviewTab},
          * {@link classesTab.directive:classesTab}, {@link propertiesTab.directive:propertiesTab},
          * {@link individualsTab.directive:individualsTab}, {@link conceptSchemesTab.directive:conceptSchemesTab},
-         * {@link conceptsTab.directive:conceptsTab}, {@link searchTab.directive:searchTab},
+         * {@link conceptsTab.directive:conceptsTab}, {@link ontology-editor.component:searchTab},
          * {@link savedChangesTab.directive:savedChangesTab}, and {@link commitsTab.directive:commitsTab}. The
          * directive is replaced by the contents of its template.
          */

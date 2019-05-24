@@ -48,7 +48,7 @@
          * {@link propertyHierarchyBlock.directive:propertyHierarchyBlock} of the current
          * {@link shared.service:ontologyStateService selected ontology} and information about a selected
          * property from that list. The selected property display includes a
-         * {@link selectedDetails.directive:selectedDetails}, a button to delete the property, an
+         * {@link ontology-editor.component:selectedDetails}, a button to delete the property, an
          * {@link annotationBlock.directive:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, a
          * {@link characteristicsRow.directive:characteristicsRow}, and a {@link usagesBlock.directive:usagesBlock}.
          * The directive houses the method for opening a modal for deleting propertyes. The directive is replaced by the

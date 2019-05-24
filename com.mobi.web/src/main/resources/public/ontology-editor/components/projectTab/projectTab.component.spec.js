@@ -20,14 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Project Tab directive', function() {
+describe('Project Tab component', function() {
     var $compile, scope;
 
     beforeEach(function() {
         module('templates');
-        module('projectTab');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('ontology-editor', 'ontologyPropertiesBlock');
         mockComponent('ontology-editor', 'importsBlock');
+        mockComponent('ontology-editor', 'previewBlock');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_) {
@@ -45,22 +47,15 @@ describe('Project Tab directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('project-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('PROJECT-TAB');
+            expect(this.element.querySelectorAll('.project-tab').length).toEqual(1);
         });
-        it('with a selected-details', function() {
-            expect(this.element.find('selected-details').length).toBe(1);
-        });
-        it('with a ontology-properties-block', function() {
-            expect(this.element.find('ontology-properties-block').length).toBe(1);
-        });
-        it('with a imports-block', function() {
-            expect(this.element.find('imports-block').length).toBe(1);
-        });
-        it('with a preview-block', function() {
-            expect(this.element.find('preview-block').length).toBe(1);
+        ['selected-details', 'ontology-properties-block', 'imports-block', 'preview-block'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.find(test).length).toEqual(1);
+            });
         });
     });
 });

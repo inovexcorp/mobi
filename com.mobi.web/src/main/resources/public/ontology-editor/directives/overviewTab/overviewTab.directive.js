@@ -48,7 +48,7 @@
          * {@link associationBlock.directive:associationBlock class and property list} of the current
          * {@link shared.service:ontologyStateService selected ontology} and information about a
          * selected item from that list. The selected entity display includes a
-         * {@link selectedDetails.directive:selectedDetails}, a button to delete the entity, an
+         * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
          * {@link annotationBlock.directive:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, and a
          * {@link usagesBlock.directive:usagesBlock}. If the selected entity is a property, a
          * {@link characteristicsRow.directive:characteristicsRow} is also displayed. The directive houses the method
