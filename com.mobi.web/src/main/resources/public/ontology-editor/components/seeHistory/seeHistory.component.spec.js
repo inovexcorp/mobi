@@ -78,10 +78,18 @@ describe('See History component', function() {
         it('should assign the correct label for each commit', function() {
             this.controller.commits = this.commits;
             utilSvc.condenseCommitId.and.returnValue('1234');
-            var label1 = this.controller.createLabel(this.commits[0].id);
-            var label2 = this.controller.createLabel(this.commits[1].id);
-            expect(label1).toEqual('1234 (latest)');
-            expect(label2).toEqual('1234');  
+            var labels = this.controller.commits.map(commit => this.controller.createLabel(commit.id));
+            labels.forEach((label, idx) => {
+                if (idx === 0) {
+                    expect(label).toEqual('1234 (latest)');
+                } else {
+                    expect(label).toEqual('1234');
+                }
+            });
+            // var label1 = this.controller.createLabel(this.commits[0].id);
+            // var label2 = this.controller.createLabel(this.commits[1].id);
+            // expect(label1).toEqual('1234 (latest)');
+            // expect(label2).toEqual('1234');  
         });
         describe('should load a list of commits', function() {
             it('to `commits` in the controller when receiveCommits is called', function() {
