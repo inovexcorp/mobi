@@ -26,6 +26,7 @@ describe('Association Block directive', function() {
     beforeEach(function() {
         module('templates');
         module('associationBlock');
+        mockComponent('ontology-editor', 'everythingTree');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {

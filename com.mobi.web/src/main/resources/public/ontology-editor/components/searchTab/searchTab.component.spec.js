@@ -26,7 +26,7 @@ describe('Search Tab component', function() {
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('treeItem', 'treeItem');
+        mockComponent('ontology-editor', 'treeItem');
         mockComponent('ontology-editor', 'selectedDetails');
         injectPrefixationFilter();
         injectTrustedFilter();

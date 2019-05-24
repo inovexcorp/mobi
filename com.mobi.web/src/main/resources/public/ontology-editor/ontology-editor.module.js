@@ -42,7 +42,6 @@
             'conceptsTab',
             'datatypePropertyAxioms',
             'datatypePropertyBlock',
-            'everythingTree',
             'individualsTab',
             'individualHierarchyBlock',
             'individualTree',
@@ -64,7 +63,6 @@
             'savedChangesTab',
             'superClassSelect',
             'superPropertySelect',
-            'treeItem',
             'usagesBlock',
 
             /* Services */

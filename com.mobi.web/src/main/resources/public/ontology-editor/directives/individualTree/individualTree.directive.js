@@ -45,8 +45,8 @@
          *
          * @description
          * `individualTree` is a directive that creates a `div` containing a {@link shared.component:searchBar}
-         * and hierarchy of {@link treeItem.directive:treeItem}s of individuals. When search text is provided, the
-         * hierarchy filters what is shown based on value matches with predicates in the
+         * and hierarchy of {@link ontology-editor.component:treeItem}s of individuals. When search text is provided,
+         * the hierarchy filters what is shown based on value matches with predicates in the
          * {@link shared.service:ontologyManagerService entityNameProps}.
          *
          * @param {Object[]} hierarchy An array which represents a flattened individual hierarchy

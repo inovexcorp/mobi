@@ -42,7 +42,7 @@
          *
          * @description
          * `associationBlock` is a directive that creates a section that displays the
-         * {@link everythingTree.directive:everythingTree} for the current
+         * {@link ontology-editor.component:everythingTree} for the current
          * {@link shared.service:ontologyStateService selected ontology}. The directive is replaced by the
          * contents of its template.
          */

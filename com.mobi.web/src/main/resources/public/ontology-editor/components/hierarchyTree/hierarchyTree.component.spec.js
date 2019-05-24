@@ -22,26 +22,24 @@
  */
 
 describe('Hierarchy Tree component', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, ontologyUtils, utilSvc, prefixes;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('treeItem', 'treeItem');
+        mockComponent('ontology-editor', 'treeItem');
         mockPrefixes();
         mockOntologyManager();
         mockOntologyState();
-        mockOntologyUtilsManager();
         mockUtil();
         injectUniqueKeyFilter();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyUtils = _ontologyUtilsManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
@@ -71,7 +69,6 @@ describe('Hierarchy Tree component', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyUtils = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();

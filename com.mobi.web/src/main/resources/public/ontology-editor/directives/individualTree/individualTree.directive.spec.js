@@ -26,6 +26,7 @@ describe('Individual Tree directive', function() {
     beforeEach(function() {
         module('templates');
         module('individualTree');
+        mockComponent('ontology-editor', 'treeItem');
         mockOntologyManager();
         mockOntologyState();
         mockUtil();
