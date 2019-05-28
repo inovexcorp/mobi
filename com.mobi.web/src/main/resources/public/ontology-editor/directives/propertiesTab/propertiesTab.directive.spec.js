@@ -29,7 +29,7 @@ describe('Properties Tab directive', function() {
         mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('propertyHierarchyBlock', 'propertyHierarchyBlock');
         mockComponent('axiomBlock', 'axiomBlock');
-        mockComponent('annotationBlock', 'annotationBlock');
+        mockComponent('ontology-editor', 'annotationBlock');
         mockComponent('characteristicsRow', 'characteristicsRow');
         mockComponent('usagesBlock', 'usagesBlock');
         mockOntologyManager();

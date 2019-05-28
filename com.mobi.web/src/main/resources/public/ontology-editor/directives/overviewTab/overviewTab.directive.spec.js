@@ -28,8 +28,8 @@ describe('Overview Tab directive', function() {
         module('overviewTab');
         mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('axiomBlock', 'axiomBlock');
-        mockComponent('annotationBlock', 'annotationBlock');
-        mockComponent('associationBlock', 'associationBlock');
+        mockComponent('ontology-editor', 'annotationBlock');
+        mockComponent('ontology-editor', 'associationBlock');
         mockComponent('characteristicsRow', 'characteristicsRow');
         mockComponent('usagesBlock', 'usagesBlock');
         mockOntologyState();

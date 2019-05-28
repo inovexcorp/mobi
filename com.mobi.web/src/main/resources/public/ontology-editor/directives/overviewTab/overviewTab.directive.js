@@ -45,11 +45,11 @@
          *
          * @description
          * `overviewTab` is a directive that creates a page containing the
-         * {@link associationBlock.directive:associationBlock class and property list} of the current
+         * {@link ontology-editor.component:associationBlock class and property list} of the current
          * {@link shared.service:ontologyStateService selected ontology} and information about a
          * selected item from that list. The selected entity display includes a
          * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
-         * {@link annotationBlock.directive:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, and a
+         * {@link ontology-editor.component:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, and a
          * {@link usagesBlock.directive:usagesBlock}. If the selected entity is a property, a
          * {@link characteristicsRow.directive:characteristicsRow} is also displayed. The directive houses the method
          * for opening the modal to delete an entity. The directive is replaced by the contents of its template.

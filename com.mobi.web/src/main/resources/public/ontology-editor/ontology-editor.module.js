@@ -27,8 +27,6 @@
         .module('ontology-editor', [
             /* New Directives */
             'advancedLanguageSelect',
-            'annotationBlock',
-            'associationBlock',
             'axiomBlock',
             'characteristicsBlock',
             'characteristicsRow',

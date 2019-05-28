@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Annotation Block directive', function() {
+describe('Annotation Block component', function() {
     var $compile, scope, ontologyStateSvc, ontoUtils, propertyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('annotationBlock');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'propertyValues');
         mockOntologyState();
         mockOntologyUtilsManager();
         mockPropertyManager();
@@ -67,35 +68,35 @@ describe('Annotation Block directive', function() {
         this.controller.$onInit();
         expect(this.controller.annotations).toEqual(['annotation1', 'default2', 'owl2', 'default1', 'owl1']);
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('annotation-block')).toBe(true);
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('ANNOTATION-BLOCK');
+            expect(this.element.querySelectorAll('.annotation-block').length).toEqual(1);
+            expect(this.element.querySelectorAll('.section-header').length).toEqual(1);
         });
         it('depending on how many annotations there are', function() {
-            expect(this.element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toEqual(0);
         });
         it('depending on whether the selected entity is imported', function() {
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
         it('depending on whether something is selected when the user can modify branch', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('a.fa-plus').length).toBe(0);
+            expect(this.element.querySelectorAll('a.fa-plus').length).toEqual(0);
         });
         it('if the user cannot modify branch', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
@@ -105,12 +106,12 @@ describe('Annotation Block directive', function() {
         });
         it('should set the correct manager values when opening the Add Annotation Overlay', function() {
             this.controller.openAddOverlay();
-            expect(ontologyStateSvc.editingAnnotation).toBe(false);
+            expect(ontologyStateSvc.editingAnnotation).toEqual(false);
             expect(ontologyStateSvc.annotationSelect).toBeUndefined();
-            expect(ontologyStateSvc.annotationValue).toBe('');
+            expect(ontologyStateSvc.annotationValue).toEqual('');
             expect(ontologyStateSvc.annotationType).toBeUndefined();
-            expect(ontologyStateSvc.annotationIndex).toBe(0);
-            expect(ontologyStateSvc.annotationLanguage).toBe('en');
+            expect(ontologyStateSvc.annotationIndex).toEqual(0);
+            expect(ontologyStateSvc.annotationLanguage).toEqual('en');
             expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay');
         });
         it('should set the correct manager values when opening the Remove Annotation Overlay', function() {
@@ -124,12 +125,12 @@ describe('Annotation Block directive', function() {
                 'prop1': [{'@value': 'value', '@type': 'type', '@language': 'language'}]
             };
             this.controller.editClicked(annotationIRI, 0);
-            expect(ontologyStateSvc.editingAnnotation).toBe(true);
+            expect(ontologyStateSvc.editingAnnotation).toEqual(true);
             expect(ontologyStateSvc.annotationSelect).toEqual(annotationIRI);
-            expect(ontologyStateSvc.annotationValue).toBe('value');
-            expect(ontologyStateSvc.annotationIndex).toBe(0);
-            expect(ontologyStateSvc.annotationType).toBe('type');
-            expect(ontologyStateSvc.annotationLanguage).toBe('language');
+            expect(ontologyStateSvc.annotationValue).toEqual('value');
+            expect(ontologyStateSvc.annotationIndex).toEqual(0);
+            expect(ontologyStateSvc.annotationType).toEqual('type');
+            expect(ontologyStateSvc.annotationLanguage).toEqual('language');
             expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay');
         });
     });

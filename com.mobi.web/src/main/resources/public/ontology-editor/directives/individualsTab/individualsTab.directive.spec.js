@@ -30,7 +30,7 @@ describe('Individuals Tab directive', function() {
         mockComponent('individualHierarchyBlock', 'individualHierarchyBlock');
         mockComponent('datatypePropertyBlock', 'datatypePropertyBlock');
         mockComponent('objectPropertyBlock', 'objectPropertyBlock');
-        mockComponent('annotationBlock', 'annotationBlock');
+        mockComponent('ontology-editor', 'annotationBlock');
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();

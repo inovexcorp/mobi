@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Association Block directive', function() {
+describe('Association Block component', function() {
     var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('associationBlock');
+        module('ontology-editor');
         mockComponent('ontology-editor', 'everythingTree');
         mockOntologyState();
 
@@ -46,19 +46,19 @@ describe('Association Block directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('association-block')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('ASSOCIATION-BLOCK');
+            expect(this.element.querySelectorAll('.association-block').length).toEqual(1);
         });
         it('depending on whether the tree is empty', function() {
             expect(this.element.find('info-message').length).toEqual(1);
-            expect(this.element.find('everything-tree').length).toBe(0);
+            expect(this.element.find('everything-tree').length).toEqual(0);
 
             ontologyStateSvc.listItem.flatEverythingTree = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
-            expect(this.element.find('everything-tree').length).toBe(1);
+            expect(this.element.find('everything-tree').length).toEqual(1);
         });
     });
 });

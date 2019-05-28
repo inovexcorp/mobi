@@ -29,7 +29,7 @@ describe('Classes Tab directive', function() {
         mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('classHierarchyBlock', 'classHierarchyBlock');
         mockComponent('axiomBlock', 'axiomBlock');
-        mockComponent('annotationBlock', 'annotationBlock');
+        mockComponent('ontology-editor', 'annotationBlock');
         mockComponent('usagesBlock', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();
