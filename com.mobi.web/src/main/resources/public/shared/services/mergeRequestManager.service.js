@@ -216,6 +216,29 @@
         }
         /**
          * @ngdoc method
+         * @name updateComment
+         * @methodOf shared.service:mergeRequestManagerService
+         *
+         * @description
+         * Calls the PUT /mobirest/merge-requests/{requestId}/comments/{commentId} endpoint to edit a comment on the Merge
+         * Request with a matching IRI with the provided comment string.
+         *
+         * @param {string} requestId An IRI ID of a Merge Request
+         * @param {string} commentId An IRI ID of a Comment on the Merge Request
+         * @param {string} commentStr A string to be the new body of the Comment
+         * @returns {Promise} A promise that resolves if the comment was edited or rejects with an error message.
+         */
+        self.updateComment = function(requestId, commentId, commentStr) {
+            var config = {
+                headers: {
+                    'Content-Type': 'text/plain'
+                }
+            };
+            return $http.put(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId), commentStr, config)
+                .then(_.noop, util.rejectError);
+        }
+        /**
+         * @ngdoc method
          * @name updateRequest
          * @methodOf shared.service:mergeRequestManagerService
          *
