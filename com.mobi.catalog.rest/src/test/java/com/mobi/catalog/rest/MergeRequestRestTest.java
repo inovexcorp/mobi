@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -80,10 +81,12 @@ import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -123,6 +126,8 @@ public class MergeRequestRestTest extends MobiRestTestNg {
     private final String doesNotExist = "urn:doesNotExist";
     private final String invalidIRIString = "invalidIRI";
     private final String commentText = "This is a comment";
+    private final String updateCommentText = "updated comment";
+    private final String largeComment = StringUtils.repeat("*", 2000000);
 
     @Mock
     private MergeRequestManager requestManager;
@@ -776,38 +781,37 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
-        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+                .put(Entity.text(updateCommentText));
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
         assertEquals(response.getStatus(), 200);
     }
 
     @Test
-    public void updateCommentEmptyJsonTest() {
+    public void updateCommentEmptyStringTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.json("[]"));
+                .put(Entity.text(""));
         verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updateCommentWithInvalidJsonTest() {
+    public void updateCommentWithInvalidCommentSizeTest() {
+        doThrow(new IllegalArgumentException()).when(requestManager).updateComment(any(Resource.class), any(Comment.class));
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.json("['test': true]"));
-        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
-    public void updateCommentThatDoesNotMatchTest() {
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
-                + encode(comment1.getResource().stringValue()))
-                .request()
-                .put(Entity.entity(groupedModelToString(comment2.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
-        verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
+                .put(Entity.text(largeComment));
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), largeComment);
         assertEquals(response.getStatus(), 400);
     }
 
@@ -817,8 +821,12 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/"+ encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
-        verify(requestManager).updateComment(eq(comment1.getResource()), any(Comment.class));
+                .put(Entity.text(updateCommentText));
+        ArgumentCaptor<Comment> commentArgumentCaptor = ArgumentCaptor.forClass(Comment.class);
+        verify(requestManager).updateComment(eq(comment1.getResource()), commentArgumentCaptor.capture());
+        Comment comment = commentArgumentCaptor.getValue();
+        assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
+        assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
         assertEquals(response.getStatus(), 500);
     }
 
@@ -827,9 +835,10 @@ public class MergeRequestRestTest extends MobiRestTestNg {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(invalidIRIString))
                 .request()
-                .put(Entity.entity(groupedModelToString(comment1.getModel(), getRDFFormat("jsonld"), transformer), MediaType.APPLICATION_JSON_TYPE));
+                .put(Entity.text(updateCommentText));
         assertEquals(response.getStatus(), 400);
     }
+
 
     /* DELETE merge-requests/{requestId}/comments/{commentId} */
 
