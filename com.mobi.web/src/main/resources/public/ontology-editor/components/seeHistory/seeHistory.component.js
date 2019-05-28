@@ -69,6 +69,19 @@
         dvm.getEntityNameDisplay = function(iri) {
             return dvm.om.isBlankNodeId(iri) ? dvm.ontoUtils.getBlankNodeValue(iri) : dvm.ontoUtils.getLabelForIRI(iri);
         }
+        dvm.receiveCommits = function(commits) {
+            dvm.commits = commits;
+            if (dvm.commits[0]) {
+                dvm.os.listItem.selectedCommit = dvm.commits[0];
+            }
+        }
+        dvm.createLabel = function(commitId) {
+            var label = dvm.util.condenseCommitId(commitId);
+            if (commitId == dvm.commits[0].id) {
+                label = label + ' (latest)';
+            }
+            return label;
+        }
     }
 
     angular.module('ontology-editor')
