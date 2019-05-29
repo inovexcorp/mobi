@@ -76,6 +76,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.cache.Cache;
 
@@ -232,6 +234,21 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     public void tearDown() throws Exception {
         repo.shutDown();
         vocabRepo.shutDown();
+    }
+
+    /* activate */
+
+    @Test
+    public void testActivate() {
+        Map<String, Object> props = new HashMap<>();
+        props.put("poolSize", 0);
+        manager.modified(props);
+        props.put("poolSize", -1);
+        manager.modified(props);
+        props.put("poolSize", 1);
+        manager.modified(props);
+        props.put("poolSize", 2);
+        manager.modified(props);
     }
 
     /* applyChanges */
