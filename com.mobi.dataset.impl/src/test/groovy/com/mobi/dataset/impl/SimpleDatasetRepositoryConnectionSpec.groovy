@@ -1149,13 +1149,13 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         QueryResults.asList(results).size() == expectedSize
 
         where:
-        msg | query | expectedSize
-        "without a dataset declaration properly queries the dataset graphs"             | "SELECT * WHERE { ?s ?p ?o }"                                             | 2
-        "without a dataset declaration properly queries the dataset graphs with named"  | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"               | 4
-        "with a dataset declaration properly queries the dataset graphs"                | "SELECT * FROM NAMED <:g1> WHERE { ?s ?p ?o }"                            | 2
-        "with a dataset declaration properly queries the dataset graphs with named"     | "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
-        "works regardless of case"                                                      | "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
-        "works with a subquery and dataset clause"                                      | "SELECT * from <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
+        msg                                                                             | query                                                                    | expectedSize
+        "without a dataset declaration properly queries the dataset graphs"             | "SELECT * WHERE { ?s ?p ?o }"                                            | 2
+        "without a dataset declaration properly queries the dataset graphs with named"  | "SELECT * WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"              | 4
+        "with a dataset declaration properly queries the dataset graphs"                | "SELECT * FROM NAMED <:g1> WHERE { ?s ?p ?o }"                           | 2
+        "with a dataset declaration properly queries the dataset graphs with named"     | "SELECT * FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"   | 4
+        "works regardless of case"                                                      | "SELECT * FroM <:g1> WHERE { {?s a ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"    | 4
+        "works with a subquery and dataset clause"                                      | "SELECT * from <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}" | 2
     }
 
     def "prepareTupleQuery(query, contexts...) #msg"() {
@@ -1214,13 +1214,16 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         QueryResults.asList(results).size() == expectedSize
 
         where:
-        msg | query | expectedSize
-        "without a dataset declaration properly queries the dataset graphs"             | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                                             | 2
-        "without a dataset declaration properly queries the dataset graphs with named"  | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"               | 4
-        "with a dataset declaration properly queries the dataset graphs"                | "CONSTRUCT { ?s ?p ?o } FROM NAMED <:g1> WHERE { ?s ?p ?o }"                            | 2
-        "with a dataset declaration properly queries the dataset graphs with named"     | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
-        "works regardless of case"                                                      | "CONSTRUCT { ?s ?p ?o } FroM <:g1> WHERE { {?s ?p ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
-        "works with a subquery and dataset clause"                                      | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
+        msg                                                                             | query                                                                                  | expectedSize
+        "without a dataset declaration properly queries the dataset graphs"             | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                                            | 2
+        "without a dataset declaration properly queries the dataset graphs with named"  | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"              | 4
+        "with a dataset declaration properly queries the dataset graphs"                | "CONSTRUCT { ?s ?p ?o } FROM NAMED <:g1> WHERE { ?s ?p ?o }"                           | 2
+        "with a dataset declaration properly queries the dataset graphs with named"     | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"   | 4
+        "works regardless of case"                                                      | "CONSTRUCT { ?s ?p ?o } FroM <:g1> WHERE { {?s ?p ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"   | 4
+        "works with a subquery and dataset clause"                                      | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}" | 2
+        "works with no graph pattern"                                                   | "CONSTRUCT WHERE { ?s ?p ?o }"                                                         | 2
+        "works with no graph pattern and with dataset declaration"                      | "CONSTRUCT FROM NAMED <:g1> WHERE { ?s ?p ?o }"                                        | 2
+        "works with no graph pattern and prefixes"                                      | "PREFIX test: <http://test.com> CONSTRUCT WHERE { ?s ?p ?o }"                          | 2
     }
 
     def "prepareGraphQuery(query, contexts...) #msg"() {
