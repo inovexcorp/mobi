@@ -274,7 +274,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Test
     public void getImportedOntologyIRIsTest() throws Exception {
         Set<IRI> iris = ont1.getImportedOntologyIRIs();
-        assertEquals(3, iris.size());
+        assertEquals(1, iris.size());
     }
 
     @Test
@@ -302,7 +302,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(2, ontologies.size());
         Set<IRI> iris = ont.getImportedOntologyIRIs();
-        assertEquals(2, iris.size());
+        assertEquals(1, iris.size());
         assertTrue(iris.contains(vf.createIRI("http://purl.org/dc/terms/")));
         Set<OClass> classes = ont.getAllClasses();
         assertEquals(expectedClasses.size(), classes.size());

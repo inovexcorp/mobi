@@ -233,7 +233,7 @@ _:node1coms4vmtx320 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:node1com
 
 <http://www.w3.org/2004/02/skos/core#altLabel> <http://www.w3.org/2000/01/rdf-schema#comment> "The range of skos:altLabel is the class of RDF plain literals."@en .
 
-<http://www.w3.org/2004/02/skos/core> a <http://www.w3.org/2002/07/owl#Ontology> .
+<http://www.w3.org/2004/02/skos/core2> a <http://www.w3.org/2002/07/owl#Ontology> .
 
 <http://www.w3.org/2004/02/skos/core#related> a <http://www.w3.org/2002/07/owl#SymmetricProperty> .
 
@@ -475,7 +475,7 @@ _:node1coms4vmtx319 <http://www.w3.org/2002/07/owl#unionOf> _:node1coms4vmtx320 
 
 <http://www.w3.org/2004/02/skos/core#hasTopConcept> <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://www.w3.org/2004/02/skos/core> .
 
-<http://www.w3.org/2004/02/skos/core> <http://www.w3.org/2002/07/owl#imports> <http://purl.org/dc/terms/> .
+<http://www.w3.org/2004/02/skos/core2> <http://www.w3.org/2002/07/owl#imports> <http://purl.org/dc/terms/> .
 
 <http://www.w3.org/2004/02/skos/core#Collection> <http://www.w3.org/2004/02/skos/core#definition> "A meaningful collection of concepts."@en .
 

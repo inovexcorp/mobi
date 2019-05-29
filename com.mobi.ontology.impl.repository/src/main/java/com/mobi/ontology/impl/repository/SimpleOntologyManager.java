@@ -229,8 +229,8 @@ public class SimpleOntologyManager implements OntologyManager {
                 () -> new IllegalStateException("ontologyCache repository does not exist"));
 
         String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
-        return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager, importsResolver,
-                sesameTransformer, bNodeService, valueFactory, modelFactory);
+        return new SimpleOntology(key, repository, this, catalogManager, configProvider, datasetManager,
+                importsResolver, sesameTransformer, bNodeService, valueFactory, modelFactory);
     }
 
     @Override
@@ -401,7 +401,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Model getOntologyModel(Resource recordId, Resource branchId) {
         Branch branch = catalogManager.getBranch(configProvider.getLocalCatalogIRI(), recordId, branchId, branchFactory)
-                .get();
+                .orElseThrow(() -> new IllegalStateException("Branch must exist in catalog."));
         return catalogManager.getCompiledResource(recordId, branchId, getHeadOfBranch(branch));
     }
 

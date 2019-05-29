@@ -34,6 +34,7 @@ public class OntologyDatasets {
     public static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
     public static final String TIMESTAMP_IRI_STRING = "http://mobi.com/ontologies/graph#lastAccessed";
     public static final String UNRESOLVED_IRI_STRING = "http://mobi.com/ontologies/graph#unresolved";
+    public static final String CACHE_KEY_SEPARATOR = "&";
 
     /**
      * Creates an Ontology Dataset IRI given a cache key. Prepends the dataset namespace to the encoded key.
@@ -78,5 +79,16 @@ public class OntologyDatasets {
     public static IRI getDatasetIriFromSystemDefaultNamedGraph(Resource iri, ValueFactory vf) {
         return vf.createIRI(iri.stringValue().substring(0, iri.stringValue()
                 .lastIndexOf(OntologyDatasets.SYSTEM_DEFAULT_NG_SUFFIX)));
+    }
+
+    /**
+     * Creates an Ontology cache key from the recordId and commitId.
+     *
+     * @param recordId The Resource of the recordId for the Ontology
+     * @param commitId The Resource of the commitId
+     * @return An ontology cache key
+     */
+    public static String createRecordKey(Resource recordId, Resource commitId) {
+        return recordId.stringValue() + CACHE_KEY_SEPARATOR + commitId.stringValue();
     }
 }

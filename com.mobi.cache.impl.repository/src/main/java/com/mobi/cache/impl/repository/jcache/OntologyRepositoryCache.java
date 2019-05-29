@@ -360,8 +360,9 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
 
     private Ontology getValueFromRepo(DatasetConnection dsConn, String key) {
         updateDatasetTimestamp(dsConn);
-        String[] ids = key.split("&");
-        return ontologyManager.retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1])).get();
+        String[] ids = key.split(OntologyDatasets.CACHE_KEY_SEPARATOR);
+        return ontologyManager.retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1]))
+                .orElseThrow(() -> new IllegalStateException("Ontology must exist in cache repository"));
     }
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
