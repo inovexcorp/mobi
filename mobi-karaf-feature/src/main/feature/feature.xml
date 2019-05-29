@@ -44,6 +44,7 @@
         <feature prerequisite="true">pax-http-whiteboard</feature>
         <feature prerequisite="true">obr</feature>
         <feature prerequisite="true">scr</feature>
+        <feature prerequisite="true">scheduler</feature>
         <feature prerequisite="true">jax-rs-connector</feature>
         <feature prerequisite="true">jax-rs-provider-gson</feature>
         <feature prerequisite="true">jax-rs-provider-multipart</feature>
