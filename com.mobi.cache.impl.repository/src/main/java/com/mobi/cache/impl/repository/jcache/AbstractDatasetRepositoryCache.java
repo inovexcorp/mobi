@@ -58,7 +58,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                     LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
                     datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());
                 } else {
-                    LOG.info("The dataset " + datasetIRI + " does not exist in the specified repository.");
+                    LOG.trace("The dataset " + datasetIRI + " does not exist in the specified repository.");
                     throw new IllegalArgumentException("The dataset " + datasetIRI
                             + " does not exist in the specified repository.");
                 }
