@@ -23,6 +23,7 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -176,6 +177,14 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     public void setbNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
+    }
+
+    /**
+     * Activate method required in order to have config file service.ranking property used.
+     */
+    @Activate
+    public void activate() {
+        log.trace("Repository based SimpleOntologyManager started.");
     }
 
     @Override

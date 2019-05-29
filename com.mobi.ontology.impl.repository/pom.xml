@@ -29,7 +29,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.20-SNAPSHOT</version>
+        <version>1.16.23-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -80,23 +80,12 @@
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
 
-        <!-- Openrdf Sesame dependencies -->
-        <!--<dependency>-->
-            <!--<groupId>org.eclipse.rdf4j</groupId>-->
-            <!--<artifactId>rdf4j-runtime-osgi</artifactId>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.apache.httpcomponents</groupId>-->
-            <!--<artifactId>httpclient-osgi</artifactId>-->
-            <!--<version>4.5.1</version>-->
-        <!--</dependency>-->
-
         <!--  Test dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>${project.version}</version>
-		    <scope>test</scope>
+            <scope>test</scope>
 	    </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
