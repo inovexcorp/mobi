@@ -72,12 +72,10 @@ describe('Concept Schemes Tab directive', function() {
         it('with a data-property-block depending on whether the selected entity is a concept', function() {
             ontologyManagerSvc.isConcept.and.returnValue(false);
             scope.$digest();
-            console.log(JSON.stringify(this.element.find('datatype-property-block')));
             expect(this.element.find('datatype-property-block').length).toBe(0);
 
             ontologyManagerSvc.isConcept.and.returnValue(true);
             scope.$digest();
-            console.log(JSON.stringify(this.element.find('datatype-property-block')));
             expect(this.element.find('datatype-property-block').length).toBe(1);
         })
         it('with a button to delete a concept scheme if a user can modify', function() {
