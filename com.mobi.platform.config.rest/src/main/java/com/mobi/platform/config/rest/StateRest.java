@@ -23,10 +23,30 @@ package com.mobi.platform.config.rest;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.platform.config.api.state.StateManager;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -42,9 +62,35 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@Component(service = StateRest.class, immediate = true)
 @Path("/states")
 @Api(value = "/states")
-public interface StateRest {
+public class StateRest {
+    protected StateManager stateManager;
+    protected ValueFactory factory;
+    protected ModelFactory modelFactory;
+    protected SesameTransformer transformer;
+
+    @Reference
+    protected void setStateManager(StateManager stateManager) {
+        this.stateManager = stateManager;
+    }
+
+    @Reference
+    protected void setValueFactory(final ValueFactory vf) {
+        factory = vf;
+    }
+
+    @Reference
+    protected void setModelFactory(final ModelFactory mf) {
+        modelFactory = mf;
+    }
+
+    @Reference
+    protected void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
     /**
      * Retrieves a JSON array of the IDs and associated resources for all State for the User making the request
      * which match the passed criteria. Can filter by associated Application and by the IDs of associated resources.
@@ -59,9 +105,27 @@ public interface StateRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves State for the User making the request based on filter criteria")
-    Response getStates(@Context ContainerRequestContext context,
+    public Response getStates(@Context ContainerRequestContext context,
                        @QueryParam("application") String applicationId,
-                       @QueryParam("subjects") List<String> subjectIds);
+                       @QueryParam("subjects") List<String> subjectIds) {
+        String username = RestUtils.getActiveUsername(context);
+        Set<Resource> subjects = subjectIds.stream()
+                .map(factory::createIRI)
+                .collect(Collectors.toSet());
+        try {
+            Map<Resource, Model> results = stateManager.getStates(username, applicationId, subjects);
+            JSONArray array = new JSONArray();
+            results.keySet().forEach(resource -> {
+                JSONObject state = new JSONObject();
+                state.put("id", resource.stringValue());
+                state.put("model", convertModel(results.get(resource)));
+                array.add(state);
+            });
+            return Response.ok(array).build();
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     /**
      * Creates a new State for the User making the request using the passed JSON-LD to be associated with the new State.
@@ -76,9 +140,27 @@ public interface StateRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Creates a new State for the User making the request")
-    Response createState(@Context ContainerRequestContext context,
+    public Response createState(@Context ContainerRequestContext context,
                          @QueryParam("application") String applicationId,
-                         String stateJson);
+                         String stateJson) {
+        String username = RestUtils.getActiveUsername(context);
+        try {
+            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(stateJson), "",
+                    RDFFormat.JSONLD));
+            if (newState.isEmpty()) {
+                throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
+            }
+            Resource stateId = (applicationId == null) ? stateManager.storeState(newState, username)
+                    : stateManager.storeState(newState, username, applicationId);
+            return Response.status(201).entity(stateId.stringValue()).build();
+        } catch (IOException ex) {
+            throw ErrorUtils.sendError(ex, "Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     /**
      * Retrieves all resources associated with the State identified by ID. Will only retrieve the State if it belongs
@@ -93,7 +175,20 @@ public interface StateRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves State by ID as long it belongs to the User making the request")
-    Response getState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId);
+    public Response getState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId) {
+        String username = RestUtils.getActiveUsername(context);
+        try {
+            if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
+            }
+            Model state = stateManager.getState(factory.createIRI(stateId));
+            return Response.ok(convertModel(state)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     /**
      * Updates the resources of the State identified by ID with the new statements passed as JSON-LD. Will only update
@@ -110,9 +205,29 @@ public interface StateRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates State as long as it belongs to the User making the request")
-    Response updateState(@Context ContainerRequestContext context,
+    public Response updateState(@Context ContainerRequestContext context,
                          @PathParam("stateId") String stateId,
-                         String newStateJson);
+                         String newStateJson) {
+        String username = RestUtils.getActiveUsername(context);
+        try {
+            if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
+            }
+            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
+                    RDFFormat.JSONLD));
+            if (newState.isEmpty()) {
+                throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
+            }
+            stateManager.updateState(factory.createIRI(stateId), newState);
+        } catch (IOException ex) {
+            throw ErrorUtils.sendError(ex, "Invalid JSON-LD", Response.Status.BAD_REQUEST);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok().build();
+    }
 
     /**
      * Removes the State identified by ID and all associated resources if not used by other States. Will only delete
@@ -127,5 +242,22 @@ public interface StateRest {
     @Path("{stateId}")
     @RolesAllowed("user")
     @ApiOperation("Deletes State as long as it belongs to the User making the request")
-    Response deleteState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId);
+    public Response deleteState(@Context ContainerRequestContext context, @PathParam("stateId") String stateId) {
+        String username = RestUtils.getActiveUsername(context);
+        try {
+            if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
+                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
+            }
+            stateManager.deleteState(factory.createIRI(stateId));
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.NOT_FOUND);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok().build();
+    }
+
+    private String convertModel(Model model) {
+        return RestUtils.modelToJsonld(model, transformer);
+    }
 }

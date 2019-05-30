@@ -28,15 +28,11 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
-import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -46,7 +42,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.concurrent.Semaphore;
 
@@ -97,22 +92,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
      * @param config A {@link RepositoryConnection} to use for lookup
      * @return created ontology
      */
-    private Model createOntologyModel(RecordOperationConfig config) {
-        Model ontologyModel;
-        if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
-            try {
-                ontologyModel = Models.createModel(config.get(OntologyRecordCreateSettings.INPUT_STREAM),
-                        sesameTransformer);
-            } catch (IOException e) {
-                throw new MobiOntologyException("Could not parse Ontology input stream.", e);
-            }
-        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
-            ontologyModel = config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA);
-        } else {
-            throw new IllegalArgumentException("Ontology config does not have initial data.");
-        }
-        return ontologyModel;
-    }
+    protected abstract Model createOntologyModel(RecordOperationConfig config);
 
     /**
      * Validates and sets the ontology to the record.

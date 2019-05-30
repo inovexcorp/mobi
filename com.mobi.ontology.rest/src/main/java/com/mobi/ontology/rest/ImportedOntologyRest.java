@@ -23,9 +23,14 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
+import com.mobi.rest.util.ErrorUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.osgi.service.component.annotations.Component;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -34,7 +39,9 @@ import javax.ws.rs.core.Response;
 
 @Path("/imported-ontologies")
 @Api(value = "/imported-ontologies")
-public interface ImportedOntologyRest {
+@Component(service = ImportedOntologyRest.class, immediate = true)
+public class ImportedOntologyRest {
+
     /**
      * Checks to see if the provided URL is resolvable.
      *
@@ -46,5 +53,22 @@ public interface ImportedOntologyRest {
     @Path("{url}")
     @RolesAllowed("user")
     @ApiOperation("Checks to see if the provided URL is resolvable.")
-    Response verifyUrl(@PathParam("url") String url);
+    public Response verifyUrl(@PathParam("url") String url) {
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setRequestMethod("HEAD");
+            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                return Response.ok().build();
+            } else {
+                throw ErrorUtils.sendError("The provided URL was unresolvable.", Response.Status.BAD_REQUEST);
+            }
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
 }

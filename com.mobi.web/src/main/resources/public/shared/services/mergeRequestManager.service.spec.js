@@ -187,6 +187,29 @@ describe('Merge Request Manager service', function() {
         expect(mergeRequestManagerSvc.isAccepted({'@type': []})).toEqual(false);
         expect(mergeRequestManagerSvc.isAccepted({'@type': [prefixes.mergereq + 'AcceptedMergeRequest']})).toEqual(true);
     });
+    describe('should update a comment on a merge request', function() {
+        beforeEach(function() {
+            this.requestId = 'request';
+            this.commentId = 'comment';
+            this.updatedText = 'UPDATED';
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT('/mobirest/merge-requests/' + this.requestId + '/comments/' + this.commentId, this.updatedText).respond(400, null, null, 'Error Message');
+            mergeRequestManagerSvc.updateComment(this.requestId, this.commentId, this.updatedText)
+                .then(() => fail('Promise should have rejected'), response => expect(response).toBe('Error Message'));
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+            $httpBackend.expectPUT('/mobirest/merge-requests/' + this.requestId + '/comments/' + this.commentId, this.updatedText).respond(200, '');
+            mergeRequestManagerSvc.updateComment(this.requestId, this.commentId, this.updatedText)
+                .then(_.noop, () => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('should update a merge request', function() {
         beforeEach(function() {
             this.requestId = 'request';
