@@ -27,10 +27,8 @@
         .module('ontology-editor', [
             /* New Directives */
             'advancedLanguageSelect',
-            'axiomBlock',
             'characteristicsBlock',
             'characteristicsRow',
-            'classAxioms',
             'classesTab',
             'classHierarchyBlock',
             'commitsTab',
@@ -38,7 +36,6 @@
             'conceptSchemeHierarchyBlock',
             'conceptSchemesTab',
             'conceptsTab',
-            'datatypePropertyAxioms',
             'datatypePropertyBlock',
             'individualsTab',
             'individualHierarchyBlock',
@@ -46,7 +43,6 @@
             'iriSelectOntology',
             'mergeBlock',
             'mergeTab',
-            'objectPropertyAxioms',
             'objectPropertyBlock',
             'ontologyButtonStack',
             'ontologyClassSelect',

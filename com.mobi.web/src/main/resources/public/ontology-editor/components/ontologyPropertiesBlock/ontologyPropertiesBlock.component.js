@@ -33,7 +33,7 @@
      *
      * @description
      * `ontologyPropertiesBlock` is a component that creates a section that displays the ontology properties (and
-     * annotations) on the provided ontology using {@link propertyValues.directive:propertyValues}. The section header
+     * annotations) on the provided ontology using {@link ontology-editor.component:propertyValues}. The section header
      * contains a button for adding a property. The component houses the methods for opening the modal for
      * {@link ontology-editor.component:ontologyPropertyOverlay editing, adding}, and removing ontology properties.
      * 

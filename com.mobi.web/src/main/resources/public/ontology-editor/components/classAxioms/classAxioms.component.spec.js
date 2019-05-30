@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Datatype Property Axioms directive', function() {
+describe('Class Axioms component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('datatypePropertyAxioms');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'propertyValues');
         mockOntologyState();
         mockPropertyManager();
         mockPrefixes();
@@ -49,9 +50,9 @@ describe('Datatype Property Axioms directive', function() {
             'axiom1': [{'@value': 'value1'}],
             'axiom2': [{'@value': 'value2'}]
         };
-        this.element = $compile(angular.element('<datatype-property-axioms></datatype-property-axioms>'))(scope);
+        this.element = $compile(angular.element('<class-axioms></class-axioms>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('datatypePropertyAxioms');
+        this.controller = this.element.controller('classAxioms');
     });
 
     afterEach(function() {
@@ -66,54 +67,62 @@ describe('Datatype Property Axioms directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('datatype-property-axioms')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('CLASS-AXIOMS');
+            expect(this.element.querySelectorAll('.class-axioms').length).toEqual(1);
         });
         it('depending on how many axioms there are', function() {
-            expect(this.element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.listItem.selected.mobi = {originalIRI: ''};
+            ontologyStateSvc.listItem.selected = {
+                '@id': 'classId',
+                mobi: {
+                    originalIRI: ''
+                }
+            };
         });
         it('should get the list of object property axioms', function() {
-            propertyManagerSvc.datatypeAxiomList = [{iri: 'axiom'}];
+            propertyManagerSvc.classAxiomList = [{iri: 'axiom'}];
             expect(this.controller.getAxioms()).toEqual(['axiom']);
         });
         it('should open the remove overlay', function() {
             this.controller.openRemoveOverlay('key', 0);
-            expect(this.controller.key).toBe('key');
+            expect(this.controller.key).toEqual('key');
             expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 0);
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });
-        describe('should remove a property from the hierarchy', function() {
+        describe('should remove a class from the hierarchy', function() {
             beforeEach(function() {
                 this.axiomObject = {'@id': 'axiom'};
             });
-            it('unless the selected key is not subPropertyOf or the value is a blank node', function() {
+            it('unless the selected key is not subClassOf or the value is a blank node', function() {
                 this.controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
 
-                this.controller.key = prefixes.rdfs + 'subPropertyOf';
+                this.controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
                 this.controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
             });
-            it('if the selected key is subPropertyOf', function() {
-                this.controller.key = prefixes.rdfs + 'subPropertyOf';
+            it('if the selected key is subClassOf and the value is not a blank node', function() {
+                this.controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 this.controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id']);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties);
-                expect(ontologyStateSvc.listItem.dataProperties.flat).toEqual([{entityIRI: 'new'}]);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id']);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes);
+                expect(ontologyStateSvc.listItem.classes.flat).toEqual([{entityIRI: 'new'}]);
+                expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
             });
         });
     });

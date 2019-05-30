@@ -45,7 +45,7 @@
          * @description
          * `objectPropertyBlock` is a directive that creates a section that displays the object properties on the
          * {@link shared.service:ontologyStateService selected individual} using
-         * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding an object
+         * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding an object
          * property. The directive houses the methods for opening the modal for
          * {@link ontology-editor.component:objectPropertyOverlay adding} and removing object property values.
          * The directive is replaced by the contents of its template.

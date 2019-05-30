@@ -46,7 +46,7 @@
          * @description
          * `datatypePropertyBlock` is a directive that creates a section that displays the data properties on the
          * {@link shared.service:ontologyStateService selected individual} using
-         * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding a data
+         * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding a data
          * property. The directive houses the methods for opening the modal for
          * {@link ontology-editor.component:datatypePropertyOverlay editing, adding}, and removing data property
          * values. The directive is replaced by the contents of its template.

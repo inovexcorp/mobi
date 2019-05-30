@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Object Property Axioms directive', function() {
+describe('Object Property Axioms component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, prefixes, ontoUtils, ontologyManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('objectPropertyAxioms');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'propertyValues');
         mockOntologyState();
         mockPropertyManager();
         mockPrefixes();
@@ -65,16 +66,16 @@ describe('Object Property Axioms directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('object-property-axioms')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('OBJECT-PROPERTY-AXIOMS');
+            expect(this.element.querySelectorAll('.object-property-axioms').length).toEqual(1);
         });
         it('depending on how many axioms there are', function() {
-            expect(this.element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
@@ -87,7 +88,7 @@ describe('Object Property Axioms directive', function() {
         });
         it('should open the remove overlay', function() {
             this.controller.openRemoveOverlay('key', 0);
-            expect(this.controller.key).toBe('key');
+            expect(this.controller.key).toEqual('key');
             expect(ontoUtils.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 0);
             expect(modalSvc.openConfirmModal).toHaveBeenCalledWith('', jasmine.any(Function));
         });

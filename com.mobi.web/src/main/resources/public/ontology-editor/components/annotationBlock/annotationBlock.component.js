@@ -33,7 +33,7 @@
      * @description
      * `annotationBlock` is a component that creates a section that displays the annotations on the
      * {@link shared.service:ontologyStateService selected entity} using
-     * {@link propertyValues.directive:propertyValues}. The section header contains a button for adding an
+     * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding an
      * annotation. The directive houses the methods for opening the modal for
      * {@link ontology-editor.component:annotationOverlay editing, adding}, and removing annotations.
      */

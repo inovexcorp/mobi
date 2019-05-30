@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Axiom Block directive', function() {
+describe('Axiom Block component', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, propertyManagerSvc, ontoUtils, prefixes, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('axiomBlock');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'classAxioms');
+        mockComponent('ontology-editor', 'objectPropertyAxioms');
+        mockComponent('ontology-editor', 'datatypePropertyAxioms');
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();
@@ -192,64 +195,64 @@ describe('Axiom Block directive', function() {
             });
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('axiom-block')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('AXIOM-BLOCK');
+            expect(this.element.querySelectorAll('.axiom-block').length).toEqual(1);
         });
         it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header').length).toEqual(1);
         });
         it('based on whether something is selected and the user can modify the branch', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
         it('when the user cannot modify the branch', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
         it('based on whether the selected entity is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
 
             ontologyStateSvc.listItem.selected.mobi = {imported: true};
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
         it('based on whether a class is selected', function() {
             ontologyManagerSvc.isClass.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('class-axioms').length).toBe(1);
+            expect(this.element.find('class-axioms').length).toEqual(1);
 
             ontologyManagerSvc.isClass.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('class-axioms').length).toBe(0);
+            expect(this.element.find('class-axioms').length).toEqual(0);
         });
         it('based on whether an object property is selected', function() {
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('object-property-axioms').length).toBe(1);
+            expect(this.element.find('object-property-axioms').length).toEqual(1);
 
             ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('object-property-axioms').length).toBe(0);
+            expect(this.element.find('object-property-axioms').length).toEqual(0);
         });
         it('based on whether a datatype property is selected', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('datatype-property-axioms').length).toBe(1);
+            expect(this.element.find('datatype-property-axioms').length).toEqual(1);
 
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('datatype-property-axioms').length).toBe(0);
+            expect(this.element.find('datatype-property-axioms').length).toEqual(0);
         });
     });
     it('should call showAxiomOverlay when the add axiom link is clicked', function() {

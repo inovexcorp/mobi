@@ -27,7 +27,7 @@ describe('Overview Tab directive', function() {
         module('templates');
         module('overviewTab');
         mockComponent('ontology-editor', 'selectedDetails');
-        mockComponent('axiomBlock', 'axiomBlock');
+        mockComponent('ontology-editor', 'axiomBlock');
         mockComponent('ontology-editor', 'annotationBlock');
         mockComponent('ontology-editor', 'associationBlock');
         mockComponent('characteristicsRow', 'characteristicsRow');

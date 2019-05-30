@@ -45,7 +45,7 @@
          * @description
          * `usagesBlock` is a directive that creates a section that displays the usages of the
          * {@link shared.service:ontologyStateService selected entity} using
-         * {@link propertyValues.directive:propertyValues}. The usages are only shown 100 at a time to save rendering
+         * {@link ontology-editor.component:propertyValues}. The usages are only shown 100 at a time to save rendering
          * time with a link at the bottom to load more. The directive is replaced by the contents of its template.
          */
         .directive('usagesBlock', usagesBlock);

@@ -47,7 +47,7 @@
          * @description
          * `relationshipsBlock` is a directive that creates a section that displays the SKOS relationships on the
          * {@link shared.service:ontologyStateService selected concept or concept scheme} using
-         * {@link propertyValues.directive:propertyValues}. If the selected entity is a concept, the section header
+         * {@link ontology-editor.component:propertyValues}. If the selected entity is a concept, the section header
          * contains a button to {@link ontology-editor.component:relationshipOverlay add a relationship}. If the
          * selected entity is a concept scheme, the section header contains a button to
          * {@link ontology-editor.component:topConceptOverlay add a top concept}. The directive is replaced by the

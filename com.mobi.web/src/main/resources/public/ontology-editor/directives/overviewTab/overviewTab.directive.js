@@ -49,7 +49,7 @@
          * {@link shared.service:ontologyStateService selected ontology} and information about a
          * selected item from that list. The selected entity display includes a
          * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
-         * {@link ontology-editor.component:annotationBlock}, an {@link axiomBlock.directive:axiomBlock}, and a
+         * {@link ontology-editor.component:annotationBlock}, an {@link ontology-editor.component:axiomBlock}, and a
          * {@link usagesBlock.directive:usagesBlock}. If the selected entity is a property, a
          * {@link characteristicsRow.directive:characteristicsRow} is also displayed. The directive houses the method
          * for opening the modal to delete an entity. The directive is replaced by the contents of its template.
