@@ -24,7 +24,6 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.google.common.collect.Iterables;
-
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -1230,13 +1229,17 @@ public class SimpleOntology implements Ontology {
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, model, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
                 bNodeService, vf, mf);
-        importedOntology.getImportsClosure().forEach(importedImport -> {
-            OntologyId ontologyId = importedImport.getOntologyId();
-            IRI importIRI = ontologyId.getOntologyIRI().orElse((IRI) ontologyId.getOntologyIdentifier());
-            conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), importIRI, datasetIRI);
-            conn.addDefaultNamedGraph(OntologyDatasets.createSystemDefaultNamedGraphIRI(
-                    getDatasetIRI(importIRI, ontologyManager), vf));
-        });
+        List<Statement> importStatements = RepositoryResults.asList(conn.getStatements(
+                importedDatasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), null, importedDatasetIRI));
+        importStatements.stream()
+                .map(Statement::getObject)
+                .filter(iri -> iri instanceof IRI)
+                .map(iri -> (IRI) iri)
+                .forEach(importIRI -> {
+                    conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), importIRI, datasetIRI);
+                    conn.addDefaultNamedGraph(OntologyDatasets.createSystemDefaultNamedGraphIRI(
+                            getDatasetIRI(importIRI, ontologyManager), vf));
+                });
     }
 
     private void undoApplyDifferenceIfPresent(RepositoryConnection conn) {
