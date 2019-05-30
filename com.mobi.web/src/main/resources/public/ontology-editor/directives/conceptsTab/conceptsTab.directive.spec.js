@@ -68,7 +68,7 @@ describe('Concepts Tab directive', function() {
             expect(this.element.hasClass('concepts-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
         });
-        ['concept-hierarchy-block', 'selected-details', 'annotation-block', 'relationships-block', 'usages-block'].forEach(test => {
+        ['concept-hierarchy-block', 'selected-details', 'annotation-block', 'relationships-block', 'usages-block', 'datatype-property-block'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toBe(1);
             });
