@@ -357,9 +357,7 @@ public class SimpleOntology implements Ontology {
         }
         logTrace("SimpleOntology constructor from cache", startTime);
     }
-
-    // If it is an import. Used for generating the closure
-
+    
     /**
      * Creates an SimpleOntology object that represents an imported Ontology.
      *
@@ -505,7 +503,17 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<IRI> getUnloadableImportIRIs() {
-        return unresolvedImports.stream().map(imported -> (IRI) imported).collect(Collectors.toSet());
+        try (DatasetConnection conn = getDatasetConnection()) {
+            Set<IRI> unloadableImports = conn.getStatements(
+                    datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, datasetIRI)
+                    .stream()
+                    .map(Statement::getObject)
+                    .filter(iri -> iri instanceof IRI)
+                    .map(iri -> (IRI) iri)
+                    .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            return unloadableImports;
+        }
     }
 
     @Override
@@ -1229,6 +1237,13 @@ public class SimpleOntology implements Ontology {
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, model, repository,
                 ontologyManager, catalogManager, configProvider, datasetManager, importsResolver, transformer,
                 bNodeService, vf, mf);
+        Set<IRI> failedImportStatements = RepositoryResults.asList(conn.getStatements(
+                importedDatasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), null, importedDatasetIRI))
+                .stream()
+                .map(Statement::getObject)
+                .filter(iri -> iri instanceof IRI)
+                .map(iri -> (IRI) iri)
+                .collect(Collectors.toSet());
         List<Statement> importStatements = RepositoryResults.asList(conn.getStatements(
                 importedDatasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), null, importedDatasetIRI));
         importStatements.stream()
@@ -1237,9 +1252,13 @@ public class SimpleOntology implements Ontology {
                 .map(iri -> (IRI) iri)
                 .forEach(importIRI -> {
                     conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), importIRI, datasetIRI);
-                    conn.addDefaultNamedGraph(OntologyDatasets.createSystemDefaultNamedGraphIRI(
-                            getDatasetIRI(importIRI, ontologyManager), vf));
+                    if (!failedImportStatements.contains(importIRI)) {
+                        conn.addDefaultNamedGraph(OntologyDatasets.createSystemDefaultNamedGraphIRI(
+                                getDatasetIRI(importIRI, ontologyManager), vf));
+                    }
                 });
+        failedImportStatements.forEach(importIRI
+                -> conn.add(datasetIRI, vf.createIRI(OntologyDatasets.UNRESOLVED_IRI_STRING), importIRI, datasetIRI));
     }
 
     private void undoApplyDifferenceIfPresent(RepositoryConnection conn) {
