@@ -262,6 +262,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.setbNodeService(bNodeService);
         manager.setImportsResolver(importsResolver);
         manager.setDatasetManager(datasetManager);
+        manager.activate();
     }
 
     @After

@@ -357,7 +357,7 @@ public class SimpleOntology implements Ontology {
         }
         logTrace("SimpleOntology constructor from cache", startTime);
     }
-    
+
     /**
      * Creates an SimpleOntology object that represents an imported Ontology.
      *

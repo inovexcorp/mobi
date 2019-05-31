@@ -76,6 +76,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 import javax.cache.Cache;
 
@@ -226,6 +227,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.setRepositoryManager(mockRepoManager);
         manager.addOntologyCache(ontologyCache);
         manager.setbNodeService(bNodeService);
+        manager.start(new HashMap<>());
     }
 
     @After

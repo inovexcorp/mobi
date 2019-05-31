@@ -24,10 +24,8 @@ package com.mobi.ontology.impl.owlapi;
  */
 
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.ontology.impl.core.AbstractOntologyId;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
@@ -36,75 +34,23 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-public class SimpleOntologyId implements OntologyId {
+public class SimpleOntologyId extends AbstractOntologyId {
 
-    private Resource identifier;
     private OWLOntologyID ontologyId;
-    private ValueFactory factory;
 
-    private static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/";
-
-    public static class Builder {
-        private Resource identifier;
-        private IRI ontologyIRI;
-        private IRI versionIRI;
-        private Model model;
-        private ValueFactory factory;
-
+    public static class Builder extends AbstractOntologyId.Builder {
         public Builder(ValueFactory factory) {
             this.factory = factory;
         }
 
-        /**
-         * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
-         * OntologyIRI and VersionIRI.
-         *
-         * @param model the Model to use to retrieve identifier information
-         * @return SimpleOntologyId Builder
-         */
-        public Builder model(Model model) {
-            this.model = model;
-            return this;
-        }
-
-        public Builder id(Resource identifier) {
-            this.identifier = identifier;
-            return this;
-        }
-
-        public Builder ontologyIRI(IRI ontologyIRI) {
-            this.ontologyIRI = ontologyIRI;
-            return this;
-        }
-
-        public Builder versionIRI(IRI versionIRI) {
-            this.versionIRI = versionIRI;
-            return this;
-        }
-
-        public SimpleOntologyId build() {
+        @Override
+        public OntologyId build() {
             return new SimpleOntologyId(this);
         }
     }
 
     private SimpleOntologyId(Builder builder) {
-        this.factory = builder.factory;
-
-        if (builder.model != null) {
-            builder.ontologyIRI = null;
-            builder.versionIRI = null;
-            builder.identifier = null;
-            OntologyModels.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
-                    -> builder.ontologyIRI = ontologyIRI);
-            if (builder.ontologyIRI != null) {
-                OntologyModels.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI
-                        -> builder.versionIRI = versionIRI);
-            }
-        }
-
-        if (builder.versionIRI != null && builder.ontologyIRI == null) {
-            throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
-        }
+        setUp(builder);
 
         org.semanticweb.owlapi.model.IRI ontologyIRI = null;
         org.semanticweb.owlapi.model.IRI versionIRI = null;
@@ -128,7 +74,6 @@ public class SimpleOntologyId implements OntologyId {
             this.identifier = factory.createIRI(DEFAULT_PREFIX + UUID.randomUUID());
             ontologyId = new OWLOntologyID();
         }
-
     }
 
     @Override
@@ -160,28 +105,6 @@ public class SimpleOntologyId implements OntologyId {
     public String toString() {
         return ontologyId.toString();
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-
-        if (obj instanceof SimpleOntologyId) {
-            SimpleOntologyId other = (SimpleOntologyId) obj;
-            if (identifier.equals(other.getOntologyIdentifier())) {
-                return this.getVersionIRI().equals(other.getVersionIRI());
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return identifier.hashCode();
-    }
-
 }
 
 
