@@ -24,10 +24,8 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.ontology.impl.core.AbstractOntologyId;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 
@@ -35,76 +33,24 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-public class SimpleOntologyId implements OntologyId {
+public class SimpleOntologyId extends AbstractOntologyId {
 
     private IRI ontologyIRI;
     private IRI versionIRI;
-    private Resource identifier;
-    private ValueFactory factory;
 
-    private static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/";
-
-    public static class Builder {
-        private Resource identifier;
-        private IRI ontologyIRI;
-        private IRI versionIRI;
-        private Model model;
-        private ValueFactory factory;
-
+    public static class Builder extends AbstractOntologyId.Builder {
         public Builder(ValueFactory factory) {
             this.factory = factory;
         }
 
-        /**
-         * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
-         * OntologyIRI and VersionIRI.
-         *
-         * @param model the Model to use to retrieve identifier information
-         * @return SimpleOntologyId Builder
-         */
-        public Builder model(Model model) {
-            this.model = model;
-            return this;
-        }
-
-        public Builder id(Resource identifier) {
-            this.identifier = identifier;
-            return this;
-        }
-
-        public Builder ontologyIRI(IRI ontologyIRI) {
-            this.ontologyIRI = ontologyIRI;
-            return this;
-        }
-
-        public Builder versionIRI(IRI versionIRI) {
-            this.versionIRI = versionIRI;
-            return this;
-        }
-
-        public SimpleOntologyId build() {
+        @Override
+        public OntologyId build() {
             return new SimpleOntologyId(this);
         }
     }
 
     private SimpleOntologyId(Builder builder) {
-        this.factory = builder.factory;
-
-        if (builder.model != null) {
-            builder.ontologyIRI = null;
-            builder.versionIRI = null;
-            builder.identifier = null;
-            OntologyModels.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
-                    -> builder.ontologyIRI = ontologyIRI);
-            if (builder.ontologyIRI != null) {
-                OntologyModels.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI
-                        -> builder.versionIRI = versionIRI);
-            }
-        }
-
-        if (builder.versionIRI != null && builder.ontologyIRI == null) {
-            throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
-        }
+        setUp(builder);
 
         if (builder.versionIRI != null) {
             this.ontologyIRI = factory.createIRI(builder.ontologyIRI.stringValue());
@@ -170,7 +116,6 @@ public class SimpleOntologyId implements OntologyId {
     public int hashCode() {
         return identifier.hashCode();
     }
-
 }
 
 
