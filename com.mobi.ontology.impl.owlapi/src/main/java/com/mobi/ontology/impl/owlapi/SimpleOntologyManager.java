@@ -36,6 +36,7 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.config.OntologyManagerConfig;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.impl.core.AbstractOntologyManager;
@@ -58,6 +59,7 @@ import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
 @Component(
+        provide = { SimpleOntologyManager.class, OntologyManager.class },
         configurationPolicy = ConfigurationPolicy.optional,
         designateFactory = OntologyManagerConfig.class,
         name = SimpleOntologyManager.COMPONENT_NAME

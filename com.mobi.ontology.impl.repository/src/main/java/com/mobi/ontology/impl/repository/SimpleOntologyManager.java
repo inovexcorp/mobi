@@ -36,6 +36,7 @@ import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.impl.core.AbstractOntologyManager;
 import com.mobi.ontology.utils.OntologyModels;
@@ -64,7 +65,10 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.cache.Cache;
 
-@Component(name = SimpleOntologyManager.COMPONENT_NAME)
+@Component(
+        provide = { SimpleOntologyManager.class, OntologyManager.class },
+        name = SimpleOntologyManager.COMPONENT_NAME
+)
 public class SimpleOntologyManager extends AbstractOntologyManager {
 
     static final String COMPONENT_NAME = "com.mobi.ontology.impl.repository.OntologyManager";

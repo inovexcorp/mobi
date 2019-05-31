@@ -1001,12 +1001,82 @@ public class SimpleOntology implements Ontology {
             Binding value = Iterables.get(queryResult, 1, null);
             if (!(key instanceof BNode) && key instanceof IRI) {
                 hierarchy.addIRI((IRI) key);
-                if (value != null && !(value.getValue() instanceof BNode) && value.getValue() instanceof IRI) {
-                    hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
+                if (value != null && !(value.getValue() instanceof BNode) && value.getValue() instanceof IRI
+                        && !key.stringValue().equals(value.getValue().stringValue())) {
+                    String parent = key.stringValue();
+                    String child = value.getValue().stringValue();
+                    Map<String, Set<String>> parentMap = hierarchy.getParentMap();
+                    Map<String, Set<String>> childMap = hierarchy.getChildMap();
+
+                    // Remove if Parent and Child are directly subclasses of each other
+                    boolean existsInParent = parentMap.containsKey(child) && parentMap.get(child).contains(parent);
+                    boolean existsInChild = childMap.containsKey(parent) && childMap.get(parent).contains(child);
+                    if (existsInParent) {
+                        parentMap.get(child).remove(parent);
+                        if (parentMap.get(child).size() == 0) {
+                            parentMap.remove(child);
+                        }
+                    }
+                    if (existsInChild) {
+                        childMap.get(parent).remove(child);
+                        if (childMap.get(parent).size() == 0) {
+                            childMap.remove(parent);
+                        }
+                    }
+
+                    Map<String, Set<String>> parentCopy = parentMap.entrySet()
+                            .stream()
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(e.getValue())));
+                    Map<String, Set<String>> childCopy = childMap.entrySet()
+                            .stream()
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(e.getValue())));
+
+                    boolean circular = isCircular(parentMap, parentCopy, childCopy, parent, child, new HashSet<>());
+
+                    if (!existsInChild && !existsInParent && !circular) {
+                        hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
+                    } else if (circular) {
+                        parentMap.clear();
+                        parentMap.putAll(parentCopy);
+                        childMap.clear();
+                        childMap.putAll(childCopy);
+                    }
                 }
             }
         });
         return hierarchy;
+    }
+
+    private boolean isCircular(Map<String, Set<String>> parentMap, Map<String, Set<String>> parentMapCopy,
+                               Map<String, Set<String>> childMapCopy, String parent, String child,
+                               Set<String> visited) {
+        boolean circular = false;
+        visited.add(parent);
+        visited.add(child);
+        if (parentMap.containsKey(child)) {
+            Set<String> children = parentMap.get(child);
+
+            circular = children.parallelStream().anyMatch(otherChild -> {
+                if (visited.contains(otherChild)) {
+                    parentMapCopy.get(child).remove(otherChild);
+                    if (parentMapCopy.get(child).size() == 0) {
+                        parentMapCopy.remove(child);
+                    }
+                    childMapCopy.get(otherChild).remove(child);
+                    if (childMapCopy.get(otherChild).size() == 0) {
+                        childMapCopy.remove(otherChild);
+                    }
+                    return true;
+                }
+                return false;
+            });
+
+            if (!circular) {
+                circular = children.parallelStream()
+                        .anyMatch(otherChild -> isCircular(parentMap, parentMapCopy, childMapCopy, parent, otherChild, visited));
+            }
+        }
+        return circular;
     }
 
     /**
@@ -1049,76 +1119,56 @@ public class SimpleOntology implements Ontology {
         Resource datasetKey = key == null
                 ? getDatasetIRI(ontologyId, ontologyManager) : OntologyDatasets.createDatasetIRIFromKey(key, vf);
 
+
         try (RepositoryConnection cacheConn = cacheRepo.getConnection()) {
-            for (int i = 0; i < importsToProcess.size(); i++) {
+            if (!cacheConn.containsContext(datasetKey)) {
+                datasetManager.createDataset(datasetKey.stringValue(), cacheRepo.getConfig().id());
+            }
+            addOntologyToRepo(cacheRepo, ontModel, datasetKey, datasetKey, true);
+            addImportsToSets(getImportsFromModel(ontModel), processedImports, importsToProcess, ontologyId);
+
+            for (int i = 1; i < importsToProcess.size(); i++) {
                 Resource importIRI = importsToProcess.get(i);
-
                 Model model;
-                if (i == 0) {
-                    model = ontModel;
-                    if (!cacheConn.containsContext(datasetKey)) {
-                        datasetManager.createDataset(datasetKey.stringValue(), cacheRepo.getConfig().id());
-                    }
-                    addOntologyToRepo(cacheRepo, model, datasetKey, datasetKey, true);
-                } else {
-                    IRI iri = getDatasetIRI(importIRI, ontologyManager);
-                    IRI sdngIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(iri, vf);
-                    if (cacheConn.containsContext(iri) || cacheConn.containsContext(sdngIRI)) {
-                        List<Resource> imports = cacheConn.getStatements(null,
-                                vf.createIRI(OWL.IMPORTS.stringValue()), null, sdngIRI)
-                                .stream()
-                                .map(Statement::getObject)
-                                .filter(o -> o instanceof IRI)
-                                .map(r -> (IRI) r)
-                                .collect(Collectors.toList());
+                IRI iri = getDatasetIRI(importIRI, ontologyManager);
+                IRI sdngIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(iri, vf);
+                if (cacheConn.containsContext(iri) || cacheConn.containsContext(sdngIRI)) {
+                    List<Resource> imports = cacheConn.getStatements(null,
+                            vf.createIRI(OWL.IMPORTS.stringValue()), null, sdngIRI)
+                            .stream()
+                            .map(Statement::getObject)
+                            .filter(o -> o instanceof IRI)
+                            .map(r -> (IRI) r)
+                            .collect(Collectors.toList());
 
+                    addImportsToSets(imports, processedImports, importsToProcess, importIRI);
+                    cacheConn.add(datasetKey, vf.createIRI(Dataset.defaultNamedGraph_IRI), sdngIRI, datasetKey);
+                    continue;
+                }
+                if (iri.equals(importIRI)) {
+                    Optional<Model> modelOpt = importsResolver.retrieveOntologyFromWeb(importIRI);
+                    if (modelOpt.isPresent()) {
+                        model = modelOpt.get();
+                        addOntologyToRepo(cacheRepo, model, datasetKey, iri, false);
+                    } else {
+                        unresolvedImports.add(importIRI);
                         processedImports.add(importIRI);
-                        imports.forEach(imported -> {
-                            if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
-                                importsToProcess.add(imported);
-                            }
-                        });
-                        cacheConn.add(datasetKey, vf.createIRI(Dataset.defaultNamedGraph_IRI), sdngIRI, datasetKey);
                         continue;
                     }
-                    if (iri.equals(importIRI)) {
-                        Optional<Model> modelOpt = importsResolver.retrieveOntologyFromWeb(importIRI);
-                        if (modelOpt.isPresent()) {
-                            model = modelOpt.get();
-                            addOntologyToRepo(cacheRepo, model, datasetKey, iri, false);
-                        } else {
-                            unresolvedImports.add(importIRI);
-                            processedImports.add(importIRI);
-                            continue;
-                        }
-                    } else {
-                        Resource recordIRI = ontologyManager.getOntologyRecordResource(importIRI).orElseThrow(
-                                () -> new IllegalStateException("Imported IRI " + importIRI + " must be associated with"
-                                        + "a catalog record"));
-                        Resource headCommit = catalogManager.getMasterBranch(
-                                configProvider.getLocalCatalogIRI(), recordIRI).getHead_resource().orElseThrow(
-                                    () -> new IllegalStateException("Record " + recordIRI + " must have a head "
-                                            + "commit associated with the master branch"));
-                        model = catalogManager.getCompiledResource(headCommit);
-                        String headKey = OntologyDatasets.createRecordKey(recordIRI, headCommit);
-                        addOntologyToRepo(cacheRepo, model, datasetKey,
-                                OntologyDatasets.createDatasetIRIFromKey(headKey, vf), false);
-                    }
+                } else {
+                    Resource recordIRI = ontologyManager.getOntologyRecordResource(importIRI).orElseThrow(
+                            () -> new IllegalStateException("Imported IRI " + importIRI + " must be associated with"
+                                    + "a catalog record"));
+                    Resource headCommit = catalogManager.getMasterBranch(
+                            configProvider.getLocalCatalogIRI(), recordIRI).getHead_resource().orElseThrow(
+                                () -> new IllegalStateException("Record " + recordIRI + " must have a head "
+                                        + "commit associated with the master branch"));
+                    model = catalogManager.getCompiledResource(headCommit);
+                    String headKey = OntologyDatasets.createRecordKey(recordIRI, headCommit);
+                    addOntologyToRepo(cacheRepo, model, datasetKey,
+                            OntologyDatasets.createDatasetIRIFromKey(headKey, vf), false);
                 }
-
-                List<Resource> imports = model.filter(null, vf.createIRI(OWL.IMPORTS.stringValue()), null)
-                        .stream()
-                        .map(Statement::getObject)
-                        .filter(o -> o instanceof IRI)
-                        .map(r -> (IRI) r)
-                        .collect(Collectors.toList());
-
-                processedImports.add(importIRI);
-                imports.forEach(imported -> {
-                    if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
-                        importsToProcess.add(imported);
-                    }
-                });
+                addImportsToSets(getImportsFromModel(model), processedImports, importsToProcess, importIRI);
             }
             processedImports.forEach(imported
                     -> cacheConn.add(datasetKey, vf.createIRI(OWL.IMPORTS.stringValue()), imported, datasetKey));
@@ -1153,6 +1203,25 @@ public class SimpleOntology implements Ontology {
                         vf.createLiteral(OffsetDateTime.now()), datasetIRI);
             }
         }
+    }
+
+    private void addImportsToSets(List<Resource> imports, Set<Resource> processedImports,
+                                  List<Resource> importsToProcess, Resource importIRI) {
+        processedImports.add(importIRI);
+        imports.forEach(imported -> {
+            if (!processedImports.contains(imported) && !importsToProcess.contains(imported)) {
+                importsToProcess.add(imported);
+            }
+        });
+    }
+
+    private List<Resource> getImportsFromModel(Model model) {
+        return model.filter(null, vf.createIRI(OWL.IMPORTS.stringValue()), null)
+                .stream()
+                .map(Statement::getObject)
+                .filter(o -> o instanceof IRI)
+                .map(r -> (IRI) r)
+                .collect(Collectors.toList());
     }
 
     private IRI getDatasetIRI(Resource ontologyIRI, OntologyManager ontologyManager) {

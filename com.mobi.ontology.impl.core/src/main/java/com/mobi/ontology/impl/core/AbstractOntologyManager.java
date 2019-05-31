@@ -95,8 +95,8 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
                             + " is not associated with an OntologyRecord"));
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(
                     configProvider.getLocalCatalogIRI(), recordId, inProgressCommitId).orElseThrow(
-                    () -> new IllegalStateException("InProgressCommit for " + inProgressCommitId
-                            + " could not be found"));
+                        () -> new IllegalStateException("InProgressCommit for " + inProgressCommitId
+                                + " could not be found"));
             return applyInProgressCommitChanges(ontology, inProgressCommit, conn);
         }
     }
