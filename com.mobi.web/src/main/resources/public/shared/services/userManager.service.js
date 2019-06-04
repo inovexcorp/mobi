@@ -222,9 +222,7 @@
                 .then(response => {
                     return self.getUser(newUser.username);
                 }, $q.reject)
-                .then(user => {
-                    self.users = self.users.concat([user]);
-                }, util.rejectError);
+                .then(_.noop, util.rejectError);
         }
         /**
          * @ngdoc method
@@ -479,9 +477,7 @@
                 .then(response => {
                     return self.getGroup(newGroup.title);
                 }, $q.reject)
-                .then(group => {
-                    self.groups = self.groups.concat([group]);
-                }, util.rejectError);
+                .then(_.noop, util.rejectError);
         }
         /**
          * @ngdoc method
@@ -507,6 +503,7 @@
                     } else {
                         self.groups.push(groupObj);
                     }
+                    return groupObj;
                 }, util.rejectError);
         }
         /**

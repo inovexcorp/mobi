@@ -175,7 +175,6 @@ describe('User Manager service', function() {
                 .then(_.noop, () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
             expect(userManagerSvc.getUser).toHaveBeenCalledWith(this.user.username);
-            expect(userManagerSvc.users).toContain(this.user);
         });
     });
     describe('should retrieve a user', function() {
@@ -421,7 +420,6 @@ describe('User Manager service', function() {
                 .then(_.noop, () => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
             expect(userManagerSvc.getGroup).toHaveBeenCalledWith(this.group.title);
-            expect(userManagerSvc.groups).toContain(this.group);
         });
     });
     describe('should retrieve a group', function() {
@@ -442,7 +440,7 @@ describe('User Manager service', function() {
                 userManagerSvc.groups = [copyGroup];
                 $httpBackend.whenGET('/mobirest/groups/' + encodeURIComponent(this.group.title)).respond(200, this.groupRdf);
                 userManagerSvc.getGroup(this.group.title)
-                    .then(response => expect(response.iri).toEqual(this.group.iri));
+                    .then(response => expect(_.get(response, 'iri')).toEqual(this.group.iri));
                 flushAndVerify($httpBackend);
                 expect(userManagerSvc.groups.length).toEqual(1);
                 expect(userManagerSvc.groups[0]).toEqual(this.group);
