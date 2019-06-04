@@ -70,7 +70,6 @@ import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
-import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -134,6 +133,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES;
     private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
     private static final String GET_ALL_DATATYPES;
+    private static final String GET_ALL_INDIVIDUALS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -220,6 +220,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_ALL_DATATYPES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-datatypes.rq"),
+                    "UTF-8"
+            );
+            GET_ALL_INDIVIDUALS = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-all-individuals.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -775,19 +779,11 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Individual> getAllIndividuals() {
-        try (DatasetConnection conn = getDatasetConnection()) {
-            long start = getStartTime();
-            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.NAMEDINDIVIDUAL.stringValue())));
-            Set<Individual> individuals = statements.stream()
-                    .map(Statement::getSubject)
-                    .map(subject -> new SimpleIndividual((IRI) subject))
-                    .collect(Collectors.toSet());
-            undoApplyDifferenceIfPresent(conn);
-            individuals.addAll(getIndividualsOfType(vf.createIRI(SKOS.CONCEPT.stringValue())));
-            logTrace("getAllIndividuals()", start);
-            return individuals;
-        }
+        return getIRISet(runQueryOnOntology(GET_ALL_INDIVIDUALS, null,
+                "getAllIndividuals()", true))
+                .stream()
+                .map(SimpleIndividual::new)
+                .collect(Collectors.toSet());
     }
 
     @Override
