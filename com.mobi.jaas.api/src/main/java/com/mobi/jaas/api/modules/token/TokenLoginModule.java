@@ -134,7 +134,7 @@ public abstract class TokenLoginModule<T extends TokenCallback> implements Login
     @Override
     public boolean abort() throws LoginException {
         this.userId = null;
-        LOG.debug("Abort");
+        LOG.debug("Abort Token Login");
         return true;
     }
 
@@ -142,7 +142,7 @@ public abstract class TokenLoginModule<T extends TokenCallback> implements Login
     public boolean logout() throws LoginException {
         subject.getPrincipals().remove(new UserPrincipal(this.userId));
         this.userId = null;
-        LOG.debug("Logout");
+        LOG.debug("Logout from TokenLoginModule");
         return true;
     }
 }

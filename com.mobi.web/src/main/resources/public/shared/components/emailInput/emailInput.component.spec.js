@@ -40,7 +40,8 @@ describe('Email Input component', function() {
         scope.inputName = '';
         scope.isInvalid = false;
         scope.isValid = false;
-        this.element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent(value)" muted-text="mutedText" required="required" input-name="inputName" is-invalid="isInvalid" is-valid="isValid"></email-input>'))(scope);
+        scope.isDisabledWhen = false;
+        this.element = $compile(angular.element('<email-input ng-model="bindModel" change-event="changeEvent(value)" muted-text="mutedText" required="required" input-name="inputName" is-invalid="isInvalid" is-valid="isValid" is-disabled-when="isDisabledWhen"></email-input>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('emailInput');
     });
@@ -85,6 +86,11 @@ describe('Email Input component', function() {
             this.controller.isValid = true;
             scope.$digest();
             expect(scope.isValid).toEqual(false);
+        });
+        it('isDisabledWhen should be one way bound', function() {
+            this.controller.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toEqual(false);
         });
     });
     describe('contains the correct html', function() {
@@ -137,6 +143,14 @@ describe('Email Input component', function() {
             scope.isValid = true;
             scope.$digest();
             expect(input.hasClass('is-valid')).toEqual(true);
+        });
+        it('depending on whether the input should be disabled', function() {
+            var input = angular.element(this.element.querySelectorAll('input[type="text"]')[0]);
+            expect(input.attr('disabled')).toBeFalsy();
+            
+            scope.isDisabledWhen = true;
+            scope.$digest();
+            expect(input.attr('disabled')).toBeTruthy();
         });
     });
     it('should call changeEvent when the text in the input changes', function() {
