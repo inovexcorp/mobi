@@ -455,7 +455,8 @@ public class RdfEngine implements Engine {
     public boolean checkPassword(String username, String password) {
         Optional<User> userOptional = retrieveUser(username);
         if (!userOptional.isPresent()) {
-            throw new IllegalArgumentException("User with that id does not exist");
+            logger.debug("User with " + username + " username does not exist");
+            return false;
         }
         User user = userOptional.get();
         if (!user.getPassword().isPresent()) {

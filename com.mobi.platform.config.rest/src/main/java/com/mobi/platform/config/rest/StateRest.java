@@ -179,7 +179,7 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(context);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
             }
             Model state = stateManager.getState(factory.createIRI(stateId));
             return Response.ok(convertModel(state)).build();
@@ -211,7 +211,7 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(context);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
             }
             Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
                     RDFFormat.JSONLD));
@@ -246,7 +246,7 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(context);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
+                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
             }
             stateManager.deleteState(factory.createIRI(stateId));
         } catch (IllegalArgumentException ex) {

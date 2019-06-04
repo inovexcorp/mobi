@@ -40,6 +40,7 @@ describe('Password Tab component', function() {
         });
 
         loginManagerSvc.currentUser = 'user';
+        userManagerSvc.users = [{ username: 'user' }];
         this.element = $compile(angular.element('<password-tab></password-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('passwordTab');
@@ -55,6 +56,10 @@ describe('Password Tab component', function() {
         this.element.remove();
     });
 
+    it('should initialize with the current user', function() {
+        expect(this.controller.currentUser).not.toBe(userManagerSvc.users[0]);
+        expect(this.controller.currentUser).toEqual(userManagerSvc.users[0]);
+    });
     describe('controller methods', function() {
         describe('should save changes to the user password', function() {
             beforeEach(function() {
@@ -120,6 +125,17 @@ describe('Password Tab component', function() {
             this.controller.form.$setDirty();
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether the current user is external', function() {
+            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
+            this.controller.form.$invalid = false;
+            this.controller.form.$setDirty();
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+
+            this.controller.currentUser.external = true;
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
         });
     });
     it('should save changes when the save button is clicked', function() {

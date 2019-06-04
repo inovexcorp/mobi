@@ -483,4 +483,10 @@ public class RdfEngineTest extends OrmEnabledTestCase {
         result = engine.checkPassword(username, "password");
         assertFalse(result);
     }
+
+    @Test
+    public void testCheckPasswordUserDoesNotExist() {
+        boolean result = engine.checkPassword("error", password);
+        assertFalse(result);
+    }
 }

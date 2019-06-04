@@ -24,7 +24,5 @@ package com.mobi.jaas.api.config;
  */
 
 public class LoginModuleConfig {
-    public static final String USERS_FILE = "users";
     public static final String ENGINE_MANAGER = "engine-manager";
-    public static final String ENGINE = "engine";
 }
