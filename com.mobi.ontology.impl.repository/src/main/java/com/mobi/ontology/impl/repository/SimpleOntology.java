@@ -1024,22 +1024,27 @@ public class SimpleOntology implements Ontology {
                         }
                     }
 
-                    Map<String, Set<String>> parentCopy = parentMap.entrySet()
-                            .stream()
-                            .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(e.getValue())));
-                    Map<String, Set<String>> childCopy = childMap.entrySet()
-                            .stream()
-                            .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(e.getValue())));
+                    Map<String, Set<String>> parentMapToRemove = new HashMap<>();
+                    Map<String, Set<String>> childMapToRemove = new HashMap<>();
 
-                    boolean circular = isCircular(parentMap, parentCopy, childCopy, parent, child, new HashSet<>());
+                    boolean circular = isCircular(parentMap, parentMapToRemove, childMapToRemove, parent, child,
+                            new HashSet<>());
 
                     if (!existsInChild && !existsInParent && !circular) {
                         hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
                     } else if (circular) {
-                        parentMap.clear();
-                        parentMap.putAll(parentCopy);
-                        childMap.clear();
-                        childMap.putAll(childCopy);
+                        parentMapToRemove.entrySet().forEach(entry -> {
+                            parentMap.get(entry.getKey()).removeAll(entry.getValue());
+                            if (parentMap.get(entry.getKey()).size() == 0) {
+                                parentMap.remove(entry.getKey());
+                            }
+                        });
+                        childMapToRemove.entrySet().forEach(entry -> {
+                            childMap.get(entry.getKey()).removeAll(entry.getValue());
+                            if (childMap.get(entry.getKey()).size() == 0) {
+                                childMap.remove(entry.getKey());
+                            }
+                        });
                     }
                 }
             }
@@ -1047,8 +1052,8 @@ public class SimpleOntology implements Ontology {
         return hierarchy;
     }
 
-    private boolean isCircular(Map<String, Set<String>> parentMap, Map<String, Set<String>> parentMapCopy,
-                               Map<String, Set<String>> childMapCopy, String parent, String child,
+    private boolean isCircular(Map<String, Set<String>> parentMap, Map<String, Set<String>> parentMapToRemove,
+                               Map<String, Set<String>> childMapToRemove, String parent, String child,
                                Set<String> visited) {
         boolean circular = false;
         visited.add(parent);
@@ -1058,14 +1063,10 @@ public class SimpleOntology implements Ontology {
 
             circular = children.parallelStream().anyMatch(otherChild -> {
                 if (visited.contains(otherChild)) {
-                    parentMapCopy.get(child).remove(otherChild);
-                    if (parentMapCopy.get(child).size() == 0) {
-                        parentMapCopy.remove(child);
-                    }
-                    childMapCopy.get(otherChild).remove(child);
-                    if (childMapCopy.get(otherChild).size() == 0) {
-                        childMapCopy.remove(otherChild);
-                    }
+                    parentMapToRemove.putIfAbsent(child, new HashSet<>());
+                    parentMapToRemove.get(child).add(otherChild);
+                    childMapToRemove.putIfAbsent(otherChild, new HashSet<>());
+                    childMapToRemove.get(otherChild).add(child);
                     return true;
                 }
                 return false;
@@ -1073,7 +1074,8 @@ public class SimpleOntology implements Ontology {
 
             if (!circular) {
                 circular = children.parallelStream()
-                        .anyMatch(otherChild -> isCircular(parentMap, parentMapCopy, childMapCopy, parent, otherChild, visited));
+                        .anyMatch(otherChild -> isCircular(parentMap, parentMapToRemove, childMapToRemove, parent,
+                                otherChild, visited));
             }
         }
         return circular;
