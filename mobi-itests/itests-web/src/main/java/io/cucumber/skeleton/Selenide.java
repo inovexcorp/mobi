@@ -73,13 +73,4 @@ public class Selenide {
             e.printStackTrace();
         }
     }
-
-    public void InputDropdownField(WebElement element, String inputText) {
-        //@TODO Implement InputDropdownField
-    }
-
-    public void WaitTillTableLoad() {
-        //@TODO Implement WaitTillTableLoad
-        String progressBarID = "secondaryProgress";
-    }
 }

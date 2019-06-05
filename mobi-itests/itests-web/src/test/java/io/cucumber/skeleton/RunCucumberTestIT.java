@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 public class RunCucumberTestIT extends KarafTestSupport {
 
-    public static Boolean setupComplete = false;
     private static Logger logger = LoggerFactory.getLogger(RunCucumberTestIT.class);
 
     @Rule
