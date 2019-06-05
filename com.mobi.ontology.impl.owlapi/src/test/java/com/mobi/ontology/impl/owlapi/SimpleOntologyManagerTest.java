@@ -73,12 +73,14 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import javax.cache.Cache;
 
 @RunWith(PowerMockRunner.class)
@@ -243,12 +245,20 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Map<String, Object> props = new HashMap<>();
         props.put("poolSize", 0);
         manager.modified(props);
+        ForkJoinPool pool = Whitebox.getInternalState(manager, "threadPool");
+        assertTrue(pool.getParallelism() > 0);
         props.put("poolSize", -1);
         manager.modified(props);
+        pool = Whitebox.getInternalState(manager, "threadPool");
+        assertEquals(pool.getParallelism(), 1);
         props.put("poolSize", 1);
         manager.modified(props);
+        pool = Whitebox.getInternalState(manager, "threadPool");
+        assertEquals(pool.getParallelism(), 1);
         props.put("poolSize", 2);
         manager.modified(props);
+        pool = Whitebox.getInternalState(manager, "threadPool");
+        assertEquals(pool.getParallelism(), 2);
     }
 
     /* applyChanges */
