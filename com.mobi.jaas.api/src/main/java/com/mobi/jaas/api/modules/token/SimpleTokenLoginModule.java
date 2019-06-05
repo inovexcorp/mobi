@@ -59,12 +59,7 @@ public class SimpleTokenLoginModule extends TokenLoginModule<TokenCallback> {
 
     @Override
     protected void verifyUser(String user, TokenCallback callback) throws LoginException {
-        if (!engineManager.containsEngine(engineName)) {
-            String msg = "Engine " + engineName + " is not registered with SimpleEngineManager";
-            LOG.debug(msg);
-            throw new LoginException(msg);
-        }
-        if (!engineManager.userExists(engineName, user)) {
+        if (!engineManager.userExists(user)) {
             throw new FailedLoginException("User " + user + " does not exist");
         }
     }
@@ -72,8 +67,7 @@ public class SimpleTokenLoginModule extends TokenLoginModule<TokenCallback> {
     @Override
     public void initialize(Subject subject, CallbackHandler handler, Map<String, ?> state, Map<String, ?> options) {
         super.initialize(subject, handler, state, options);
-        engineName = options.get(LoginModuleConfig.ENGINE) + "";
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
-        LOG.debug("Initialized SimpleTokenLoginModule engineName=" + engineName);
+        LOG.debug("Initialized SimpleTokenLoginModule");
     }
 }

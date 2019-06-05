@@ -45,6 +45,7 @@
      * @param {boolean} [isInvalid=false] Whether the text input is invalid
      * @param {boolean} [isValid=false] Whether the text input is valid
      * @param {boolean} isFocusMe Whether the text input should be focused once rendered
+     * @param {boolean} [isDisabledWhen=false] When the input should be disabled
      */
     const textInputComponent = {
         templateUrl: 'shared/components/textInput/textInput.component.html',
@@ -57,7 +58,8 @@
             inputName: '<',
             isInvalid: '<',
             isValid: '<',
-            isFocusMe: '<?'
+            isFocusMe: '<?',
+            isDisabledWhen: '<'
         },
         controllerAs: 'dvm',
         controller: textInputComponentCtrl
