@@ -52,7 +52,7 @@ public class RunCucumberTestIT extends KarafTestSupport {
 
     @RunWith(Cucumber.class)
     @CucumberOptions(
-        plugin = {"pretty"},
+        plugin = {"pretty", "json:target/cucumber-report.json"},
         monochrome = true)
     public static class InnerCucumberTestRunner {
 

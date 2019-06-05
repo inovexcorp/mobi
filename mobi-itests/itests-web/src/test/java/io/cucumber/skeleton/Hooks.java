@@ -36,12 +36,20 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class Hooks {
@@ -51,10 +59,11 @@ public class Hooks {
     public int implicitWaitTimeout = 5;
     public Selenide selenide;
     private static boolean dunit;
+    private static SupportedBrowser browser;
 
     @Before
-    public void beforeAll(){
-        if(!dunit) {
+    public void beforeAll() {
+        if (!dunit) {
             Runtime.getRuntime().addShutdownHook(new Thread(this::setupCucumberReporting));
             dunit = true;
         }
@@ -62,21 +71,36 @@ public class Hooks {
 
     @Before
     public void beforeBrowserScenario() {
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless");
-        chromeOptions.addArguments("--no-sandbox");
-        chromeOptions.addArguments("window-size=1920,1080");
-        chromeOptions.setAcceptInsecureCerts(true);
-        chromeOptions.addArguments("test-type");
-//
-//        FirefoxOptions firefoxOptions = new FirefoxOptions();
-//        FirefoxProfile firefoxProfile = new FirefoxProfile();
-//        firefoxProfile.setAssumeUntrustedCertificateIssuer(false);
-////        firefoxOptions.setHeadless(true);
-//        firefoxOptions.addArguments("--width=1920 --height=1080");
-//        firefoxOptions.setProfile(firefoxProfile);
+        String browserString = System.getProperty("BROWSER");
+        if (browser == null) {
+            browserString = System.getenv("BROWSER");
+            if (browserString == null) {
+                browserString = "chrome";
+            }
+        }
+        browser = SupportedBrowser.fromString(browserString);
 
-        driver = new ChromeDriver(chromeOptions);
+        switch (browser) {
+            case CHROME:
+                ChromeOptions chromeOptions = new ChromeOptions();
+                chromeOptions.addArguments("--headless");
+                chromeOptions.addArguments("--no-sandbox");
+                chromeOptions.addArguments("window-size=1920,1080");
+                chromeOptions.setAcceptInsecureCerts(true);
+                chromeOptions.addArguments("test-type");
+                driver = new ChromeDriver(chromeOptions);
+                break;
+            case FIREFOX:
+                FirefoxOptions firefoxOptions = new FirefoxOptions();
+                FirefoxProfile firefoxProfile = new FirefoxProfile();
+                firefoxProfile.setAssumeUntrustedCertificateIssuer(false);
+                firefoxOptions.setHeadless(true);
+                firefoxOptions.addArguments("--width=1920 --height=1080");
+                firefoxOptions.setProfile(firefoxProfile);
+                driver = new FirefoxDriver(firefoxOptions);
+                break;
+        }
+
         driver.manage().timeouts().implicitlyWait(implicitWaitTimeout, TimeUnit.SECONDS); //set overall implicit wait to 5 seconds
         driver.get("about:blank");
         driver.manage().window().fullscreen();
@@ -100,30 +124,38 @@ public class Hooks {
         driver.quit();
     }
 
-    public void setupCucumberReporting() {
+    private String getCurrentGitBranch() throws IOException, InterruptedException {
+        Process process = Runtime.getRuntime().exec( "git rev-parse --abbrev-ref HEAD" );
+        process.waitFor();
+
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader( process.getInputStream() ) );
+
+        return reader.readLine();
+    }
+
+    private String getBuildNumber() throws IOException {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/maven/dependencies.properties");
+        Properties properties = new Properties();
+        properties.load(is);
+        return properties.getProperty("version");
+    }
+
+    private void setupCucumberReporting() {
         File reportOutputDirectory = new File("target");
         List<String> jsonFiles = new ArrayList<>();
-        jsonFiles.add("cucumber-report-1.json");
-        jsonFiles.add("cucumber-report-2.json");
+        jsonFiles.add("target/cucumber-report.json");
 
-        String buildNumber = "1";
-        String projectName = "cucumberProject";
-        boolean runWithJenkins = false;
-
-        Configuration configuration = new Configuration(reportOutputDirectory, projectName);
-        // optional configuration - check javadoc
-        configuration.setRunWithJenkins(runWithJenkins);
-        configuration.setBuildNumber(buildNumber);
-        // additional metadata presented on main page
-        configuration.addClassifications("Platform", "Windows");
-        configuration.addClassifications("Browser", "Firefox");
-        configuration.addClassifications("Branch", "release/1.0");
-
-        // optionally add metadata presented on main page via properties file
-        List<String> classificationFiles = new ArrayList<>();
-        classificationFiles.add("properties-1.properties");
-        classificationFiles.add("properties-2.properties");
-        configuration.addClassificationFiles(classificationFiles);
+        Configuration configuration = new Configuration(reportOutputDirectory, "Mobi");
+        configuration.setRunWithJenkins(false);
+        configuration.addClassifications("Platform", System.getProperty("os.name"));
+        configuration.addClassifications("Browser", browser.browserName());
+        try {
+            configuration.addClassifications("Branch", getCurrentGitBranch());
+            configuration.setBuildNumber(getBuildNumber());
+        } catch (InterruptedException | IOException e) {
+            System.err.println("Unable to determine git branch");
+        }
 
         ReportBuilder reportBuilder = new ReportBuilder(jsonFiles, configuration);
         Reportable result = reportBuilder.generateReports();
