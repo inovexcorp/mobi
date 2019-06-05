@@ -443,23 +443,28 @@ public class MergeRequestRest {
     }
 
     /**
-     * Updates an existing {@link Comment} that has the {@code commentId} with the provided JSONLD of
-     * {@code newComment}.
+     * Updates an existing {@link Comment} that has the {@code commentId} with the provided String of
+     * {@code newCommentStr}.
      *
      * @param commentId The String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
-     * @param newComment The String representing the JSONLD representation of the updated {@link Comment}.
+     * @param newCommentStr The String representing the new description of the updated {@link Comment}.
      * @return A Response indicating the status of the update.
      */
     @PUT
     @Path("{requestId}/comments/{commentId}")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
-    @ApiOperation("Updates a Comment by its ID using the provided JSON-LD")
-    public Response updateComment(@PathParam("commentId") String commentId, String newComment) {
+    @ApiOperation("Updates a Comment by its ID using the provided String")
+    public Response updateComment(@PathParam("commentId") String commentId, String newCommentStr) {
         Resource commentIdResource = createIRI(commentId, vf);
+        Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
+                ErrorUtils.sendError("Comment " + commentId + " could not be found",
+                        Response.Status.BAD_REQUEST));
+        checkStringParam(newCommentStr, "Comment string is required");
+        comment.setProperty(vf.createLiteral(newCommentStr), vf.createIRI(_Thing.description_IRI));
         try {
-            manager.updateComment(commentIdResource, jsonToComment(commentIdResource, newComment));
+            manager.updateComment(commentIdResource, comment);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -499,7 +504,7 @@ public class MergeRequestRest {
                 manager.deleteComment(commentIRI);
             } else {
                 throw ErrorUtils.sendError("User not permitted to delete comment " + commentId,
-                        Response.Status.FORBIDDEN);
+                        Response.Status.UNAUTHORIZED);
             }
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {

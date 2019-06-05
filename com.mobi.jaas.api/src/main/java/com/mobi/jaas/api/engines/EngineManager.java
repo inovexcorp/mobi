@@ -290,6 +290,17 @@ public interface EngineManager {
     boolean checkPassword(String engine, String username, String password);
 
     /**
+     * Returns a boolean indicating whether the provided password matches the saved password for the {@link User} with
+     * the provided username using any of the {@link Engine Engines} managed by the {@link EngineManager}. If the
+     * credentials match in any of the {@link Engine Engines}, returns true.
+     *
+     * @param username the username for the {@link User} to test the password of
+     * @param password the password to test
+     * @return true if the passwords match; false otherwise
+     */
+    boolean checkPassword(String username, String password);
+
+    /**
      * Attempts to find the username of a {@link User} associated with the provided IRI using all the
      * {@link Engine Engines} managed by the {@link EngineManager}.
      *

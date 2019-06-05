@@ -53,7 +53,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
-
+import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -482,6 +482,15 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public void updateComment(Resource commentId, Comment comment) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Optional<com.mobi.rdf.api.Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
+            if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
+                throw new IllegalArgumentException("Comment string length must be less than " + MAX_COMMENT_STRING_LENGTH);
+            }
+            if (!description.isPresent() || StringUtils.isBlank(description.get().stringValue())) {
+                throw new IllegalArgumentException("Comment string is required");
+            }
+            OffsetDateTime now = OffsetDateTime.now();
+            comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
             catalogUtils.validateResource(commentId, commentFactory.getTypeIRI(), conn);
             catalogUtils.updateObject(comment, conn);
         }
