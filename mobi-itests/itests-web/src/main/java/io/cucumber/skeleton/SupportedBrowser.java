@@ -1,8 +1,8 @@
-package com.mobi.jaas.modules.token;
+package io.cucumber.skeleton;
 
 /*-
  * #%L
- * com.mobi.jaas
+ * itests-web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,17 +23,24 @@ package com.mobi.jaas.modules.token;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import java.util.Arrays;
 
-@Meta.OCD
-public interface SimpleTokenLoginModuleConfig {
+public enum SupportedBrowser {
+    CHROME ("Chrome"),
+    FIREFOX ("Firefox");
 
-    /**
-     * The name of the {@link com.mobi.jaas.api.engines.Engine} to be used for the
-     * {@link com.mobi.jaas.api.modules.token.SimpleTokenLoginModule}.
-     *
-     * @return The {@link Class#getName() name} of an {@link com.mobi.jaas.api.engines.Engine}
-     */
-    @Meta.AD(required = false)
-    String engineName();
+    private final String name;
+
+    SupportedBrowser(String name) {
+        this.name = name;
+    }
+
+    String browserName() {
+        return name;
+    }
+
+    public static SupportedBrowser fromString(String name) {
+        return Arrays.stream(SupportedBrowser.values()).filter(s -> s.name.equalsIgnoreCase(name)).findFirst()
+                .orElse(SupportedBrowser.CHROME);
+    }
 }
