@@ -138,11 +138,17 @@ public class SimpleOntologyManager extends AbstractOntologyManager {
         OntologyManagerConfig config = Configurable.createConfigurable(OntologyManagerConfig.class, props);
         if (config.poolSize() == 0) {
             int cpus = Runtime.getRuntime().availableProcessors();
-            log.debug("OntologyManager pool size: " + (cpus / 2));
-            threadPool = new ForkJoinPool(cpus / 2);
+            int parallelism = cpus / 2 == 0 ? 1 : cpus / 2;
+            log.debug("OntologyManager pool size: " + parallelism);
+            threadPool = new ForkJoinPool(parallelism);
         } else {
-            log.debug("OntologyManager pool size: " + config.poolSize());
-            threadPool = new ForkJoinPool(config.poolSize());
+            int parallelism = config.poolSize();
+            if (parallelism < 1) {
+                log.warn("Pool size must be greater than 0. Setting to default of 1.");
+                parallelism = 1;
+            }
+            log.debug("OntologyManager pool size: " + parallelism);
+            threadPool = new ForkJoinPool(parallelism);
         }
     }
 
