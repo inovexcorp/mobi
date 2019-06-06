@@ -38,7 +38,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
-import com.mobi.ontologies.foaf.Agent;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -444,12 +443,10 @@ public class UserRest {
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-            Set<Role> roleObjs = new HashSet<>();
-            roles.forEach(s -> roleObjs.add(engineManager.getRole(s).orElseThrow(() ->
-                    ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
-            Set<Role> allRoles = savedUser.getHasUserRole();
-            allRoles.addAll(roleObjs);
-            savedUser.setHasUserRole(allRoles);
+            roles.stream()
+                    .map(s -> engineManager.getRole(s).orElseThrow(() ->
+                            ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST)))
+                    .forEach(savedUser::addHasUserRole);
             engineManager.updateUser(savedUser);
             logger.info("Role(s) " + String.join(", ", roles) + " added to user " + username);
             return Response.ok().build();
@@ -478,7 +475,7 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Role roleObj = engineManager.getRole(role).orElseThrow(() ->
                     ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
-            savedUser.removeProperty(roleObj.getResource(), vf.createIRI(User.hasUserRole_IRI));
+            savedUser.removeHasUserRole(roleObj);
             engineManager.updateUser(savedUser);
             logger.info("Role " + role + " removed from user " + username);
             return Response.ok().build();
@@ -543,9 +540,7 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-            Set<Agent> newMembers = savedGroup.getMember();
-            newMembers.add(savedUser);
-            savedGroup.setMember(newMembers);
+            savedGroup.addMember(savedUser);
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
             logger.info("Added user " + username + " to group " + groupTitle);
             return Response.ok().build();
@@ -575,7 +570,7 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
-            savedGroup.removeProperty(savedUser.getResource(), vf.createIRI(Group.member_IRI));
+            savedGroup.removeMember(savedUser);
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
             logger.info("Removed user " + username + " from group " + groupTitle);
             return Response.ok().build();
@@ -616,10 +611,10 @@ public class UserRest {
     private void isAuthorizedUser(ContainerRequestContext context, String username) {
         String activeUsername = getActiveUsername(context);
         if (!engineManager.userExists(activeUsername)) {
-            throw ErrorUtils.sendError("User not found", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED);
         }
         if (!isAdminUser(activeUsername) && !activeUsername.equals(username)) {
-            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.UNAUTHORIZED);
         }
     }
 
@@ -644,7 +639,7 @@ public class UserRest {
      */
     private void checkCurrentUser(String username, String currentUsername) {
         if (!username.equals(currentUsername)) {
-            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.FORBIDDEN);
+            throw ErrorUtils.sendError("Not authorized to make this request", Response.Status.UNAUTHORIZED);
         }
     }
 

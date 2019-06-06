@@ -1,8 +1,10 @@
-package com.mobi.jaas.modules.token;
+@Version("1.0.0.${build}")
+
+package com.mobi.ontology.utils.imports;
 
 /*-
  * #%L
- * com.mobi.jaas
+ * com.mobi.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,17 +25,4 @@ package com.mobi.jaas.modules.token;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-
-@Meta.OCD
-public interface SimpleTokenLoginModuleConfig {
-
-    /**
-     * The name of the {@link com.mobi.jaas.api.engines.Engine} to be used for the
-     * {@link com.mobi.jaas.api.modules.token.SimpleTokenLoginModule}.
-     *
-     * @return The {@link Class#getName() name} of an {@link com.mobi.jaas.api.engines.Engine}
-     */
-    @Meta.AD(required = false)
-    String engineName();
-}
+import aQute.bnd.annotation.Version;

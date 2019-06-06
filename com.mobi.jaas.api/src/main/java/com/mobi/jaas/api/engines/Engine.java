@@ -196,7 +196,6 @@ public interface Engine {
      * @param username the username for the {@link User} to test the password of
      * @param password the password to test
      * @return true if the passwords match; false otherwise
-     * @throws IllegalArgumentException If a {@link User} with the provided username does not exist in the data source.
      * @throws IllegalStateException If an error occurs retrieving required information about the {@link User}.
      */
     boolean checkPassword(String username, String password);

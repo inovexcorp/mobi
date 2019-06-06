@@ -41,6 +41,7 @@
      * update the value of `password`. Expects an argument called `value`.
      * @param {string} label The label for the first password input
      * @param {boolean} required Whether the password field is required
+     * @param {boolean} [isDisabledWhen=false] When the inputs should be disabled
      */
     const passwordConfirmInputComponent = {
         templateUrl: 'shared/components/passwordConfirmInput/passwordConfirmInput.component.html',
@@ -52,7 +53,8 @@
             confirmedPassword: '<',
             changeEvent: '&',
             label: '<',
-            required: '@'
+            required: '@',
+            isDisabledWhen: '<'
         },
         controllerAs: 'dvm',
         controller: passwordConfirmInputComponentCtrl

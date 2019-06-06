@@ -21,7 +21,7 @@
  * #L%
  */
 describe('See History component', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,10 +36,11 @@ describe('See History component', function() {
         mockOntologyUtilsManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            utilSvc = _utilService_;
         });
 
         this.commits = [{id: 'commit1'}, {id: 'commit2'}];
@@ -52,6 +53,7 @@ describe('See History component', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
+        utilSvc = null;
         this.element.remove();
     });
 
@@ -72,6 +74,32 @@ describe('See History component', function() {
             this.controller.goBack();
             expect(ontologyStateSvc.listItem.seeHistory).toBeUndefined();
             expect(ontologyStateSvc.listItem.selectedCommit).toBeUndefined();
+        });
+        it('should assign the correct label for each commit', function() {
+            this.controller.commits = this.commits;
+            utilSvc.condenseCommitId.and.returnValue('1234');
+            var labels = this.controller.commits.map(commit => this.controller.createLabel(commit.id));
+            labels.forEach((label, idx) => {
+                if (idx === 0) {
+                    expect(label).toEqual('1234 (latest)');
+                } else {
+                    expect(label).toEqual('1234');
+                }
+            });
+            // var label1 = this.controller.createLabel(this.commits[0].id);
+            // var label2 = this.controller.createLabel(this.commits[1].id);
+            // expect(label1).toEqual('1234 (latest)');
+            // expect(label2).toEqual('1234');  
+        });
+        describe('should load a list of commits', function() {
+            it('to `commits` in the controller when receiveCommits is called', function() {
+                this.controller.receiveCommits(this.commits);
+                expect(this.controller.commits).toBe(this.commits);
+            });
+            it('and set the default value in the dropdown to the latest commit for an entity', function() {
+                this.controller.receiveCommits(this.commits);
+                expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
+            });
         });
     });
     describe('contains the correct html', function() {

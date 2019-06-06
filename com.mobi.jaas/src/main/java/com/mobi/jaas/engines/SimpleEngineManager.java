@@ -35,6 +35,8 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.orm.Thing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +47,8 @@ import java.util.stream.Collectors;
 
 @Component(immediate = true)
 public class SimpleEngineManager implements EngineManager {
+    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
+
     protected Map<String, Engine> engines = new HashMap<>();
 
     @Reference(type = '*', dynamic = true)
@@ -63,6 +67,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Optional<Role> getRole(String engine, String roleName) {
+        log.debug("Getting roles with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).getRole(roleName);
         }
@@ -72,6 +77,7 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public Optional<Role> getRole(String roleName) {
         for (Engine engine : engines.values()) {
+            log.debug("Getting roles with " + engine.getEngineName());
             Optional<Role> optional = engine.getRole(roleName);
             if (optional.isPresent()) {
                 return optional;
@@ -82,6 +88,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Set<User> getUsers(String engine) {
+        log.debug("Getting users with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).getUsers();
         }
@@ -92,6 +99,7 @@ public class SimpleEngineManager implements EngineManager {
     public Set<User> getUsers() {
         Set<User> users = new HashSet<>();
         for (Engine engine : engines.values()) {
+            log.debug("Getting users with " + engine.getEngineName());
             users.addAll(engine.getUsers());
         }
         return users;
@@ -99,6 +107,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public User createUser(String engine, UserConfig userConfig) {
+        log.debug("Creating user with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).createUser(userConfig);
         }
@@ -107,6 +116,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public void storeUser(String engine, User user) {
+        log.debug("Storing user with " + engine);
         if (containsEngine(engine)) {
             engines.get(engine).storeUser(user);
         }
@@ -114,6 +124,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Optional<User> retrieveUser(String engine, String username) {
+        log.debug("Retrieving user with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).retrieveUser(username);
         }
@@ -123,6 +134,7 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public Optional<User> retrieveUser(String username) {
         for (Engine engine : engines.values()) {
+            log.debug("Retrieving user with " + engine.getEngineName());
             Optional<User> optional = engine.retrieveUser(username);
             if (optional.isPresent()) {
                 return optional;
@@ -133,6 +145,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public void deleteUser(String engine, String username) {
+        log.debug("Deleting user with" + engine);
         if (containsEngine(engine)) {
             engines.get(engine).deleteUser(username);
         }
@@ -140,6 +153,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public void updateUser(String engine, User newUser) {
+        log.debug("Updating user with" + engine);
         if (containsEngine(engine)) {
             engines.get(engine).updateUser(newUser);
         }
@@ -154,18 +168,21 @@ public class SimpleEngineManager implements EngineManager {
             }
         }
         if (foundEngine != null) {
+            log.debug("Updating user with " + foundEngine.getEngineName());
             foundEngine.updateUser(newUser);
         }
     }
 
     @Override
     public boolean userExists(String engine, String username) {
+        log.debug("Checking user exists with " + engine);
         return engines.containsKey(engine) && engines.get(engine).userExists(username);
     }
 
     @Override
     public boolean userExists(String username) {
         for (Engine engine : engines.values()) {
+            log.debug("Checking user exists with " + engine.getEngineName());
             if (engine.userExists(username)) {
                 return true;
             }
@@ -175,6 +192,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Set<Group> getGroups(String engine) {
+        log.debug("Getting groups with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).getGroups();
         }
@@ -185,6 +203,7 @@ public class SimpleEngineManager implements EngineManager {
     public Set<Group> getGroups() {
         Set<Group> groups = new HashSet<>();
         for (Engine engine : engines.values()) {
+            log.debug("Getting groups with " + engine.getEngineName());
             groups.addAll(engine.getGroups());
         }
         return groups;
@@ -192,6 +211,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Group createGroup(String engine, GroupConfig groupConfig) {
+        log.debug("Creating group with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).createGroup(groupConfig);
         }
@@ -200,6 +220,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public void storeGroup(String engine, Group group) {
+        log.debug("Storing group with " + engine);
         if (containsEngine(engine)) {
             engines.get(engine).storeGroup(group);
         }
@@ -207,6 +228,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Optional<Group> retrieveGroup(String engine, String groupTitle) {
+        log.debug("Retrieving group with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).retrieveGroup(groupTitle);
         }
@@ -216,6 +238,7 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public Optional<Group> retrieveGroup(String groupTitle) {
         for (Engine engine : engines.values()) {
+            log.debug("Retrieving group with " + engine.getEngineName());
             Optional<Group> optional = engine.retrieveGroup(groupTitle);
             if (optional.isPresent()) {
                 return optional;
@@ -227,12 +250,14 @@ public class SimpleEngineManager implements EngineManager {
     @Override
     public void deleteGroup(String engine, String groupTitle) {
         if (containsEngine(engine)) {
+            log.debug("Deleting group with " + engine);
             engines.get(engine).deleteGroup(groupTitle);
         }
     }
 
     @Override
     public void updateGroup(String engine, Group newGroup) {
+        log.debug("Updating group with " + engine);
         if (containsEngine(engine)) {
             engines.get(engine).updateGroup(newGroup);
         }
@@ -247,18 +272,21 @@ public class SimpleEngineManager implements EngineManager {
             }
         }
         if (foundEngine != null) {
+            log.debug("Updating group with " + foundEngine.getEngineName());
             foundEngine.updateGroup(newGroup);
         }
     }
 
     @Override
     public boolean groupExists(String engine, String groupTitle) {
+        log.debug("Checking group exists with " + engine);
         return engines.containsKey(engine) && engines.get(engine).groupExists(groupTitle);
     }
 
     @Override
     public boolean groupExists(String groupTitle) {
         for (Engine engine : engines.values()) {
+            log.debug("Checking group exists with " + engine.getEngineName());
             if (engine.groupExists(groupTitle)) {
                 return true;
             }
@@ -268,6 +296,7 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public Set<Role> getUserRoles(String engine, String username) {
+        log.debug("Checking user roles with " + engine);
         if (engines.containsKey(engine)) {
             return engines.get(engine).getUserRoles(username);
         }
@@ -278,6 +307,7 @@ public class SimpleEngineManager implements EngineManager {
     public Set<Role> getUserRoles(String username) {
         Set<Role> roles = new HashSet<>();
         for (Engine engine : engines.values()) {
+            log.debug("Checking user roles with " + engine.getEngineName());
             if (engine.userExists(username)) {
                 engine.getUserRoles(username).stream()
                         .filter(role -> !roles.stream()
@@ -291,7 +321,19 @@ public class SimpleEngineManager implements EngineManager {
 
     @Override
     public boolean checkPassword(String engine, String username, String password) {
+        log.debug("Checking password with " + engine);
         return engines.containsKey(engine) && engines.get(engine).checkPassword(username, password);
+    }
+
+    @Override
+    public boolean checkPassword(String username, String password) {
+        for (Engine engine : engines.values()) {
+            log.debug("Checking password with " + engine.getEngineName());
+            if (engine.checkPassword(username, password)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -1,8 +1,8 @@
-package com.mobi.jaas.modules.password;
+package com.mobi.ontology.utils.imports;
 
 /*-
  * #%L
- * com.mobi.jaas
+ * com.mobi.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%
@@ -26,14 +26,13 @@ package com.mobi.jaas.modules.password;
 import aQute.bnd.annotation.metatype.Meta;
 
 @Meta.OCD
-public interface PasswordLoginModuleConfig {
+public interface ImportsResolverConfig {
 
     /**
-     * The name of the {@link com.mobi.jaas.api.engines.Engine} to be used for the
-     * {@link com.mobi.jaas.api.modules.password.PasswordLoginModule}.
+     * The user agent used to make requests to resolve imports
      *
-     * @return The {@link Class#getName() name} of an {@link com.mobi.jaas.api.engines.Engine}
+     * @return The user agent string
      */
-    @Meta.AD(required = false)
-    String engineName();
+    @Meta.AD(deflt = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0")
+    String userAgent();
 }

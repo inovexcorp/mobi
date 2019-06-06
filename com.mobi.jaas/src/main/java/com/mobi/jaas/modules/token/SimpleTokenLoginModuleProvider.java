@@ -25,29 +25,20 @@ package com.mobi.jaas.modules.token;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.provider.AppConfigEntryProvider;
 import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
-import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.proxy.ProxyLoginModule;
-import org.apache.commons.lang3.StringUtils;
 import org.osgi.framework.BundleContext;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Component(
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = SimpleTokenLoginModuleConfig.class
-)
+@Component
 public class SimpleTokenLoginModuleProvider implements AppConfigEntryProvider {
-
-    protected String engineName;
 
     private EngineManager engineManager;
     protected BundleContext context;
@@ -58,20 +49,13 @@ public class SimpleTokenLoginModuleProvider implements AppConfigEntryProvider {
     }
 
     @Activate
-    protected void start(Map<String, Object> props, BundleContext context) {
+    protected void start(BundleContext context) {
         this.context = context;
-        SimpleTokenLoginModuleConfig config = Configurable.createConfigurable(SimpleTokenLoginModuleConfig.class,
-                props);
-        if (StringUtils.isEmpty(config.engineName())) {
-            engineName = RdfEngine.ENGINE_NAME;
-        } else {
-            engineName = config.engineName();
-        }
     }
 
     @Modified
-    protected void modified(Map<String, Object> props, BundleContext context) {
-        start(props, context);
+    protected void modified(BundleContext context) {
+        start(context);
     }
 
     @Override
@@ -83,7 +67,6 @@ public class SimpleTokenLoginModuleProvider implements AppConfigEntryProvider {
     public Map<String, Object> getModuleConfig() {
         Map<String, Object> tokenOptions = new HashMap<>();
         tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-        tokenOptions.put(LoginModuleConfig.ENGINE, engineName);
         tokenOptions.put(BundleContext.class.getName(), context);
         tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
         tokenOptions.put(ProxyLoginModule.MODULE, SimpleTokenLoginModule.class.getName());
