@@ -75,11 +75,11 @@ describe('Datatype Property Overlay component', function() {
             [
                 {
                     value: true,
-                    header: 'Edit Individual Data Property',
+                    header: 'Edit Datatype Property Value',
                 },
                 {
                     value: false,
-                    header: 'Add Individual Data Property',
+                    header: 'Add Datatype Property Value',
                 }
             ].forEach(test => {
                 ontologyStateSvc.editingProperty = test.value;
