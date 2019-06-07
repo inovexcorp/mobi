@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Characteristics Block directive', function() {
+describe('Characteristics Block component', function() {
     var $compile, scope, ontologyStateSvc, prefixes, ontologyManagerSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('characteristicsBlock');
+        module('ontology-editor');
         mockPrefixes();
         mockOntologyState();
         mockOntologyUtilsManager();
@@ -42,8 +42,10 @@ describe('Characteristics Block directive', function() {
 
         this.functionalProperty = prefixes.owl + 'FunctionalProperty';
         this.asymmetricProperty = prefixes.owl + 'AsymmetricProperty';
-        ontologyStateSvc.listItem.selected = undefined;
-        this.element = $compile(angular.element('<characteristics-block></characteristics-block>'))(scope);
+        scope.iri = '';
+        scope.types = [];
+        scope.updateTypes = jasmine.createSpy('updateTypes');
+        this.element = $compile(angular.element('<characteristics-block iri="iri" types="types" update-types="updateTypes(value)"></characteristics-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('characteristicsBlock');
     });
@@ -58,23 +60,23 @@ describe('Characteristics Block directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('characteristics-block')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('CHARACTERISTICS-BLOCK');
+            expect(this.element.querySelectorAll('.characteristics-block').length).toEqual(1);
         });
         it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header').length).toEqual(1);
         });
         describe('with checkboxes if a', function() {
             it('object property is selected', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 scope.$digest();
-                expect(this.element.find('checkbox').length).toBe(2);
+                expect(this.element.find('checkbox').length).toEqual(2);
             });
             it('data property is selected', function() {
                 scope.$digest();
-                expect(this.element.find('checkbox').length).toBe(1);
+                expect(this.element.find('checkbox').length).toEqual(1);
             });
         });
     });
@@ -89,13 +91,14 @@ describe('Characteristics Block directive', function() {
                 checked: true,
                 typeIRI: this.functionalProperty
             };
-            ontologyStateSvc.listItem.selected = {'@id': this.id};
+            this.controller.iri = this.id;
         });
         describe('onChange sets all variables correctly when characteristic', function() {
             it('is checked and no match in deletions', function() {
                 this.controller.onChange(this.characteristicObj, true);
                 expect(this.characteristicObj.checked).toEqual(true);
-                expect(_.includes(_.get(ontologyStateSvc.listItem.selected, '@type', []), this.functionalProperty)).toBe(true);
+                expect(this.controller.types).toContain(this.functionalProperty);
+                expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -103,9 +106,10 @@ describe('Characteristics Block directive', function() {
                 ontologyStateSvc.listItem.deletions = [angular.copy(this.statement)];
                 this.controller.onChange(this.characteristicObj, true);
                 expect(this.characteristicObj.checked).toEqual(true);
-                expect(_.includes(_.get(ontologyStateSvc.listItem.selected, '@type', []), this.functionalProperty)).toBe(true);
+                expect(this.controller.types).toContain(this.functionalProperty);
+                expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.listItem.deletions.length).toBe(0);
+                expect(ontologyStateSvc.listItem.deletions.length).toEqual(0);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is checked and the statement with another property is in deletions', function() {
@@ -114,16 +118,18 @@ describe('Characteristics Block directive', function() {
                 ontologyStateSvc.listItem.deletions = [object];
                 this.controller.onChange(this.characteristicObj, true);
                 expect(this.characteristicObj.checked).toEqual(true);
-                expect(_.includes(_.get(ontologyStateSvc.listItem.selected, '@type', []), this.functionalProperty)).toBe(true);
+                expect(this.controller.types).toContain(this.functionalProperty);
+                expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
-                expect(_.some(ontologyStateSvc.listItem.deletions, {'@id': this.id, other: 'value'})).toBe(true);
+                expect(_.some(ontologyStateSvc.listItem.deletions, {'@id': this.id, other: 'value'})).toEqual(true);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is not checked and no match in additions', function() {
                 ontologyStateSvc.listItem.selected = angular.copy(this.statement);
                 this.controller.onChange(this.characteristicObj, false);
                 expect(this.characteristicObj.checked).toEqual(false);
-                expect(_.includes(_.get(ontologyStateSvc.listItem.selected, '@type', []), this.functionalProperty)).toBe(false);
+                expect(this.controller.types).not.toContain(false);
+                expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -132,9 +138,10 @@ describe('Characteristics Block directive', function() {
                 ontologyStateSvc.listItem.selected = angular.copy(this.statement);
                 this.controller.onChange(this.characteristicObj, false);
                 expect(this.characteristicObj.checked).toEqual(false);
-                expect(_.includes(_.get(ontologyStateSvc.listItem.selected, '@type', []), this.functionalProperty)).toBe(false);
+                expect(this.controller.types).not.toContain(false);
+                expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.listItem.additions.length).toBe(0);
+                expect(ontologyStateSvc.listItem.additions.length).toEqual(0);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is not checked and the statement is in additions', function() {
@@ -144,23 +151,24 @@ describe('Characteristics Block directive', function() {
                 ontologyStateSvc.listItem.selected = angular.copy(this.statement);
                 this.controller.onChange(this.characteristicObj, false);
                 expect(this.characteristicObj.checked).toEqual(false);
-                expect(_.includes(_.get(ontologyStateSvc.listItem.selected, '@type', []), this.functionalProperty)).toBe(false);
+                expect(this.controller.types).not.toContain(false);
+                expect(scope.updateTypes).toHaveBeenCalledWith(this.controller.types);
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
-                expect(_.some(ontologyStateSvc.listItem.additions, {'@id': this.id, other: 'value'})).toBe(true);
+                expect(_.some(ontologyStateSvc.listItem.additions, {'@id': this.id, other: 'value'})).toEqual(true);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
     });
-    it('correctly updates the checkboxes when the selected entities changes', function() {
+    it('correctly updates the checkboxes when the types change', function() {
         _.forEach(this.controller.characteristics, obj => {
             obj.checked = false;
         });
         spyOn(this.controller, 'onChange');
-        ontologyStateSvc.listItem.selected = {'@type': [this.functionalProperty, this.asymmetricProperty]};
-        scope.$digest();
+        this.controller.types = [this.functionalProperty, this.asymmetricProperty];
+        this.controller.$onChanges();
         expect(this.controller.onChange).not.toHaveBeenCalled();
         _.forEach(this.controller.characteristics, obj => {
-            expect(obj.checked).toBe(true);
+            expect(obj.checked).toEqual(true);
         });
     });
 });

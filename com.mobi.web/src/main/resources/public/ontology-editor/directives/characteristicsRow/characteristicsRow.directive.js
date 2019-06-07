@@ -24,14 +24,6 @@
     'use strict';
 
     angular
-        /**
-         * @ngdoc overview
-         * @name characteristicsRow
-         *
-         * @description
-         * The `characteristicsRow` module only provides the `characteristicsRow` directive which creates a
-         * Bootstrap `.row` for displaying the {@link characteristicsBlock.directive:characteristicsBlock}.
-         */
         .module('characteristicsRow', [])
         /**
          * @ngdoc directive
@@ -45,7 +37,7 @@
          *
          * @description
          * `characteristicsRow` is a directive that creates a Bootstrap `.row` that displays the
-         * {@link characteristicsBlock.directive:characteristicsBlock} depending on whether the
+         * {@link ontology-editor.component:characteristicsBlock} depending on whether the
          * {@link shared.service:ontologyStateService selected entity} is a object or data property.
          * The directive is replaced by the contents of its template.
          */
