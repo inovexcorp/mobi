@@ -35,6 +35,9 @@
                 <div class="row py-2">
                     <annotation-block class="col" highlight-iris="dvm.om.entityNameProps" highlight-text="dvm.os.listItem.editorTabStates.schemes.searchText"></annotation-block>
                 </div>
+                <div class="row py-2" ng-if="dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)">
+                    <datatype-property-block class="col"></datatype-property-block>
+                </div>
                 <div class="row py-2">
                     <relationships-block class="col" relationship-list="dvm.relationshipList"></relationships-block>
                 </div>
