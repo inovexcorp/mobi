@@ -68,8 +68,9 @@
     function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
         var self = this,
             anon = 'self anon',
-            prefix = REST_PREFIX + 'session',
-            weGood = false;
+            prefix = REST_PREFIX + 'session';
+        
+        self.weGood = false;
 
         /**
          * @ngdoc property
@@ -108,35 +109,25 @@
          * with an error message if the log in attempt failed
          */
         self.login = function(username, password) {
-            var config = {
-                    params: {
-                        username: username,
-                        password: password
-                    }
-                },
-                deferred = $q.defer();
-
-            $http.post(prefix, null, config)
+            var config = { params: { username, password } };
+            return $http.post(prefix, null, config)
                 .then(response => {
                     if (response.status === 200 && response.data.scope !== anon) {
                         self.currentUser = response.data.sub;
-                        userManagerService.getUser(self.currentUser).then(user => {
-                            self.currentUserIRI = user.iri;
-                        });
-                        $state.go('root.home');
-                        deferred.resolve(true);
-                    } else {
-                        deferred.resolve();
+                        return userManagerService.getUser(self.currentUser)
+                            .then(user => {
+                                self.currentUserIRI = user.iri;
+                                $state.go('root.home');
+                                return true;
+                            });
                     }
                 }, response => {
                     if (response.status === 401) {
-                        deferred.reject('This email/password combination is not correct.');
+                        return $q.reject('This email/password combination is not correct.');
                     } else {
-                        deferred.reject('An error has occured. Please try again later.');
+                        return $q.reject('An error has occurred. Please try again later.');
                     }
                 });
-
-            return deferred.promise;
         }
 
         /**
@@ -201,11 +192,12 @@
                 self.currentUser = data.sub;
                 var promises = [
                     stateManagerService.initialize(),
+                    userManagerService.initialize(),
                     userManagerService.getUser(self.currentUser).then(user => {
                         self.currentUserIRI = user.iri;
                     })
                 ];
-                if (!weGood) {
+                if (!self.weGood) {
                     promises = promises.concat([
                         catalogManagerService.initialize().then(() => {
                             catalogStateService.initialize();
@@ -213,14 +205,13 @@
                             ontologyManagerService.initialize();
                             ontologyStateService.initialize();
                         }),
-                        userManagerService.initialize(),
                         datasetManagerService.initialize()
                     ]);
                 }
                 return $q.all(promises);
             }, $q.reject)
             .then(() => {
-                weGood = true;
+                self.weGood = true;
             }, handleError);
         };
 

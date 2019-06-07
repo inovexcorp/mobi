@@ -124,6 +124,20 @@ describe('Profile Tab component', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the current user is external', function() {
+            this.controller.form.$setDirty();
+            this.controller.form.$invalid = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
+
+            this.controller.currentUser.external = true;
+            scope.$digest();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
+
+            this.controller.currentUser.external = false;
+            scope.$digest();
+            expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
+        });
     });
     it('should save changes when the save button is clicked', function() {
         spyOn(this.controller, 'save');

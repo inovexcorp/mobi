@@ -70,7 +70,6 @@ import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
-import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
@@ -134,6 +133,7 @@ public class SimpleOntology implements Ontology {
     private static final String GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES;
     private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
     private static final String GET_ALL_DATATYPES;
+    private static final String GET_ALL_INDIVIDUALS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -220,6 +220,10 @@ public class SimpleOntology implements Ontology {
             );
             GET_ALL_DATATYPES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-datatypes.rq"),
+                    "UTF-8"
+            );
+            GET_ALL_INDIVIDUALS = IOUtils.toString(
+                    SimpleOntology.class.getResourceAsStream("/get-all-individuals.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -775,19 +779,11 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Individual> getAllIndividuals() {
-        try (DatasetConnection conn = getDatasetConnection()) {
-            long start = getStartTime();
-            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
-                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.NAMEDINDIVIDUAL.stringValue())));
-            Set<Individual> individuals = statements.stream()
-                    .map(Statement::getSubject)
-                    .map(subject -> new SimpleIndividual((IRI) subject))
-                    .collect(Collectors.toSet());
-            undoApplyDifferenceIfPresent(conn);
-            individuals.addAll(getIndividualsOfType(vf.createIRI(SKOS.CONCEPT.stringValue())));
-            logTrace("getAllIndividuals()", start);
-            return individuals;
-        }
+        return getIRISet(runQueryOnOntology(GET_ALL_INDIVIDUALS, null,
+                "getAllIndividuals()", true))
+                .stream()
+                .map(SimpleIndividual::new)
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -1024,22 +1020,27 @@ public class SimpleOntology implements Ontology {
                         }
                     }
 
-                    Map<String, Set<String>> parentCopy = parentMap.entrySet()
-                            .stream()
-                            .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(e.getValue())));
-                    Map<String, Set<String>> childCopy = childMap.entrySet()
-                            .stream()
-                            .collect(Collectors.toMap(e -> e.getKey(), e -> new HashSet<>(e.getValue())));
+                    Map<String, Set<String>> parentMapToRemove = new HashMap<>();
+                    Map<String, Set<String>> childMapToRemove = new HashMap<>();
 
-                    boolean circular = isCircular(parentMap, parentCopy, childCopy, parent, child, new HashSet<>());
+                    boolean circular = isCircular(parentMap, parentMapToRemove, childMapToRemove, parent, child,
+                            new HashSet<>());
 
                     if (!existsInChild && !existsInParent && !circular) {
                         hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
                     } else if (circular) {
-                        parentMap.clear();
-                        parentMap.putAll(parentCopy);
-                        childMap.clear();
-                        childMap.putAll(childCopy);
+                        parentMapToRemove.entrySet().forEach(entry -> {
+                            parentMap.get(entry.getKey()).removeAll(entry.getValue());
+                            if (parentMap.get(entry.getKey()).size() == 0) {
+                                parentMap.remove(entry.getKey());
+                            }
+                        });
+                        childMapToRemove.entrySet().forEach(entry -> {
+                            childMap.get(entry.getKey()).removeAll(entry.getValue());
+                            if (childMap.get(entry.getKey()).size() == 0) {
+                                childMap.remove(entry.getKey());
+                            }
+                        });
                     }
                 }
             }
@@ -1047,8 +1048,8 @@ public class SimpleOntology implements Ontology {
         return hierarchy;
     }
 
-    private boolean isCircular(Map<String, Set<String>> parentMap, Map<String, Set<String>> parentMapCopy,
-                               Map<String, Set<String>> childMapCopy, String parent, String child,
+    private boolean isCircular(Map<String, Set<String>> parentMap, Map<String, Set<String>> parentMapToRemove,
+                               Map<String, Set<String>> childMapToRemove, String parent, String child,
                                Set<String> visited) {
         boolean circular = false;
         visited.add(parent);
@@ -1058,14 +1059,10 @@ public class SimpleOntology implements Ontology {
 
             circular = children.parallelStream().anyMatch(otherChild -> {
                 if (visited.contains(otherChild)) {
-                    parentMapCopy.get(child).remove(otherChild);
-                    if (parentMapCopy.get(child).size() == 0) {
-                        parentMapCopy.remove(child);
-                    }
-                    childMapCopy.get(otherChild).remove(child);
-                    if (childMapCopy.get(otherChild).size() == 0) {
-                        childMapCopy.remove(otherChild);
-                    }
+                    parentMapToRemove.putIfAbsent(child, new HashSet<>());
+                    parentMapToRemove.get(child).add(otherChild);
+                    childMapToRemove.putIfAbsent(otherChild, new HashSet<>());
+                    childMapToRemove.get(otherChild).add(child);
                     return true;
                 }
                 return false;
@@ -1073,7 +1070,8 @@ public class SimpleOntology implements Ontology {
 
             if (!circular) {
                 circular = children.parallelStream()
-                        .anyMatch(otherChild -> isCircular(parentMap, parentMapCopy, childMapCopy, parent, otherChild, visited));
+                        .anyMatch(otherChild -> isCircular(parentMap, parentMapToRemove, childMapToRemove, parent,
+                                otherChild, visited));
             }
         }
         return circular;

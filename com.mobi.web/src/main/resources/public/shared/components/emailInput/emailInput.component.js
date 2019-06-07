@@ -41,6 +41,7 @@
      * @param {string} [inputName=''] The name to give the text input
      * @param {boolean} [isInvalid=false] Whether the text input is invalid
      * @param {boolean} [isValid=false] Whether the text input is valid
+     * @param {boolean} [isDisabledWhen=false] When the input should be disabled
      */
     const emailInputComponent = {
         templateUrl: 'shared/components/emailInput/emailInput.component.html',
@@ -51,7 +52,8 @@
             required: '<',
             inputName: '<',
             isInvalid: '<',
-            isValid: '<'
+            isValid: '<',
+            isDisabledWhen: '<'
         },
         controllerAs: 'dvm',
         controller: emailInputComponentCtrl
