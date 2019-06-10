@@ -4,9 +4,10 @@ prefix owl: <http://www.w3.org/2002/07/owl#>
 
 select ?parent ?child
 where {
-    ?parent rdf:type owl:Class .
+    values ?type {owl:Class rdfs:Class}
+    ?parent rdf:type ?type .
     optional {
         ?child rdfs:subClassOf ?parent ;
-               rdf:type owl:Class .
+               rdf:type ?type .
     }
 }

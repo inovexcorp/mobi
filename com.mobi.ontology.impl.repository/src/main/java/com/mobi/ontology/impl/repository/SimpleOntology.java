@@ -596,11 +596,13 @@ public class SimpleOntology implements Ontology {
     public boolean containsClass(IRI iri) {
         try (DatasetConnection conn = getDatasetConnection()) {
             long start = getStartTime();
-            boolean contains = conn.contains(iri, vf.createIRI(RDF.TYPE.stringValue()),
+            boolean containsOwl = conn.contains(iri, vf.createIRI(RDF.TYPE.stringValue()),
                     vf.createIRI(OWL.CLASS.stringValue()));
+            boolean containsRdfs = conn.contains(iri, vf.createIRI(RDF.TYPE.stringValue()),
+                    vf.createIRI(RDFS.CLASS.stringValue()));
             undoApplyDifferenceIfPresent(conn);
             logTrace("containsClass(" + iri.stringValue() + ")", start);
-            return contains;
+            return containsOwl || containsRdfs;
         }
     }
 
@@ -611,14 +613,23 @@ public class SimpleOntology implements Ontology {
             List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
                     vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(OWL.CLASS.stringValue()),
                     conn.getSystemDefaultNamedGraph()));
-            Set<OClass> ontClasses = statements.stream()
+            Set<OClass> owlClasses = statements.stream()
                     .map(Statement::getSubject)
                     .filter(subject -> subject instanceof IRI)
                     .map(subject -> new SimpleClass((IRI) subject))
                     .collect(Collectors.toSet());
+            statements = RepositoryResults.asList(conn.getStatements(null,
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(RDFS.CLASS.stringValue()),
+                    conn.getSystemDefaultNamedGraph()));
+            Set<OClass> rdfsClasses = statements.stream()
+                    .map(Statement::getSubject)
+                    .filter(subject -> subject instanceof IRI)
+                    .map(subject -> new SimpleClass((IRI) subject))
+                    .collect(Collectors.toSet());
+            owlClasses.addAll(rdfsClasses);
             undoApplyDifferenceIfPresent(conn);
             logTrace("getAllClasses()", start);
-            return ontClasses;
+            return owlClasses;
         }
     }
 
@@ -1020,61 +1031,13 @@ public class SimpleOntology implements Ontology {
                         }
                     }
 
-                    Map<String, Set<String>> parentMapToRemove = new HashMap<>();
-                    Map<String, Set<String>> childMapToRemove = new HashMap<>();
-
-                    boolean circular = isCircular(parentMap, parentMapToRemove, childMapToRemove, parent, child,
-                            new HashSet<>());
-
-                    if (!existsInChild && !existsInParent && !circular) {
+                    if (!existsInChild && !existsInParent) {
                         hierarchy.addParentChild((IRI) key, (IRI) value.getValue());
-                    } else if (circular) {
-                        parentMapToRemove.entrySet().forEach(entry -> {
-                            parentMap.get(entry.getKey()).removeAll(entry.getValue());
-                            if (parentMap.get(entry.getKey()).size() == 0) {
-                                parentMap.remove(entry.getKey());
-                            }
-                        });
-                        childMapToRemove.entrySet().forEach(entry -> {
-                            childMap.get(entry.getKey()).removeAll(entry.getValue());
-                            if (childMap.get(entry.getKey()).size() == 0) {
-                                childMap.remove(entry.getKey());
-                            }
-                        });
                     }
                 }
             }
         });
         return hierarchy;
-    }
-
-    private boolean isCircular(Map<String, Set<String>> parentMap, Map<String, Set<String>> parentMapToRemove,
-                               Map<String, Set<String>> childMapToRemove, String parent, String child,
-                               Set<String> visited) {
-        boolean circular = false;
-        visited.add(parent);
-        visited.add(child);
-        if (parentMap.containsKey(child)) {
-            Set<String> children = parentMap.get(child);
-
-            circular = children.parallelStream().anyMatch(otherChild -> {
-                if (visited.contains(otherChild)) {
-                    parentMapToRemove.putIfAbsent(child, new HashSet<>());
-                    parentMapToRemove.get(child).add(otherChild);
-                    childMapToRemove.putIfAbsent(otherChild, new HashSet<>());
-                    childMapToRemove.get(otherChild).add(child);
-                    return true;
-                }
-                return false;
-            });
-
-            if (!circular) {
-                circular = children.parallelStream()
-                        .anyMatch(otherChild -> isCircular(parentMap, parentMapToRemove, childMapToRemove, parent,
-                                otherChild, visited));
-            }
-        }
-        return circular;
     }
 
     /**
