@@ -5,7 +5,6 @@ com.mobi.etl.cli
 com.mobi.etl.delimited
 com.mobi.etl.rdf
 com.mobi.etl.rest
-com.mobi.etl.workflows
 com.mobi.ontology.api
 com.mobi.ontology.impl.owlapi
 com.mobi.ontology.rest

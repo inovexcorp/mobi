@@ -244,11 +244,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>etl.workflows</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>prov.api</artifactId>
             <version>${project.version}</version>
         </dependency>
