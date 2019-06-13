@@ -143,15 +143,23 @@ describe('Password Confirm Input component', function() {
             expect(confirmInput.attr('disabled')).toBeTruthy();
         });
     });
-    it('should validate whether the passwords match', function() {
-        this.controller.password = 'test';
-        this.controller.confirmedPassword = this.controller.password;
-        scope.$digest();
-        expect(this.controller.form.$valid).toEqual(true);
+    describe('should validate whether the passwords match', function() {
+        it('when it contains regular expression characters', function() {
+            this.controller.password = '$^&/{}!';
+            this.controller.confirmedPassword = this.controller.password;
+            scope.$digest();
+            expect(this.controller.form.$valid).toEqual(true);
+        });
+        it('when it does not contain regular expression characters', function() {
+            this.controller.password = 'test';
+            this.controller.confirmedPassword = this.controller.password;
+            scope.$digest();
+            expect(this.controller.form.$valid).toEqual(true);
 
-        this.controller.confirmedPassword = 'tester';
-        scope.$digest();
-        expect(this.controller.form.$valid).toEqual(false);
+            this.controller.confirmedPassword = 'tester';
+            scope.$digest();
+            expect(this.controller.form.$valid).toEqual(false);
+        });
     });
     it('should call changeEvent when the password text in the input changes', function() {
         var input = angular.element(this.element.querySelectorAll('.password input')[0]);
