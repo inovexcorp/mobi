@@ -90,7 +90,6 @@
         <module>com.mobi.cache.impl.core</module>
         <module>com.mobi.cache.impl.repository</module>
         <module>com.mobi.explorable.dataset.rest</module>
-        <module>com.mobi.etl.workflows</module>
         <module>mobi-itests</module>
         <module>com.mobi.prov.api</module>
         <module>com.mobi.prov.impl</module>
