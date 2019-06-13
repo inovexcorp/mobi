@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.27</version>
+        <version>1.16.28</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -86,10 +86,6 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-core</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
@@ -127,11 +123,6 @@
                                     <ontologyFile>${project.basedir}/src/main/resources/delimited.ttl</ontologyFile>
                                     <outputPackage>com.mobi.etl.api.ontologies.delimited</outputPackage>
                                     <ontologyName>Delimited</ontologyName>
-                                </ontology>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/etl.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.etl.api.ontologies.etl</outputPackage>
-                                    <ontologyName>ETL</ontologyName>
                                 </ontology>
                             </generates>
                             <references>
