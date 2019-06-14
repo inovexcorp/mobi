@@ -3,7 +3,6 @@
 (&(objectClass=com.mobi.catalog.api.CatalogManager))
 (&(objectClass=com.mobi.sparql.rest.SparqlRest))
 (&(objectClass=com.mobi.etl.api.delimited.DelimitedConverter))
-(&(objectClass=com.mobi.etl.api.workflows.WorkflowManager))
 (&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))
 (&(objectClass=com.mobi.jaas.rest.AuthRest))
 (&(objectClass=com.mobi.jaas.rest.GroupRest))
