@@ -5,10 +5,7 @@ var gulp = require('gulp'),
     strictify = require('strictify'),
     source = require('vinyl-source-stream'),
     babel = require('gulp-babel'),
-    cache = require('gulp-cache'),
     concat = require('gulp-concat'),
-    debug = require('gulp-debug'),
-    del = require('del'),
     queue = require('streamqueue'),
     filelog = require('gulp-filelog'),
     flatten = require('gulp-flatten'),
@@ -21,7 +18,6 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     ngAnnotate = require('gulp-ng-annotate'),
     strip = require('gulp-strip-comments'),
-    glob = require('glob-all'),
     templateCache = require('gulp-angular-templatecache'),
     Karma = require('karma').Server;
 
@@ -213,13 +209,11 @@ gulp.task('inject-minified', ['minify-scripts', 'minify-vendor-scripts', 'minify
 // Compresses images
 gulp.task('images', function() {
     return gulp.src(src + 'images/*')
-        .pipe(cache(
-            imagemin({
-                optimizationLevel: 5,
-                progressive: true,
-                interlaced: true
-            })
-        ))
+        .pipe(imagemin({
+            optimizationLevel: 5,
+            progressive: true,
+            interlaced: true
+        }))
         .pipe(gulp.dest(dest + 'images'));
 });
 
@@ -312,10 +306,6 @@ gulp.task('icons-minified', function() {
 gulp.task('icons-unminified', function() {
     return gulp.src(fontFiles(nodeDir))
         .pipe(gulp.dest(dest + 'css/fonts'));
-});
-
-gulp.task('clearcache', function() {
-    cache.clearAll();
 });
 
 // Production Task (minified)
