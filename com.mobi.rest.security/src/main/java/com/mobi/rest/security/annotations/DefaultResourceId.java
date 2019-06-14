@@ -34,8 +34,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface ResourceId {
-
+public @interface DefaultResourceId {
     /**
      * The {@link ValueType type} of data provided for the Resource ID.
      */
@@ -56,6 +55,4 @@ public @interface ResourceId {
      * ValueType.
      */
     Value[] start() default {};
-
-    DefaultResourceId[] defaultValue() default {};
 }
