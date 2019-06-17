@@ -49,7 +49,6 @@
         <feature prerequisite="true">jax-rs-provider-multipart</feature>
         <feature prerequisite="true">jax-rs-provider-security</feature>
         <feature prerequisite="true">aries-blueprint</feature>
-        <feature prerequisite="true">camel</feature>
         <feature prerequisite="true">mobi-server-deps</feature>
         <bundle start-level="80">mvn:com.mobi/api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/server.api/${project.version}</bundle>
@@ -96,7 +95,6 @@
         <bundle start-level="80">mvn:com.opencsv/opencsv/${opencsv.version}</bundle>
         <bundle start-level="80">mvn:ch.qos.logback/logback-classic/${logback.version}</bundle>
         <bundle start-level="80">mvn:ch.qos.logback/logback-core/${logback.version}</bundle>
-        <bundle start-level="80">mvn:org.apache.camel/camel-core-osgi/${camel.version}</bundle>
 
         <!-- Ontology Dependencies -->
         <bundle start-level="80">mvn:org.tukaani/xz/1.6</bundle>
@@ -139,7 +137,6 @@
         <bundle start-level="80">mvn:com.mobi/etl.delimited/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/etl.rdf/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/vfs/${project.version}</bundle>
-        <bundle start-level="80">mvn:com.mobi/etl.workflows/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.api/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.impl.core/${project.version}</bundle>
         <bundle start-level="80">mvn:com.mobi/ontology.impl.owlapi/${project.version}</bundle>
