@@ -30,7 +30,7 @@ describe('Classes Tab directive', function() {
         mockComponent('classHierarchyBlock', 'classHierarchyBlock');
         mockComponent('ontology-editor', 'axiomBlock');
         mockComponent('ontology-editor', 'annotationBlock');
-        mockComponent('usagesBlock', 'usagesBlock');
+        mockComponent('ontology-editor', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

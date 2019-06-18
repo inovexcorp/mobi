@@ -50,7 +50,7 @@
          * selected class from that list. The selected class display includes a
          * {@link ontology-editor.component:selectedDetails}, a button to delete the class, an
          * {@link ontology-editor.component:annotationBlock}, an {@link ontology-editor.component:axiomBlock}, and a
-         * {@link usagesBlock.directive:usagesBlock}. The directive houses the method for opening a modal for deleting
+         * {@link ontology-editor.component:usagesBlock}. The directive houses the method for opening a modal for deleting
          * classes. The directive is replaced by the contents of its template.
          */
         .directive('classesTab', classesTab);

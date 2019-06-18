@@ -29,7 +29,7 @@ describe('Ontology Tab directive', function() {
         mockComponent('ontology-editor', 'seeHistory');
         mockComponent('mergeTab', 'mergeTab');
         mockComponent('ontology-editor', 'projectTab');
-        mockComponent('overviewTab', 'overviewTab');
+        mockComponent('ontology-editor', 'overviewTab');
         mockComponent('classesTab', 'classesTab');
         mockComponent('propertiesTab', 'propertiesTab');
         mockComponent('individualsTab', 'individualsTab');

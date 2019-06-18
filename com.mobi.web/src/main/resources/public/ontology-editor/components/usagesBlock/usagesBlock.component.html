@@ -25,7 +25,7 @@
         <h5>Usages</h5>
     </div>
     <div class="usages-container" targeted-spinner="dvm.id">
-        <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
+        <div class="property-values mt-3" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results" disable-animate>
             <div class="prop-header d-flex align-items-center clearfix">
                 <p class="text text-truncate m-0">{{dvm.ontoUtils.getLabelForIRI(key)}}</p>
                 <small class="ml-1 text-muted text-truncate flex-1">&lt;{{key}}&gt;</small>
@@ -42,7 +42,7 @@
                 </span>
             </div>
         </div>
-        <div class="text-center">
+        <div class="text-center pt-1">
             <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
         </div>
     </div>

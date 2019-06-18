@@ -29,8 +29,9 @@ describe('Concept Schemes Tab directive', function() {
         mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('conceptSchemeHierarchyBlock', 'conceptSchemeHierarchyBlock');
         mockComponent('ontology-editor', 'annotationBlock');
+        mockComponent('ontology-editor', 'datatypePropertyBlock');
         mockComponent('relationshipsBlock', 'relationshipsBlock');
-        mockComponent('usagesBlock', 'usagesBlock');
+        mockComponent('ontology-editor', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

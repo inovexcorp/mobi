@@ -51,7 +51,7 @@
          * selected entity from that list. The selected entity display includes a
          * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
          * {@link ontology-editor.component:annotationBlock}, a
-         * {@link relationshipsBlock.directive:relationshipsBlock}, and a {@link usagesBlock.directive:usagesBlock}.
+         * {@link relationshipsBlock.directive:relationshipsBlock}, and a {@link ontology-editor.component:usagesBlock}.
          * The directive houses the method for opening a modal for deleting concepts or concept schemes. The directive
          * is replaced by the contents of its template.
          */

@@ -20,18 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Overview Tab directive', function() {
+describe('Overview Tab component', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('overviewTab');
+        module('ontology-editor');
         mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('ontology-editor', 'axiomBlock');
         mockComponent('ontology-editor', 'annotationBlock');
         mockComponent('ontology-editor', 'associationBlock');
-        mockComponent('characteristicsRow', 'characteristicsRow');
-        mockComponent('usagesBlock', 'usagesBlock');
+        mockComponent('ontology-editor', 'characteristicsRow');
+        mockComponent('ontology-editor', 'usagesBlock');
         mockOntologyState();
         mockOntologyManager();
         mockOntologyUtilsManager();
@@ -61,28 +61,27 @@ describe('Overview Tab directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('overview-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('OVERVIEW-TAB');
+            expect(this.element.querySelectorAll('.overview-tab.row').length).toEqual(1);
         });
         ['association-block', 'selected-details', 'annotation-block', 'axiom-block', 'characteristics-row', 'usages-block'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
         it('with a button to delete an entity if the user can modify', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
             var button = this.element.querySelectorAll('.selected-header button.btn-danger');
-            expect(button.length).toBe(1);
+            expect(button.length).toEqual(1);
             expect(angular.element(button[0]).text()).toContain('Delete');
         });
         it('with no button to delete an entity if the user cannot modify', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.selected-header button.btn-danger').length).toBe(0);
+            expect(this.element.querySelectorAll('.selected-header button.btn-danger').length).toEqual(0);
         });
         it('with a button to see the entity history', function() {
             var button = this.element.querySelectorAll('.selected-header button.btn-primary');

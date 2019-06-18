@@ -49,10 +49,9 @@
          * {@link shared.service:ontologyStateService selected ontology} and information about a selected
          * individual from that list. The selected individual display includes a
          * {@link ontology-editor.component:selectedDetails}, a button to delete the individual, a
-         * {@link datatypePropertyBlock.directive:datatypePropertyBlock}, a
-         * {@link objectPropertyBlock.directive:objectPropertyBlock}, and a {@link usagesBlock.directive:usagesBlock}.
-         * The directive houses the method for opening a modal for deleting individuals. The directive is replaced by
-         * the contents of its template.
+         * {@link datatypePropertyBlock.directive:datatypePropertyBlock}, and a
+         * {@link objectPropertyBlock.directive:objectPropertyBlock}. The directive houses the method for opening a
+         * modal for deleting individuals. The directive is replaced by the contents of its template.
          */
         .directive('individualsTab', individualsTab);
 

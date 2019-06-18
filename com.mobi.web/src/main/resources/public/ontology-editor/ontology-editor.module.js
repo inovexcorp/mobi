@@ -27,7 +27,6 @@
         .module('ontology-editor', [
             /* New Directives */
             'advancedLanguageSelect',
-            'characteristicsRow',
             'classesTab',
             'classHierarchyBlock',
             'commitsTab',
@@ -48,7 +47,6 @@
             'ontologyTab',
             'ontologyEditorPage',
             'openOntologyTab',
-            'overviewTab',
             'propertiesTab',
             'propertyHierarchyBlock',
             'relationshipsBlock',
@@ -56,7 +54,6 @@
             'savedChangesTab',
             'superClassSelect',
             'superPropertySelect',
-            'usagesBlock',
 
             /* Services */
             'ontologyUtilsManager'
