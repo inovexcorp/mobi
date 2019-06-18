@@ -29,8 +29,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation to set a custom value for the Resource ID of a REST endpoint request. If
- * the annotation is not set, the Resource ID is assumed to be the REST endpoint path itself.
+ * An annotation to set a custom value for the default Resource ID of a REST endpoint request. This will only be used
+ * if the expected Resource ID cannot be found in the params. This annotation will only be used as the defaultValue
+ * property of a ResourceID annotation.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

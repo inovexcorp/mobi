@@ -50,6 +50,7 @@ import com.mobi.rest.security.annotations.SubjectAttributes;
 import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
@@ -154,7 +155,19 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         // Resource
 
         ResourceId resourceIdAnnotation = method.getAnnotation(ResourceId.class);
-        IRI resourceIdIri = getResourceIdIri(resourceIdAnnotation, context, queryParameters, pathParameters);
+        IRI resourceIdIri;
+        try {
+            resourceIdIri = getResourceIdIri(resourceIdAnnotation, context, queryParameters, pathParameters);
+        } catch (MobiWebException ex) {
+            DefaultResourceId[] defaultValArr = resourceIdAnnotation.defaultValue();
+            if (defaultValArr.length != 0) {
+                DefaultResourceId defaultVal = defaultValArr[0];
+                ResourceId defaultResourceId = getResourceIdFromDefault(defaultVal);
+                resourceIdIri = getResourceIdIri(defaultResourceId, context, queryParameters, pathParameters);
+            } else {
+                throw ex;
+            }
+        }
 
         ResourceAttributes resourceAttributesAnnotation = method.getAnnotation(ResourceAttributes.class);
         Map<String, Literal> resourceAttributes = new HashMap<>();
@@ -219,66 +232,26 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                                             MultivaluedMap<String, String> queryParameters,
                                             MultivaluedMap<String, String> pathParameters) {
         IRI resourceIdIri;
-        String resourceValueStr = resourceIdAnnotation.value();
-        DefaultResourceId[] defaultValArr = resourceIdAnnotation.defaultValue();
-
-        switch (resourceIdAnnotation.type()) {
-            case PATH:
-                if (!pathParameters.containsKey(resourceValueStr)) {
-                    if (defaultValArr.length != 0) {
-                        DefaultResourceId defaultVal = defaultValArr[0];
-                        ResourceId defaultResourceId = getResourceIdFromDefault(resourceIdAnnotation, defaultVal);
-                        return getResourceIdIri(defaultResourceId, context, queryParameters,
-                                pathParameters);
-                    } else {
-                        throw ErrorUtils.sendError("Path does not contain parameter " + resourceValueStr, INTERNAL_SERVER_ERROR);
-                    }
-                } else {
+        if (resourceIdAnnotation == null) {
+            resourceIdIri = vf.createIRI(uriInfo.getAbsolutePath().toString());
+        } else {
+            String resourceValueStr = resourceIdAnnotation.value();
+            switch (resourceIdAnnotation.type()) {
+                case PATH:
+                    validatePathParam(resourceValueStr, pathParameters, true);
                     resourceIdIri = vf.createIRI(pathParameters.getFirst(resourceValueStr));
                     break;
-                }
-            case QUERY:
-                if (!queryParameters.containsKey(resourceValueStr)) {
-                    if (defaultValArr.length != 0) {
-                        DefaultResourceId defaultVal = defaultValArr[0];
-                        ResourceId defaultResourceId = getResourceIdFromDefault(resourceIdAnnotation, defaultVal);
-                        return getResourceIdIri(defaultResourceId, context, queryParameters,
-                                pathParameters);
-                    } else {
-                        throw ErrorUtils.sendError("Query parameters do not contain " + resourceValueStr, INTERNAL_SERVER_ERROR);
-                    }
-                } else {
+                case QUERY:
+                    validateQueryParam(resourceValueStr, queryParameters, true);
                     resourceIdIri = vf.createIRI(queryParameters.getFirst(resourceValueStr));
                     break;
-                }
-            case BODY:
-                FormDataMultiPart form = getFormData(context);
-                if (form.getField(resourceValueStr) == null) {
-                    if (defaultValArr.length != 0) {
-                        DefaultResourceId defaultVal = defaultValArr[0];
-                        ResourceId defaultResourceId = getResourceIdFromDefault(resourceIdAnnotation, defaultVal);
-                        return getResourceIdIri(defaultResourceId, context, queryParameters,
-                                pathParameters);
-                    } else {
-                        throw ErrorUtils.sendError("Form parameters do not contain " + resourceValueStr, INTERNAL_SERVER_ERROR);
-                    }
-                } else {
+                case BODY:
+                    FormDataMultiPart form = getFormData(context);
+                    validateFormParam(resourceValueStr, form, true);
                     resourceIdIri = vf.createIRI(form.getField(resourceValueStr).getValue());
                     break;
-                }
-            case PROP_PATH:
-                if (resourceIdAnnotation.start().length != 1) {
-                    if (defaultValArr.length != 0) {
-                        DefaultResourceId defaultVal = defaultValArr[0];
-                        ResourceId defaultResourceId = getResourceIdFromDefault(resourceIdAnnotation, defaultVal);
-                        return getResourceIdIri(defaultResourceId, context, queryParameters,
-                                pathParameters);
-                    } else {
-                        throw ErrorUtils.sendError("A Property Path value requires exactly one starting point",
-                                INTERNAL_SERVER_ERROR);
-                    }
-                } else {
-                    IRI pathStart = getPropPathStart(resourceIdAnnotation.start()[0],
+                case PROP_PATH:
+                    IRI pathStart = getPropPathStart(validatePropPathValue(resourceIdAnnotation.start()),
                             pathParameters, queryParameters, context, true);
                     try (RepositoryConnection conn = repository.getConnection()) {
                         TupleQueryResult result = getPropPathResult(pathStart, resourceIdAnnotation.value(), conn);
@@ -288,12 +261,13 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                         resourceIdIri = (IRI) Bindings.requiredResource(result.next(), "value");
                     }
                     break;
-                }
-            case PRIMITIVE:
-            default:
-                resourceIdIri = vf.createIRI(resourceIdAnnotation.value());
-                break;
+                case PRIMITIVE:
+                default:
+                    resourceIdIri = vf.createIRI(resourceIdAnnotation.value());
+                    break;
+            }
         }
+
         return resourceIdIri;
     }
 
@@ -301,7 +275,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         return vf.createLiteral(value, vf.createIRI(datatype));
     }
 
-    private ResourceId getResourceIdFromDefault(ResourceId resourceId, DefaultResourceId defaultVal) {
+    private ResourceId getResourceIdFromDefault(DefaultResourceId defaultVal) {
         ResourceId defaultResourceId = new ResourceId() {
             @Override
             public String value() {
@@ -317,7 +291,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
             }
             @Override
             public DefaultResourceId[] defaultValue() {
-                return resourceId.defaultValue();
+                return new DefaultResourceId[]{};
             }
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -333,7 +307,6 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
     }
 
     private boolean validatePathParam(String key, MultivaluedMap<String, String> params, boolean isRequired) {
-
         if (!params.containsKey(key) && isRequired) {
             throw ErrorUtils.sendError("Path does not contain parameter " + key, INTERNAL_SERVER_ERROR);
         }
