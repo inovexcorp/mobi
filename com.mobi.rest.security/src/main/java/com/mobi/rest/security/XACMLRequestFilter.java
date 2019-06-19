@@ -161,6 +161,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
         } catch (MobiWebException ex) {
             DefaultResourceId[] defaultValArr = resourceIdAnnotation.defaultValue();
             if (defaultValArr.length != 0) {
+                log.info("Attempting to resolve a default Resource ID.");
                 DefaultResourceId defaultVal = defaultValArr[0];
                 ResourceId defaultResourceId = getResourceIdFromDefault(defaultVal);
                 resourceIdIri = getResourceIdIri(defaultResourceId, context, queryParameters, pathParameters);
