@@ -23,8 +23,6 @@ package com.mobi.etl.service.ontology;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.versioning.VersioningManager;
@@ -37,6 +35,9 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 @Component
 public class OntologyImportServiceImpl implements OntologyImportService {
@@ -68,7 +69,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
         this.catalogManager = catalogManager;
     }
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
     }
