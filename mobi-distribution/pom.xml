@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.28-SNAPSHOT</version>
+        <version>1.16.31-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -61,14 +61,6 @@
             <artifactId>enterprise</artifactId>
             <classifier>features</classifier>
             <version>${karaf.version}</version>
-            <type>xml</type>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.karaf</groupId>
-            <artifactId>apache-camel</artifactId>
-            <classifier>features</classifier>
-            <version>${camel.version}</version>
             <type>xml</type>
             <scope>runtime</scope>
         </dependency>
@@ -212,7 +204,6 @@
                         <feature>jax-rs-provider-multipart</feature>
                         <feature>jax-rs-provider-gson</feature>
                         <feature>jax-rs-provider-security</feature>
-                        <feature>camel</feature>
 
                         <!-- Mobi Features -->
                         <feature>mobi-server-deps</feature>
