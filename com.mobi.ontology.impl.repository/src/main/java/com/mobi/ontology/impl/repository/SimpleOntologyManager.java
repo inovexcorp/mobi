@@ -67,7 +67,8 @@ import javax.cache.Cache;
 
 @Component(
         provide = { SimpleOntologyManager.class, OntologyManager.class },
-        name = SimpleOntologyManager.COMPONENT_NAME
+        name = SimpleOntologyManager.COMPONENT_NAME,
+        enabled = false
 )
 public class SimpleOntologyManager extends AbstractOntologyManager {
 
