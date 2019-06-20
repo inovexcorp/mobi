@@ -315,8 +315,15 @@
             if (self.datasetRecordIRI) {
                 config.params.dataset = self.datasetRecordIRI;
             }
-            $http.get(prefix + '/page', config)
-                .then(onSuccess, response => self.errorMessage = getMessage(response));
+            return $http.get(prefix + '/page', config)
+                .then(onSuccess, response => {
+                    if (response.status === 401) {
+                        util.createErrorToast(getMessage(response))
+                    }
+                    else {
+                        self.errorMessage = getMessage(response)
+                    }
+                });
         }
 
         function onSuccess(response) {
