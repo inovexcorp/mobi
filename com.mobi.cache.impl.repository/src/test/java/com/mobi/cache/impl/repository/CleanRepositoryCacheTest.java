@@ -28,6 +28,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -154,6 +155,9 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
         config.put("expiry", 1000000000);
         cleanJob.modified(config);
         cleanJob.execute(jobContext);
+        verify(repoManager, times(2)).getRepository("ontologyCache");
+        verify(datasetManager, never()).safeDeleteDataset(dataset1, "ontologyCache", false);
+        verify(datasetManager, never()).safeDeleteDataset(dataset2, "ontologyCache", false);
     }
 
     @Test (expected = IllegalStateException.class)
@@ -172,5 +176,8 @@ public class CleanRepositoryCacheTest extends OrmEnabledTestCase {
         config.put("repoId", "otherRepo");
         cleanJob.modified(config);
         cleanJob.execute(jobContext);
+        verify(repoManager).getRepository("otherRepo");
+        verify(datasetManager, never()).safeDeleteDataset(dataset1, "otherRepo", false);
+        verify(datasetManager, never()).safeDeleteDataset(dataset2, "otherRepo", false);
     }
 }
