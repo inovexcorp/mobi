@@ -46,7 +46,8 @@
             hierarchy: '<',
             index: '<',
             updateSearch: '&',
-            resetIndex: '&'
+            resetIndex: '&',
+            clickItem: '&?'
         },
         controllerAs: 'dvm',
         controller: hierarchyTreeComponentCtrl
@@ -76,6 +77,12 @@
         dvm.$onDestroy = function() {
             if (dvm.os.listItem.editorTabStates) {
                 dvm.resetIndex();
+            }
+        }
+        dvm.click = function(entityIRI) {
+            dvm.os.selectItem(entityIRI);
+            if (dvm.clickItem) {
+                dvm.clickItem({iri: entityIRI});
             }
         }
         dvm.onKeyup = function() {

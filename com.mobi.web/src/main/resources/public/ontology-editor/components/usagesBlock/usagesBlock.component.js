@@ -76,7 +76,7 @@
 
         function getResults() {
             var results = {};
-            dvm.total = dvm.usages.length;
+            dvm.total = _.get(dvm.usages, 'length');
             var chunks = _.chunk(dvm.usages, dvm.size);
             dvm.chunks = chunks.length === 0 ? 0 : chunks.length - 1;
             _.forEach(_.get(chunks, dvm.index, []), binding => addToResults(results, binding));

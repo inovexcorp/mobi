@@ -30,11 +30,11 @@ describe('Ontology Tab directive', function() {
         mockComponent('mergeTab', 'mergeTab');
         mockComponent('ontology-editor', 'projectTab');
         mockComponent('ontology-editor', 'overviewTab');
-        mockComponent('classesTab', 'classesTab');
-        mockComponent('propertiesTab', 'propertiesTab');
-        mockComponent('individualsTab', 'individualsTab');
-        mockComponent('conceptSchemesTab', 'conceptSchemesTab');
-        mockComponent('conceptsTab', 'conceptsTab');
+        mockComponent('ontology-editor', 'classesTab');
+        mockComponent('ontology-editor', 'propertiesTab');
+        mockComponent('ontology-editor', 'individualsTab');
+        mockComponent('ontology-editor', 'conceptSchemesTab');
+        mockComponent('ontology-editor', 'conceptsTab');
         mockComponent('ontology-editor', 'searchTab');
         mockComponent('savedChangesTab', 'savedChangesTab');
         mockComponent('commitsTab', 'commitsTab');

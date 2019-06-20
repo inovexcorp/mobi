@@ -112,7 +112,7 @@ describe('Everything Tree component', function() {
                 isOpened: true
             }]);
         });
-        it('updateSearch is one way bound', function() {
+        it('updateSearch should be called in the parent scope', function() {
             this.controller.updateSearch({value: 'value'});
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
         });

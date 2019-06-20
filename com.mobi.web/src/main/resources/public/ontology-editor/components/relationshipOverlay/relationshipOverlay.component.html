@@ -32,7 +32,7 @@
                 <ui-select-match placeholder="Select Relationship">
                     <span>{{$select.selected}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="relationship in resolve.relationshipList | filter:$select.search | orderBy:dvm.util.getIRILocalName">
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="relationship in dvm.resolve.relationshipList | filter:$select.search | orderBy:dvm.util.getIRILocalName">
                     <div title="{{relationship}}" ng-bind-html="dvm.util.getIRILocalName(relationship) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
