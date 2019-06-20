@@ -12,4 +12,6 @@ com.mobi.platform.server.cfg
 com.mobi.security.policy.api.cache.PolicyCacheConfiguration.cfg
 com.mobi.security.policy.api.xacml.XACMLPolicyManager.cfg
 com.mobi.vfs.basic-system.cfg
+com.mobi.ontology.impl.owlapi.OntologyManager.cfg
+com.mobi.ontology.impl.repository.OntologyManager.cfg
 emailTemplate.html

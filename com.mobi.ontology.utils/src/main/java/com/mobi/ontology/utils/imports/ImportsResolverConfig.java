@@ -29,10 +29,10 @@ import aQute.bnd.annotation.metatype.Meta;
 public interface ImportsResolverConfig {
 
     /**
-     * The user agent used to make requests to resolve imports
+     * The user agent used to make requests to resolve imports.
      *
      * @return The user agent string
      */
-    @Meta.AD(deflt = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0")
+    @Meta.AD(required = false)
     String userAgent();
 }

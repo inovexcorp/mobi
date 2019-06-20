@@ -23,9 +23,6 @@ package com.mobi.ontology.impl.core.record;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
@@ -52,6 +49,10 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
@@ -62,7 +63,7 @@ import java.io.IOException;
 
 @Component(
         immediate = true,
-        provide = { RecordService.class, SimpleOntologyRecordService.class }
+        service = { RecordService.class, SimpleOntologyRecordService.class }
 )
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
 
@@ -120,7 +121,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         this.mergeRequestManager = mergeRequestManager;
     }
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
     }

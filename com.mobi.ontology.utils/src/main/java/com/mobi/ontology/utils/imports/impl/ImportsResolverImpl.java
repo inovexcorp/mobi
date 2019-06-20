@@ -25,6 +25,7 @@ package com.mobi.ontology.utils.imports.impl;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.catalog.api.CatalogManager;
@@ -54,6 +55,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component(
+        configurationPolicy = ConfigurationPolicy.optional,
+        immediate = true,
         designateFactory = ImportsResolverConfig.class,
         name = ImportsResolverImpl.COMPONENT_NAME
 )
@@ -95,7 +98,11 @@ public class ImportsResolverImpl implements ImportsResolver {
     @Activate
     protected void activate(Map<String, Object> props) {
         ImportsResolverConfig config = Configurable.createConfigurable(ImportsResolverConfig.class, props);
-        userAgent = config.userAgent();
+        if (config.userAgent() == null) {
+            userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0";
+        } else {
+            userAgent = config.userAgent();
+        }
     }
 
     @Override

@@ -56,8 +56,16 @@
         </dependency>
 
         <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component.annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
         </dependency>
 
         <!--  Test dependencies -->
@@ -134,6 +142,7 @@
                         <Bundle-Name>Mobi Ontology Impl Core</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
+                            com.mobi.ontology.impl.core;
                             com.mobi.ontology.core.api.record;provide:=true
                         </Export-Package>
                         <Import-Package>

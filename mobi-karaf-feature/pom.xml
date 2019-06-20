@@ -89,6 +89,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>ontology.impl.repository</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>ontology.rest</artifactId>
             <version>${project.version}</version>
         </dependency>

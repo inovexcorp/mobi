@@ -1,0 +1,203 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://test.com/ontology1#"
+     xml:base="http://test.com/ontology1"
+     xmlns:ontology1="http://test.com/ontology1#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://test.com/ontology1">
+        <rdfs:label>Test Ontology</rdfs:label>
+        <owl:versionIRI>http://test.com/ontology1/1.0.0</owl:versionIRI>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://test.com/ontology1#testAnnotation -->
+
+    <owl:AnnotationProperty rdf:about="http://test.com/ontology1#testAnnotation"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://test.com/ontology1#testObjectProperty1 -->
+
+    <owl:ObjectProperty rdf:about="http://test.com/ontology1#testObjectProperty1">
+        <rdfs:range rdf:resource="http://test.com/ontology1#TestClassA"/>
+        <rdfs:domain rdf:resource="http://test.com/ontology1#TestClassA"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://test.com/ontology1#testObjectProperty2 -->
+
+    <owl:ObjectProperty rdf:about="http://test.com/ontology1#testObjectProperty2">
+        <rdfs:range rdf:resource="http://test.com/ontology1#TestClassC"/>
+        <rdfs:range>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://test.com/ontology1#TestClassA"/>
+                    <rdf:Description rdf:about="http://test.com/ontology1#TestClassB"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:range>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://test.com/ontology1#testDataProperty1 -->
+
+    <owl:DatatypeProperty rdf:about="http://test.com/ontology1#testDataProperty1">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <rdfs:domain rdf:resource="http://test.com/ontology1#TestClassA"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://test.com/ontology1#testDataProperty2 -->
+
+    <owl:DatatypeProperty rdf:about="http://test.com/ontology1#testDataProperty2">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:range>
+            <rdfs:Datatype>
+                <owl:oneOf>
+                    <rdf:Description>
+                        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                        <rdf:first>Accept</rdf:first>
+                        <rdf:rest>
+                            <rdf:Description>
+                                <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                <rdf:first>Decline</rdf:first>
+                                <rdf:rest>
+                                    <rdf:Description>
+                                        <rdf:type rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#List"/>
+                                        <rdf:first>Provisional</rdf:first>
+                                        <rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+                                    </rdf:Description>
+                                </rdf:rest>
+                            </rdf:Description>
+                        </rdf:rest>
+                    </rdf:Description>
+                </owl:oneOf>
+            </rdfs:Datatype>
+        </rdfs:range>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://test.com/ontology1#TestClassA -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassA">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class A</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://test.com/ontology1#TestClassB -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassB">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class B</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://test.com/ontology1#TestClassC -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassC">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class C</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- http://test.com/ontology1#TestClassD -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassD">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class D</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://test.com/ontology1#TestClassC"/>
+    </owl:Class>
+
+
+
+    <!-- http://test.com/ontology1#TestClassE -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassE">
+        <rdfs:label rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test Class E</rdfs:label>
+        <owl:equivalentClass rdf:resource="http://test.com/ontology1#TestClassC"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://test.com/ontology1#IndividualA -->
+
+    <owl:NamedIndividual rdf:about="http://test.com/ontology1#IndividualA">
+        <rdf:type rdf:resource="http://test.com/ontology1#TestClassA"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://test.com/ontology1#IndividualD -->
+
+    <owl:NamedIndividual rdf:about="http://test.com/ontology1#IndividualD">
+        <rdf:type rdf:resource="http://test.com/ontology1#TestClassD"/>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.2.5.20160517-0735) https://github.com/owlcs/owlapi -->
+
