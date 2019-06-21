@@ -230,6 +230,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.setRepositoryManager(mockRepoManager);
         manager.addOntologyCache(ontologyCache);
         manager.setbNodeService(bNodeService);
+        manager.start(new HashMap<>());
     }
 
     @After

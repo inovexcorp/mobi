@@ -208,8 +208,8 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                     context);
         }
 
-        Request request = pdp.createRequest(subjectIdIri, subjectAttributes, resourceIdIri, resourceAttributes, actionId,
-                actionAttributes);
+        Request request = pdp.createRequest(subjectIdIri, subjectAttributes, resourceIdIri, resourceAttributes,
+                actionId, actionAttributes);
         log.debug(request.toString());
         Response response = pdp.evaluate(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
         log.debug(response.toString());
@@ -282,23 +282,26 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
             public String value() {
                 return defaultVal.value();
             }
+
             @Override
             public ValueType type() {
                 return defaultVal.type();
             }
+
             @Override
             public Value[] start() {
                 return defaultVal.start();
             }
+
             @Override
             public DefaultResourceId[] defaultValue() {
                 return new DefaultResourceId[]{};
             }
+
             @Override
             public Class<? extends Annotation> annotationType() {
                 return ResourceId.class;
             }
-
         };
         return defaultResourceId;
     }

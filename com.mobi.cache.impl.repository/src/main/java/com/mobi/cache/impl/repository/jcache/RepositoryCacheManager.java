@@ -221,9 +221,11 @@ public class RepositoryCacheManager implements CacheManager {
         }
         synchronized (cacheFactoryMap) {
             if (!isClosed()) {
-                cachingProvider.close(uri, classLoaderReference.get());
-                for (Cache<?, ?> cache : caches.values()) {
-                    cache.close();
+                if (cachingProvider != null) {
+                    cachingProvider.close(uri, classLoaderReference.get());
+                    for (Cache<?, ?> cache : caches.values()) {
+                        cache.close();
+                    }
                 }
                 closed = true;
             }

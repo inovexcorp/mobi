@@ -26,6 +26,7 @@ package com.mobi.cache.impl.repository.jcache;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.ontology.dataset.DatasetFactory;
+import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ModelFactory;
@@ -43,10 +44,6 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
 
     private final Logger LOG = LoggerFactory.getLogger(AbstractDatasetRepositoryCache.class);
 
-    protected static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
-    protected static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
-    protected static final String TIMESTAMP_IRI_STRING = "http://mobi.com/ontologies/graph#lastAccessed";
-
     protected ValueFactory vf;
     protected ModelFactory mf;
     protected Repository repository;
@@ -61,7 +58,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
                     LOG.debug("Creating cache dataset " + datasetIRI.stringValue());
                     datasetManager.createDataset(datasetIRI.stringValue(), repository.getConfig().id());
                 } else {
-                    LOG.error("The dataset " + datasetIRI + " does not exist in the specified repository.");
+                    LOG.trace("The dataset " + datasetIRI + " does not exist in the specified repository.");
                     throw new IllegalArgumentException("The dataset " + datasetIRI
                             + " does not exist in the specified repository.");
                 }
@@ -78,7 +75,7 @@ public abstract class AbstractDatasetRepositoryCache<K, V> implements Cache<K, V
     }
 
     protected void updateDatasetTimestamp(DatasetConnection conn) {
-        IRI pred = vf.createIRI(TIMESTAMP_IRI_STRING);
+        IRI pred = vf.createIRI(OntologyDatasets.TIMESTAMP_IRI_STRING);
         Literal timestamp = vf.createLiteral(OffsetDateTime.now());
 
         Resource dataset = conn.getDataset();

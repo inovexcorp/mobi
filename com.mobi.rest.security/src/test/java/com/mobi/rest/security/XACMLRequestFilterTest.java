@@ -24,13 +24,17 @@ package com.mobi.rest.security;
  */
 
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.rest.security.annotations.DefaultResourceId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
@@ -40,6 +44,7 @@ import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.Response;
 import com.mobi.security.policy.api.ontologies.policy.Read;
+import com.mobi.web.security.util.AuthenticationProps;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
@@ -51,29 +56,33 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
+import java.util.Optional;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
 
-public class XACMLRequestFilterTest {
-    private static final String queryParamKey = "testQueryParamKey";
-    private static final String queryParamKey2 = "testQueryParamTwoKey";
-    private static final String queryParamValue = "http://mobi.com/queryParamKey#queryParamValue";
+public class XACMLRequestFilterTest extends OrmEnabledTestCase {
+    private static final String QUERY_PARAM_KEY = "testQueryParamKey";
+    private static final String QUERY_PARAM_TWO_KEY = "testQueryParamTwoKey";
+    private static final String QUERY_PARAM_VALUE = "http://mobi.com/queryParamKey#queryParamValue";
 
-    private static final String pathParamKey = "testPathParamKey";
-    private static final String pathParamKey2 = "testPathParamTwoKey";
-    private static final String pathParamValue = "http://mobi.com/pathParamKey#pathParamValue";
+    private static final String PATH_PARAM_KEY = "testPathParamKey";
+    private static final String PATH_PARAM_TWO_KEY = "testPathParamTwoKey";
+    private static final String PATH_PARAM_VALUE = "http://mobi.com/pathParamKey#pathParamValue";
 
-    private static final String formDataField = "testFormDataField";
-    private static final String formDataField2 = "testFormDataTwoField";
-    private static final String formDataValue = "http://mobi.com/formDataField#formDataValue";
+    private static final String FORM_DATA_FIELD = "testFormDataField";
+    private static final String FORM_DATA_TWO_FIELD = "testFormDataTwoField";
+    private static final String FORM_DATA_VALUE = "http://mobi.com/formDataField#formDataValue";
 
-    private static final String defaultResourceIdIri = "http://mobi.com/test-default";
+    private static final String DEFAULT_RESOURCE_ID_IRI = "http://mobi.com/test-default";
 
-    private static ValueFactory vf = SimpleValueFactory.getInstance();
+    private static final String MOBI_USER_IRI = "urn:mobiUser";
 
     private XACMLRequestFilter filter;
+
+    private User user;
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
 
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
@@ -102,52 +111,136 @@ public class XACMLRequestFilterTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+
         filter = new XACMLRequestFilter();
         filter.setPdp(pdp);
-        filter.setVf(vf);
+        filter.setVf(VALUE_FACTORY);
         filter.setEngineManager(engineManager);
         filter.uriInfo = uriInfo;
         filter.resourceInfo = resourceInfo;
+
         when(context.getMethod()).thenReturn("GET");
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
         when(pdp.evaluate(any(), any(IRI.class))).thenReturn(response);
         when(response.getDecision()).thenReturn(Decision.PERMIT);
     }
 
+
     @Test
-    public void resourceIdQueryParamExistsNoDefault() throws Exception {
+    public void decisionIsPermitTest() throws Exception {
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
+        filter.filter(context);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI("http://mobi.com/test#action");
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
+        Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
+    }
+
+    @Test
+    public void decisionIsDenyTest() throws Exception {
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
+        when(response.getDecision()).thenReturn(Decision.DENY);
+        try {
+            filter.filter(context);
+            fail("Expected MobiWebException to have been thrown");
+        } catch (MobiWebException e) {
+            assertEquals("You do not have permission to perform this action", e.getMessage());
+            assertEquals(401, e.getResponse().getStatus());
+        }
+    }
+
+    @Test
+    public void decisionIsIndeterminateTest() throws Exception {
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
+        when(response.getDecision()).thenReturn(Decision.INDETERMINATE);
+        try {
+            filter.filter(context);
+            fail("Expected MobiWebException to have been thrown");
+        } catch (MobiWebException e) {
+            assertEquals("Request indeterminate", e.getMessage());
+            assertEquals(500, e.getResponse().getStatus());
+        }
+    }
+
+    @Test
+    public void decisionIsNotApplicableTest() throws Exception {
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
+        when(response.getDecision()).thenReturn(Decision.NOT_APPLICABLE);
+        filter.filter(context);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI("http://mobi.com/test#action");
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
+        Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
+
+    }
+
+    @Test
+    public void userIsNotAnonymousTest() throws Exception {
+        user = userFactory.createNew(VALUE_FACTORY.createIRI(MOBI_USER_IRI));
+        when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
+        when(engineManager.retrieveUser("tester")).thenReturn(Optional.of(user));
+
+        when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
+        when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
+
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI("http://mobi.com/test#action");
+        IRI subjectId = VALUE_FACTORY.createIRI(MOBI_USER_IRI);
+
+        filter.filter(context);
+        Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
+    }
+
+    @Test
+    public void noResourceIdAnnotationTest() throws Exception {
+        when(resourceInfo.getResourceMethod()).thenReturn(MockNoResourceIdClass.class.getDeclaredMethod("noResourceId"));
+        filter.filter(context);
+        Mockito.verify(pdp, never()).createRequest(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void resourceIdQueryParamExistsNoDefaultTest() throws Exception {
         MultivaluedHashMap<String, String> queryParameters = new MultivaluedHashMap<>();
-        queryParameters.putSingle(queryParamKey, queryParamValue);
+        queryParameters.putSingle(QUERY_PARAM_KEY, QUERY_PARAM_VALUE);
         when(uriInfo.getQueryParameters()).thenReturn(queryParameters);
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdQueryParamClass.class.getDeclaredMethod("queryParamNoDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(queryParamValue);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(QUERY_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdQueryParamExistsWithDefault() throws Exception {
+    public void resourceIdQueryParamExistsWithDefaultTest() throws Exception {
         MultivaluedHashMap<String, String> queryParameters = new MultivaluedHashMap<>();
-        queryParameters.putSingle(queryParamKey, queryParamValue);
+        queryParameters.putSingle(QUERY_PARAM_KEY, QUERY_PARAM_VALUE);
         when(uriInfo.getQueryParameters()).thenReturn(queryParameters);
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdQueryParamClass.class.getDeclaredMethod("queryParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(queryParamValue);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(QUERY_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdMissingQueryParamNoDefault() throws Exception {
+    public void resourceIdMissingQueryParamNoDefaultTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Query parameters do not contain testQueryParamKey");
 
@@ -160,22 +253,22 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdMissingQueryParamWithDefault() throws Exception {
+    public void resourceIdMissingQueryParamWithDefaultTest() throws Exception {
         MultivaluedHashMap<String, String> queryParameters = new MultivaluedHashMap<>();
         when(uriInfo.getQueryParameters()).thenReturn(queryParameters);
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdQueryParamClass.class.getDeclaredMethod("queryParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(defaultResourceIdIri);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdMissingQueryParamWithDefaultNotExists() throws Exception {
+    public void resourceIdMissingQueryParamWithDefaultNotExistsTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Query parameters do not contain testQueryParamTwoKey");
 
@@ -188,39 +281,39 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdPathParamExistsNoDefault() throws Exception {
+    public void resourceIdPathParamExistsNoDefaultTest() throws Exception {
         MultivaluedHashMap<String, String> pathParameters = new MultivaluedHashMap<>();
-        pathParameters.putSingle(pathParamKey, pathParamValue);
+        pathParameters.putSingle(PATH_PARAM_KEY, PATH_PARAM_VALUE);
         when(uriInfo.getPathParameters()).thenReturn(pathParameters);
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdPathParamClass.class.getDeclaredMethod("pathParamNoDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(pathParamValue);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(PATH_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdPathParamExistsWithDefault() throws Exception {
+    public void resourceIdPathParamExistsWithDefaultTest() throws Exception {
         MultivaluedHashMap<String, String> pathParameters = new MultivaluedHashMap<>();
-        pathParameters.putSingle(pathParamKey, pathParamValue);
+        pathParameters.putSingle(PATH_PARAM_KEY, PATH_PARAM_VALUE);
         when(uriInfo.getPathParameters()).thenReturn(pathParameters);
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdPathParamClass.class.getDeclaredMethod("pathParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(pathParamValue);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(PATH_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdMissingPathParamNoDefault() throws Exception {
+    public void resourceIdMissingPathParamNoDefaultTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Path does not contain parameter testPathParamKey");
 
@@ -233,22 +326,22 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdMissingPathParamWithDefault() throws Exception {
+    public void resourceIdMissingPathParamWithDefaultTest() throws Exception {
         MultivaluedHashMap<String, String> pathParameters = new MultivaluedHashMap<>();
         when(uriInfo.getPathParameters()).thenReturn(pathParameters);
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdPathParamClass.class.getDeclaredMethod("pathParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(defaultResourceIdIri);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdMissingPathParamWithDefaultNotExists() throws Exception {
+    public void resourceIdMissingPathParamWithDefaultNotExistsTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Path does not contain parameter testPathParamTwoKey");
 
@@ -261,9 +354,9 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdFormDataExistsNoDefault() throws Exception {
+    public void resourceIdFormDataExistsNoDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
-        formPart.field(formDataField, formDataValue);
+        formPart.field(FORM_DATA_FIELD, FORM_DATA_VALUE);
         when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
@@ -271,18 +364,18 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataNoDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(formDataValue);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(FORM_DATA_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdFormDataExistsWithDefault() throws Exception {
+    public void resourceIdFormDataExistsWithDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
-        formPart.field(formDataField, formDataValue);
+        formPart.field(FORM_DATA_FIELD, FORM_DATA_VALUE);
         when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
         when(context.hasEntity()).thenReturn(true);
         when(context.getMediaType()).thenReturn(MediaType.MULTIPART_FORM_DATA_TYPE);
@@ -290,16 +383,16 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(formDataValue);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(FORM_DATA_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
     @Test
-    public void resourceIdEmptyFormDataNoDefault() throws Exception {
+    public void resourceIdEmptyFormDataNoDefaultTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Form parameters do not contain testFormDataField");
 
@@ -315,7 +408,7 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdEmptyFormDataWithDefault() throws Exception {
+    public void resourceIdEmptyFormDataWithDefaultTest() throws Exception {
         FormDataMultiPart formPart = new FormDataMultiPart();
         when(context.readEntity(FormDataMultiPart.class)).thenReturn(formPart);
         when(context.hasEntity()).thenReturn(true);
@@ -324,9 +417,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(defaultResourceIdIri);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
 
@@ -334,7 +427,7 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdEmptyFormDataWithDefaultNotExists() throws Exception {
+    public void resourceIdEmptyFormDataWithDefaultNotExistsTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Form parameters do not contain testFormDataTwoField");
 
@@ -350,7 +443,7 @@ public class XACMLRequestFilterTest {
     }
 
     @Test
-    public void resourceIdMissingFormDataNoDefault() throws Exception {
+    public void resourceIdMissingFormDataNoDefaultTest() throws Exception {
         exceptionRule.expect(MobiWebException.class);
         exceptionRule.expectMessage("Expected Request to have form data");
 
@@ -366,35 +459,44 @@ public class XACMLRequestFilterTest {
     }
 
     private static class MockResourceIdQueryParamClass {
-        @ResourceId(type = ValueType.QUERY, value = queryParamKey, defaultValue = @DefaultResourceId(defaultResourceIdIri))
+        @ResourceId(type = ValueType.QUERY, value = QUERY_PARAM_KEY, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))
         public void queryParamWithDefault() {}
 
-        @ResourceId(type = ValueType.QUERY, value = queryParamKey)
+        @ResourceId(type = ValueType.QUERY, value = QUERY_PARAM_KEY)
         public void queryParamNoDefault() {}
 
-        @ResourceId(type = ValueType.QUERY, value = queryParamKey, defaultValue = @DefaultResourceId(type = ValueType.QUERY, value = queryParamKey2))
+        @ResourceId(type = ValueType.QUERY, value = QUERY_PARAM_KEY, defaultValue = @DefaultResourceId(type = ValueType.QUERY, value = QUERY_PARAM_TWO_KEY))
         public void queryParamWithDefaultNotExists() {}
     }
 
     private static class MockResourceIdPathParamClass {
-        @ResourceId(type = ValueType.PATH, value = pathParamKey, defaultValue = @DefaultResourceId(defaultResourceIdIri))
+        @ResourceId(type = ValueType.PATH, value = PATH_PARAM_KEY, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))
         public void pathParamWithDefault() {}
 
-        @ResourceId(type = ValueType.PATH, value = pathParamKey)
+        @ResourceId(type = ValueType.PATH, value = PATH_PARAM_KEY)
         public void pathParamNoDefault() {}
 
-        @ResourceId(type = ValueType.PATH, value = pathParamKey, defaultValue = @DefaultResourceId(type = ValueType.PATH, value = pathParamKey2))
+        @ResourceId(type = ValueType.PATH, value = PATH_PARAM_KEY, defaultValue = @DefaultResourceId(type = ValueType.PATH, value = PATH_PARAM_TWO_KEY))
         public void pathParamWithDefaultNotExists() {}
     }
 
     private static class MockResourceIdFormDataClass {
-        @ResourceId(type = ValueType.BODY, value = formDataField, defaultValue = @DefaultResourceId(defaultResourceIdIri))
+        @ResourceId(type = ValueType.BODY, value = FORM_DATA_FIELD, defaultValue = @DefaultResourceId(DEFAULT_RESOURCE_ID_IRI))
         public void formDataWithDefault() {}
 
-        @ResourceId(type = ValueType.BODY, value = formDataField)
+        @ResourceId(type = ValueType.BODY, value = FORM_DATA_FIELD)
         public void formDataNoDefault() {}
 
-        @ResourceId(type = ValueType.BODY, value = formDataField, defaultValue = @DefaultResourceId(type = ValueType.BODY, value = formDataField2))
+        @ResourceId(type = ValueType.BODY, value = FORM_DATA_FIELD, defaultValue = @DefaultResourceId(type = ValueType.BODY, value = FORM_DATA_TWO_FIELD))
         public void formDataWithDefaultNotExists() {}
+    }
+
+    private static class MockResourceIdStringClass {
+        @ResourceId(value = "http://mobi.com/test#action")
+        public void resourceIdString() {}
+    }
+
+    private static class MockNoResourceIdClass {
+        public void noResourceId() {}
     }
 }

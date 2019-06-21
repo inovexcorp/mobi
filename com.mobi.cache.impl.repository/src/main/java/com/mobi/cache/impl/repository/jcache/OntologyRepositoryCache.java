@@ -31,6 +31,7 @@ import com.mobi.dataset.ontology.dataset.DatasetFactory;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.utils.OntologyUtils;
+import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.ResourceUtils;
 import com.mobi.rdf.api.IRI;
@@ -109,9 +110,9 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public Ontology get(String key) {
         LOG.debug("Retrieving ontology from cache for key " + key);
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            return getValueFromRepo(dsConn);
+            return getValueFromRepo(dsConn, key);
         } catch (IllegalArgumentException e) {
             LOG.debug("Cache does not contain ontology for key " + key);
             return null;
@@ -129,7 +130,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     @Override
     public boolean containsKey(String key) {
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             return true;
         } catch (IllegalArgumentException e) {
@@ -147,9 +148,9 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     public void put(String key, Ontology ontology) {
         LOG.debug("Putting ontology in cache for key " + key);
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, true)) {
-            IRI ontNamedGraphIRI = createSystemDefaultNamedGraphIRIFromKey(key);
+            IRI ontNamedGraphIRI = OntologyDatasets.createSystemDefaultNamedGraphIRIFromKey(key, vf);
             putValueInRepo(ontology, ontNamedGraphIRI, dsConn);
         }
 
@@ -169,7 +170,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     @Override
     public boolean putIfAbsent(String key, Ontology ontology) {
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             return false;
         } catch (IllegalArgumentException e) {
@@ -181,16 +182,16 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     @Override
     public boolean remove(String key) {
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         return removeValueFromRepo(datasetIRI);
     }
 
     @Override
     public boolean remove(String key, Ontology ontology) {
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            Ontology repoOntology = getValueFromRepo(dsConn);
+            Ontology repoOntology = getValueFromRepo(dsConn, key);
             if (ontology.equals(repoOntology)) {
                 return removeValueFromRepo(datasetIRI);
             }
@@ -206,10 +207,10 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     @Override
     public boolean replace(String key, Ontology ontology, Ontology newOntology) {
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         boolean success = false;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
-            Ontology repoOntology = getValueFromRepo(dsConn);
+            Ontology repoOntology = getValueFromRepo(dsConn, key);
             if (ontology.equals(repoOntology)) {
                 success = removeValueFromRepo(datasetIRI);
             }
@@ -226,7 +227,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
     @Override
     public boolean replace(String key, Ontology ontology) {
         requireNotClosed();
-        IRI datasetIRI = createDatasetIRIFromKey(key);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
         boolean success;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             success = removeValueFromRepo(datasetIRI);
@@ -344,7 +345,8 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
                     .stream()
                     .map(Statement::getSubject)
                     .map(Resource::stringValue)
-                    .map(resourceStr -> StringUtils.removeStart(resourceStr, DEFAULT_DS_NAMESPACE))
+                    .map(resourceStr -> StringUtils.removeStart(resourceStr,
+                            OntologyDatasets.DEFAULT_DS_NAMESPACE))
                     .map(ResourceUtils::decode)
                     .collect(Collectors.toSet());
             return getAll(keys)
@@ -356,15 +358,11 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         }
     }
 
-    private Ontology getValueFromRepo(DatasetConnection dsConn) {
+    private Ontology getValueFromRepo(DatasetConnection dsConn, String key) {
         updateDatasetTimestamp(dsConn);
-        Resource sdNamedGraphIRI = dsConn.getSystemDefaultNamedGraph();
-        Model ontologyModel = RepositoryResults.asModelNoContext(
-                dsConn.getStatements(null, null, null, sdNamedGraphIRI), mf);
-        if (ontologyModel.size() == 0) {
-            return null;
-        }
-        return ontologyManager.createOntology(ontologyModel);
+        String[] ids = key.split(OntologyDatasets.CACHE_KEY_SEPARATOR);
+        return ontologyManager.retrieveOntologyByCommit(vf.createIRI(ids[0]), vf.createIRI(ids[1]))
+                .orElseThrow(() -> new IllegalStateException("Ontology must exist in cache repository"));
     }
 
     private void putValueInRepo(Ontology ontology, IRI ontNamedGraphIRI, DatasetConnection dsConn) {
@@ -377,7 +375,7 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
             Model importedModel = importedOntology.asModel(mf);
             IRI ontSdNg = vf.createIRI(importedOntology.getOntologyId().getOntologyIRI()
                     .orElse((IRI)importedOntology.getOntologyId().getOntologyIdentifier()).stringValue()
-                    + SYSTEM_DEFAULT_NG_SUFFIX);
+                    + OntologyDatasets.SYSTEM_DEFAULT_NG_SUFFIX);
             if (!dsConn.containsContext(ontSdNg)) {
                 dsConn.addDefault(importedModel, ontSdNg);
             }
@@ -393,14 +391,6 @@ public class OntologyRepositoryCache extends AbstractDatasetRepositoryCache<Stri
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private IRI createDatasetIRIFromKey(String key) {
-        return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key));
-    }
-
-    private IRI createSystemDefaultNamedGraphIRIFromKey(String key) {
-        return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key) + SYSTEM_DEFAULT_NG_SUFFIX);
     }
 
     private static <K, V> Cache.Entry<K, V> cacheEntryFor(K key, V value) {
