@@ -32,14 +32,9 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.rest.security.annotations.DefaultResourceId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
@@ -67,7 +62,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
 
-public class XACMLRequestFilterTest {
+public class XACMLRequestFilterTest extends OrmEnabledTestCase {
     private static final String QUERY_PARAM_KEY = "testQueryParamKey";
     private static final String QUERY_PARAM_TWO_KEY = "testQueryParamTwoKey";
     private static final String QUERY_PARAM_VALUE = "http://mobi.com/queryParamKey#queryParamValue";
@@ -86,12 +81,8 @@ public class XACMLRequestFilterTest {
 
     private XACMLRequestFilter filter;
 
-    private ValueFactory vf;
-    private ModelFactory mf;
-    private ValueConverterRegistry vcr;
-
     private User user;
-    private UserFactory userFactory;
+    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
 
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
@@ -121,19 +112,9 @@ public class XACMLRequestFilterTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        vf = SimpleValueFactory.getInstance();
-        mf = LinkedHashModelFactory.getInstance();
-        vcr = new DefaultValueConverterRegistry();
-
-        userFactory = new UserFactory();
-        userFactory.setModelFactory(mf);
-        userFactory.setValueFactory(vf);
-        userFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(userFactory);
-
         filter = new XACMLRequestFilter();
         filter.setPdp(pdp);
-        filter.setVf(vf);
+        filter.setVf(VALUE_FACTORY);
         filter.setEngineManager(engineManager);
         filter.uriInfo = uriInfo;
         filter.resourceInfo = resourceInfo;
@@ -151,9 +132,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
         filter.filter(context);
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI("http://mobi.com/test#action");
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI("http://mobi.com/test#action");
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
     }
 
@@ -194,16 +175,16 @@ public class XACMLRequestFilterTest {
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
         when(response.getDecision()).thenReturn(Decision.NOT_APPLICABLE);
         filter.filter(context);
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI("http://mobi.com/test#action");
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI("http://mobi.com/test#action");
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
 
     }
 
     @Test
     public void userIsNotAnonymousTest() throws Exception {
-        user = userFactory.createNew(vf.createIRI(MOBI_USER_IRI));
+        user = userFactory.createNew(VALUE_FACTORY.createIRI(MOBI_USER_IRI));
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
         when(engineManager.retrieveUser("tester")).thenReturn(Optional.of(user));
 
@@ -211,9 +192,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdStringClass.class.getDeclaredMethod("resourceIdString"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI("http://mobi.com/test#action");
-        IRI subjectId = vf.createIRI(MOBI_USER_IRI);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI("http://mobi.com/test#action");
+        IRI subjectId = VALUE_FACTORY.createIRI(MOBI_USER_IRI);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -234,9 +215,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdQueryParamClass.class.getDeclaredMethod("queryParamNoDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(QUERY_PARAM_VALUE);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(QUERY_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -250,9 +231,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdQueryParamClass.class.getDeclaredMethod("queryParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(QUERY_PARAM_VALUE);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(QUERY_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -278,9 +259,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getPathParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdQueryParamClass.class.getDeclaredMethod("queryParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(DEFAULT_RESOURCE_ID_IRI);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -307,9 +288,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdPathParamClass.class.getDeclaredMethod("pathParamNoDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(PATH_PARAM_VALUE);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(PATH_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -323,9 +304,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdPathParamClass.class.getDeclaredMethod("pathParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(PATH_PARAM_VALUE);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(PATH_PARAM_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -351,9 +332,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdPathParamClass.class.getDeclaredMethod("pathParamWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(DEFAULT_RESOURCE_ID_IRI);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -383,9 +364,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataNoDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(FORM_DATA_VALUE);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(FORM_DATA_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -402,9 +383,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(FORM_DATA_VALUE);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(FORM_DATA_VALUE);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
         Mockito.verify(pdp).createRequest(subjectId, new HashMap<>(), resourceId, new HashMap<>(), actionId, new HashMap<>());
@@ -436,9 +417,9 @@ public class XACMLRequestFilterTest {
         when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
         when(resourceInfo.getResourceMethod()).thenReturn(MockResourceIdFormDataClass.class.getDeclaredMethod("formDataWithDefault"));
 
-        IRI actionId = vf.createIRI(Read.TYPE);
-        IRI resourceId = vf.createIRI(DEFAULT_RESOURCE_ID_IRI);
-        IRI subjectId = vf.createIRI(ANON_USER);
+        IRI actionId = VALUE_FACTORY.createIRI(Read.TYPE);
+        IRI resourceId = VALUE_FACTORY.createIRI(DEFAULT_RESOURCE_ID_IRI);
+        IRI subjectId = VALUE_FACTORY.createIRI(ANON_USER);
 
         filter.filter(context);
 
