@@ -38,6 +38,8 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.karaf.scheduler.Job;
 import org.apache.karaf.scheduler.JobContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -60,6 +62,7 @@ import java.util.Map;
         enabled = false
 )
 public class CleanRepositoryCache implements Job {
+    private final Logger log = LoggerFactory.getLogger(CleanRepositoryCache.class);
     static final String COMPONENT_NAME = "com.mobi.cache.impl.repository.CleanRepositoryCache";
 
     private DatasetManager datasetManager;
@@ -107,6 +110,8 @@ public class CleanRepositoryCache implements Job {
 
     @Override
     public void execute(JobContext context) {
+        log.trace("Starting CleanRepositoryCache Job");
+        long startTime = System.currentTimeMillis();
         Repository cacheRepo = repositoryManager.getRepository(repoId)
                 .orElseThrow(() -> new IllegalStateException("Ontology Cache Repository" + repoId + " must exist"));
 
@@ -117,9 +122,11 @@ public class CleanRepositoryCache implements Job {
             OffsetDateTime now = OffsetDateTime.now();
             statements.forEach(statement -> {
                 if (now.isAfter(OffsetDateTime.parse(statement.getObject().stringValue()).plusSeconds(expirySeconds))) {
+                    log.debug("Evicting expired dataset: " + statement.getSubject().stringValue());
                     datasetManager.safeDeleteDataset(statement.getSubject(), repoId, false);
                 }
             });
         }
+        log.trace("CleanRepositoryCache Job complete in " + (System.currentTimeMillis() - startTime));
     }
 }
