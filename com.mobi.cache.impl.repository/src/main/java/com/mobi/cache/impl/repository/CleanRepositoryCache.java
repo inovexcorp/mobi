@@ -127,6 +127,6 @@ public class CleanRepositoryCache implements Job {
                 }
             });
         }
-        log.trace("CleanRepositoryCache Job complete in " + (System.currentTimeMillis() - startTime));
+        log.trace("CleanRepositoryCache Job complete in " + (System.currentTimeMillis() - startTime) + " ms");
     }
 }
