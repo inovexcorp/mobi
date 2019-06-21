@@ -23,8 +23,6 @@ package com.mobi.cache.impl.repository;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.cache.api.repository.CacheFactory;
 import com.mobi.cache.api.repository.jcache.config.RepositoryConfiguration;
 import com.mobi.cache.impl.repository.jcache.OntologyRepositoryCache;
@@ -35,6 +33,9 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -48,8 +49,7 @@ public class OntologyRepositoryCacheFactory implements CacheFactory<String, Onto
     private DatasetFactory datasetFactory;
     private DatasetManager datasetManager;
 
-    // TODO: Remove when Repository based OntologyManager is implemented (or are we leaving it?)
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
     }
