@@ -277,7 +277,7 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
     }
 
     private ResourceId getResourceIdFromDefault(DefaultResourceId defaultVal) {
-        ResourceId defaultResourceId = new ResourceId() {
+        return new ResourceId() {
             @Override
             public String value() {
                 return defaultVal.value();
@@ -303,7 +303,6 @@ public class XACMLRequestFilter implements ContainerRequestFilter {
                 return ResourceId.class;
             }
         };
-        return defaultResourceId;
     }
 
     private String getMessageOrDefault(Response response, String defaultMessage) {
