@@ -29,13 +29,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation to set a custom value for the Resource ID of a REST endpoint request. If
- * the annotation is not set, the Resource ID is assumed to be the REST endpoint path itself.
+ * An annotation to set a custom value for the default Resource ID of a REST endpoint request. This will only be used
+ * if the expected Resource ID cannot be found in the params. This annotation will only be used as the defaultValue
+ * property of a ResourceID annotation.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface ResourceId {
-
+public @interface DefaultResourceId {
     /**
      * The {@link ValueType type} of data provided for the Resource ID.
      */
@@ -56,12 +56,4 @@ public @interface ResourceId {
      * ValueType.
      */
     Value[] start() default {};
-
-    /**
-     * A default value that can be provided for a Resource ID to be used if the value of
-     * the Resource ID cannot be resolved given the Query Parameters, Path Parameters,
-     * Form Data Parameters, or Property Path. If needed, it will be converted to a Resource ID
-     * and thus contains all the same methods as ResourceId except defaultValue.
-     */
-    DefaultResourceId[] defaultValue() default {};
 }
