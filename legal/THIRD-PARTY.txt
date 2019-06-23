@@ -1,5 +1,5 @@
 
-Lists of 358 third-party dependencies.
+Lists of 359 third-party dependencies.
      (Revised BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Public Domain) AOP alliance (aopalliance:aopalliance:1.0 - http://aopalliance.sourceforge.net)
      (The Apache Software License, Version 2.0) avalon-framework (avalon-framework:avalon-framework:4.1.3 - no url defined)
@@ -145,6 +145,7 @@ Lists of 358 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache Karaf :: JAAS :: Config (org.apache.karaf.jaas:org.apache.karaf.jaas.config:4.2.0 - https://www.apache.org/karaf/jaas/org.apache.karaf.jaas.config/)
      (The Apache Software License, Version 2.0) Apache Karaf :: JAAS :: Modules (org.apache.karaf.jaas:org.apache.karaf.jaas.modules:4.2.0 - https://www.apache.org/karaf/jaas/org.apache.karaf.jaas.modules/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Package :: Core (org.apache.karaf.package:org.apache.karaf.package.core:4.2.0 - https://www.apache.org/karaf/org.apache.karaf.package.core/)
+     (The Apache Software License, Version 2.0) Apache Karaf :: Scheduler :: Core (org.apache.karaf.scheduler:org.apache.karaf.scheduler.core:4.2.0 - https://www.apache.org/karaf/org.apache.karaf.scheduler.core/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Shell :: Console (org.apache.karaf.shell:org.apache.karaf.shell.console:4.2.0 - https://www.apache.org/karaf/shell/org.apache.karaf.shell.console/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Shell :: Core (org.apache.karaf.shell:org.apache.karaf.shell.core:4.2.0 - https://www.apache.org/karaf/shell/org.apache.karaf.shell.core/)
      (The Apache Software License, Version 2.0) Apache Karaf :: Shell :: SSH (org.apache.karaf.shell:org.apache.karaf.shell.ssh:4.2.0 - https://www.apache.org/karaf/shell/org.apache.karaf.shell.ssh/)

@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.16.32-SNAPSHOT</version>
+    <version>1.16.33-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -183,6 +183,11 @@
             <dependency>
                 <groupId>org.apache.karaf.jaas</groupId>
                 <artifactId>org.apache.karaf.jaas.modules</artifactId>
+                <version>${karaf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.karaf.scheduler</groupId>
+                <artifactId>org.apache.karaf.scheduler.core</artifactId>
                 <version>${karaf.version}</version>
             </dependency>
 
