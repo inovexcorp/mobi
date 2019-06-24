@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Concept Hierarchy Block component', function() {
+describe('Concept Hierarchy Block component', function() {
     var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {

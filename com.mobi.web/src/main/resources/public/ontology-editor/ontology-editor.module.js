@@ -37,7 +37,6 @@
             'ontologyEditorPage',
             'openOntologyTab',
             'resolveConflictsBlock',
-            'savedChangesTab',
             'superClassSelect',
             'superPropertySelect',
 

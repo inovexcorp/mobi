@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Saved Changes Tab directive', function() {
+describe('Saved Changes Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, utilSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('savedChangesTab');
+        module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockCatalogManager();
@@ -44,7 +44,9 @@ describe('Saved Changes Tab directive', function() {
         });
 
         ontologyStateSvc.listItem.inProgressCommit = {additions: [], deletions: []};
-        this.element = $compile(angular.element('<saved-changes-tab></saved-changes-tab>'))(scope);
+        scope.additions = [];
+        scope.deletions = [];
+        this.element = $compile(angular.element('<saved-changes-tab additions="additions" deletions="deletions"></saved-changes-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('savedChangesTab');
     });
@@ -60,11 +62,50 @@ describe('Saved Changes Tab directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('controller bound variable', function() {
+        it('additions is one way bound', function() {
+            this.controller.additions = [{}];
+            scope.$digest();
+            expect(scope.additions).toEqual([]);
+        });
+        it('deletions is one way bound', function() {
+            this.controller.deletions = [{}];
+            scope.$digest();
+            expect(scope.deletions).toEqual([]);
+        });
+    });
+    describe('should update the list of changes when additions/deletions change', function() {
+        beforeEach(function() {
+            utilSvc.getChangesById.and.returnValue([{}]);
+        });
+        it('if there are less than 100 changes', function() {
+            ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': '1', 'value': ['stuff']}];
+            ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
+            this.controller.$onChanges();
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('1', ontologyStateSvc.listItem.inProgressCommit.additions);
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('1', ontologyStateSvc.listItem.inProgressCommit.deletions);
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('2', ontologyStateSvc.listItem.inProgressCommit.additions);
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('2', ontologyStateSvc.listItem.inProgressCommit.deletions);
+            expect(this.controller.showList).toEqual([
+                {id: '1', additions: [{}], deletions: [{}], disableAll: false},
+                {id: '2', additions: [{}], deletions: [{}], disableAll: false},
+            ]);
+        });
+        it('if there are more than 100 changes', function() {
+            var ids = _.range(102);
+            ontologyStateSvc.listItem.inProgressCommit.additions = _.map(ids, id => ({'@id': id}));
+            this.controller.$onChanges();
+            _.forEach(ids, id => {
+                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, ontologyStateSvc.listItem.inProgressCommit.additions);
+                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, ontologyStateSvc.listItem.inProgressCommit.deletions);
+            });
+            expect(this.controller.showList.length).toEqual(100);
+        });
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('saved-changes-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('SAVED-CHANGES-TAB');
+            expect(this.element.querySelectorAll('.saved-changes-tab.row').length).toBe(1);
         });
         it('with a .has-changes', function() {
             expect(this.element.querySelectorAll('.has-changes').length).toBe(0);
@@ -87,15 +128,15 @@ describe('Saved Changes Tab directive', function() {
         it('with .list-group', function() {
             expect(this.element.querySelectorAll('.list-group').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
+            this.controller.showList = [{}];
             scope.$apply();
             expect(this.element.querySelectorAll('.list-group').length).toBe(1);
         });
         it('with statement-display dependent on how many additions/deletions there are', function() {
             expect(this.element.find('statement-display').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id', 'value': ['stuff']}];
-            ontologyStateSvc.listItem.upToDate = false;
-            utilSvc.getChangesById.and.returnValue([{}]);
-            scope.$apply();
+            this.controller.showList = [{additions: [{}]}, {additions: [{}]}];
+            scope.$digest();
             expect(this.element.find('statement-display').length).toBe(2);
         });
         it('depending on whether the list item is up to date', function() {
