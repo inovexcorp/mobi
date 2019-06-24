@@ -319,8 +319,7 @@
                 .then(onSuccess, response => {
                     if (response.status === 401) {
                         util.createErrorToast(getMessage(response))
-                    }
-                    else {
+                    } else {
                         self.errorMessage = getMessage(response)
                     }
                 });
