@@ -23,8 +23,6 @@ package com.mobi.ontology.impl.core.versioning;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
@@ -50,6 +48,9 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import java.io.IOException;
 import java.util.List;
@@ -58,7 +59,7 @@ import java.util.stream.Stream;
 
 @Component(
         immediate = true,
-        provide = { VersioningService.class, OntologyRecordVersioningService.class }
+        service = { VersioningService.class, OntologyRecordVersioningService.class }
 )
 public class OntologyRecordVersioningService extends BaseVersioningService<OntologyRecord> {
     private OntologyRecordFactory ontologyRecordFactory;
@@ -102,7 +103,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         this.catalogManager = catalogManager;
     }
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     protected void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
     }

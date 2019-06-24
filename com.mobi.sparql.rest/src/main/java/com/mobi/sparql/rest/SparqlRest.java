@@ -38,12 +38,15 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.rest.security.annotations.DefaultResourceId;
+import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.jaxb.Links;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import com.mobi.rest.security.annotations.ResourceId;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
@@ -152,6 +155,7 @@ public class SparqlRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the results of the provided SPARQL query.")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response queryRdf(@QueryParam("query") String queryString,
                       @QueryParam("dataset") String datasetRecordId) {
         if (queryString == null) {
@@ -205,6 +209,7 @@ public class SparqlRest {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ApiOperation("Download the results of the provided SPARQL query.")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response downloadQuery(@QueryParam("query") String queryString,
                            @QueryParam("dataset") String datasetRecordId,
                            @QueryParam("fileType") String fileExtension,
@@ -261,6 +266,7 @@ public class SparqlRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response getPagedResults(@Context UriInfo uriInfo,
                              @QueryParam("query") String queryString,
                              @QueryParam("dataset") String datasetRecordId,

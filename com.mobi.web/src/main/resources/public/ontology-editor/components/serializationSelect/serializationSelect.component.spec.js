@@ -66,7 +66,7 @@ describe('Serialization Select component', function() {
             expect(this.element.find('select').length).toEqual(1);
         });
         it('with options', function() {
-            expect(this.element.find('option').length).toEqual(5);
+            expect(this.element.find('option').length).toEqual(4);
         });
     });
 });

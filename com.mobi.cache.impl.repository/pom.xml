@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.31-SNAPSHOT</version>
+        <version>1.16.34-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -50,17 +50,17 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>persistence.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.impl.owlapi</artifactId>
+            <artifactId>ontology.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>ontology.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -68,8 +68,20 @@
             <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.component.annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.metatype.annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.scheduler</groupId>
+            <artifactId>org.apache.karaf.scheduler.core</artifactId>
         </dependency>
 
         <!-- Test Dependencies -->

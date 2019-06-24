@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.31-SNAPSHOT</version>
+        <version>1.16.34-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -124,9 +124,10 @@
                         <Bundle-Name>Mobi Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.ontology.utils;
-                            com.mobi.ontology.utils.cache; provide:=true
-                            com.mobi.cache.config; provide:=true
+                            com.mobi.ontology.utils,
+                            com.mobi.ontology.utils.cache; provide:=true,
+                            com.mobi.ontology.utils.cache.repository,
+                            com.mobi.cache.config; provide:=true,
                             com.mobi.ontology.utils.imports; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
