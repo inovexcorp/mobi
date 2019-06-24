@@ -261,7 +261,7 @@ describe('SPARQL Manager service', function() {
             sparqlManagerSvc.queryRdf();
             flushAndVerify($httpBackend);
         });
-        it('unless an error occurs', function() {
+        it('unless a 400 error occurs', function() {
             this.url += $httpParamSerializer(this.params);
             var statusMessage = 'Error message';
             var details = 'Details';
@@ -274,6 +274,20 @@ describe('SPARQL Manager service', function() {
             expect(sparqlManagerSvc.currentPage).toBe(1);
             expect(sparqlManagerSvc.data).toBeUndefined();
         });
+        it('unless a 401 error occurs'), function() {
+            this.url += $httpParamSerializer(this.params);
+            var statusMessage = 'Error message';
+            var details = 'Details';
+            utilSvc.getErrorMessage.and.returnValue(statusMessage);
+            $httpBackend.expectGET(this.url).respond(401, {details: details}, undefined, statusMessage);
+            sparqlManagerSvc.queryRdf();
+            flushAndVerify($httpBackend);
+            expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
+            expect(sparqlManagerSvc.errorDetails).toEqual(details);
+            expect(sparqlManagerSvc.currentPage).toBe(1);
+            expect(sparqlManagerSvc.data).toBeUndefined();
+            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message'); 
+        }
         it('when returning no bindings', function() {
             this.url += $httpParamSerializer(this.params);
             $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []});
