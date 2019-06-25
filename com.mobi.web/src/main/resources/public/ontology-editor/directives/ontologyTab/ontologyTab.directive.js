@@ -44,7 +44,7 @@
          * {@link ontology-editor.component:classesTab}, {@link ontology-editor.component:propertiesTab},
          * {@link ontology-editor.component:individualsTab}, {@link ontology-editor.component:conceptSchemesTab},
          * {@link ontology-editor.component:conceptsTab}, {@link ontology-editor.component:searchTab},
-         * {@link ontology-editor.component:savedChangesTab}, and {@link commitsTab.directive:commitsTab}. The
+         * {@link ontology-editor.component:savedChangesTab}, and {@link ontology-editor.component:commitsTab}. The
          * directive is replaced by the contents of its template.
          */
         .directive('ontologyTab', ontologyTab);

@@ -67,7 +67,7 @@ describe('Concept Scheme Hierarchy Block component', function() {
         });
         it('click should call the correct method', function() {
             this.controller.click('iri');
-            expect(this.contorller.clickItem).toHaveBeenCalledWith({iri: 'iri'});
+            expect(scope.clickItem).toHaveBeenCalledWith('iri');
         });
     });
     describe('contains the correct html', function() {

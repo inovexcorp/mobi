@@ -27,7 +27,6 @@
         .module('ontology-editor', [
             /* New Directives */
             'advancedLanguageSelect',
-            'commitsTab',
             'iriSelectOntology',
             'mergeBlock',
             'mergeTab',

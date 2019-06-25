@@ -37,7 +37,7 @@ describe('Ontology Tab directive', function() {
         mockComponent('ontology-editor', 'conceptsTab');
         mockComponent('ontology-editor', 'searchTab');
         mockComponent('ontology-editor', 'savedChangesTab');
-        mockComponent('commitsTab', 'commitsTab');
+        mockComponent('ontology-editor', 'commitsTab');
         mockComponent('ontologyButtonStack', 'ontologyButtonStack');
         mockComponent('ontology-editor', 'openEntitySnackbar');
         mockOntologyState();
