@@ -26,7 +26,8 @@ package com.mobi.web.authentication;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
-import com.mobi.jaas.api.utils.TokenUtils;
+import aQute.bnd.annotation.component.Reference;
+import com.mobi.jaas.api.token.TokenManager;
 import com.nimbusds.jwt.SignedJWT;
 import org.ops4j.pax.web.extender.whiteboard.ExtenderConstants;
 import org.osgi.framework.BundleContext;
@@ -50,22 +51,29 @@ public class UITokenContext extends AuthHttpContext {
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
     static final String CONTEXT_ID = "uiCtxId";
 
+    private TokenManager tokenManager;
+
     @Activate
     void setup(BundleContext context) {
         this.setBundle(context.getBundle());
     }
 
+    @Reference
+    void setTokenManager(TokenManager tokenManager) {
+        this.tokenManager = tokenManager;
+    }
+
     @Override
     protected boolean handleAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String token = TokenUtils.getTokenString(request);
-        Optional<SignedJWT> tokenOptional = TokenUtils.verifyToken(token, response);
+        String token = tokenManager.getTokenString(request);
+        Optional<SignedJWT> tokenOptional = tokenManager.verifyToken(token);
 
         if (tokenOptional.isPresent()) {
             log.debug("Token found and verified.");
         } else {
             log.debug("Token missing or unverified. Generating unauthenticated token.");
-            SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
-            response.addCookie(TokenUtils.createSecureTokenCookie(unauthToken));
+            SignedJWT unauthToken = tokenManager.generateUnauthToken();
+            response.addCookie(tokenManager.createSecureTokenCookie(unauthToken));
         }
         return true;
     }

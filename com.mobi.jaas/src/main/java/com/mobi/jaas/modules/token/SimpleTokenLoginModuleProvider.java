@@ -31,6 +31,8 @@ import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.provider.AppConfigEntryProvider;
 import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
+import com.mobi.jaas.api.modules.token.TokenLoginModule;
+import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.jaas.proxy.ProxyLoginModule;
 import org.osgi.framework.BundleContext;
 
@@ -41,11 +43,17 @@ import java.util.Map;
 public class SimpleTokenLoginModuleProvider implements AppConfigEntryProvider {
 
     private EngineManager engineManager;
+    private TokenManager tokenManager;
     protected BundleContext context;
 
     @Reference
     public void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
+    }
+
+    @Reference
+    public void setTokenManager(TokenManager tokenManager) {
+        this.tokenManager = tokenManager;
     }
 
     @Activate
@@ -70,6 +78,7 @@ public class SimpleTokenLoginModuleProvider implements AppConfigEntryProvider {
         tokenOptions.put(BundleContext.class.getName(), context);
         tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
         tokenOptions.put(ProxyLoginModule.MODULE, SimpleTokenLoginModule.class.getName());
+        tokenOptions.put(TokenLoginModule.TOKEN_MANAGER, tokenManager);
         return tokenOptions;
     }
 }

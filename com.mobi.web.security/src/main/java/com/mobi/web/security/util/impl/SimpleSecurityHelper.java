@@ -29,7 +29,7 @@ import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.principals.UserPrincipal;
-import com.mobi.jaas.api.utils.TokenUtils;
+import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.web.security.util.RestSecurityUtils;
 import com.mobi.web.security.util.api.SecurityHelper;
 
@@ -42,6 +42,7 @@ public class SimpleSecurityHelper implements SecurityHelper {
 
     private MobiConfiguration configuration;
     private EngineManager engineManager;
+    private TokenManager tokenManager;
 
     @Reference
     protected void setMobiConfiguration(MobiConfiguration configuration) {
@@ -53,9 +54,14 @@ public class SimpleSecurityHelper implements SecurityHelper {
         this.engineManager = engineManager;
     }
 
+    @Reference
+    protected void setTokenManager(TokenManager tokenManager) {
+        this.tokenManager = tokenManager;
+    }
+
     @Override
     public boolean authenticate(ContainerRequestContext context, Subject subject) {
-        String tokenString = TokenUtils.getTokenString(context);
+        String tokenString = tokenManager.getTokenString(context);
         return RestSecurityUtils.authenticateToken("mobi", subject, tokenString, configuration);
     }
 
