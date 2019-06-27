@@ -27,7 +27,7 @@ import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.principals.UserPrincipal;
-import com.mobi.jaas.api.utils.TokenUtils;
+import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
 import com.mobi.web.security.util.RestSecurityUtils;
@@ -72,6 +72,7 @@ public class AuthRest {
 
     private EngineManager engineManager;
     private MobiConfiguration configuration;
+    private TokenManager tokenManager;
 
     @Reference
     void setEngineManager(EngineManager engineManager) {
@@ -81,6 +82,11 @@ public class AuthRest {
     @Reference
     void setConfiguration(MobiConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    @Reference
+    void setTokenManager(TokenManager tokenManager) {
+        this.tokenManager = tokenManager;
     }
 
     /**
@@ -93,26 +99,18 @@ public class AuthRest {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation("Gets the current user token")
     public Response getCurrentUser(@Context ContainerRequestContext context) {
-        String token = TokenUtils.getTokenString(context);
-        try {
-            Optional<SignedJWT> tokenOptional = TokenUtils.verifyToken(token);
-            if (tokenOptional.isPresent()) {
-                log.debug("Token found and verified.");
-                log.debug("Writing payload to response.");
-                SignedJWT signedToken = tokenOptional.get();
-                return Response.ok(signedToken.getPayload().toString()).build();
-            } else {
-                log.debug("Token missing or unverified. Generating unauthenticated token.");
-                SignedJWT signedToken = TokenUtils.generateUnauthToken();
-                log.debug("Writing payload to response.");
-                return createResponse(signedToken);
-            }
-        } catch (ParseException ex) {
-            throw handleParseError(ex);
-        } catch (JOSEException ex) {
-            throw handleJOSEError(ex);
-        } catch (IOException ex) {
-            throw handleIOError(ex);
+        String token = tokenManager.getTokenString(context);
+        Optional<SignedJWT> tokenOptional = tokenManager.verifyToken(token);
+        if (tokenOptional.isPresent()) {
+            log.debug("Token found and verified.");
+            log.debug("Writing payload to response.");
+            SignedJWT signedToken = tokenOptional.get();
+            return Response.ok(signedToken.getPayload().toString()).build();
+        } else {
+            log.debug("Token missing or unverified. Generating unauthenticated token.");
+            SignedJWT signedToken = tokenManager.generateUnauthToken();
+            log.debug("Writing payload to response.");
+            return createResponse(signedToken);
         }
     }
 
@@ -142,19 +140,13 @@ public class AuthRest {
 
         UserCredentials userCreds = userCredsOptional.get();
         log.debug("Attempting to login in as " + username);
-        try {
-            if (authenticated(userCreds.getUsername(), userCreds.getPassword())) {
-                SignedJWT token = TokenUtils.generateauthToken(userCreds.getUsername());
-                log.debug("Authentication successful.");
-                return createResponse(token);
-            }
-            log.debug("Authentication failed.");
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        } catch (JOSEException ex) {
-            throw handleJOSEError(ex);
-        } catch (IOException ex) {
-            throw handleIOError(ex);
+        if (authenticated(userCreds.getUsername(), userCreds.getPassword())) {
+            SignedJWT token = tokenManager.generateAuthToken(userCreds.getUsername());
+            log.debug("Authentication successful.");
+            return createResponse(token);
         }
+        log.debug("Authentication failed.");
+        return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
     /**
@@ -167,20 +159,14 @@ public class AuthRest {
     @ApiOperation("Logs out of Mobi by setting unauth token")
     public Response logout() {
         log.debug("Requested logout. Generating unauthenticated token.");
-        try {
-            SignedJWT unauthToken = TokenUtils.generateUnauthToken();
-            return createResponse(unauthToken);
-        } catch (JOSEException ex) {
-            throw handleJOSEError(ex);
-        } catch (IOException ex) {
-            throw handleIOError(ex);
-        }
+        SignedJWT unauthToken = tokenManager.generateUnauthToken();
+        return createResponse(unauthToken);
     }
 
     private Response createResponse(SignedJWT token) {
         log.debug("Writing payload to response.");
         return Response.ok(token.getPayload().toString())
-                .cookie(TokenUtils.createSecureTokenNewCookie(token)).build();
+                .cookie(tokenManager.createSecureTokenNewCookie(token)).build();
     }
 
     private boolean authenticated(String username, String password) {

@@ -30,6 +30,8 @@ import static org.mockito.Mockito.when;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
+import com.mobi.jaas.api.modules.token.TokenLoginModule;
+import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.jaas.proxy.ProxyLoginModule;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +51,9 @@ public class SimpleTokenLoginModuleProviderTest {
     private EngineManager engineManager;
 
     @Mock
+    private TokenManager tokenManager;
+
+    @Mock
     private BundleContext context;
 
     @Mock
@@ -62,6 +67,7 @@ public class SimpleTokenLoginModuleProviderTest {
 
         provider = new SimpleTokenLoginModuleProvider();
         provider.setEngineManager(engineManager);
+        provider.setTokenManager(tokenManager);
     }
 
     @Test
@@ -87,5 +93,7 @@ public class SimpleTokenLoginModuleProviderTest {
         assertEquals(Long.toString(bundleId), config.get(ProxyLoginModule.BUNDLE_ID));
         assertTrue(config.containsKey(ProxyLoginModule.MODULE));
         assertEquals(SimpleTokenLoginModule.class.getName(), config.get(ProxyLoginModule.MODULE));
+        assertTrue(config.containsKey(TokenLoginModule.TOKEN_MANAGER));
+        assertEquals(tokenManager, config.get(TokenLoginModule.TOKEN_MANAGER));
     }
 }
