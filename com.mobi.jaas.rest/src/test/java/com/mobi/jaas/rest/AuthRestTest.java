@@ -27,6 +27,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -42,11 +43,10 @@ import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.principals.UserPrincipal;
-import com.mobi.jaas.api.utils.TokenUtils;
+import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.web.security.util.RestSecurityUtils;
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jwt.SignedJWT;
 import net.sf.json.JSONObject;
@@ -61,8 +61,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.text.ParseException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -74,7 +72,7 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 @PowerMockIgnore({"javax.ws.*", "org.glassfish.*"})
-@PrepareForTest({TokenUtils.class, RestSecurityUtils.class})
+@PrepareForTest({RestSecurityUtils.class})
 public class AuthRestTest extends MobiRestTestNg {
 
     private NewCookie authCookie;
@@ -91,6 +89,7 @@ public class AuthRestTest extends MobiRestTestNg {
 
     private EngineManager engineManager;
     private MobiConfiguration mobiConfiguration;
+    private TokenManager tokenManager;
     private SignedJWT signedJWT;
     private SignedJWT unauthSignedJWT;
     private Role requiredRole;
@@ -103,19 +102,18 @@ public class AuthRestTest extends MobiRestTestNg {
 
     @BeforeMethod
     private void setupStaticMocks() throws Exception {
-        reset(engineManager);
+        reset(engineManager, tokenManager);
 
         when(engineManager.getUserRoles(anyString())).thenReturn(Collections.emptySet());
         when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(requiredRole));
 
-        mockStatic(TokenUtils.class);
-        when(TokenUtils.getTokenString(any(ContainerRequestContext.class))).thenReturn(TOKEN_STRING);
-        when(TokenUtils.verifyToken(anyString())).thenReturn(Optional.empty());
-        when(TokenUtils.verifyToken(TOKEN_STRING)).thenReturn(Optional.of(signedJWT));
-        when(TokenUtils.generateauthToken(anyString())).thenReturn(signedJWT);
-        when(TokenUtils.generateUnauthToken()).thenReturn(unauthSignedJWT);
-        when(TokenUtils.createSecureTokenNewCookie(signedJWT)).thenReturn(authCookie);
-        when(TokenUtils.createSecureTokenNewCookie(unauthSignedJWT)).thenReturn(unauthCookie);
+        when(tokenManager.getTokenString(any(ContainerRequestContext.class))).thenReturn(TOKEN_STRING);
+        when(tokenManager.verifyToken(anyString())).thenReturn(Optional.empty());
+        when(tokenManager.verifyToken(TOKEN_STRING)).thenReturn(Optional.of(signedJWT));
+        when(tokenManager.generateAuthToken(anyString())).thenReturn(signedJWT);
+        when(tokenManager.generateUnauthToken()).thenReturn(unauthSignedJWT);
+        when(tokenManager.createSecureTokenNewCookie(signedJWT)).thenReturn(authCookie);
+        when(tokenManager.createSecureTokenNewCookie(unauthSignedJWT)).thenReturn(unauthCookie);
 
         mockStatic(RestSecurityUtils.class);
         when(RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), anyString(), anyString(), eq(mobiConfiguration))).thenReturn(false);
@@ -132,6 +130,7 @@ public class AuthRestTest extends MobiRestTestNg {
 
         engineManager = mock(EngineManager.class);
         mobiConfiguration = mock(MobiConfiguration.class);
+        tokenManager = mock(TokenManager.class);
         signedJWT = mock(SignedJWT.class);
         unauthSignedJWT = mock(SignedJWT.class);
         requiredRole = mock(Role.class);
@@ -148,6 +147,7 @@ public class AuthRestTest extends MobiRestTestNg {
         AuthRest rest = new AuthRest();
         rest.setConfiguration(mobiConfiguration);
         rest.setEngineManager(engineManager);
+        rest.setTokenManager(tokenManager);
 
         return new ResourceConfig()
                 .register(rest)
@@ -163,12 +163,9 @@ public class AuthRestTest extends MobiRestTestNg {
     public void getCurrentUserTest() throws Exception {
         Response response = target().path("session").request().get();
         assertEquals(response.getStatus(), 200);
-        verifyStatic();
-        TokenUtils.getTokenString(any(ContainerRequestContext.class));
-        verifyStatic();
-        TokenUtils.verifyToken(TOKEN_STRING);
-        verifyStatic(times(0));
-        TokenUtils.generateUnauthToken();
+        verify(tokenManager).getTokenString(any(ContainerRequestContext.class));
+        verify(tokenManager).verifyToken(TOKEN_STRING);
+        verify(tokenManager, never()).generateUnauthToken();
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
         try {
@@ -182,16 +179,13 @@ public class AuthRestTest extends MobiRestTestNg {
     @Test
     public void getCurrentUserNotVerifiedTest() throws Exception {
         // Setup:
-        when(TokenUtils.getTokenString(any(ContainerRequestContext.class))).thenReturn(ERROR);
+        when(tokenManager.getTokenString(any(ContainerRequestContext.class))).thenReturn(ERROR);
 
         Response response = target().path("session").request().get();
         assertEquals(response.getStatus(), 200);
-        verifyStatic();
-        TokenUtils.getTokenString(any(ContainerRequestContext.class));
-        verifyStatic();
-        TokenUtils.verifyToken(ERROR);
-        verifyStatic();
-        TokenUtils.generateUnauthToken();
+        verify(tokenManager).getTokenString(any(ContainerRequestContext.class));
+        verify(tokenManager).verifyToken(ERROR);
+        verify(tokenManager).generateUnauthToken();
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(ANON, cookies.get(TOKEN_NAME).getValue());
@@ -201,58 +195,6 @@ public class AuthRestTest extends MobiRestTestNg {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
-    }
-
-    @Test
-    public void getCurrentUserParseExceptionTest() throws Exception {
-        // Setup:
-        when(TokenUtils.verifyToken(anyString())).thenThrow(new ParseException("", 0));
-
-        Response response = target().path("session").request().get();
-        assertEquals(response.getStatus(), 500);
-        verifyStatic();
-        TokenUtils.getTokenString(any(ContainerRequestContext.class));
-        verifyStatic();
-        TokenUtils.verifyToken(TOKEN_STRING);
-        verifyStatic(times(0));
-        TokenUtils.generateUnauthToken();
-        Map<String, NewCookie> cookies = response.getCookies();
-        assertEquals(0, cookies.size());
-    }
-
-    @Test
-    public void getCurrentUserIOExceptionTest() throws Exception {
-        // Setup:
-        when(TokenUtils.getTokenString(any(ContainerRequestContext.class))).thenReturn(ERROR);
-        when(TokenUtils.generateUnauthToken()).thenThrow(new IOException());
-
-        Response response = target().path("session").request().get();
-        assertEquals(response.getStatus(), 500);
-        verifyStatic();
-        TokenUtils.getTokenString(any(ContainerRequestContext.class));
-        verifyStatic();
-        TokenUtils.verifyToken(ERROR);
-        verifyStatic();
-        TokenUtils.generateUnauthToken();
-        Map<String, NewCookie> cookies = response.getCookies();
-        assertEquals(0, cookies.size());
-    }
-
-    @Test
-    public void getCurrentUserJOSEExceptionTest() throws Exception {
-        // Setup:
-        when(TokenUtils.verifyToken(anyString())).thenThrow(new JOSEException(""));
-
-        Response response = target().path("session").request().get();
-        assertEquals(response.getStatus(), 500);
-        verifyStatic();
-        TokenUtils.getTokenString(any(ContainerRequestContext.class));
-        verifyStatic();
-        TokenUtils.verifyToken(TOKEN_STRING);
-        verifyStatic(times(0));
-        TokenUtils.generateUnauthToken();
-        Map<String, NewCookie> cookies = response.getCookies();
-        assertEquals(0, cookies.size());
     }
 
     @Test
@@ -271,8 +213,7 @@ public class AuthRestTest extends MobiRestTestNg {
         Response response = target().path("session").request()
                 .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
     }
@@ -285,8 +226,7 @@ public class AuthRestTest extends MobiRestTestNg {
         Response response = target().path("session").request()
                 .header("Authorization", "Basic " + Base64.encode(authorization.getBytes())).post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
     }
@@ -301,8 +241,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 401);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(ANON), eq(ERROR), eq(mobiConfiguration));
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -319,8 +258,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 401);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -337,8 +275,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 401);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -354,8 +291,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
-        verifyStatic();
-        TokenUtils.generateauthToken(USERNAME);
+        verify(tokenManager).generateAuthToken(USERNAME);
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
@@ -375,8 +311,7 @@ public class AuthRestTest extends MobiRestTestNg {
 
         Response response = target().path("session").queryParam("password", PASSWORD).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
     }
@@ -385,8 +320,7 @@ public class AuthRestTest extends MobiRestTestNg {
     public void loginCredNoPasswordTest() throws Exception {
         Response response = target().path("session").queryParam("username", USERNAME).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 401);
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
     }
@@ -397,8 +331,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 401);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(ANON), eq(ERROR), eq(mobiConfiguration));
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -413,8 +346,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 401);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -429,8 +361,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 401);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
-        verifyStatic(times(0));
-        TokenUtils.generateauthToken(anyString());
+        verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -442,8 +373,7 @@ public class AuthRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verifyStatic();
         RestSecurityUtils.authenticateUser(eq("mobi"), any(Subject.class), eq(USERNAME), eq(PASSWORD), eq(mobiConfiguration));
-        verifyStatic();
-        TokenUtils.generateauthToken(USERNAME);
+        verify(tokenManager).generateAuthToken(USERNAME);
         verify(engineManager).getUserRoles(USERNAME);
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
@@ -460,8 +390,7 @@ public class AuthRestTest extends MobiRestTestNg {
     public void logoutTest() throws Exception {
         Response response = target().path("session").request().delete();
         assertEquals(response.getStatus(), 200);
-        verifyStatic();
-        TokenUtils.generateUnauthToken();
+        verify(tokenManager).generateUnauthToken();
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(ANON, cookies.get(TOKEN_NAME).getValue());
@@ -471,32 +400,6 @@ public class AuthRestTest extends MobiRestTestNg {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
-    }
-
-    @Test
-    public void logoutJOSEExceptionTest() throws Exception {
-        // Setup:
-        when(TokenUtils.generateUnauthToken()).thenThrow(new JOSEException(""));
-
-        Response response = target().path("session").request().delete();
-        assertEquals(response.getStatus(), 500);
-        verifyStatic();
-        TokenUtils.generateUnauthToken();
-        Map<String, NewCookie> cookies = response.getCookies();
-        assertEquals(0, cookies.size());
-    }
-
-    @Test
-    public void logoutIOExceptionTest() throws Exception {
-        // Setup:
-        when(TokenUtils.generateUnauthToken()).thenThrow(new IOException(""));
-
-        Response response = target().path("session").request().delete();
-        assertEquals(response.getStatus(), 500);
-        verifyStatic();
-        TokenUtils.generateUnauthToken();
-        Map<String, NewCookie> cookies = response.getCookies();
-        assertEquals(0, cookies.size());
     }
 
     private String removeWhitespace(String s) {

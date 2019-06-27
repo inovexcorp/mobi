@@ -23,9 +23,8 @@ package com.mobi.jaas.api.modules.token;
  * #L%
  */
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jwt.SignedJWT;
 import com.mobi.jaas.api.principals.UserPrincipal;
+import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,9 +46,11 @@ public abstract class TokenLoginModule<T extends TokenCallback> implements Login
     private CallbackHandler callbackHandler;
     private String userId;
 
+    public static final String TOKEN_MANAGER = "tokenManager";
+
     protected abstract T[] getCallbacks();
 
-    protected abstract Optional<SignedJWT> verifyToken(T callback) throws ParseException, JOSEException;
+    protected abstract Optional<SignedJWT> verifyToken(T callback);
 
     protected abstract void verifyUser(String user, T callback) throws LoginException;
 
@@ -83,18 +84,7 @@ public abstract class TokenLoginModule<T extends TokenCallback> implements Login
             throw new FailedLoginException(msg);
         }
 
-        Optional<SignedJWT> tokenOptional;
-        try {
-            tokenOptional = verifyToken(callbacks[0]);
-        } catch (ParseException e) {
-            String msg = "Problem parsing JWT";
-            LOG.debug(msg);
-            throw new FailedLoginException(msg);
-        } catch (JOSEException e) {
-            String msg = "Problem verifying JWT";
-            LOG.debug(msg);
-            throw new FailedLoginException(msg);
-        }
+        Optional<SignedJWT> tokenOptional = verifyToken(callbacks[0]);
 
         if (!tokenOptional.isPresent()) {
             String msg = "Token not verified";

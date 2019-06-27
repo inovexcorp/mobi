@@ -123,7 +123,7 @@ public class DatasetRestIT extends KarafTestSupport {
                 Optional<Resource> opt2 = Statements.objectResource(sdngResults.next());
                 assertTrue(opt2.isPresent());
                 systemDefaultNG = opt2.get();
-                assertTrue(conn.size(systemDefaultNG) == 0);
+                assertEquals(0, conn.size(systemDefaultNG));
             }
         }
 
