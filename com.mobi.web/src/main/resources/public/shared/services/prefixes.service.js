@@ -54,6 +54,7 @@
         self.policy = 'http://mobi.com/ontologies/policy#';
         self.user = 'http://mobi.com/ontologies/user/management#';
         self.roles = 'http://mobi.com/roles/';
+        self.skosxl = 'http://www.w3.org/2008/05/skos-xl#';
     }
 
     angular.module('shared')
