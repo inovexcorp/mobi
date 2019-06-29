@@ -1573,9 +1573,6 @@
             } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
                 commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
                 self.listItem.editorTabStates.schemes.index = getScrollIndex(iri, self.listItem.conceptSchemes.flat);
-            } else if (om.isIndividual(entity)) {
-                commonGoTo('individuals', iri, self.listItem.individuals.flat);
-                self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
             } else {
                 commonGoTo('individuals', iri, self.listItem.individuals.flat);
                 self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
