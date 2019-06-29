@@ -1087,8 +1087,7 @@
                 position: listItem.ontology.length - 1,
                 label: om.getEntityName(entityJSON),
                 ontologyIri: listItem.ontologyId
-            }
-            
+            }         
         }
         /**
          * @ngdoc method
