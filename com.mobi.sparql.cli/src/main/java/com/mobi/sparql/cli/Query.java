@@ -24,7 +24,9 @@ package com.mobi.sparql.cli;
  */
 
 import com.mobi.exception.MobiException;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.Value;
 import com.mobi.repository.api.Repository;
@@ -38,6 +40,12 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
+import org.eclipse.rdf4j.query.parser.ParsedOperation;
+import org.eclipse.rdf4j.query.parser.ParsedQuery;
+import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
+import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -99,13 +107,26 @@ public class Query implements Action {
             return null;
         }
 
+        // Parse Query
+        ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+
         // Execute Query
-        executeQuery(repoOpt.get(), queryString);
-        
+        if (parsedOperation instanceof ParsedQuery) {
+            if (parsedOperation instanceof ParsedTupleQuery) {
+                executeTupleQuery(repoOpt.get(), queryString);
+            } else if (parsedOperation instanceof ParsedGraphQuery) {
+                executeGraphQuery(repoOpt.get(), queryString);
+            } else {
+                System.out.println("Query type not supported.");
+            }
+        } else {
+            System.out.println("Update queries not supported.");
+        }
+
         return null;
     }
 
-    private void executeQuery(Repository repository, String queryString) {
+    private void executeTupleQuery(Repository repository, String queryString) {
         try(RepositoryConnection conn = repository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             TupleQueryResult result = query.evaluate();
@@ -124,6 +145,33 @@ public class Query implements Action {
                     String value = valueOpt.isPresent() ? valueOpt.get().stringValue() : "";
                     content[index] = value;
                 });
+
+                table.addRow().addContent(content);
+            });
+
+            table.print(System.out);
+        }
+    }
+
+    private void executeGraphQuery(Repository repository, String queryString) {
+        try(RepositoryConnection conn = repository.getConnection()) {
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            GraphQueryResult result = query.evaluate();
+
+            ShellTable table = new ShellTable();
+            table.column("s");
+            table.column("p");
+            table.column("o");
+            table.column("c");
+            table.emptyTableText("\n");
+
+            String[] content = new String[4];
+
+            result.forEach(statement -> {
+                content[0] = statement.getSubject().stringValue();
+                content[1] = statement.getPredicate().stringValue();
+                content[2] = statement.getObject().stringValue();
+                content[3] = statement.getContext().map(Value::stringValue).orElse("-");
 
                 table.addRow().addContent(content);
             });
