@@ -54,7 +54,9 @@
         var um = userManagerService;
         var util = utilService;
         var catalogId = '';
-        var action = pm.actionCreate;
+        var systemRepoId = 'http://mobi.com/system-repo'
+        var actionCreate = pm.actionCreate;
+        var actionRead = pm.actionRead
         var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
         var userRole = 'http://mobi.com/roles/user';
 
@@ -85,39 +87,41 @@
 
         function setPolicies() {
             dvm.policies = [];
-            pm.getPolicies(catalogId, undefined, action)
-                .then(result => {
-                    dvm.policies = _.chain(result)
-                        .map(policy => ({
-                            policy,
-                            id: policy.PolicyId,
-                            type: getRecordType(policy),
-                            changed: false,
-                            everyone: false,
-                            users: [],
-                            groups: [],
-                            selectedUsers: [],
-                            selectedGroups: [],
-                            userSearchText: '',
-                            groupSearchText: '',
-                            selectedUser: undefined,
-                            selectedGroup: undefined
-                        }))
-                        .filter('type')
-                        .forEach(setInfo)
-                        .value();
+            var policiesInQuestion = [];
+            policiesInQuestion.push({resourceId: catalogId, actionId: actionCreate, subjectId: undefined});
+            policiesInQuestion.push({resourceId: systemRepoId, actionId: actionRead, subjectId: undefined});
+            var policyTitles = {'http://mobi.com/policies/system-repo-access': 'System Repo Access', 'http://mobi.com/policies/ontology-creation':'Ontology Creation', 'id':'val'}; 
+            var yo = [];
+            pm.getPolicies('','','').then((results) => {
+                yo = results;
+            }, util.createErrorToast);
+
+
+            $q.all(_.map(policiesInQuestion, policy => pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
+                .then((results) => {
+                    var flatResults = _.flatten(results);
+                    dvm.policies = _.chain(flatResults)
+                    .map(policy => ({
+                        policy,
+                        id: policy.PolicyId,
+                        type: policyTitles[policy.PolicyId],
+                        changed: false,
+                        everyone: false,
+                        users: [],
+                        groups: [],
+                        selectedUsers: [],
+                        selectedGroups: [],
+                        userSearchText: '',
+                        groupSearchText: '',
+                        selectedUser: undefined,
+                        selectedGroup: undefined
+                    }))
+                    .filter('type')
+                    .forEach(setInfo)
+                    .value();
                 }, util.createErrorToast);
         }
-        function getRecordType(policy) {
-            return _.chain(policy)
-                .get('Target.AnyOf', [])
-                .map('AllOf').flatten()
-                .map('Match').flatten()
-                .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type'])
-                .get('AttributeValue.content', [])
-                .head()
-                .value();
-        }
+
         function setInfo(item) {
             var matches = _.chain(item.policy)
                 .get('Rule[0].Target.AnyOf[0].AllOf', [])
