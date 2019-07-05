@@ -69,7 +69,7 @@ describe('Concept Schemes Tab component', function() {
             expect(this.element.prop('tagName')).toEqual('CONCEPT-SCHEMES-TAB');
             expect(this.element.querySelectorAll('.concept-schemes-tab.row').length).toEqual(1);
         });
-        ['concept-scheme-hierarchy-block', 'selected-details', 'annotation-block', 'relationships-block', 'usages-block'].forEach(test => {
+        ['concept-scheme-hierarchy-block', 'selected-details', 'annotation-block', 'object-property-block', 'usages-block'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.find(test).length).toEqual(1);
             });

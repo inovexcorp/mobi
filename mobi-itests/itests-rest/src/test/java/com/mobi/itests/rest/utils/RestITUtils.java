@@ -61,7 +61,7 @@ public class RestITUtils {
                     + URLEncoder.encode(password, "UTF-8") + "&username=" + URLEncoder.encode(username, "UTF-8"));
             CloseableHttpResponse response = client.execute(post, context);
             assertNotNull(response);
-            assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
         }
     }
 }

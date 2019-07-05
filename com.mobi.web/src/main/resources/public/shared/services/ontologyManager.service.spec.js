@@ -1824,6 +1824,30 @@ describe('Ontology Manager service', function() {
                 expect(util.getBeautifulIRI).not.toHaveBeenCalled();
             });
         });
+        describe('returns skosxl:literalForm if present and no rdfs:label, dcterms:title, or dc:title, skos:prefLabel or skos:altLabel', function() {
+            it('and in english', function() {
+                this.entity[prefixes.skosxl + 'literalForm'] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+                ontologyManagerSvc.getEntityName(this.entity);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skosxl + 'literalForm');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+            it('and there is no english version', function() {
+                this.presentProp = prefixes.skosxl + 'literalForm';
+                ontologyManagerSvc.getEntityName(this.entity);
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dcterms + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+                expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skosxl + 'literalForm');
+                expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+            });
+        });
         it('returns the @id if present and nothing else', function() {
             util.getBeautifulIRI.and.returnValue(this.ontologyId);
             this.entity['@id'] = this.ontologyId;
