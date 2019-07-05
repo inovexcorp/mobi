@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Merge Tab directive', function() {
+fdescribe('Merge Tab component', function() {
     var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('mergeTab');
+        module('ontology-editor');
+        mockComponent('ontology-editor', 'mergeBlock');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
@@ -34,6 +35,7 @@ describe('Merge Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
+        ontologyStateSvc.listItem.merge.conflicts = [];
         this.element = $compile(angular.element('<merge-tab></merge-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeTab');
@@ -46,19 +48,21 @@ describe('Merge Tab directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('merge-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('MERGE-TAB');
+            expect(this.element.querySelectorAll('.merge-tab').length).toEqual(1);
         });
         it('depending on whether there are conflicts', function() {
-            expect(this.element.find('merge-block').length).toBe(1);
-            expect(this.element.find('resolve-conflicts-block').length).toBe(0);
+            console.log(this.controller);
+            
+            expect(this.element.find('merge-block').length).toEqual(1);
+            expect(this.element.find('resolve-conflicts-block').length).toEqual(0);
 
             ontologyStateSvc.listItem.merge.conflicts = [{}];
             scope.$digest();
-            expect(this.element.find('merge-block').length).toBe(0);
-            expect(this.element.find('resolve-conflicts-block').length).toBe(1);
+            expect(this.element.find('merge-block').length).toEqual(0);
+            expect(this.element.find('resolve-conflicts-block').length).toEqual(1);
         });
     });
 });

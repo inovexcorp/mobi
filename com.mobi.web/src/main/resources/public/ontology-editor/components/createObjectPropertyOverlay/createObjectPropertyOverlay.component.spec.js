@@ -27,8 +27,8 @@ describe('Create Object Property Overlay component', function() {
         module('templates');
         module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
-        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
-        mockComponent('iriSelectOntology', 'iriSelectOntology');
+        mockComponent('ontology-editor', 'advancedLanguageSelect');
+        mockComponent('ontology-editor', 'iriSelectOntology');
         mockComponent('ontology-editor', 'superPropertySelect');
         mockOntologyState();
         mockPrefixes();

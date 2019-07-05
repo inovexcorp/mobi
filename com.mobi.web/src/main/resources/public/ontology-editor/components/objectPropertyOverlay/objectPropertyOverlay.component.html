@@ -38,7 +38,7 @@
         </div>
 
         <!-- value -->
-        <iri-select-ontology ng-model="dvm.os.propertyValue" display-text="'Value'" select-list="dvm.individuals" multi-select="false"></iri-select-ontology>
+        <iri-select-ontology bind-model="dvm.os.propertyValue" display-text="'Value'" select-list="dvm.individuals" multi-select="false" change-event="dvm.os.propertyValue = value"></iri-select-ontology>
     </form>
 </div>
 <div class="modal-footer">

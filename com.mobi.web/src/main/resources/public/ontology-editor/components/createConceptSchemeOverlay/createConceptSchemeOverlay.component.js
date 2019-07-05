@@ -37,7 +37,7 @@
      * in the current {@link shared.service:ontologyStateService selected ontology/vocabulary}. The form in
      * the modal contains a text input for the concept scheme name (which populates the
      * {@link ontology-editor.component:staticIri IRI}), an
-     * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a `ui-select` for the top concepts. Meant to
+     * {@link ontology-editor.component:advancedLanguageSelect}, and a `ui-select` for the top concepts. Meant to
      * be used in conjunction with the {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal

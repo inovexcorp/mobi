@@ -36,10 +36,10 @@
      * current {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a text
      * input for the property name (which populates the {@link ontology-editor.component:staticIri IRI}), a
      * {@link shared.component:textArea} for the property description, an
-     * {@link advancedLanguageSelect.directive:advancedLanguageSelect},
+     * {@link ontology-editor.component:advancedLanguageSelect},
      * {@link shared.component:checkbox checkboxes} for the property characteristics, an
-     * {@link iriSelectOntology.directive:iriSelectOntology} for the domain, an
-     * {@link iriSelectOntology.directive:iriSelectOntology} for the range, and a
+     * {@link ontology-editor.component:iriSelectOntology} for the domain, an
+     * {@link ontology-editor.component:iriSelectOntology} for the range, and a
      * {@link ontology-editor.component:superPropertySelect}. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *

@@ -35,10 +35,9 @@
      * `newOntologyOverlay` is a component that creates content for a modal that creates a new ontology. The form
      * in the modal contains a {@link shared.component:textInput} for the name, a field for the IRI, a
      * {@link shared.component:textArea} for the description, an
-     * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
-     * {@link shared.component:keywordSelect}. The value of the name field will populate the IRI field
-     * unless the IRI value is manually changed.  Meant to be used in conjunction with the
-     * {@link shared.service:modalService}.
+     * {@link ontology-editor.component:advancedLanguageSelect}, and a {@link shared.component:keywordSelect}. The value
+     * of the name field will populate the IRI field unless the IRI value is manually changed.  Meant to be used in
+     * conjunction with the {@link shared.service:modalService}.
      */
     const newOntologyOverlayComponent = {
         templateUrl: 'ontology-editor/components/newOntologyOverlay/newOntologyOverlay.component.html',

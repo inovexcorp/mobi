@@ -35,7 +35,7 @@
      * {@link shared.service:ontologyStateService selected ontology}. The form in the modal contains a
      * text input for the class name (which populates the {@link ontology-editor.component:staticIri IRI}), a
      * {@link shared.component:textArea} for the class description, an
-     * {@link advancedLanguageSelect.directive:advancedLanguageSelect}, and a
+     * {@link ontology-editor.component:advancedLanguageSelect}, and a
      * {@link ontology-editor.component:superClassSelect}. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *

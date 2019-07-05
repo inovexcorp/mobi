@@ -26,10 +26,6 @@
     angular
         .module('ontology-editor', [
             /* New Directives */
-            'advancedLanguageSelect',
-            'iriSelectOntology',
-            'mergeBlock',
-            'mergeTab',
             'ontologyButtonStack',
             'ontologyTab',
             'ontologyEditorPage',

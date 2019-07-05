@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Ontology Overlay directive', function() {
+describe('New Ontology Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc, utilSvc, prefixes, ontoUtils, splitIRI;
 
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
+        mockComponent('ontology-editor', 'advancedLanguageSelect');
         mockUtil();
         mockOntologyState();
         mockPrefixes();

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Merge Block directive', function() {
+describe('Merge Block component', function() {
     var $compile, scope, $q, ontologyStateSvc, util, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('mergeBlock');
+        module('ontology-editor');
         mockUtil();
         mockOntologyState();
         mockCatalogManager();
@@ -57,30 +57,30 @@ describe('Merge Block directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('merge-block')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('MERGE-BLOCK');
+            expect(this.element.querySelectorAll('.merge-block').length).toEqual(1);
         });
         _.forEach(['branch-select', 'checkbox'], item => {
             it('with a ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toEqual(1);
             });
         });
         it('with a .merge-message', function() {
-            expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.merge-message').length).toEqual(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.btn-container .btn');
             expect(buttons.length).toEqual(2);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
             this.controller.error = 'Error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on whether the branch is a UserBranch', function() {
             expect(this.element.find('checkbox').length).toEqual(1);
@@ -99,12 +99,12 @@ describe('Merge Block directive', function() {
         });
         it('depending on whether a target has been selected', function() {
             var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
-            expect(this.element.find('commit-difference-tabset').length).toBe(0);
+            expect(this.element.find('commit-difference-tabset').length).toEqual(0);
             expect(button.attr('disabled')).toBeTruthy();
 
             ontologyStateSvc.listItem.merge.target = {};
             scope.$digest();
-            expect(this.element.find('commit-difference-tabset').length).toBe(1);
+            expect(this.element.find('commit-difference-tabset').length).toEqual(1);
             expect(button.attr('disabled')).toBeFalsy();
         });
     });

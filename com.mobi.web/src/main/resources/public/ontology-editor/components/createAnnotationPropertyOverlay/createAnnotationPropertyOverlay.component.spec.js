@@ -27,7 +27,7 @@ describe('Create Annotation Overlay component', function() {
         module('templates');
         module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
-        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
+        mockComponent('ontology-editor', 'advancedLanguageSelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();

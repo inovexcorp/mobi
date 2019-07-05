@@ -40,7 +40,7 @@
         <text-area bind-model="dvm.os.newOntology[dvm.prefixes.dcterms + 'description'][0]['@value']"
                    change-event="dvm.os.newOntology[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
                    input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <advanced-language-select ng-model="dvm.os.newLanguage"></advanced-language-select>
+        <advanced-language-select bind-model="dvm.os.newLanguage" change-event="dvm.os.newLanguage = value"></advanced-language-select>
         <keyword-select bind-model="dvm.os.newKeywords" change-event="dvm.os.newKeywords = value"></keyword-select>
     </form>
 </div>

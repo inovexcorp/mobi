@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('IRI Select Ontology directive', function() {
+describe('IRI Select Ontology component', function() {
     var $compile, scope, ontologyStateSvc, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
-        module('iriSelectOntology');
+        module('ontology-editor');
         mockOntologyState();
         mockOntologyUtilsManager();
         injectTrustedFilter();
@@ -43,11 +43,11 @@ describe('IRI Select Ontology directive', function() {
         scope.mutedText = 'test';
         scope.isDisabledWhen = false;
         scope.isRequiredWhen = false;
-        scope.multiSelect = false;
-        scope.onChange = jasmine.createSpy('onChange');
-        scope.bindModel = undefined;
+        scope.multiSelect = true;
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.bindModel = '';
 
-        this.element = $compile(angular.element('<iri-select-ontology multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></iri-select-ontology>'))(scope);
+        this.element = $compile(angular.element('<iri-select-ontology multi-select="multiSelect" change-event="changeEvent(value)" display-text="displayText" select-list="selectList" muted-text="mutedText" bind-model="bindModel" is-disabled-when="isDisabledWhen"></iri-select-ontology>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('iriSelectOntology');
     });
@@ -60,71 +60,66 @@ describe('IRI Select Ontology directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
-        it('displayText should be one way bound', function() {
-            this.isolatedScope.displayText = 'new';
-            scope.$digest();
-            expect(scope.displayText).toEqual('test');
-        });
-        it('isDisabledWhen should be one way bound', function() {
-            this.isolatedScope.isDisabledWhen = true;
-            scope.$digest();
-            expect(scope.isDisabledWhen).toEqual(false);
-        });
-        it('isRequiredWhen should be one way bound', function() {
-            this.isolatedScope.isRequiredWhen = true;
-            scope.$digest();
-            expect(scope.isRequiredWhen).toEqual(false);
-        });
-        it('multiSelect should be one way bound', function() {
-            this.isolatedScope.multiSelect = true;
-            scope.$digest();
-            expect(scope.multiSelect).toEqual(false);
-        });
-        it('mutedText should be one way bound', function() {
-            this.isolatedScope.mutedText = 'new';
-            scope.$digest();
-            expect(scope.mutedText).toEqual('test');
-        });
-        it('onChange should be called in parent scope', function() {
-            this.isolatedScope.onChange();
-            expect(scope.onChange).toHaveBeenCalled();
-        });
-    });
     describe('controller bound variable', function() {
-        it('bindModel should be two way bound', function() {
+        it('bindModel should be one way bound', function() {
             this.controller.bindModel = 'new';
             scope.$digest();
-            expect(scope.bindModel).toEqual('new');
+            expect(scope.bindModel).toEqual('');
         });
         it('selectList should be one way bound', function() {
             this.controller.selectList = {test: 'ontology'};
             scope.$digest();
             expect(scope.selectList).toEqual({});
         });
+        it('displayText should be one way bound', function() {
+            this.controller.displayText = 'new';
+            scope.$digest();
+            expect(scope.displayText).toEqual('test');
+        });
+        it('isDisabledWhen should be one way bound', function() {
+            this.controller.isDisabledWhen = true;
+            scope.$digest();
+            expect(scope.isDisabledWhen).toEqual(false);
+        });
+        it('isRequiredWhen should be one way bound', function() {
+            this.controller.isRequiredWhen = true;
+            scope.$digest();
+            expect(scope.isRequiredWhen).toEqual(false);
+        });
+        it('multiSelect should be one way bound', function() {
+            this.controller.multiSelect = false;
+            scope.$digest();
+            expect(scope.multiSelect).toEqual(true);
+        });
+        it('mutedText should be one way bound', function() {
+            this.controller.mutedText = 'new';
+            scope.$digest();
+            expect(scope.mutedText).toEqual('test');
+        });
+        it('changeEvent should be called in parent scope', function() {
+            this.controller.changeEvent({value: 'wow'});
+            expect(scope.changeEvent).toHaveBeenCalledWith('wow');
+        });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('iri-select-ontology')).toBe(true);
-            expect(this.element.hasClass('form-group')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('IRI-SELECT-ONTOLOGY');
+            expect(this.element.querySelectorAll('.iri-select-ontology').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
         it('with custom-labels', function() {
-            expect(this.element.querySelectorAll('custom-label').length).toBe(1);
+            expect(this.element.querySelectorAll('custom-label').length).toEqual(1);
         });
         it('depending on whether it is a multi select', function() {
             var selects = this.element.querySelectorAll('ui-select');
-            expect(selects.length).toBe(1);
-            expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
+            expect(selects.length).toEqual(1);
+            expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
 
-            scope.multiSelect = true;
+            scope.multiSelect = false;
             scope.$digest();
             selects = this.element.querySelectorAll('ui-select');
-            expect(selects.length).toBe(1);
-            expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
+            expect(selects.length).toEqual(1);
+            expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
         });
     });
     describe('controller methods', function() {
@@ -142,6 +137,10 @@ describe('IRI Select Ontology directive', function() {
             it('should return ontologyId if iri is not set on selectList', function() {
                 expect(this.controller.getOntologyIri('test')).toEqual('ontologyId');
             });
+        });
+        it('onChange should call changeEvent', function() {
+            this.controller.onChange();
+            expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.bindModel);
         });
         it('getValues should set the correct value', function() {
             scope.selectList = {iri: 'new'};

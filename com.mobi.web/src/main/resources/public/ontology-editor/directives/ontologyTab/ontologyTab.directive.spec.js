@@ -27,7 +27,7 @@ describe('Ontology Tab directive', function() {
         module('templates');
         module('ontologyTab');
         mockComponent('ontology-editor', 'seeHistory');
-        mockComponent('mergeTab', 'mergeTab');
+        mockComponent('ontology-editor', 'mergeTab');
         mockComponent('ontology-editor', 'projectTab');
         mockComponent('ontology-editor', 'overviewTab');
         mockComponent('ontology-editor', 'classesTab');
