@@ -31,13 +31,10 @@
             'mergeBlock',
             'mergeTab',
             'ontologyButtonStack',
-            'ontologyClassSelect',
             'ontologyTab',
             'ontologyEditorPage',
             'openOntologyTab',
             'resolveConflictsBlock',
-            'superClassSelect',
-            'superPropertySelect',
 
             /* Services */
             'ontologyUtilsManager'

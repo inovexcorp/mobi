@@ -32,7 +32,7 @@
             <custom-label>Name</custom-label>
             <input type="text" name="name" class="form-control" ng-trim="false" ng-keyup="dvm.nameChanged()" required ng-model="dvm.name" focus-me="true" />
         </div>
-        <ontology-class-select values="dvm.individual['@type']"></ontology-class-select>
+        <ontology-class-select bind-model="dvm.individual['@type']" change-event="dvm.individual['@type'] = values"></ontology-class-select>
     </form>
 </div>
 <div class="modal-footer">

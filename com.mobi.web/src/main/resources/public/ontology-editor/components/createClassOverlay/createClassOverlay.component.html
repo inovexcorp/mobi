@@ -37,7 +37,7 @@
                    change-event="dvm.clazz[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
                    display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <advanced-language-select ng-model="dvm.language"></advanced-language-select>
-        <super-class-select values="dvm.values"></super-class-select>
+        <super-class-select bind-model="dvm.values" change-event="dvm.values = values"></super-class-select>
     </form>
 </div>
 <div class="modal-footer">

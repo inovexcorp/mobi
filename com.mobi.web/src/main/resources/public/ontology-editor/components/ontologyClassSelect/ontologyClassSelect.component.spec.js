@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Class Select directive', function() {
+describe('Ontology Class Select component', function() {
     var $compile, scope, ontologyStateSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyClassSelect');
+        module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
@@ -39,9 +39,10 @@ describe('Ontology Class Select directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        scope.values = [];
+        scope.bindModel = [];
         scope.lockChoice = jasmine.createSpy('lockChoice');
-        this.element = $compile(angular.element('<ontology-class-select values="values" lock-choice="lockChoice(iri)"></ontology-class-select>'))(scope);
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        this.element = $compile(angular.element('<ontology-class-select bind-model="bindModel" lock-choice="lockChoice(iri)" change-event="changeEvent(values)"></ontology-class-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('ontologyClassSelect');
     });
@@ -55,30 +56,34 @@ describe('Ontology Class Select directive', function() {
     });
 
     describe('controller bound variable', function() {
-        it('values should be two way bound', function() {
-            this.controller.values = ['different'];
+        it('bindModel should be one way bound', function() {
+            this.controller.bindModel = ['different'];
             scope.$apply();
-            expect(scope.values).toEqual(['different']);
+            expect(scope.bindModel).toEqual([]);
         });
         it('lockChoice should be called in parent scope', function() {
             this.controller.lockChoice({iri: 'iri'});
             expect(scope.lockChoice).toHaveBeenCalledWith('iri');
         });
+        it('changeEvent should be called in parent scope', function() {
+            this.controller.changeEvent({values: []});
+            expect(scope.changeEvent).toHaveBeenCalledWith([]);
+        });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('ontology-class-select')).toBe(true);
-            expect(this.element.hasClass('form-group')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-CLASS-SELECT');
+            expect(this.element.querySelectorAll('.ontology-class-select').length).toEqual(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
         _.forEach(['custom-label', 'ui-select', 'ui-select-match', 'ui-select-choices'], el => {
             it('with a ' + el, function() {
-                expect(this.element.find(el).length).toBe(1);
+                expect(this.element.find(el).length).toEqual(1);
             });
         });
         _.forEach(['span[title]', 'div[title]'], sel => {
             it('with a ' + sel, function() {
-                expect(this.element.querySelectorAll(sel).length).toBe(1);
+                expect(this.element.querySelectorAll(sel).length).toEqual(1);
             });
         });
     });
@@ -89,6 +94,10 @@ describe('Ontology Class Select directive', function() {
             this.controller.getValues('text');
             expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['classA'], 'text', ontoUtils.getDropDownText);
             expect(this.controller.array).toEqual(['list']);
+        });
+        it('onChange should call changeEvent', function() {
+            this.controller.onChange();
+            expect(scope.changeEvent).toHaveBeenCalledWith([]);
         });
     });
 });

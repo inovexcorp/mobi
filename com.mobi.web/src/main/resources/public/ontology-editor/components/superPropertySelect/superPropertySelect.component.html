@@ -26,7 +26,7 @@
         <a class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Property Of</a>
         <div class="form-group">
             <custom-label>Properties</custom-label>
-            <ui-select multiple ng-model="dvm.values">
+            <ui-select multiple ng-model="dvm.bindModel" ng-change="dvm.onChange()">
                 <ui-select-match placeholder="Select properties">
                     <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                 </ui-select-match>

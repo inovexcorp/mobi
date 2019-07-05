@@ -27,7 +27,7 @@
 <div class="modal-body">
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
     <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
-        <ontology-class-select values="dvm.types" lock-choice="dvm.isNamedIndividual(iri)"></ontology-class-select>
+        <ontology-class-select bind-model="dvm.types" lock-choice="dvm.isNamedIndividual(iri)" change-event="dvm.types = values"></ontology-class-select>
     </form>
 </div>
 <div class="modal-footer">

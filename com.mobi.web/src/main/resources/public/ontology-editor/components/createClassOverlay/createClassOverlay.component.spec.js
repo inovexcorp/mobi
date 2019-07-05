@@ -28,7 +28,7 @@ describe('Create Class Overlay component', function() {
         module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
         mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
-        mockComponent('superClassSelect', 'superClassSelect');
+        mockComponent('ontology-editor', 'superClassSelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();

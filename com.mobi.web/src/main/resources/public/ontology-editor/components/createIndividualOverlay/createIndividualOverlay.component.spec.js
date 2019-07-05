@@ -27,7 +27,7 @@ describe('Create Individual Overlay component', function() {
         module('templates');
         module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
-        mockComponent('ontologyClassSelect', 'ontologyClassSelect');
+        mockComponent('ontology-editor', 'ontologyClassSelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();

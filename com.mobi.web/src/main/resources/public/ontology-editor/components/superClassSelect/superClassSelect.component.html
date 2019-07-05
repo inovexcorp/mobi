@@ -24,6 +24,6 @@
     <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show Sub Class Of</a>
     <div ng-if="dvm.isShown">
         <a class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Sub Class Of</a>
-        <ontology-class-select values="dvm.iris"></ontology-class-select>
+        <ontology-class-select bindModel="dvm.iris" change-event="dvm.onChange(values)"></ontology-class-select>
     </div>
 </div>

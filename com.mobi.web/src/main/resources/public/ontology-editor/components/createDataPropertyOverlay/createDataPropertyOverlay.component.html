@@ -43,7 +43,7 @@
         </div>
         <iri-select-ontology ng-model="dvm.domains" display-text="'Domain'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></iri-select-ontology>
         <iri-select-ontology ng-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange"></iri-select-ontology>
-        <super-property-select values="dvm.values" key="'dataProperties'"></super-property-select>
+        <super-property-select bind-model="dvm.values" key="'dataProperties'" change-event="dvm.values = values"></super-property-select>
     </form>
 </div>
 <div class="modal-footer">

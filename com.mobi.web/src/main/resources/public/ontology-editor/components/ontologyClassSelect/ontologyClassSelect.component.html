@@ -22,7 +22,7 @@
   -->
 <div class="ontology-class-select form-group">
     <custom-label>Classes</custom-label>
-    <ui-select multiple ng-model="dvm.values">
+    <ui-select multiple ng-model="dvm.bindModel" ng-change="dvm.onChange()">
         <ui-select-match placeholder="Select classes" ui-lock-choice="dvm.lockChoice({iri: $item})">
             <span title="{{$item}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
         </ui-select-match>

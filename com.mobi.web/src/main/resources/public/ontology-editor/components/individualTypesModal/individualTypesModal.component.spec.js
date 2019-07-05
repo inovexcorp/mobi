@@ -26,7 +26,7 @@ describe('Individual Types Modal component', function() {
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('ontologyClassSelect', 'ontologyClassSelect');
+        mockComponent('ontology-editor', 'ontologyClassSelect');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();

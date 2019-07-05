@@ -39,7 +39,7 @@
      * {@link shared.component:checkbox checkboxes} for the property characteristics, an
      * {@link iriSelectOntology.directive:iriSelectOntology} for the domain, an
      * {@link iriSelectOntology.directive:iriSelectOntology} for the range, and a
-     * {@link superPropertySelect.directive:superPropertySelect}. Meant to be used in conjunction with the
+     * {@link ontology-editor.component:superPropertySelect}. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal

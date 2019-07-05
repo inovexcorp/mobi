@@ -29,7 +29,7 @@ describe('Create Data Property Overlay component', function() {
         mockComponent('ontology-editor', 'staticIri');
         mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
         mockComponent('iriSelectOntology', 'iriSelectOntology');
-        mockComponent('superPropertySelect', 'superPropertySelect');
+        mockComponent('ontology-editor', 'superPropertySelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
