@@ -24,6 +24,8 @@ package com.mobi.sparql.cli;
  */
 
 import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.StatementIterable;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.GraphQuery;
@@ -46,11 +48,18 @@ import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -58,13 +67,34 @@ import java.util.stream.IntStream;
 @Service
 public class Query implements Action {
 
+    protected static final Map<String, RDFFormat> formats;
+
+    static {
+        formats = new HashMap<>();
+        formats.put("ttl", RDFFormat.TURTLE);
+        formats.put("trig", RDFFormat.TRIG);
+        formats.put("trix", RDFFormat.TRIX);
+        formats.put("rdf/xml", RDFFormat.RDFXML);
+        formats.put("jsonld", RDFFormat.JSONLD);
+        formats.put("n3", RDFFormat.N3);
+        formats.put("nquads", RDFFormat.NQUADS);
+        formats.put("ntriples", RDFFormat.NTRIPLES);
+    }
+
     // Service References
 
     @Reference
     private RepositoryManager repoManager;
 
+    @Reference
+    private SesameTransformer transformer;
+
     public void setRepoManager(RepositoryManager repoManager) {
         this.repoManager = repoManager;
+    }
+
+    public void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     // Command Parameters
@@ -78,6 +108,10 @@ public class Query implements Action {
     @Argument(name = "Query", description = "The SPARQL query (ignored if query file provided). NOTE: Any % symbols as"
             + " a result of URL encoding must be escaped.")
     private String queryParam = null;
+
+    @Option(name = "-t", aliases = "--format", description = "The output format (ttl, trig, trix, rdf/xml, jsonld, "
+            + "n3, nquads, ntriples)")
+    private String formatParam = null;
 
     // Implementation
 
@@ -127,7 +161,7 @@ public class Query implements Action {
     }
 
     private void executeTupleQuery(Repository repository, String queryString) {
-        try(RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = repository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             TupleQueryResult result = query.evaluate();
 
@@ -154,29 +188,23 @@ public class Query implements Action {
     }
 
     private void executeGraphQuery(Repository repository, String queryString) {
-        try(RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = repository.getConnection()) {
             GraphQuery query = conn.prepareGraphQuery(queryString);
             GraphQueryResult result = query.evaluate();
 
-            ShellTable table = new ShellTable();
-            table.column("s");
-            table.column("p");
-            table.column("o");
-            table.column("c");
-            table.emptyTableText("\n");
+            OutputStream out = System.out;
+            RDFFormat format = getFormat();
 
-            String[] content = new String[4];
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, out));
+            Rio.write(new StatementIterable(result, transformer), rdfWriter);
+        }
+    }
 
-            result.forEach(statement -> {
-                content[0] = statement.getSubject().stringValue();
-                content[1] = statement.getPredicate().stringValue();
-                content[2] = statement.getObject().stringValue();
-                content[3] = statement.getContext().map(Value::stringValue).orElse("-");
-
-                table.addRow().addContent(content);
-            });
-
-            table.print(System.out);
+    private RDFFormat getFormat() {
+        if (formatParam != null && formats.containsKey(formatParam)) {
+            return formats.get(formatParam);
+        } else {
+            return RDFFormat.TRIG;
         }
     }
 }
