@@ -44,12 +44,21 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.console</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-runtime-osgi</artifactId>
         </dependency>
     </dependencies>
 
