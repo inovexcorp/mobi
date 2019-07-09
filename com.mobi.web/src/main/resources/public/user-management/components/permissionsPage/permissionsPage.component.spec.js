@@ -92,7 +92,14 @@ describe('Permissions Page component', function() {
         userManagerSvc.users = [{iri: 'user1', username: 'user1'}, {iri: 'user2', username: 'user2'}];
         userManagerSvc.groups = [{iri: 'group1', title: 'group1'}, {iri: 'group2', title: 'group2'}];
         this.getPolicyDefer = $q.defer();
-        policyManagerSvc.getPolicies.and.returnValue(this.getPolicyDefer.promise);
+        this.getSecondPolicyDefer = $q.defer();
+        policyManagerSvc.getPolicies.and.callFake((resourceId, subjectId, attributeId) => {
+            if (resourceId === 'catalogId') {
+                return this.getPolicyDefer.promise;
+            } else {
+                return this.getSecondPolicyDefer.promise;
+            }
+        });
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         this.element = $compile(angular.element('<permissions-page></permissions-page>'))(scope);
         scope.$digest();
@@ -114,8 +121,15 @@ describe('Permissions Page component', function() {
     describe('initializes policies correctly when getPolicies', function() {
         describe('resolves', function() {
             beforeEach(function() {
-                this.typePolicy = {
+                this.firstTypePolicy = {
                     PolicyId: 'id',
+                    Target: {AnyOf: [{AllOf: [{Match: [{
+                        AttributeDesignator: {AttributeId: prefixes.rdf + 'type'},
+                        AttributeValue: {content: ['type']}
+                    }]}]}]}
+                };
+                this.secondTypePolicy = {
+                    PolicyId: 'id2',
                     Target: {AnyOf: [{AllOf: [{Match: [{
                         AttributeDesignator: {AttributeId: prefixes.rdf + 'type'},
                         AttributeValue: {content: ['type']}
@@ -129,13 +143,32 @@ describe('Permissions Page component', function() {
                 expect(this.controller.policies).toEqual([]);
             });
             it('with a policy that allows everyone', function() {
-                var policies = [_.set(angular.copy(this.typePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.everyoneMatch))];
-                this.getPolicyDefer.resolve(policies);
+                var firstPolicyPolicies = [_.set(angular.copy(this.firstTypePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.everyoneMatch))];
+                var secondPolicyPolicies = [_.set(angular.copy(this.secondTypePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.everyoneMatch))];
+
+                this.getPolicyDefer.resolve(firstPolicyPolicies);
+                this.getSecondPolicyDefer.resolve(secondPolicyPolicies);
+
                 scope.$apply();
+                
                 expect(this.controller.policies).toEqual([{
-                    policy: policies[0],
-                    id: this.typePolicy.PolicyId,
-                    type: 'type',
+                    policy: firstPolicyPolicies[0],
+                    id: this.firstTypePolicy.PolicyId,
+                    title: 'Create type',
+                    changed: false,
+                    everyone: true,
+                    users: userManagerSvc.users,
+                    groups: userManagerSvc.groups,
+                    selectedUsers: [],
+                    selectedGroups: [],
+                    userSearchText: '',
+                    groupSearchText: '',
+                    selectedUser: undefined,
+                    selectedGroup: undefined
+                }, {
+                    policy: secondPolicyPolicies[0],
+                    id: this.secondTypePolicy.PolicyId,
+                    title: 'Access System Repo',
                     changed: false,
                     everyone: true,
                     users: userManagerSvc.users,
@@ -149,13 +182,32 @@ describe('Permissions Page component', function() {
                 }]);
             });
             it('with a policy that has selected users', function() {
-                var policies = [_.set(angular.copy(this.typePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.userMatch))];
-                this.getPolicyDefer.resolve(policies);
+                var firstPolicyPolicies = [_.set(angular.copy(this.firstTypePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.userMatch))];
+                var secondPolicyPolicies = [_.set(angular.copy(this.secondTypePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.userMatch))];
+
+                this.getPolicyDefer.resolve(firstPolicyPolicies);
+                this.getSecondPolicyDefer.resolve(secondPolicyPolicies);
+
                 scope.$apply();
+                
                 expect(this.controller.policies).toEqual([{
-                    policy: policies[0],
-                    id: this.typePolicy.PolicyId,
-                    type: 'type',
+                    policy: firstPolicyPolicies[0],
+                    id: this.firstTypePolicy.PolicyId,
+                    title: 'Create type',
+                    changed: false,
+                    everyone: false,
+                    users: _.reject(userManagerSvc.users, {iri: 'user1', username: 'user1'}),
+                    groups: userManagerSvc.groups,
+                    selectedUsers: [{iri: 'user1', username: 'user1'}],
+                    selectedGroups: [],
+                    userSearchText: '',
+                    groupSearchText: '',
+                    selectedUser: undefined,
+                    selectedGroup: undefined
+                }, {
+                    policy: secondPolicyPolicies[0],
+                    id: this.secondTypePolicy.PolicyId,
+                    title: 'Access System Repo',
                     changed: false,
                     everyone: false,
                     users: _.reject(userManagerSvc.users, {iri: 'user1', username: 'user1'}),
@@ -169,13 +221,31 @@ describe('Permissions Page component', function() {
                 }]);
             });
             it('with a policy that has selected groups', function() {
-                var policies = [_.set(angular.copy(this.typePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.groupMatch))];
-                this.getPolicyDefer.resolve(policies);
+                var firstPolicyPolicies = [_.set(angular.copy(this.firstTypePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.groupMatch))];
+                var secondPolicyPolicies = [_.set(angular.copy(this.secondTypePolicy), 'Rule[0].Target.AnyOf[0].AllOf[0].Match[0]', angular.copy(this.groupMatch))];
+
+                this.getPolicyDefer.resolve(firstPolicyPolicies);
+                this.getSecondPolicyDefer.resolve(secondPolicyPolicies);
+
                 scope.$apply();
                 expect(this.controller.policies).toEqual([{
-                    policy: policies[0],
-                    id: this.typePolicy.PolicyId,
-                    type: 'type',
+                    policy: firstPolicyPolicies[0],
+                    id: this.firstTypePolicy.PolicyId,
+                    title: 'Create type',
+                    changed: false,
+                    everyone: false,
+                    users: userManagerSvc.users,
+                    groups: _.reject(userManagerSvc.groups, {iri: 'group1', title: 'group1'}),
+                    selectedUsers: [],
+                    selectedGroups: [{iri: 'group1', title: 'group1'}],
+                    userSearchText: '',
+                    groupSearchText: '',
+                    selectedUser: undefined,
+                    selectedGroup: undefined
+                }, {
+                    policy: secondPolicyPolicies[0],
+                    id: this.secondTypePolicy.PolicyId,
+                    title: 'Access System Repo',
                     changed: false,
                     everyone: false,
                     users: userManagerSvc.users,

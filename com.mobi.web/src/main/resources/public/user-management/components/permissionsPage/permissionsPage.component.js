@@ -62,8 +62,11 @@
 
         dvm.policies = [];
 
+        dvm.policiesInQuestion = [];
+
         dvm.$onInit = function() {
             catalogId = _.get(catalogManagerService.localCatalog, '@id', '');
+            setPoliciesInQuestion();
             setPolicies();
         }
         dvm.updatePolicy = function(item, policyIndex) {
@@ -84,44 +87,47 @@
         dvm.hasChanges = function() {
             return _.some(dvm.policies, 'changed');
         }
-
+        function setPoliciesInQuestion() {
+            dvm.policiesInQuestion.push({resourceId: catalogId, actionId: actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + util.getBeautifulIRI(getRecordType(policy))});
+            dvm.policiesInQuestion.push({resourceId: systemRepoId, actionId: actionRead, subjectId: undefined, titleFunc: () => 'Access System Repo'});
+        }
+        function getRecordType(policy) {
+            return _.chain(policy)
+                .get('Target.AnyOf', [])
+                .map('AllOf').flatten()
+                .map('Match').flatten()
+                .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type'])
+                .get('AttributeValue.content', [])
+                .head()
+                .value();
+        }
         function setPolicies() {
-            dvm.policies = [];
-            var policiesInQuestion = [];
-            policiesInQuestion.push({resourceId: catalogId, actionId: actionCreate, subjectId: undefined});
-            policiesInQuestion.push({resourceId: systemRepoId, actionId: actionRead, subjectId: undefined});
-            var policyTitles = {'http://mobi.com/policies/system-repo-access': 'System Repo Access', 'http://mobi.com/policies/ontology-creation':'Ontology Creation', 'id':'val'}; 
-            var yo = [];
-            pm.getPolicies('','','').then((results) => {
-                yo = results;
-            }, util.createErrorToast);
-
-
-            $q.all(_.map(policiesInQuestion, policy => pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
+            dvm.policies = [];           
+            $q.all(_.map(dvm.policiesInQuestion, policy => pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
                 .then((results) => {
-                    var flatResults = _.flatten(results);
-                    dvm.policies = _.chain(flatResults)
-                    .map(policy => ({
-                        policy,
-                        id: policy.PolicyId,
-                        type: policyTitles[policy.PolicyId],
-                        changed: false,
-                        everyone: false,
-                        users: [],
-                        groups: [],
-                        selectedUsers: [],
-                        selectedGroups: [],
-                        userSearchText: '',
-                        groupSearchText: '',
-                        selectedUser: undefined,
-                        selectedGroup: undefined
-                    }))
-                    .filter('type')
-                    .forEach(setInfo)
-                    .value();
+                    results.forEach((response, idx) => {
+                        dvm.policies = dvm.policies.concat(_.chain(response)
+                        .map(policy => ({
+                            policy,
+                            id: policy.PolicyId,
+                            title: dvm.policiesInQuestion[idx].titleFunc(policy),
+                            changed: false,
+                            everyone: false,
+                            users: [],
+                            groups: [],
+                            selectedUsers: [],
+                            selectedGroups: [],
+                            userSearchText: '',
+                            groupSearchText: '',
+                            selectedUser: undefined,
+                            selectedGroup: undefined
+                        }))
+                        .filter('title')
+                        .forEach(setInfo)
+                        .value());
+                    });
                 }, util.createErrorToast);
         }
-
         function setInfo(item) {
             var matches = _.chain(item.policy)
                 .get('Rule[0].Target.AnyOf[0].AllOf', [])
