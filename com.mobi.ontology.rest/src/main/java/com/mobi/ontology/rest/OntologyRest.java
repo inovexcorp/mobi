@@ -67,7 +67,6 @@ import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -85,7 +84,6 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
-import com.mobi.sparql.utils.Query;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import net.sf.json.JSON;
@@ -98,6 +96,13 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
+import org.eclipse.rdf4j.query.MalformedQueryException;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
+import org.eclipse.rdf4j.query.parser.ParsedOperation;
+import org.eclipse.rdf4j.query.parser.ParsedQuery;
+import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
+import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
@@ -143,6 +148,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
+//import com.mobi.query.exception.MalformedQueryException;
 
 @Path("/ontologies")
 @Api(value = "/ontologies")
@@ -2200,9 +2207,10 @@ public class OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
-            String queryType = Query.getQueryType(queryString);
-            switch (queryType) {
-                case "select":
+            ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+
+            if (parsedOperation instanceof ParsedQuery) {
+                if (parsedOperation instanceof ParsedTupleQuery) {
                     TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {
                         JSONObject json = JSONQueryResults.getResponse(tupResults);
@@ -2210,7 +2218,7 @@ public class OntologyRest {
                     } else {
                         return Response.noContent().build();
                     }
-                case "construct":
+                } else if (parsedOperation instanceof ParsedGraphQuery) {
                     Model modelResult = ontology.getGraphQueryResults(queryString, includeImports, modelFactory);
                     if (modelResult.size() >= 1) {
                         String modelStr = modelToString(modelResult, format, sesameTransformer);
@@ -2220,8 +2228,11 @@ public class OntologyRest {
                     } else {
                         return Response.noContent().build();
                     }
-                default:
-                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+                } else {
+                    throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+                }
+            } else {
+                throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
             }
         } catch (MalformedQueryException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

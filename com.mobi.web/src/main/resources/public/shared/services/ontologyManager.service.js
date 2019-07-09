@@ -65,7 +65,7 @@
          * @description
          * 'entityNameProps' holds an array of properties used to determine an entity name.
          */
-        self.entityNameProps = [prefixes.rdfs + 'label', prefixes.dcterms + 'title', prefixes.dc + 'title', prefixes.skos + 'prefLabel', prefixes.skos + 'altLabel'];
+        self.entityNameProps = [prefixes.rdfs + 'label', prefixes.dcterms + 'title', prefixes.dc + 'title', prefixes.skos + 'prefLabel', prefixes.skos + 'altLabel', prefixes.skosxl + 'literalForm'];
 
         /**
          * @ngdoc method

@@ -1087,7 +1087,7 @@
                 position: listItem.ontology.length - 1,
                 label: om.getEntityName(entityJSON),
                 ontologyIri: listItem.ontologyId
-            }
+            }         
         }
         /**
          * @ngdoc method
@@ -1572,7 +1572,7 @@
             } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
                 commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
                 self.listItem.editorTabStates.schemes.index = getScrollIndex(iri, self.listItem.conceptSchemes.flat);
-            } else if (om.isIndividual(entity)) {
+            } else if (_.filter(self.listItem.individuals.flat, {entityIRI: iri}).length != 0) {
                 commonGoTo('individuals', iri, self.listItem.individuals.flat);
                 self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
             }
