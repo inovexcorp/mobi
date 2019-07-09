@@ -4537,7 +4537,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testQueryOntologyWithEmptyConstruct() {
         // Setup:
-        String query = "construct * { ?s ?p ?o }";
+        String query = "construct where { ?s <urn:test> ?o }";
         when(ontology.getGraphQueryResults(query, true, mf)).thenReturn(mf.createModel());
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
