@@ -28,7 +28,7 @@
      * @name ontology-editor.component:superPropertySelect
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `superPropertySelect` is a component which provides a link to hide/show a `ui-select` of all available properties

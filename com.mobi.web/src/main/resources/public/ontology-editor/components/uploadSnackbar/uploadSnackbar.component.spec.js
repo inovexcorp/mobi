@@ -161,7 +161,6 @@ describe('Upload Snackbar component', function() {
             ontologyStateSvc.uploadFiles = [{}];
             this.controller.close();
             expect(scope.changeEvent).toHaveBeenCalledWith(false);
-            // expect(this.controller.showSnackbar).toBe(false);
             expect(httpSvc.cancel).toHaveBeenCalledWith(item.id);
             expect(ontologyStateSvc.uploadList).toEqual([]);
             expect(ontologyStateSvc.uploadFiles).toEqual([]);

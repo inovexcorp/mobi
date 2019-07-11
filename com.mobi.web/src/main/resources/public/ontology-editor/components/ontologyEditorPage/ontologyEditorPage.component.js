@@ -25,32 +25,34 @@
 
     /**
      * @ngdoc component
-     * @name ontology-editor.component:characteristicsRow
-     * @requires shared.service:prefixes
+     * @name ontology-editor.component:ontologyEditorPage
      * @requires shared.service:ontologyStateService
-     * @requires shared.service:ontologyManagerService
-     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
-     * `characteristicsRow` is a component that creates a Bootstrap `.row` that displays the
-     * {@link ontology-editor.component:characteristicsBlock} depending on whether the
-     * {@link shared.service:ontologyStateService selected entity} is a object or data property.
+     * `ontologyEditorPage` is a component that creates a `div` containing the main components of the Ontology Editor.
+     * These components are {@link ontology-editor.component:ontologySidebar},
+     * {@link ontology-editor.component:ontologyTab} with the
+     * {@link shared.service:ontologyStateService currently selected open ontology}, and
+     * {@link ontology-editor.component:openOntologyTab}.
      */
-    const characteristicsRowComponent = {
-        templateUrl: 'ontology-editor/components/characteristicsRow/characteristicsRow.component.html',
+    const ontologyEditorPageComponent = {
+        templateUrl: 'ontology-editor/components/ontologyEditorPage/ontologyEditorPage.component.html',
         bindings: {},
         controllerAs: 'dvm',
-        controller: characteristicsRowComponentCtrl
+        controller: ontologyEditorPageComponentCtrl
     };
 
-    characteristicsRowComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService'];
+    ontologyEditorPageComponentCtrl.$inject = ['ontologyStateService'];
 
-    function characteristicsRowComponentCtrl(ontologyManagerService, ontologyStateService) {
+    function ontologyEditorPageComponentCtrl(ontologyStateService) {
         var dvm = this;
-        dvm.om = ontologyManagerService;
         dvm.os = ontologyStateService;
+
+        dvm.isOpenTab = function() {
+            return _.isEmpty(dvm.os.listItem);
+        }
     }
 
     angular.module('ontology-editor')
-        .component('characteristicsRow', characteristicsRowComponent);
+        .component('ontologyEditorPage', ontologyEditorPageComponent);
 })();

@@ -20,15 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Editor Page directive', function() {
+describe('Ontology Editor Page component', function() {
     var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyEditorPage');
+        module('ontology-editor');
         mockComponent('ontology-editor', 'ontologySidebar');
-        mockComponent('ontologyTab', 'ontologyTab');
-        mockComponent('openOntologyTab', 'openOntologyTab');
+        mockComponent('ontology-editor', 'ontologyTab');
+        mockComponent('ontology-editor', 'openOntologyTab');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
@@ -49,10 +49,10 @@ describe('Ontology Editor Page directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toEqual('DIV');
-            expect(this.element.hasClass('ontology-editor-page')).toEqual(true);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-EDITOR-PAGE');
+            expect(this.element.querySelectorAll('.ontology-editor-page').length).toEqual(1);
         });
         it('with a ontology-sidebar', function() {
             expect(this.element.find('ontology-sidebar').length).toEqual(1);

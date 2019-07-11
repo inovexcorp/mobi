@@ -71,7 +71,17 @@ describe('Ontology Property Overlay component', function() {
         this.controller.$onInit();
         expect(this.controller.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', 'annotation1']);
     });
-    describe('replaces the element with the correct html', function() {
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('ONTOLOGY-PROPERTY-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toBe(1);

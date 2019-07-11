@@ -26,7 +26,7 @@
     /**
      * @ngdoc component
      * @name ontology-editor.component:blankNodeValueDisplay
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `blankNodeValueDisplay` is a component that creates a ui-codemirror container for displaying a blank node with

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Button Stack directive', function() {
+describe('Ontology Button Stack component', function() {
     var $compile, scope, ontologyStateSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyButtonStack');
+        module('ontology-editor');
         mockOntologyState();
         mockModal();
 
@@ -54,16 +54,16 @@ describe('Ontology Button Stack directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('ontology-button-stack')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-BUTTON-STACK');
+            expect(this.element.querySelectorAll('.ontology-button-stack').length).toEqual(1);
         });
         it('with a circle-button-stack', function() {
-            expect(this.element.find('circle-button-stack').length).toBe(1);
+            expect(this.element.find('circle-button-stack').length).toEqual(1);
         });
         it('with button.btn-floats', function() {
-            expect(this.element.querySelectorAll('button.btn-float').length).toBe(6);
+            expect(this.element.querySelectorAll('button.btn-float').length).toEqual(6);
         });
         it('depending on whether the ontology is committable', function() {
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';

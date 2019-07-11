@@ -20,13 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Merge Tab component', function() {
+describe('Merge Tab component', function() {
     var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
         mockComponent('ontology-editor', 'mergeBlock');
+        mockComponent('ontology-editor', 'resolveConflictsBlock');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
@@ -54,8 +55,6 @@ fdescribe('Merge Tab component', function() {
             expect(this.element.querySelectorAll('.merge-tab').length).toEqual(1);
         });
         it('depending on whether there are conflicts', function() {
-            console.log(this.controller);
-            
             expect(this.element.find('merge-block').length).toEqual(1);
             expect(this.element.find('resolve-conflicts-block').length).toEqual(0);
 

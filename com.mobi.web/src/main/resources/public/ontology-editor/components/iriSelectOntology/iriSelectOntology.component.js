@@ -27,7 +27,7 @@
      * @ngdoc component
      * @name ontology-editor.component:iriSelectOntology
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `objectPropertyOverlay` is a component that creates a `ui-select` for select a specific IRI from the provided

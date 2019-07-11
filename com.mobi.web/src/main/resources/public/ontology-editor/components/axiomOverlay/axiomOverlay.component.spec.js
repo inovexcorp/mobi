@@ -86,6 +86,22 @@ describe('Axiom Overlay component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+        it('resolve is one way bound', function() {
+            var original = angular.copy(scope.resolve);
+            this.controller.resolve = {};
+            scope.$digest();
+            expect(scope.resolve).toEqual(original);
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('AXIOM-OVERLAY');

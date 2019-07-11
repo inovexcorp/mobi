@@ -27,7 +27,7 @@
      * @ngdoc component
      * @name ontology-editor.component:annotationBlock
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:modalService
      *
      * @description

@@ -29,7 +29,7 @@
      * @requires shared.service:prefixes
      * @requires shared.service:ontologyStateService
      * @requires shared.service:ontologyManagerService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `characteristicsBlock` is a component that creates a section that displays the appropriate characteristics

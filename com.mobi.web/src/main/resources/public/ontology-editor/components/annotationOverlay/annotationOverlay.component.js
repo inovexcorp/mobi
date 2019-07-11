@@ -29,7 +29,7 @@
      * @requires shared.service:propertyManagerService
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:prefixes
      *
      * @description
@@ -37,7 +37,7 @@
      * {@link shared.service:ontologyStateService selected entity}. The form in the modal contains a
      * `ui-select` for the annotation property, a {@link shared.component:textArea} for the annotation value, and
      * a {@link shared.component:languageSelect}. If the annotation is owl:deprecated, the `textArea` and
-     * `languageSelect` are replaced by {@link shared.component:radiobutton radio buttons} for the boolean
+     * `languageSelect` are replaced by {@link shared.component:radioButton radio buttons} for the boolean
      * value. Meant to be used in conjunction with the {@link shared.service:modalService}.
      *
      * @param {Function} close A function that closes the modal

@@ -29,7 +29,7 @@
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:propertyManagerService
      *
      * @description

@@ -28,7 +28,7 @@
      * @name ontology-editor.component:usagesBlock
      * @requires shared.service:ontologyStateService
      * @requires shared.service:ontologyManagerService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `usagesBlock` is a component that creates a section that displays the provided usages of the

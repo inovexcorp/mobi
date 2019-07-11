@@ -23,16 +23,13 @@
 (function() {
     'use strict';
 
-    angular
-        .module('ontology-editor', [
-            /* New Directives */
-            'ontologyButtonStack',
-            'ontologyTab',
-            'ontologyEditorPage',
-            'openOntologyTab',
-            'resolveConflictsBlock',
-
-            /* Services */
-            'ontologyUtilsManager'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name ontology-editor
+     *
+     * @description
+     * The `ontology-editor` module provides components and services that make up the Ontology Editor page of Mobi for
+     * creating, editing, and managing ontologies/vocabularies.
+     */
+    angular.module('ontology-editor', []);
 })();

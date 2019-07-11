@@ -28,7 +28,7 @@
      * @name ontology-editor.component:ontologyClassSelect
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `ontologyClassSelect` is a component that creates a Bootstrap `form-group` with a `ui-select` of the IRIs of

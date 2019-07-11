@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Resolve Conflicts Block directive', function() {
+describe('Resolve Conflicts Block component', function() {
     var $compile, scope, $q, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
-        module('resolveConflictsBlock');
+        module('ontology-editor');
         mockOntologyState();
         mockUtil();
 
@@ -51,25 +51,25 @@ describe('Resolve Conflicts Block directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('resolve-conflicts-block')).toBe(true);
+            expect(this.element.prop('tagName')).toEqual('RESOLVE-CONFLICTS-BLOCK');
+            expect(this.element.querySelectorAll('.resolve-conflicts-block').length).toEqual(1);
         });
         it('with a resolve-conflicts-form', function() {
-            expect(this.element.find('resolve-conflicts-form').length).toBe(1);
+            expect(this.element.find('resolve-conflicts-form').length).toEqual(1);
         });
         it('with buttons to submit with resolutions and cancel', function() {
             var buttons = this.element.querySelectorAll('.btn-container .btn');
             expect(buttons.length).toEqual(2);
-            expect(['Cancel', 'Submit with Resolutions'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Submit with Resolutions'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Submit with Resolutions'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit with Resolutions'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
             this.controller.error = 'Error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on the value of the merge checkbox', function() {
             expect(this.element.querySelectorAll('.merge-details p').length).toEqual(1);

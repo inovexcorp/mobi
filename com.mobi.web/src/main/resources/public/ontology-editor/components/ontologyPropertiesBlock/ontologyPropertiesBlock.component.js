@@ -28,7 +28,7 @@
      * @name ontology-editor.component:ontologyPropertiesBlock
      * @requires shared.service:ontologyStateService
      * @requires shared.service:propertyManagerService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:modalService
      *
      * @description

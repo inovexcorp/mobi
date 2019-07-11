@@ -28,7 +28,7 @@
      * @name ontology-editor.component:conceptsTab
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:propertyManagerService
      * @requires shared.service:modalService
      *

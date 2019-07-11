@@ -28,7 +28,7 @@
      * @name ontology-editor.component:selectedDetails
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:manchesterConverterService
      * @requires shared.service:modalService
      *

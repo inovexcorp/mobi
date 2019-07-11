@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Open Ontology Tab directive', function() {
+describe('Open Ontology Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
         module('templates');
-        module('openOntologyTab');
+        module('ontology-editor');
         mockComponent('ontology-editor', 'uploadSnackbar');
         injectHighlightFilter();
         injectTrustedFilter();
@@ -97,36 +97,35 @@ describe('Open Ontology Tab directive', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('open-ontology-tab')).toBe(true);
-            expect(this.element.hasClass('row')).toBe(true);
-            expect(this.element.querySelectorAll('.col-10').length).toBe(1);
-            expect(this.element.querySelectorAll('.actions').length).toBe(1);
-            expect(this.element.querySelectorAll('.ontologies').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('OPEN-ONTOLOGY-TAB');
+            expect(this.element.querySelectorAll('.open-ontology-tab.row').length).toEqual(1);
+            expect(this.element.querySelectorAll('.col-10').length).toEqual(1);
+            expect(this.element.querySelectorAll('.actions').length).toEqual(1);
+            expect(this.element.querySelectorAll('.ontologies').length).toEqual(1);
         });
         _.forEach(['form', 'paging', 'upload-snackbar'], item => {
             it('with a ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toEqual(1);
             });
         });
         it('with a .list-group', function() {
-            expect(this.element.querySelectorAll('.list-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.list-group').length).toEqual(1);
         });
         it('with buttons to upload an ontology and make a new ontology', function() {
             var buttons = this.element.querySelectorAll('.actions button');
-            expect(buttons.length).toBe(2);
-            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
-            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(2);
+            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toEqual(true);
+            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toEqual(true);
         });
         it('depending on how many ontologies there are', function() {
-            expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toBe(10);
-            expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toEqual(10);
+            expect(this.element.querySelectorAll('.ontologies info-message').length).toEqual(0);
             this.controller.filteredList = [];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toBe(0);
-            expect(this.element.querySelectorAll('.ontologies info-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item').length).toEqual(0);
+            expect(this.element.querySelectorAll('.ontologies info-message').length).toEqual(1);
         });
         it('depending on whether an ontology is open', function() {
             spyOn(this.controller, 'isOpened').and.returnValue(false);
@@ -141,7 +140,7 @@ describe('Open Ontology Tab directive', function() {
         it('depending if a user has access to manage a record', function() {
             this.controller.filteredList = [{userCanManage: true}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu a').length).toBe(2);
+            expect(this.element.querySelectorAll('.ontologies .list-group-item action-menu a').length).toEqual(2);
         });
         it('with a hidden file input', function() {
             expect(this.element.querySelectorAll('input[type="file"].hide').length).toEqual(1);
@@ -205,13 +204,13 @@ describe('Open Ontology Tab directive', function() {
             });
             it('and ask the user for confirmation', function() {
                 this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
-                expect(this.controller.recordId).toBe('record');
+                expect(this.controller.recordId).toEqual('record');
                 expect(modalSvc.openConfirmModal).toHaveBeenCalledWith({asymmetricMatch: actual => !actual.includes('<error-display>')}, this.controller.deleteOntology);
             });
             it('and should warn the user if the ontology is open in the mapping tool', function() {
                 mapperStateSvc.sourceOntologies = [{'recordId':'record'}];
                 this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
-                expect(this.controller.recordId).toBe('record');
+                expect(this.controller.recordId).toEqual('record');
                 expect(modalSvc.openConfirmModal).toHaveBeenCalledWith(jasmine.stringMatching('<error-display>'), this.controller.deleteOntology);
             });
         });
@@ -275,12 +274,33 @@ describe('Open Ontology Tab directive', function() {
             this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule');
             expect(modalSvc.openModal).toHaveBeenCalledWith('recordAccessOverlay', {ruleId: 'rule', resource: 'recordId'});
         });
-    });
-    it('should filter the ontology list when the filter text changes', function() {
-        utilSvc.getDctermsValue.and.callFake((obj, filter) => obj['@id'] === 'recordA' ? 'test' : '');
-        this.controller.filterText = 'test';
-        scope.$apply();
-        expect(this.controller.filterText).not.toContain(jasmine.objectContaining({'@id': 'recordB'}));
+        it('should show the uploadOntologyOverlay', function() {
+            this.controller.showUploadOntologyOverlay();
+            expect(modalSvc.openModal).toHaveBeenCalledWith('uploadOntologyOverlay', {startUpload: this.controller.startUpload, finishUpload: this.controller.finishUpload});
+        });
+        it('should handle starting an upload', function() {
+            ontologyStateSvc.uploadPending = 0;
+            this.controller.startUpload();
+            expect(ontologyStateSvc.uploadPending).toEqual(1);
+            expect(this.controller.showSnackbar).toEqual(true);
+        });
+        describe('should handle finishing an upload', function() {
+            beforeEach(function() {
+                spyOn(this.controller, 'search');
+            });
+            it('if there are no more uploads pending', function() {
+                ontologyStateSvc.uploadPending = 1;
+                this.controller.finishUpload();
+                expect(ontologyStateSvc.uploadPending).toEqual(0);
+                expect(this.controller.search).toHaveBeenCalled();
+            });
+            it('if there are uploads pending', function() {
+                ontologyStateSvc.uploadPending = 2;
+                this.controller.finishUpload();
+                expect(ontologyStateSvc.uploadPending).toEqual(1);
+                expect(this.controller.search).not.toHaveBeenCalled();
+            });
+        });
     });
     it('should call newOntology when the button is clicked', function() {
         spyOn(this.controller, 'newOntology');

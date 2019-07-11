@@ -67,6 +67,16 @@ describe('Create Class Overlay component', function() {
         expect(this.controller.clazz['@id']).toBe(this.controller.prefix);
         expect(this.controller.clazz['@type']).toEqual(['Class']);
     });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('CREATE-CLASS-OVERLAY');

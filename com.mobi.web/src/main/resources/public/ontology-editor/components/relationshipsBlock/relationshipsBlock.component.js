@@ -28,7 +28,7 @@
      * @name ontology-editor.component:relationshipsBlock
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:modalService
      * @requires shared.service:prefixes
      *

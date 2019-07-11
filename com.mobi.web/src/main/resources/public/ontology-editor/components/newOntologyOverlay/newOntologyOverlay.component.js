@@ -29,7 +29,7 @@
      * @requires shared.service:ontologyStateService
      * @requires shared.service:prefixes
      * @requires shared.service:utilService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `newOntologyOverlay` is a component that creates content for a modal that creates a new ontology. The form

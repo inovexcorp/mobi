@@ -26,7 +26,7 @@
     /**
      * @ngdoc component
      * @name ontology-editor.component:propertyValues
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:ontologyStateService
      * @requires shared.service:ontologyManagerService
      *

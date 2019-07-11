@@ -27,7 +27,7 @@
         <button class="btn btn-outline-light material-icons remove-min-width float-right p-0 mr-2 collapse-button" ng-click="dvm.collapse = !dvm.collapse">{{dvm.collapse ? 'keyboard_arrow_down' : 'keyboard_arrow_up'}}</button>
     </div>
     <div class="snackbar-body w-100 vertical-scroll flex-1" ng-hide="dvm.collapse">
-        <div ng-repeat="item in dvm.state.uploadList | orderBy:'-'" class="uploaded-ontology d-flex align-items-baseline py-2" ng-class="{'last': $last}">
+        <div ng-repeat="item in dvm.os.uploadList | orderBy:'-'" class="uploaded-ontology d-flex align-items-baseline py-2" ng-class="{'last': $last}">
             <div class="item-indicator pr-2">
                 <md-progress-circular ng-if="dvm.isPending(item)" md-diameter="18"></md-progress-circular>
                 <div ng-if="!dvm.isPending(item)" class="item-completed">

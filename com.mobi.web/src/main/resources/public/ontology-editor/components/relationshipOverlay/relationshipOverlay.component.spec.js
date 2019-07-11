@@ -83,6 +83,22 @@ describe('Relationship Overlay component', function() {
             expect(this.controller.schemeList).toEqual(['scheme2']);
         });
     });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+        it('resolve is one way bound', function() {
+            var original = angular.copy(scope.resolve);
+            this.controller.resolve = {};
+            scope.$digest();
+            expect(scope.resolve).toEqual(original);
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('RELATIONSHIP-OVERLAY');

@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Tab directive', function() {
+describe('Ontology Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
-        module('ontologyTab');
+        module('ontology-editor');
         mockComponent('ontology-editor', 'seeHistory');
         mockComponent('ontology-editor', 'mergeTab');
         mockComponent('ontology-editor', 'projectTab');
@@ -38,7 +38,7 @@ describe('Ontology Tab directive', function() {
         mockComponent('ontology-editor', 'searchTab');
         mockComponent('ontology-editor', 'savedChangesTab');
         mockComponent('ontology-editor', 'commitsTab');
-        mockComponent('ontologyButtonStack', 'ontologyButtonStack');
+        mockComponent('ontology-editor', 'ontologyButtonStack');
         mockComponent('ontology-editor', 'openEntitySnackbar');
         mockOntologyState();
         mockCatalogManager();
@@ -94,6 +94,7 @@ describe('Ontology Tab directive', function() {
         catalogManagerSvc = null;
         utilSvc = null;
         prefixes = null;
+        this.element.remove();
     });
 
     describe('should initialize calling the correct methods', function() {
@@ -140,14 +141,13 @@ describe('Ontology Tab directive', function() {
             expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
         });
     });
-
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         beforeEach(function() {
             scope.$digest();
-        })
+        });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('DIV');
-            expect(this.element.hasClass('ontology-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('ONTOLOGY-TAB');
+            expect(this.element.querySelectorAll('.ontology-tab').length).toBe(1);
         });
         it('with a material-tabset', function() {
             expect(this.element.find('material-tabset').length).toBe(1);
@@ -155,11 +155,11 @@ describe('Ontology Tab directive', function() {
         it('with material-tabs', function() {
             expect(this.element.find('material-tab').length).toBe(10);
         });
-        ['ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(function(tag) {
+        ['material-tabset', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(tag => {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
-        }, this);
+        });
         it('if branches are being merged', function() {
             expect(this.element.find('merge-tab').length).toBe(0);
 

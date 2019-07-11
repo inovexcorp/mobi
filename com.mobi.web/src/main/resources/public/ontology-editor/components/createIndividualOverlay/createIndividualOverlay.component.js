@@ -28,7 +28,7 @@
      * @name ontology-editor.component:createIndividualOverlay
      * @requires shared.service:ontologyStateService
      * @requires shared.service:prefixes
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `createIndividualOverlay` is a component that creates content for a modal that creates an individual in the

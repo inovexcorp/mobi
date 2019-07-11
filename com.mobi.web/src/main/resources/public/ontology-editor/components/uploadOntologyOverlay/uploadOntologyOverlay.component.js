@@ -45,7 +45,8 @@
         templateUrl: 'ontology-editor/components/uploadOntologyOverlay/uploadOntologyOverlay.component.html',
         bindings: {
             close: '&',
-            dismiss: '&'
+            dismiss: '&',
+            resolve: '<'
         },
         controllerAs: 'dvm',
         controller: uploadOntologyOverlayComponentCtrl
@@ -56,7 +57,7 @@
     function uploadOntologyOverlayComponentCtrl(ontologyManagerService, ontologyStateService) {
         var dvm = this;
         var om = ontologyManagerService;
-        var state = ontologyStateService;
+        var os = ontologyStateService;
         var file = undefined;
         var uploadOffset = 0;
         dvm.total = 0;
@@ -66,8 +67,8 @@
         dvm.keywords = [];
 
         dvm.$onInit = function() {
-            uploadOffset = state.uploadList.length;
-            dvm.total = state.uploadFiles.length;
+            uploadOffset = os.uploadList.length;
+            dvm.total = os.uploadFiles.length;
             if (dvm.total) {
                 setFormValues();
             }
@@ -77,14 +78,18 @@
         }
         dvm.submit = function() {
             var id = 'upload-' + (uploadOffset + dvm.index);
+            dvm.resolve.startUpload();
             var promise = om.uploadFile(file, dvm.title, dvm.description, _.map(dvm.keywords, _.trim), id)
-                .then(_.noop, errorMessage => state.addErrorToUploadItem(id, errorMessage));
-            state.uploadList.push({title: dvm.title, id, promise, error: undefined});
+                .then(dvm.resolve.finishUpload, errorMessage => {
+                    os.addErrorToUploadItem(id, errorMessage);
+                    dvm.resolve.finishUpload();
+                });
+            os.uploadList.push({title: dvm.title, id, promise, error: undefined});
             if ((dvm.index + 1) < dvm.total) {
                 dvm.index++;
                 setFormValues();
             } else {
-                state.uploadFiles.splice(0);
+                os.uploadFiles.splice(0);
                 dvm.close();
             }
         }
@@ -94,13 +99,13 @@
             }
         }
         dvm.cancel = function() {
-            state.uploadFiles.splice(0);
+            os.uploadFiles.splice(0);
             dvm.total = 0;
             dvm.dismiss();
         }
 
         function setFormValues() {
-            file = _.pullAt(state.uploadFiles, 0)[0];
+            file = _.pullAt(os.uploadFiles, 0)[0];
             dvm.title = file.name;
             dvm.description = '';
             dvm.keywords = [];

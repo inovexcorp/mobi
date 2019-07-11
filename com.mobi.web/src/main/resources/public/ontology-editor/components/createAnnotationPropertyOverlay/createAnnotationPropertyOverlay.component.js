@@ -29,7 +29,7 @@
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
      * @requires shared.service:prefixes
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `createAnnotationPropertyOverlay` is a component that creates content for a modal that creates an annotation

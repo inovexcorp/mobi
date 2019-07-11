@@ -41,7 +41,8 @@ describe('Upload Ontology Overlay component', function() {
         ontologyStateSvc.uploadList = [{}];
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
-        this.element = $compile(angular.element('<upload-ontology-overlay close="close()" dismiss="dismiss()"></upload-ontology-overlay>'))(scope);
+        scope.resolve = {startUpload: jasmine.createSpy('startUpload'), finishUpload: jasmine.createSpy('finishUpload')};
+        this.element = $compile(angular.element('<upload-ontology-overlay close="close()" dismiss="dismiss()" resolve="resolve"></upload-ontology-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('uploadOntologyOverlay');
     });
@@ -55,7 +56,28 @@ describe('Upload Ontology Overlay component', function() {
         this.element.remove();
     });
 
-    describe('replaces the element with the correct html', function() {
+    it('should initialize with the correct values', function() {
+        this.controller.title = 'file1';
+        this.controller.description = '';
+        this.controller.keywords = [];
+    });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+        it('resolve is one way bound', function() {
+            var original = angular.copy(scope.resolve);
+            this.controller.resolve = {};
+            scope.$digest();
+            expect(scope.resolve).toEqual(original);
+        });
+    });
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('UPLOAD-ONTOLOGY-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
@@ -91,6 +113,7 @@ describe('Upload Ontology Overlay component', function() {
                     expect(this.controller.title).toBe('file2');
                     expect(this.controller.description).toBe('');
                     expect(this.controller.keywords).toEqual([]);
+                    expect(scope.resolve.startUpload).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toContain({promise: jasmine.any(Object), id: this.newId, title: 'title', error: undefined});
                     expect(scope.close).not.toHaveBeenCalled();
                 });
@@ -98,6 +121,7 @@ describe('Upload Ontology Overlay component', function() {
                     this.controller.total = 1;
                     this.controller.submit();
                     expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', ['keywords'], this.newId);
+                    expect(scope.resolve.startUpload).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toContain({promise: jasmine.any(Object), id: this.newId, title: 'title', error: undefined});
                     expect(scope.close).toHaveBeenCalled();
                 });
@@ -108,6 +132,7 @@ describe('Upload Ontology Overlay component', function() {
                     this.controller.submit();
                     scope.$apply();
                     expect(ontologyStateSvc.addErrorToUploadItem).not.toHaveBeenCalled();
+                    expect(scope.resolve.finishUpload).toHaveBeenCalled();
                 });
                 it('rejected', function() {
                     this.controller.index = 0;
@@ -116,6 +141,7 @@ describe('Upload Ontology Overlay component', function() {
                     this.controller.submit();
                     scope.$apply();
                     expect(ontologyStateSvc.addErrorToUploadItem).toHaveBeenCalledWith(this.newId, 'error');
+                    expect(scope.resolve.finishUpload).toHaveBeenCalled();
                 });
             });
         });
@@ -133,10 +159,5 @@ describe('Upload Ontology Overlay component', function() {
             expect(ontologyStateSvc.uploadFiles).toEqual([]);
             expect(scope.dismiss).toHaveBeenCalled();
         });
-    });
-    it('sets up variables correctly', function() {
-        this.controller.title = 'file1';
-        this.controller.description = '';
-        this.controller.keywords = [];
     });
 });

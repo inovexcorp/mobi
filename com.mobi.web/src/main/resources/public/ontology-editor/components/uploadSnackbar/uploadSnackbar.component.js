@@ -52,7 +52,7 @@
 
     function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalService) {
         var dvm = this;
-        dvm.state = ontologyStateService;
+        dvm.os = ontologyStateService;
         dvm.showOntology = false;
 
         dvm.$onDestroy = function() {
@@ -73,25 +73,20 @@
         }
         dvm.close = function() {
             dvm.changeEvent({value: false});
-            // dvm.showSnackbar = false;
-            _.forEach(dvm.state.uploadList, item => httpService.cancel(item.id));
-            dvm.state.uploadList = [];
-            dvm.state.uploadFiles = [];
-            dvm.state.uploadPending = 0;
+            _.forEach(dvm.os.uploadList, item => httpService.cancel(item.id));
+            dvm.os.uploadList = [];
+            dvm.os.uploadFiles = [];
+            dvm.os.uploadPending = 0;
         }
         dvm.hasPending = function() {
-            return _.some(dvm.state.uploadList, dvm.isPending);
+            return _.some(dvm.os.uploadList, dvm.isPending);
         }
         dvm.getTitle = function() {
-            dvm.state.uploadPending = dvm.getNumberPending();
             if (dvm.hasPending()) {
-                return 'Uploading ' + (dvm.state.uploadPending === 1 ? '1 item' : dvm.state.uploadPending + ' items');
+                return 'Uploading ' + (dvm.os.uploadPending === 1 ? '1 item' : dvm.os.uploadPending + ' items');
             } else {
-                return dvm.state.uploadList.length + ' uploads complete';
+                return dvm.os.uploadList.length + ' uploads complete';
             }
-        }
-        dvm.getNumberPending = function() {
-            return _.filter(dvm.state.uploadList, dvm.isPending).length;
         }
     }
 

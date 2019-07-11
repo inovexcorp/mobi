@@ -29,7 +29,7 @@
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `individualTree` is a component that creates a `div` containing a {@link shared.component:searchBar}

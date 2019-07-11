@@ -71,6 +71,16 @@ describe('Create Concept Overlay component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     it('initializes with the correct values', function() {
         expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
         expect(this.controller.prefix).toBe(this.iri);

@@ -28,7 +28,7 @@
      * @name ontology-editor.component:conceptSchemesTab
      * @requires shared.service:ontologyStateService
      * @requires shared.service:ontologyManagerService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:propertyManagerService
      * @requires shared.service:modalService
      *

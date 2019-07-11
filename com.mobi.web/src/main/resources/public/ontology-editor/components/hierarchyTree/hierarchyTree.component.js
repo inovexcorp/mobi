@@ -28,7 +28,7 @@
      * @name ontology-editor.component:hierarchyTree
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *

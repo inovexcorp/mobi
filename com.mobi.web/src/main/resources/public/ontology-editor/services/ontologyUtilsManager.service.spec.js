@@ -28,7 +28,7 @@ describe('Ontology Utils Manager service', function() {
     var schemeToConcept = ['hasTopConcept'];
 
     beforeEach(function() {
-        module('ontologyUtilsManager');
+        module('ontology-editor');
         mockOntologyManager();
         mockOntologyState();
         mockUpdateRefs();

@@ -28,7 +28,7 @@
      * @name ontology-editor.component:individualTypesModal
      * @requires shared.service:ontologyStateService
      * @requires shared.service:prefixes
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
      * `individualTypesModal` is a component that creates content for a modal that edits the types of the selected
