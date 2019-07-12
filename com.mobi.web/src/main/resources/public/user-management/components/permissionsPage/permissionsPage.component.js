@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
+(function () {
     'use strict';
 
     /**
@@ -54,9 +54,7 @@
         var um = userManagerService;
         var util = utilService;
         var catalogId = '';
-        var systemRepoId = 'http://mobi.com/system-repo'
-        var actionCreate = pm.actionCreate;
-        var actionRead = pm.actionRead
+        var systemRepoId = 'http://mobi.com/system-repo';
         var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
         var userRole = 'http://mobi.com/roles/user';
 
@@ -64,19 +62,19 @@
 
         dvm.policiesInQuestion = [];
 
-        dvm.$onInit = function() {
+        dvm.$onInit = function () {
             catalogId = _.get(catalogManagerService.localCatalog, '@id', '');
             setPoliciesInQuestion();
             setPolicies();
         }
-        dvm.updatePolicy = function(item, policyIndex) {
+        dvm.updatePolicy = function (item, policyIndex) {
             item.changed = true;
             dvm.policies[policyIndex] = item;
         }
-        dvm.getTitle = function(item) {
+        dvm.getTitle = function (item) {
             return util.getBeautifulIRI(item.type);
         }
-        dvm.saveChanges = function() {
+        dvm.saveChanges = function () {
             var changedPolicies = _.filter(dvm.policies, 'changed');
             $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
                 .then(() => {
@@ -84,12 +82,12 @@
                     util.createSuccessToast('Permissions updated');
                 }, util.createErrorToast);
         }
-        dvm.hasChanges = function() {
+        dvm.hasChanges = function () {
             return _.some(dvm.policies, 'changed');
         }
         function setPoliciesInQuestion() {
-            dvm.policiesInQuestion.push({resourceId: catalogId, actionId: actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + util.getBeautifulIRI(getRecordType(policy))});
-            dvm.policiesInQuestion.push({resourceId: systemRepoId, actionId: actionRead, subjectId: undefined, titleFunc: () => 'Access System Repo'});
+            dvm.policiesInQuestion.push({ resourceId: catalogId, actionId: pm.actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + util.getBeautifulIRI(getRecordType(policy)) });
+            dvm.policiesInQuestion.push({ resourceId: systemRepoId, actionId: pm.actionRead, subjectId: undefined, titleFunc: () => 'Query System Repo' });
         }
         function getRecordType(policy) {
             return _.chain(policy)
@@ -102,29 +100,29 @@
                 .value();
         }
         function setPolicies() {
-            dvm.policies = [];           
+            dvm.policies = [];
             $q.all(_.map(dvm.policiesInQuestion, policy => pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
-                .then((results) => {
+                .then(results => {
                     results.forEach((response, idx) => {
                         dvm.policies = dvm.policies.concat(_.chain(response)
-                        .map(policy => ({
-                            policy,
-                            id: policy.PolicyId,
-                            title: dvm.policiesInQuestion[idx].titleFunc(policy),
-                            changed: false,
-                            everyone: false,
-                            users: [],
-                            groups: [],
-                            selectedUsers: [],
-                            selectedGroups: [],
-                            userSearchText: '',
-                            groupSearchText: '',
-                            selectedUser: undefined,
-                            selectedGroup: undefined
-                        }))
-                        .filter('title')
-                        .forEach(setInfo)
-                        .value());
+                            .map(policy => ({
+                                policy,
+                                id: policy.PolicyId,
+                                title: dvm.policiesInQuestion[idx].titleFunc(policy),
+                                changed: false,
+                                everyone: false,
+                                users: [],
+                                groups: [],
+                                selectedUsers: [],
+                                selectedGroups: [],
+                                userSearchText: '',
+                                groupSearchText: '',
+                                selectedUser: undefined,
+                                selectedGroup: undefined
+                            }))
+                            .filter('title')
+                            .forEach(setInfo)
+                            .value());
                     });
                 }, util.createErrorToast);
         }
@@ -137,17 +135,17 @@
                     value: _.get(match, 'AttributeValue.content[0]')
                 }))
                 .value();
-            if (_.find(matches, {id: prefixes.user + 'hasUserRole', value: userRole})) {
+            if (_.find(matches, { id: prefixes.user + 'hasUserRole', value: userRole })) {
                 item.everyone = true;
             } else {
                 item.selectedUsers = sortUsers(_.chain(matches)
-                    .filter({id: pm.subjectId})
-                    .map(obj => _.find(um.users, {iri: obj.value}))
+                    .filter({ id: pm.subjectId })
+                    .map(obj => _.find(um.users, { iri: obj.value }))
                     .reject(_.isNull)
                     .value());
                 item.selectedGroups = sortGroups(_.chain(matches)
-                    .filter({id: groupAttributeId})
-                    .map(obj => _.find(um.groups, {iri: obj.value}))
+                    .filter({ id: groupAttributeId })
+                    .map(obj => _.find(um.groups, { iri: obj.value }))
                     .reject(_.isNull)
                     .value());
             }

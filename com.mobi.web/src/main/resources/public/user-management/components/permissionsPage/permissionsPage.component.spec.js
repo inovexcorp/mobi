@@ -168,7 +168,7 @@ describe('Permissions Page component', function() {
                 }, {
                     policy: secondPolicyPolicies[0],
                     id: this.secondTypePolicy.PolicyId,
-                    title: 'Access System Repo',
+                    title: 'Query System Repo',
                     changed: false,
                     everyone: true,
                     users: userManagerSvc.users,
@@ -207,7 +207,7 @@ describe('Permissions Page component', function() {
                 }, {
                     policy: secondPolicyPolicies[0],
                     id: this.secondTypePolicy.PolicyId,
-                    title: 'Access System Repo',
+                    title: 'Query System Repo',
                     changed: false,
                     everyone: false,
                     users: _.reject(userManagerSvc.users, {iri: 'user1', username: 'user1'}),
@@ -245,7 +245,7 @@ describe('Permissions Page component', function() {
                 }, {
                     policy: secondPolicyPolicies[0],
                     id: this.secondTypePolicy.PolicyId,
-                    title: 'Access System Repo',
+                    title: 'Query System Repo',
                     changed: false,
                     everyone: false,
                     users: userManagerSvc.users,
