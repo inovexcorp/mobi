@@ -20,8 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+import { map, get, find, remove } from 'lodash';
+
+import './mappingListBlock.component.scss';
+
+const template = require('./mappingListBlock.component.html');
 
     /**
      * @ngdoc component
@@ -41,7 +44,7 @@
      * component houses the method for opening a modal to confirm deleting a mapping.
      */
     const mappingListBlockComponent = {
-        templateUrl: 'mapper/components/mappingListBlock/mappingListBlock.component.html',
+        template,
         bindings: {},
         controllerAs: 'dvm',
         controller: mappingListBlockComponentCtrl
@@ -70,7 +73,7 @@
         dvm.deleteMapping = function() {
             dvm.mm.deleteMapping(dvm.state.mapping.record.id)
                 .then(() => {
-                    _.remove(dvm.state.openedMappings, {record: {id: dvm.state.mapping.record.id}});
+                    remove(dvm.state.openedMappings, {record: {id: dvm.state.mapping.record.id}});
                     dvm.state.mapping = undefined;
                     dvm.state.sourceOntologies = [];
                     setRecords();
@@ -78,26 +81,24 @@
         }
 
         function setRecords() {
-            var catalogId = _.get(dvm.cm.localCatalog, '@id', '');
+            var catalogId = get(dvm.cm.localCatalog, '@id', '');
             var paginatedConfig = {
                 pageIndex: 0,
                 limit: 0,
                 recordType: prefixes.delim + 'MappingRecord',
-                sortOption: _.find(dvm.cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true})
+                sortOption: find(dvm.cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true})
             };
             dvm.cm.getRecords(catalogId, paginatedConfig)
                 .then(response => {
-                    dvm.list = _.map(response.data, record => ({
+                    dvm.list = map(response.data, record => ({
                         id: record['@id'],
                         title: dvm.util.getDctermsValue(record, 'title'),
                         description: dvm.util.getDctermsValue(record, 'description'),
-                        keywords: _.map(_.get(record, "['" + prefixes.catalog + "keyword']", []), '@value'),
+                        keywords: map(get(record, "['" + prefixes.catalog + "keyword']", []), '@value'),
                         branch: dvm.util.getPropertyId(record, prefixes.catalog + 'masterBranch')
                     }));
                 }, dvm.util.createErrorToast);
         }
     }
 
-    angular.module('mapper')
-        .component('mappingListBlock', mappingListBlockComponent);
-})();
+export default mappingListBlockComponent;

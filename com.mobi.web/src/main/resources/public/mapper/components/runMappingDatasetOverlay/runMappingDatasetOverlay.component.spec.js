@@ -20,18 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Run Mapping Dataset Overlay component', function() {
+import {
+    mockMapperState,
+    mockDelimitedManager,
+    mockDatasetManager,
+    mockUtil,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Run Mapping Dataset Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
-        injectHighlightFilter();
-        injectTrustedFilter();
+        angular.mock.module('mapper');
         mockMapperState();
         mockDelimitedManager();
         mockDatasetManager();
         mockUtil();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _datasetManagerService_, _utilService_) {
             $compile = _$compile_;

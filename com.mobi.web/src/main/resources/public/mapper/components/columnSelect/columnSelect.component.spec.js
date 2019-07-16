@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Column Select component', function() {
+import {
+    mockDelimitedManager,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Column Select component', function() {
     var $compile, scope, delimitedManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockDelimitedManager();
         injectTrustedFilter();
         injectHighlightFilter();

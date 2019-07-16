@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Class Select component', function() {
+import {
+    mockOntologyManager,
+    injectHighlightFilter,
+    injectTrustedFilter,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Class Select component', function() {
     var $compile, scope, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockOntologyManager();
         injectHighlightFilter();
         injectTrustedFilter();

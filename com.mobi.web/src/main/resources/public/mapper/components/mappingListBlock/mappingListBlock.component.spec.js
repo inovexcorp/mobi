@@ -20,12 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping List Block component', function() {
+import {
+    mockPrefixes,
+    mockUtil,
+    mockMappingManager,
+    mockMapperState,
+    mockCatalogManager,
+    mockModal,
+    injectSplitIRIFilter,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Mapping List Block component', function() {
     var $compile, scope, $q, utilSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockPrefixes();
         mockUtil();
         mockMappingManager();

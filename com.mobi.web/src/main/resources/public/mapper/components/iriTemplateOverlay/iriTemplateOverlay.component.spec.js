@@ -20,18 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('IRI Template Overlay component', function() {
+import {
+    mockUtil,
+    mockPrefixes,
+    mockMapperState,
+    mockMappingManager,
+    mockDelimitedManager
+} from '../../../../../../test/js/Shared';
+
+fdescribe('IRI Template Overlay component', function() {
     var $compile, scope, utilSvc, prefixes, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockUtil();
         mockPrefixes();
         mockMapperState();
         mockMappingManager();
         mockDelimitedManager();
-        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_, _prefixes_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;

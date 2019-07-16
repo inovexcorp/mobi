@@ -20,19 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Run Mapping Download Overlay component', function() {
+import {
+    mockComponent,
+    mockMapperState,
+    mockDelimitedManager,
+    mockUtil,
+    injectCamelCaseFilter,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Run Mapping Download Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, camelCase;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockComponent('mapper', 'mapperSerializationSelect');
-        injectCamelCaseFilter();
-        injectHighlightFilter();
-        injectTrustedFilter();
         mockMapperState();
         mockDelimitedManager();
         mockUtil();
+        injectCamelCaseFilter();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _camelCaseFilter_) {
             $compile = _$compile_;

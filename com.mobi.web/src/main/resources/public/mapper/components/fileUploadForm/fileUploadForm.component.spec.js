@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('File Upload Form component', function() {
+import {
+    mockMapperState,
+    mockDelimitedManager
+} from '../../../../../../test/js/Shared';
+
+fdescribe('File Upload Form component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockMapperState();
         mockDelimitedManager();
 

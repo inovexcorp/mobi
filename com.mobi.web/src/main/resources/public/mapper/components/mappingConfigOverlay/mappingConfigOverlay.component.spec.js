@@ -20,12 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping Config Overlay component', function() {
+import {
+    mockHttpService,
+    mockUtil,
+    mockOntologyManager,
+    mockMappingManager,
+    mockMapperState,
+    mockCatalogManager,
+    mockPrefixes,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Mapping Config Overlay component', function() {
     var $compile, scope, $q, httpSvc, utilSvc, ontologyManagerSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockHttpService();
         mockUtil();
         mockOntologyManager();

@@ -83,6 +83,7 @@ import './catalog/catalog.module';
 import './datasets/datasets.module';
 import './home/home.module';
 import './login/login.module';
+import './mapper/mapper.module';
 import './settings/settings.module';
 import './shared/shared.module';
 import './user-management/user-management.module';
@@ -110,7 +111,7 @@ angular
         // 'discover',
         'home',
         'login',
-        // 'mapper',
+        'mapper',
         // 'merge-requests',
         // 'ontology-editor',
         'settings',

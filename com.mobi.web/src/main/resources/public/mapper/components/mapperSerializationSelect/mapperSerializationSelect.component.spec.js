@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapper Serialization Select component', function() {
+fdescribe('Mapper Serialization Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
@@ -36,10 +35,8 @@ describe('Mapper Serialization Select component', function() {
         scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.required = '';
         scope.name = '';
-        var form = $compile('<form></form>')(scope);
-        this.element = $compile(angular.element('<mapper-serialization-select format="format" change-event="changeEvent(value)" required="required" name="name"></mapper-serialization-select>'))(scope);
-        form.append(this.element);
-        this.element = $compile(this.element)(scope);
+        this.element = $compile(angular.element('<form><mapper-serialization-select format="format" change-event="changeEvent(value)" required="required" name="name"></mapper-serialization-select></form>'))(scope);
+        this.element = this.element.find('mapper-serialization-select');
         scope.$digest();
         this.controller = this.element.controller('mapperSerializationSelect');
     });
