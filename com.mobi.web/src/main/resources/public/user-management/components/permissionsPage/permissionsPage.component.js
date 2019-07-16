@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function () {
+(function() {
     'use strict';
 
     /**
@@ -62,19 +62,19 @@
 
         dvm.policiesInQuestion = [];
 
-        dvm.$onInit = function () {
+        dvm.$onInit = function() {
             catalogId = _.get(catalogManagerService.localCatalog, '@id', '');
             setPoliciesInQuestion();
             setPolicies();
         }
-        dvm.updatePolicy = function (item, policyIndex) {
+        dvm.updatePolicy = function(item, policyIndex) {
             item.changed = true;
             dvm.policies[policyIndex] = item;
         }
-        dvm.getTitle = function (item) {
+        dvm.getTitle = function(item) {
             return util.getBeautifulIRI(item.type);
         }
-        dvm.saveChanges = function () {
+        dvm.saveChanges = function() {
             var changedPolicies = _.filter(dvm.policies, 'changed');
             $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
                 .then(() => {
@@ -82,7 +82,7 @@
                     util.createSuccessToast('Permissions updated');
                 }, util.createErrorToast);
         }
-        dvm.hasChanges = function () {
+        dvm.hasChanges = function() {
             return _.some(dvm.policies, 'changed');
         }
         function setPoliciesInQuestion() {
