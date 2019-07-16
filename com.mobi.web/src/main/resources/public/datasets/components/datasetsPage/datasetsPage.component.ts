@@ -20,15 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+import './datasetsPage.component.scss';
 
-    /**
-     * @ngdoc overview
-     * @name datasets
-     *
-     * @description
-     * The `datasets` module provides components that make up the Datasets module in the Mobi application.
-     */
-    angular.module('datasets', []);
-})();
+const template = require('./datasetsPage.component.html');
+
+/**
+ * @ngdoc component
+ * @name datasets.component:datasetsPage
+ *
+ * @description
+ * `datasetsPage` is a component which creates the main page of the Datasets module. The component contains
+ * a {@link datasets.component.datasetsTabset datsetsTabset} for navigating the Datasets module
+ */
+const datasetsPageComponent = {
+    template,
+    bindings: {},
+    controllerAs: 'dvm',
+    controller: datasetsPageComponentCtrl
+};
+
+function datasetsPageComponentCtrl() {}
+
+export default datasetsPageComponent;

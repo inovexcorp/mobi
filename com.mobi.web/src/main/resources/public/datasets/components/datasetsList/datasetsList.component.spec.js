@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Datasets List component', function() {
+import {
+    mockDatasetState,
+    mockDatasetManager,
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes,
+    mockModal,
+    injectInArrayFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Datasets List component', function() {
     var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('datasets');
+        angular.mock.module('datasets');
         mockDatasetState();
         mockDatasetManager();
         mockCatalogManager();

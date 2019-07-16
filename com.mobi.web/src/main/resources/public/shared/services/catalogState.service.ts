@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { find, includes, get } from 'lodash';
 
 catalogStateService.$inject = ['catalogManagerService', 'prefixes'];
 
@@ -156,7 +156,7 @@ function catalogStateService(catalogManagerService, prefixes) {
      * @return {string} The type IRI of the record
      */
     self.getRecordType = function(record) {
-        return _.find(_.keys(self.recordIcons), type => _.includes(_.get(record, '@type', []), type)) || prefixes.catalog + 'Record';
+        return find(Object.keys(self.recordIcons), type => includes(get(record, '@type', []), type)) || prefixes.catalog + 'Record';
     }
     /**
      * @ngdoc method
@@ -199,7 +199,7 @@ function catalogStateService(catalogManagerService, prefixes) {
      * {@link shared.service:catalogManagerService catalogManagerService}.
      */
     self.initializeRecordSortOption = function() {
-        self.recordSortOption = _.find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
+        self.recordSortOption = find(cm.sortOptions, {field: prefixes.dcterms + 'modified', asc: false});
     }
 }
 

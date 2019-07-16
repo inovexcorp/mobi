@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { take, includes, get, find } from 'lodash';
 
 /**
  * @ngdoc service
@@ -180,7 +180,7 @@ function discoverStateService() {
      * @param {number} index The index of the breadcrumb clicked.
      */
     self.clickCrumb = function(index) {
-        self.explore.breadcrumbs = _.take(self.explore.breadcrumbs, index + 1);
+        self.explore.breadcrumbs = take(self.explore.breadcrumbs, index + 1);
         self.explore.editing = false;
         self.explore.creating = false;
     }
@@ -196,7 +196,7 @@ function discoverStateService() {
      * @returns {Object} An object which contains the instance's JSON-LD.
      */
     self.getInstance = function() {
-        return _.find(self.explore.instance.entity, obj => _.includes(_.get(obj, '@type'), self.explore.classId));
+        return find(self.explore.instance.entity, obj => includes(get(obj, '@type'), self.explore.classId));
     }
 
     /**

@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Type component', function() {
+import {
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Record Type component', function() {
     var $compile, scope, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockCatalogManager();
         mockUtil();
         mockPrefixes();

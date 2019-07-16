@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { pick } from 'lodash';
 
 policyEnforcementService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
@@ -65,7 +65,7 @@ function policyEnforcementService($http, $q, REST_PREFIX, utilService) {
      * an error message
      */
     self.evaluateRequest = function(jsonRequest) {
-        var filteredRequest = _.pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
+        var filteredRequest = pick(jsonRequest, ['resourceId', 'actionId', 'actionAttrs', 'resourceAttrs', 'subjectAttrs']);
         return $http.post(prefix, filteredRequest)
             .then(response => response.data, util.rejectError);
     }

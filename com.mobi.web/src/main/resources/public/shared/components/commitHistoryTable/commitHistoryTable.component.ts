@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { has, find, startsWith, split, forEach, includes, join, map, indexOf } from 'lodash';
 
 import './commitHistoryTable.component.scss';
 
@@ -103,7 +103,7 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
         dvm.snap = Snap('.commit-graph');
     }
     dvm.$onChanges = function(changesObj) {
-        if (_.has(changesObj, 'headTitle') || _.has(changesObj, 'commitId') || _.has(changesObj, 'targetId') || _.has(changesObj, 'entityId')) {
+        if (has(changesObj, 'headTitle') || has(changesObj, 'commitId') || has(changesObj, 'targetId') || has(changesObj, 'entityId')) {
             dvm.getCommits();
         }
     }
@@ -114,7 +114,7 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
         cm.getCommit(commitId)
             .then(response => {
                 modalService.openModal('commitInfoOverlay', {
-                    commit: _.find(dvm.commits, {id: commitId}),
+                    commit: find(dvm.commits, {id: commitId}),
                     additions: response.additions,
                     deletions: response.deletions,
                     entityNameFunc: dvm.entityNameFunc
@@ -159,7 +159,7 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
         if (dvm.commits.length > 0) {
             wrapper = dvm.snap.group();
             // First draw circles in a straight line
-            _.forEach(dvm.commits, (commit, i) => {
+            forEach(dvm.commits, (commit, i) => {
                 var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (i * dvm.circleSpacing), dvm.circleRadius);
                 var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
                 circle.append(title);
@@ -178,28 +178,28 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
             }
             recurse(c);
             // Update deltaX based on how many columns there are or the minimum width
-            dvm.deltaX = _.max([dvm.deltaX + xI * dvm.columnSpacing, titleWidth + 10 + dvm.circleRadius]);
+            dvm.deltaX = Math.max(dvm.deltaX + xI * dvm.columnSpacing, titleWidth + 10 + dvm.circleRadius);
             // Shift the x and y coordinates of everything using deltaX and deltaY
-            _.forEach(graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY}));
-            _.forEach(wrapper.selectAll('path'), path => {
-                var points = _.map(_.split(path.attr('d'), ' '), s => {
+            forEach(graphCommits, (c, idx) => c.circle.attr({cx: c.circle.asPX('cx') + dvm.deltaX, cy: c.circle.asPX('cy') + dvm.deltaY}));
+            forEach(wrapper.selectAll('path'), path => {
+                var points = map(split(path.attr('d'), ' '), s => {
                     var sections;
                     var head;
-                    if (_.startsWith(s, 'M') || _.startsWith(s, 'C') || _.startsWith(s, 'L')) {
-                        head = _.head(s);
-                        sections = _.split(s.substring(1), ',');
+                    if (startsWith(s, 'M') || startsWith(s, 'C') || startsWith(s, 'L')) {
+                        head = head(s);
+                        sections = split(s.substring(1), ',');
                     } else {
                         head = '';
-                        sections = _.split(s, ',');
+                        sections = split(s, ',');
                     }
                     sections[0] = '' + (parseFloat(sections[0]) + dvm.deltaX);
                     sections[1] = '' + (parseFloat(sections[1]) + dvm.deltaY);
-                    return head + _.join(sections, ',');
+                    return head + join(sections, ',');
                 });
-                path.attr({d: _.join(points, ' ')});
+                path.attr({d: join(points, ' ')});
             });
-            _.forEach(wrapper.selectAll('rect'), rect => rect.attr({x: rect.asPX('x') + dvm.deltaX, y: rect.asPX('y') + dvm.deltaY}));
-            _.forEach(wrapper.selectAll('text'), text => text.attr({x: text.asPX('x') + dvm.deltaX, y: text.asPX('y') + dvm.deltaY}));
+            forEach(wrapper.selectAll('rect'), rect => rect.attr({x: rect.asPX('x') + dvm.deltaX, y: rect.asPX('y') + dvm.deltaY}));
+            forEach(wrapper.selectAll('text'), text => text.attr({x: text.asPX('x') + dvm.deltaX, y: text.asPX('y') + dvm.deltaY}));
         }
     }
     dvm.reset = function() {
@@ -215,14 +215,14 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
 
     function recurse(c) {
         // Find the column this commit belongs to and the ids of its base and auxiliary commits
-        var col = _.find(cols, col => _.includes(col.commits, c.commit.id));
+        var col = find(cols, col => includes(col.commits, c.commit.id));
         var baseParent = c.commit.base;
         var auxParent = c.commit.auxiliary;
         // If there is an auxiliary parent, there is also a base parent
         if (auxParent) {
             // Determine whether the base parent is already in a column
-            var baseC = _.find(graphCommits, {commit: {id: baseParent}});
-            var baseCol = _.find(cols, col => _.includes(col.commits, baseParent));
+            var baseC = find(graphCommits, {commit: {id: baseParent}});
+            var baseCol = find(cols, col => includes(col.commits, baseParent));
             var baseColor = col.color;
             if (!baseCol) {
                 // If not in a column, shift the base parent to be beneath the commit
@@ -232,8 +232,8 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
             // Draw a line between commit and base parent
             drawLine(c, baseC, col.color);
             // Determine whether auxiliary parent is already in a column
-            var auxC = _.find(graphCommits, {commit: {id: auxParent}});
-            var auxCol = _.find(cols, col => _.includes(col.commits, auxParent));
+            var auxC = find(graphCommits, {commit: {id: auxParent}});
+            var auxCol = find(cols, col => includes(col.commits, auxParent));
             var auxColor;
             if (auxCol) {
                 // If in a column, collect line color
@@ -258,8 +258,8 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
             }
         } else if (baseParent) {
             // Determine whether the base parent is already in a column
-            var baseC = _.find(graphCommits, {commit: {id: baseParent}});
-            var baseCol = _.find(cols, col => _.includes(col.commits, baseParent));
+            var baseC = find(graphCommits, {commit: {id: baseParent}});
+            var baseCol = find(cols, col => includes(col.commits, baseParent));
             if (!baseCol) {
                 // If not in a column, push into current column and draw a line between them
                 baseC.circle.attr({cx: col.x, fill: col.color});
@@ -280,18 +280,18 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
         if (start.x > end.x) {
             // If the starting commit is further right than the ending commit, curve first then go straight down
             pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
-                + end.x + ',' + (_.min([start.y + dvm.circleSpacing, end.y - dvm.circleRadius])) + ' L';
+                + end.x + ',' + (Math.min(start.y + dvm.circleSpacing, end.y - dvm.circleRadius)) + ' L';
         } else if (start.x < end.x) {
             // If the starting commit is further left than the ending commmit, check if there are any commits in between in the same column
             // as the starting commit
-            var inBetweenCommits = graphCommits.slice(_.indexOf(graphCommits, c) + 1, _.indexOf(graphCommits, parentC));
-            if (_.find(inBetweenCommits, commit => commit.circle.asPX('cx') === start.x)) {
+            var inBetweenCommits = graphCommits.slice(indexOf(graphCommits, c) + 1, indexOf(graphCommits, parentC));
+            if (find(inBetweenCommits, commit => commit.circle.asPX('cx') === start.x)) {
                 // If there is a commit in the way, curve first then go straight down
                 pathStr += ' C' + start.x + ',' + (start.y + 3 * dvm.circleSpacing/4) + ' ' + end.x + ',' + (start.y + dvm.circleSpacing/4) + ' '
                     + end.x + ',' + (start.y + dvm.circleSpacing) + ' L';
             } else {
                 // If there isn't a commit in the way, go straight down then curve
-                pathStr += ' L' + start.x + ',' + (_.max([end.y - dvm.circleSpacing, start.y + dvm.circleRadius])) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' '
+                pathStr += ' L' + start.x + ',' + (Math.max(end.y - dvm.circleSpacing, start.y + dvm.circleRadius)) + ' C' + start.x + ',' + (end.y - dvm.circleSpacing/4) + ' '
                     + end.x + ',' + (end.y - 3 * dvm.circleSpacing/4) + ' ';
             }
         } else {

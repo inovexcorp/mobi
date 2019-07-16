@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { includes, has } from 'lodash';
 
 requestInterceptor.$inject = ['$q', '$rootScope'];
 
@@ -6,7 +6,7 @@ function requestInterceptor($q, $rootScope) {
     $rootScope.pendingRequests = 0;
 
     function checkConfig(config) {
-        return !_.includes(config.url, '.html') && !_.has(config, 'timeout');
+        return !includes(config.url, '.html') && !has(config, 'timeout');
     }
 
     function handleStop(config) {

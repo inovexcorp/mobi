@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { has, get } from 'lodash';
 
 import './statementDisplay.component.scss';
 
@@ -49,13 +49,13 @@ statementDisplayComponentCtrl.$inject = ['$filter'];
 function statementDisplayComponentCtrl($filter) {
     var dvm = this;
     dvm.$onInit = function () {
-        if (_.has(dvm.object, '@id')) {
+        if (has(dvm.object, '@id')) {
             dvm.fullObject = dvm.object['@id'];
             dvm.o = $filter('splitIRI')(dvm.fullObject).end || dvm.fullObject;
         } else {
-            dvm.o = _.get(dvm.object, '@value', dvm.object)
-                + (_.has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
-                + (_.has(dvm.object, '@type') ? ' [type: ' + $filter('prefixation')(dvm.object['@type']) + ']' : '');
+            dvm.o = get(dvm.object, '@value', dvm.object)
+                + (has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
+                + (has(dvm.object, '@type') ? ' [type: ' + $filter('prefixation')(dvm.object['@type']) + ']' : '');
             dvm.fullObject = dvm.o;
         }
     }

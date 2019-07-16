@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { find } from 'lodash';
 
 import './passwordTab.component.scss';
 
@@ -56,7 +56,7 @@ function passwordTabComponentCtrl(userManagerService, loginManagerService, utilS
     dvm.currentUser = undefined;
 
     dvm.$onInit = function() {
-        dvm.currentUser = angular.copy(_.find(dvm.um.users, {username: dvm.lm.currentUser}));
+        dvm.currentUser = angular.copy(find(dvm.um.users, {username: dvm.lm.currentUser}));
     }
     dvm.save = function() {
         dvm.um.changePassword(dvm.lm.currentUser, dvm.currentPassword, dvm.password)

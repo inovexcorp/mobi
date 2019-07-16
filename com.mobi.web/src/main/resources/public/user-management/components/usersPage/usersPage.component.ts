@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { includes, get, filter } from 'lodash';
 
 import './usersPage.component.scss';
 
@@ -94,7 +94,7 @@ function usersPageComponentCtrl(userStateService, userManagerService, loginManag
         }, dvm.util.createErrorToast);
     }
     dvm.getUserGroups = function() {
-        return _.filter(dvm.um.groups, group => _.includes(group.members, dvm.state.selectedUser.username));
+        return filter(dvm.um.groups, group => includes(group.members, dvm.state.selectedUser.username));
     }
     dvm.goToGroup = function(group) {
         dvm.state.showGroups = true;
@@ -103,7 +103,7 @@ function usersPageComponentCtrl(userStateService, userManagerService, loginManag
     }
 
     function setRoles() {
-        dvm.roles.admin = _.includes(_.get(dvm.state.selectedUser, 'roles', []), 'admin');
+        dvm.roles.admin = includes(get(dvm.state.selectedUser, 'roles', []), 'admin');
     }
 }
 

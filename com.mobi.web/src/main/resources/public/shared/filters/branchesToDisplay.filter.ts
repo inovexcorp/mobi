@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { filter, includes, map, concat, sortBy, reject, remove } from 'lodash';
 
 branchesToDisplay.$inject = ['catalogManagerService', 'utilService', 'loginManagerService', 'prefixes'];
 
@@ -46,18 +46,18 @@ function branchesToDisplay(catalogManagerService, utilService, loginManagerServi
     var util = utilService;
     var lm = loginManagerService;
     return function(branches) {
-        var displayBranches = _.filter(branches, branch => !cm.isBranch(branch));
-        var myUserBranches = _.filter(branches, branch => cm.isUserBranch(branch) && lm.currentUserIRI === util.getDctermsId(branch, 'publisher'));
+        var displayBranches = filter(branches, branch => !cm.isBranch(branch));
+        var myUserBranches = filter(branches, branch => cm.isUserBranch(branch) && lm.currentUserIRI === util.getDctermsId(branch, 'publisher'));
         if (myUserBranches.length) {
-            var toHide = _.map(myUserBranches, branch => util.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
-            var moreBranches = _.filter(branches, branch => !cm.isUserBranch(branch) && !_.includes(toHide, branch['@id']));
-            displayBranches = _.concat(moreBranches, myUserBranches);
+            var toHide = map(myUserBranches, branch => util.getPropertyId(branch, prefixes.catalog + 'createdFrom'));
+            var moreBranches = filter(branches, branch => !cm.isUserBranch(branch) && !includes(toHide, branch['@id']));
+            displayBranches = concat(moreBranches, myUserBranches);
         } else {
-            displayBranches = _.reject(branches, cm.isUserBranch);
+            displayBranches = reject(branches, cm.isUserBranch);
         }
 
-        var masterBranchArr = _.remove(displayBranches, branch => util.getDctermsValue(branch, 'title') === 'MASTER');
-        return _.concat(masterBranchArr, _.sortBy(displayBranches, branch => util.getDctermsValue(branch, 'title')));
+        var masterBranchArr = remove(displayBranches, branch => util.getDctermsValue(branch, 'title') === 'MASTER');
+        return concat(masterBranchArr, sortBy(displayBranches, branch => util.getDctermsValue(branch, 'title')));
     }
 }
 

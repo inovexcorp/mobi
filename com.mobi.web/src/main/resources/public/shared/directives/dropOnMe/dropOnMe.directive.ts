@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { includes } from 'lodash';
 
 import './dropOnMe.directive.scss';
         
@@ -46,7 +46,7 @@ function dropOnMe($timeout) {
         },
         link: function(scope, elem) {
             elem.on('dragover', event => {
-                if (_.includes(event.dataTransfer.types, scope.dropId)) {
+                if (includes(event.dataTransfer.types, scope.dropId)) {
                     event.preventDefault();
                     elem.addClass('drop-hover');
                 }

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { get } from 'lodash';
 
 const template = require('./activityCard.component.html');
 
@@ -80,7 +80,7 @@ function activityCardComponentCtrl(provManagerService, utilService, prefixes, ht
         dvm.activities = response.data.activities;
         dvm.entities = response.data.entities;
         var headers = response.headers();
-        dvm.totalSize = _.get(headers, 'x-total-count', 0);
+        dvm.totalSize = get(headers, 'x-total-count', 0);
     }
     function createToast(errorMessage) {
         if (errorMessage) {

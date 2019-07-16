@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Limit Description component', function() {
+fdescribe('Limit Description component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

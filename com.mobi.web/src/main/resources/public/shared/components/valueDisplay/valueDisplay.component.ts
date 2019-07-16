@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { has } from 'lodash';
 
 import './valueDisplay.component.scss';
 
@@ -56,7 +56,7 @@ function valueDisplayComponentCtrl(discoverStateService, utilService) {
     dvm.ds = discoverStateService;
 
     dvm.has = function(obj, key) {
-        return _.has(obj, key);
+        return has(obj, key);
     }
 }
 

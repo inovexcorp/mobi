@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { toUpper } from 'lodash';
 
 /**
  * @ngdoc filter
@@ -34,8 +35,6 @@
  * @returns {string} Either an empty string if the value is not a string or a beautified
  * version of the value if it is a string.
  */
-import * as _ from 'lodash';
-
 function beautify() {
     return function(value) {
         if (value && typeof value !== 'object') {
@@ -49,7 +48,7 @@ function beautify() {
                 // space before last upper in a sequence followed by lower
                 .replace(/\b([A-Z]+)([A-Z])([a-z])/, '$1 $2$3')
                 // uppercase the first character
-                .replace(/^./, _.toUpper);
+                .replace(/^./, toUpper);
         }
         return '';
     }

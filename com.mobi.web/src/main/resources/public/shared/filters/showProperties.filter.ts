@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { isArray, filter, has } from 'lodash';
 
 /**
  * @ngdoc filter
@@ -39,8 +39,8 @@ import * as _ from 'lodash';
 function showProperties() {
     return function(entity, properties) {
         var arr = [];
-        if (_.isArray(properties)) {
-            arr = _.filter(properties, property => _.has(entity, property));
+        if (isArray(properties)) {
+            arr = filter(properties, property => has(entity, property));
         }
         return arr;
     }

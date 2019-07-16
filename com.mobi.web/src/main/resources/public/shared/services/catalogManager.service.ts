@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { identity, has, find, get, forEach, includes } from 'lodash';
 
 catalogManagerService.$inject = ['$http', '$httpParamSerializer', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
@@ -128,8 +128,8 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.initialize = function() {
         return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
             .then(responses => {
-                self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Local)'}]});
-                self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]});
+                self.localCatalog = find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Local)'}]});
+                self.distributedCatalog = find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]});
                 if (!self.localCatalog) {
                     return $q.reject('Could not find local catalog');
                 }
@@ -137,9 +137,9 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
                     return $q.reject('Could not find distributed catalog');
                 }
                 self.recordTypes = responses[0];
-                _.forEach(responses[1], option => {
+                forEach(responses[1], option => {
                     var label = util.getBeautifulIRI(option);
-                    if (!_.find(self.sortOptions, {field: option})) {
+                    if (!find(self.sortOptions, {field: option})) {
                         self.sortOptions.push({
                             field: option,
                             asc: true,
@@ -233,10 +233,10 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
             params: util.paginatedConfigToParams(paginatedConfig)
         };
         setDefaultSort(config.params);
-        if (_.get(paginatedConfig, 'searchText')) {
+        if (get(paginatedConfig, 'searchText')) {
             config.params.searchText = paginatedConfig.searchText;
         }
-        if (_.get(paginatedConfig, 'recordType')) {
+        if (get(paginatedConfig, 'recordType')) {
             config.params.type = paginatedConfig.recordType;
         }
         var url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
@@ -286,17 +286,17 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createRecord = function(catalogId, recordConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
             };
         fd.append('type', recordConfig.recordType);
         fd.append('title', recordConfig.title);
-        if (_.has(recordConfig, 'description')) {
+        if (has(recordConfig, 'description')) {
             fd.append('description', recordConfig.description);
         }
-        _.forEach(_.get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
+        forEach(get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
             .then(response => response.data, util.rejectError);
     }
@@ -412,22 +412,22 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createRecordDistribution = function(recordId, catalogId, distributionConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
             };
         fd.append('title', distributionConfig.title);
-        if (_.has(distributionConfig, 'description')) {
+        if (has(distributionConfig, 'description')) {
             fd.append('description', distributionConfig.description);
         }
-        if (_.has(distributionConfig, 'format')) {
+        if (has(distributionConfig, 'format')) {
             fd.append('format', distributionConfig.format);
         }
-        if (_.has(distributionConfig, 'accessURL')) {
+        if (has(distributionConfig, 'accessURL')) {
             fd.append('accessURL', distributionConfig.accessURL);
         }
-        if (_.has(distributionConfig, 'downloadURL')) {
+        if (has(distributionConfig, 'downloadURL')) {
             fd.append('downloadURL', distributionConfig.downloadURL);
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
@@ -590,7 +590,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createRecordTag = function(recordId, catalogId, tagConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
@@ -598,7 +598,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         fd.append('iri', tagConfig.iri);
         fd.append('title', tagConfig.title);
         fd.append('commit', tagConfig.commitId);
-        if (_.has(tagConfig, 'description')) {
+        if (has(tagConfig, 'description')) {
             fd.append('description', tagConfig.description);
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/tags', fd, config)
@@ -746,22 +746,22 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.createVersionDistribution = function(versionId, recordId, catalogId, distributionConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
             };
         fd.append('title', distributionConfig.title);
-        if (_.has(distributionConfig, 'description')) {
+        if (has(distributionConfig, 'description')) {
             fd.append('description', distributionConfig.description);
         }
-        if (_.has(distributionConfig, 'format')) {
+        if (has(distributionConfig, 'format')) {
             fd.append('format', distributionConfig.format);
         }
-        if (_.has(distributionConfig, 'accessURL')) {
+        if (has(distributionConfig, 'accessURL')) {
             fd.append('accessURL', distributionConfig.accessURL);
         }
-        if (_.has(distributionConfig, 'downloadURL')) {
+        if (has(distributionConfig, 'downloadURL')) {
             fd.append('format', distributionConfig.downloadURL);
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
@@ -1240,14 +1240,14 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.mergeBranches = function(sourceId, targetId, recordId, catalogId, differenceObj) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 },
                 params: {targetId}
             };
-        fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : '[]');
-        fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
+        fd.append('additions', has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : '[]');
+        fd.append('deletions', has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
             .then(response => response.data, util.rejectError);
     }
@@ -1368,15 +1368,15 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.updateInProgressCommit = function(recordId, catalogId, differenceObj) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
             };
-        if (_.has(differenceObj, 'additions')) {
+        if (has(differenceObj, 'additions')) {
             fd.append('additions', JSON.stringify(differenceObj.additions));
         }
-        if (_.has(differenceObj, 'deletions')) {
+        if (has(differenceObj, 'deletions')) {
             fd.append('deletions', JSON.stringify(differenceObj.deletions));
         }
         return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
@@ -1428,7 +1428,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the Record type; false otherwise
      */
     self.isRecord = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Record');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'Record');
     }
 
     /**
@@ -1443,7 +1443,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the VersionedRDFRecord type; false otherwise
      */
     self.isVersionedRDFRecord = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'VersionedRDFRecord');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'VersionedRDFRecord');
     }
 
     /**
@@ -1458,7 +1458,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the Distribution type; false otherwise
      */
     self.isDistribution = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Distribution');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'Distribution');
     }
 
     /**
@@ -1473,7 +1473,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the Branch type; false otherwise
      */
     self.isBranch = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Branch');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'Branch');
     }
 
     /**
@@ -1488,7 +1488,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the UserBranch type; false otherwise
      */
     self.isUserBranch = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'UserBranch');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'UserBranch');
     }
 
     /**
@@ -1503,7 +1503,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the Version type; false otherwise
      */
     self.isVersion = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Version');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'Version');
     }
 
     /**
@@ -1518,7 +1518,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the Tag type; false otherwise
      */
     self.isTag = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Tag');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'Tag');
     }
 
     /**
@@ -1533,20 +1533,20 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {boolean} True if the entity contains the Commit type; false otherwise
      */
     self.isCommit = function(entity) {
-        return _.includes(_.get(entity, '@type', []), prefixes.catalog + 'Commit');
+        return includes(get(entity, '@type', []), prefixes.catalog + 'Commit');
     }
 
     function createVersion(recordId, catalogId, versionConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
             };
         fd.append('title', versionConfig.title);
         fd.append('type', versionConfig.type);
-        if (_.has(versionConfig, 'description')) {
+        if (has(versionConfig, 'description')) {
             fd.append('description', versionConfig.description);
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
@@ -1556,7 +1556,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     function createBranch(recordId, catalogId, branchConfig, commitId) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
@@ -1564,7 +1564,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
         fd.append('title', branchConfig.title);
         fd.append('type', branchConfig.type);
         fd.append('commitId', commitId);
-        if (_.has(branchConfig, 'description')) {
+        if (has(branchConfig, 'description')) {
             fd.append('description', branchConfig.description);
         }
         return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)
@@ -1582,7 +1582,7 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     }
 
     function setDefaultSort(configParams) {
-        if (!_.has(configParams, 'sort')) {
+        if (!has(configParams, 'sort')) {
             configParams.sort = self.sortOptions[0].field;
             configParams.ascending = self.sortOptions[0].asc;
         }

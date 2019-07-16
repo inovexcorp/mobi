@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { includes } from 'lodash';
 
 /**
  * @ngdoc directive
@@ -42,7 +42,7 @@ function uniqueValue() {
                 if (ctrl.$isEmpty(value)) {
                     return true;
                 }
-                return !_.includes(scope.$eval(attrs.uniqueValue), value);
+                return !includes(scope.$eval(attrs.uniqueValue), value);
             }
         }
     }

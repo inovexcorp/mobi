@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Dataset Overlay component', function() {
+import {
+    mockComponent,
+    mockDatasetState,
+    mockDatasetManager,
+    mockUtil,
+    injectRegexConstant
+} from '../../../../../../test/js/Shared';
+
+fdescribe('New Dataset Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('datasets');
+        angular.mock.module('datasets');
         mockComponent('datasets', 'datasetsOntologyPicker');
         mockDatasetManager();
         mockDatasetState();

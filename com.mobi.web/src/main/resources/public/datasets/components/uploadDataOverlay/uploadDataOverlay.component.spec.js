@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Upload Data Overlay component', function() {
+import {
+    mockDatasetManager,
+    mockDatasetState,
+    mockUtil,
+    mockHttpService
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Upload Data Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc, httpSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('datasets');
+        angular.mock.module('datasets');
         mockDatasetManager();
         mockDatasetState();
         mockUtil();

@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { get } from 'lodash';
 
 import './dragFile.directive.scss';
 
@@ -54,7 +54,7 @@ function dragFile($window, $parse, $compile) {
 
             elem.on('dragenter', event => event.preventDefault());
             elem.on('dragover', event => {
-                if (_.get(event.dataTransfer, 'items', []).length) {
+                if (get(event.dataTransfer, 'items', []).length) {
                     elem.addClass('hover');
                     scope.$apply(function() {
                         scope.showDragFileOverlay = true;

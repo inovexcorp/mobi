@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { forOwn, isString, isEmpty, has, indexOf, isPlainObject, forEach, unset, isArray, remove } from 'lodash';
 
 updateRefsService.$inject = ['$filter'];
 
@@ -57,8 +57,8 @@ function updateRefsService($filter) {
     self.update = function(obj, old, fresh) {
         var freshSplit = $filter('splitIRI')(fresh);
         // iterates over all of the properties of the object
-        _.forOwn(obj, (value, key) => {
-            var excluded = _.indexOf(exclude, key);
+        forOwn(obj, (value, key) => {
+            var excluded = indexOf(exclude, key);
             // replaces the key if it is the old value
             if (key === old && excluded === -1) {
                 delete obj[key];
@@ -67,8 +67,8 @@ function updateRefsService($filter) {
             }
             if (!(excluded !== -1 || !obj[key])) {
                 // checks all items in the array
-                if (_.isArray(value)) {
-                    _.forEach(value, (item, index) => {
+                if (isArray(value)) {
+                    forEach(value, (item, index) => {
                         // checks to see if it contains the old value
                         if (item === old) {
                             obj[key][index] = fresh;
@@ -105,30 +105,30 @@ function updateRefsService($filter) {
      * @param {string} word The original string that will be removed
      */
     self.remove = function(obj, word) {
-        _.forOwn(obj, (value, key) => {
-            if (_.isArray(value)) {
-                _.remove(value, item => item === word);
-                _.forEach(value, (item, index) => {
-                    if (!_.isString(item)) {
+        forOwn(obj, (value, key) => {
+            if (isArray(value)) {
+                remove(value, item => item === word);
+                forEach(value, (item, index) => {
+                    if (!isString(item)) {
                         self.remove(item, word);
                     }
                 });
-                _.remove(value, item => checkValue(item));
+                remove(value, item => checkValue(item));
                 if (!value.length) {
-                    _.unset(obj, key);
+                    unset(obj, key);
                 }
-            } else if (_.isPlainObject(value)) {
+            } else if (isPlainObject(value)) {
                 self.remove(value, word);
                 if (checkValue(value)) {
-                    _.unset(obj, key);
+                    unset(obj, key);
                 }
             } else if (value === word) {
-                _.unset(obj, key);
+                unset(obj, key);
             }
         });
     }
     function checkValue(value) {
-        return _.isEmpty(value) || (_.keys(value).length === 1 && _.has(value, '$$hashKey'));
+        return isEmpty(value) || (Object.keys(value).length === 1 && has(value, '$$hashKey'));
     }
 }
 

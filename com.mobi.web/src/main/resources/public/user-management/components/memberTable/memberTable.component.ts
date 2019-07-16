@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { filter, has, includes } from 'lodash';
 
 import './memberTable.component.scss';
  
@@ -77,9 +77,9 @@ function memberTableComponentCtrl(userStateService, userManagerService, loginMan
     dvm.availableUsers = []; 
 
     dvm.$onChanges = function(changesObj) {
-        if (_.has(changesObj, 'members')) {
-            dvm.memberObjects = _.filter(dvm.um.users, user => _.includes(dvm.members, user.username));
-            dvm.availableUsers = _.filter(dvm.um.users, user => !_.includes(dvm.members, user.username));
+        if (has(changesObj, 'members')) {
+            dvm.memberObjects = filter(dvm.um.users, user => includes(dvm.members, user.username));
+            dvm.availableUsers = filter(dvm.um.users, user => !includes(dvm.members, user.username));
         }
     }
     dvm.onSelect = function() {

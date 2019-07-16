@@ -20,15 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-(function() {
-    'use strict';
+import './catalogPage.component.scss';
 
-    /**
-     * @ngdoc overview
-     * @name catalog
-     *
-     * @description
-     * The `catalog` module provides components that make up the Catalog module in the Mobi application.
-     */
-    angular.module('catalog', []);
-})();
+const template = require('./catalogPage.component.html');
+
+/**
+ * @ngdoc component
+ * @name catalog.component:catalogPage
+ * @requires shared.service:catalogStateService
+ *
+ * @description
+ * `catalogPage` is a component which creates the main page of the Catalog module. The component contains different
+ * content depending on whether a catalog Record has been selected.
+ */
+const catalogPageComponent = {
+    template,
+    bindings: {},
+    controllerAs: 'dvm',
+    controller: catalogPageComponentCtrl
+};
+
+catalogPageComponentCtrl.$inject = ['catalogStateService'];
+
+function catalogPageComponentCtrl(catalogStateService) {
+    var dvm = this;
+    dvm.state = catalogStateService;
+}
+
+export default catalogPageComponent;

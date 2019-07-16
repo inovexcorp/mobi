@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { map, get, find, filter, identity, set, noop, forEach, has, merge, remove, pull, assign, union, includes, flatten, } from 'lodash';
 
 userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
 
@@ -112,11 +112,11 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.initialize = function() {
         return self.getUsers()
             .then(data => {
-                self.users = _.map(data, self.getUserObj);
+                self.users = map(data, self.getUserObj);
                 return self.getGroups();
             }, $q.reject)
             .then(data => {
-                self.groups = _.map(data, self.getGroupObj)
+                self.groups = map(data, self.getGroupObj)
             }, error => console.log(util.getErrorMessage(error)));
     }
     /**
@@ -164,13 +164,13 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      */
     self.getUsername = function(iri) {
         var config = { params: { iri } };
-        var user = _.find(self.users, { iri });
+        var user = find(self.users, { iri });
         if (user) {
             return $q.when(user.username);
         } else {
             return $http.get(userPrefix + '/username', config)
                 .then(response => {
-                    _.set(_.find(self.users, {username: response.data}), 'iri', iri);
+                    set(find(self.users, {username: response.data}), 'iri', iri);
                     return response.data;
                 }, util.rejectError);
         }
@@ -199,21 +199,21 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.addUser = function(newUser, password) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 },
             };
         fd.append('username', newUser.username);
         fd.append('password', password);
-        _.forEach(_.get(newUser, 'roles', []), role => fd.append('roles', role));
-        if (_.has(newUser, 'firstName')) {
+        forEach(get(newUser, 'roles', []), role => fd.append('roles', role));
+        if (has(newUser, 'firstName')) {
             fd.append('firstName', newUser.firstName);
         }
-        if (_.has(newUser, 'lastName')) {
+        if (has(newUser, 'lastName')) {
             fd.append('lastName', newUser.lastName);
         }
-        if (_.has(newUser, 'email')) {
+        if (has(newUser, 'email')) {
             fd.append('email', newUser.email);
         }
 
@@ -221,7 +221,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             .then(response => {
                 return self.getUser(newUser.username);
             }, $q.reject)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -241,9 +241,9 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         return $http.get(userPrefix + '/' + encodeURIComponent(username))
             .then(response => {
                 var userObj = self.getUserObj(response.data);
-                var existing = _.find(self.users, {iri: userObj.iri});
+                var existing = find(self.users, {iri: userObj.iri});
                 if (existing) {
-                    _.merge(existing, userObj);
+                    merge(existing, userObj);
                 } else {
                     self.users.push(userObj);
                 }
@@ -269,7 +269,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.updateUser = function(username, newUser) {
         return $http.put(userPrefix + '/' + encodeURIComponent(username), newUser.jsonld)
             .then(response => {
-                _.assign(_.find(self.users, {username}), newUser);
+                assign(find(self.users, {username}), newUser);
             }, util.rejectError);
     }
     /**
@@ -296,7 +296,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             }
         };
         return $http.post(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -316,7 +316,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.resetPassword = function(username, newPassword) {
         var config = { params: { newPassword } };
         return $http.put(userPrefix + '/' + encodeURIComponent(username) + '/password', null, config)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -335,8 +335,8 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.deleteUser = function(username) {
         return $http.delete(userPrefix + '/' + encodeURIComponent(username))
             .then(response => {
-                _.remove(self.users, {username});
-                _.forEach(self.groups, group => _.pull(group.members, username));
+                remove(self.users, {username});
+                forEach(self.groups, group => pull(group.members, username));
             }, util.rejectError);
     }
     /**
@@ -358,8 +358,8 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var config = { params: { roles } };
         return $http.put(userPrefix + '/' + encodeURIComponent(username) + '/roles', null, config)
             .then(response => {
-                var user = _.find(self.users, {username});
-                user.roles = _.union(_.get(user, 'roles', []), roles);
+                var user = find(self.users, {username});
+                user.roles = union(get(user, 'roles', []), roles);
             }, util.rejectError);
     }
     /**
@@ -381,7 +381,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var config = { params: { role } };
         return $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/roles', config)
             .then(response => {
-                _.pull(_.get(_.find(self.users, {username}), 'roles'), role);
+                pull(get(find(self.users, {username}), 'roles'), role);
             }, util.rejectError);
     }
     /**
@@ -407,8 +407,8 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         };
         return $http.put(userPrefix + '/' + encodeURIComponent(username) + '/groups', null, config)
             .then(response => {
-                var group = _.find(self.groups, {title: groupTitle});
-                group.members = _.union(_.get(group, 'members', []), [username]);
+                var group = find(self.groups, {title: groupTitle});
+                group.members = union(get(group, 'members', []), [username]);
             }, util.rejectError);
     }
     /**
@@ -434,7 +434,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         };
         return $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/groups', config)
             .then(response => {
-                _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
+                pull(get(find(self.groups, {title: groupTitle}), 'members'), username);
             }, util.rejectError);
     }
     /**
@@ -458,25 +458,25 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.addGroup = function(newGroup) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 },
             };
         fd.append('title', newGroup.title);
-        _.forEach(_.get(newGroup, 'members', []), member => fd.append('members', member));
-        if (_.has(newGroup, 'description')) {
+        forEach(get(newGroup, 'members', []), member => fd.append('members', member));
+        if (has(newGroup, 'description')) {
             fd.append('description', newGroup.description);
         }
-        if (_.has(newGroup, 'roles')) {
-            _.forEach(_.get(newGroup, 'roles', []), role => fd.append('roles', role));
+        if (has(newGroup, 'roles')) {
+            forEach(get(newGroup, 'roles', []), role => fd.append('roles', role));
         }
 
         return $http.post(groupPrefix, fd, config)
             .then(response => {
                 return self.getGroup(newGroup.title);
             }, $q.reject)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -496,9 +496,9 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         return $http.get(groupPrefix + '/' + encodeURIComponent(groupTitle))
             .then(response => {
                 var groupObj = self.getGroupObj(response.data);
-                var existing = _.find(self.groups, {iri: groupObj.iri});
+                var existing = find(self.groups, {iri: groupObj.iri});
                 if (existing) {
-                    _.merge(existing, groupObj);
+                    merge(existing, groupObj);
                 } else {
                     self.groups.push(groupObj);
                 }
@@ -525,7 +525,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.updateGroup = function(groupTitle, newGroup) {
         return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle), newGroup.jsonld)
             .then(response => {
-                _.assign(_.find(self.groups, {title: groupTitle}), newGroup);
+                assign(find(self.groups, {title: groupTitle}), newGroup);
             }, util.rejectError);
     }
     /**
@@ -545,7 +545,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
     self.deleteGroup = function(groupTitle) {
         return $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle))
             .then(response => {
-                _.remove(self.groups, {title: groupTitle});
+                remove(self.groups, {title: groupTitle});
             }, util.rejectError);
     }
     /**
@@ -567,8 +567,8 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var config = { params: { roles } };
         return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', null, config)
             .then(response => {
-                var group = _.find(self.groups, {title: groupTitle});
-                group.roles = _.union(_.get(group, 'roles', []), roles);
+                var group = find(self.groups, {title: groupTitle});
+                group.roles = union(get(group, 'roles', []), roles);
             }, util.rejectError);
     }
     /**
@@ -590,7 +590,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var config = { params: { role } };
         return $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/roles', config)
             .then(response => {
-                _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'roles'), role);
+                pull(get(find(self.groups, {title: groupTitle}), 'roles'), role);
             }, util.rejectError);
     }
     /**
@@ -630,8 +630,8 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         var config = { params: { users } };
         return $http.put(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', null, config)
             .then(response => {
-                var group = _.find(self.groups, {title: groupTitle});
-                group.members = _.union(_.get(group, 'members', []), users);
+                var group = find(self.groups, {title: groupTitle});
+                group.members = union(get(group, 'members', []), users);
             }, util.rejectError);
     }
     /**
@@ -657,7 +657,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
         };
         return $http.delete(groupPrefix + '/' + encodeURIComponent(groupTitle) + '/users', config)
             .then(response => {
-                _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
+                pull(get(find(self.groups, {title: groupTitle}), 'members'), username);
             }, util.rejectError);
     }
     /**
@@ -673,13 +673,13 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      * @return {boolean} true if the user is an admin; false otherwise
      */
     self.isAdmin = function(username) {
-        if (_.includes(_.get(_.find(self.users, {username}), 'roles', []), 'admin')) {
+        if (includes(get(find(self.users, {username}), 'roles', []), 'admin')) {
             return true;
         } else {
-            var userGroups = _.filter(self.groups, group => {
-                return _.includes(group.members, username);
+            var userGroups = filter(self.groups, group => {
+                return includes(group.members, username);
             });
-            return _.includes(_.flatten(_.map(userGroups, 'roles')), 'admin');
+            return includes(flatten(map(userGroups, 'roles')), 'admin');
         }
     }
     /**
@@ -694,7 +694,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      * @return {boolean} true if the JSON-LD object is an ExternalUser; false otherwise
      */
     self.isExternalUser = function(jsonld) {
-        return _.get(jsonld, '@type', []).includes(prefixes.user + 'ExternalUser');
+        return get(jsonld, '@type', []).includes(prefixes.user + 'ExternalUser');
     }
     /**
      * @ngdoc method
@@ -708,7 +708,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      * @return {boolean} true if the JSON-LD object is ExternalGroup; false otherwise
      */
     self.isExternalGroup = function(jsonld) {
-        return _.get(jsonld, '@type', []).includes(prefixes.user + 'ExternalGroup');
+        return get(jsonld, '@type', []).includes(prefixes.user + 'ExternalGroup');
     }
     /**
      * @ngdoc method
@@ -724,7 +724,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      * @return {string} a string to identify for the provided user.
      */
     self.getUserDisplay = function(userObject) {
-        return (_.get(userObject, 'firstName') && _.get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : _.get(userObject, 'username', '[Not Available]');
+        return (get(userObject, 'firstName') && get(userObject, 'lastName')) ? userObject.firstName + ' ' + userObject.lastName : get(userObject, 'username', '[Not Available]');
     }
     /**
      * @ngdoc method
@@ -756,7 +756,7 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             firstName: util.getPropertyValue(jsonld, prefixes.foaf + 'firstName'),
             lastName: util.getPropertyValue(jsonld, prefixes.foaf + 'lastName'),
             email: util.getPropertyId(jsonld, prefixes.foaf + 'mbox'),
-            roles: _.map(jsonld[prefixes.user + 'hasUserRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
+            roles: map(jsonld[prefixes.user + 'hasUserRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
         }
     }
     /**
@@ -785,13 +785,13 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             iri: jsonld['@id'],
             title: util.getDctermsValue(jsonld, 'title'),
             description: util.getDctermsValue(jsonld, 'description'),
-            members: _.map(jsonld[prefixes.foaf + 'member'], member => {
-                var user = _.find(self.users, {'iri': member['@id']});
+            members: map(jsonld[prefixes.foaf + 'member'], member => {
+                var user = find(self.users, {'iri': member['@id']});
                 if (user != undefined) {
                     return user.username;
                 }
             }),
-            roles: _.map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
+            roles: map(jsonld[prefixes.user + 'hasGroupRole'], role => util.getBeautifulIRI(role['@id']).toLowerCase())
         }
     }
 }

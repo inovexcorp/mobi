@@ -20,16 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Card component', function() {
+import {
+    mockComponent,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Record Card component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
-        mockComponent('catalog', 'entityPublisher');
+        angular.mock.module('catalog');
         mockComponent('catalog', 'recordIcon');
         mockComponent('catalog', 'recordType');
+        mockComponent('catalog', 'entityPublisher');
         mockComponent('catalog', 'catalogRecordKeywords');
+        mockComponent('catalog', 'openRecordButton');
         mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_) {

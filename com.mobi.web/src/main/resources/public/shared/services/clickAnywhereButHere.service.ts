@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { find } from 'lodash';
 
 clickAnywhereButHereService.$inject = ['$document'];
 
@@ -19,7 +19,7 @@ function clickAnywhereButHereService($document) {
     var tracker = [];
 
     return function($scope, expr) {
-        var t = _.find(tracker, tr => tr.expr === expr && tr.scope === $scope);
+        var t = find(tracker, tr => tr.expr === expr && tr.scope === $scope);
         if (t) {
             return t;
         }

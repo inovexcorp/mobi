@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
 
 /**
  * @ngdoc filter
@@ -51,7 +50,7 @@ function splitIRI() {
             var hash = iri.indexOf('#');
             var slash = iri.lastIndexOf('/');
             var colon = iri.lastIndexOf(':');
-            var index = _.max([hash, slash, colon]);
+            var index = Math.max(hash, slash, colon);
 
             return {
                 begin: iri.substring(0, index),

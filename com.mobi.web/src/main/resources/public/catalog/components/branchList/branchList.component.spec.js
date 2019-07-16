@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Branch List component', function() {
+import {
+    mockComponent,
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Branch List component', function() {
     var $compile, scope, $q, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockComponent('catalog', 'entityPublisher');
         mockCatalogManager();
         mockUtil();

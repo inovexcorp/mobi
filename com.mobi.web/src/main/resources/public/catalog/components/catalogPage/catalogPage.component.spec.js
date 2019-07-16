@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Catalog Page component', function() {
+import {
+    mockComponent,
+    mockCatalogState
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Catalog Page component', function() {
     var $compile, scope, catalogStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockComponent('catalog', 'recordView');
         mockComponent('catalog', 'recordsView');
         mockCatalogState();

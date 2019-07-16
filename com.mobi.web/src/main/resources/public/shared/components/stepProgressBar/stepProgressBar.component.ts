@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { range } from 'lodash';
 
 const template = require('./stepProgressBar.component.html');
 
@@ -50,7 +50,7 @@ function stepProgressBarComponentCtrl() {
     var dvm = this;
 
     dvm.getRange = function() {
-        return _.range(0, dvm.stepNumber);
+        return range(0, dvm.stepNumber);
     }
 }
 

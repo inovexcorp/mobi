@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { map, concat, pullAt, some, forEach, without, unset, has } from 'lodash';
 
 propertyManagerService.$inject = ['prefixes'];
 
@@ -36,9 +36,9 @@ propertyManagerService.$inject = ['prefixes'];
 function propertyManagerService(prefixes) {
     var self = this;
 
-    var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => prefixes.rdfs + item);
-    var dcAnnotations = _.map(['contributor', 'coverage', 'creator', 'date', 'description', 'format', 'identifier', 'language', 'publisher', 'relation', 'rights', 'source', 'title', 'type'], item => prefixes.dcterms + item);
-    var dcElementsAnnotations = _.map(['abstract' , 'accessRights' , 'accrualMethod' , 'accrualPeriodicity' , 'accrualPolicy' , 'alternative' , 'audience' , 'available' , 'bibliographicCitation' , 'conformsTo' , 'contributor' , 'coverage' , 'created' , 'creator' , 'date' , 'dateAccepted' , 'dateCopyrighted' , 'dateSubmitted' , 'description' , 'educationLevel' , 'extent' , 'format' , 'hasFormat' , 'hasPart' , 'hasVersion' , 'identifier' , 'instructionalMethod' , 'isFormatOf' , 'isPartOf' , 'isReferencedBy' , 'isReplacedBy' , 'isRequiredBy' , 'issued' , 'isVersionOf' , 'language' , 'license' , 'mediator' , 'medium' , 'modified' , 'provenance' , 'publisher' , 'references' , 'relation' , 'replaces' , 'requires' , 'rights' , 'rightsHolder' , 'source' , 'spatial' , 'subject' , 'tableOfContents' , 'temporal' , 'title' , 'type' , 'valid'], item => prefixes.dc + item);
+    var rdfsAnnotations = map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => prefixes.rdfs + item);
+    var dcAnnotations = map(['contributor', 'coverage', 'creator', 'date', 'description', 'format', 'identifier', 'language', 'publisher', 'relation', 'rights', 'source', 'title', 'type'], item => prefixes.dcterms + item);
+    var dcElementsAnnotations = map(['abstract' , 'accessRights' , 'accrualMethod' , 'accrualPeriodicity' , 'accrualPolicy' , 'alternative' , 'audience' , 'available' , 'bibliographicCitation' , 'conformsTo' , 'contributor' , 'coverage' , 'created' , 'creator' , 'date' , 'dateAccepted' , 'dateCopyrighted' , 'dateSubmitted' , 'description' , 'educationLevel' , 'extent' , 'format' , 'hasFormat' , 'hasPart' , 'hasVersion' , 'identifier' , 'instructionalMethod' , 'isFormatOf' , 'isPartOf' , 'isReferencedBy' , 'isReplacedBy' , 'isRequiredBy' , 'issued' , 'isVersionOf' , 'language' , 'license' , 'mediator' , 'medium' , 'modified' , 'provenance' , 'publisher' , 'references' , 'relation' , 'replaces' , 'requires' , 'rights' , 'rightsHolder' , 'source' , 'spatial' , 'subject' , 'tableOfContents' , 'temporal' , 'title' , 'type' , 'valid'], item => prefixes.dc + item);
     /**
      * @ngdoc property
      * @name defaultAnnotations
@@ -48,7 +48,7 @@ function propertyManagerService(prefixes) {
      * @description
      * `defaultAnnotations` holds an array of annotations that are available by default.
      */
-    self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations, dcElementsAnnotations);
+    self.defaultAnnotations = concat(rdfsAnnotations, dcAnnotations, dcElementsAnnotations);
     /**
      * @ngdoc property
      * @name owlAnnotations
@@ -68,10 +68,10 @@ function propertyManagerService(prefixes) {
      * @description
      * `skosAnnotations` holds an array of SKOS annotations.
      */
-    self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example', 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => prefixes.skos + item);
+    self.skosAnnotations = map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example', 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => prefixes.skos + item);
 
-    var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => prefixes.xsd + item);
-    var rdfDatatypes = _.map(['langString'], item => prefixes.rdf + item);
+    var xsdDatatypes = map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => prefixes.xsd + item);
+    var rdfDatatypes = map(['langString'], item => prefixes.rdf + item);
     /**
      * @ngdoc property
      * @name defaultDatatypes
@@ -81,7 +81,7 @@ function propertyManagerService(prefixes) {
      * @description
      * `defaultDatatypes` holds an array of datatypes that are available by default.
      */
-    self.defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
+    self.defaultDatatypes = concat(xsdDatatypes, rdfDatatypes);
     /**
      * @ngdoc property
      * @name ontologyProperties
@@ -92,7 +92,7 @@ function propertyManagerService(prefixes) {
      * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
      * within an ontology.
      */
-    self.ontologyProperties = _.map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => prefixes.owl + item);
+    self.ontologyProperties = map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => prefixes.owl + item);
     /**
      * @ngdoc property
      * @name ontologyProperties
@@ -103,7 +103,7 @@ function propertyManagerService(prefixes) {
      * `conceptSchemeRelationshipList` holds an array of the relationships that skos:Concepts can have with
      * skos:ConceptSchemes.
      */
-    self.conceptSchemeRelationshipList = _.map(['topConceptOf', 'inScheme'], item => prefixes.skos + item);
+    self.conceptSchemeRelationshipList = map(['topConceptOf', 'inScheme'], item => prefixes.skos + item);
     /**
      * @ngdoc property
      * @name conceptRelationshipList
@@ -114,7 +114,7 @@ function propertyManagerService(prefixes) {
      * `conceptRelationshipList` holds an array of the relationships that skos:Concepts can have with other
      * skos:Concepts.
      */
-    self.conceptRelationshipList = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive', 'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => prefixes.skos + item);
+    self.conceptRelationshipList = map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive', 'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => prefixes.skos + item);
     /**
      * @ngdoc property
      * @name schemeRelationshipList
@@ -395,7 +395,7 @@ function propertyManagerService(prefixes) {
      * @param {number} index The index of the value that should be removed
      */
     self.remove = function(entity, key, index) {
-        _.pullAt(entity[key], index);
+        pullAt(entity[key], index);
         if (!entity[key].length) {
             delete entity[key];
         }
@@ -421,7 +421,7 @@ function propertyManagerService(prefixes) {
             return false;
         }
         var annotation = self.createValueObj(value, type, language);
-        if (_.has(entity, prop)) {
+        if (has(entity, prop)) {
             if (contains(entity[prop], annotation)) {
                 return false;
             }
@@ -450,7 +450,7 @@ function propertyManagerService(prefixes) {
             return false;
         }
         var axiom = {'@id': value};
-        if (_.has(entity, prop)) {
+        if (has(entity, prop)) {
             if (contains(entity[prop], axiom)) {
                 return false;
             }
@@ -486,19 +486,19 @@ function propertyManagerService(prefixes) {
         if (!annotation) {
             return false;
         }
-        if (contains(_.without(entity[prop], annotation), self.createValueObj(value, type, language))) {
+        if (contains(without(entity[prop], annotation), self.createValueObj(value, type, language))) {
             return false;
         }
         annotation['@value'] = value;
         if (type) {
             annotation['@type'] = type;
         } else {
-            _.unset(annotation, '@type');
+            unset(annotation, '@type');
         }
         if (language) {
             annotation['@language'] = language;
         } else {
-            _.unset(annotation, '@language');
+            unset(annotation, '@language');
         }
         return true;
     }
@@ -510,7 +510,7 @@ function propertyManagerService(prefixes) {
         if (!axiom) {
             return false;
         }
-        if (contains(_.without(entity[prop], axiom), {'@id': value})) {
+        if (contains(without(entity[prop], axiom), {'@id': value})) {
             return false;
         }
         axiom['@id'] = value;
@@ -551,13 +551,13 @@ function propertyManagerService(prefixes) {
      */
     self.getDatatypeMap = function() {
         var mapObj = {};
-        _.forEach(xsdDatatypes, item => mapObj[item] = prefixes.xsd);
-        _.forEach(rdfDatatypes, item => mapObj[item] = prefixes.rdf)
+        forEach(xsdDatatypes, item => mapObj[item] = prefixes.xsd);
+        forEach(rdfDatatypes, item => mapObj[item] = prefixes.rdf)
         return mapObj;
     }
 
     function contains(arr, valueObj) {
-        return _.some(arr, obj => {
+        return some(arr, obj => {
             return obj['@id'] === valueObj['@id']
                 && obj['@value'] === valueObj['@value']
                 && obj['@type'] === valueObj['@type']

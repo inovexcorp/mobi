@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { get, find, map, forEach, join, includes } from 'lodash';
 
 import './activityTitle.component.scss';
 
@@ -79,31 +79,31 @@ function activityTitleComponentCtrl(provManagerService, utilService, userManager
     }
 
     function setEntities(activity) {
-        var types = _.get(activity, '@type', []);
+        var types = get(activity, '@type', []);
         var pred = '';
-        _.forEach(pm.activityTypes, obj => {
-            if (_.includes(types, obj.type)) {
+        forEach(pm.activityTypes, obj => {
+            if (includes(types, obj.type)) {
                 pred = obj.pred;
                 return false;
             }
         });
-        var entityTitles = _.map(_.get(activity, "['" + pred + "']", []), idObj => {
-            var entity = _.find(dvm.entities, {'@id': idObj['@id']});
+        var entityTitles = map(get(activity, "['" + pred + "']", []), idObj => {
+            var entity = find(dvm.entities, {'@id': idObj['@id']});
             return util.getDctermsValue(entity, 'title');
         });
-        dvm.entitiesStr = _.join(entityTitles, ', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
+        dvm.entitiesStr = join(entityTitles, ', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }
     function setUsername(iri) {
         if (iri) {
-            dvm.username = _.get(_.find(um.users, {iri}), 'username', '(None)');
+            dvm.username = get(find(um.users, {iri}), 'username', '(None)');
         } else {
             dvm.username = '(None)';
         }
     }
     function setWord(activity) {
-        var types = _.get(activity, '@type', []);
-        _.forEach(pm.activityTypes, obj => {
-            if (_.includes(types, obj.type)) {
+        var types = get(activity, '@type', []);
+        forEach(pm.activityTypes, obj => {
+            if (includes(types, obj.type)) {
                 dvm.word = obj.word;
                 return false;
             }

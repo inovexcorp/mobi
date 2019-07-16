@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { remove, find, merge, some } from 'lodash';
 
 httpService.$inject = ['$q', '$http'];
 
@@ -69,7 +69,7 @@ function httpService($q, $http) {
      *                   false if it is not.
      */
     self.isPending = function(id) {
-        return _.some(self.pending, {id});
+        return some(self.pending, {id});
     }
 
     /**
@@ -84,7 +84,7 @@ function httpService($q, $http) {
      */
     self.cancel = function(id) {
         if (self.isPending(id)) {
-            _.find(self.pending, {id}).canceller.resolve();
+            find(self.pending, {id}).canceller.resolve();
         }
     }
 
@@ -106,7 +106,7 @@ function httpService($q, $http) {
      */
     self.get = function(url, config, id) {
         var promise = $http.get(url, addCanceller(config, id));
-        promise.finally(() => _.remove(self.pending, {id}));
+        promise.finally(() => remove(self.pending, {id}));
         return promise;
     }
 
@@ -129,14 +129,14 @@ function httpService($q, $http) {
      */
     self.post = function(url, data, config, id) {
         var promise = $http.post(url, data, addCanceller(config, id));
-        promise.finally(() => _.remove(self.pending, {id}));
+        promise.finally(() => remove(self.pending, {id}));
         return promise;
     }
 
     function addCanceller(config, id) {
         var canceller = $q.defer();
         self.pending.push({id, canceller});
-        return _.merge({}, config, {timeout: canceller.promise});
+        return merge({}, config, {timeout: canceller.promise});
     }
 }
 

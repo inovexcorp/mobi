@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { concat, map, values, trim, filter, identity, get, intersection, head, includes, has,  } from 'lodash';
 import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts';
 import { ParseTreeWalker } from 'antlr4ts/tree/ParseTreeWalker'
 import { MOSLexer } from '../../vendor/antlr4/dist/MOSLexer';
@@ -85,7 +85,7 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
      * @return {string[]} An array of strings contains the Manchester Syntax keywords that are supported.
      */
     self.getKeywords = function() {
-        return _.concat(_.filter(_.map(_.values(expressionKeywords), _.trim), _.identity), _.map(_.values(expressionKeywords), _.trim));
+        return concat(filter(map(values(expressionKeywords), trim), identity), map(values(expressionKeywords), trim));
     }
     /**
      * @ngdoc method
@@ -117,7 +117,7 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
         try {
             ParseTreeWalker.DEFAULT.walk(blankNodes, start);
         } catch (ex) {
-            result.errorMessage = _.get(ex, 'message', ex);
+            result.errorMessage = get(ex, 'message', ex);
             result.jsonld = undefined;
         }
         return result;
@@ -152,15 +152,15 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
         var entity = jsonld[index[id].position];
         var result = '';
         if (om.isClass(entity)) {
-            var prop = _.intersection(_.keys(entity), _.keys(expressionKeywords));
+            var prop = intersection(Object.keys(entity), Object.keys(expressionKeywords));
             if (prop.length === 1) {
-                var item = _.head(entity[prop[0]]);
+                var item = head(entity[prop[0]]);
                 var keyword = expressionKeywords[prop[0]];
                 if (html && prop[0] !== prefixes.owl + 'oneOf') {
                     keyword = surround(keyword, expressionClassName);
                 }
-                if (_.includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
-                    if (_.has(item, '@list')) {
+                if (includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
+                    if (has(item, '@list')) {
                         result += getValue(item['@list'][0], jsonld, index, html, keyword);
                     } else {
                         result += renderList(item['@id'], jsonld, index, html, keyword);
@@ -179,19 +179,19 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
             if (onProperty) {
                 var propertyRestriction = $filter('splitIRI')(onProperty).end;
                 var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
-                var prop = _.intersection(_.keys(entity), _.keys(restrictionKeywords));
+                var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
                 if (prop.length === 1) {
-                    var item = _.head(entity[prop[0]]);
+                    var item = head(entity[prop[0]]);
                     var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
                     result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
                 }
             }
         } else if (om.isDatatype(entity)) {
-            var prop = _.intersection(_.keys(entity), _.keys(datatypeKeywords));
+            var prop = intersection(Object.keys(entity), Object.keys(datatypeKeywords));
             if (prop.length === 1 && prop[0] === prefixes.owl + 'oneOf') {
-                var item = _.head(entity[prop[0]]);
+                var item = head(entity[prop[0]]);
                 var separator = datatypeKeywords[prop[0]];
-                if (_.has(item, '@list')) {
+                if (has(item, '@list')) {
                     result += getValue(item['@list'][0], jsonld, index, html, separator);
                 } else {
                     result += renderList(item['@id'], jsonld, index, html, separator);
@@ -202,13 +202,13 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
         return result === '' ? id : result;
     }
     function getValue(item, jsonld, index, html, listKeyword = '') {
-        if (_.has(item, '@value')) {
+        if (has(item, '@value')) {
             var literal, lang = '';
-            if (_.has(item, '@language')) {
+            if (has(item, '@language')) {
                 literal = '"' + item['@value'] + '"';
                 lang = '@' + item['@language'];
             } else {
-                switch (_.get(item, '@type', prefixes.xsd + 'string')) {
+                switch (get(item, '@type', prefixes.xsd + 'string')) {
                     case prefixes.xsd + 'decimal':
                     case prefixes.xsd + 'double':
                     case prefixes.xsd + 'float':
@@ -227,15 +227,15 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
                     case prefixes.rdfs + 'Literal':
                     case prefixes.xsd + 'boolean':
                     case prefixes.xsd + 'byte':
-                        literal = '"' + item['@value'] + '"^^xsd:' + _.get(item, '@type').replace(prefixes.xsd, '');
+                        literal = '"' + item['@value'] + '"^^xsd:' + get(item, '@type').replace(prefixes.xsd, '');
                         break;
                     default:
-                        literal = '"' + item['@value'] + '"^^<' + _.get(item, '@type') + '>';
+                        literal = '"' + item['@value'] + '"^^<' + get(item, '@type') + '>';
                 }
             }
             return (html ? surround(literal, literalClassName) : literal) + lang;
         } else {
-            var value = _.get(item, '@id');
+            var value = get(item, '@id');
             if (!om.isBlankNodeId(value)) {
                 return $filter('splitIRI')(value).end;
             }
@@ -254,10 +254,10 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
         var end = false;
         while (!end) {
             var entity = jsonld[index[id].position];
-            var first = _.head(entity[prefixes.rdf + 'first']);
-            var rest = _.head(entity[prefixes.rdf + 'rest']);
+            var first = head(entity[prefixes.rdf + 'first']);
+            var rest = head(entity[prefixes.rdf + 'rest']);
             result += getValue(first, jsonld, index, html);
-            if (_.has(rest, '@list')) {
+            if (has(rest, '@list')) {
                 end = true;
             } else {
                 result += listKeyword;

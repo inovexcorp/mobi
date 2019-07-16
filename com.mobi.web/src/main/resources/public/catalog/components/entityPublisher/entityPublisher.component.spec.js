@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Entity Publisher component', function() {
+import {
+    mockUserManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Entity Publisher component', function() {
     var $compile, scope, userManagerSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockUserManager();
         mockUtil();
 

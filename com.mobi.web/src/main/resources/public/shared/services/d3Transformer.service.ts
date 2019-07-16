@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { forEach, get, find, filter, startsWith } from 'lodash';
 
 /**
  * @ngdoc service
@@ -50,16 +50,16 @@ function d3TransformerService() {
         allNodes.nodes = [];
         allNodes.links = [];
 
-        _.forEach(jsonld, (jsonldNode, index) => {
-            var jsonldNodeKeys = _.keys(jsonldNode);
-            var getValueId = _.get(jsonldNode, '@id');
+        forEach(jsonld, (jsonldNode, index) => {
+            var jsonldNodeKeys = Object.keys(jsonldNode);
+            var getValueId = get(jsonldNode, '@id');
 
             buildNode(allNodes, getValueId, 1, "obj");
 
-            var filterAnnotations = _.filter(jsonldNodeKeys, o => !_.startsWith(o, '@'));
+            var filterAnnotations = filter(jsonldNodeKeys, o => !startsWith(o, '@'));
 
-            _.forEach(filterAnnotations, (element, key) => {
-                var getValue = _.get(jsonldNode, element);
+            forEach(filterAnnotations, (element, key) => {
+                var getValue = get(jsonldNode, element);
                 buildWithLinks(allNodes, getValueId, element, getValue);
             });
         });
@@ -82,11 +82,11 @@ function d3TransformerService() {
     } */
 
     function buildWithLinks(allNodes, parentId, predicate, jsonld) {
-        _.forEach(jsonld, (jsonldNode, index) => {
-            var jsonldNodeKeys = _.keys(jsonldNode);
+        forEach(jsonld, (jsonldNode, index) => {
+            var jsonldNodeKeys = Object.keys(jsonldNode);
 
             var link: any = {};
-            var getValueId = _.get(jsonldNode, '@id');
+            var getValueId = get(jsonldNode, '@id');
 
             if (getValueId) {
                 buildNode(allNodes, getValueId, 1, "obj");
@@ -98,10 +98,10 @@ function d3TransformerService() {
                 allNodes.links.push(link);
             }
 
-            _.forEach(jsonldNodeKeys, (element, key) => {
+            forEach(jsonldNodeKeys, (element, key) => {
                 var singleNode = {};
-                var getValue = _.get(jsonldNode, element);
-                var innerparentId = _.get(getValue, '@id');
+                var getValue = get(jsonldNode, element);
+                var innerparentId = get(getValue, '@id');
 
                 if (innerparentId) {
                     buildWithLinks(allNodes, innerparentId, element, getValue);
@@ -116,7 +116,7 @@ function d3TransformerService() {
             singleNode.id = id;
             singleNode.group = 1;
             singleNode.type = type;
-            if (!_.find(allNodes.nodes, singleNode)) {
+            if (!find(allNodes.nodes, singleNode)) {
                 allNodes.nodes.push(singleNode);
             }
         }

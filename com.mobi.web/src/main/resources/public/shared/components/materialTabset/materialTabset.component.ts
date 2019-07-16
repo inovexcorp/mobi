@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { pull, isEqual, forEach } from 'lodash';
 
 import './materialTabset.component.scss';
 
@@ -61,11 +61,11 @@ function materialTabsetComponentCtrl($timeout) {
         dvm.tabs.push(tab);
     }
     dvm.removeTab = function(tab) {
-        _.pull(dvm.tabs, tab);
+        pull(dvm.tabs, tab);
     }
     dvm.select = function(selectedTab) {
-        _.forEach(dvm.tabs, tab => {
-            if (tab.active && !_.isEqual(tab, selectedTab)) {
+        forEach(dvm.tabs, tab => {
+            if (tab.active && !isEqual(tab, selectedTab)) {
                 tab.setActive({value: false});
             }
         });

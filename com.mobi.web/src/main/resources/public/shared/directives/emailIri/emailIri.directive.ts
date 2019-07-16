@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { replace } from 'lodash';
 
 /**
  * @ngdoc directive
@@ -37,7 +37,7 @@ function emailIri() {
         restrict: 'A',
         require: 'ngModel',
         link: function(scope, element, attrs, ctrl) {
-            ctrl.$formatters.push(value => _.replace(value, 'mailto:', ''));
+            ctrl.$formatters.push(value => replace(value, 'mailto:', ''));
             ctrl.$parsers.push(value => 'mailto:' + value);
         }
     }

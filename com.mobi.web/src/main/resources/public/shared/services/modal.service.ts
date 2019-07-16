@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { noop, mapValues } from 'lodash';
 
 modalService.$inject = ['$uibModal'];
 
@@ -57,7 +57,7 @@ function modalService($uibModal) {
     self.openModal = function(componentName, resolve = {}, onClose, size) {
         var configObj: any = {
             component: componentName,
-            resolve: _.mapValues(resolve, val => {
+            resolve: mapValues(resolve, val => {
                 return () => val;
             })
         };
@@ -85,7 +85,7 @@ function modalService($uibModal) {
      * @param {string} size A string representing the size of the modal. Expected values are "sm" and "lg". The
      * default is a medium sized modal
      */
-    self.openConfirmModal = function(body, yes = _.noop, no = _.noop, size) {
+    self.openConfirmModal = function(body, yes = noop, no = noop, size) {
         var configObj: any = {
             component: 'confirmModal',
             resolve: {

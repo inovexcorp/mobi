@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { noop } from 'lodash';
 
 recordPermissionsManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService'];
 
@@ -73,7 +73,7 @@ function recordPermissionsManagerService($http, $q, REST_PREFIX, utilService) {
      */
     self.updateRecordPolicy = function(recordId, newPolicy) {
         return $http.put(prefix + '/' + encodeURIComponent(recordId), newPolicy)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
 }
 

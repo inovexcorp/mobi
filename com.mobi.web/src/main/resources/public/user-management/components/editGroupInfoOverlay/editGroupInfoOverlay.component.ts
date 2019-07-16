@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { find } from 'lodash';
 
 const template = require('./editGroupInfoOverlay.component.html');
 
@@ -66,7 +66,7 @@ function editGroupInfoOverlayComponentCtrl(userStateService, userManagerService,
         utilService.updateDctermsValue(dvm.newGroup.jsonld, 'description', dvm.newGroup.description);
         dvm.um.updateGroup(dvm.state.selectedGroup.title, dvm.newGroup).then(response => {
             dvm.errorMessage = '';
-            dvm.state.selectedGroup = _.find(dvm.um.groups, {title: dvm.newGroup.title});
+            dvm.state.selectedGroup = find(dvm.um.groups, {title: dvm.newGroup.title});
             dvm.close();
         }, error => dvm.errorMessage = error);
     }

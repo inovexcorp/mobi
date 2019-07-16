@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { map } from 'lodash';
 
 const template = require('./createUserOverlay.component.html');
 
@@ -67,7 +67,7 @@ function createUserOverlayComponentCtrl(userStateService, userManagerService, RE
     };
 
     dvm.getUsernames = function() {
-        return _.map(dvm.um.users, 'username');
+        return map(dvm.um.users, 'username');
     }
     dvm.add = function() {
         if (dvm.roles.admin) {

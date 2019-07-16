@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { chunk, isEmpty } from 'lodash';
 
 import './quickActionGrid.component.scss';
 
@@ -85,14 +85,14 @@ function quickActionGridComponentCtrl($window, $state, ontologyStateService, dis
                 action: dvm.ingestData
             },
         ];
-        dvm.actions = _.chunk(actions, 3);
+        dvm.actions = chunk(actions, 3);
     }
     dvm.searchTheCatalog = function() {
         $state.go('root.catalog');
     }
     dvm.openAnOntology = function() {
         $state.go('root.ontology-editor');
-        if (!_.isEmpty(os.listItem)) {
+        if (!isEmpty(os.listItem)) {
             os.listItem.active = false;
         }
         os.listItem = {};

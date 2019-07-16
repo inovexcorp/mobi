@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { isArray, intersection } from 'lodash';
 
 /**
  * @ngdoc filter
@@ -38,7 +38,7 @@ import * as _ from 'lodash';
  */
 function inArray() {
     return function(list, arrayFilter) {
-        return _.isArray(list) && _.isArray(arrayFilter) ? _.intersection(list, arrayFilter) : [];
+        return isArray(list) && isArray(arrayFilter) ? intersection(list, arrayFilter) : [];
     }
 }
 

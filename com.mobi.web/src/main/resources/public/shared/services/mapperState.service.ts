@@ -21,7 +21,28 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import {
+    startsWith,
+    get,
+    find,
+    map,
+    set,
+    chain,
+    join,
+    union,
+    uniq,
+    pick,
+    has,
+    unset,
+    concat,
+    forEach,
+    filter,
+    isEqual,
+    remove,
+    merge,
+    nth,
+    last
+} from 'lodash';
 
 mapperStateService.$inject = ['$q', 'prefixes', 'mappingManagerService', 'ontologyManagerService', 'catalogManagerService', 'delimitedManagerService', 'utilService'];
 
@@ -321,7 +342,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @param {Object} record the mapping record to select
      */
     self.selectMapping = function(record) {
-        var openedMapping = _.find(self.openedMappings, {record: {id: record.id}});
+        var openedMapping = find(self.openedMappings, {record: {id: record.id}});
         if (openedMapping) {
             self.mapping = openedMapping;
         } else {
@@ -337,11 +358,11 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
                     };
                     self.mapping = mapping;
                     self.openedMappings.push(mapping);
-                    return cm.getRecord(_.get(mm.getSourceOntologyInfo(jsonld), 'recordId'), cm.localCatalog['@id']);
+                    return cm.getRecord(get(mm.getSourceOntologyInfo(jsonld), 'recordId'), cm.localCatalog['@id']);
                 }, () => $q.reject('Mapping ' + record.title + ' could not be found'))
                 .then(ontologyRecord => {
                     self.mapping.ontology = ontologyRecord;
-                }, errorMessage => util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
+                }, errorMessage => util.createErrorToast(startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
         }
     }
     /**
@@ -355,7 +376,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {boolean} True if the mapping has been changed; false otherwise
      */
     self.isMappingChanged = function() {
-        return _.get(self.mapping, 'difference.additions', []).length > 0 || _.get(self.mapping, 'difference.deletions', []).length > 0;
+        return get(self.mapping, 'difference.additions', []).length > 0 || get(self.mapping, 'difference.deletions', []).length > 0;
     }
     /**
      * @ngdoc method
@@ -366,15 +387,15 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * Saves the current mapping appropriately depending on whether it is a new mapping or an existing mapping.
      */
     self.saveMapping = function() {
-        var catalogId = _.get(cm.localCatalog, '@id', '');
+        var catalogId = get(cm.localCatalog, '@id', '');
         if (self.newMapping) {
             return mm.upload(self.mapping.jsonld, self.mapping.record.title, self.mapping.record.description, self.mapping.record.keywords);
         } else {
             return cm.updateInProgressCommit(self.mapping.record.id, catalogId, self.mapping.difference)
                 .then(() => {
-                    var addedNames = _.map(self.mapping.difference.additions, getChangedEntityName);
-                    var deletedNames = _.map(self.mapping.difference.deletions, getChangedEntityName);
-                    var commitMessage = 'Changed ' + _.join(_.union(addedNames, deletedNames), ', ');
+                    var addedNames = map(self.mapping.difference.additions, getChangedEntityName);
+                    var deletedNames = map(self.mapping.difference.deletions, getChangedEntityName);
+                    var commitMessage = 'Changed ' + join(union(addedNames, deletedNames), ', ');
                     return cm.createBranchCommit(self.mapping.record.branch, self.mapping.record.id, catalogId, commitMessage);
                 }, $q.reject)
                 .then(() => self.mapping.record.id, $q.reject);
@@ -390,9 +411,9 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * {@link mapper.component:mappingCommitsPage mappingCommitsPage}.
      */
     self.setMasterBranch = function() {
-        var catalogId = _.get(cm.localCatalog, '@id', '');
+        var catalogId = get(cm.localCatalog, '@id', '');
         return cm.getRecordMasterBranch(self.mapping.record.id, catalogId)
-            .then(branch => _.set(self.mapping, 'branch', branch), util.createErrorToast);
+            .then(branch => set(self.mapping, 'branch', branch), util.createErrorToast);
     }
     /**
      * @ngdoc method
@@ -406,9 +427,9 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * columns that don't exist in the delimited data.
      */
     self.setInvalidProps = function() {
-        self.invalidProps = _.chain(mm.getAllDataMappings(self.mapping.jsonld))
-            .map(dataMapping => _.pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
-            .forEach(obj => _.set(obj, 'index', parseInt(util.getPropertyValue(obj, prefixes.delim + 'columnIndex'), 10)))
+        self.invalidProps = chain(mm.getAllDataMappings(self.mapping.jsonld))
+            .map(dataMapping => pick(dataMapping, ['@id', prefixes.delim + 'columnIndex']))
+            .forEach(obj => set(obj, 'index', parseInt(util.getPropertyValue(obj, prefixes.delim + 'columnIndex'), 10)))
             .filter(obj => obj.index > dm.dataRows[0].length - 1)
             .sortBy('index')
             .value();
@@ -425,7 +446,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {string[]} an array of strings of column indexes that have been mapped
      */
     self.getMappedColumns = function() {
-        return _.uniq(_.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex')));
+        return uniq(map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex')));
     }
     /**
      * @ngdoc method
@@ -439,7 +460,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {boolean} True if there are properties to map for the class; false otherwise.
      */
     self.hasProps = function(classId) {
-        return _.get(self.propsByClass, encodeURIComponent(classId), []).length > 0;
+        return get(self.propsByClass, encodeURIComponent(classId), []).length > 0;
     }
     /**
      * @ngdoc method
@@ -467,7 +488,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {boolean} True if properties have been retrieved for the class; false otherwise.
      */
     self.hasPropsSet = function(classId) {
-        return _.has(self.propsByClass, encodeURIComponent(classId));
+        return has(self.propsByClass, encodeURIComponent(classId));
     }
     /**
      * @ngdoc method
@@ -495,7 +516,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @param {string} classId The id of a class to remove from the props list.
      */
     self.removeProps = function(classId) {
-        _.unset(self.propsByClass, encodeURIComponent(classId));
+        unset(self.propsByClass, encodeURIComponent(classId));
     }
     /**
      * @ngdoc method
@@ -522,8 +543,8 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @param {string} classId The id of the class to set the array of property objects for
      */
     self.setProps = function(classId) {
-        var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => ({ ontologyId: '', propObj: {'@id': id}})));
-        _.set(self.propsByClass, encodeURIComponent(classId), props);
+        var props = concat(self.getClassProps(self.sourceOntologies, classId), map(mm.annotationProperties, id => ({ ontologyId: '', propObj: {'@id': id}})));
+        set(self.propsByClass, encodeURIComponent(classId), props);
     }
     /**
      * @ngdoc method
@@ -552,7 +573,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {Object[]} An array of property objects that can be set on the class
      */
     self.getProps = function(classId) {
-        return _.get(self.propsByClass, encodeURIComponent(classId), []);
+        return get(self.propsByClass, encodeURIComponent(classId), []);
     }
     /**
      * @ngdoc method
@@ -585,9 +606,9 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      */
     self.getClassProps = function(ontologies, classId) {
         var props = [];
-        _.forEach(ontologies, ontology => {
-            var classProps = _.filter(_.union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities]), om.getAnnotations([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
-            props = _.union(props, _.map(classProps, prop => ({ontologyId: ontology.id, propObj: prop})));
+        forEach(ontologies, ontology => {
+            var classProps = filter(union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities]), om.getAnnotations([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
+            props = union(props, map(classProps, prop => ({ontologyId: ontology.id, propObj: prop})));
         });
         return props;
     }
@@ -605,8 +626,8 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      */
     self.getClasses = function(ontologies) {
         var classes = [];
-        _.forEach(ontologies, ontology => {
-            classes = _.concat(classes, _.map(om.getClasses([ontology.entities]), classObj => ({ontologyId: ontology.id, classObj})));
+        forEach(ontologies, ontology => {
+            classes = concat(classes, map(om.getClasses([ontology.entities]), classObj => ({ontologyId: ontology.id, classObj})));
         });
         return classes;
     }
@@ -628,22 +649,22 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
     self.changeProp = function(entityId, propId, newValue, originalValue, isId = false) {
         if (newValue !== originalValue) {
             var valueKey = isId ? '@id' : '@value';
-            var additionsObj = _.find(self.mapping.difference.additions, {'@id': entityId});
-            var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': entityId});
+            var additionsObj = find(self.mapping.difference.additions, {'@id': entityId});
+            var deletionsObj = find(self.mapping.difference.deletions, {'@id': entityId});
             if (additionsObj) {
                 var deletionsValue = isId ? util.getPropertyId(deletionsObj, propId) : util.getPropertyValue(deletionsObj, propId);
                 if (deletionsValue === newValue) {
                     delete additionsObj[propId];
-                    if (_.isEqual(additionsObj, {'@id': entityId})) {
-                        _.remove(self.mapping.difference.additions, additionsObj);
+                    if (isEqual(additionsObj, {'@id': entityId})) {
+                        remove(self.mapping.difference.additions, additionsObj);
                     }
                     delete deletionsObj[propId];
-                    if (_.isEqual(deletionsObj, {'@id': entityId})) {
-                        _.remove(self.mapping.difference.deletions, deletionsObj);
+                    if (isEqual(deletionsObj, {'@id': entityId})) {
+                        remove(self.mapping.difference.deletions, deletionsObj);
                     }
                 } else {
                     additionsObj[propId] = [{[valueKey]: newValue}];
-                    if (deletionsObj && originalValue && !_.has(deletionsObj, "['" + propId + "']")) {
+                    if (deletionsObj && originalValue && !has(deletionsObj, "['" + propId + "']")) {
                         deletionsObj[propId] = [{[valueKey]: originalValue}];
                     }
                 }
@@ -673,14 +694,14 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @return {Object} The ClassMapping JSON-LD that was added
      */
     self.addClassMapping = function(classIdObj) {
-        var ontology = _.find(self.sourceOntologies, {id: classIdObj.ontologyId});
+        var ontology = find(self.sourceOntologies, {id: classIdObj.ontologyId});
         var originalClassMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classIdObj.classObj['@id']);
         var classMapping = mm.addClass(self.mapping.jsonld, ontology.entities, classIdObj.classObj['@id']);
         var className = om.getEntityName(classIdObj.classObj);
         if (!originalClassMappings.length) {
             util.setDctermsValue(classMapping, 'title', className);
         } else {
-            _.forEach(originalClassMappings, classMapping => {
+            forEach(originalClassMappings, classMapping => {
                 if (util.getDctermsValue(classMapping, 'title') === className) {
                     classMapping[prefixes.dcterms + 'title'][0]['@value'] = className + ' (1)';
                     self.changeProp(classMapping['@id'], prefixes.dcterms + 'title', className + ' (1)', className);
@@ -743,13 +764,13 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @param {Object} entity The JSON-LD object of the entity to delete
      */
     self.deleteEntity = function(entity) {
-        var additionsObj = _.find(self.mapping.difference.additions, {'@id': entity['@id']});
-        if (_.isEqual(angular.copy(additionsObj), angular.copy(entity))) {
-            _.remove(self.mapping.difference.additions, additionsObj);
+        var additionsObj = find(self.mapping.difference.additions, {'@id': entity['@id']});
+        if (isEqual(angular.copy(additionsObj), angular.copy(entity))) {
+            remove(self.mapping.difference.additions, additionsObj);
         } else {
-            var deletionObj = _.find(self.mapping.difference.deletions, {'@id': entity['@id']});
+            var deletionObj = find(self.mapping.difference.deletions, {'@id': entity['@id']});
             if (deletionObj) {
-                _.merge(deletionObj, entity);
+                merge(deletionObj, entity);
             } else {
                 self.mapping.difference.deletions.push(angular.copy(entity));
             }
@@ -768,18 +789,18 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
      * @param {string} classMappingId The id of the ClassMapping to delete.
      */
     self.deleteClass = function(classMappingId) {
-        var propsLinkingToClass = _.map(mm.getPropsLinkingToClass(self.mapping.jsonld, classMappingId), propMapping => ({
+        var propsLinkingToClass = map(mm.getPropsLinkingToClass(self.mapping.jsonld, classMappingId), propMapping => ({
                 propMapping,
                 classMappingId: mm.findClassWithObjectMapping(self.mapping.jsonld, propMapping['@id'])['@id']
             }));
         var classMappingProps = mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId);
         var deletedClass = mm.removeClass(self.mapping.jsonld, classMappingId);
         self.deleteEntity(deletedClass);
-        _.forEach(classMappingProps, propMapping => {
-            _.remove(self.invalidProps, {'@id': propMapping['@id']})
+        forEach(classMappingProps, propMapping => {
+            remove(self.invalidProps, {'@id': propMapping['@id']})
             self.deleteEntity(propMapping);
         });
-        _.forEach(propsLinkingToClass, obj => cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
+        forEach(propsLinkingToClass, obj => cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
         var classId = mm.getClassIdByMapping(deletedClass);
         var classMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classId);
         if (classMappings.length === 0) {
@@ -811,17 +832,17 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
 
     function cleanUpDeletedProp(propMapping, parentClassMappingId) {
         self.deleteEntity(propMapping);
-        var additionsObj = _.find(self.mapping.difference.additions, {'@id': parentClassMappingId});
+        var additionsObj = find(self.mapping.difference.additions, {'@id': parentClassMappingId});
         var prop = prefixes.delim + (mm.isDataMapping(propMapping) ? 'dataProperty' : 'objectProperty');
         if (util.hasPropertyId(additionsObj, prop, propMapping['@id'])) {
             util.removePropertyId(additionsObj, prop, propMapping['@id']);
-            if (_.isEqual(additionsObj, {'@id': parentClassMappingId})) {
-                _.remove(self.mapping.difference.additions, additionsObj);
+            if (isEqual(additionsObj, {'@id': parentClassMappingId})) {
+                remove(self.mapping.difference.additions, additionsObj);
             }
         } else {
-            var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': parentClassMappingId});
+            var deletionsObj = find(self.mapping.difference.deletions, {'@id': parentClassMappingId});
             if (deletionsObj) {
-                if (!_.has(deletionsObj, "['" + prop + "']")) {
+                if (!has(deletionsObj, "['" + prop + "']")) {
                     deletionsObj[prop] = [];
                 }
                 deletionsObj[prop].push({'@id': propMapping['@id']});
@@ -829,25 +850,25 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
                 self.mapping.difference.deletions.push({'@id': parentClassMappingId, [prop]: [{'@id': propMapping['@id']}]});
             }
         }
-        _.remove(self.invalidProps, {'@id': propMapping['@id']});
+        remove(self.invalidProps, {'@id': propMapping['@id']});
     }
     function getChangedEntityName(diffObj) {
-        var entity = _.find(self.mapping.jsonld, {'@id': diffObj['@id']}) || diffObj;
+        var entity = find(self.mapping.jsonld, {'@id': diffObj['@id']}) || diffObj;
         return util.getDctermsValue(entity, 'title') || util.getBeautifulIRI(diffObj['@id']);
     }
     function setNewTitle(classMapping, className, existingClassMappings) {
         var regex = / \((\d+)\)$/;
-        var sortedNums = _.map(
+        var sortedNums = map(
             // Collect all titles that start with the name of the passed entity
-            _.filter(
-                _.map(existingClassMappings, obj => util.getDctermsValue(obj, 'title')),
-                title => _.startsWith(title, className)),
+            filter(
+                map(existingClassMappings, obj => util.getDctermsValue(obj, 'title')),
+                title => startsWith(title, className)),
             // Collect the index number based on the set string format
-            title => parseInt(_.nth(regex.exec(title), 1), 10)
+            title => parseInt(nth(regex.exec(title), 1), 10)
         ).sort((a, b) => a - b);
 
         // If there are no missing numbers, newIdx is the next number
-        var newIdx = ` (${_.last(sortedNums) + 1})`;
+        var newIdx = ` (${last(sortedNums) + 1})`;
         for (var i = 1; i < sortedNums.length; i++) {
             // If there is a missing number between this index and the index of the previous title,
             // newIdx is one more than previous
@@ -859,8 +880,8 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
         util.setDctermsValue(classMapping, 'title', className + newIdx);
     }
     function addPropMapping(propIdObj, classMappingId, func, valueStr, valueStr2 = undefined, valueStr3 = undefined) {
-        var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
-        var propMapping = func(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], valueStr, valueStr2, valueStr3);
+        var ontology = find(self.sourceOntologies, {id: propIdObj.ontologyId});
+        var propMapping = func(self.mapping.jsonld, get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], valueStr, valueStr2, valueStr3);
         util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
         self.mapping.difference.additions.push(angular.copy(propMapping));
         return propMapping;

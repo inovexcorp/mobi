@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { map, without } from 'lodash';
 
 const template = require('./createGroupOverlay.component.html');
 
@@ -68,7 +68,7 @@ function createGroupOverlayComponentCtrl(userManagerService, loginManagerService
         dvm.newGroup.members = [dvm.lm.currentUser];
     }
     dvm.getTitles = function() {
-        return _.map(dvm.um.groups, 'title');
+        return map(dvm.um.groups, 'title');
     }
     dvm.add = function() {
         dvm.um.addGroup(dvm.newGroup)
@@ -81,7 +81,7 @@ function createGroupOverlayComponentCtrl(userManagerService, loginManagerService
         dvm.newGroup.members = dvm.newGroup.members.concat([member]);
     }
     dvm.removeMember = function(member) {
-        dvm.newGroup.members = _.without(dvm.newGroup.members, member);
+        dvm.newGroup.members = without(dvm.newGroup.members, member);
     }
     dvm.cancel = function() {
         dvm.dismiss();

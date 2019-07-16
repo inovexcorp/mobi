@@ -21,7 +21,28 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import {
+    identity,
+    forEach,
+    get,
+    concat,
+    set,
+    includes,
+    pull,
+    remove,
+    findIndex,
+    find,
+    map,
+    mapValues,
+    mapKeys,
+    lowerFirst,
+    pick,
+    replace,
+    head,
+    intersection,
+    intersectionBy,
+    filter
+} from 'lodash';
 
 mappingManagerService.$inject = ['$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid', 'REST_PREFIX'];
 
@@ -72,7 +93,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
     self.upload = function(mapping, title, description, keywords) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined,
                     'Accept': 'text/plain'
@@ -82,7 +103,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
         if (description) {
             fd.append('description', description);
         }
-        _.forEach(keywords, keyword => fd.append('keywords', keyword));
+        forEach(keywords, keyword => fd.append('keywords', keyword));
         fd.append('jsonld', angular.toJson(mapping));
         return $http.post(prefix, fd, config).then(response => response.data, util.rejectError);
     }
@@ -205,19 +226,19 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
         var newMapping = angular.copy(mapping);
         self.getMappingEntity(newMapping)['@id'] = newId;
         var idTransforms = {};
-        _.forEach(self.getAllClassMappings(newMapping), classMapping => {
-            _.set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuid.v4());
-            classMapping['@id'] = _.get(idTransforms, encodeURIComponent(classMapping['@id']));
-            _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
-                _.set(idTransforms, encodeURIComponent(propIdObj['@id']), newId + '/' + uuid.v4());
-                propIdObj['@id'] = _.get(idTransforms, encodeURIComponent(propIdObj['@id']));
+        forEach(self.getAllClassMappings(newMapping), classMapping => {
+            set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuid.v4());
+            classMapping['@id'] = get(idTransforms, encodeURIComponent(classMapping['@id']));
+            forEach(concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
+                set(idTransforms, encodeURIComponent(propIdObj['@id']), newId + '/' + uuid.v4());
+                propIdObj['@id'] = get(idTransforms, encodeURIComponent(propIdObj['@id']));
             });
         });
-        _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
+        forEach(concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
             if (self.isObjectMapping(propMapping)) {
-                propMapping[prefixes.delim + 'classMapping'][0]['@id'] = _.get(idTransforms, encodeURIComponent(propMapping[prefixes.delim + 'classMapping'][0]['@id']));
+                propMapping[prefixes.delim + 'classMapping'][0]['@id'] = get(idTransforms, encodeURIComponent(propMapping[prefixes.delim + 'classMapping'][0]['@id']));
             }
-            propMapping['@id'] = _.get(idTransforms, encodeURIComponent(propMapping['@id']));
+            propMapping['@id'] = get(idTransforms, encodeURIComponent(propMapping['@id']));
         });
         return newMapping;
     }
@@ -303,7 +324,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
         // Check if class mapping exists and the property exists in the ontology or the property is one of the
         // supported annotations
         var propEntity = om.getEntity([ontology], propId);
-        if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || _.includes(self.annotationProperties, propId) || om.isAnnotation(propEntity))) {
+        if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || includes(self.annotationProperties, propId) || om.isAnnotation(propEntity))) {
             // Add new data mapping id to data properties of class mapping
             propMapping = {
                 '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
@@ -389,9 +410,9 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
             var propType = self.isObjectMapping(propMapping) ? 'objectProperty' : 'dataProperty';
             var classMapping = getEntityById(mapping, classMappingId);
             // Remove the property mapping
-            _.pull(mapping, propMapping);
+            pull(mapping, propMapping);
             // Remove the property mapping id from the class mapping's properties
-            _.remove(classMapping[prefixes.delim + propType], {'@id': propMappingId});
+            remove(classMapping[prefixes.delim + propType], {'@id': propMappingId});
             cleanPropertyArray(classMapping, propType);
             return propMapping;
         }
@@ -417,22 +438,22 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
             var classId = self.getClassIdByMapping(classMapping);
             var objectMappings = self.getPropsLinkingToClass(mapping, classMapping['@id']);
             // If there are object mappings that use the class mapping, iterate through them
-            _.forEach(objectMappings, objectMapping => {
+            forEach(objectMappings, objectMapping => {
                 // Collect the class mapping that uses the object mapping
                 var classWithObjectMapping = self.findClassWithObjectMapping(mapping, objectMapping['@id']);
                 // Remove the object property for the object mapping
-                _.remove(classWithObjectMapping[prefixes.delim + 'objectProperty'], {'@id': objectMapping['@id']});
+                remove(classWithObjectMapping[prefixes.delim + 'objectProperty'], {'@id': objectMapping['@id']});
                 cleanPropertyArray(classWithObjectMapping, 'objectProperty');
                 //Replace class mapping
-                mapping.splice(_.findIndex(mapping, {'@id': classWithObjectMapping['@id']}), 1, classWithObjectMapping);
+                mapping.splice(findIndex(mapping, {'@id': classWithObjectMapping['@id']}), 1, classWithObjectMapping);
                 // Remove object mapping
-                _.remove(mapping, objectMapping);
+                remove(mapping, objectMapping);
             });
             // Remove all properties of the class mapping and the class mapping itself
-            _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), prop => {
+            forEach(concat(getDataProperties(classMapping), getObjectProperties(classMapping)), prop => {
                 self.removeProp(mapping, classMapping['@id'], prop['@id']);
             });
-            _.remove(mapping, {'@id': classMapping['@id']});
+            remove(mapping, {'@id': classMapping['@id']});
             return classMapping;
         }
     }
@@ -492,16 +513,16 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
         }
         var sourceOntology,
             deferred = $q.defer();
-        var ontologyObj = _.find(om.list, {recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
+        var ontologyObj = find(om.list, {recordId: ontologyInfo.recordId, branchId: ontologyInfo.branchId, commitId: ontologyInfo.commitId});
         var promise = ontologyObj ? $q.when({id: ontologyObj.ontologyId, entities: ontologyObj.ontology, recordId: ontologyInfo.recordId}) : self.getOntology(ontologyInfo);
         promise.then(ontology => {
             sourceOntology = ontology;
             return om.getImportedOntologies(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId);
         }, $q.reject).then(imported => {
-            var importedOntologies = _.map(imported, obj => {
+            var importedOntologies = map(imported, obj => {
                 return {id: obj.ontologyId, entities: obj.ontology};
             });
-            deferred.resolve(_.concat(sourceOntology, importedOntologies));
+            deferred.resolve(concat(sourceOntology, importedOntologies));
         }, deferred.reject);
         return deferred.promise;
     }
@@ -519,11 +540,11 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      * the source ontology of the passed mapping
      */
     self.getSourceOntologyInfo = function(mapping) {
-        return _.mapValues(
-            _.mapKeys(_.pick(self.getMappingEntity(mapping), [prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
-                (val, key) => _.lowerFirst(_.replace(key, prefixes.delim + 'source', '')) + 'Id'
+        return mapValues(
+            mapKeys(pick(self.getMappingEntity(mapping), [prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
+                (val, key) => lowerFirst(replace(key, prefixes.delim + 'source', '')) + 'Id'
             ),
-            (val, key) => _.get(val, "[0]['@id']")
+            (val, key) => get(val, "[0]['@id']")
         );
     }
     /**
@@ -540,7 +561,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      * @return {Object} The ontology with the class with the passed IRI
      */
     self.findSourceOntologyWithClass = function(classIRI, ontologies) {
-        return _.find(ontologies, ontology => _.findIndex(om.getClasses([ontology.entities]), {'@id': classIRI}) !== -1);
+        return find(ontologies, ontology => findIndex(om.getClasses([ontology.entities]), {'@id': classIRI}) !== -1);
     }
     /**
      * @ngdoc method
@@ -556,9 +577,9 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      * @return {Object} The ontology containing the property with the passed IRI
      */
     self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
-        return _.find(ontologies, ontology => {
-            var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]), om.getAnnotations([ontology.entities]));
-            return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
+        return find(ontologies, ontology => {
+            var properties = concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]), om.getAnnotations([ontology.entities]));
+            return findIndex(properties, {'@id': propertyIRI}) !== -1;
         });
     }
     /**
@@ -597,7 +618,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      */
     self.findIncompatibleMappings = function(mapping, ontologies) {
         var incompatibleMappings = [];
-        _.forEach(self.getAllClassMappings(mapping), classMapping => {
+        forEach(self.getAllClassMappings(mapping), classMapping => {
             var classId = self.getClassIdByMapping(classMapping);
             var classOntology = self.findSourceOntologyWithClass(classId, ontologies);
             // Incompatible if class no longer exists or is deprecated
@@ -605,11 +626,11 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
                 incompatibleMappings.push(classMapping);
             }
         });
-        _.forEach(self.getAllDataMappings(mapping), propMapping => {
+        forEach(self.getAllDataMappings(mapping), propMapping => {
             var propId = self.getPropIdByMapping(propMapping);
             var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
             // Incompatible if data property no longer exists and is not a supported annotation
-            if (!propOntology && !_.includes(self.annotationProperties, propId)) {
+            if (!propOntology && !includes(self.annotationProperties, propId)) {
                 incompatibleMappings.push(propMapping);
             } else if (propOntology) {
                 var propObj = om.getEntity([propOntology.entities], propId);
@@ -619,7 +640,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
                 }
             }
         });
-        _.forEach(self.getAllObjectMappings(mapping), propMapping => {
+        forEach(self.getAllObjectMappings(mapping), propMapping => {
             var propId = self.getPropIdByMapping(propMapping);
             var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
             // Incompatible if object property no longer exists
@@ -639,7 +660,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
                     return;
                 }
                 // Incompatible if range of object property is incompatible
-                if (_.find(incompatibleMappings, entityMap => self.getClassIdByMapping(entityMap) === rangeClassId)) {
+                if (find(incompatibleMappings, entityMap => self.getClassIdByMapping(entityMap) === rangeClassId)) {
                     incompatibleMappings.push(propMapping);
                 }
             }
@@ -649,7 +670,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
 
     // Public helper methods
     self.getMappingEntity = function(mapping) {
-        return _.head(getEntitiesByType(mapping, 'Mapping'));
+        return head(getEntitiesByType(mapping, 'Mapping'));
     }
     /**
      * @ngdoc method
@@ -766,8 +787,8 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      */
     self.getPropMappingsByClass = function(mapping, classMappingId) {
         var classMapping = getEntityById(mapping, classMappingId);
-        return _.intersectionBy(
-            mapping, _.concat(getDataProperties(classMapping), getObjectProperties(classMapping)),
+        return intersectionBy(
+            mapping, concat(getDataProperties(classMapping), getObjectProperties(classMapping)),
             '@id'
         );
     }
@@ -870,7 +891,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      * @return {Object[]} The property mappings that link to the specified class mapping
      */
     self.getPropsLinkingToClass = function(mapping, classMappingId) {
-        return _.filter(
+        return filter(
             self.getAllObjectMappings(mapping),
             ["['" + prefixes.delim + "classMapping'][0]['@id']", classMappingId]
         );
@@ -903,7 +924,7 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      * @return {Object[]} The array of class mappings for the identified class in the mapping
      */
     self.getClassMappingsByClassId = function(mapping, classId) {
-        return _.filter(self.getAllClassMappings(mapping), [prefixes.delim + 'mapsTo', [{'@id': classId}]]);
+        return filter(self.getAllClassMappings(mapping), [prefixes.delim + 'mapsTo', [{'@id': classId}]]);
     }
     /**
      * @ngdoc method
@@ -918,27 +939,27 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
      * @return {Object[]} THe array of property mappings for the identified property in the mapping
      */
     self.getPropMappingsByPropId = function(mapping, propId) {
-        var propMappings = _.concat(self.getAllDataMappings(mapping), self.getAllObjectMappings(mapping));
-        return _.filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
+        var propMappings = concat(self.getAllDataMappings(mapping), self.getAllObjectMappings(mapping));
+        return filter(propMappings, [prefixes.delim + 'hasProperty', [{'@id': propId}]]);
     }
 
     // Private helper methods
     function cleanPropertyArray(classMapping, propType) {
-        if (_.get(classMapping, prefixes.delim + propType) && _.get(classMapping, prefixes.delim + propType).length === 0) {
+        if (get(classMapping, prefixes.delim + propType) && get(classMapping, prefixes.delim + propType).length === 0) {
             delete classMapping[prefixes.delim + propType];
         }
     }
     function getEntitiesByType(mapping, type) {
-        return _.filter(mapping, {'@type': [prefixes.delim + type]});
+        return filter(mapping, {'@type': [prefixes.delim + type]});
     }
     function getEntityById(mapping, id) {
-        return _.find(mapping, {'@id': id});
+        return find(mapping, {'@id': id});
     }
     function entityExists(mapping, id) {
         return !!getEntityById(mapping, id);
     }
     function findClassWithPropMapping(mapping, propMappingId, type) {
-        return _.find(self.getAllClassMappings(mapping), classMapping => _.map(getProperties(classMapping, type), '@id').indexOf(propMappingId) >= 0);
+        return find(self.getAllClassMappings(mapping), classMapping => map(getProperties(classMapping, type), '@id').indexOf(propMappingId) >= 0);
     }
     function getDataProperties(classMapping) {
         return getProperties(classMapping, 'dataProperty');
@@ -947,13 +968,13 @@ function mappingManagerService($filter, $http, $q, utilService, ontologyManagerS
         return getProperties(classMapping, 'objectProperty');
     }
     function getProperties(classMapping, type) {
-        return _.get(classMapping, "['" + prefixes.delim + type + "']", []);
+        return get(classMapping, "['" + prefixes.delim + type + "']", []);
     }
     function isType(entity, type) {
-        return _.includes(_.get(entity, "['@type']"), prefixes.delim + type);
+        return includes(get(entity, "['@type']"), prefixes.delim + type);
     }
     function validateOntologyInfo(obj) {
-        return _.intersection(_.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;
+        return intersection(Object.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;
     }
 }
 

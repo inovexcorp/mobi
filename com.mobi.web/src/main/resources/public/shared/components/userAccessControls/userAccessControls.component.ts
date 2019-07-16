@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { includes, filter, remove, concat, set, get, find, sortBy } from 'lodash';
 
 import './userAccessControls.component.scss';
 
@@ -83,16 +83,16 @@ function userAccessControlsComponentCtrl($scope, policyManagerService, loginMana
     var userRole = 'http://mobi.com/roles/user';
 
     dvm.filterUsers = function(users, searchText) {
-        return _.filter(users, user => _.includes(user.username.toLowerCase(), searchText.toLowerCase()));
+        return filter(users, user => includes(user.username.toLowerCase(), searchText.toLowerCase()));
     }
     dvm.filterGroups = function(groups, searchText) {
-        return _.filter(groups, group => _.includes(group.title.toLowerCase(), searchText.toLowerCase()));
+        return filter(groups, group => includes(group.title.toLowerCase(), searchText.toLowerCase()));
     }
     dvm.addUser = function(user) {
         if (user) {
             dvm.item.selectedUsers.push(user);
             dvm.item.selectedUsers = sortUsers(dvm.item.selectedUsers);
-            _.remove(dvm.item.users, user);
+            remove(dvm.item.users, user);
             dvm.item.selectedUser = undefined;
             dvm.item.userSearchText = '';
             $scope.$$childTail.userSearchText = '';
@@ -110,7 +110,7 @@ function userAccessControlsComponentCtrl($scope, policyManagerService, loginMana
     dvm.removeUser = function(user) {
         dvm.item.users.push(user);
         dvm.item.users = sortUsers(dvm.item.users);
-        _.remove(dvm.item.selectedUsers, user);
+        remove(dvm.item.selectedUsers, user);
         if (!dvm.ruleId) {
             removeMatch(user.iri, dvm.item.policy);
         }
@@ -120,7 +120,7 @@ function userAccessControlsComponentCtrl($scope, policyManagerService, loginMana
         if (group) {
             dvm.item.selectedGroups.push(group);
             dvm.item.selectedGroups = sortGroups(dvm.item.selectedGroups);
-            _.remove(dvm.item.groups, group);
+            remove(dvm.item.groups, group);
             dvm.item.selectedGroup = undefined;
             dvm.item.groupSearchText = '';
             $scope.$$childTail.groupSearchText = '';
@@ -138,7 +138,7 @@ function userAccessControlsComponentCtrl($scope, policyManagerService, loginMana
     dvm.removeGroup = function(group) {
         dvm.item.groups.push(group);
         dvm.item.groups = sortGroups(dvm.item.groups);
-        _.remove(dvm.item.selectedGroups, group);
+        remove(dvm.item.selectedGroups, group);
         if (!dvm.ruleId) {
             removeMatch(group.iri, dvm.item.policy);
         }
@@ -147,24 +147,24 @@ function userAccessControlsComponentCtrl($scope, policyManagerService, loginMana
     dvm.toggleEveryone = function() {
         if (dvm.item.everyone) {
             if (!dvm.ruleId) {
-                _.set(dvm.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
+                set(dvm.item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
                 addMatch(userRole, prefixes.user + 'hasUserRole', dvm.item.policy);
             }
-            dvm.item.users = sortUsers(_.concat(dvm.item.users, dvm.item.selectedUsers));
+            dvm.item.users = sortUsers(concat(dvm.item.users, dvm.item.selectedUsers));
             dvm.item.selectedUsers = [];
-            dvm.item.groups = sortGroups(_.concat(dvm.item.groups, dvm.item.selectedGroups));
+            dvm.item.groups = sortGroups(concat(dvm.item.groups, dvm.item.selectedGroups));
             dvm.item.selectedGroups = [];
         } else {
             if (!dvm.ruleId) {
                 removeMatch(userRole, dvm.item.policy);
             }
-            dvm.addUser(_.find(dvm.item.users, {iri: dvm.lm.currentUserIRI}));
+            dvm.addUser(find(dvm.item.users, {iri: dvm.lm.currentUserIRI}));
         }
         dvm.updateItem({item: dvm.item});
     }
 
     function removeMatch(value, policy) {
-        _.remove(_.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
+        remove(get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
     }
     function addUserMatch(value, policy) {
         addMatch(value, pm.subjectId, policy);
@@ -189,13 +189,13 @@ function userAccessControlsComponentCtrl($scope, policyManagerService, loginMana
                 MatchId: pm.stringEqual
             }]
         };
-        _.get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []).push(newMatch);
+        get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []).push(newMatch);
     }
     function sortUsers(users) {
-        return _.sortBy(users, 'username');
+        return sortBy(users, 'username');
     }
     function sortGroups(groups) {
-        return _.sortBy(groups, 'title');
+        return sortBy(groups, 'title');
     }
 }
 

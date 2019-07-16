@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { filter } from 'lodash';
 
 import './groupsList.component.scss';
 
@@ -70,7 +70,7 @@ function groupListComponentCtrl() {
     function filterGroups() {
         var arr = dvm.groups;
         if (dvm.searchText) {
-            arr = _.filter(arr, group => group.title.toLowerCase().includes(dvm.searchText.toLowerCase()));
+            arr = filter(arr, group => group.title.toLowerCase().includes(dvm.searchText.toLowerCase()));
         }
         return arr.sort((group1, group2) => group1.title.localeCompare(group2.title));
     }

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { identity, has, get, forEach, orderBy, find, map, remove, includes } from 'lodash';
 
 datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService', 'httpService', 'REST_PREFIX'];
 
@@ -79,7 +79,7 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
         var config = {
                 params: util.paginatedConfigToParams(paginatedConfig)
             };
-        if (_.get(paginatedConfig, 'searchText')) {
+        if (get(paginatedConfig, 'searchText')) {
             config.params.searchText = paginatedConfig.searchText;
         }
         return $http.get(prefix, config)
@@ -127,26 +127,26 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
     self.createDatasetRecord = function(recordConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
             };
         fd.append('title', recordConfig.title);
         fd.append('repositoryId', recordConfig.repositoryId);
-        if (_.has(recordConfig, 'datasetIRI')) {
+        if (has(recordConfig, 'datasetIRI')) {
             fd.append('datasetIRI', recordConfig.datasetIRI);
         }
-        if (_.has(recordConfig, 'description')) {
+        if (has(recordConfig, 'description')) {
             fd.append('description', recordConfig.description);
         }
-        _.forEach(_.get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
-        _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
+        forEach(get(recordConfig, 'keywords', []), word => fd.append('keywords', word));
+        forEach(get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
         return $http.post(prefix, fd, config)
             .then(response => self.getDatasetRecord(response.data), $q.reject)
             .then(response => {
                 self.datasetRecords.push(response);
-                self.datasetRecords = _.orderBy(self.datasetRecords, array => util.getDctermsValue(_.find(array, '@type'), 'title'));
+                self.datasetRecords = orderBy(self.datasetRecords, array => util.getDctermsValue(find(array, '@type'), 'title'));
                 return response['@id'];
             }, util.rejectError);
     }
@@ -239,7 +239,7 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
     self.uploadData = function(datasetRecordIRI, file, id = '') {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
@@ -286,7 +286,7 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
      * @return {Object[]} A JSON-LD array of OntologyIdentifier blank nodes
      */
     self.getOntologyIdentifiers = function(arr, record = self.getRecordFromArray(arr)) {
-        return _.map(_.get(record, `['${prefixes.dataset}ontology']`), obj => _.find(arr, {'@id': obj['@id']}));
+        return map(get(record, `['${prefixes.dataset}ontology']`), obj => find(arr, {'@id': obj['@id']}));
     }
 
     /**
@@ -302,7 +302,7 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
      * @return {Object} The JSON-LD object for a DatasetRecord; undefined otherwise
      */
     self.getRecordFromArray = function(arr) {
-        return _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord'));
+        return find(arr, obj => includes(obj['@type'], prefixes.dataset + 'DatasetRecord'));
     }
 
     /**
@@ -333,7 +333,7 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
     }
 
     function removeDataset(datasetRecordIRI) {
-        _.remove(self.datasetRecords, array => _.find(array, {'@id': datasetRecordIRI}));
+        remove(self.datasetRecords, array => find(array, {'@id': datasetRecordIRI}));
     }
 }
 

@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { get, isArray, isEqual, unionWith, forEach, has, find, forOwn, replace, set, some, remove } from 'lodash';
 
 utilService.$inject = ['$filter', '$http', '$q', '$window', '$rootScope', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
 
@@ -74,7 +74,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {string} The first value of the property if found; empty string otherwise
      */
     self.getPropertyValue = function(entity, propertyIRI) {
-        return _.get(entity, "['" + propertyIRI + "'][0]['@value']", '');
+        return get(entity, "['" + propertyIRI + "'][0]['@value']", '');
     }
     /**
      * @ngdoc method
@@ -155,7 +155,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {string} The first id value of the property if found; empty string otherwise
      */
     self.getPropertyId = function(entity, propertyIRI) {
-        return _.get(entity, "['" + propertyIRI + "'][0]['@id']", '');
+        return get(entity, "['" + propertyIRI + "'][0]['@id']", '');
     }
     /**
      * @ngdoc method
@@ -300,8 +300,8 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {*[]} The result of merging the two arrays using Lodash's isEqual
      */
     self.mergingArrays = function(objValue, srcValue) {
-        if (_.isArray(objValue)) {
-            return _.unionWith(objValue, srcValue, _.isEqual);
+        if (isArray(objValue)) {
+            return unionWith(objValue, srcValue, isEqual);
         }
     }
     /**
@@ -318,7 +318,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {string} The first id value of the dcterms property if found; empty string otherwise
      */
     self.getDctermsId = function(entity, property) {
-        return _.get(entity, "['" + prefixes.dcterms + property + "'][0]['@id']", '');
+        return get(entity, "['" + prefixes.dcterms + property + "'][0]['@id']", '');
     }
     /**
      * @ngdoc method
@@ -337,7 +337,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         var parts = header.split(',');
         var links = {};
         // Parse each part into a named link
-        _.forEach(parts, p => {
+        forEach(parts, p => {
             var section = p.split(';');
             if (section.length === 2) {
                 var url = section[0].replace(/<(.*)>/, '$1').trim();
@@ -486,15 +486,15 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      */
     self.paginatedConfigToParams = function(paginatedConfig) {
         var params: any = {};
-        if (_.has(paginatedConfig, 'sortOption.field')) {
+        if (has(paginatedConfig, 'sortOption.field')) {
             params.sort = paginatedConfig.sortOption.field;
         }
-        if (_.has(paginatedConfig, 'sortOption.asc')) {
+        if (has(paginatedConfig, 'sortOption.asc')) {
             params.ascending = paginatedConfig.sortOption.asc;
         }
-        if (_.has(paginatedConfig, 'limit')) {
+        if (has(paginatedConfig, 'limit')) {
             params.limit = paginatedConfig.limit;
-            if (_.has(paginatedConfig, 'pageIndex')) {
+            if (has(paginatedConfig, 'pageIndex')) {
                 params.offset = paginatedConfig.pageIndex * paginatedConfig.limit;
             }
         }
@@ -534,7 +534,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @param {string} defaultMessage The optional default error text for the rejection
      */
     self.onError = function(error, deferred, defaultMessage) {
-        deferred.reject(_.get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
+        deferred.reject(get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
     }
     /**
      * @ngdoc method
@@ -550,7 +550,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {Promise} A Promise that rejects with an error message
      */
     self.rejectError = function(error, defaultMessage) {
-        return $q.reject(_.get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
+        return $q.reject(get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
     }
     /**
      * @ngdoc method
@@ -567,7 +567,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {string} An error message for the passed HTTP response
      */
     self.getErrorMessage = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
-        return _.get(error, 'statusText') || defaultMessage;
+        return get(error, 'statusText') || defaultMessage;
     }
     /**
      * @ngdoc method
@@ -585,15 +585,15 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      */
     self.getChangesById = function(id, array) {
         var results = [];
-        var entity = angular.copy(_.find(array, {'@id': id}));
-        _.forOwn(entity, (value, key) => {
+        var entity = angular.copy(find(array, {'@id': id}));
+        forOwn(entity, (value, key) => {
             if (key !== '@id') {
                 var actualKey = key;
                 if (key === '@type') {
                     actualKey = prefixes.rdf + 'type';
                 }
-                if (_.isArray(value)) {
-                    _.forEach(value, item => results.push({p: actualKey, o: item}));
+                if (isArray(value)) {
+                    forEach(value, item => results.push({p: actualKey, o: item}));
                 } else {
                     results.push({p: actualKey, o: value});
                 }
@@ -614,7 +614,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @return {string} The localname for the predicate provided in the partialStatement.
      */
     self.getPredicateLocalName = function(partialStatement) {
-        return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;
+        return $filter('splitIRI')(get(partialStatement, 'p', '')).end;
     }
     /**
      * @ngdoc method
@@ -654,7 +654,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @returns {string} A string identifying the input type that should be used for the provided property.
      */
     self.getInputType = function(typeIRI) {
-        switch (_.replace(typeIRI, prefixes.xsd, '')) {
+        switch (replace(typeIRI, prefixes.xsd, '')) {
             case 'dateTime':
             case 'dateTimeStamp':
                 return 'datetime-local';
@@ -683,7 +683,7 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
      * @returns {RegEx} A Regular Expression identifying the acceptable values for the provided property.
      */
     self.getPattern = function(typeIRI) {
-        switch (_.replace(typeIRI, prefixes.xsd, '')) {
+        switch (replace(typeIRI, prefixes.xsd, '')) {
             case 'dateTime':
             case 'dateTimeStamp':
                 return REGEX.DATETIME;
@@ -717,18 +717,18 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
     }
 
     function setValue(entity, propertyIRI, valueObj) {
-        if (_.has(entity, "['" + propertyIRI + "']")) {
+        if (has(entity, "['" + propertyIRI + "']")) {
             entity[propertyIRI].push(valueObj);
         } else {
-            _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+            set(entity, "['" + propertyIRI + "'][0]", valueObj);
         }
     }
     function hasValue(entity, propertyIRI, valueObj) {
-        return _.some(_.get(entity, "['" + propertyIRI + "']", []), valueObj);
+        return some(get(entity, "['" + propertyIRI + "']", []), valueObj);
     }
     function removeValue(entity, propertyIRI, valueObj) {
-        if (_.has(entity, "['" + propertyIRI + "']")) {
-            _.remove(entity[propertyIRI], valueObj);
+        if (has(entity, "['" + propertyIRI + "']")) {
+            remove(entity[propertyIRI], valueObj);
             if (entity[propertyIRI].length === 0) {
                 delete entity[propertyIRI];
             }

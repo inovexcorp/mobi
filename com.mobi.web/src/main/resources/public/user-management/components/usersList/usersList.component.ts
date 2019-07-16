@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { filter, some } from 'lodash';
 
 import './usersList.component.scss';
 
@@ -86,7 +86,7 @@ function usersListComponentCtrl(userManagerService) {
         if (dvm.searchText) {
             var searchTermLower = dvm.searchText.toLowerCase();
 
-            results = _.filter(dvm.users, userObj => {
+            results = filter(dvm.users, userObj => {
                 var searchFields = [
                     userObj.username.toLowerCase(),
                     userObj.firstName.toLowerCase(),
@@ -95,7 +95,7 @@ function usersListComponentCtrl(userManagerService) {
                     (userObj.lastName + " " + userObj.firstName).toLowerCase(),
                     (userObj.lastName + ", " + userObj.firstName).toLowerCase()
                 ];
-                return _.some(searchFields, searchField => searchField.includes(searchTermLower));
+                return some(searchFields, searchField => searchField.includes(searchTermLower));
             });
         }
 

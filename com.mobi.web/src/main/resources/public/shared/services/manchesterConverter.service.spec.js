@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import {  } from 'lodash';
 import {
     mockPrefixes,
     mockUtil,

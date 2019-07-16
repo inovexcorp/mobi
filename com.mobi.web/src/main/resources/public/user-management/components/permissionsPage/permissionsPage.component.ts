@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { get, filter, map, forEach, some, chain, find, difference, sortBy, isNull } from 'lodash';
 
 import './permissionsPage.component.scss';
  
@@ -64,7 +64,7 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
     dvm.policies = [];
 
     dvm.$onInit = function() {
-        catalogId = _.get(catalogManagerService.localCatalog, '@id', '');
+        catalogId = get(catalogManagerService.localCatalog, '@id', '');
         setPolicies();
     }
     dvm.updatePolicy = function(item, policyIndex) {
@@ -75,22 +75,22 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
         return util.getBeautifulIRI(item.type);
     }
     dvm.saveChanges = function() {
-        var changedPolicies = _.filter(dvm.policies, 'changed');
-        $q.all(_.map(changedPolicies, item => pm.updatePolicy(item.policy)))
+        var changedPolicies = filter(dvm.policies, 'changed');
+        $q.all(map(changedPolicies, item => pm.updatePolicy(item.policy)))
             .then(() => {
-                _.forEach(changedPolicies, item => item.changed = false);
+                forEach(changedPolicies, item => item.changed = false);
                 util.createSuccessToast('Permissions updated');
             }, util.createErrorToast);
     }
     dvm.hasChanges = function() {
-        return _.some(dvm.policies, 'changed');
+        return some(dvm.policies, 'changed');
     }
 
     function setPolicies() {
         dvm.policies = [];
         pm.getPolicies(catalogId, undefined, action)
             .then(result => {
-                dvm.policies = _.chain(result)
+                dvm.policies = chain(result)
                     .map(policy => ({
                         policy,
                         id: policy.PolicyId,
@@ -112,7 +112,7 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
             }, util.createErrorToast);
     }
     function getRecordType(policy) {
-        return _.chain(policy)
+        return chain(policy)
             .get('Target.AnyOf', [])
             .map('AllOf').flatten()
             .map('Match').flatten()
@@ -122,36 +122,36 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
             .value();
     }
     function setInfo(item) {
-        var matches = _.chain(item.policy)
+        var matches = chain(item.policy)
             .get('Rule[0].Target.AnyOf[0].AllOf', [])
             .map('Match[0]')
             .map(match => ({
-                id: _.get(match, 'AttributeDesignator.AttributeId'),
-                value: _.get(match, 'AttributeValue.content[0]')
+                id: get(match, 'AttributeDesignator.AttributeId'),
+                value: get(match, 'AttributeValue.content[0]')
             }))
             .value();
-        if (_.find(matches, {id: prefixes.user + 'hasUserRole', value: userRole})) {
+        if (find(matches, {id: prefixes.user + 'hasUserRole', value: userRole})) {
             item.everyone = true;
         } else {
-            item.selectedUsers = sortUsers(_.chain(matches)
+            item.selectedUsers = sortUsers(chain(matches)
                 .filter({id: pm.subjectId})
-                .map(obj => _.find(um.users, {iri: obj.value}))
-                .reject(_.isNull)
+                .map(obj => find(um.users, {iri: obj.value}))
+                .reject(isNull)
                 .value());
-            item.selectedGroups = sortGroups(_.chain(matches)
+            item.selectedGroups = sortGroups(chain(matches)
                 .filter({id: groupAttributeId})
-                .map(obj => _.find(um.groups, {iri: obj.value}))
-                .reject(_.isNull)
+                .map(obj => find(um.groups, {iri: obj.value}))
+                .reject(isNull)
                 .value());
         }
-        item.users = sortUsers(_.difference(um.users, item.selectedUsers));
-        item.groups = sortGroups(_.difference(um.groups, item.selectedGroups));
+        item.users = sortUsers(difference(um.users, item.selectedUsers));
+        item.groups = sortGroups(difference(um.groups, item.selectedGroups));
     }
     function sortUsers(users) {
-        return _.sortBy(users, 'username');
+        return sortBy(users, 'username');
     }
     function sortGroups(groups) {
-        return _.sortBy(groups, 'title');
+        return sortBy(groups, 'title');
     }
 }
 

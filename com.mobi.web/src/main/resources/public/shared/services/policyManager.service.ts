@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { noop } from 'lodash';
 
 policyManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
 
@@ -115,7 +115,7 @@ function policyManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
      */
     self.updatePolicy = function(newPolicy) {
         return $http.put(prefix + '/' + encodeURIComponent(newPolicy.PolicyId), newPolicy)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
 }
 

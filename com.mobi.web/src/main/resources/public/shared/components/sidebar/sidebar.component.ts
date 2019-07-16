@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { find, get } from 'lodash';
 
 import './sidebar.component.scss';
 
@@ -72,8 +72,8 @@ function sidebarComponentCtrl($rootScope, $state, loginManagerService, userManag
         $rootScope.collapsedNav = !$rootScope.collapsedNav;
     }
     dvm.getUserDisplay = function() {
-        var user = _.find(dvm.um.users, {iri: dvm.lm.currentUserIRI});
-        return _.get(user, 'firstName', '') || _.get(user, 'username', '');
+        var user = find(dvm.um.users, {iri: dvm.lm.currentUserIRI});
+        return get(user, 'firstName', '') || get(user, 'username', '');
     }
 }
 

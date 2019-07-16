@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { filter, startsWith } from 'lodash';
 
 const template = require('./rdfVisualization.component.html');
 
@@ -252,7 +252,7 @@ function rdfVisualizationComponentCtrl($element, d3TransformerService, d3) {
     function removeNode(selectedNode) {
         this.formattedData.nodes.splice(selectedNode.index, 1);
         // Remove the links connected with that node
-        _.filter(this.formattedData.links, link => link.target.id === selectedNode.id || link.source.id === selectedNode.id)
+        filter(this.formattedData.links, link => link.target.id === selectedNode.id || link.source.id === selectedNode.id)
         document.getElementById("nodeMetada").textContent = '';
         draw();
     }
@@ -423,7 +423,7 @@ function rdfVisualizationComponentCtrl($element, d3TransformerService, d3) {
             .style("font-weight", nodesTextConfig.fontWeight)
             .style('fill', nodesTextConfig.fill)
             .text(element => {
-                if (!_.startsWith(element.id, '_:')) {
+                if (!startsWith(element.id, '_:')) {
                     var n = element.id.lastIndexOf('/');
                     var result = element.id.substring(n + 1);
                     return result;

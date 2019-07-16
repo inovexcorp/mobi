@@ -20,17 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Markdown component', function() {
+import {
+    mockUtil,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Record Markdown component', function() {
     var $compile, scope, $q, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
-        injectTrustedFilter();
+        angular.mock.module('catalog');
         mockUtil();
+        injectTrustedFilter();
 
         this.markdown = '<h1>Test</h1>';
-        module($provide => {
+        angular.mock.module($provide => {
             $provide.constant('showdown', {
                 Converter: jasmine.createSpy('Converter').and.returnValue({
                     setFlavor: jasmine.createSpy('setFlavor'),

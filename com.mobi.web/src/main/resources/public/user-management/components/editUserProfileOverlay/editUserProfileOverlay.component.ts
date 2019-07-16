@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { find } from 'lodash';
 
 const template = require('./editUserProfileOverlay.component.html');
 
@@ -68,7 +68,7 @@ function editUserProfileOverlayComponentCtrl(userStateService, userManagerServic
         dvm.newUser.jsonld[prefixes.foaf + 'mbox'] = [{'@id': dvm.newUser.email}];
         dvm.um.updateUser(dvm.state.selectedUser.username, dvm.newUser).then(response => {
             dvm.errorMessage = '';
-            dvm.state.selectedUser = _.find(dvm.um.users, {username: dvm.newUser.username});
+            dvm.state.selectedUser = find(dvm.um.users, {username: dvm.newUser.username});
             dvm.close();
         }, error => dvm.errorMessage = error);
     }

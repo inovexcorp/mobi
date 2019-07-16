@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { isArray, join, map } from 'lodash';
 
 const template = require('./fileInput.component.html');
 
@@ -76,9 +76,9 @@ function fileInputComponentCtrl($scope) {
         dvm.id = 'file_input_' + $scope.$id;
         dvm.isMultiple = dvm.multiple !== undefined;
         dvm.isRequired = dvm.required !== undefined;
-        if ((_.isArray(dvm.bindModel) && dvm.bindModel.length) || dvm.bindModel) {
+        if ((isArray(dvm.bindModel) && dvm.bindModel.length) || dvm.bindModel) {
             dvm.selected = true;
-            dvm.text = _.isArray(dvm.bindModel) ? collectFileNames(dvm.bindModel) : dvm.bindModel.name;
+            dvm.text = isArray(dvm.bindModel) ? collectFileNames(dvm.bindModel) : dvm.bindModel.name;
         } else {
             resetText();
         }
@@ -105,7 +105,7 @@ function fileInputComponentCtrl($scope) {
     }
 
     function collectFileNames(files) {
-        return _.join(_.map(files, 'name'), ', ');
+        return join(map(files, 'name'), ', ');
     }
     function resetText() {
         dvm.text = dvm.multiple ? 'No files selected' : 'No file selected';

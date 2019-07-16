@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { get } from 'lodash';
 
  /**
  * @ngdoc directive
@@ -39,7 +39,7 @@ function dragMe() {
             elem.on('dragstart', event => {
                 event.dataTransfer.setData(scope.$eval(attrs.dragId), JSON.stringify(scope.$eval(attrs.info)));
             });
-            scope.$watch(() => _.get(attrs, 'disabled'), newValue => {
+            scope.$watch(() => get(attrs, 'disabled'), newValue => {
                 elem.prop('draggable', !newValue);
             });
         }

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { has, get, join } from 'lodash';
 
 sparqlManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
@@ -237,19 +237,19 @@ function sparqlManagerService($http, $q, $httpParamSerializer, utilService, http
      * error message.
      */
     self.pagedQuery = function(query, paramObj) {
-        var limit = _.get(paramObj, 'limit', 100);
+        var limit = get(paramObj, 'limit', 100);
         var config: any = {
             params: {
                 query,
                 limit,
-                offset: _.get(paramObj, 'page', 0) * limit
+                offset: get(paramObj, 'page', 0) * limit
             }
         };
-        if (_.has(paramObj, 'datasetRecordIRI')) {
+        if (has(paramObj, 'datasetRecordIRI')) {
             config.params.dataset = paramObj.datasetRecordIRI;
         }
         var url = prefix + '/page';
-        var promise = _.has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
+        var promise = has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
         return promise.then($q.when, util.rejectError);
     }
     /**
@@ -325,24 +325,24 @@ function sparqlManagerService($http, $q, $httpParamSerializer, utilService, http
     }
 
     function onSuccess(response) {
-        if (_.get(response, 'data.bindings', []).length) {
+        if (get(response, 'data.bindings', []).length) {
             self.bindings = response.data.bindings;
             self.data = response.data.data;
             var headers = response.headers();
-            self.totalSize = _.get(headers, 'x-total-count', 0);
-            var links = util.parseLinks(_.get(headers, 'link', ''));
-            self.links.prev = _.get(links, 'prev', '');
-            self.links.next = _.get(links, 'next', '');
+            self.totalSize = get(headers, 'x-total-count', 0);
+            var links = util.parseLinks(get(headers, 'link', ''));
+            self.links.prev = get(links, 'prev', '');
+            self.links.next = get(links, 'next', '');
         } else {
             self.infoMessage = 'There were no results for the submitted query.';
         }
     }
     function getMessage(response) {
-        self.errorDetails = _.get(response, 'data.details', '');
+        self.errorDetails = get(response, 'data.details', '');
         return util.getErrorMessage(response, 'A server error has occurred. Please try again later.');
     }
     function getPrefixString() {
-        return self.prefixes.length ? 'PREFIX ' + _.join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
+        return self.prefixes.length ? 'PREFIX ' + join(self.prefixes, '\nPREFIX ') + '\n\n' : '';
     }
 }
 

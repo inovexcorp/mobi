@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { has, head, map, get, forEach, omit, find, mergeWith, isArray } from 'lodash';
 
 import './commitCompiledResource.component.scss';
 
@@ -68,7 +68,7 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
     dvm.id = 'commit-compiled-resource';
 
     dvm.$onChanges = function(changes) {
-        if (_.has(changes, 'commitId') || _.has(changes, 'entityId')) {
+        if (has(changes, 'commitId') || has(changes, 'entityId')) {
             dvm.setResource();
         }
     }
@@ -77,34 +77,34 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
             httpService.cancel(dvm.id);
             cm.getCompiledResource(dvm.commitId, dvm.entityId, dvm.id)
                 .then(resources => {
-                    var resource = _.head(resources) || {};
-                    dvm.types = _.map(_.get(resource, '@type', []), type => ({type}));
-                    dvm.resource = _.omit(resource, ['@id', '@type']);
+                    var resource = head(resources) || {};
+                    dvm.types = map(get(resource, '@type', []), type => ({type}));
+                    dvm.resource = omit(resource, ['@id', '@type']);
                     return cm.getCommit(dvm.commitId);
                 }, $q.reject)
                 .then(response => {
-                    var additionsObj = _.find(response.additions, {'@id': dvm.entityId});
-                    var deletionsObj = _.find(response.deletions, {'@id': dvm.entityId});
-                    _.forEach(_.get(additionsObj, '@type'), addedType => {
-                        var typeObj = _.find(dvm.types, {type: addedType});
+                    var additionsObj = find(response.additions, {'@id': dvm.entityId});
+                    var deletionsObj = find(response.deletions, {'@id': dvm.entityId});
+                    forEach(get(additionsObj, '@type'), addedType => {
+                        var typeObj = find(dvm.types, {type: addedType});
                         typeObj.add = true;
                     });
-                    dvm.types = dvm.types.concat(_.map(_.get(deletionsObj, '@type', []), type => ({type, del: true})));
-                    var additions = _.omit(additionsObj, ['@id', '@type']);
-                    var deletions = _.omit(deletionsObj, ['@id', '@type']);
-                    _.forEach(additions, (values, prop) => {
-                        _.forEach(values, value => {
-                            var resourceVal = _.find(dvm.resource[prop], value);
+                    dvm.types = dvm.types.concat(map(get(deletionsObj, '@type', []), type => ({type, del: true})));
+                    var additions = omit(additionsObj, ['@id', '@type']);
+                    var deletions = omit(deletionsObj, ['@id', '@type']);
+                    forEach(additions, (values, prop) => {
+                        forEach(values, value => {
+                            var resourceVal = find(dvm.resource[prop], value);
                             if (resourceVal) {
                                 resourceVal.add = true;
                             }
                         });
                     });
-                    _.forEach(deletions, (values, prop) => {
-                        _.forEach(values, value => { value.del = true });
+                    forEach(deletions, (values, prop) => {
+                        forEach(values, value => { value.del = true });
                     });
-                    _.mergeWith(dvm.resource, deletions, (objValue, srcValue) => {
-                        if (_.isArray(objValue)) {
+                    mergeWith(dvm.resource, deletions, (objValue, srcValue) => {
+                        if (isArray(objValue)) {
                             return objValue.concat(srcValue);
                         }
                     });

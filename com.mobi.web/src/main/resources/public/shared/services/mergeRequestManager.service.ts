@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { forEach, get, has, noop, identity, includes } from 'lodash';
 
 mergeRequestManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'REST_PREFIX'];
 
@@ -82,7 +82,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
     self.createRequest = function(requestConfig) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined
                 }
@@ -91,11 +91,11 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
         fd.append('recordId', requestConfig.recordId);
         fd.append('sourceBranchId', requestConfig.sourceBranchId);
         fd.append('targetBranchId', requestConfig.targetBranchId);
-        if (_.has(requestConfig, 'description')) {
+        if (has(requestConfig, 'description')) {
             fd.append('description', requestConfig.description);
         }
-        _.forEach(_.get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
-        if (_.has(requestConfig, 'removeSource')) {
+        forEach(get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
+        if (has(requestConfig, 'removeSource')) {
             fd.append('removeSource', requestConfig.removeSource);
         }
         return $http.post(prefix, fd, config)
@@ -133,7 +133,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
      */
     self.deleteRequest = function(requestId) {
         return $http.delete(prefix + '/' + encodeURIComponent(requestId))
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -150,7 +150,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
      */
     self.acceptRequest = function(requestId) {
         return $http.post(prefix + '/' + encodeURIComponent(requestId))
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -184,7 +184,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
      */
     self.deleteComment = function(requestId, commentId) {
         return $http.delete(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId))
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -211,7 +211,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
             config.params = { commentId: replyComment };
         }
         return $http.post(prefix + '/' + encodeURIComponent(requestId) + '/comments', commentStr, config)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -234,7 +234,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
             }
         };
         return $http.put(prefix + '/' + encodeURIComponent(requestId) + '/comments/' + encodeURIComponent(commentId), commentStr, config)
-            .then(_.noop, util.rejectError);
+            .then(noop, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -267,7 +267,7 @@ function mergeRequestManagerService($http, $q, utilService, prefixes, REST_PREFI
      * @return {boolean} True if the MergeRequest is accepted; false otherwise
      */
     self.isAccepted = function(request) {
-        return _.includes(request['@type'], prefixes.mergereq + 'AcceptedMergeRequest');
+        return includes(request['@type'], prefixes.mergereq + 'AcceptedMergeRequest');
     }
 }
 

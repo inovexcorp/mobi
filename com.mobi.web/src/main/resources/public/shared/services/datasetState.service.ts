@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { map, get } from 'lodash';
 
 datasetStateService.$inject = ['datasetManagerService', 'utilService', 'prefixes', '$q'];
 
@@ -163,12 +163,12 @@ function datasetStateService(datasetManagerService, utilService, prefixes, $q) {
      * @param {Object} response A response from a paginated HTTP call
      */
     self.setPagination = function(response) {
-        self.results = _.map(response.data, arr => dm.splitDatasetArray(arr));
+        self.results = map(response.data, arr => dm.splitDatasetArray(arr));
         var headers = response.headers();
-        self.totalSize = _.get(headers, 'x-total-count', 0);
-        var links = util.parseLinks(_.get(headers, 'link', ''));
-        self.links.prev = _.get(links, 'prev', '');
-        self.links.next = _.get(links, 'next', '');
+        self.totalSize = get(headers, 'x-total-count', 0);
+        var links = util.parseLinks(get(headers, 'link', ''));
+        self.links.prev = get(links, 'prev', '');
+        self.links.next = get(links, 'next', '');
         self.openedDatasetId = '';
     }
 }

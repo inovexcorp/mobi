@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { toArray } from 'lodash';
 
 fileChange.$inject = ['$parse'];
 
@@ -44,7 +44,7 @@ function fileChange($parse) {
                     // Execute the provided handler in the directive's scope.
                     // The files variable will be available for consumption
                     // by the event handler.
-                    attrHandler($scope, { $event: e, files: _.toArray(e.target.files) });
+                    attrHandler($scope, { $event: e, files: toArray(e.target.files) });
                 });
             };
     

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { get, map, uniq, noop, forEach, filter, find } from 'lodash';
 
 mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', '$q'];
 
@@ -170,7 +170,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * {@link shared.service:catalogManagerService local catalog} id.
      */
     self.initialize = function() {
-        catalogId = _.get(cm.localCatalog, '@id', '');
+        catalogId = get(cm.localCatalog, '@id', '');
     }
     /**
      * @ngdoc method
@@ -207,14 +207,14 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
     self.setRequests = function(accepted = false) {
         mm.getRequests({accepted})
             .then(data => {
-                self.requests = _.map(data, self.getRequestObj);
-                var recordsToRetrieve = _.uniq(_.map(self.requests, 'recordIri'));
-                return $q.all(_.map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
+                self.requests = map(data, self.getRequestObj);
+                var recordsToRetrieve = uniq(map(self.requests, 'recordIri'));
+                return $q.all(map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
             }, $q.reject)
             .then(responses => {
-                _.forEach(responses, record => {
+                forEach(responses, record => {
                     var title = util.getDctermsValue(record, 'title');
-                    _.forEach(_.filter(self.requests, {recordIri: record['@id']}), request => request.recordTitle = title);
+                    forEach(filter(self.requests, {recordIri: record['@id']}), request => request.recordTitle = title);
                 });
             }, error => {
                 self.requests = [];
@@ -280,7 +280,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                             }, $q.reject)
                             .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
-                        promise.then(_.noop, util.createErrorToast);
+                        promise.then(noop, util.createErrorToast);
                     }
                 }
             }, util.createErrorToast);
@@ -351,7 +351,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             date: getDate(jsonld),
             creator: getCreator(jsonld),
             recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
-            assignees: _.map(_.get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => _.get(_.find(um.users, {iri: obj['@id']}), 'username'))
+            assignees: map(get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => get(find(um.users, {iri: obj['@id']}), 'username'))
         };
     }
 
@@ -361,7 +361,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
     }
     function getCreator(jsonld) {
         var iri = util.getDctermsId(jsonld, 'creator');
-        return _.get(_.find(um.users, {iri}), 'username');
+        return get(find(um.users, {iri}), 'username');
     }
 }
 

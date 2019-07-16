@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { map, get } from 'lodash';
 
 const template = require('./recordKeywords.component.html');
 
@@ -51,7 +51,7 @@ function recordKeywordsComponentCtrl(prefixes) {
     var dvm = this;
 
     dvm.getKeywords = function() {
-        return _.map(_.get(dvm.record, prefixes.catalog + 'keyword', []), '@value').sort();
+        return map(get(dvm.record, prefixes.catalog + 'keyword', []), '@value').sort();
     }
 }
 

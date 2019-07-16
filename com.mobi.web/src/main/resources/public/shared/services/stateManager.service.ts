@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import * as _ from 'lodash';
+import { get, remove, forEach, set } from 'lodash';
 
 stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'utilService', 'REST_PREFIX'];
 
@@ -86,7 +86,7 @@ function stateManagerService($http, $q, $httpParamSerializer, utilService, REST_
     self.getStates = function(stateConfig) {
         var params = $httpParamSerializer(stateConfig);
         return $http.get(prefix + (params ? '?' + params : ''))
-            .then(response => _.get(response, 'data', []), util.rejectError);
+            .then(response => get(response, 'data', []), util.rejectError);
     }
     /**
      * @ngdoc method
@@ -130,7 +130,7 @@ function stateManagerService($http, $q, $httpParamSerializer, utilService, REST_
      */
     self.getState = function(stateId) {
         return $http.get(prefix + '/' + encodeURIComponent(stateId))
-            .then(response => _.get(response, 'data', {}), util.rejectError);
+            .then(response => get(response, 'data', {}), util.rejectError);
     }
     /**
      * @ngdoc method
@@ -148,9 +148,9 @@ function stateManagerService($http, $q, $httpParamSerializer, utilService, REST_
      */
     self.updateState = function(stateId, stateJson) {
         return $http.put(prefix + '/' + encodeURIComponent(stateId), angular.toJson(stateJson))
-            .then(() => _.forEach(self.states, state => {
-                if (_.get(state, 'id', '') === stateId) {
-                    _.set(state, 'model', stateJson);
+            .then(() => forEach(self.states, state => {
+                if (get(state, 'id', '') === stateId) {
+                    set(state, 'model', stateJson);
                     return false;
                 }
             }), util.rejectError);
@@ -170,7 +170,7 @@ function stateManagerService($http, $q, $httpParamSerializer, utilService, REST_
      */
     self.deleteState = function(stateId) {
         return $http.delete(prefix + '/' + encodeURIComponent(stateId))
-            .then(() => _.remove(self.states, {id: stateId}), util.rejectError);
+            .then(() => remove(self.states, {id: stateId}), util.rejectError);
     }
 }
 

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { identity, get } from 'lodash';
 import * as angular from 'angular';
 
 delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', 'utilService', 'REST_PREFIX'];
@@ -137,7 +137,7 @@ function delimitedManagerService($http, $httpParamSerializer, $q, utilService, R
     self.upload = function(file) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 headers: {
                     'Content-Type': undefined,
                     'Accept': 'text/plain'
@@ -207,7 +207,7 @@ function delimitedManagerService($http, $httpParamSerializer, $q, utilService, R
     self.previewMap = function(jsonld, format) {
         var fd = new FormData(),
             config = {
-                transformRequest: _.identity,
+                transformRequest: identity,
                 params: {
                     'format': format,
                     'containsHeaders': self.containsHeaders,
@@ -305,7 +305,7 @@ function delimitedManagerService($http, $httpParamSerializer, $q, utilService, R
             }
         };
         return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-to-ontology', null, config)
-            .then(_.identity, util.rejectError);
+            .then(identity, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -322,7 +322,7 @@ function delimitedManagerService($http, $httpParamSerializer, $q, utilService, R
      * @return {string} A header name for the column at the specified index
      */
     self.getHeader = function(index) {
-        return self.containsHeaders && self.dataRows ? _.get(self.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
+        return self.containsHeaders && self.dataRows ? get(self.dataRows[0], index, `Column ${index}`) : `Column ${index}`;
     }
     /**
      * @ngdoc method

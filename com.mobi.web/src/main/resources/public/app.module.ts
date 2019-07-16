@@ -24,7 +24,6 @@
 import * as angular from 'angular';
 import * as Snap from 'snapsvg';
 import * as chroma from 'chroma-js';
-import * as _ from 'lodash';
 import * as CodeMirror  from 'codemirror-minified';
 (<any> window).CodeMirror = CodeMirror;
 import * as Handsontable from 'handsontable';
@@ -54,8 +53,9 @@ import 'ngclipboard';
 import 'ui-select';
 import 'ng-handsontable/dist/ngHandsontable.min.js';
 import 'clipboard';
-import showdown from 'showdown';
+import * as showdown from 'showdown';
 import sparqljs from 'sparqljs';
+import 'bootstrap';
 
 import 'angular-material/angular-material.min.css';
 import 'font-awesome/css/font-awesome.min.css';
@@ -79,13 +79,13 @@ import themingConfig from './theming.config';
 import requestInterceptor from './requestInterceptor.service';
 import beforeUnload from './beforeUnload.service';
 
+import './catalog/catalog.module';
+import './datasets/datasets.module';
 import './home/home.module';
 import './login/login.module';
 import './settings/settings.module';
 import './shared/shared.module';
 import './user-management/user-management.module';
-
-// prefix + 'bootstrap/' + (prefix.includes(dest) ? '**' : 'dist/js') + '/bootstrap.min.js',
 
 angular
     .module('app', [
@@ -105,8 +105,8 @@ angular
         'ui.select',
 
         /* Custom Modules */
-        // 'catalog',
-        // 'datasets',
+        'catalog',
+        'datasets',
         // 'discover',
         'home',
         'login',

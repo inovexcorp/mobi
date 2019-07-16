@@ -21,7 +21,7 @@
  * #L%
  */
 
-import * as _ from 'lodash';
+import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
 
 import './commitChangesDisplay.component.scss';
 
@@ -66,27 +66,27 @@ function commitChangesDisplayComponentCtrl(utilService) {
     dvm.results = {};
 
     dvm.$onInit = function() {
-        dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
+        dvm.list = unionWith(map(dvm.additions, '@id'), map(dvm.deletions, '@id'), isEqual);
         dvm.results = getResults();
     }
     dvm.$onChanges = function() {
-        dvm.list = _.unionWith(_.map(dvm.additions, '@id'), _.map(dvm.deletions, '@id'), _.isEqual);
+        dvm.list = unionWith(map(dvm.additions, '@id'), map(dvm.deletions, '@id'), isEqual);
         dvm.size = 100;
         dvm.index = 0;
         dvm.results = getResults();
     }
     dvm.getMoreResults = function() {
         dvm.index++;
-        _.forEach(_.get(dvm.chunkList, dvm.index, dvm.list), id => {
+        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
             addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
         });
     }
 
     function getResults() {
         var results = {};
-        dvm.chunkList = _.chunk(dvm.list, dvm.size);
+        dvm.chunkList = chunk(dvm.list, dvm.size);
         dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
-        _.forEach(_.get(dvm.chunkList, dvm.index, dvm.list), id => {
+        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
             addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, results);
         });
         return results;

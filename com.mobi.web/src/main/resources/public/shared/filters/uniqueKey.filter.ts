@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { isEmpty, forEach, get, indexOf } from 'lodash';
 
 /**
  * @ngdoc filter
@@ -40,13 +40,13 @@ function uniqueKey() {
         var keys = [];
 
         // do not filter if no path was provided
-        if (!keyField || _.isEmpty(keyField)) {
+        if (!keyField || isEmpty(keyField)) {
             return collection;
         }
         //do filter
-        _.forEach(collection, item => {
-            var key = _.get(item, keyField);
-            if (key && _.indexOf(keys, key) === -1) {
+        forEach(collection, item => {
+            var key = get(item, keyField);
+            if (key && indexOf(keys, key) === -1) {
                 keys.push(key);
                 results.push(item);
             }

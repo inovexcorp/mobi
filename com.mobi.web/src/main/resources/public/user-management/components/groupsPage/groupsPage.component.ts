@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { includes, get, noop } from 'lodash';
 
 const template = require('./groupsPage.component.html');
 
@@ -93,14 +93,14 @@ function groupsPageComponentCtrl(userStateService, userManagerService, loginMana
         modalService.openConfirmModal('Are you sure you want to remove <strong>' + member + '</strong> from <strong>' + dvm.state.selectedGroup.title + '</strong>?', () => dvm.removeMember(member));
     }
     dvm.removeMember = function(member) {
-        dvm.um.deleteUserGroup(member, dvm.state.selectedGroup.title).then(_.noop, dvm.util.createErrorToast);
+        dvm.um.deleteUserGroup(member, dvm.state.selectedGroup.title).then(noop, dvm.util.createErrorToast);
     }
     dvm.addMember = function(member) {
-        dvm.um.addUserGroup(member, dvm.state.selectedGroup.title).then(_.noop, dvm.util.createErrorToast);
+        dvm.um.addUserGroup(member, dvm.state.selectedGroup.title).then(noop, dvm.util.createErrorToast);
     }
 
     function setRoles() {
-        dvm.roles.admin = _.includes(_.get(dvm.state.selectedGroup, 'roles', []), 'admin');
+        dvm.roles.admin = includes(get(dvm.state.selectedGroup, 'roles', []), 'admin');
     }
 }
 

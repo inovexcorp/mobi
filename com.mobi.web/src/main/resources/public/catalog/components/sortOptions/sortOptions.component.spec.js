@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Sort Options component', function() {
+import {
+    mockCatalogManager
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Sort Options component', function() {
     var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockCatalogManager();
 
         inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {

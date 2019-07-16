@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { some } from 'lodash';
 
 beforeUnload.$inject = ['$window', '$rootScope', 'ontologyStateService', 'mapperStateService'];
 
@@ -8,7 +8,7 @@ function beforeUnload($window, $rootScope, ontologyStateService, mapperStateServ
             $rootScope.isDownloading = false;
             return undefined;
         } else {
-            var ontologyHasChanges = _.some(ontologyStateService.list, ontologyStateService.hasChanges);
+            var ontologyHasChanges = some(ontologyStateService.list, ontologyStateService.hasChanges);
             var mappingHasChanges = mapperStateService.isMappingChanged();
             if (ontologyHasChanges || mappingHasChanges) {
                 return true;

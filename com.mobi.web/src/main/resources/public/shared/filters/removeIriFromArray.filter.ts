@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { isArray, some, get, filter } from 'lodash';
 
 /**
  * @ngdoc filter
@@ -42,15 +42,15 @@ import * as _ from 'lodash';
  */
 function removeIriFromArray() {
     function hasId(id, arr) {
-        return _.some(arr, obj => id === _.get(obj, '@id'));
+        return some(arr, obj => id === get(obj, '@id'));
     }
 
     return function(arr, toRemove) {
         var result = [];
 
-        if (_.isArray(arr) && arr.length && toRemove) {
-            var removeIsArray = _.isArray(toRemove);
-            result = _.filter(arr, iri => (removeIsArray && !hasId(iri, toRemove)) || (!removeIsArray && toRemove !== iri));
+        if (isArray(arr) && arr.length && toRemove) {
+            var removeIsArray = isArray(toRemove);
+            result = filter(arr, iri => (removeIsArray && !hasId(iri, toRemove)) || (!removeIsArray && toRemove !== iri));
         } else if (!toRemove) {
             result = result.concat(arr);
         }

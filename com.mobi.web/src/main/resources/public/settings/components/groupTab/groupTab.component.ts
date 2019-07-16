@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as _ from 'lodash';
+import { filter, includes } from 'lodash';
 
 import './groupTab.component.scss';
 
@@ -51,7 +51,7 @@ function groupTabComponentCtrl(userManagerService, loginManagerService) {
     dvm.groups = [];
 
     dvm.$onInit = function() {
-        dvm.groups = _.filter(dvm.um.groups, group => _.includes(group.members, dvm.lm.currentUser));
+        dvm.groups = filter(dvm.um.groups, group => includes(group.members, dvm.lm.currentUser));
     }
 }
 
