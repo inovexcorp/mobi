@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Users Page component', function() {
+import {
+    mockComponent,
+    mockUserState,
+    mockUserManager,
+    mockLoginManager,
+    mockUtil,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Users Page component', function() {
     var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockComponent('user-management', 'usersList');
         mockComponent('user-management', 'permissionsInput');
         mockUserState();

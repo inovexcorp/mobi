@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Entity Description component', function() {
+
+import {
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Entity Description component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_) {

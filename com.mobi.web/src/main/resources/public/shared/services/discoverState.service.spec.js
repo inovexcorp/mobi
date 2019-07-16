@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Discover State Service', function() {
+fdescribe('Discover State Service', function() {
     var discoverStateSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(discoverStateService) {
             discoverStateSvc = discoverStateService;

@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Update Refs service', function() {
+fdescribe('Update Refs service', function() {
     var updateRefsSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
                 return {
                     begin: 'aaa',

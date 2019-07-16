@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Confirm Modal component', function() {
+
+import {
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Confirm Modal component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_) {

@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit Info Overlay component', function() {
+
+import {
+    mockComponent,
+    mockUserManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Commit Info Overlay component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'commitChangesDisplay');
         mockUserManager();
         mockUtil();

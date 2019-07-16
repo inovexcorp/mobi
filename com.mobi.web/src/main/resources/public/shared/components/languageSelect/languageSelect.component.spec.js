@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Language Select component', function() {
+
+import {
+    mockComponent,
+    mockPropertyManager,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Language Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'customLabel');
         mockPropertyManager();
         injectHighlightFilter();

@@ -20,52 +20,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Manchester Converter service', function() {
-    var manchesterConverterSvc, ontologyManagerSvc, prefixes, utilSvc, splitIRIFilter, antlr;
+import * as _ from 'lodash';
+import {
+    mockPrefixes,
+    mockUtil,
+    mockOntologyManager,
+    injectSplitIRIFilter,
+} from '../../../../../test/js/Shared';
+
+fdescribe('Manchester Converter service', function() {
+    var manchesterConverterSvc, ontologyManagerSvc, prefixes, utilSvc, splitIRIFilter;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
         mockOntologyManager();
         mockUtil();
         injectSplitIRIFilter();
-        module(function($provide) {
-            $provide.constant('antlr', {
-                antlr4: window.antlr.antlr4,
-                MOSLexer: window.antlr.MOSLexer,
-                MOSParser: window.antlr.MOSParser,
-                BlankNodesListener: window.antlr.BlankNodesListener,
-                BlankNodesErrorListener: window.antlr.BlankNodesErrorListener
-            });
-        });
-
-        inject(function(manchesterConverterService, _ontologyManagerService_, _prefixes_, _utilService_, _splitIRIFilter_, _antlr_) {
+        
+        inject(function(manchesterConverterService, _ontologyManagerService_, _prefixes_, _utilService_, _splitIRIFilter_) {
             manchesterConverterSvc = manchesterConverterService;
             ontologyManagerSvc = _ontologyManagerService_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
             splitIRIFilter = _splitIRIFilter_;
-            antlr = _antlr_;
         });
 
-        ontologyManagerSvc.isBlankNodeId.and.callFake(function(id) {
-            return _.includes(id, '_:genid');
-        });
-        ontologyManagerSvc.isClass.and.callFake(function(obj) {
-            return _.includes(obj['@type'], prefixes.owl + 'Class');
-        });
-        ontologyManagerSvc.isDatatype.and.callFake(function(obj) {
-            return _.includes(obj['@type'], prefixes.rdfs + 'Datatype');
-        });
-        ontologyManagerSvc.isRestriction.and.callFake(function(obj) {
-            return _.includes(obj['@type'], prefixes.owl + 'Restriction');
-        });
-        splitIRIFilter.and.callFake(function(str) {
-            return {end: str};
-        });
-        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-            return _.get(obj[prop], "[0]['@id']", '');
-        });
+        ontologyManagerSvc.isBlankNodeId.and.callFake(id => _.includes(id, '_:genid'));
+        ontologyManagerSvc.isClass.and.callFake(obj => _.includes(obj['@type'], prefixes.owl + 'Class'));
+        ontologyManagerSvc.isDatatype.and.callFake(obj => _.includes(obj['@type'], prefixes.rdfs + 'Datatype'));
+        ontologyManagerSvc.isRestriction.and.callFake(obj => _.includes(obj['@type'], prefixes.owl + 'Restriction'));
+        splitIRIFilter.and.callFake(str => ({end: str}));
+        utilSvc.getPropertyId.and.callFake((obj, prop) => _.get(obj[prop], "[0]['@id']", ''));
     });
 
     afterEach(function() {
@@ -73,7 +59,6 @@ describe('Manchester Converter service', function() {
         ontologyManagerSvc = null;
         prefixes = null;
         splitIRIFilter = null;
-        antlr = null;
     });
 
     describe('should convert a Manchester syntax string into JSON-LD', function() {

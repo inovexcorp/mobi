@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Permissions Input component', function() {
+fdescribe('Permissions Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

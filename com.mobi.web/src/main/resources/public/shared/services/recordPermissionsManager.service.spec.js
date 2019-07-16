@@ -20,21 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Record Permissions service', function() {
-    var recordPermissionsSvc, utilSvc, scope, $httpBackend, $httpParamSerializer, $q;
+import {
+    mockUtil,
+    mockPrefixes,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Record Permissions service', function() {
+    var recordPermissionsSvc, utilSvc, $httpBackend, $q;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
-        injectRestPathConstant();
         mockPrefixes();
+        injectRestPathConstant();
 
-        inject(function(recordPermissionsManagerService, _utilService_,  _$rootScope_, _$httpBackend_, _$httpParamSerializer_, _$q_) {
+        inject(function(recordPermissionsManagerService, _utilService_, _$httpBackend_, _$q_) {
             recordPermissionsSvc = recordPermissionsManagerService;
             utilSvc = _utilService_;
-            scope = _$rootScope_;
             $httpBackend = _$httpBackend_;
-            $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
         });
 
@@ -44,9 +49,9 @@ describe('Record Permissions service', function() {
     });
 
     afterEach(function() {
-        scope = null;
+        recordPermissionsSvc = null;
         $httpBackend = null;
-        $httpParamSerializer = null
+        utilSvc = null;
         $q = null;
     });
 

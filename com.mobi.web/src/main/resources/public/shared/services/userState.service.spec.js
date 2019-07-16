@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User State service', function() {
+fdescribe('User State service', function() {
     var userStateSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(userStateService) {
             userStateSvc = userStateService;

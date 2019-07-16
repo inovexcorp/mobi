@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Beautify filter', function() {
+fdescribe('Beautify filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         // To test out a filter, you need to inject $filter and save it to use
         // like you would normally
@@ -37,7 +37,7 @@ describe('Beautify filter', function() {
         $filter = null;
     });
 
-    it('returns an empty string when given a falsey value', function() {
+    it('returns an empty string when given a falsy value', function() {
         var result;
         _.forEach([false, '', 0, undefined, null], function(value) {
             result = $filter('beautify')(value);

@@ -20,15 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Prov Manager service', function() {
+import {
+    mockUtil,
+    mockPrefixes,
+    mockHttpService,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Prov Manager service', function() {
     var $httpBackend, $httpParamSerializer, scope, provManagerSvc, $q, utilSvc, httpSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
         mockPrefixes();
-        injectRestPathConstant();
         mockHttpService();
+        injectRestPathConstant();
 
         inject(function(provManagerService, _$httpBackend_, _$httpParamSerializer_, _$rootScope_, _$q_, _utilService_, _httpService_) {
             provManagerSvc = provManagerService;

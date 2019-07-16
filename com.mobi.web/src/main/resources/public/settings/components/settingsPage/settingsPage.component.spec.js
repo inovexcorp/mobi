@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Settings Page component', function() {
+import {
+    mockComponent
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Settings Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('settings');
+        angular.mock.module('settings');
         mockComponent('settings', 'profileTab');
         mockComponent('settings', 'passwordTab');
         mockComponent('settings', 'groupTab');

@@ -20,11 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Catalog State service', function() {
+import {
+    mockPrefixes,
+    mockCatalogManager
+} from '../../../../../test/js/Shared';
+
+fdescribe('Catalog State service', function() {
     var catalogStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockCatalogManager();
         mockPrefixes();
 

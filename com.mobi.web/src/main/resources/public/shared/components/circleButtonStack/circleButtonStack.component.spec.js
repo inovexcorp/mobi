@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Circle Button Stack component', function() {
+fdescribe('Circle Button Stack component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Commit Difference Tabset component', function() {
+
+ import {
+     mockComponent
+ } from '../../../../../../test/js/Shared';
+
+ fdescribe('Commit Difference Tabset component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'commitChangesDisplay');
         mockComponent('shared', 'commitHistoryTable');
         mockComponent('shared', 'infoMessage');

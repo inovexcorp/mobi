@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Branch Select component', function() {
+
+import {
+    injectBranchesToDisplayFilter,
+    injectTrustedFilter,
+    injectHighlightFilter,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Branch Select component', function() {
     var $compile, $timeout, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         injectBranchesToDisplayFilter();
         injectTrustedFilter();
         injectHighlightFilter();

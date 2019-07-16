@@ -20,11 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('User Manager service', function() {
+import {
+    mockUtil,
+    mockPrefixes,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('User Manager service', function() {
     var userManagerSvc, $q, $httpBackend, scope, $httpParamSerializer, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
         mockPrefixes();
         injectRestPathConstant();

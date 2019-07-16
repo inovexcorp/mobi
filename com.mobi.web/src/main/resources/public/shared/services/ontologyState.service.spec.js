@@ -20,12 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology State Service', function() {
+import {
+    mockPropertyManager,
+    mockOntologyManager,
+    mockUpdateRefs,
+    mockStateManager,
+    mockUtil,
+    mockCatalogManager,
+    mockPrefixes,
+    mockManchesterConverter,
+    mockHttpService,
+    mockPolicyEnforcement,
+    mockPolicyManager,
+    injectSplitIRIFilter
+} from '../../../../../test/js/Shared';
+
+fdescribe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, policyEnforcementSvc, httpSvc, uuidSvc, $document, splitIRI;
     var listItem;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPropertyManager();
         mockOntologyManager();
         mockUpdateRefs();
@@ -39,7 +54,7 @@ describe('Ontology State Service', function() {
         mockPolicyManager();
         injectSplitIRIFilter();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$document', function() {
                 this.querySelectorAll = jasmine.createSpy('querySelectorAll');
             });

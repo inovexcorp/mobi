@@ -20,16 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Sidebar component', function() {
+import {
+    mockUserManager,
+    mockLoginManager
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Sidebar component', function() {
     var $compile, scope, loginManagerSvc, userManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockLoginManager();
         mockUserManager();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$state', function() {
                 this.is = jasmine.createSpy('is').and.returnValue(false);
             });

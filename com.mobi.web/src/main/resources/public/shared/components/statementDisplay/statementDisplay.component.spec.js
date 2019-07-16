@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Statement Display component', function() {
+import {
+    injectSplitIRIFilter,
+    injectPrefixationFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Statement Display component', function() {
     var $compile, scope, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         injectSplitIRIFilter();
         injectPrefixationFilter();
 
@@ -34,29 +38,17 @@ describe('Statement Display component', function() {
             scope = _$rootScope_;
             splitIRI = _splitIRIFilter_;
         });
-    });
 
-    beforeEach(function compile() {
-        this.compile = function(object, splitResult) {
-            if (object === undefined || object === null) {
-                object = 'object';
-            }
-            if (splitResult === undefined || splitResult === null) {
-                splitResult = {};
-            }
-            scope.predicate = 'predicate';
-            scope.object = object;
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            this.element = angular.element('<statement-display predicate="predicate" object="object"></statement-display>');
-            parent.append(this.element);
-            this.element = $compile(this.element)(scope);
-            splitIRI.and.returnValue(splitResult);
-            scope.$digest();
-            this.controller = this.element.controller('statementDisplay');
-        }
-
-        this.compile();
+        scope.predicate = 'predicate';
+        scope.object = 'object';
+        var parent = $compile('<div></div>')(scope);
+        parent.data('$statementContainerController', {});
+        this.element = angular.element('<statement-display predicate="predicate" object="object"></statement-display>');
+        parent.append(this.element);
+        this.element = $compile(this.element)(scope);
+        splitIRI.and.returnValue({});
+        scope.$digest();
+        this.controller = this.element.controller('statementDisplay');
     });
 
     afterEach(function() {
@@ -90,35 +82,47 @@ describe('Statement Display component', function() {
     describe('check controller.o value', function() {
         describe('when @id is present', function() {
             it('and split.end is present', function() {
-                this.compile({'@id': 'full/id'}, {end: 'id'});
+                this.controller.object = {'@id': 'full/id'};
+                splitIRI.and.returnValue({end: 'id'});
+                this.controller.$onInit();
                 expect(splitIRI).toHaveBeenCalledWith('full/id');
                 expect(this.controller.o).toEqual('id');
                 expect(this.controller.fullObject).toEqual('full/id');
             });
             it('and split.end is empty', function() {
-                this.compile({'@id': 'full/id'}, {end: ''});
+                this.controller.object = {'@id': 'full/id'};
+                splitIRI.and.returnValue({end: ''});
+                this.controller.$onInit();
                 expect(splitIRI).toHaveBeenCalledWith('full/id');
                 expect(this.controller.o).toEqual('full/id');
                 expect(this.controller.fullObject).toEqual('full/id');
             });
         });
         it('when @value is present', function() {
-            this.compile({'@value': 'value'});
+            this.controller.object = {'@value': 'value'};
+            splitIRI.and.returnValue({});
+            this.controller.$onInit();
             expect(this.controller.o).toEqual('value');
             expect(this.controller.fullObject).toEqual('value');
         });
         it('when @language is present', function() {
-            this.compile({'@value': 'value', '@language': 'en'});
+            this.controller.object = {'@value': 'value', '@language': 'en'};
+            splitIRI.and.returnValue({});
+            this.controller.$onInit();
             expect(this.controller.o).toEqual('value [language: en]');
             expect(this.controller.fullObject).toEqual('value [language: en]');
         });
         it('when @type is present', function() {
-            this.compile({'@value': 'value', '@type': 'type'});
+            this.controller.object = {'@value': 'value', '@type': 'type'};
+            splitIRI.and.returnValue({});
+            this.controller.$onInit();
             expect(this.controller.o).toEqual('value [type: type]');
             expect(this.controller.fullObject).toEqual('value [type: type]');
         });
         it('when no extra information is present', function() {
-            this.compile('words');
+            this.controller.object = 'words';
+            splitIRI.and.returnValue({});
+            this.controller.$onInit();
             expect(this.controller.o).toEqual('words');
             expect(this.controller.fullObject).toEqual('words');
         });

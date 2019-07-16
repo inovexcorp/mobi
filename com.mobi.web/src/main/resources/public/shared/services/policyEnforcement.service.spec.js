@@ -20,21 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Policy Enforcement service', function() {
-    var policyEnforcementSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
+import {
+    mockUtil,
+    mockPrefixes,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Policy Enforcement service', function() {
+    var policyEnforcementSvc, $httpBackend, utilSvc, $q;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
-        injectRestPathConstant();
         mockPrefixes();
+        injectRestPathConstant();
 
-        inject(function(policyEnforcementService, _$rootScope_, _utilService_, _$httpBackend_, _$httpParamSerializer_, _$q_) {
+        inject(function(policyEnforcementService, _utilService_, _$httpBackend_, _$q_) {
             policyEnforcementSvc = policyEnforcementService;
-            scope = _$rootScope_;
             utilSvc = _utilService_;
             $httpBackend = _$httpBackend_;
-            $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
         });
 
@@ -56,9 +61,7 @@ describe('Policy Enforcement service', function() {
 
     afterEach(function() {
         policyEnforcementSvc = null;
-        scope = null;
         $httpBackend = null;
-        $httpParamSerializer = null
         utilSvc = null;
         $q = null;
     });

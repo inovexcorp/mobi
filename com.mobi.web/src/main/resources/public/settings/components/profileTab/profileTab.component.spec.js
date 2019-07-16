@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Profile Tab component', function() {
+import {
+    mockUserManager,
+    mockLoginManager,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Profile Tab component', function() {
     var $compile, scope, $q, userManagerSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('settings');
+        angular.mock.module('settings');
         mockUserManager();
         mockLoginManager();
         mockPrefixes();

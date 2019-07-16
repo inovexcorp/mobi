@@ -20,11 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUtil,
+    injectRestPathConstant
+} from '../../../../../test/js/Shared';
+
 describe('State Manager service', function() {
     var $httpBackend, stateManagerSvc, $q, scope, $httpParamSerializer, util;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
         injectRestPathConstant();
 

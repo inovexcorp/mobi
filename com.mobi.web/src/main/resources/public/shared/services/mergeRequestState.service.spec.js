@@ -20,11 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Merge Requests State service', function() {
+import {
+    mockMergeRequestManager,
+    mockCatalogManager,
+    mockUserManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../test/js/Shared';
+
+fdescribe('Merge Requests State service', function() {
     var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockMergeRequestManager();
         mockCatalogManager();
         mockUserManager();

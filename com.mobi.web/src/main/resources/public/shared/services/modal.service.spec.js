@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Modal service', function() {
+fdescribe('Modal service', function() {
     var modalSvc, $uibModal, scope;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$uibModal', function($q) {
                 this.open = jasmine.createSpy('open').and.returnValue({result: $q.when()});
             });

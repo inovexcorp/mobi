@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Http service', function() {
+fdescribe('Http service', function() {
     var httpSvc, $http, $q;
 
     beforeEach(function() {
-        module('shared');
+       angular.mock.module('shared');
 
         inject(function(httpService, _$http_, _$q_) {
             httpSvc = httpService;

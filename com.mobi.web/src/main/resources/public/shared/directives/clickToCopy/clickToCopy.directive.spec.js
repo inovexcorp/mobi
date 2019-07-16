@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Click to Copy directive', function() {
+import {
+    mockToastr
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Click to Copy directive', function() {
     var $compile, scope, toastr;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockToastr();
 
         inject(function(_$compile_, _$rootScope_, _toastr_) {

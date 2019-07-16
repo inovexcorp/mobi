@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Home Page component', function() {
+import {
+    mockComponent
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Home Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('home');
+        angular.mock.module('home');
         mockComponent('home', 'quickActionGrid');
         mockComponent('home', 'activityCard');
 

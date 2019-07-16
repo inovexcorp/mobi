@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-function mockComponent(moduleName, componentName) {
-    module(moduleName, function($provide) {
+export function mockComponent(moduleName, componentName) {
+    angular.mock.module(moduleName, function($provide) {
         $provide.factory(componentName + 'Directive', function() { return {}; });
     });
 }
   
-function createQueryString(obj) {
+export function createQueryString(obj) {
     var queryString = '';
     var keys = Object.keys(obj);
     keys.forEach(function(key) {
@@ -41,8 +41,8 @@ function createQueryString(obj) {
     return queryString;
 }
 
-function injectChromaConstant() {
-    module(function($provide) {
+export function injectChromaConstant() {
+    angular.mock.module(function($provide) {
         $provide.constant('chroma', {
             scale: jasmine.createSpy('scale').and.returnValue({
                 colors: jasmine.createSpy('colors').and.callFake(function(num) {
@@ -56,8 +56,8 @@ function injectChromaConstant() {
     });
 }
 
-function injectAntlrConstant() {
-    module(function($provide) {
+export function injectAntlrConstant() {
+    angular.mock.module(function($provide) {
         $provide.constant('antlr', {
             antlr4: {
                 InputStream: jasmine.createSpy('InputStream').and.returnValue({}),
@@ -83,8 +83,8 @@ function injectAntlrConstant() {
     });
 }
 
-function injectRegexConstant() {
-    module(function($provide) {
+export function injectRegexConstant() {
+    angular.mock.module(function($provide) {
         $provide.constant('REGEX', {
             'IRI': /[a-zA-Z]/,
             'LOCALNAME': /[a-zA-Z]+/,
@@ -98,20 +98,20 @@ function injectRegexConstant() {
     });
 }
 
-function injectRestPathConstant() {
-    module(function($provide) {
+export function injectRestPathConstant() {
+    angular.mock.module(function($provide) {
         $provide.constant('REST_PREFIX', '/mobirest/');
     });
 }
 
-function injectIndentConstant() {
-    module(function($provide) {
+export function injectIndentConstant() {
+    angular.mock.module(function($provide) {
         $provide.constant('INDENT', 1);
     });
 }
 
-function injectShowdownConstant() {
-    module(function($provide) {
+export function injectShowdownConstant() {
+    angular.mock.module(function($provide) {
         $provide.constant('showdown', {
             Converter: jasmine.createSpy('Converter').and.returnValue({
                 setFlavor: jasmine.createSpy('setFlavor'),
@@ -121,20 +121,20 @@ function injectShowdownConstant() {
     });
 }
 
-function injectBeautifyFilter() {
-    module(function($provide) {
+export function injectBeautifyFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('beautifyFilter', jasmine.createSpy('beautifyFilter').and.callFake(_.identity));
     });
 }
 
-function injectBranchesToDisplayFilter() {
-    module(function($provide) {
+export function injectBranchesToDisplayFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('branchesToDisplayFilter', jasmine.createSpy('branchesToDisplay').and.callFake(_.identity));
     });
 }
 
-function injectSplitIRIFilter() {
-    module(function($provide) {
+export function injectSplitIRIFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
             return {
                 begin: '',
@@ -145,28 +145,28 @@ function injectSplitIRIFilter() {
     });
 }
 
-function injectTrustedFilter() {
-    module(function($provide) {
+export function injectTrustedFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('trustedFilter', jasmine.createSpy('trustedFilter'));
     });
 }
 
-function injectHighlightFilter() {
-    module(function($provide) {
+export function injectHighlightFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('highlightFilter', jasmine.createSpy('highlightFilter'));
     });
 }
 
-function injectCamelCaseFilter() {
-    module(function($provide) {
+export function injectCamelCaseFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('camelCaseFilter', jasmine.createSpy('camelCaseFilter').and.callFake(function(str) {
             return str;
         }));
     });
 }
 
-function injectShowPropertiesFilter() {
-    module(function($provide) {
+export function injectShowPropertiesFilter() {
+    angular.mock.module(function($provide) {
         var properties = ['prop1', 'prop2'];
         $provide.value('showPropertiesFilter', jasmine.createSpy('showPropertiesFilter').and.callFake(function(entity, arr) {
             return entity ? properties : [];
@@ -174,38 +174,38 @@ function injectShowPropertiesFilter() {
     });
 }
 
-function injectRemoveIriFromArrayFilter() {
-    module(function($provide) {
+export function injectRemoveIriFromArrayFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('removeIriFromArrayFilter', jasmine.createSpy('removeIriFromArrayFilter').and.callFake(_.identity));
     });
 }
 
-function injectPrefixationFilter() {
-    module(function($provide) {
+export function injectPrefixationFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('prefixationFilter', jasmine.createSpy('prefixationFilter').and.callFake(_.identity));
     });
 }
 
-function injectInArrayFilter() {
-    module(function($provide) {
+export function injectInArrayFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('inArrayFilter', jasmine.createSpy('inArrayFilter').and.callFake(_.identity));
     });
 }
 
-function injectUsernameSearchFilter() {
-    module(function($provide) {
+export function injectUsernameSearchFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('usernameSearchFilter', jasmine.createSpy('usernameSearchFilter').and.callFake(_.identity));
     });
 }
 
-function injectUniqueKeyFilter() {
-    module(function($provide) {
+export function injectUniqueKeyFilter() {
+    angular.mock.module(function($provide) {
         $provide.value('uniqueKeyFilter', jasmine.createSpy('uniqueKeyFilter').and.callFake(_.identity));
     });
 }
 
-function mockStateManager() {
-    module(function($provide, $qProvider) {
+export function mockStateManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('stateManagerService', function($q) {
             this.states = [];
@@ -219,8 +219,8 @@ function mockStateManager() {
     });
 }
 
-function mockOntologyManager() {
-    module(function($provide, $qProvider) {
+export function mockOntologyManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('ontologyManagerService', function($q) {
             this.ontologyRecords = [];
@@ -310,8 +310,8 @@ function mockOntologyManager() {
     });
 }
 
-function mockMappingManager() {
-    module(function($provide, $qProvider) {
+export function mockMappingManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mappingManagerService', function($q) {
             this.annotationProperties = [];
@@ -363,8 +363,8 @@ function mockMappingManager() {
     });
 }
 
-function mockDelimitedManager() {
-    module(function($provide, $qProvider) {
+export function mockDelimitedManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('delimitedManagerService', function($q) {
             this.dataRows = undefined;
@@ -394,8 +394,8 @@ function mockDelimitedManager() {
     });
 }
 
-function mockMapperState() {
-    module(function($provide, $qProvider) {
+export function mockMapperState() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mapperStateService', function($q) {
             this.selectMappingStep = 0;
@@ -451,8 +451,8 @@ function mockMapperState() {
     });
 }
 
-function mockHttpService() {
-    module(function($provide, $qProvider) {
+export function mockHttpService() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('httpService', function() {
             this.pending = [];
@@ -464,8 +464,8 @@ function mockHttpService() {
     });
 }
 
-function mockPrefixes() {
-    module(function($provide) {
+export function mockPrefixes() {
+    angular.mock.module(function($provide) {
         $provide.service('prefixes', function() {
             this.owl = this.delim = this.data = this.mappings = '';
             this.rdfs = 'rdfs:';
@@ -490,8 +490,8 @@ function mockPrefixes() {
     });
 }
 
-function mockUpdateRefs() {
-    module(function($provide) {
+export function mockUpdateRefs() {
+    angular.mock.module(function($provide) {
         $provide.service('updateRefsService', function() {
             this.update = jasmine.createSpy('update');
             this.remove = jasmine.createSpy('remove');
@@ -499,8 +499,8 @@ function mockUpdateRefs() {
     });
 }
 
-function mockSparqlManager() {
-    module(function($provide, $qProvider) {
+export function mockSparqlManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('sparqlManagerService', function($q) {
             this.data = undefined;
@@ -527,8 +527,8 @@ function mockSparqlManager() {
     });
 }
 
-function mockSettingsManager() {
-    module(function($provide) {
+export function mockSettingsManager() {
+    angular.mock.module(function($provide) {
         $provide.service('settingsManagerService', function() {
             this.getSettings = jasmine.createSpy('getSettings').and.returnValue({});
             this.setSettings = jasmine.createSpy('setSettings').and.callFake(_.identity);
@@ -538,8 +538,8 @@ function mockSettingsManager() {
     });
 }
 
-function mockOntologyState() {
-    module(function($provide, $qProvider) {
+export function mockOntologyState() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('ontologyStateService', function($q) {
             this.recordIdToClose = 'recordIdToClose';
@@ -790,8 +790,8 @@ function mockOntologyState() {
     });
 }
 
-function mockOntologyUtilsManager() {
-    module(function($provide, $qProvider) {
+export function mockOntologyUtilsManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('ontologyUtilsManagerService', function($q) {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
@@ -830,8 +830,8 @@ function mockOntologyUtilsManager() {
     });
 }
 
-function mockPropertyManager() {
-    module(function($provide, $qProvider) {
+export function mockPropertyManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('propertyManagerService', function($q) {
             this.defaultAnnotations = [];
@@ -856,8 +856,8 @@ function mockPropertyManager() {
     });
 }
 
-function mockLoginManager() {
-    module(function($provide, $qProvider) {
+export function mockLoginManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('loginManagerService', function($q) {
             this.currentUser = '';
@@ -869,8 +869,8 @@ function mockLoginManager() {
     });
 }
 
-function mockUserManager() {
-    module(function($provide, $qProvider) {
+export function mockUserManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('userManagerService', function($q) {
             this.users = [];
@@ -906,8 +906,8 @@ function mockUserManager() {
     });
 }
 
-function mockUserState() {
-    module(function($provide) {
+export function mockUserState() {
+    angular.mock.module(function($provide) {
         $provide.service('userStateService', function() {
             this.userSearchString = '';
             this.groupSearchString = '';
@@ -920,8 +920,8 @@ function mockUserState() {
     });
 }
 
-function mockCatalogManager() {
-    module(function($provide, $qProvider) {
+export function mockCatalogManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('catalogManagerService', function($q) {
             this.coreRecordTypes = [];
@@ -993,8 +993,8 @@ function mockCatalogManager() {
     });
 }
 
-function mockCatalogState() {
-    module(function($provide) {
+export function mockCatalogState() {
+    angular.mock.module(function($provide) {
         $provide.service('catalogStateService', function() {
             this.selectedRecord = undefined;
             this.totalRecordSize = 0;
@@ -1012,8 +1012,8 @@ function mockCatalogState() {
     });
 }
 
-function mockUtil() {
-    module(function($provide, $qProvider) {
+export function mockUtil() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('utilService', function($q) {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
@@ -1060,8 +1060,8 @@ function mockUtil() {
     });
 }
 
-function mockDatasetManager() {
-    module(function($provide, $qProvider) {
+export function mockDatasetManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('datasetManagerService', function($q) {
             this.datasetRecords = [];
@@ -1080,8 +1080,8 @@ function mockDatasetManager() {
     });
 }
 
-function mockDatasetState() {
-    module(function($provide) {
+export function mockDatasetState() {
+    angular.mock.module(function($provide) {
         $provide.service('datasetStateService', function() {
             this.paginationConfig = {
                 limit: 0,
@@ -1105,8 +1105,8 @@ function mockDatasetState() {
     })
 }
 
-function mockManchesterConverter() {
-    module(function($provide) {
+export function mockManchesterConverter() {
+    angular.mock.module(function($provide) {
         $provide.service('manchesterConverterService', function() {
             this.getKeywords = jasmine.createSpy('getKeywords').and.returnValue([]);
             this.jsonldToManchester = jasmine.createSpy('jsonldToManchester').and.returnValue('');
@@ -1115,8 +1115,8 @@ function mockManchesterConverter() {
     })
 }
 
-function mockToastr() {
-    module(function($provide) {
+export function mockToastr() {
+    angular.mock.module(function($provide) {
         $provide.service('toastr', function() {
             this.error = jasmine.createSpy('error');
             this.success = jasmine.createSpy('success');
@@ -1126,8 +1126,8 @@ function mockToastr() {
     });
 }
 
-function mockDiscoverState() {
-    module(function($provide) {
+export function mockDiscoverState() {
+    angular.mock.module(function($provide) {
         $provide.service('discoverStateService', function() {
             this.explore = {
                 active: true,
@@ -1184,8 +1184,8 @@ function mockDiscoverState() {
     });
 }
 
-function mockExplore() {
-    module(function($provide, $qProvider) {
+export function mockExplore() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
@@ -1200,8 +1200,8 @@ function mockExplore() {
     });
 }
 
-function mockExploreUtils() {
-    module(function($provide, $qProvider) {
+export function mockExploreUtils() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('exploreUtilsService', function($q) {
             this.getInputType = jasmine.createSpy('getInputType').and.returnValue('');
@@ -1222,8 +1222,8 @@ function mockExploreUtils() {
     });
 }
 
-function mockSearch() {
-    module(function($provide, $qProvider) {
+export function mockSearch() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('searchService', function($q) {
             this.getPropertiesForDataset = jasmine.createSpy('getPropertiesForDataset').and.returnValue($q.when([]));
@@ -1239,8 +1239,8 @@ function mockSearch() {
     });
 }
 
-function mockProvManager() {
-    module(function($provide, $qProvider) {
+export function mockProvManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('provManagerService', function($q) {
             this.activityTypes = [];
@@ -1249,8 +1249,8 @@ function mockProvManager() {
     });
 }
 
-function mockMergeRequestManager() {
-    module(function($provide, $qProvider) {
+export function mockMergeRequestManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mergeRequestManagerService', function($q) {
             this.getRequests = jasmine.createSpy('getRequests').and.returnValue($q.when([]));
@@ -1267,8 +1267,8 @@ function mockMergeRequestManager() {
     });
 }
 
-function mockMergeRequestsState() {
-    module(function($provide, $qProvider) {
+export function mockMergeRequestsState() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('mergeRequestsStateService', function($q) {
             this.selected = undefined;
@@ -1288,8 +1288,8 @@ function mockMergeRequestsState() {
     });
 }
 
-function mockPolicyManager() {
-    module(function($provide, $qProvider) {
+export function mockPolicyManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('policyManagerService', function($q) {
             this.actionCreate = 'create';
@@ -1310,8 +1310,8 @@ function mockPolicyManager() {
     });
 }
 
-function mockPolicyEnforcement() {
-    module(function($provide, $qProvider) {
+export function mockPolicyEnforcement() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('policyEnforcementService', function($q) {
             this.permit = 'Permit';
@@ -1322,8 +1322,8 @@ function mockPolicyEnforcement() {
     });
 }
 
-function mockModal() {
-    module(function($provide) {
+export function mockModal() {
+    angular.mock.module(function($provide) {
         $provide.service('modalService', function() {
             this.openModal = jasmine.createSpy('openModal');
             this.openConfirmModal = jasmine.createSpy('openConfirmModal');
@@ -1331,8 +1331,8 @@ function mockModal() {
     });
 }
 
-function mockRecordPermissionsManager() {
-    module(function($provide, $qProvider) {
+export function mockRecordPermissionsManager() {
+    angular.mock.module(function($provide, $qProvider) {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('recordPermissionsManagerService', function($q) {
             this.getRecordPolicy = jasmine.createSpy('getRecordPolicy').and.returnValue($q.when({}));
@@ -1341,7 +1341,7 @@ function mockRecordPermissionsManager() {
     });
 }
 
-function flushAndVerify($httpBackend) {
+export function flushAndVerify($httpBackend) {
     $httpBackend.flush();
     $httpBackend.verifyNoOutstandingExpectation();
     $httpBackend.verifyNoOutstandingRequest();

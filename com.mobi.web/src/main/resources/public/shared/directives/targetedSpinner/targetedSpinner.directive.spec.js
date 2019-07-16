@@ -20,11 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Targeted Spinner directive', function() {
+import {
+    mockHttpService
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Targeted Spinner directive', function() {
     var $compile, scope, httpSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockHttpService();
 
         inject(function(_$compile_, _$rootScope_, _httpService_) {

@@ -20,11 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Util service', function() {
+import {
+    mockPrefixes,
+    mockToastr,
+    mockHttpService,
+    injectSplitIRIFilter,
+    injectBeautifyFilter,
+    injectRegexConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Util service', function() {
     var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc, windowSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
         mockToastr();
         mockHttpService();
@@ -32,7 +42,7 @@ describe('Util service', function() {
         injectBeautifyFilter();
         injectRegexConstant();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });

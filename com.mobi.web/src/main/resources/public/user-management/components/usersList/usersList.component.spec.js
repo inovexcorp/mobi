@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Users List component', function() {
+import {
+    mockUserManager,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Users List component', function() {
     var $compile, scope, userManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockUserManager();
         injectHighlightFilter();
         injectTrustedFilter();

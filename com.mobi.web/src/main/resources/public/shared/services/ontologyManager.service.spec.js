@@ -20,11 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology Manager service', function() {
+import {
+    mockPrefixes,
+    mockCatalogManager,
+    mockUtil,
+    mockHttpService,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Ontology Manager service', function() {
     var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, util, paramSerializer, httpSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
         mockCatalogManager();
         mockUtil();
@@ -264,7 +273,7 @@ describe('Ontology Manager service', function() {
         describe('with an id and', function() {
             beforeEach(function() {
                 this.config = {
-                    transformRequest: angular.identity,
+                    transformRequest: _.identity,
                     headers: {
                         'Content-Type': undefined
                     }

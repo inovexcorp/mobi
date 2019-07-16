@@ -20,24 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Merge Request Manager service', function() {
-    var mergeRequestManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, prefixes, $q, scope;
+import {
+    mockPrefixes,
+    mockUtil,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Merge Request Manager service', function() {
+    var mergeRequestManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, prefixes, $q;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
         mockUtil();
-        mockPrefixes();
         injectRestPathConstant();
 
-        inject(function(mergeRequestManagerService, _utilService_, _$httpBackend_, _$httpParamSerializer_, _prefixes_, _$q_, _$rootScope_) {
+        inject(function(mergeRequestManagerService, _utilService_, _$httpBackend_, _$httpParamSerializer_, _prefixes_, _$q_) {
             mergeRequestManagerSvc = mergeRequestManagerService;
             utilSvc = _utilService_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             prefixes = _prefixes_;
             $q = _$q_;
-            scope = _$rootScope_;
         });
 
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
@@ -50,7 +55,6 @@ describe('Merge Request Manager service', function() {
         utilSvc = null;
         prefixes = null;
         $q = null;
-        scope = null;
     });
 
     describe('should get a list of merge requests', function() {

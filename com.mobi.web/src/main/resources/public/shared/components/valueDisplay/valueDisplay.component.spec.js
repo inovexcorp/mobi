@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Value Display component', function() {
+import * as angular from 'angular';
+import {
+    mockUtil,
+    mockDiscoverState,
+    injectPrefixationFilter,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Value Display component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         injectPrefixationFilter();
         injectTrustedFilter();
         injectHighlightFilter();

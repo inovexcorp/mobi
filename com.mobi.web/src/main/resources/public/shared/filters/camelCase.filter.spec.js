@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Camel Case filter', function() {
+fdescribe('Camel Case filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$filter_) {
             $filter = _$filter_;

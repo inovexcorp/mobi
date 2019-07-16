@@ -20,11 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Delimited Manager service', function() {
+import {
+    mockUtil,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
+fdescribe('Delimited Manager service', function() {
     var delimitedManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
         injectRestPathConstant();
 

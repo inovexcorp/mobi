@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Group Overlay component', function() {
+import {
+    mockComponent,
+    mockUserManager,
+    mockLoginManager
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Create Group Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockComponent('user-management', 'memberTable');
         mockUserManager();
         mockLoginManager();

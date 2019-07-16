@@ -20,19 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* global expect, FormData */
+import * as _ from 'lodash';
+import {
+    mockUtil,
+    mockPrefixes,
+    mockDiscoverState,
+    mockCatalogManager,
+    mockHttpService,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
 
-describe('Dataset Manager service', function() {
+fdescribe('Dataset Manager service', function() {
     var $httpBackend, $httpParamSerializer, $q, scope, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, discoverStateSvc, httpSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
         mockPrefixes();
         mockDiscoverState();
         mockCatalogManager();
-        injectRestPathConstant();
         mockHttpService();
+        injectRestPathConstant();
 
         inject(function(_$httpBackend_, _$httpParamSerializer_, _$q_, _$rootScope_, _datasetManagerService_, _catalogManagerService_, _utilService_, _prefixes_, _discoverStateService_, _httpService_) {
             datasetManagerSvc = _datasetManagerService_;
@@ -300,7 +309,7 @@ describe('Dataset Manager service', function() {
             expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, '', []);
         });
         it('on success.', function() {
-            expected = [
+            var expected = [
                 [{'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}],
                 [{'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]}],
                 [{'@id': this.recordId, 'dcterms:title': [{'@value': ''}]}]
@@ -331,7 +340,7 @@ describe('Dataset Manager service', function() {
                         expect(response).toEqual('Error Message');
                     });
                 scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: angular.identity, headers: {'Content-Type': undefined}}, 'id');
+                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: _.identity, headers: {'Content-Type': undefined}}, 'id');
                 expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                     status: 400,
                     statusText: 'Error Message'
@@ -344,7 +353,7 @@ describe('Dataset Manager service', function() {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: angular.identity, headers: {'Content-Type': undefined}}, 'id');
+                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: _.identity, headers: {'Content-Type': undefined}}, 'id');
                 expect(utilSvc.rejectError).not.toHaveBeenCalled();
             });
         });
