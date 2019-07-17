@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Download Query Overlay component', function() {
+import { mockSparqlManager } from '../../../../../../../test/js/Shared';
+
+fdescribe('Download Query Overlay component', function() {
     var $compile, scope, sparqlManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('query');
+        angular.mock.module('query');
         mockSparqlManager();
 
         inject(function(_$compile_, _$rootScope_, _sparqlManagerService_) {

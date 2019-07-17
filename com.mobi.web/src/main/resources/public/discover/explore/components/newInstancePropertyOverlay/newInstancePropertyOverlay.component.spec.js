@@ -20,20 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('New Instance Property Overlay component', function() {
-    var $compile, scope, exploreUtils, util;
+import { 
+    mockExploreUtils,
+    mockUtil
+} from '../../../../../../../test/js/Shared';
+
+fdescribe('New Instance Property Overlay component', function() {
+    var $compile, scope, exploreUtils;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockExploreUtils();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _exploreUtilsService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _exploreUtilsService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             exploreUtils = _exploreUtilsService_;
-            util = _utilService_;
         });
 
         scope.close = jasmine.createSpy('close');
@@ -48,7 +51,6 @@ describe('New Instance Property Overlay component', function() {
         $compile = null;
         scope = null;
         exploreUtils = null;
-        util = null;
         this.element.remove();
     });
 

@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('SPARQL Result Table component', function() {
+import { 
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('SPARQL Result Table component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('discover');
+        angular.mock.module('discover');
         injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_) {

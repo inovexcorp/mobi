@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Query Tab component', function() {
+import { mockComponent } from '../../../../../../../test/js/Shared';
+
+fdescribe('Query Tab component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('query');
+        angular.mock.module('query');
         mockComponent('query', 'sparqlEditor');
         mockComponent('query', 'sparqlResultBlock');
 

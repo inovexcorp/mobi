@@ -273,7 +273,7 @@ fdescribe('Ontology Manager service', function() {
         describe('with an id and', function() {
             beforeEach(function() {
                 this.config = {
-                    transformRequest: _.identity,
+                    transformRequest: jasmine.any(Function),
                     headers: {
                         'Content-Type': undefined
                     }

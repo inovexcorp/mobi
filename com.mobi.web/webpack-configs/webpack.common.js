@@ -15,13 +15,6 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.g4/,
-                loader: 'antlr4-webpack-loader',
-                options: {
-                    lib: 'src/main/resources/public/vendor/antlr4'
-                }
-            },
-            {
                 test: /\.ts?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/

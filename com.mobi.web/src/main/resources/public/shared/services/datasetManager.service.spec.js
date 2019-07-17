@@ -340,7 +340,7 @@ fdescribe('Dataset Manager service', function() {
                         expect(response).toEqual('Error Message');
                     });
                 scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: _.identity, headers: {'Content-Type': undefined}}, 'id');
+                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: jasmine.any(Function), headers: {'Content-Type': undefined}}, 'id');
                 expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                     status: 400,
                     statusText: 'Error Message'
@@ -353,7 +353,7 @@ fdescribe('Dataset Manager service', function() {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: _.identity, headers: {'Content-Type': undefined}}, 'id');
+                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: jasmine.any(Function), headers: {'Content-Type': undefined}}, 'id');
                 expect(utilSvc.rejectError).not.toHaveBeenCalled();
             });
         });

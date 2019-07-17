@@ -10,18 +10,18 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
 
     files: [
-        'webpack.tests.js'
+        'webpack.tests.tdd.js'
     ],
 
     preprocessors: {
-        'webpack.tests.js': ['webpack']
+        'webpack.tests.tdd.js': ['webpack', 'sourcemap']
     },
 
     webpack: {
         resolve: webpackConfig.resolve,
         module: webpackConfig.module,
         node: webpackConfig.node,
-        devtool: 'source-map'
+        devtool: 'inline-source-map'
     },
 
     // test results reporter to use

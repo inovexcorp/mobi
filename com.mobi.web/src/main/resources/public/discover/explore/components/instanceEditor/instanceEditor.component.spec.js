@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Instance Editor component', function() {
+import { 
+    mockComponent,
+    mockDiscoverState,
+    mockUtil,
+    mockExplore,
+    mockExploreUtils
+} from '../../../../../../../test/js/Shared';
+
+fdescribe('Instance Editor component', function() {
     var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockComponent('explore', 'instanceForm');
         mockDiscoverState();
         mockUtil();

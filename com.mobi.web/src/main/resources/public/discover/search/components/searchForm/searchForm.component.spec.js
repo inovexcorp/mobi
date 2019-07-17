@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Search Form component', function() {
+import {
+    mockDiscoverState,
+    mockSearch,
+    mockExplore,
+    mockUtil,
+    mockModal
+} from '../../../../../../../test/js/Shared';
+
+fdescribe('Search Form component', function() {
     var $compile, scope, $q, searchSvc, discoverStateSvc, exploreSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('search');
+        angular.mock.module('search');
         mockDiscoverState();
         mockSearch();
         mockExplore();

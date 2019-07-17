@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Dataset Form Group Component', function() {
+import { mockComponent } from '../../../../../../test/js/Shared';
+
+fdescribe('Dataset Form Group Component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('discover');
+        angular.mock.module('discover');
         mockComponent('discover', 'datasetSelect');
 
         inject(function(_$compile_, _$rootScope_) {

@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import * as angular from 'angular';
 import {
     mockUtil,
     mockDiscoverState,

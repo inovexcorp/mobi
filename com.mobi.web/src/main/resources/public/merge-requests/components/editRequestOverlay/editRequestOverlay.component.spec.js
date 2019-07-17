@@ -20,14 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Edit Request Overlay Component', function() {
-    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, modalSvc, userManagerSvc, utilSvc, prefixes;
+import {
+    mockMergeRequestsState,
+    mockMergeRequestManager,
+    mockCatalogManager,
+    mockUserManager,
+    mockModal,
+    mockUtil,
+    mockPrefixes,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Edit Request Overlay Component', function() {
+    var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
-        injectTrustedFilter();
-        injectHighlightFilter();
+        angular.mock.module('merge-requests');
         mockMergeRequestsState();
         mockMergeRequestManager();
         mockCatalogManager();
@@ -35,19 +44,17 @@ describe('Edit Request Overlay Component', function() {
         mockModal();
         mockUtil();
         mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _catalogManagerService_, _userManagerService_, _modalService_, _utilService_, _prefixes_, _trustedFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _mergeRequestManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
             mergeRequestManagerSvc = _mergeRequestManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
-            userManagerSvc = _userManagerService_;
-            modalSvc = _modalService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
-            trustedFilter = _trustedFilter_;
         });
 
         this.getDefer = $q.defer();
@@ -85,9 +92,6 @@ describe('Edit Request Overlay Component', function() {
         $q = null;
         mergeRequestsStateSvc = null;
         mergeRequestManagerSvc = null;
-        catalogManagerSvc = null;
-        userManagerSvc = null;
-        modalSvc = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();

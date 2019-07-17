@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Merge Request Tabset component', function() {
+import {
+    mockComponent,
+    mockMergeRequestManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Merge Request Tabset component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
+        angular.mock.module('merge-requests');
         mockComponent('merge-requests', 'mergeRequestDiscussion');
         mockMergeRequestManager();
         mockUtil();

@@ -10,6 +10,8 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
 
     files: [
+        'target/classes/build/vendor.bundle.js',
+        'target/classes/build/main.bundle.js',
         'webpack.tests.js'
     ],
 
@@ -20,8 +22,7 @@ module.exports = function(config) {
     webpack: {
         resolve: webpackConfig.resolve,
         module: webpackConfig.module,
-        node: webpackConfig.node,
-        devtool: 'source-map'
+        node: webpackConfig.node
     },
 
     // test results reporter to use

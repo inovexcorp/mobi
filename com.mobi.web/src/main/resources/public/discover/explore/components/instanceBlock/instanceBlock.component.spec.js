@@ -20,19 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Instance Block component', function() {
+import { 
+    mockComponent,
+    mockDiscoverState,
+    mockExplore,
+    mockUtil,
+    injectSplitIRIFilter
+} from '../../../../../../../test/js/Shared';
+
+fdescribe('Instance Block component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, uuid, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockComponent('explore', 'instanceCards');
         mockDiscoverState();
         mockExplore();
         mockUtil();
         injectSplitIRIFilter();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });

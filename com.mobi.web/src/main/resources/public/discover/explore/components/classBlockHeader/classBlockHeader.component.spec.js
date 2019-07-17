@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Class Block Header component', function() {
+import { 
+    mockComponent,
+    mockDiscoverState,
+    mockExplore,
+    mockExploreUtils,
+    mockUtil,
+    mockModal
+} from '../../../../../../../test/js/Shared';
+
+fdescribe('Class Block Header component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, exploreUtils, util, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockComponent('discover', 'datasetSelect');
         mockDiscoverState();
         mockExplore();

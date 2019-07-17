@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Discover Search Tab component', function() {
+import {
+    mockComponent,
+    mockDiscoverState
+} from '../../../../../../../test/js/Shared';
+
+fdescribe('Discover Search Tab component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('search');
+        angular.mock.module('search');
         mockComponent('search', 'searchForm');
         mockComponent('discover', 'sparqlResultTable');
         mockDiscoverState();

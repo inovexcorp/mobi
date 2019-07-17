@@ -54,7 +54,7 @@ import 'ui-select';
 import 'ng-handsontable/dist/ngHandsontable.min.js';
 import 'clipboard';
 import * as showdown from 'showdown';
-import sparqljs from 'sparqljs';
+import * as sparqljs from 'sparqljs';
 import 'bootstrap';
 
 import 'angular-material/angular-material.min.css';
@@ -81,9 +81,11 @@ import beforeUnload from './beforeUnload.service';
 
 import './catalog/catalog.module';
 import './datasets/datasets.module';
+import './discover/discover.module';
 import './home/home.module';
 import './login/login.module';
 import './mapper/mapper.module';
+import './merge-requests/merge-requests.module';
 import './settings/settings.module';
 import './shared/shared.module';
 import './user-management/user-management.module';
@@ -108,11 +110,11 @@ angular
         /* Custom Modules */
         'catalog',
         'datasets',
-        // 'discover',
+        'discover',
         'home',
         'login',
         'mapper',
-        // 'merge-requests',
+        'merge-requests',
         // 'ontology-editor',
         'settings',
         'shared',

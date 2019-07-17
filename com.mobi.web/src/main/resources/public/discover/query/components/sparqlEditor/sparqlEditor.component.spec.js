@@ -20,19 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockComponent,
+    mockPrefixes,
+    mockSparqlManager,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../../test/js/Shared';
+
 describe('SPARQL Editor component', function() {
     var $compile, scope, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('query');
+        angular.mock.module('query');
         mockComponent('discover', 'datasetFormGroup');
-        injectTrustedFilter();
-        injectHighlightFilter();
         mockPrefixes();
         mockSparqlManager();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
         });
 

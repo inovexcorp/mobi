@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Request Branch Select component', function() {
+import {
+    mockCatalogManager,
+    mockMergeRequestsState,
+    mockMergeRequestManager,
+    mockUtil,
+    mockPrefixes,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
+fdescribe('Request Branch Select component', function() {
     var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
+        angular.mock.module('merge-requests');
         mockCatalogManager();
         mockMergeRequestsState();
         mockMergeRequestManager();
