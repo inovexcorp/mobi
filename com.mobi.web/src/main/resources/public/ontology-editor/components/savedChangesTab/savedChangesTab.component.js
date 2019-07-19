@@ -69,7 +69,6 @@
         dvm.util = utilService;
         dvm.list = [];
         dvm.showList = [];
-        // dvm.showList = getList();
         dvm.checkedStatements = {
             additions: [],
             deletions: []
@@ -169,24 +168,6 @@
             var currChunk = _.get(dvm.chunks, dvm.index, []);
             dvm.showList = _.concat(dvm.showList, currChunk);
         }
-
-        // $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
-        //     var ids = _.unionWith(_.map(dvm.os.listItem.inProgressCommit.additions, '@id'), _.map(dvm.os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
-        //     dvm.list = _.map(ids, id => {
-        //         var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
-        //         var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
-
-        //         return {
-        //             id,
-        //             additions,
-        //             deletions,
-        //             disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
-        //         }
-        //     });
-
-        //     dvm.list = _.sortBy(dvm.list, dvm.orderByIRI)
-        //     dvm.showList = getList();
-        // });
 
         function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
             _.forEach(dvm.os.listItem.branches, branch => {
