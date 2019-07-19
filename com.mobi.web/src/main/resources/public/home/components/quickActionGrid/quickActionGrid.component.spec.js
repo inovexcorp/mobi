@@ -25,7 +25,7 @@ import {
     mockDiscoverState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Quick Action Grid component', function() {
+describe('Quick Action Grid component', function() {
     var $compile, scope, $state, $window, ontologyStateSvc, discoverStateSvc;
 
     beforeEach(function() {

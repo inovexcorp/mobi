@@ -25,7 +25,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Groups List component', function() {
+describe('Groups List component', function() {
     var $compile, scope;
 
     beforeEach(function() {

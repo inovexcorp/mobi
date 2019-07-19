@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Commits Tab component', function() {
-    var $compile, scope, ontologyStateSvc, prefixes;
+    var $compile, scope, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockPrefixes();

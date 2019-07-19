@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Trusted filter', function() {
+describe('Trusted filter', function() {
     var $filter, $sce;
 
     beforeEach(function() {

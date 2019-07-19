@@ -25,7 +25,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Confirm Modal component', function() {
+describe('Confirm Modal component', function() {
     var $compile, scope;
 
     beforeEach(function() {

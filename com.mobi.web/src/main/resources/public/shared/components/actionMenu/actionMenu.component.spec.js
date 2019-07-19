@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Action Menu component', function() {
+describe('Action Menu component', function() {
     var $compile, scope;
 
     beforeEach(function() {

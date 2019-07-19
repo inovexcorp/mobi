@@ -27,7 +27,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('SPARQL Manager service', function() {
+describe('SPARQL Manager service', function() {
     var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, utilSvc, httpSvc;
 
     beforeEach(function() {

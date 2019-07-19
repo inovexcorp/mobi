@@ -24,7 +24,7 @@ import {
     mockCatalogState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Icon component', function() {
+describe('Record Icon component', function() {
     var $compile, scope, catalogStateSvc;
 
     beforeEach(function() {

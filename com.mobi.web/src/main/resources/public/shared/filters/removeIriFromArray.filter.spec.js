@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Remove IRI From Array filter', function() {
+describe('Remove IRI From Array filter', function() {
     var $filter;
 
     beforeEach(function() {

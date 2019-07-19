@@ -20,18 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState,
+    mockPropertyManager,
+    mockOntologyUtilsManager,
+    mockModal,
+    injectShowPropertiesFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Ontology Properties Block component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'propertyValues')
-        injectShowPropertiesFilter();
         mockOntologyState();
         mockPropertyManager();
         mockOntologyUtilsManager();
         mockModal();
+        injectShowPropertiesFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;

@@ -30,7 +30,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Open Record Button component', function() {
+describe('Open Record Button component', function() {
     var $compile, $state, $q, scope, catalogStateSvc, mapperStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {

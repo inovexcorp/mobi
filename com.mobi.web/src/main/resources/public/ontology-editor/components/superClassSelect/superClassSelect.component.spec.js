@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent
+} from '../../../../../../test/js/Shared';
+
 describe('Super Class Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'ontologyClassSelect');
 
         inject(function(_$compile_, _$rootScope_) {

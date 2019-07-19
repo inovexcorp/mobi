@@ -26,7 +26,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Merge Request Discussion component', function() {
+describe('Merge Request Discussion component', function() {
     var $compile, scope, $q, mergeRequestManagerSvc, utilSvc;
 
     beforeEach(function() {

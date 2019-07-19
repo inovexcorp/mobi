@@ -29,7 +29,7 @@ import {
     injectSparqljsConstant
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Explore Utils Service', function() {
+describe('Explore Utils Service', function() {
     var exploreUtilsSvc, scope, $q, utilSvc, prefixes, utilSvc, datasetManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {

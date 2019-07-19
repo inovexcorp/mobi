@@ -24,7 +24,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Settings Page component', function() {
+describe('Settings Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {

@@ -24,7 +24,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Text Area component', function() {
+describe('Text Area component', function() {
     var $compile, scope;
 
     beforeEach(function() {

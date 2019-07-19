@@ -27,7 +27,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Record Permissions service', function() {
+describe('Record Permissions service', function() {
     var recordPermissionsSvc, utilSvc, $httpBackend, $q;
 
     beforeEach(function() {

@@ -25,7 +25,7 @@ import {
     mockCatalogManager
 } from '../../../../../test/js/Shared';
 
-fdescribe('Catalog State service', function() {
+describe('Catalog State service', function() {
     var catalogStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {

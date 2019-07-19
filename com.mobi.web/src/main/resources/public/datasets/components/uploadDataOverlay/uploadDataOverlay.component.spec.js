@@ -27,7 +27,7 @@ import {
     mockHttpService
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Upload Data Overlay component', function() {
+describe('Upload Data Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc, httpSvc;
 
     beforeEach(function() {

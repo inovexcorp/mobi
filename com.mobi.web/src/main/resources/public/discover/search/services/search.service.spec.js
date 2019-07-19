@@ -32,7 +32,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Search Service', function() {
+describe('Search Service', function() {
     var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes, util, datasetManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {

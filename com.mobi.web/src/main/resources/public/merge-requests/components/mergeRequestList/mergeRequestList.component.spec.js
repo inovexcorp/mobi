@@ -25,7 +25,7 @@ import {
     mockModal
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Merge Request List component', function() {
+describe('Merge Request List component', function() {
     var $compile, scope, mergeRequestsStateSvc, modalSvc;
 
     beforeEach(function() {

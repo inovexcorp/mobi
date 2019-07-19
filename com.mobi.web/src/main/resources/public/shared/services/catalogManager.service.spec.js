@@ -28,7 +28,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Catalog Manager service', function() {
+describe('Catalog Manager service', function() {
     var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, httpSvc, $httpParamSerializer;
 
     beforeEach(function() {

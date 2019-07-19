@@ -32,7 +32,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Mapping List Block component', function() {
+describe('Mapping List Block component', function() {
     var $compile, scope, $q, utilSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes, modalSvc;
 
     beforeEach(function() {

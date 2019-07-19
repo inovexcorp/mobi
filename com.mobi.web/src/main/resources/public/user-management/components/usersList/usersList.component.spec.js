@@ -26,7 +26,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Users List component', function() {
+describe('Users List component', function() {
     var $compile, scope, userManagerSvc;
 
     beforeEach(function() {

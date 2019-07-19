@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Unique Key filter', function() {
+describe('Unique Key filter', function() {
     var $filter;
 
     beforeEach(function() {

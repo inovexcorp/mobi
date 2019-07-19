@@ -20,17 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyManager,
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    mockPropertyManager,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('Concepts Tab components', function() {
     var $compile, scope, ontologyStateSvc, ontologyUtilsManagerSvc, propertyManagerSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'selectedDetails');
         mockComponent('ontology-editor', 'conceptHierarchyBlock');
         mockComponent('ontology-editor', 'annotationBlock');
         mockComponent('ontology-editor', 'datatypePropertyBlock');
-        mockComponent('ontology-editor', 'relationshipsBlock');
+        mockComponent('ontology-editor', 'objectPropertyBlock');
         mockComponent('ontology-editor', 'usagesBlock');
         mockOntologyManager();
         mockOntologyState();

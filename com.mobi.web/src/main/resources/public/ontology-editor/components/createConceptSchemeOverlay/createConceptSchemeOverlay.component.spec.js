@@ -20,23 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyManager,
+    mockOntologyState,
+    mockPrefixes,
+    mockUtil,
+    mockOntologyUtilsManager,
+    injectRegexConstant,
+    injectCamelCaseFilter,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Create Concept Scheme Overlay component', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
         mockComponent('ontology-editor', 'advancedLanguageSelect');
-        injectRegexConstant();
-        injectCamelCaseFilter();
-        injectHighlightFilter();
-        injectTrustedFilter();
         mockOntologyManager();
         mockOntologyState();
         mockPrefixes();
         mockUtil();
         mockOntologyUtilsManager();
+        injectRegexConstant();
+        injectCamelCaseFilter();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;

@@ -28,7 +28,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Member Table component', function() {
+describe('Member Table component', function() {
     var $compile, scope, userStateSvc, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {

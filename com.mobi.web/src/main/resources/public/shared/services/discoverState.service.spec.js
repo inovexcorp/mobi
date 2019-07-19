@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Discover State Service', function() {
+describe('Discover State Service', function() {
     var discoverStateSvc;
 
     beforeEach(function() {

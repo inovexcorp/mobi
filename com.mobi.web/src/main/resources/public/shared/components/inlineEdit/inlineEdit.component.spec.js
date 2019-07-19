@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Inline Edit component', function() {
+describe('Inline Edit component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Beautify filter', function() {
+describe('Beautify filter', function() {
     var $filter;
 
     beforeEach(function() {

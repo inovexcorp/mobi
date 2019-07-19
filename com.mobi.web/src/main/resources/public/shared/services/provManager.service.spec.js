@@ -28,7 +28,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Prov Manager service', function() {
+describe('Prov Manager service', function() {
     var $httpBackend, $httpParamSerializer, scope, provManagerSvc, $q, utilSvc, httpSvc;
 
     beforeEach(function() {

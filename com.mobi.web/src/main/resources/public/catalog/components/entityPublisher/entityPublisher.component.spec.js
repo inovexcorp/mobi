@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Entity Publisher component', function() {
+describe('Entity Publisher component', function() {
     var $compile, scope, userManagerSvc, utilSvc;
 
     beforeEach(function() {

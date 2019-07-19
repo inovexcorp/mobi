@@ -26,7 +26,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Resolve Conflicts Form component', function() {
+describe('Resolve Conflicts Form component', function() {
     var $compile, scope, util;
 
     beforeEach(function() {

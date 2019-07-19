@@ -22,7 +22,7 @@
  */
 import { mockSparqlManager } from '../../../../../../../test/js/Shared';
 
-fdescribe('Download Query Overlay component', function() {
+describe('Download Query Overlay component', function() {
     var $compile, scope, sparqlManagerSvc;
 
     beforeEach(function() {

@@ -24,8 +24,7 @@ describe('Serialization Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

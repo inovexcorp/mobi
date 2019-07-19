@@ -27,7 +27,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('User Manager service', function() {
+describe('User Manager service', function() {
     var userManagerSvc, $q, $httpBackend, scope, $httpParamSerializer, utilSvc, prefixes;
 
     beforeEach(function() {

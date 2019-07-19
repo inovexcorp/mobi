@@ -26,7 +26,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Explore Service', function() {
+describe('Explore Service', function() {
     var exploreSvc, $q, $httpBackend, utilSvc;
 
     beforeEach(function() {

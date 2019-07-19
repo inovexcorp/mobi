@@ -28,7 +28,7 @@ import {
     mockModal
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Instance Cards component', function() {
+describe('Instance Cards component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, exploreUtilsSvc, modalSvc;
 
     beforeEach(function() {

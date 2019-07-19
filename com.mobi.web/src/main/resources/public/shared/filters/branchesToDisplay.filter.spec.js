@@ -27,7 +27,7 @@ import {
     mockPrefixes
 } from '../../../../../test/js/Shared';
 
-fdescribe('Branches To Display Filter', function() {
+describe('Branches To Display Filter', function() {
     var $filter, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {

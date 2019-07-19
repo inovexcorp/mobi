@@ -30,7 +30,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Mapping Manager service', function() {
+describe('Mapping Manager service', function() {
     var mappingManagerSvc, $httpBackend, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {

@@ -26,7 +26,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Delimited Manager service', function() {
+describe('Delimited Manager service', function() {
     var delimitedManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {

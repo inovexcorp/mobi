@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Mapper Serialization Select component', function() {
+describe('Mapper Serialization Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {

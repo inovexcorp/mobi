@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Search Bar component', function() {
+describe('Search Bar component', function() {
     var $compile, scope;
 
     beforeEach(function() {

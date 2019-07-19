@@ -26,7 +26,7 @@ import {
     mockExplore
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Class Cards component', function() {
+describe('Class Cards component', function() {
     var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q;
 
     beforeEach(function() {

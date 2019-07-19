@@ -25,7 +25,7 @@ import {
     mockCatalogState
  } from '../../../../../../test/js/Shared';
 
-fdescribe('Discover Page component', function() {
+describe('Discover Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Paging component', function() {
+describe('Paging component', function() {
     var $compile, scope, $timeout;
 
     beforeEach(function() {

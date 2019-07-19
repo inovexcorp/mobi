@@ -27,7 +27,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Commit Info Overlay component', function() {
+describe('Commit Info Overlay component', function() {
     var $compile, scope;
 
     beforeEach(function() {

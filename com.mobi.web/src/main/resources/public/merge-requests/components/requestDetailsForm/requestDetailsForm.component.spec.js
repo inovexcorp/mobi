@@ -29,7 +29,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Request Details Form component', function() {
+describe('Request Details Form component', function() {
     var $compile, scope, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {

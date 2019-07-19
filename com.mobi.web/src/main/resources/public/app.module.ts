@@ -86,6 +86,7 @@ import './home/home.module';
 import './login/login.module';
 import './mapper/mapper.module';
 import './merge-requests/merge-requests.module';
+import './ontology-editor/ontology-editor.module';
 import './settings/settings.module';
 import './shared/shared.module';
 import './user-management/user-management.module';
@@ -115,7 +116,7 @@ angular
         'login',
         'mapper',
         'merge-requests',
-        // 'ontology-editor',
+        'ontology-editor',
         'settings',
         'shared',
         'user-management'

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Modal service', function() {
+describe('Modal service', function() {
     var modalSvc, $uibModal, scope;
 
     beforeEach(function() {

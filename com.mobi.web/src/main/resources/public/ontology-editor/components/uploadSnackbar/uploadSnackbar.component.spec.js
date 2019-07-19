@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockHttpService,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('Upload Snackbar component', function() {
     var $compile, scope, ontologyStateSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockHttpService();
         mockModal();

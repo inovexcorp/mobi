@@ -27,7 +27,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Edit Group Info Overlay component', function() {
+describe('Edit Group Info Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, userStateSvc, prefixes;
 
     beforeEach(function() {

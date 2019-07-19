@@ -28,7 +28,7 @@ import {
     mockPrefixes
 } from '../../../../../test/js/Shared';
 
-fdescribe('Merge Requests State service', function() {
+describe('Merge Requests State service', function() {
     var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {

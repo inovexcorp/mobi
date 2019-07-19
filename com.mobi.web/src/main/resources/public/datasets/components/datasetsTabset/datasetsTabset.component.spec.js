@@ -26,7 +26,7 @@ import {
     mockModal
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Datasets Tabset component', function() {
+describe('Datasets Tabset component', function() {
     var $compile, scope, datasetStateSvc, modalSvc;
 
     beforeEach(function() {

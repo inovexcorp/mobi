@@ -26,7 +26,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Merge Request Tabset component', function() {
+describe('Merge Request Tabset component', function() {
     var $compile, scope;
 
     beforeEach(function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Camel Case filter', function() {
+describe('Camel Case filter', function() {
     var $filter;
 
     beforeEach(function() {

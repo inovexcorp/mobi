@@ -26,7 +26,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('User Access Controls component', function() {
+describe('User Access Controls component', function() {
     var $compile, scope, policyManagerSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {

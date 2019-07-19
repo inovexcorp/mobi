@@ -24,7 +24,7 @@ import {
     mockToastr
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Click to Copy directive', function() {
+describe('Click to Copy directive', function() {
     var $compile, scope, toastr;
 
     beforeEach(function() {

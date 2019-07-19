@@ -27,7 +27,7 @@ import {
     injectRegexConstant
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Create User Overlay component', function() {
+describe('Create User Overlay component', function() {
     var $compile, $q, scope, userManagerSvc;
 
     beforeEach(function() {

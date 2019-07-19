@@ -30,7 +30,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Datasets Ontology Picker component', function() {
+describe('Datasets Ontology Picker component', function() {
     var $compile, scope, $q, httpSvc, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

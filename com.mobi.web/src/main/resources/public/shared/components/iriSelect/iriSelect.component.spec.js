@@ -28,7 +28,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('IRI Select component', function() {
+describe('IRI Select component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

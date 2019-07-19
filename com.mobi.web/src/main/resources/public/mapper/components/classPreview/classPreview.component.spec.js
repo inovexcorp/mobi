@@ -25,7 +25,7 @@ import {
     mockMapperState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Class Preview component', function() {
+describe('Class Preview component', function() {
     var $compile, scope, ontologyManagerSvc, mapperStateSvc;
 
     beforeEach(function() {

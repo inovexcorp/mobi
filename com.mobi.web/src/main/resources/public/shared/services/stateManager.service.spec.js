@@ -22,7 +22,8 @@
  */
 import {
     mockUtil,
-    injectRestPathConstant
+    injectRestPathConstant,
+    flushAndVerify
 } from '../../../../../test/js/Shared';
 
 describe('State Manager service', function() {

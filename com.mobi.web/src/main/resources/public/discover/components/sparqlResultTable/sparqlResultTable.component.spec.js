@@ -24,7 +24,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('SPARQL Result Table component', function() {
+describe('SPARQL Result Table component', function() {
     var $compile, scope;
 
     beforeEach(function() {

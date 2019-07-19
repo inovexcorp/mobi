@@ -25,7 +25,7 @@ import {
     mockMergeRequestsState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Merge Requests Page component', function() {
+describe('Merge Requests Page component', function() {
     var $compile, scope, mergeRequestsStateSvc;
 
     beforeEach(function() {

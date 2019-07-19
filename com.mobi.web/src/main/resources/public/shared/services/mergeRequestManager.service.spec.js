@@ -27,7 +27,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Merge Request Manager service', function() {
+describe('Merge Request Manager service', function() {
     var mergeRequestManagerSvc, $httpBackend, $httpParamSerializer, utilSvc, prefixes, $q;
 
     beforeEach(function() {

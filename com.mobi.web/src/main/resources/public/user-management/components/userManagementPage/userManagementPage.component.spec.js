@@ -25,7 +25,7 @@ import {
     mockUserState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('User Management Page component', function() {
+describe('User Management Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {

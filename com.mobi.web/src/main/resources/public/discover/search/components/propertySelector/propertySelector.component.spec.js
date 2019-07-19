@@ -28,7 +28,7 @@ import {
     mockOntologyManager
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Property Selector component', function() {
+describe('Property Selector component', function() {
     var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc, prefixes;
 
     beforeEach(function() {

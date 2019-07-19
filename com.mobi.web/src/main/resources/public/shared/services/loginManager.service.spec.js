@@ -40,7 +40,7 @@ import {
     createQueryString
 } from '../../../../../test/js/Shared';
 
-fdescribe('Login Manager service', function() {
+describe('Login Manager service', function() {
     var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
 
     beforeEach(function() {

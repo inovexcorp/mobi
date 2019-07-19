@@ -25,7 +25,7 @@ import {
     mockMapperState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Mapper Page component', function() {
+describe('Mapper Page component', function() {
     var $compile, scope, mapperStateSvc;
 
     beforeEach(function() {

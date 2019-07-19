@@ -28,7 +28,7 @@ import {
     injectHighlightFilter
  } from '../../../../../../test/js/Shared';
 
-fdescribe('Dataset Select component', function() {
+describe('Dataset Select component', function() {
     var $compile, scope, datasetManagerSvc;
 
     beforeEach(function() {

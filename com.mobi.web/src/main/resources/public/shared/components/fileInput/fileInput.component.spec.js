@@ -25,7 +25,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('File Input component', function() {
+describe('File Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {

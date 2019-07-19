@@ -25,7 +25,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Keywords component', function() {
+describe('Record Keywords component', function() {
     var $compile, scope, prefixes;
 
     beforeEach(function() {

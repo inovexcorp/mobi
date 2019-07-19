@@ -29,7 +29,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Run Mapping Dataset Overlay component', function() {
+describe('Run Mapping Dataset Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, utilSvc;
 
     beforeEach(function() {

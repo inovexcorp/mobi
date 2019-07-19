@@ -26,7 +26,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Mapping Commits Page component', function() {
+describe('Mapping Commits Page component', function() {
     var $compile, scope, mapperStateSvc;
 
     beforeEach(function() {

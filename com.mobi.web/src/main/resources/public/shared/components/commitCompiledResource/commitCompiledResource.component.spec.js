@@ -29,7 +29,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Commit Compiled Resource component', function() {
+describe('Commit Compiled Resource component', function() {
     var $compile, scope, $q, httpSvc, catalogManagerSvc;
 
     beforeEach(function() {

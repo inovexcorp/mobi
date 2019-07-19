@@ -30,7 +30,7 @@ import {
     mockModal
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Class Mapping Details component', function() {
+describe('Class Mapping Details component', function() {
     var $compile, scope, prefixes, utilSvc, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, modalSvc;
 
     beforeEach(function() {

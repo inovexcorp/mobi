@@ -28,7 +28,7 @@ import {
     mockHttpService
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Activity Card component', function() {
+describe('Activity Card component', function() {
     var $compile, scope, $q, provManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

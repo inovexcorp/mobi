@@ -25,7 +25,7 @@ import {
     mockDelimitedManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('File Upload Form component', function() {
+describe('File Upload Form component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {

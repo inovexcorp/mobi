@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Limit Description component', function() {
+describe('Limit Description component', function() {
     var $compile, scope;
 
     beforeEach(function() {

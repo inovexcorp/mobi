@@ -27,7 +27,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Create Request component', function() {
+describe('Create Request component', function() {
     var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc;
 
     beforeEach(function() {

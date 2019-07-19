@@ -28,7 +28,7 @@ import {
     mockModal
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Search Form component', function() {
+describe('Search Form component', function() {
     var $compile, scope, $q, searchSvc, discoverStateSvc, exploreSvc, modalSvc;
 
     beforeEach(function() {

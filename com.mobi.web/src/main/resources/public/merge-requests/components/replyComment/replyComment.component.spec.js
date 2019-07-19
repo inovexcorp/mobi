@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Reply Comment component', function() {
+describe('Reply Comment component', function() {
     var $compile, scope, $q, mergeRequestManagerSvc, utilSvc;
 
     beforeEach(function() {

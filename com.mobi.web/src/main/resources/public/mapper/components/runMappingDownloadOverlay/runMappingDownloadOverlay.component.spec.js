@@ -30,7 +30,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Run Mapping Download Overlay component', function() {
+describe('Run Mapping Download Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, camelCase;
 
     beforeEach(function() {

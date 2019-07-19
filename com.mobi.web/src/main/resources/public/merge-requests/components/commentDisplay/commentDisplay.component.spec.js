@@ -30,7 +30,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Comment Display component', function() {
+describe('Comment Display component', function() {
     var $compile, scope, $q, mergeRequestManagerSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {

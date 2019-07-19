@@ -20,12 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockUtil,
+    mockOntologyState,
+    mockPrefixes,
+    mockOntologyUtilsManager,
+    injectRegexConstant,
+    injectCamelCaseFilter,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
 describe('New Ontology Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc, utilSvc, prefixes, ontoUtils, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'advancedLanguageSelect');
         mockUtil();
         mockOntologyState();

@@ -24,6 +24,7 @@ import {
     mockDiscoverState,
     mockUtil,
     mockExplore,
+    mockPrefixes,
     mockExploreUtils,
     mockModal,
     injectRegexConstant,

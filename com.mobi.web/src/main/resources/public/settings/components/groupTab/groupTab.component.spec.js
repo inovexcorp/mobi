@@ -25,7 +25,7 @@ import {
     mockLoginManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Group Tab component', function() {
+describe('Group Tab component', function() {
     var $compile, scope, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {

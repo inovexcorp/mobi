@@ -28,7 +28,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Branch Select component', function() {
+describe('Branch Select component', function() {
     var $compile, $timeout, scope;
 
     beforeEach(function() {

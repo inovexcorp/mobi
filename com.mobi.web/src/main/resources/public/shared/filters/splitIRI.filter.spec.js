@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Split IRI filter', function() {
+describe('Split IRI filter', function() {
     var $filter;
 
     beforeEach(function() {

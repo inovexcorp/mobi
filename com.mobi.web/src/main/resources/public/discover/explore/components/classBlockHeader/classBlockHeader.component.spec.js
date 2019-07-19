@@ -29,7 +29,7 @@ import {
     mockModal
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Class Block Header component', function() {
+describe('Class Block Header component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, exploreUtils, util, modalSvc;
 
     beforeEach(function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('User State service', function() {
+describe('User State service', function() {
     var userStateSvc;
 
     beforeEach(function() {

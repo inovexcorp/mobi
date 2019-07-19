@@ -32,7 +32,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Mapping Config Overlay component', function() {
+describe('Mapping Config Overlay component', function() {
     var $compile, scope, $q, httpSvc, utilSvc, ontologyManagerSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {

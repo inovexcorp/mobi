@@ -27,7 +27,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Policy Enforcement service', function() {
+describe('Policy Enforcement service', function() {
     var policyEnforcementSvc, $httpBackend, utilSvc, $q;
 
     beforeEach(function() {

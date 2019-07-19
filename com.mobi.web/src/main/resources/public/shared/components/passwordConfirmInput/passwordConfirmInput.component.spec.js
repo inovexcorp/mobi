@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Password Confirm Input component', function() {
+describe('Password Confirm Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {

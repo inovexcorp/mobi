@@ -26,7 +26,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Password Tab component', function() {
+describe('Password Tab component', function() {
     var $compile, scope, $q, userManagerSvc, loginManagerSvc, utilSvc;
 
     beforeEach(function() {

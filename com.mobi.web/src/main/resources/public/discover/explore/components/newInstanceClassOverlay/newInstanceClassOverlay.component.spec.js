@@ -27,7 +27,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('New Instance Class Overlay component', function() {
+describe('New Instance Class Overlay component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, util, splitIRI;
 
     beforeEach(function() {

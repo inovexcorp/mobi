@@ -26,7 +26,7 @@ import {
     mockModal
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('SPARQL Result Block component', function() {
+describe('SPARQL Result Block component', function() {
     var $compile, scope, sparqlManagerSvc, modalSvc;
 
     beforeEach(function() {

@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Card component', function() {
+describe('Record Card component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

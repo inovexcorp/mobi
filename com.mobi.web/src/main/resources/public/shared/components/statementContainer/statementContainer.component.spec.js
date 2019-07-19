@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Statement Container component', function() {
+describe('Statement Container component', function() {
     var $compile, scope;
 
     beforeEach(function() {

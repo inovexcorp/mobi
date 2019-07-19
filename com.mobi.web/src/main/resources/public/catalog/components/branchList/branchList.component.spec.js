@@ -27,7 +27,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Branch List component', function() {
+describe('Branch List component', function() {
     var $compile, scope, $q, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

@@ -26,7 +26,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Filters component', function() {
+describe('Record Filters component', function() {
     var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {

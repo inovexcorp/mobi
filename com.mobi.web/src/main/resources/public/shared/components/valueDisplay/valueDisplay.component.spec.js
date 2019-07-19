@@ -28,7 +28,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Value Display component', function() {
+describe('Value Display component', function() {
     var $compile, scope;
 
     beforeEach(function() {

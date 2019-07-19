@@ -22,7 +22,7 @@
  */
 import { mockComponent } from '../../../../../../test/js/Shared';
 
-fdescribe('Dataset Form Group Component', function() {
+describe('Dataset Form Group Component', function() {
     var $compile, scope;
 
     beforeEach(function() {

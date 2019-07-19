@@ -29,7 +29,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Ontology Manager service', function() {
+describe('Ontology Manager service', function() {
     var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, util, paramSerializer, httpSvc;
 
     beforeEach(function() {

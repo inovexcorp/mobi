@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Step Progress Bar component', function() {
+describe('Step Progress Bar component', function() {
     var $compile, scope;
 
     beforeEach(function() {

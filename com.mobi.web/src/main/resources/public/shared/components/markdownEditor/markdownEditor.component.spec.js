@@ -26,7 +26,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Markdown Editor component', function() {
+describe('Markdown Editor component', function() {
     var $compile, scope;
 
     beforeEach(function() {

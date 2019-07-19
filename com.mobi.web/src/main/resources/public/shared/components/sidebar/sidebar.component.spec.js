@@ -25,7 +25,7 @@ import {
     mockLoginManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Sidebar component', function() {
+describe('Sidebar component', function() {
     var $compile, scope, loginManagerSvc, userManagerSvc;
 
     beforeEach(function() {

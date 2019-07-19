@@ -28,7 +28,7 @@ import {
     mockExploreUtils
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Instance Editor component', function() {
+describe('Instance Editor component', function() {
     var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc;
 
     beforeEach(function() {

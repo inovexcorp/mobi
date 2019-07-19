@@ -28,7 +28,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Prop Preview component', function() {
+describe('Prop Preview component', function() {
     var $compile, scope, ontologyManagerSvc, mapperStateSvc, utilSvc, prefixes, splitIRI;
 
     beforeEach(function() {

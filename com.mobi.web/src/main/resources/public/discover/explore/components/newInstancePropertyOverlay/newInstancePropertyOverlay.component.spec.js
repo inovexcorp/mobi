@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('New Instance Property Overlay component', function() {
+describe('New Instance Property Overlay component', function() {
     var $compile, scope, exploreUtils;
 
     beforeEach(function() {

@@ -25,7 +25,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Material Tabset component', function() {
+describe('Material Tabset component', function() {
     var $compile, $timeout, scope;
 
     beforeEach(function() {

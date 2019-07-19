@@ -29,7 +29,7 @@ import {
     mockModal
 } from '../../../../../../test/js/Shared';
 
-fdescribe('File Upload Page component', function() {
+describe('File Upload Page component', function() {
     var $compile, scope, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {

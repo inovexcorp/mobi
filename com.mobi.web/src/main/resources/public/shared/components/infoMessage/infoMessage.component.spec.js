@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Info Message component', function() {
+describe('Info Message component', function() {
     var $compile, scope;
 
     beforeEach(function() {

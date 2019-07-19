@@ -32,7 +32,7 @@ import {
     injectChromaConstant
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Commit History Table component', function() {
+describe('Commit History Table component', function() {
     var $compile, scope, $q, catalogManagerSvc, Snap, modalSvc;
 
     beforeEach(function() {

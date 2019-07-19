@@ -26,7 +26,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Profile Tab component', function() {
+describe('Profile Tab component', function() {
     var $compile, scope, $q, userManagerSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {

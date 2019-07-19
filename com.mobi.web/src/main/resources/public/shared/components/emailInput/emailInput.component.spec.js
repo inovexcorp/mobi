@@ -25,7 +25,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
- fdescribe('Email Input component', function() {
+ describe('Email Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {

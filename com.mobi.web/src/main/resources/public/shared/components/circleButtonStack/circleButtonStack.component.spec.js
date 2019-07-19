@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Circle Button Stack component', function() {
+describe('Circle Button Stack component', function() {
     var $compile, scope;
 
     beforeEach(function() {

@@ -25,7 +25,7 @@ import {
     mockDiscoverState
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Explore Tab component', function() {
+describe('Explore Tab component', function() {
     var $compile, scope, discoverStateSvc;
 
     beforeEach(function() {

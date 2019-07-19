@@ -28,7 +28,7 @@ import {
     injectRegexConstant
 } from '../../../../../../test/js/Shared';
 
-fdescribe('New Dataset Overlay component', function() {
+describe('New Dataset Overlay component', function() {
     var $compile, scope, $q, datasetManagerSvc, datasetStateSvc, utilSvc;
 
     beforeEach(function() {

@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { has, find, startsWith, split, forEach, includes, join, map, indexOf } from 'lodash';
+import { has, find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
 
 import './commitHistoryTable.component.scss';
 
@@ -184,17 +184,17 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
             forEach(wrapper.selectAll('path'), path => {
                 var points = map(split(path.attr('d'), ' '), s => {
                     var sections;
-                    var head;
+                    var headStr;
                     if (startsWith(s, 'M') || startsWith(s, 'C') || startsWith(s, 'L')) {
-                        head = head(s);
+                        headStr = head(s);
                         sections = split(s.substring(1), ',');
                     } else {
-                        head = '';
+                        headStr = '';
                         sections = split(s, ',');
                     }
                     sections[0] = '' + (parseFloat(sections[0]) + dvm.deltaX);
                     sections[1] = '' + (parseFloat(sections[1]) + dvm.deltaY);
-                    return head + join(sections, ',');
+                    return headStr + join(sections, ',');
                 });
                 path.attr({d: join(points, ' ')});
             });

@@ -27,7 +27,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Policy Manager service', function() {
+describe('Policy Manager service', function() {
     var policyManagerSvc, $q, $httpBackend, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {

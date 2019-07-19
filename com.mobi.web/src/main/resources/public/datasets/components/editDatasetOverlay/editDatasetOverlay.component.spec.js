@@ -29,7 +29,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Edit Dataset Overlay component', function() {
+describe('Edit Dataset Overlay component', function() {
     var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

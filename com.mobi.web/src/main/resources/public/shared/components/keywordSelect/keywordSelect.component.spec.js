@@ -25,7 +25,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Keyword Select component', function() {
+describe('Keyword Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {

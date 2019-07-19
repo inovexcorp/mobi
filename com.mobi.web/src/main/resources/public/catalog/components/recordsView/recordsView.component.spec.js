@@ -27,7 +27,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Records View component', function() {
+describe('Records View component', function() {
     var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, utilSvc;
 
     beforeEach(function() {

@@ -27,7 +27,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Activity Title component', function() {
+describe('Activity Title component', function() {
     var $compile, scope, provManagerSvc, userManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

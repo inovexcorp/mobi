@@ -26,7 +26,7 @@ import {
     injectRegexConstant
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Edit IRI Overlay component', function() {
+describe('Edit IRI Overlay component', function() {
     var $compile, scope;
 
     beforeEach(function() {

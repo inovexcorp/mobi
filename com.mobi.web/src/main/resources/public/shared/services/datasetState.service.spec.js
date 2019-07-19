@@ -26,7 +26,7 @@ import {
     mockPrefixes
 } from '../../../../../test/js/Shared';
 
-fdescribe('Dataset State service', function() {
+describe('Dataset State service', function() {
     var datasetStateSvc, $q, $timeout, datasetManagerSvc, utilSvc;
 
     beforeEach(function() {

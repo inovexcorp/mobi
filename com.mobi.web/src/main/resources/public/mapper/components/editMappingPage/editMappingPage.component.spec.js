@@ -28,7 +28,7 @@ import {
     mockModal
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Edit Mapping Page component', function() {
+describe('Edit Mapping Page component', function() {
     var $compile, scope, $q, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, modalSvc;
 
     beforeEach(function() {

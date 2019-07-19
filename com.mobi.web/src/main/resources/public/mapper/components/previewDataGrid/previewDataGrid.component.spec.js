@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Preview Data Grid component', function() {
+describe('Preview Data Grid component', function() {
     var $compile, scope;
 
     beforeEach(function() {

@@ -26,7 +26,7 @@ import {
     mockMappingManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Mapping Preview component', function() {
+describe('Mapping Preview component', function() {
     var $compile, scope, utilSvc, prefixes, mappingManagerSvc;
 
     beforeEach(function() {

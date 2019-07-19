@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Permissions Input component', function() {
+describe('Permissions Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {

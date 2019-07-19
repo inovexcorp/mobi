@@ -35,7 +35,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../test/js/Shared';
 
-fdescribe('Ontology State Service', function() {
+describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, propertyManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, policyEnforcementSvc, httpSvc, uuidSvc, $document, splitIRI;
     var listItem;
 

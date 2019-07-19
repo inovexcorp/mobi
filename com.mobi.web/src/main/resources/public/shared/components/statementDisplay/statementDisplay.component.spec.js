@@ -25,7 +25,7 @@ import {
     injectPrefixationFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Statement Display component', function() {
+describe('Statement Display component', function() {
     var $compile, scope, splitIRI;
 
     beforeEach(function() {

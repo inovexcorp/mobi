@@ -27,7 +27,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Catalog Record Keywords component', function() {
+describe('Catalog Record Keywords component', function() {
     var $compile, scope, $q, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

@@ -24,7 +24,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Datasets Page component', function() {
+describe('Datasets Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {

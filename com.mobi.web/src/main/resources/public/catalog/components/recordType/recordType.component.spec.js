@@ -26,7 +26,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Type component', function() {
+describe('Record Type component', function() {
     var $compile, scope, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

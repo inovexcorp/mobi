@@ -25,7 +25,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record Markdown component', function() {
+describe('Record Markdown component', function() {
     var $compile, scope, $q, utilSvc;
 
     beforeEach(function() {

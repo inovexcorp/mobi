@@ -30,7 +30,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Record View component', function() {
+describe('Record View component', function() {
     var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {

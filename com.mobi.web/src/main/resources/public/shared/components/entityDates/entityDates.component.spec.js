@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Entity Dates directive', function() {
+describe('Entity Dates directive', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

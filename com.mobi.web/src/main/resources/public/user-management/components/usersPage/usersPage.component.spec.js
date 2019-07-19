@@ -29,7 +29,7 @@ import {
     mockModal
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Users Page component', function() {
+describe('Users Page component', function() {
     var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {

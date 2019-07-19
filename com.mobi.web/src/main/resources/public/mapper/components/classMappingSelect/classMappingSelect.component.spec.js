@@ -26,7 +26,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Class Mapping Select component', function() {
+describe('Class Mapping Select component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

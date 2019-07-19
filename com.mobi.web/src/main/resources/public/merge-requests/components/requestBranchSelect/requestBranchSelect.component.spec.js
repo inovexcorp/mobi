@@ -30,7 +30,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Request Branch Select component', function() {
+describe('Request Branch Select component', function() {
     var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {

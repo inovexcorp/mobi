@@ -32,7 +32,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Edit Request Overlay Component', function() {
+describe('Edit Request Overlay Component', function() {
     var $compile, scope, $q, mergeRequestsStateSvc, mergeRequestManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {

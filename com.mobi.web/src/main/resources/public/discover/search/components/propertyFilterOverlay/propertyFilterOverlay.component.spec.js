@@ -29,7 +29,7 @@ import {
     mockOntologyManager
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Property Filter Overlay component', function() {
+describe('Property Filter Overlay component', function() {
     var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc;
 
     beforeEach(function() {

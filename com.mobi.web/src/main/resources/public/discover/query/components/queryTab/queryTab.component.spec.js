@@ -22,7 +22,7 @@
  */
 import { mockComponent } from '../../../../../../../test/js/Shared';
 
-fdescribe('Query Tab component', function() {
+describe('Query Tab component', function() {
     var $compile, scope;
 
     beforeEach(function() {

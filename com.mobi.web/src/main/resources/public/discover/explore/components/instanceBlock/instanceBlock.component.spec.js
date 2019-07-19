@@ -28,7 +28,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Instance Block component', function() {
+describe('Instance Block component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, utilSvc, uuid, splitIRI;
 
     beforeEach(function() {

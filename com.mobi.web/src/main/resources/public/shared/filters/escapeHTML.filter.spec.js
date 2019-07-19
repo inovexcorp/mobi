@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Escape HTML filter', function() {
+describe('Escape HTML filter', function() {
     var $filter;
 
     beforeEach(function() {

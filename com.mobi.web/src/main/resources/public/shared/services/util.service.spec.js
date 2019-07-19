@@ -30,7 +30,7 @@ import {
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
-fdescribe('Util service', function() {
+describe('Util service', function() {
     var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc, windowSvc;
 
     beforeEach(function() {

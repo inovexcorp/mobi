@@ -26,7 +26,7 @@ import {
     mockDelimitedManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('RDF Preview Form component', function() {
+describe('RDF Preview Form component', function() {
     var $compile, scope, $q, delimitedManagerSvc, mapperStateSvc;
 
     beforeEach(function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Block content component', function() {
+describe('Block content component', function() {
     var $compile, scope;
 
     beforeEach(function() {

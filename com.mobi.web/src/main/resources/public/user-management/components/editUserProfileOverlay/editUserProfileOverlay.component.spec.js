@@ -26,7 +26,7 @@ import {
     mockPrefixes
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Edit User Profile Overlay component', function() {
+describe('Edit User Profile Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, userStateSvc, prefixes;
 
     beforeEach(function() {

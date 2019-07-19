@@ -29,7 +29,7 @@ import {
     mockCatalogManager
 } from '../../../../../test/js/Shared';
 
-fdescribe('Mapper State service', function() {
+describe('Mapper State service', function() {
     var mapperStateSvc, $q, scope, prefixes, ontologyManagerSvc, mappingManagerSvc, delimitedManagerSvc, utilSvc, catalogManagerSvc;
 
     beforeEach(function() {

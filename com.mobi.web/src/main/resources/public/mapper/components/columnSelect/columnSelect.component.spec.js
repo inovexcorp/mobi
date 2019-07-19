@@ -26,7 +26,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Column Select component', function() {
+describe('Column Select component', function() {
     var $compile, scope, delimitedManagerSvc;
 
     beforeEach(function() {

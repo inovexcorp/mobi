@@ -25,7 +25,7 @@ import {
     mockDiscoverState
 } from '../../../../../../test/js/Shared';
 
- fdescribe('Discover Tabset component', function() {
+ describe('Discover Tabset component', function() {
     var $compile, scope;
 
     beforeEach(function() {

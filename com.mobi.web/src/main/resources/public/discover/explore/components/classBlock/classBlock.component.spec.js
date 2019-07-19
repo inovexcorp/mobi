@@ -25,7 +25,7 @@ import {
     mockDiscoverState
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Class Block component', function() {
+describe('Class Block component', function() {
     var $compile, scope, discoverStateSvc;
 
     beforeEach(function() {

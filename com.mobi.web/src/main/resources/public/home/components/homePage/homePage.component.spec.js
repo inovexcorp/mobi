@@ -24,7 +24,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Home Page component', function() {
+describe('Home Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {

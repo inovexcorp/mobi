@@ -20,19 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockUtil,
+    mockPrefixes,
+    mockHttpService,
+    mockCatalogManager,
+    mockPropertyManager,
+    injectRegexConstant,
+    injectRestPathConstant,
+    injectTrustedFilter,
+    injectHighlightFilter,
+    flushAndVerify
+} from '../../../../../../test/js/Shared';
+
 describe('Imports Overlay component', function() {
     var $q, $compile, scope, $httpBackend, ontologyStateSvc, httpSvc, utilSvc, prefixes, propertyManagerSvc, catalogManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        injectRegexConstant();
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockPrefixes();
         mockHttpService();
         mockCatalogManager();
         mockPropertyManager();
+        injectRegexConstant();
         injectRestPathConstant();
         injectTrustedFilter();
         injectHighlightFilter();

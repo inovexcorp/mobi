@@ -24,7 +24,7 @@ import {
     mockHttpService
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Targeted Spinner directive', function() {
+describe('Targeted Spinner directive', function() {
     var $compile, scope, httpSvc;
 
     beforeEach(function() {

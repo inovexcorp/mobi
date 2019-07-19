@@ -29,7 +29,7 @@ import {
     mockPrefixes
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Instance Creator component', function() {
+describe('Instance Creator component', function() {
     var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc, prefixes;
 
     beforeEach(function() {

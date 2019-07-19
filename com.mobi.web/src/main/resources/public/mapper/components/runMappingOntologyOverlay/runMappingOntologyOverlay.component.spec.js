@@ -32,7 +32,7 @@ import {
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Run Mapping Ontology Overlay component', function() {
+describe('Run Mapping Ontology Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {

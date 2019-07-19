@@ -27,7 +27,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Class Select component', function() {
+describe('Class Select component', function() {
     var $compile, scope, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {

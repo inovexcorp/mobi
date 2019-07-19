@@ -26,7 +26,7 @@ import {
     mockLoginManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Create Group Overlay component', function() {
+describe('Create Group Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {

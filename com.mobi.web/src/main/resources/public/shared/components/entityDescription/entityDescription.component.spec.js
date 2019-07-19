@@ -25,7 +25,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Entity Description component', function() {
+describe('Entity Description component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

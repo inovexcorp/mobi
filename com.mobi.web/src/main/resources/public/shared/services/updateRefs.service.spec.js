@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Update Refs service', function() {
+describe('Update Refs service', function() {
     var updateRefsSvc;
 
     beforeEach(function() {

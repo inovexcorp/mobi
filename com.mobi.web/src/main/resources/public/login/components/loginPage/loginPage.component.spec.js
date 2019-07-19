@@ -24,7 +24,7 @@ import {
     mockLoginManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Login Page component', function() {
+describe('Login Page component', function() {
     var $compile, scope, $q, loginManagerSvc;
 
     beforeEach(function() {

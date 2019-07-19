@@ -28,7 +28,7 @@ import {
     mockDelimitedManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('IRI Template Overlay component', function() {
+describe('IRI Template Overlay component', function() {
     var $compile, scope, utilSvc, prefixes, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {

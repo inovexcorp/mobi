@@ -25,7 +25,7 @@
      mockComponent
  } from '../../../../../../test/js/Shared';
 
- fdescribe('Commit Difference Tabset component', function() {
+ describe('Commit Difference Tabset component', function() {
     var $compile, scope;
 
     beforeEach(function() {

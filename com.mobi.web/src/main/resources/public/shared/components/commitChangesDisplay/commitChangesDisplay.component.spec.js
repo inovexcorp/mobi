@@ -27,7 +27,7 @@ import {
     mockUtil
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Commit Changes Display component', function() {
+describe('Commit Changes Display component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {

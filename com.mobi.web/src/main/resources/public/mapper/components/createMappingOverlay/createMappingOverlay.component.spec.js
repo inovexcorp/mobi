@@ -25,7 +25,7 @@ import {
     mockMapperState
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Create Mapping Overlay component', function() {
+describe('Create Mapping Overlay component', function() {
     var $compile, scope, $q, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {

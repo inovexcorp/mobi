@@ -28,7 +28,7 @@ import {
     injectTrustedFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Language Select component', function() {
+describe('Language Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {

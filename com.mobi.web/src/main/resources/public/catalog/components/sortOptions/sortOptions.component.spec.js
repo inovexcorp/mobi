@@ -24,7 +24,7 @@ import {
     mockCatalogManager
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Sort Options component', function() {
+describe('Sort Options component', function() {
     var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {

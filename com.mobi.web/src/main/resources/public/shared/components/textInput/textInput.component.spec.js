@@ -24,7 +24,7 @@ import {
     mockComponent
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Text Input component', function() {
+describe('Text Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {

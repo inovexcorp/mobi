@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Http service', function() {
+describe('Http service', function() {
     var httpSvc, $http, $q;
 
     beforeEach(function() {

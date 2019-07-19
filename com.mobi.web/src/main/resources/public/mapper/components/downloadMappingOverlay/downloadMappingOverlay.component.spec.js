@@ -28,7 +28,7 @@ import {
     injectSplitIRIFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Download Mapping Overlay component', function() {
+describe('Download Mapping Overlay component', function() {
     var $compile, scope, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {

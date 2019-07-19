@@ -24,7 +24,7 @@ import {
     mockPrefixes
 } from '../../../../../test/js/Shared';
 
-fdescribe('Property Manager service', function() {
+describe('Property Manager service', function() {
     var propertyManagerSvc, prefixes;
 
     beforeEach(function() {

@@ -30,7 +30,7 @@ import {
     injectInArrayFilter
 } from '../../../../../../test/js/Shared';
 
-fdescribe('Datasets List component', function() {
+describe('Datasets List component', function() {
     var $compile, scope, $q, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, modalSvc;
 
     beforeEach(function() {

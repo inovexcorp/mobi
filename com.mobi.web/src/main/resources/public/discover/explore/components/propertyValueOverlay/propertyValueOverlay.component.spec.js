@@ -28,7 +28,7 @@ import {
     mockModal
 } from '../../../../../../../test/js/Shared';
 
-fdescribe('Property Value Overlay component', function() {
+describe('Property Value Overlay component', function() {
     var $compile, scope, discoverStateSvc, prefixes, exploreUtilsSvc, modalSvc;
 
     beforeEach(function() {
