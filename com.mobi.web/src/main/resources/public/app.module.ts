@@ -145,10 +145,14 @@ angular
     .constant('REST_PREFIX', '/mobirest/')
     .factory('requestInterceptor', requestInterceptor)
     .service('beforeUnload', beforeUnload)
-    .run(function(beforeUnload) {
-        // We have to invoke the service at least once
-    })
+    .run(runBeforeUnload)
     .run(run);
+
+runBeforeUnload.$inject = ['beforeUnload'];
+
+function runBeforeUnload(beforeUnload) {
+    // We have to invoke the service at least once
+}
 
 run.$inject = ['$rootScope', '$state', '$transitions'];
 

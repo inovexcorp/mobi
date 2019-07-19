@@ -10,8 +10,8 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
 
     files: [
-        'target/classes/build/vendor.bundle.js',
-        'target/classes/build/main.bundle.js',
+        'target/classes/build/vendor.*.js',
+        'target/classes/build/main.*.js',
         'webpack.tests.js'
     ],
 

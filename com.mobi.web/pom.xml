@@ -119,23 +119,6 @@
 
     <build>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.antlr</groupId>-->
-<!--                <artifactId>antlr4-maven-plugin</artifactId>-->
-<!--                <version>${antlr.version}</version>-->
-<!--                <configuration>-->
-<!--                    <options>-->
-<!--                        <language>JavaScript</language>-->
-<!--                    </options>-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>antlr4</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -154,7 +137,6 @@
                             </arguments>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>npm run build (compile)</id>
                         <goals>

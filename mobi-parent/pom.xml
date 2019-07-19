@@ -566,6 +566,7 @@
                     </excludes>
                     <extraExtensions>
                         <scss>java</scss>
+                        <ts>java</ts>
                     </extraExtensions>
                 </configuration>
                 <executions>

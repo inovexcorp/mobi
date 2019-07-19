@@ -1,6 +1,7 @@
 const webpack = require('webpack');
 const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const extractCSS = new ExtractTextWebpackPlugin('vendor.css');
 const extractSCSS = new ExtractTextWebpackPlugin('app.css');
@@ -44,7 +45,7 @@ module.exports = {
             },
             canPrint: true
         }),
-        new webpack.optimize.UglifyJsPlugin(),
+        new UglifyJsPlugin(),
         new webpack.optimize.CommonsChunkPlugin({
             name: 'vendor',
             filename: '[name].[hash].js',
