@@ -23,15 +23,13 @@ package com.mobi.jaas.api.modules.token;
  * #L%
  */
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jwt.SignedJWT;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.utils.TokenUtils;
+import com.mobi.jaas.api.token.TokenManager;
+import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 import javax.security.auth.Subject;
@@ -44,6 +42,7 @@ public class SimpleTokenLoginModule extends TokenLoginModule<TokenCallback> {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleTokenLoginModule.class);
     private String engineName;
     private EngineManager engineManager;
+    private TokenManager tokenManager;
 
     @Override
     protected TokenCallback[] getCallbacks() {
@@ -53,18 +52,13 @@ public class SimpleTokenLoginModule extends TokenLoginModule<TokenCallback> {
     }
 
     @Override
-    protected Optional<SignedJWT> verifyToken(TokenCallback callback) throws ParseException, JOSEException {
-        return TokenUtils.verifyToken(callback.getTokenString());
+    protected Optional<SignedJWT> verifyToken(TokenCallback callback) {
+        return tokenManager.verifyToken(callback.getTokenString());
     }
 
     @Override
     protected void verifyUser(String user, TokenCallback callback) throws LoginException {
-        if (!engineManager.containsEngine(engineName)) {
-            String msg = "Engine " + engineName + " is not registered with SimpleEngineManager";
-            LOG.debug(msg);
-            throw new LoginException(msg);
-        }
-        if (!engineManager.userExists(engineName, user)) {
+        if (!engineManager.userExists(user)) {
             throw new FailedLoginException("User " + user + " does not exist");
         }
     }
@@ -72,8 +66,8 @@ public class SimpleTokenLoginModule extends TokenLoginModule<TokenCallback> {
     @Override
     public void initialize(Subject subject, CallbackHandler handler, Map<String, ?> state, Map<String, ?> options) {
         super.initialize(subject, handler, state, options);
-        engineName = options.get(LoginModuleConfig.ENGINE) + "";
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
-        LOG.debug("Initialized SimpleTokenLoginModule engineName=" + engineName);
+        tokenManager = (TokenManager) options.get(TOKEN_MANAGER);
+        LOG.debug("Initialized SimpleTokenLoginModule");
     }
 }

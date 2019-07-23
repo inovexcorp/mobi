@@ -25,8 +25,12 @@ package com.mobi.repository.impl.sesame.query;
 
 import com.mobi.query.api.Update;
 import org.eclipse.rdf4j.query.UpdateExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SesameUpdate extends SesameOperation implements Update {
+
+    private final Logger log = LoggerFactory.getLogger(SesameUpdate.class);
 
     private org.eclipse.rdf4j.query.Update sesameUpdate;
 
@@ -35,11 +39,13 @@ public class SesameUpdate extends SesameOperation implements Update {
         this.sesameUpdate = sesameUpdate;
     }
 
-
     @Override
     public void execute() throws UpdateExecutionException {
         try {
+            long start = System.currentTimeMillis();
             sesameUpdate.execute();
+            log.debug("Query Plan\n{}", sesameUpdate.toString());
+            log.info("Query Execution Time: {}ms", System.currentTimeMillis() - start);
         } catch (org.eclipse.rdf4j.query.UpdateExecutionException e) {
             throw new UpdateExecutionException(e);
         }

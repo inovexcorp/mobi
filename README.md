@@ -1,6 +1,6 @@
 # Mobi
 
-Mobi is a decentralized, federated, and distributed graph data platform for teams and communities to publish and discover data, data models, and analytics that are instantly consumable.
+Mobi is a decentralized, federated, and distributed graph data platform for teams and communities to publish and discover data and data models that are instantly consumable.
 
 See https://mobi.inovexcorp.com/ for more information.
 

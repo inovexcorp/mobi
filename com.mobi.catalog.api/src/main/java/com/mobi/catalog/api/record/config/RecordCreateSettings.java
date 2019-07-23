@@ -36,6 +36,7 @@ public class RecordCreateSettings {
     public static OperationSetting<String> CATALOG_ID;
     public static OperationSetting<String> RECORD_TITLE;
     public static OperationSetting<String> RECORD_DESCRIPTION;
+    public static OperationSetting<String> RECORD_MARKDOWN;
     public static OperationSetting<Set<String>> RECORD_KEYWORDS;
     public static OperationSetting<Set<User>> RECORD_PUBLISHERS;
 
@@ -49,6 +50,8 @@ public class RecordCreateSettings {
                 "The title of a Record object", null);
         RECORD_DESCRIPTION = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recorddescription"),
                 "The description of a Record object", null);
+        RECORD_MARKDOWN = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordmarkdown"),
+                "The markdown abstract of a Record object", null);
         RECORD_KEYWORDS = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordkeywords"),
                 "The keywords of a Record object", Collections.emptySet());
         RECORD_PUBLISHERS = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.recordpublishers"),

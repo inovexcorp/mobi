@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.52-SNAPSHOT</version>
+        <version>1.16.38-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -84,7 +84,12 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>ontology.core.impl.owlapi</artifactId>
+            <artifactId>ontology.impl.owlapi</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>ontology.impl.repository</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -229,32 +234,17 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>cache.impl.ehcache</artifactId>
+            <artifactId>cache.impl.core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>cache.impl.repository</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>explorable.dataset.rest</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>federation.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>federation.hazelcast</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>federation.cli</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>etl.workflows</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -265,21 +255,6 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>prov.impl</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>analytic.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>analytic.impl</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>analytic.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -355,6 +330,16 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>utils.cli</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>server.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>server.impl</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

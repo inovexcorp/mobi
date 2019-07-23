@@ -1,0 +1,32 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="ontology-button-stack">
+    <circle-button-stack>
+        <button class="btn btn-float btn-sm upload-circle-button fa fa-fw fa-upload" ng-click="dvm.showUploadChangesOverlay()" ng-disabled="!dvm.os.canModify() || dvm.os.isCommittable(dvm.os.listItem)" button-hover-text="Upload Changes"></button>
+        <button class="btn btn-float btn-sm btn-dark text-white fa fa-fw fa-tag" ng-click="dvm.showCreateTagModal()" ng-disabled="!dvm.os.listItem.userCanModify || dvm.os.hasChanges(dvm.os.listItem) || dvm.os.isCommittable(dvm.os.listItem)" button-hover-text="Create Tag"></button>
+        <button class="btn btn-float btn-sm btn-warning text-white fa fa-fw fa-code-fork" ng-click="dvm.showCreateBranchOverlay()" ng-disabled="!dvm.os.listItem.userCanModify " button-hover-text="Create Branch"></button>
+        <button class="btn btn-float btn-sm btn-success fa fa-fw fa-random" ng-click="dvm.os.listItem.merge.active = true" ng-disabled="dvm.os.isCommittable(dvm.os.listItem) || dvm.os.hasChanges(dvm.os.listItem) || dvm.os.listItem.userBranch || !dvm.os.listItem.upToDate || !dvm.os.canModify()" button-hover-text="Merge Branches"></button>
+        <button class="btn btn-float btn-sm btn-info fa fa-fw fa-git" ng-click="dvm.showCommitOverlay()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem) || !dvm.os.listItem.userCanModify || !dvm.os.listItem.ontologyRecord.branchId" button-hover-text="Commit Changes"></button>
+        <button class="btn btn-float btn-primary fa fa-fw fa-plus" ng-click="dvm.showCreateEntityOverlay()" ng-disabled="!dvm.os.canModify()" button-hover-text="Create Entity"></button>
+    </circle-button-stack>
+</div>

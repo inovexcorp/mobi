@@ -87,6 +87,7 @@ import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -964,10 +965,22 @@ public class SimpleCatalogManager implements CatalogManager {
                                        @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
-            InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
-            conn.begin();
-            utils.updateCommit(commit, additions, deletions, conn);
-            conn.commit();
+            Optional<Resource> inProgressCommitIri = utils.getInProgressCommitIRI(versionedRDFRecordId,
+                    user.getResource(), conn);
+            if (inProgressCommitIri.isPresent()) {
+                InProgressCommit commit = utils.getExpectedObject(inProgressCommitIri.get(), inProgressCommitFactory,
+                        conn);
+                conn.begin();
+                utils.updateCommit(commit, additions, deletions, conn);
+                conn.commit();
+            } else {
+                InProgressCommit commit = createInProgressCommit(user);
+                commit.setOnVersionedRDFRecord(versionedRDFRecordFactory.createNew(versionedRDFRecordId));
+                conn.begin();
+                utils.addObject(commit, conn);
+                utils.updateCommit(commit, additions, deletions, conn);
+                conn.commit();
+            }
         }
     }
 
@@ -1161,10 +1174,39 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public List<Commit> getCommitEntityChain(Resource commitId, Resource entityId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitChain(commitId, entityId, false, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public List<Commit> getCommitEntityChain(Resource commitId, Resource targetId, Resource entityId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetId, commitFactory.getTypeIRI(), conn);
+            return utils.getDifferenceChain(commitId, targetId, entityId, conn).stream()
+                    .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Override
     public Model getCompiledResource(Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCompiledResource(commitId, conn);
+        }
+    }
+
+    @Override
+    public Model getCompiledResource(List<Commit> commitList) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCompiledResource(commitList.stream().map(commit -> commit.getResource())
+                    .collect(Collectors.toList()), conn);
         }
     }
 
@@ -1289,12 +1331,13 @@ public class SimpleCatalogManager implements CatalogManager {
         record.setProperties(config.getPublishers().stream().map(User::getResource).collect(Collectors.toSet()),
                 vf.createIRI(_Thing.publisher_IRI));
         if (config.getIdentifier() != null) {
-            record.setProperty(vf.createLiteral(config.getIdentifier()),
-                    vf.createIRI(_Thing.identifier_IRI));
+            record.setProperty(vf.createLiteral(config.getIdentifier()), vf.createIRI(_Thing.identifier_IRI));
         }
         if (config.getDescription() != null) {
-            record.setProperty(vf.createLiteral(config.getDescription()),
-                    vf.createIRI(_Thing.description_IRI));
+            record.setProperty(vf.createLiteral(config.getDescription()), vf.createIRI(_Thing.description_IRI));
+        }
+        if (config.getMarkdown() != null) {
+            record.setProperty(vf.createLiteral(config.getMarkdown()), vf.createIRI(DCTERMS.ABSTRACT.stringValue()));
         }
         if (config.getKeywords() != null) {
             record.setKeyword(config.getKeywords().stream().map(vf::createLiteral).collect(Collectors.toSet()));

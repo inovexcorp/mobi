@@ -28,18 +28,19 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
+import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.repository.api.RepositoryConnection;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.time.OffsetDateTime;
 import java.util.concurrent.Semaphore;
@@ -50,6 +51,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     protected ModelFactory modelFactory;
     protected OntologyManager ontologyManager;
     protected VersioningManager versioningManager;
+    protected SesameTransformer sesameTransformer;
 
     /**
      * Semaphore for protecting ontology IRI uniqueness checks.
@@ -64,7 +66,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         Branch masterBranch = createMasterBranch(record);
         try {
             semaphore.acquire();
-            Ontology ontology = createOntology(config);
+            Model ontology = createOntologyModel(config);
             setOntologyToRecord(record, ontology);
             conn.begin();
             addRecord(record, masterBranch, conn);
@@ -72,9 +74,8 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
             Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("OntologyRecord must have a master Branch"));
-            Model model = ontology.asModel(modelFactory);
             versioningManager.commit(catalogIdIRI, record.getResource(),
-                    masterBranchId, user, "The initial commit.", model, null, conn);
+                    masterBranchId, user, "The initial commit.", ontology, null, conn);
             conn.commit();
             writePolicies(user, record);
         } catch (InterruptedException e) {
@@ -86,23 +87,12 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     }
 
     /**
-     * Creates an ontology based on config file.
+     * Creates an ontology Model based on a {@link RecordOperationConfig}.
      *
      * @param config A {@link RepositoryConnection} to use for lookup
      * @return created ontology
      */
-    private Ontology createOntology(RecordOperationConfig config) {
-        Ontology ontology;
-        if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
-            ontology = ontologyManager.createOntology(config.get(OntologyRecordCreateSettings.INPUT_STREAM), false);
-        } else if (config.get(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA) != null) {
-            ontology = ontologyManager.createOntology(config.get(VersionedRDFRecordCreateSettings
-                    .INITIAL_COMMIT_DATA));
-        } else {
-            throw new IllegalArgumentException("Ontology config does not have initial data.");
-        }
-        return ontology;
-    }
+    protected abstract Model createOntologyModel(RecordOperationConfig config);
 
     /**
      * Validates and sets the ontology to the record.
@@ -110,8 +100,15 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
      * @param record created record
      * @param ontology created ontology
      */
-    private void setOntologyToRecord(T record, Ontology ontology) {
-        Resource ontologyIRI = ontology.getOntologyId().getOntologyIdentifier();
+    private void setOntologyToRecord(T record, Model ontology) {
+        IRI typeIri = valueFactory.createIRI(RDF.TYPE.stringValue());
+        IRI ontologyType = valueFactory.createIRI(OWL.ONTOLOGY.stringValue());
+        Model ontologyIriModel = ontology.filter(null, typeIri, ontologyType);
+        OntologyId id = ontologyManager.createOntologyId(ontology);
+        IRI ontologyIRI = id.getOntologyIRI().orElse((IRI) id.getOntologyIdentifier());
+        if (ontologyIriModel.size() == 0) {
+            ontology.add(ontologyIRI, typeIri, ontologyType);
+        }
         validateOntology(ontologyIRI);
         record.setOntologyIRI(ontologyIRI);
     }

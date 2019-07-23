@@ -23,22 +23,32 @@ package com.mobi.etl.cli;
  * #L%
  */
 
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
+import com.mobi.etl.api.delimited.MappingManager;
+import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.etl.api.rdf.export.RDFExportService;
-import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.engines.RdfEngine;
+import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.support.completers.FileCompleter;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.slf4j.Logger;
@@ -48,7 +58,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Optional;
 
 @Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
@@ -78,30 +87,68 @@ public class CLITransform implements Action {
     }
 
     @Reference
-    private SesameTransformer transformer;
+    private ValueFactory vf;
 
-    void setSesameTransformer(SesameTransformer transformer) {
-        this.transformer = transformer;
+    void setValueFactory(ValueFactory valueFactory) {
+        this.vf = valueFactory;
+    }
+
+    @Reference
+    private MappingManager mappingManager;
+
+    void setMappingManager(MappingManager mappingManager) {
+        this.mappingManager = mappingManager;
+    }
+
+    @Reference
+    private OntologyImportService ontologyImportService;
+
+    void setOntologyImportService(OntologyImportService ontologyImportService) {
+        this.ontologyImportService = ontologyImportService;
+    }
+
+    @Reference
+    private EngineManager engineManager;
+
+    void setEngineManager(EngineManager engineManager) {
+        this.engineManager = engineManager;
     }
 
     // Command Parameters
 
+    @Completion(FileCompleter.class)
     @Argument(name = "Delimited File", description = "The path of the File to be transformed", required = true)
     private String file = null;
+    
+    @Argument(index = 1, name = "Mapping Record", description = "The IRI of the Mapping Record. NOTE: Any % symbols as "
+            + "a result of URL encoding must be escaped.", required = true)
+    private String mappingRecordIRI = null;
 
-    @Argument(index = 1, name = "Mapping File", description = "The path of the mapping file to be used",
-            required = true)
-    private String mappingFileLocation = null;
-
-    @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no repository "
-            + "given)")
+    @Completion(FileCompleter.class)
+    @Option(name = "-o", aliases = "--outputFile", description = "The output file to use. (Required if no other output "
+            + "is given)")
     private String outputFile = null;
 
-    @Option(name = "-r", aliases = "--repositoryID",
-            description = "The repository to store the resulting triples. (Required if no output file given)")
-    private String repositoryID = null;
+    @Option(name = "-d", aliases = "--dataset",
+            description = "The dataset in which to store the resulting triples. (Required if no other output is given)."
+                    + "NOTE: Any % symbols as a result of URL encoding must be escaped.")
+    private String dataset = null;
 
-    @Option(name = "-h", aliases = "--headers", description = "Whether or not the file contains headers.")
+    @Option(name = "-ont", aliases = "--ontology",
+            description = "The ontology in which to store the resulting triples. (Required if no other output is "
+                    + "given). NOTE: Any % symbols as a result of URL encoding must be escaped.")
+    private String ontology = null;
+
+    @Option(name = "-b", aliases = "--branch",
+            description = "The branch for the ontology in which to store the resulting triples. (defaults to MASTER)")
+    private String branch = null;
+
+    @Option(name = "-u", aliases = "--update",
+            description = "Calculate the differences between the mapped data and the data on the head of the ontology"
+                    + "branch. (defaults to false)")
+    private boolean update = false;
+
+    @Option(name = "-h", aliases = "--headers", description = "The file contains headers.")
     private boolean containsHeaders = false;
 
     @Option(name = "-s", aliases = "--separator", description = "The separator character for the delimited file if it "
@@ -117,7 +164,6 @@ public class CLITransform implements Action {
         LOGGER.info("Importing CSV");
 
         File newFile = new File(file);
-        File mappingFile = new File(mappingFileLocation);
 
         if (!newFile.exists()) {
             String msg = "Delimited input file does not exist.";
@@ -126,25 +172,18 @@ public class CLITransform implements Action {
             return null;
         }
 
-        if (!mappingFile.exists()) {
-            String msg = "Mapping input file does not exist.";
-            LOGGER.error(msg);
-            System.out.println(msg);
-            return null;
-        }
-
-        if (outputFile == null && repositoryID == null) {
-            System.out.println("No output file or output repository given. Please supply one or more option.");
+        if (outputFile == null && dataset == null && ontology == null) {
+            System.out.println("No output file, dataset, or ontology provided. Please supply one or more options.");
             return null;
         }
 
         try {
             String extension = FilenameUtils.getExtension(newFile.getName());
-            Optional<RDFFormat> format = Rio.getParserFormatForFileName(mappingFile.getName());
-            if (!format.isPresent()) {
-                throw new Exception("Mapping file is not in a correct RDF format.");
-            }
-            Model mapping = transformer.mobiModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
+
+            Model mapping = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI))
+                    .orElseThrow(() -> new IllegalArgumentException("Mapping record not found"))
+                    .getModel();
+
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
                 ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(new FileInputStream(newFile), mapping)
@@ -156,8 +195,8 @@ public class CLITransform implements Action {
                 model = converter.convert(config);
             }
 
-            if (repositoryID != null) {
-                ImportServiceConfig config = new ImportServiceConfig.Builder().repository(repositoryID)
+            if (dataset != null) {
+                ImportServiceConfig config = new ImportServiceConfig.Builder().dataset(vf.createIRI(dataset))
                         .printOutput(true)
                         .logOutput(true)
                         .build();
@@ -170,12 +209,36 @@ public class CLITransform implements Action {
                 RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
                 rdfExportService.export(config, model);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            LOGGER.error("Unspecified error in transformation.", e);
+
+            if (ontology != null) {
+                IRI ontologyIri = vf.createIRI(ontology);
+                User adminUser = engineManager.retrieveUser(RdfEngine.ENGINE_NAME, "admin").orElseThrow(() ->
+                        new IllegalStateException("Admin user could not be found"));
+                String commitMsg = "Mapping data from " + mappingRecordIRI;
+
+                Difference difference;
+                if (StringUtils.isEmpty(branch)) {
+                    difference = ontologyImportService.importOntology(ontologyIri, update, model, adminUser, commitMsg);
+                } else {
+                    IRI branchIri = vf.createIRI(branch);
+                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser,
+                            commitMsg);
+                }
+
+                if (difference.getAdditions().isEmpty() && difference.getDeletions().isEmpty()) {
+                    System.out.println("Ontology transform complete. No commit required.");
+                } else {
+                    int additionSize = difference.getAdditions().size();
+                    int deletionSize = difference.getDeletions().size();
+                    System.out.println("Ontology transform complete. " + (additionSize + deletionSize)
+                            + " statements changed.");
+                }
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            LOGGER.error("Unspecified error in transformation.", ex);
         }
 
         return null;
     }
-
 }

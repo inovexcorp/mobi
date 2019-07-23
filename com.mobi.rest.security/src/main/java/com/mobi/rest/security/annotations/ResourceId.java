@@ -56,4 +56,12 @@ public @interface ResourceId {
      * ValueType.
      */
     Value[] start() default {};
+
+    /**
+     * A default value that can be provided for a Resource ID to be used if the value of
+     * the Resource ID cannot be resolved given the Query Parameters, Path Parameters,
+     * Form Data Parameters, or Property Path. If needed, it will be converted to a Resource ID
+     * and thus contains all the same methods as ResourceId except defaultValue.
+     */
+    DefaultResourceId[] defaultValue() default {};
 }

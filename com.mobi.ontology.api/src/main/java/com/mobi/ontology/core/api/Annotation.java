@@ -23,19 +23,12 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
 import com.mobi.rdf.api.Value;
 
-import java.util.Set;
 
-
-public interface Annotation extends OWLObject {
+public interface Annotation {
 
     AnnotationProperty getProperty();
 
     Value getValue();
-
-    Set<Annotation> getAnnotations();
-
-    boolean isAnnotated();
 }

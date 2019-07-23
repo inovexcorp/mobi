@@ -1,5 +1,27 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 /* Core variables */
-@import "./src/main/resources/public/css/variables";
+@import "./variables";
 
 // Fixes for AngularJS Material
 md-backdrop.md-select-backdrop {
@@ -10,6 +32,9 @@ md-backdrop.md-select-backdrop {
 }
 .md-button {
     text-transform: none;
+}
+.md-virtual-repeat-container .md-virtual-repeat-scroller {
+    overflow-x: auto;
 }
 
 // Fixes for Material Bootstrap
@@ -431,85 +456,6 @@ ul {
     color: #fff;
 }
 
-.ontology-select.ui-select-bootstrap > .ui-select-match > .btn {
-    height: auto;
-}
-
-.btn.btn-circle {
-    border-radius: 28px;
-    box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
-    padding: 16px 14px;
-    position: relative;
-
-    &.small {
-        border-radius: 25px;
-        padding: 13px 11px;
-
-        .fa {
-            font-size: 1.25em;
-        }
-
-        .display-text {
-            right: $circle-button-tooltip;
-            top: 9px;
-        }
-    }
-
-    &:hover {
-        box-shadow: 0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32);
-        -webkit-transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
-                transition: box-shadow 150ms cubic-bezier(0,0,.2,1);
-
-        .display-text {
-            display: inline-block;
-        }
-    }
-
-    &:focus {
-        outline: 0;
-    }
-
-    .fa {
-        font-size: 1.5em;
-        margin: 0;
-    }
-
-    .display-text {
-        background-color: var(--dark-light);
-        box-shadow: 0 0 2px rgba(0,0,0,.14), 0 2px 4px rgba(0,0,0,.28);
-        color: #fff;
-        display: none;
-        padding: 5px 8px;
-        position: absolute;
-        right: 72px;
-        top: 13px;
-    }
-}
-
-/* Pagination styles */
-.pagination-wrapper {
-    .paging-details {
-        float: left;
-
-        p {
-            line-height: 34px;
-            margin: 0;
-        }
-    }
-    .page-nav {
-        float: right;
-
-        .pagination {
-            margin: 0;
-            vertical-align: bottom;
-        }
-    }
-}
-.page-nav {
-    display: block;
-    text-align: center;
-}
-
 body {
     .main-page {
         height: 100%;
@@ -519,11 +465,6 @@ body {
     }
 }
 
-.paging-container {
-    .paging-details {
-        padding-top: 15px;
-    }
-}
 .modal-header h3 {
     margin-bottom: 0;
 }
@@ -545,6 +486,9 @@ body {
 .remove-min-width {
     min-width: 0;
 }
+.remove-min-height {
+    min-height: 0;
+}
 .vertical-scroll {
     overflow-y: auto;
 }
@@ -554,6 +498,16 @@ body {
 .flex-1 {
     flex: 1;
 }
+.flex-2 {
+    flex: 2;
+}
 .break-word {
     word-break: break-word;
+    overflow-wrap: break-word;
+}
+.hyphens {
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
 }

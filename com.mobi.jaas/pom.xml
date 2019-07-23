@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.52-SNAPSHOT</version>
+        <version>1.16.38-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -90,6 +90,12 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+            <version>${jersey.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -141,7 +147,8 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Bundle-Name>Mobi Jaas</Bundle-Name>
                         <Export-Package>
-                            com.mobi.jaas.*;provide=true
+                            com.mobi.jaas.*;provide=true,
+                            com.mobi.jaas.modules.*;provide=true,
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>

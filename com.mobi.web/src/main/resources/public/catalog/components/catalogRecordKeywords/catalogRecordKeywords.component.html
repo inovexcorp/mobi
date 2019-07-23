@@ -1,0 +1,32 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="catalog-record-keywords" click-anywhere-but-here="dvm.cancelChanges()">
+    <div ng-if="dvm.canEdit && dvm.edit" class="d-flex p-2">
+        <keyword-select bind-model="dvm.keywords" change-event="dvm.keywords = value" hide-label="true" class="flex-1" is-focus-me></keyword-select>
+        <a ng-mousedown="dvm.saveChanges()" class="fa fa-save fa-2x"></a>
+    </div>
+    <div class="static-area" ng-if="!dvm.canEdit || !dvm.edit" ng-click="dvm.edit = true" ng-class="{'hover-area': dvm.canEdit}" ng-attr-title="{{dvm.canEdit ? 'Click to edit' : undefined}}">
+        <span ng-if="dvm.keywords.length === 0">(No keywords specified)</span>
+        <span class="keyword badge badge-pill badge-dark mr-1 mb-1 text-truncate mw-100" ng-repeat="keyword in dvm.keywords">{{keyword}}</span>
+    </div>
+</div>

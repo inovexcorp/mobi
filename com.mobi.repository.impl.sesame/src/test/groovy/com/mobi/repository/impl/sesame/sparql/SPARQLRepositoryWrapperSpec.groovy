@@ -33,7 +33,8 @@ class SPARQLRepositoryWrapperSpec extends Specification {
         def props = [
                 id: "test",
                 title: "test repo",
-                endpointUrl: "urn:test"
+                endpointUrl: "urn:test",
+                updateEndpointUrl: "urn:test/statements"
         ]
 
         def service = new SPARQLRepositoryWrapper()
@@ -50,7 +51,26 @@ class SPARQLRepositoryWrapperSpec extends Specification {
         def props = [
                 id: "test",
                 title: "test repo",
-                endpointUrl: "http://test.com/sparql"
+                endpointUrl: "http://test.com/sparql",
+                updateEndpointUrl: "http://test.com/sparql/statements"
+        ]
+
+        def service = new SPARQLRepositoryWrapper()
+
+        when:
+        service.start(props)
+
+        then:
+        noExceptionThrown()
+    }
+
+    def "Valid local URLs work"() {
+        setup:
+        def props = [
+                id: "test",
+                title: "test repo",
+                endpointUrl: "http://locahost/sparql",
+                updateEndpointUrl: "http://localhost/sparql/statements"
         ]
 
         def service = new SPARQLRepositoryWrapper()

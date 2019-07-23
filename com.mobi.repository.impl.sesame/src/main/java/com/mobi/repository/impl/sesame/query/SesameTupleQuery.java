@@ -27,8 +27,12 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.query.exception.QueryEvaluationException;
 import org.eclipse.rdf4j.query.impl.MutableTupleQueryResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SesameTupleQuery extends SesameOperation implements TupleQuery {
+
+    private final Logger log = LoggerFactory.getLogger(SesameTupleQuery.class);
 
     private org.eclipse.rdf4j.query.TupleQuery sesameTupleQuery;
 
@@ -44,7 +48,11 @@ public class SesameTupleQuery extends SesameOperation implements TupleQuery {
     @Override
     public TupleQueryResult evaluate() throws QueryEvaluationException {
         try {
-            return new SesameTupleQueryResult(sesameTupleQuery.evaluate());
+            long start = System.currentTimeMillis();
+            SesameTupleQueryResult queryResult = new SesameTupleQueryResult(sesameTupleQuery.evaluate());
+            log.debug("Query Plan\n{}", sesameTupleQuery.toString());
+            log.info("Query Execution Time: {}ms", System.currentTimeMillis() - start);
+            return queryResult;
         } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }
@@ -53,7 +61,11 @@ public class SesameTupleQuery extends SesameOperation implements TupleQuery {
     @Override
     public TupleQueryResult evaluateAndReturn() throws QueryEvaluationException {
         try {
-            return new SesameTupleQueryResult(new MutableTupleQueryResult(sesameTupleQuery.evaluate()));
+            long start = System.currentTimeMillis();
+            SesameTupleQueryResult queryResult = new SesameTupleQueryResult(new MutableTupleQueryResult(sesameTupleQuery.evaluate()));
+            log.debug("Query Plan\n{}", sesameTupleQuery.toString());
+            log.info("Query Execution Time: {}ms", System.currentTimeMillis() - start);
+            return queryResult;
         } catch (org.eclipse.rdf4j.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }

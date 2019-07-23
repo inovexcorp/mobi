@@ -1,0 +1,27 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?parent
+WHERE {
+    ?commit a mcat:Commit ;
+        (mcat:baseCommit | mcat:auxiliaryCommit)* ?parent .
+
+    ?parent prov:atTime ?time ;
+            prov:generated ?revision.
+
+
+    ?revision a mcat:Revision ;
+        mcat:additions ?additions ;
+        mcat:deletions ?deletions .
+
+    FILTER (exists {
+        graph ?additions {
+            ?entity ?p ?o .
+        }
+    } || exists {
+        graph ?deletions {
+            ?entity ?p ?o .
+        }
+    })
+}
+ORDER BY DESC(?time)

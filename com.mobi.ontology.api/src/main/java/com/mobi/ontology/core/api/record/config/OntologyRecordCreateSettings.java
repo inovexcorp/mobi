@@ -36,7 +36,7 @@ public class OntologyRecordCreateSettings {
     }
 
     static {
-        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.inputstream"),
+        INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.ontology.inputstream"),
                 "The input stream file for the ontology", null);
     }
 }

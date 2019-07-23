@@ -68,12 +68,14 @@ class SimpleCatalogManagerSpec extends Specification {
     def userBranchFactory = getRequiredOrmFactory(UserBranch.class)
     def title = "title"
     def description = "description"
+    def markdown = "#markdown"
     def identifier = "identifier"
     def keywords = new HashSet<String>()
     def publishers = new HashSet<User>()
     def dcTerms = "http://purl.org/dc/terms/"
     def dcTitle = dcTerms + "title"
     def dcDescription = dcTerms + "description"
+    def dcAbstract = dcTerms + "abstract"
     def dcIdentifier = dcTerms + "identifier"
     def dcIssued = dcTerms + "issued"
     def dcModified = dcTerms + "modified"
@@ -118,6 +120,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def recordConfig = new RecordConfig.Builder(title, publishers)
                 .identifier(identifier)
                 .description(description)
+                .markdown(markdown)
                 .keywords(keywords)
                 .build()
         def record = service.createRecord(recordConfig, recordFactory)
@@ -128,6 +131,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
+        record.getProperty(vf.createIRI(dcAbstract)).get().stringValue() == markdown
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
@@ -136,7 +140,7 @@ class SimpleCatalogManagerSpec extends Specification {
         publishers.contains(user.getResource())
     }
 
-    def "createRecord creates a Record with no identifier, description or keywords when provided a RecordFactory"() {
+    def "createRecord creates a Record with no identifier, description, markdown, or keywords when provided a RecordFactory"() {
         setup:
         def recordConfig = new RecordConfig.Builder(title, publishers).build()
         def record = service.createRecord(recordConfig, recordFactory)
@@ -146,6 +150,7 @@ class SimpleCatalogManagerSpec extends Specification {
         record instanceof Record
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         !record.getProperty(vf.createIRI(dcDescription)).isPresent()
+        !record.getProperty(vf.createIRI(dcAbstract)).isPresent()
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
         record.getKeyword().size() == 0
@@ -157,6 +162,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def recordConfig = new RecordConfig.Builder(title, publishers)
                 .identifier(identifier)
                 .description(description)
+                .markdown(markdown)
                 .keywords(keywords)
                 .build()
         def record = service.createRecord(recordConfig, unversionedRecordFactory)
@@ -167,6 +173,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
+        record.getProperty(vf.createIRI(dcAbstract)).get().stringValue() == markdown
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
@@ -180,6 +187,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def recordConfig = new RecordConfig.Builder(title, publishers)
                 .identifier(identifier)
                 .description(description)
+                .markdown(markdown)
                 .keywords(keywords)
                 .build()
         def record = service.createRecord(recordConfig, versionedRecordFactory)
@@ -190,6 +198,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
+        record.getProperty(vf.createIRI(dcAbstract)).get().stringValue() == markdown
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()
@@ -203,6 +212,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def recordConfig = new RecordConfig.Builder(title, publishers)
                 .identifier(identifier)
                 .description(description)
+                .markdown(markdown)
                 .keywords(keywords)
                 .build()
         def record = service.createRecord(recordConfig, versionedRDFRecordFactory)
@@ -213,6 +223,7 @@ class SimpleCatalogManagerSpec extends Specification {
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
+        record.getProperty(vf.createIRI(dcAbstract)).get().stringValue() == markdown
         record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
         record.getProperty(vf.createIRI(dcIssued)).isPresent()
         record.getProperty(vf.createIRI(dcModified)).isPresent()

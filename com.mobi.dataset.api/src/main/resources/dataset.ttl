@@ -29,8 +29,7 @@
 
 :systemDefaultNamedGraph a owl:ObjectProperty , owl:FunctionalProperty ;
     rdfs:label "System Default Named Graph"@en ;
-    rdfs:comment "The resource representing the default named graph of an RDF Dataset that is created and maintained
-    by the system. This graph is used when loading default graph data and no other default named graph is specified"@en ;
+    rdfs:comment "The resource representing the default named graph of an RDF Dataset that is created and maintained by the system. This graph is used when loading default graph data and no other default named graph is specified"@en ;
     rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
     rdfs:domain :Dataset ;
     rdfs:range mobi:Identifier .

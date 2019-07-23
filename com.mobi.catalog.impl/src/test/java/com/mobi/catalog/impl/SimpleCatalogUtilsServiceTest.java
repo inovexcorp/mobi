@@ -1919,6 +1919,32 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void getCommitChainEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> expect = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+            Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class");
+
+            List<Resource> result = service.getCommitChain(commitId, entityId, false, conn);
+            assertEquals(expect, result);
+        }
+    }
+
+    @Test
+    public void getEmptyCommitChainEntityTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test5a");
+            Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/noClass");
+
+            List<Resource> result = service.getCommitChain(commitId, entityId, false, conn);
+            assertEquals(0, result.size());
+        }
+    }
+
+    @Test
     public void getCommitChainMissingCommitTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
@@ -2364,6 +2390,36 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             List<Resource> actual = service.getDifferenceChain(sourceId, targetId, conn);
 
             assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void testGetDifferenceEntityChain() {
+        // Setup:
+        List<Resource> expected = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
+        Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, entityId, conn);
+
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void testGetDifferenceEntityChainEmpty() {
+        // Setup:
+        Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
+        Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
+        Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class5");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            List<Resource> actual = service.getDifferenceChain(sourceId, targetId, entityId, conn);
+
+            assertEquals(0, actual.size());
         }
     }
 

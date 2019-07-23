@@ -227,7 +227,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith(hash));
+            assertTrue(file.getUrl().toString().endsWith(hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -253,7 +253,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith(hash));
+            assertTrue(file.getUrl().toString().endsWith(hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -279,7 +279,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith(hash));
+            assertTrue(file.getUrl().toString().endsWith(hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -305,7 +305,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith("directory/" + hash));
+            assertTrue(file.getUrl().toString().endsWith("directory/" + hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -331,7 +331,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith("directory/" + hash));
+            assertTrue(file.getUrl().toString().endsWith("directory/" + hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -357,7 +357,8 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertEquals(testResources.getPath().replaceFirst("/", "///") + hash, file.getUrl().getPath());
+            assertEquals(testResources.getPath().replaceFirst("/", "///")
+                    + hash.replaceAll("\\\\", "/"), file.getUrl().getPath());
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -417,7 +418,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith(hash));
+            assertTrue(file.getUrl().toString().endsWith(hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -443,7 +444,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith(hash));
+            assertTrue(file.getUrl().toString().endsWith(hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -469,7 +470,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith("directory/" + hash));
+            assertTrue(file.getUrl().toString().endsWith("directory/" + hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -495,7 +496,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith("directory/" + hash));
+            assertTrue(file.getUrl().toString().endsWith("directory/" + hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -521,7 +522,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertEquals(testResources.getPath().replaceFirst("/", "///") + hash, file.getUrl().getPath());
+            assertEquals(testResources.getPath().replaceFirst("/", "///") + hash.replaceAll("\\\\", "/"), file.getUrl().getPath());
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -582,7 +583,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
             }
             assertTrue(file.delete());
             assertFalse(file.delete());
-            assertTrue(file.getUrl().toString().endsWith(hash));
+            assertTrue(file.getUrl().toString().endsWith(hash.replaceAll("\\\\", "/")));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -702,7 +703,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
         try {
             String hash = fs.contentHashFilePath(testFileInputStream);
             String otherHashLib = Long.toHexString(LongHashFunction.xx().hashBytes(fileContents.getBytes()));
-            String expectedHash = otherHashLib.substring(0, 2) + "/" + otherHashLib.substring(2, 4) + "/" + otherHashLib.substring(4, otherHashLib.length());
+            String expectedHash = otherHashLib.substring(0, 2) + File.separator + otherHashLib.substring(2, 4) + File.separator + otherHashLib.substring(4, otherHashLib.length());
             assertEquals(expectedHash, hash);
         } catch (Exception e) {
             fail(e.getMessage());
@@ -714,7 +715,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
         try {
             String hash = fs.contentHashFilePath(fileContents.getBytes());
             String otherHashLib = Long.toHexString(LongHashFunction.xx().hashBytes(fileContents.getBytes()));
-            String expectedHash = otherHashLib.substring(0, 2) + "/" + otherHashLib.substring(2, 4) + "/" + otherHashLib.substring(4, otherHashLib.length());
+            String expectedHash = otherHashLib.substring(0, 2) + File.separator + otherHashLib.substring(2, 4) + File.separator + otherHashLib.substring(4, otherHashLib.length());
             assertEquals(expectedHash, hash);
         } catch (Exception e) {
             fail(e.getMessage());

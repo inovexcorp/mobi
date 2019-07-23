@@ -22,20 +22,16 @@
  */
 package com.mobi.etl.service.delimited
 
-import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory
+
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService
 
 import com.mobi.catalog.api.CatalogManager
 import com.mobi.catalog.config.CatalogConfigProvider
-import com.mobi.etl.api.config.delimited.MappingRecordConfig
 import com.mobi.etl.api.delimited.MappingId
 import com.mobi.etl.api.delimited.MappingWrapper
 import com.mobi.etl.api.ontologies.delimited.Mapping
-import com.mobi.etl.api.ontologies.delimited.MappingRecord
 import com.mobi.exception.MobiException
-import com.mobi.jaas.api.ontologies.usermanagement.User
-import com.mobi.ontologies.rdfs.Resource
 import com.mobi.persistence.utils.api.SesameTransformer
 import com.mobi.rdf.api.Model
 import com.mobi.rdf.core.utils.Values
@@ -49,9 +45,6 @@ class SimpleMappingManagerSpec extends Specification {
 
     def service = new SimpleMappingManager()
     def vf = getValueFactory()
-    def userFactory = getRequiredOrmFactory(User.class)
-    def mappingRecordFactory = getRequiredOrmFactory(MappingRecord.class)
-    def builder = new SimpleMappingId.Builder(vf)
 
     def configProvider = Mock(CatalogConfigProvider)
     def catalogManager = Mock(CatalogManager)
@@ -62,7 +55,6 @@ class SimpleMappingManagerSpec extends Specification {
     def transformer = Mock(SesameTransformer)
 
     def mappingIRI = vf.createIRI("http://test.com/mapping")
-    def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
 
     def setup() {
         injectOrmFactoryReferencesIntoService(service)
@@ -81,54 +73,6 @@ class SimpleMappingManagerSpec extends Specification {
         mappingId.getMappingIdentifier() >> mappingIRI
 
         transformer.mobiModel(_) >> { args -> Values.mobiModel(args[0])}
-    }
-
-    def "Create a MappingRecord"() {
-        setup:
-        MappingRecord record = mappingRecordFactory.createNew(vf.createIRI("http://mobi.com/test/records#mapping-record"))
-        catalogManager.createRecord(_, mappingRecordFactory) >> record
-        def config = new MappingRecordConfig.MappingRecordBuilder("Title",
-                Collections.singleton(userFactory.createNew(vf.createIRI("http://mobi.com/test/users#user")))).build()
-
-        when:
-        def result = service.createMappingRecord(config)
-
-        then:
-        result == record
-    }
-
-    def "Create a Mapping using a MappingId with an id"() {
-        setup:
-        def mappingId = builder.id(mappingIRI).build()
-        def mapping = service.createMapping(mappingId)
-
-        expect:
-        mapping.getId() == mappingId
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE))
-    }
-
-    def "Create a Mapping using a MappingId with a mapping iri"() {
-        setup:
-        def mappingId = builder.mappingIRI(mappingIRI).build()
-        def mapping = service.createMapping(mappingId)
-
-        expect:
-        mapping.getId() == mappingId
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE))
-    }
-
-    def "Create a Mapping using a MappingId with a version IRI"() {
-        setup:
-        SimpleMappingId mappingId = new SimpleMappingId.Builder(vf)
-                .mappingIRI(mappingIRI)
-                .versionIRI(versionIRI)
-                .build()
-        def mapping = service.createMapping(mappingId)
-
-        expect:
-        mapping.getId() == mappingId
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Mapping.TYPE))
-        mapping.getModel().contains(mappingIRI, vf.createIRI(Mapping.versionIRI_IRI), versionIRI)
     }
 
     def "Create a Mapping using a valid File"() {

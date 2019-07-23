@@ -1,2 +1,0 @@
-com.mobi.federation.api
-com.mobi.federation.hazelcast

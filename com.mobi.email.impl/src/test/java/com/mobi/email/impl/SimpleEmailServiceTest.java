@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.dumbster.smtp.SimpleSmtpServer;
 import com.dumbster.smtp.SmtpMessage;
-import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.server.api.Mobi;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

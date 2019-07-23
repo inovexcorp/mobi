@@ -23,18 +23,13 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
 import com.mobi.ontology.core.utils.MobiOntologyException;
-import com.mobi.ontology.core.api.axiom.Axiom;
-import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
-import com.mobi.ontology.core.api.classexpression.OClass;
-import com.mobi.ontology.core.api.datarange.Datatype;
+import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.ValueFactory;
 
 import java.io.OutputStream;
 import java.util.Optional;
@@ -130,6 +125,11 @@ public interface Ontology {
      */
     boolean containsClass(IRI iri);
 
+    /**
+     * Gets all classes explicitly defined within the ontology (excluding imports).
+     *
+     * @return A {@link Set} of {@link OClass} objects representing defined classes in the ontology
+     */
     Set<OClass> getAllClasses();
 
     /**
@@ -137,14 +137,14 @@ public interface Ontology {
      * IRI in the ontology.
      *
      * @param iri the IRI of the class
-     * @return a Set of all class object properties
+     * @return a {@link Set} of all class object properties
      */
     Set<ObjectProperty> getAllClassObjectProperties(IRI iri);
 
     /**
      * Attempts to get all of the object properties that have no domain set.
      *
-     * @return a Set of all object properties without a domain
+     * @return a {@link Set} of all object properties without a domain
      */
     Set<ObjectProperty> getAllNoDomainObjectProperties();
 
@@ -153,41 +153,49 @@ public interface Ontology {
      * IRI in the ontology.
      *
      * @param iri the IRI of the class
-     * @return a Set of all class data properties
+     * @return a {@link Set} of all class data properties
      */
     Set<DataProperty> getAllClassDataProperties(IRI iri);
 
     /**
      * Attempts to get all of the data properties that have no domain set.
      *
-     * @return a Set of all data properties without a domain
+     * @return a {@link Set} of all data properties without a domain
      */
     Set<DataProperty> getAllNoDomainDataProperties();
 
-    Set<Axiom> getAxioms();
-
     Set<Datatype> getAllDatatypes();
 
+    /**
+     * Gets all object properties explicitly defined within the ontology (excluding imports).
+     *
+     * @return A {@link Set} of {@link ObjectProperty} objects representing defined object properties in the ontology
+     */
     Set<ObjectProperty> getAllObjectProperties();
 
     /**
      * Attempts to get a specific object property in the ontology by its IRI.
      *
      * @param iri the IRI of an object property
-     * @return an Optional with the object property if found
+     * @return an {@link Optional} with the {@link ObjectProperty} if found
      */
     Optional<ObjectProperty> getObjectProperty(IRI iri);
 
     /**
-     * Retrieves a Set of Resources corresponding to the range of the passed object property within the ontology.
-     * Set will be empty if the object property cannot be found in the ontology, has no ranges set, or if none of the
-     * ranges can be represented as a Resource.
+     * Retrieves a {@link Set} of Resources corresponding to the range of the passed object property within the
+     * ontology. Set will be empty if the object property cannot be found in the ontology, has no ranges set, or if none
+     * of the ranges can be represented as a Resource.
      *
      * @param objectProperty an object property from the ontology
-     * @return a Set of Resources representing all the range values of the object property
+     * @return a {@link Set} of Resources representing all the range values of the object property
      */
     Set<Resource> getObjectPropertyRange(ObjectProperty objectProperty);
 
+    /**
+     * Gets all data properties explicitly defined within the ontology (excluding imports).
+     *
+     * @return A {@link Set} of {@link DataProperty} objects representing defined data properties in the ontology
+     */
     Set<DataProperty> getAllDataProperties();
 
     /**
@@ -199,9 +207,9 @@ public interface Ontology {
     Optional<DataProperty> getDataProperty(IRI iri);
 
     /**
-     * Retrieves a Set of Resources corresponding to the range of the passed data property within the ontology. Set will
-     * be empty if the data property cannot be found in the ontology, has no ranges set, or if none of the ranges can be
-     * represented as a Resource.
+     * Retrieves a {@link Set} of Resources corresponding to the range of the passed data property within the ontology.
+     * Set will be empty if the data property cannot be found in the ontology, has no ranges set, or if none of the
+     * ranges can be represented as a Resource.
      *
      * @param dataProperty a data property from the ontology
      * @return a {@link Set} of {@link Resource}s representing all the range values of the data property
@@ -209,21 +217,14 @@ public interface Ontology {
     Set<Resource> getDataPropertyRange(DataProperty dataProperty);
 
     /**
-     * Retrieves a {@link Set} of all Individuals which includes NamedIndividuals and AnonymousIndividuals.
+     * Retrieves a {@link Set} of all Individuals explicitly defined in the ontology.
      *
      * @return a {@link Set} of all {@link Individual}s in the {@link Ontology}
      */
     Set<Individual> getAllIndividuals();
 
     /**
-     * Retrieves a {@link Set} of all NamedIndividuals.
-     *
-     * @return a {@link Set} of all {@link NamedIndividual}s in the {@link Ontology}
-     */
-    Set<NamedIndividual> getAllNamedIndividuals();
-
-    /**
-     * Searches for all individuals of a particular class or any sub-classes of the provided class.
+     * Searches for all explicitly defined individuals of a particular class or any sub-classes of the provided class.
      *
      * @param classIRI The {@link IRI} of the class of individuals to find.
      * @return The {@link Set} of {@link Individual}s.
@@ -231,7 +232,7 @@ public interface Ontology {
     Set<Individual> getIndividualsOfType(IRI classIRI);
 
     /**
-     * Searches for all individuals of a particular class or any sub-classes of the provided class.
+     * Searches for all explicitly defined individuals of a particular class or any sub-classes of the provided class.
      *
      * @param clazz The {@link OClass} of individuals to find.
      * @return The {@link Set} of {@link Individual}s.
@@ -239,12 +240,137 @@ public interface Ontology {
     Set<Individual> getIndividualsOfType(OClass clazz);
 
     /**
-     * Searches for all cardinality properties associated with a particular class.
+     * Gets the subClassOf relationships for classes in the Ontology. The parents will be OWL Classes and the
+     * children will be all OWL Classes that are direct subclasses.
      *
-     * @param classIRI The {@link IRI} of the class.
-     * @return The {@link Set} of {@link CardinalityRestriction}s.
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Class {@link IRI IRIs} to Class {@link IRI IRIs}.
      */
-    Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI);
+    Hierarchy getSubClassesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the subClassOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
+     * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     *
+     * @param iri The {@link IRI} of the class for which you want the list of subclasses.
+     * @return a {@link Set} with the {@link IRI IRIs} of the subclasses
+     */
+    Set<IRI> getSubClassesFor(IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for a particular {@link IRI} in the {@link Ontology}. It will provide
+     * <em>all</em> properties that can be traced back to the provided property IRI, even if nested.
+     *
+     * @param iri The {@link IRI} of the property for which you want the list of subproperties.
+     * @return a {@link Set} with the {@link IRI IRIs} of the subproperties
+     */
+    Set<IRI> getSubPropertiesFor(IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for datatype properties in the Ontology. The parents will be OWL
+     * DatatypeProperties and the children will be all OWL DatatypeProperties that are direct subproperties.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of DatatypeProperty {@link IRI IRIs} to DatatypeProperty {@link IRI IRIs}.
+     */
+    Hierarchy getSubDatatypePropertiesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties in the Ontology. The parents will be OWL
+     * AnnotationProperties and the children will be all OWL AnnotationProperties that are direct subproperties.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of AnnotationProperty {@link IRI IRIs} to AnnotationProperty {@link IRI IRIs}.
+     */
+    Hierarchy getSubAnnotationPropertiesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the subPropertyOf relationships for object properties in the Ontology. The parents will be OWL
+     * ObjectProperties and the children will be all OWL ObjectProperties that are direct subproperties.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of ObjectProperty {@link IRI IRIs} to ObjectProperty {@link IRI IRIs}.
+     */
+    Hierarchy getSubObjectPropertiesOf(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the classes with individuals in the Ontology. The parents will be OWL Classes and the children will be all
+     * instances of the classes directly.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Class {@link IRI IRIs} to individual {@link IRI IRIs}.
+     */
+    Hierarchy getClassesWithIndividuals(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the entity usages for the provided Resource in the Ontology.
+     *
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getEntityUsages(Resource entity);
+
+    /**
+     * Constructs the entity usages for the provided Resource in the Ontology.
+     *
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @return a {@link Model} with the constructed statements.
+     */
+    Model constructEntityUsages(Resource entity, ModelFactory modelFactory);
+
+    /**
+     * Gets the concept relationships in the Ontology. The parents will be instances of skos:Concept or a subclass and
+     * the children will be instances of skos:Concept or a subclass that have a skos:broader, skos:broaderMatch, or
+     * skos:broaderTransitive property or are the object of a skos:narrower, skos:narrowerMatch, or
+     * skos:narrowerTransitive property.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Concept {@link IRI IRIs} to Concept {@link IRI IRIs}.
+     */
+    Hierarchy getConceptRelationships(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Gets the concept scheme relationships in the Ontology. The parents will be instances of skos:ConceptScheme or
+     * a subclass and the children are instances of skos:Concept or a subclass that have a skos:inScheme or
+     * skos:topConceptOf property or are the object of a skos:hasTopConcept property.
+     *
+     * @param vf A {@link ValueFactory} for creating the hierarchy
+     * @param mf A {@link ModelFactory} for creating the hierarchy
+     * @return a {@link Hierarchy} of Concept Scheme {@link IRI IRIs} to Concept {@link IRI IRIs}.
+     */
+    Hierarchy getConceptSchemeRelationships(ValueFactory vf, ModelFactory mf);
+
+    /**
+     * Searches the Ontology using the provided searchText.
+     *
+     * @param searchText the String for the text you want to search for in the Ontology.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSearchResults(String searchText, ValueFactory valueFactory);
+
+    /**
+     * Searches the Ontology & its import closures using the provided Sparql query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a Tuple Set with the query results.
+     */
+    TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports);
+
+    /**
+     * Searches the Ontology & its import closures using the provided SPARQL query.
+     *
+     * @param queryString the Sparql query string you want to execute.
+     * @param includeImports include data from ontology imports when querying
+     * @return a model with the query results.
+     */
+    Model getGraphQueryResults(String queryString, boolean includeImports, ModelFactory modelFactory);
 
     /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,

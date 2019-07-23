@@ -159,8 +159,22 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param masterBranchId The Resource of the Master Branch associated with the recordId
      */
     protected void writePolicies(Resource user, Resource recordId, Resource masterBranchId) {
+        // Record Policy
+        Resource recordPolicyResource = writeRecordPolicy(user, recordId, masterBranchId);
+
+        // Policy for the Record Policy
+        writeRecordPolicyPolicy(user, recordId, recordPolicyResource);
+    }
+
+    /**
+     * Creates a policy file based on default templates that controls who can view and modify the Record.
+     *
+     * @param user The Resource of the user who created the Record and associated Policy files
+     * @param recordId The Resource of the Record to write out
+     * @param masterBranchId The Resource of the Master Branch associated with the recordId
+     */
+    protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
         try {
-            // Record Policy
             InputStream recordPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/recordPolicy.xml");
             String encodedRecordIRI = ResourceUtils.encode(recordId);
@@ -172,18 +186,29 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
                     search, replace);
 
-            Resource recordPolicyResource = addPolicy(recordPolicy);
+            return addPolicy(recordPolicy);
+        } catch (IOException e) {
+            throw new MobiException("Error writing record policy.", e);
+        }
+    }
 
-            // Policy for the Record Policy
-            search[1] = POLICY_IRI_BINDING;
-            search[2] = ENCODED_POLICY_IRI_BINDING;
-            replace[1] = recordPolicyResource.stringValue();
+    /**
+     * Creates a policy file based on default templates that controls who can modify the policy for the Record.
+     *
+     * @param user The Resource of the user who created the Record and associated Policy files
+     * @param recordId The Resource of the Record to write out
+     * @param recordPolicyResource The Resource of the Record policy
+     */
+    protected void writeRecordPolicyPolicy(Resource user, Resource recordId,  Resource recordPolicyResource) {
+        try {
+            String encodedRecordIRI = ResourceUtils.encode(recordId);
+            String[] search = {USER_IRI_BINDING, POLICY_IRI_BINDING, ENCODED_POLICY_IRI_BINDING};
+            String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
             InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/policyPolicy.xml");
             String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, "UTF-8"),
                     search, replace);
             addPolicy(policyPolicy);
-
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);
         }

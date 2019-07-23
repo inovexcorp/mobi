@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.14.52-SNAPSHOT</version>
+        <version>1.16.38-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,7 +41,7 @@
 
     <dependencies>
         <dependency>
-            <!-- scope is compile so all features (there is only one) are installed into startup.properties and the feature repo itself is not added in etc/org.apache.karaf.features.cfg file -->
+            <!-- scope is compile so all features are installed into startup.properties and the feature repo itself is not added in etc/org.apache.karaf.features.cfg file -->
             <groupId>org.apache.karaf.features</groupId>
             <artifactId>framework</artifactId>
             <version>${karaf.version}</version>
@@ -61,14 +61,6 @@
             <artifactId>enterprise</artifactId>
             <classifier>features</classifier>
             <version>${karaf.version}</version>
-            <type>xml</type>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.karaf</groupId>
-            <artifactId>apache-camel</artifactId>
-            <classifier>features</classifier>
-            <version>${camel.version}</version>
             <type>xml</type>
             <scope>runtime</scope>
         </dependency>
@@ -212,14 +204,14 @@
                         <feature>jax-rs-provider-multipart</feature>
                         <feature>jax-rs-provider-gson</feature>
                         <feature>jax-rs-provider-security</feature>
-                        <feature>camel</feature>
 
                         <!-- Mobi Features -->
+                        <feature>mobi-server-deps</feature>
+                        <feature>mobi-server-core</feature>
                         <feature>mobi-deps</feature>
                         <feature>mobi-core</feature>
                         <feature>mobi-cli</feature>
                         <feature>mobi-web</feature>
-                        <feature>mobi-federation</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>

@@ -1,0 +1,8 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix ontedit: <http://mobi.com/ontologies/ontology-editor#> .
+
+<http://mobi.com/record> a ontedit:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+    mcat:catalog <http://mobi.com/catalog> ;
+    mcat:branch <http://mobi.com/branch> ;
+    mcat:masterBranch <http://mobi.com/branch> ;
+    ontedit:ontologyIRI <http://mobi.com/ontology> .

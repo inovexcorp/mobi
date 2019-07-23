@@ -23,8 +23,6 @@ package com.mobi.etl.service.delimited;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
 import com.google.common.base.CharMatcher;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
@@ -37,7 +35,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
+import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
@@ -56,6 +54,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +78,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Component(provide = DelimitedConverter.class)
+@Component(service = DelimitedConverter.class)
 public class DelimitedConverterImpl implements DelimitedConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedConverterImpl.class);
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
@@ -109,7 +110,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         this.classMappingFactory = classMappingFactory;
     }
 
-    @Reference
+    @Reference(policyOption = ReferencePolicyOption.GREEDY)
     public void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
     }

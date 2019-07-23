@@ -23,12 +23,14 @@ package com.mobi.jaas.api.engines;
  * #L%
  */
 
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+
 import java.util.Set;
 
 public class GroupConfig {
     private String title;
-    private String description = "";
-    private Set<String> members;
+    private String description;
+    private Set<User> members;
     private Set<String> roles;
 
     private GroupConfig(Builder builder) {
@@ -46,7 +48,7 @@ public class GroupConfig {
         return description;
     }
 
-    public Set<String> getMembers() {
+    public Set<User> getMembers() {
         return members;
     }
 
@@ -57,7 +59,7 @@ public class GroupConfig {
     public static class Builder {
         private final String title;
         private String description = "";
-        private Set<String> members;
+        private Set<User> members;
         private Set<String> roles;
 
         /**
@@ -74,7 +76,7 @@ public class GroupConfig {
             return this;
         }
 
-        public Builder members(Set<String> members) {
+        public Builder members(Set<User> members) {
             this.members = members;
             return this;
         }

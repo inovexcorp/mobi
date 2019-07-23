@@ -30,6 +30,7 @@ import java.util.Set;
 public class RecordConfig {
     private String title;
     private String description;
+    private String markdown;
     private String identifier;
     private Set<String> keywords;
     private Set<User> publishers;
@@ -37,6 +38,7 @@ public class RecordConfig {
     protected RecordConfig(Builder builder) {
         title = builder.title;
         description = builder.description;
+        markdown = builder.markdown;
         identifier = builder.identifier;
         keywords = builder.keywords;
         publishers = builder.publishers;
@@ -50,6 +52,9 @@ public class RecordConfig {
         return description;
     }
 
+    public String getMarkdown() {
+        return markdown;
+    }
     public String getIdentifier() {
         return identifier;
     }
@@ -65,6 +70,7 @@ public class RecordConfig {
     public static class Builder {
         private String title;
         private String description;
+        private String markdown;
         private String identifier;
         private Set<String> keywords;
         private Set<User> publishers;
@@ -87,6 +93,11 @@ public class RecordConfig {
 
         public Builder description(String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder markdown(String markdown) {
+            this.markdown = markdown;
             return this;
         }
 

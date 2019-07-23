@@ -57,6 +57,21 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
     protected static final String REPOSITORY_TYPE = "native";
     protected static final String NAME = "com.mobi.service.repository." + REPOSITORY_TYPE;
 
+    @Activate
+    protected void start(Map<String, Object> props) {
+        super.start(props);
+    }
+
+    @Deactivate
+    protected void stop() {
+        super.stop();
+    }
+
+    @Modified
+    protected void modified(Map<String, Object> props) {
+        super.modified(props);
+    }
+
     @Override
     protected Repository getRepo(Map<String, Object> props) {
         NativeRepositoryConfig config = Configurable.createConfigurable(NativeRepositoryConfig.class, props);
@@ -100,20 +115,5 @@ public class NativeRepositoryWrapper extends RepositoryWrapper {
                     throw new RepositoryConfigException(new IllegalArgumentException("Invalid Triple Index"));
             });
         }
-    }
-
-    @Activate
-    protected void start(Map<String, Object> props) {
-        super.start(props);
-    }
-
-    @Deactivate
-    protected void stop() {
-        super.stop();
-    }
-
-    @Modified
-    protected void modified(Map<String, Object> props) {
-        super.modified(props);
     }
 }

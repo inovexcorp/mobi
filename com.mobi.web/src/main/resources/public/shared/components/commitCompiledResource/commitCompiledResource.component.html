@@ -1,0 +1,59 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="commit-compiled-resource vertical-scroll h-100" targeted-spinner="dvm.id">
+    <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    <info-message ng-if="!dvm.resource && !dvm.error">No entity to display</info-message>
+    <div class="wrapper mt-1" ng-if="dvm.resource">
+        <div class="mb-2">
+            <p class="type-label m-0">Type(s)</p>
+            <div class="type text-truncate d-flex w-100" ng-repeat="typeObj in dvm.types" ng-class="{'text-success': typeObj.add, 'text-danger': typeObj.del}">
+                <div class="value-signs">
+                    <span class="text-monospace px-1" ng-if="typeObj.add">++</span>
+                    <span class="text-monospace px-1" ng-if="typeObj.del">--</span>
+                </div>
+                <div class="px-4 flex-1 remove-min-width">{{typeObj.type | prefixation}}</div>
+            </div>
+        </div>
+        <div class="property-values my-2" ng-repeat="(key, value) in dvm.resource track by key" disable-animate>
+            <div class="prop-header d-flex align-items-center">
+                <p class="text text-truncate m-0" title="{{key}}">{{dvm.entityNameFunc ? dvm.entityNameFunc(key) : dvm.util.getBeautifulIRI(key)}}</p>
+                <small class="ml-1 text-muted text-truncate flex-1 remove-min-width">&lt;<span>{{key}}</span>&gt;</small>
+            </div>
+            <div class="prop-value-container" ng-repeat="item in value">
+                <span class="value-display-wrapper d-flex w-100" ng-class="{'text-success': item.add, 'text-danger': item.del}">
+                    <div class="value-signs">
+                        <span class="text-monospace px-1" ng-if="item.add">++</span>
+                        <span class="text-monospace px-1" ng-if="item.del">--</span>
+                    </div>
+                    <div class="value-display px-4 flex-1 remove-min-width">
+                        <span ng-if="item['@id']" class="value-display"><span>{{dvm.entityNameFunc ? dvm.entityNameFunc(item['@id']) : dvm.util.getBeautifulIRI(item['@id'])}}</span> <small ng-if="!dvm.om.isBlankNodeId(item['@id'])">&lt;<span>{{item['@id']}}</span>&gt;</small></span>
+                        <span ng-if="item['@value']" class="value-display"><span>{{item['@value']}}</span>
+                            <small ng-if="item['@type']" class="item-type type-display" ng-class="{'text-success': item.add, 'text-danger': item.del}">[type: <span ng-bind-html="item['@type'] | prefixation | trusted"></span>]</small>
+                            <small ng-if="item['@language']" class="item-language type-display" ng-class="{'text-success': item.add, 'text-danger': item.del}">[language: <span ng-bind-html="item['@language'] | prefixation | trusted"></span>]</small>
+                        </span>
+                    </div>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

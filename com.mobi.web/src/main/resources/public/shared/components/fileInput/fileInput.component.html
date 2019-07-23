@@ -1,0 +1,32 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="file-input form-group">
+    <custom-label ng-if="dvm.displayText">{{dvm.displayText}}</custom-label>
+    <div class="mt-2">
+        <button type="button" class="btn btn-light btn-sm ml-1" ng-click="dvm.click()">Choose File</button>
+        <span class="file-name-label mx-1 text-truncate text-muted" ng-class="{'text-body': dvm.selected}"> {{dvm.text}}</span>
+        <input ng-if="dvm.isMultiple" id="{{dvm.id}}" class="hide multiple" type="file" name="{{dvm.inputName}}" file-change="dvm.update($event, files)" multiple ng-attr-accept="{{dvm.accept ? dvm.accept : undefined}}" ng-required="dvm.isRequired"/>
+        <input ng-if="!dvm.isMultiple" id="{{dvm.id}}" class="hide not-multiple" type="file" name="{{dvm.inputName}}" file-change="dvm.update($event, files)" ng-attr-accept="{{dvm.accept ? dvm.accept : undefined}}" ng-required="dvm.isRequired"/>
+    </div>
+    <small class="form-text text-muted" ng-if="dvm.helpText">{{dvm.helpText}}</small>
+</div>

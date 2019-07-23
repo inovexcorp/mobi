@@ -44,7 +44,6 @@ import javax.security.auth.spi.LoginModule;
 public class PasswordLoginModule implements LoginModule {
     private static final Logger LOG = LoggerFactory.getLogger(PasswordLoginModule.class.getName());
     private EngineManager engineManager;
-    private String engineName;
     private Subject subject;
     private CallbackHandler callbackHandler;
     private String userId;
@@ -55,19 +54,12 @@ public class PasswordLoginModule implements LoginModule {
         this.subject = subject;
         this.callbackHandler = callbackHandler;
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
-        engineName = options.get(LoginModuleConfig.ENGINE) + "";
-        LOG.debug("Initialized PasswordLoginModule engineName=" + engineName);
+        LOG.debug("Initialized PasswordLoginModule");
     }
 
     @Override
     public boolean login() throws LoginException {
         LOG.debug("Verifying password...");
-
-        if (!engineManager.containsEngine(engineName)) {
-            String msg = "Engine " + engineName + " is not registered with SimpleEngineManager";
-            LOG.debug(msg);
-            throw new LoginException(msg);
-        }
 
         Callback[] callbacks = new Callback[2];
         callbacks[0] = new NameCallback("Username: ");
@@ -94,16 +86,12 @@ public class PasswordLoginModule implements LoginModule {
             throw new LoginException("Password can not be null");
         }
 
-        if (!engineManager.userExists(engineName, user)) {
-            throw new FailedLoginException("User " + user + " does not exist");
-        }
-
-        if (!engineManager.checkPassword(engineName, user, new String(password))) {
+        if (!engineManager.checkPassword(user, new String(password))) {
             throw new FailedLoginException("Password is not valid");
         }
 
         this.userId = user;
-        LOG.debug("Successfully logged in " + user);
+        LOG.debug("Successfully logged in " + user + " with PasswordLoginModule");
         return true;
     }
 
@@ -120,7 +108,7 @@ public class PasswordLoginModule implements LoginModule {
     @Override
     public boolean abort() throws LoginException {
         this.userId = null;
-        LOG.debug("Abort");
+        LOG.debug("Abort Password Login");
         return true;
     }
 
@@ -128,7 +116,7 @@ public class PasswordLoginModule implements LoginModule {
     public boolean logout() throws LoginException {
         subject.getPrincipals().remove(new UserPrincipal(this.userId));
         this.userId = null;
-        LOG.debug("Logout");
+        LOG.debug("Logout from PasswordLoginModule");
         return true;
     }
 }

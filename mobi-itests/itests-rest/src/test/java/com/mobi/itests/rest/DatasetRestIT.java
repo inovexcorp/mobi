@@ -85,6 +85,7 @@ public class DatasetRestIT extends KarafTestSupport {
         Files.copy(getBundleEntry(thisBundleContext, "/" + DATA_FILE), Paths.get(DATA_FILE));
 
         waitForService("(&(objectClass=com.mobi.ontology.rest.DatasetRest))", 10000L);
+        waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.api.ValueFactory))", 10000L);
@@ -122,7 +123,7 @@ public class DatasetRestIT extends KarafTestSupport {
                 Optional<Resource> opt2 = Statements.objectResource(sdngResults.next());
                 assertTrue(opt2.isPresent());
                 systemDefaultNG = opt2.get();
-                assertTrue(conn.size(systemDefaultNG) == 0);
+                assertEquals(0, conn.size(systemDefaultNG));
             }
         }
 

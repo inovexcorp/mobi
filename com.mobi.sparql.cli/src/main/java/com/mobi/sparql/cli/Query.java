@@ -23,8 +23,17 @@ package com.mobi.sparql.cli;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.StatementIterable;
+import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
+import com.mobi.rdf.api.Value;
+import com.mobi.repository.api.Repository;
+import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
@@ -33,18 +42,24 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
-import com.mobi.exception.MobiException;
-import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.TupleQuery;
-import com.mobi.rdf.api.Value;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.api.RepositoryManager;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
+import org.eclipse.rdf4j.query.parser.ParsedOperation;
+import org.eclipse.rdf4j.query.parser.ParsedQuery;
+import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
+import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -52,13 +67,34 @@ import java.util.stream.IntStream;
 @Service
 public class Query implements Action {
 
+    protected static final Map<String, RDFFormat> formats;
+
+    static {
+        formats = new HashMap<>();
+        formats.put("ttl", RDFFormat.TURTLE);
+        formats.put("trig", RDFFormat.TRIG);
+        formats.put("trix", RDFFormat.TRIX);
+        formats.put("rdf/xml", RDFFormat.RDFXML);
+        formats.put("jsonld", RDFFormat.JSONLD);
+        formats.put("n3", RDFFormat.N3);
+        formats.put("nquads", RDFFormat.NQUADS);
+        formats.put("ntriples", RDFFormat.NTRIPLES);
+    }
+
     // Service References
 
     @Reference
     private RepositoryManager repoManager;
 
+    @Reference
+    private SesameTransformer transformer;
+
     public void setRepoManager(RepositoryManager repoManager) {
         this.repoManager = repoManager;
+    }
+
+    public void setTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     // Command Parameters
@@ -69,8 +105,13 @@ public class Query implements Action {
     @Option(name = "-f", aliases = "--query-file", description = "The input query file")
     private String queryFileParam = null;
 
-    @Argument(name = "Query", description = "The SPARQL query (ignored if query file provided)")
+    @Argument(name = "Query", description = "The SPARQL query (ignored if query file provided). NOTE: Any % symbols as"
+            + " a result of URL encoding must be escaped.")
     private String queryParam = null;
+
+    @Option(name = "-t", aliases = "--format", description = "The output format (ttl, trig, trix, rdf/xml, jsonld, "
+            + "n3, nquads, ntriples)")
+    private String formatParam = null;
 
     // Implementation
 
@@ -100,14 +141,27 @@ public class Query implements Action {
             return null;
         }
 
+        // Parse Query
+        ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
+
         // Execute Query
-        executeQuery(repoOpt.get(), queryString);
-        
+        if (parsedOperation instanceof ParsedQuery) {
+            if (parsedOperation instanceof ParsedTupleQuery) {
+                executeTupleQuery(repoOpt.get(), queryString);
+            } else if (parsedOperation instanceof ParsedGraphQuery) {
+                executeGraphQuery(repoOpt.get(), queryString);
+            } else {
+                System.out.println("Query type not supported.");
+            }
+        } else {
+            System.out.println("Update queries not supported.");
+        }
+
         return null;
     }
 
-    private void executeQuery(Repository repository, String queryString) {
-        try(RepositoryConnection conn = repository.getConnection()) {
+    private void executeTupleQuery(Repository repository, String queryString) {
+        try (RepositoryConnection conn = repository.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             TupleQueryResult result = query.evaluate();
 
@@ -130,6 +184,27 @@ public class Query implements Action {
             });
 
             table.print(System.out);
+        }
+    }
+
+    private void executeGraphQuery(Repository repository, String queryString) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            GraphQuery query = conn.prepareGraphQuery(queryString);
+            GraphQueryResult result = query.evaluate();
+
+            OutputStream out = System.out;
+            RDFFormat format = getFormat();
+
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, out));
+            Rio.write(new StatementIterable(result, transformer), rdfWriter);
+        }
+    }
+
+    private RDFFormat getFormat() {
+        if (formatParam != null && formats.containsKey(formatParam)) {
+            return formats.get(formatParam);
+        } else {
+            return RDFFormat.TRIG;
         }
     }
 }
