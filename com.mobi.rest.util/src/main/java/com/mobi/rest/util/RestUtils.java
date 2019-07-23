@@ -23,6 +23,9 @@ package com.mobi.rest.util;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -47,11 +50,14 @@ import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -403,6 +409,26 @@ public class RestUtils {
                     .orElse(new JSONObject());
         }
         return firstObject;
+    }
+
+    public static ObjectNode getObjectNodeFromJsonld(String json) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = mapper.readTree(json);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        JsonNode firstObject = jsonNode.get(0);
+        if (firstObject == null) {
+            return mapper.createObjectNode();
+        } else if (firstObject.has("@graph")) {
+            firstObject = firstObject.get("@graph").get(0);
+            if (firstObject == null) {
+                return mapper.createObjectNode();
+            }
+        }
+        return (ObjectNode) firstObject;
     }
 
     /**
