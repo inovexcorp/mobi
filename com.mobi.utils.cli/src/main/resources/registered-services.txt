@@ -1,6 +1,5 @@
 (&(objectClass=com.mobi.catalog.config.CatalogConfigProvider))
 (&(objectClass=com.mobi.email.api.EmailService))
-(&(objectClass=com.mobi.etl.api.workflows.WorkflowManager))
 (&(service.pid=com.mobi.jaas.engines.RdfEngine))
 (&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=ontologyCache))
 (&(objectClass=com.mobi.cache.config.CacheConfiguration)(id=policyCache))
