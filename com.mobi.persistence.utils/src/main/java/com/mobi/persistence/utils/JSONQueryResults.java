@@ -24,10 +24,13 @@ package com.mobi.persistence.utils;
  */
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.BNode;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+//import net.sf.json.JSONArray;
+//import net.sf.json.JSONObject;
 import com.mobi.exception.MobiException;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.BNode;
@@ -40,8 +43,10 @@ import java.util.List;
 
 public class JSONQueryResults {
 
-    private static JSONObject writeValue(Value value) {
-        JSONObject result = new JSONObject();
+    private static ObjectMapper mapper = new ObjectMapper();
+
+    private static ObjectNode writeValue(Value value) {
+        ObjectNode result = mapper.createObjectNode();
 
         if (value instanceof IRI) {
             result.put("type", "uri");
@@ -66,30 +71,30 @@ public class JSONQueryResults {
         return result;
     }
 
-    public static List<JSONObject> getBindings(TupleQueryResult queryResults) {
-        List<JSONObject> bindings = new ArrayList<>();
+    public static List<ObjectNode> getBindings(TupleQueryResult queryResults) {
+        List<ObjectNode> bindings = new ArrayList<>();
         queryResults.forEach(queryResult -> {
-            JSONObject bindingSet = new JSONObject();
-            queryResult.forEach(binding -> bindingSet.put(binding.getName(), writeValue(binding.getValue())));
+            ObjectNode bindingSet = mapper.createObjectNode();
+            queryResult.forEach(binding -> bindingSet.set(binding.getName(), writeValue(binding.getValue())));
             bindings.add(bindingSet);
         });
         return bindings;
     }
 
-    public static JSONObject getResponse(TupleQueryResult queryResults) {
-        JSONObject data = new JSONObject();
+    public static ObjectNode getResponse(TupleQueryResult queryResults) {
+        ObjectNode data = mapper.createObjectNode();
 
-        JSONObject head = new JSONObject();
-        JSONArray vars = new JSONArray();
+        ObjectNode head = mapper.createObjectNode();
+        ArrayNode vars = mapper.createArrayNode();
         queryResults.getBindingNames().forEach(vars::add);
         head.put("vars", vars);
 
-        JSONObject results = new JSONObject();
-        JSONArray bindings = JSONArray.fromObject(getBindings(queryResults));
-        results.put("bindings", bindings);
+        ObjectNode results = mapper.createObjectNode();
+        ArrayNode bindings = mapper.valueToTree(getBindings(queryResults));
+        results.set("bindings", bindings);
 
-        data.put("head", head);
-        data.put("results", results);
+        data.set("head", head);
+        data.set("results", results);
 
         return data;
     }

@@ -92,7 +92,6 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -169,6 +168,7 @@ public class OntologyRest {
     private OntologyCache ontologyCache;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
@@ -731,8 +731,6 @@ public class OntologyRest {
     private StreamingOutput getOntologyStuffStream(Ontology ontology) {
         Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
 
-        ObjectMapper mapper = new ObjectMapper();
-
         return outputStream -> {
             StopWatch watch = new StopWatch();
             log.trace("Start iriList");
@@ -872,7 +870,7 @@ public class OntologyRest {
                                       @QueryParam("commitId") String commitIdStr) {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -906,7 +904,7 @@ public class OntologyRest {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1011,7 +1009,7 @@ public class OntologyRest {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
                     applyInProgressCommit);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1112,7 +1110,7 @@ public class OntologyRest {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeIRIObject, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1213,7 +1211,7 @@ public class OntologyRest {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1314,7 +1312,7 @@ public class OntologyRest {
         try {
             ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1415,7 +1413,7 @@ public class OntologyRest {
         try {
             ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1550,12 +1548,11 @@ public class OntologyRest {
                                       @QueryParam("commitId") String commitIdStr) {
         try {
             Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
-            ObjectMapper mapper = new ObjectMapper();
             ArrayNode arrayNode = mapper.createArrayNode();
             importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
                     .forEach(arrayNode::add);
-            return arrayNode.size() == 0 ? Response.noContent().build() : Response.ok(arrayNode).build();
+            return arrayNode.size() == 0 ? Response.noContent().build() : Response.ok(arrayNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2028,12 +2025,10 @@ public class OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-
-            ObjectMapper mapper = new ObjectMapper();
             ObjectNode objectNode = mapper.createObjectNode();
             objectNode.set("individuals",
                     mapper.valueToTree(ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap()));
-            return Response.ok(objectNode).build();
+            return Response.ok(objectNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2079,7 +2074,7 @@ public class OntologyRest {
                 return Response.ok(modelToJsonld(results, sesameTransformer)).build();
             } else if (queryType.equals("select")) {
                 TupleQueryResult results = ontology.getEntityUsages(entityIRI);
-                return Response.ok(JSONQueryResults.getResponse(results)).build();
+                return Response.ok(JSONQueryResults.getResponse(results).toString()).build();
             } else {
                 throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
                         Response.Status.BAD_REQUEST);
@@ -2139,8 +2134,7 @@ public class OntologyRest {
                     }
                 }
             });
-            ObjectMapper mapper = new ObjectMapper();
-            return response.size() == 0 ? Response.noContent().build() : Response.ok(mapper.valueToTree(response))
+            return response.size() == 0 ? Response.noContent().build() : Response.ok(mapper.valueToTree(response).toString())
                     .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2227,8 +2221,8 @@ public class OntologyRest {
                     TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {
                         // TODO: Replace with Jackson
-                        JSONObject json = JSONQueryResults.getResponse(tupResults);
-                        return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
+                        ObjectNode json = JSONQueryResults.getResponse(tupResults);
+                        return Response.ok(json.toString(), MediaType.APPLICATION_JSON_TYPE).build();
                     } else {
                         return Response.noContent().build();
                     }
@@ -2271,7 +2265,6 @@ public class OntologyRest {
 
     private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream, boolean includeNested,
                                         @Nullable Set<IRI> iris) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
         outputStream.write("{\"parentMap\": ".getBytes());
         outputStream.write(mapper.valueToTree(hierarchy.getParentMap()).toString().getBytes());
         outputStream.write(", \"childMap\": ".getBytes());
@@ -2414,14 +2407,13 @@ public class OntologyRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         if (!importedOntologies.isEmpty()) {
-            return Response.ok(doWithOntologies(importedOntologies, iriFunction)).build();
+            return Response.ok(doWithOntologies(importedOntologies, iriFunction).toString()).build();
         } else {
             return Response.noContent().build();
         }
     }
 
     private ArrayNode doWithOntologies(Set<Ontology> ontologies, Function<Ontology, ObjectNode> function) {
-        ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
         for (Ontology ontology : ontologies) {
             ObjectNode object = function.apply(ontology);
@@ -2505,7 +2497,6 @@ public class OntologyRest {
      * @return a JSONArray of Classes form the provided Ontology.
      */
     private ArrayNode getClassArray(Ontology ontology) {
-        ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
         ontology.getAllClasses().stream()
@@ -2561,7 +2552,6 @@ public class OntologyRest {
      * @return a JSONArray of ObjectProperties from the provided Ontology.
      */
     private ArrayNode getObjectPropertyArray(Ontology ontology) {
-        ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
         ontology.getAllObjectProperties().stream()
@@ -2602,7 +2592,6 @@ public class OntologyRest {
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
     private ArrayNode getDataPropertyArray(Ontology ontology) {
-        ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
         ontology.getAllDataProperties().stream()
@@ -2715,7 +2704,6 @@ public class OntologyRest {
      * @return a JSONArray of the IRI strings.
      */
     private ArrayNode irisToJsonArray(Set<IRI> iris) {
-        ObjectMapper mapper = new ObjectMapper();
         return mapper.valueToTree(iris.stream().map(Value::stringValue).collect(Collectors.toSet()));
     }
 
@@ -2726,7 +2714,6 @@ public class OntologyRest {
      * @return
      */
     private ObjectNode getObjectArray(String field, ArrayNode arrayNode) {
-        ObjectMapper mapper = new ObjectMapper();
         ObjectNode jsonObject = mapper.createObjectNode();
         jsonObject.set(field, arrayNode);
         return jsonObject;
@@ -2766,14 +2753,13 @@ public class OntologyRest {
         OntologyId ontologyId = ontology.getOntologyId();
         Optional<IRI> optIri = ontologyId.getOntologyIRI();
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode objectNode = objectMapper.createObjectNode();
+        ObjectNode objectNode = mapper.createObjectNode();
         objectNode.put("documentFormat", rdfFormat);
         objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
         objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
         log.debug("JACKSON: getting ontology");
         try {
-            objectNode.set("ontology", objectMapper.readTree(getOntologyAsRdf(ontology, rdfFormat, false)));
+            objectNode.set("ontology", mapper.readTree(getOntologyAsRdf(ontology, rdfFormat, false)));
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -2808,8 +2794,7 @@ public class OntologyRest {
      * @return a JSONObject which has the combined key-value pairs from all of the provided JSONObjects.
      */
     private ObjectNode combineJsonObjects(ObjectNode... objects) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode objectNode = objectMapper.createObjectNode();
+        ObjectNode objectNode = mapper.createObjectNode();
 
         if (objects.length == 0) {
             return objectNode;
@@ -2898,8 +2883,7 @@ public class OntologyRest {
      */
     private void verifyJsonldType(String jsonldStr, String type) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode json = objectMapper.readTree(jsonldStr);
+            JsonNode json = mapper.readTree(jsonldStr);
 
             if (!json.has("@type")) {
                 throw ErrorUtils.sendError("The JSON-LD does not contain \"@type\".", Response.Status.BAD_REQUEST);
@@ -2907,7 +2891,7 @@ public class OntologyRest {
 
             JsonNode jsonNode = json.get("@type");
             if (jsonNode.isArray()) {
-                ObjectReader reader = objectMapper.reader(new TypeReference<List<String>>() {
+                ObjectReader reader = mapper.reader(new TypeReference<List<String>>() {
                 });
                 List<String> values = reader.readValue(jsonNode);
                 if (!values.contains(type)) {
@@ -2966,8 +2950,7 @@ public class OntologyRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode objectNode = objectMapper.createObjectNode();
+        ObjectNode objectNode = mapper.createObjectNode();
 
         objectNode.put("ontologyId", record.getOntologyIRI().get().toString());
         objectNode.put("recordId", record.getResource().stringValue());

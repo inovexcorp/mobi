@@ -24,6 +24,9 @@ package com.mobi.sparql.rest;
  */
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
@@ -47,8 +50,6 @@ import com.mobi.rest.util.jaxb.Links;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import com.mobi.rest.security.annotations.ResourceId;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -60,7 +61,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -91,6 +91,8 @@ public class SparqlRest {
     private ValueFactory valueFactory;
 
     private final Logger log = LoggerFactory.getLogger(SparqlRest.class);
+    private final ObjectMapper mapper = new ObjectMapper();
+
 
     @Reference
     public void setRepository(RepositoryManager repositoryManager) {
@@ -116,8 +118,10 @@ public class SparqlRest {
         } catch (MalformedQueryException ex) {
             String statusText = "Query is invalid. Please change the query and re-execute.";
             MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getMessage());
             Response response = Response.status(status)
-                    .entity(new JSONObject().element("details", ex.getMessage()).toString())
+                    .entity(entity.toString())
                     .build();
             throw ErrorUtils.sendError(ex, statusText, response);
         } catch (MobiException ex) {
@@ -135,8 +139,10 @@ public class SparqlRest {
         } catch (MalformedQueryException ex) {
             String statusText = "Query is invalid. Please change the query and re-execute.";
             MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
             Response response = Response.status(status)
-                    .entity(new JSONObject().element("details", ex.getCause().getMessage()).toString())
+                    .entity(entity.toString())
                     .build();
             throw ErrorUtils.sendError(ex, statusText, response);
         } catch (MobiException ex) {
@@ -185,8 +191,8 @@ public class SparqlRest {
 
         if (queryResults.hasNext()) {
             try {
-                JSONObject json = JSONQueryResults.getResponse(queryResults);
-                return Response.ok().entity(json).build();
+                ObjectNode json = JSONQueryResults.getResponse(queryResults);
+                return Response.ok().entity(json.toString()).build();
             } catch (MobiException ex) {
                 throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
             }
@@ -281,22 +287,23 @@ public class SparqlRest {
             queryResults = getQueryResults(queryString);
         }
         if (queryResults.hasNext()) {
-            List<JSONObject> bindings = JSONQueryResults.getBindings(queryResults);
+            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
             if (offset > bindings.size()) {
                 throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
             }
-            JSONArray results;
+            ArrayNode results;
             int size;
             if ((offset + limit) > bindings.size()) {
-                results = JSONArray.fromObject(bindings.subList(offset, bindings.size()));
+                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
                 size = bindings.size() - offset;
             } else {
-                results = JSONArray.fromObject(bindings.subList(offset, offset + limit));
+                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
                 size = limit;
             }
-            JSONObject response = new JSONObject().element("data", results)
-                    .element("bindings", JSONArray.fromObject(queryResults.getBindingNames()));
-            Response.ResponseBuilder builder = Response.ok(response).header("X-Total-Count", bindings.size());
+            ObjectNode response = mapper.createObjectNode();
+            response.set("data", results);
+            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
+            Response.ResponseBuilder builder = Response.ok(response.toString()).header("X-Total-Count", bindings.size());
             Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
             if (links.getNext() != null) {
                 builder = builder.link(links.getBase() + links.getNext(), "next");

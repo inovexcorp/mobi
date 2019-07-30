@@ -24,8 +24,10 @@ package com.mobi.catalog.rest.utils;
  */
 
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
-import static com.mobi.rest.util.RestUtils.thingToSkolemizedJsonObject;
+import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -39,13 +41,14 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import net.minidev.json.JSONValue;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class CatalogRestUtils {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     /**
      * Creates the JSONObject to be returned in the commit chain to more easily work with the data associated with the
      * Commit.
@@ -55,7 +58,7 @@ public class CatalogRestUtils {
      * @param engineManager The {@link EngineManager} to use.
      * @return JSONObject with the necessary information set.
      */
-    public static JSONObject createCommitJson(Commit commit, ValueFactory vf, EngineManager engineManager) {
+    public static ObjectNode createCommitJson(Commit commit, ValueFactory vf, EngineManager engineManager) {
         Literal emptyLiteral = vf.createLiteral("");
         Value creatorIRI = commit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
                 .orElse(null);
@@ -69,22 +72,24 @@ public class CatalogRestUtils {
                 .orElse(emptyLiteral).stringValue();
         User creator = engineManager.retrieveUser(engineManager.getUsername((Resource) creatorIRI)
                 .orElse("")).orElse(null);
-        JSONObject creatorObject = new JSONObject();
+        ObjectNode creatorObject = mapper.createObjectNode();
         if (creator != null) {
-            creatorObject.element("firstName", creator.getFirstName().stream().findFirst()
-                    .orElse(emptyLiteral).stringValue())
-                    .element("lastName", creator.getLastName().stream().findFirst().orElse(emptyLiteral)
-                            .stringValue())
-                    .element("username", creator.getUsername().orElse(emptyLiteral).stringValue());
+            creatorObject.put("firstName", creator.getFirstName().stream().findFirst()
+                    .orElse(emptyLiteral).stringValue());
+            creatorObject.put("lastName", creator.getLastName().stream().findFirst().orElse(emptyLiteral)
+                    .stringValue());
+            creatorObject.put("username", creator.getUsername().orElse(emptyLiteral).stringValue());
         }
 
-        return new JSONObject()
-                .element("id", commit.getResource().stringValue())
-                .element("creator", creatorObject)
-                .element("date", date.stringValue())
-                .element("message", message)
-                .element("base", baseCommit)
-                .element("auxiliary", auxCommit);
+        ObjectNode commitJson = mapper.createObjectNode();
+        commitJson.put("id", commit.getResource().stringValue());
+        commitJson.set("creator", creatorObject);
+        commitJson.put("date", date.stringValue());
+        commitJson.put("message", message);
+        commitJson.put("base", baseCommit);
+        commitJson.put("auxiliary", auxCommit);
+
+        return commitJson;
     }
 
     /**
@@ -103,7 +108,7 @@ public class CatalogRestUtils {
                                                 SesameTransformer transformer, BNodeService bNodeService) {
         String differences = getDifferenceJsonString(difference, format, transformer, bNodeService);
         String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
-                + thingToSkolemizedJsonObject(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";
+                + thingToSkolemizedObjectNode(commit, Commit.TYPE, transformer, bNodeService).toString() + "}";
         return Response.ok(response, MediaType.APPLICATION_JSON).build();
     }
 

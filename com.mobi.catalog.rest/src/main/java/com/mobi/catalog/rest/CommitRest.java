@@ -27,9 +27,11 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -45,14 +47,12 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -74,6 +74,7 @@ import javax.ws.rs.core.UriInfo;
 public class CommitRest {
 
     private static final Logger logger = LoggerFactory.getLogger(CommitRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private BNodeService bNodeService;
     private CatalogManager catalogManager;
@@ -81,6 +82,7 @@ public class CommitRest {
     private ValueFactory vf;
 
     protected EngineManager engineManager;
+
 
     @Reference
     void setbNodeService(BNodeService bNodeService) {
@@ -194,10 +196,12 @@ public class CommitRest {
                             .limit(limit);
                 }
 
-                JSONArray commitChain = result.map(r -> createCommitJson(r, vf, engineManager))
-                        .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+                ArrayNode commitChain = mapper.createArrayNode();
 
-                return createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
+                result.map(r -> createCommitJson(r, vf, engineManager))
+                        .forEach(commitChain::add);
+
+                return createPaginatedResponseWithJsonNode(uriInfo, commitChain, commits.size(), limit, offset);
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             } catch (IllegalStateException | MobiException ex) {
