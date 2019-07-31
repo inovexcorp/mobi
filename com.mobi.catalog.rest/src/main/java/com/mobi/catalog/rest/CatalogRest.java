@@ -1713,6 +1713,7 @@ public class CatalogRest {
                           @PathParam("branchId") String branchId,
                           @QueryParam("targetId") String targetBranchId,
                           @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+        long start = System.currentTimeMillis();
         try {
             checkStringParam(targetBranchId, "Target branch is required");
             Resource catalogIRI = vf.createIRI(catalogId);
@@ -1729,6 +1730,8 @@ public class CatalogRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("getConflicts took {}ms", System.currentTimeMillis() - start);
         }
     }
 
