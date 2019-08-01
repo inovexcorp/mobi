@@ -28,7 +28,7 @@ import spock.lang.Specification
 
 import java.time.OffsetDateTime
 
-import static groovyx.gpars.GParsPool.*
+import static groovyx.gpars.GParsPool.withPool
 
 class SimpleValueFactorySpec extends Specification {
 
@@ -193,17 +193,23 @@ class SimpleValueFactorySpec extends Specification {
         literal.byteValue() == (byte) 127
     }
 
-    def "createLiteral(date) creates the correct literal"() {
+    def "createLiteral(#input) creates the correct literal"() {
         given:
-        def literal = VF.createLiteral(OffsetDateTime.parse(dateTimeString))
+        def literal = VF.createLiteral(OffsetDateTime.parse(input))
 
         expect:
-        literal.getLabel() == dateTimeString
+        literal.getLabel() == output
         literal.getDatatype().stringValue() == XMLSchema.DATETIME.stringValue()
-        literal.dateTimeValue() == OffsetDateTime.parse(dateTimeString)
+        literal.dateTimeValue() == OffsetDateTime.parse(input)
 
         where:
-        dateTimeString << ["2015-01-01T00:00:00Z", "-2015-01-01T00:00:00Z"]
+        input | output
+        "2015-01-01T00:00Z"                 | "2015-01-01T00:00:00Z"
+        "2015-01-01T00:00-05:00"            | "2015-01-01T00:00:00-05:00"
+        "-2015-01-01T00:00:00Z"             | "-2015-01-01T00:00:00Z"
+        "2015-01-01T00:00:00.123Z"          | "2015-01-01T00:00:00.123Z"
+        "2015-01-01T00:00:00.1234Z"         | "2015-01-01T00:00:00.1234Z"
+        "2015-01-01T00:00:00.1234-05:00"    | "2015-01-01T00:00:00.1234-05:00"
     }
 
     def "createLiteral(double) creates the correct literal"() {
