@@ -102,6 +102,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -1106,8 +1107,6 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            JsonNode object = thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService);
-            String itemString = thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService).toString();
             return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService).toString())
                     .build();
         } catch (IllegalArgumentException ex) {

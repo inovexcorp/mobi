@@ -42,6 +42,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import net.minidev.json.JSONValue;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 

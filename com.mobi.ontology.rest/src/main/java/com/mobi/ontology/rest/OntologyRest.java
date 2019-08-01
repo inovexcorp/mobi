@@ -2220,7 +2220,6 @@ public class OntologyRest {
                 if (parsedOperation instanceof ParsedTupleQuery) {
                     TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {
-                        // TODO: Replace with Jackson
                         ObjectNode json = JSONQueryResults.getResponse(tupResults);
                         return Response.ok(json.toString(), MediaType.APPLICATION_JSON_TYPE).build();
                     } else {
@@ -2698,20 +2697,21 @@ public class OntologyRest {
     }
 
     /**
-     * Creates a JSONArray of IRI strings from the passed Set of IRIs.
+     * Creates an ArrayNode of IRI strings from the passed Set of IRIs.
      *
-     * @param iris the Set of IRIs to turn into this JSONArray.
-     * @return a JSONArray of the IRI strings.
+     * @param iris the Set of IRIs to turn into this ArrayNode.
+     * @return an ArrayNode of the IRI strings.
      */
     private ArrayNode irisToJsonArray(Set<IRI> iris) {
         return mapper.valueToTree(iris.stream().map(Value::stringValue).collect(Collectors.toSet()));
     }
 
     /**
+     * Creates an ObjectNode with a specified key out of an ArrayNode.
      *
-     * @param field
-     * @param arrayNode
-     * @return
+     * @param field the key for the ObjectNode that will be returned.
+     * @param arrayNode the value for the ObjectNode that will be returned.
+     * @return an ObjectNode with a key of the passed in field and a value of the passed in ArrayNode
      */
     private ObjectNode getObjectArray(String field, ArrayNode arrayNode) {
         ObjectNode jsonObject = mapper.createObjectNode();
@@ -2757,13 +2757,14 @@ public class OntologyRest {
         objectNode.put("documentFormat", rdfFormat);
         objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
         objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
-        log.debug("JACKSON: getting ontology");
+        long start = System.currentTimeMillis();
+        log.trace("Start getOntologyAsJsonObject");
         try {
             objectNode.set("ontology", mapper.readTree(getOntologyAsRdf(ontology, rdfFormat, false)));
         } catch (IOException e) {
             throw new MobiException(e);
         }
-        log.debug("JACKSON: got ontology");
+        log.trace("getOntologyAsJsonObject took {}ms", System.currentTimeMillis() - start);
 
         return objectNode;
     }
@@ -2891,8 +2892,7 @@ public class OntologyRest {
 
             JsonNode jsonNode = json.get("@type");
             if (jsonNode.isArray()) {
-                ObjectReader reader = mapper.reader(new TypeReference<List<String>>() {
-                });
+                ObjectReader reader = mapper.reader(new TypeReference<List<String>>() {});
                 List<String> values = reader.readValue(jsonNode);
                 if (!values.contains(type)) {
                     throw ErrorUtils.sendError("The JSON-LD does not contain the proper type: " + type + ".",
