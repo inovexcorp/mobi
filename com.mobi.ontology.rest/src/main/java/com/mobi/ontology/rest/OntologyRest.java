@@ -2957,6 +2957,6 @@ public class OntologyRest {
         objectNode.put("branchId", branchId.toString());
         objectNode.put("commitId", commitId.toString());
 
-        return Response.status(Response.Status.CREATED).entity(objectNode).build();
+        return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
 }
