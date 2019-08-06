@@ -39,6 +39,7 @@ import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import net.sf.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -104,6 +105,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.OffsetDateTime;
@@ -2116,11 +2118,20 @@ public class CatalogRest {
         long start = System.currentTimeMillis();
         try {
             ObjectNode differenceJson = mapper.createObjectNode();
-            differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(), format,
-                    transformer, bNodeService));
-            differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(), format, transformer,
-                    bNodeService));
+            if (format.equals("jsonld")) {
+                differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(), format,
+                        transformer, bNodeService)));
+                differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(), format, transformer,
+                        bNodeService)));
+            } else {
+                differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(), format,
+                        transformer, bNodeService));
+                differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(), format, transformer,
+                        bNodeService));
+            }
             return differenceJson;
+        } catch(IOException e) {
+            throw new MobiException(e);
         } finally {
             LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
         }
