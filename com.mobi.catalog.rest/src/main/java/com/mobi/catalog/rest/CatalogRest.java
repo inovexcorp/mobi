@@ -38,8 +38,6 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import net.sf.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -451,7 +449,8 @@ public class CatalogRest {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(record, Record.TYPE, transformer, bNodeService).toString()).build();
+            return Response.ok(thingToSkolemizedObjectNode(record, Record.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -636,8 +635,8 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService).toString())
-                    .build();
+            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -883,7 +882,8 @@ public class CatalogRest {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Latest Version could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService).toString()).build();
+            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -915,7 +915,8 @@ public class CatalogRest {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Version " + versionId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService).toString()).build();
+            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1109,8 +1110,8 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService).toString())
-                    .build();
+            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1359,8 +1360,8 @@ public class CatalogRest {
                              @PathParam("recordId") String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, transformer, bNodeService).toString())
-                    .build();
+            return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -1392,7 +1393,8 @@ public class CatalogRest {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Branch " + branchId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, transformer, bNodeService).toString()).build();
+            return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -2119,18 +2121,18 @@ public class CatalogRest {
         try {
             ObjectNode differenceJson = mapper.createObjectNode();
             if (format.equals("jsonld")) {
-                differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(), format,
-                        transformer, bNodeService)));
-                differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(), format, transformer,
-                        bNodeService)));
+                differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
+                        format, transformer, bNodeService)));
+                differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
+                        format, transformer, bNodeService)));
             } else {
-                differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(), format,
-                        transformer, bNodeService));
-                differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(), format, transformer,
-                        bNodeService));
+                differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(),
+                        format, transformer, bNodeService));
+                differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(),
+                        format, transformer, bNodeService));
             }
             return differenceJson;
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new MobiException(e);
         } finally {
             LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);

@@ -477,7 +477,8 @@ public class RestUtils {
                 } else if (o.has("@graph")) {
                     o = getTypedObjectNodeFromJsonld(o.get("@graph").toString(), type);
                 }
-                if (o != null && o.has("@type") && mapper.convertValue(o.get("@type"), ArrayList.class).contains(type)) {
+                if (o != null && o.has("@type")
+                        && mapper.convertValue(o.get("@type"), ArrayList.class).contains(type)) {
                     return o;
                 }
             }
@@ -520,6 +521,7 @@ public class RestUtils {
     public static JsonNode thingToObjectNode(Thing thing, String type, SesameTransformer transformer) {
         return getTypedObjectNodeFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD, transformer), type);
     }
+
     /**
      * Converts a Thing into a skolemized JSONObject by the first object of a specific type in the JSON-LD serialization
      * of the Thing's Model.
@@ -627,8 +629,8 @@ public class RestUtils {
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            return createPaginatedResponseJackson(uriInfo, result, filteredThings.size(), limit, offset, type, transformer,
-                    bNodeService);
+            return createPaginatedResponseJackson(uriInfo, result, filteredThings.size(),
+                    limit, offset, type, transformer, bNodeService);
         } finally {
             LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
         }
@@ -673,9 +675,9 @@ public class RestUtils {
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
      * pages if present.
      */
-    public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
-                                                                      int limit, int offset, String type,
-                                                                      SesameTransformer transformer,
+    public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
+                                                                     int totalSize, int limit, int offset,
+                                                                     String type, SesameTransformer transformer,
                                                                       BNodeService bNodeService) {
         JSONArray results;
         long start = System.currentTimeMillis();
@@ -696,10 +698,11 @@ public class RestUtils {
         }
     }
 
-    public static <T extends Thing> Response createPaginatedResponseJackson(UriInfo uriInfo, Collection<T> items, int totalSize,
-                                                                     int limit, int offset, String type,
-                                                                     SesameTransformer transformer,
-                                                                     BNodeService bNodeService) {
+    public static <T extends Thing> Response createPaginatedResponseJackson(UriInfo uriInfo, Collection<T> items,
+                                                                            int totalSize, int limit,
+                                                                            int offset, String type,
+                                                                            SesameTransformer transformer,
+                                                                            BNodeService bNodeService) {
         ArrayNode results;
         long start = System.currentTimeMillis();
 
@@ -751,8 +754,8 @@ public class RestUtils {
         }
     }
 
-    public static Response createPaginatedResponseWithJsonNode(UriInfo uriInfo, ArrayNode items, int totalSize, int limit,
-                                                           int offset) {
+    public static Response createPaginatedResponseWithJsonNode(UriInfo uriInfo, ArrayNode items,
+                                                               int totalSize, int limit, int offset) {
         long start = System.currentTimeMillis();
         try {
             LinksUtils.validateParams(limit, offset);

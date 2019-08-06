@@ -2134,7 +2134,8 @@ public class OntologyRest {
                     }
                 }
             });
-            return response.size() == 0 ? Response.noContent().build() : Response.ok(mapper.valueToTree(response).toString())
+            return response.size() == 0 ? Response.noContent().build() :
+                    Response.ok(mapper.valueToTree(response).toString())
                     .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2373,9 +2374,10 @@ public class OntologyRest {
      *                              applied to the return value
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private <T extends JsonNode> T doWithOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                           String commitIdStr, Function<Ontology, T> iriFunction,
-                                              boolean applyInProgressCommit) {
+    private <T extends JsonNode> T doWithOntology(ContainerRequestContext context, String recordIdStr,
+                                                  String branchIdStr, String commitIdStr,
+                                                  Function<Ontology, T> iriFunction,
+                                                  boolean applyInProgressCommit) {
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit);
         if (optionalOntology.isPresent()) {
@@ -2594,8 +2596,9 @@ public class OntologyRest {
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
         ontology.getAllDataProperties().stream()
-                .map(dataProperty -> getObjectNodeFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(), null, null),
-                        sesameTransformer)))
+                .map(dataProperty ->
+                        getObjectNodeFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(),
+                                null, null), sesameTransformer)))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
@@ -2750,6 +2753,7 @@ public class OntologyRest {
      * @return a JSONObject with the document format and the ontology in that format
      */
     private ObjectNode getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
+        log.trace("Start getOntologyAsJsonObject");
         OntologyId ontologyId = ontology.getOntologyId();
         Optional<IRI> optIri = ontologyId.getOntologyIRI();
 
@@ -2758,7 +2762,6 @@ public class OntologyRest {
         objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
         objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
         long start = System.currentTimeMillis();
-        log.trace("Start getOntologyAsJsonObject");
         try {
             objectNode.set("ontology", mapper.readTree(getOntologyAsRdf(ontology, rdfFormat, false)));
         } catch (IOException e) {
