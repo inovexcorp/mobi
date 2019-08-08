@@ -27,17 +27,20 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJson;
-import static com.mobi.rest.util.RestUtils.createPaginatedThingResponse;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponseJackson;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
+import static com.mobi.rest.util.RestUtils.createPaginatedThingResponseJackson;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
-import static com.mobi.rest.util.RestUtils.thingToSkolemizedJsonObject;
+import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -89,8 +92,6 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -102,6 +103,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.OffsetDateTime;
@@ -140,6 +142,7 @@ public class CatalogRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(CatalogRest.class);
     private static final Set<String> SORT_RESOURCES;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private OrmFactoryRegistry factoryRegistry;
     private SesameTransformer transformer;
@@ -254,10 +257,11 @@ public class CatalogRest {
                 catalogs.add(distributedCatalog);
             }
 
-            JSONArray array = JSONArray.fromObject(catalogs.stream()
-                    .map(catalog -> thingToSkolemizedJsonObject(catalog, Catalog.TYPE, transformer, bNodeService))
+            ArrayNode array = mapper.valueToTree(catalogs.stream()
+                    .map(catalog -> thingToSkolemizedObjectNode(catalog, Catalog.TYPE, transformer, bNodeService))
                     .collect(Collectors.toList()));
-            return Response.ok(array).build();
+
+            return Response.ok(array.toString()).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -279,11 +283,11 @@ public class CatalogRest {
         try {
             Resource catalogIri = vf.createIRI(catalogId);
             if (catalogIri.equals(configProvider.getLocalCatalogIRI())) {
-                return Response.ok(thingToSkolemizedJsonObject(catalogManager.getLocalCatalog(),
-                        Catalog.TYPE, transformer, bNodeService)).build();
+                return Response.ok(thingToSkolemizedObjectNode(catalogManager.getLocalCatalog(),
+                        Catalog.TYPE, transformer, bNodeService).toString()).build();
             } else if (catalogIri.equals(configProvider.getDistributedCatalogIRI())) {
-                return Response.ok(thingToSkolemizedJsonObject(catalogManager.getDistributedCatalog(),
-                        Catalog.TYPE, transformer, bNodeService)).build();
+                return Response.ok(thingToSkolemizedObjectNode(catalogManager.getDistributedCatalog(),
+                        Catalog.TYPE, transformer, bNodeService).toString()).build();
             } else {
                 throw ErrorUtils.sendError("Catalog " + catalogId + " does not exist", Response.Status.NOT_FOUND);
             }
@@ -341,7 +345,7 @@ public class CatalogRest {
             PaginatedSearchResults<Record> records = catalogManager.findRecord(vf.createIRI(catalogId),
                     builder.build());
 
-            return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
+            return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -445,7 +449,8 @@ public class CatalogRest {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(record, Record.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedObjectNode(record, Record.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -555,7 +560,7 @@ public class CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getUnversionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId));
-            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), offset,
+            return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -630,8 +635,8 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(distribution, Distribution.TYPE, transformer, bNodeService))
-                    .build();
+            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -735,7 +740,7 @@ public class CatalogRest {
         try {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Version> versions = catalogManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), offset, limit,
+            return createPaginatedThingResponseJackson(uriInfo, versions, vf.createIRI(sort), offset, limit,
                     asc, null, Version.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -877,7 +882,8 @@ public class CatalogRest {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Latest Version could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(version, Version.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -909,7 +915,8 @@ public class CatalogRest {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Version " + versionId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(version, Version.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedObjectNode(version, Version.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1021,7 +1028,7 @@ public class CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = catalogManager.getVersionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(versionId));
-            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), offset,
+            return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -1103,8 +1110,8 @@ public class CatalogRest {
                     vf.createIRI(recordId), vf.createIRI(versionId), vf.createIRI(distributionId)).orElseThrow(() ->
                     ErrorUtils.sendError("Distribution " + distributionId + " could not be found",
                             Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(distribution, Distribution.TYPE, transformer, bNodeService))
-                    .build();
+            return Response.ok(thingToSkolemizedObjectNode(distribution, Distribution.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1267,7 +1274,7 @@ public class CatalogRest {
                                     .stringValue().equals(activeUser.getResource().stringValue());
                 };
             }
-            return createPaginatedThingResponse(uriInfo, branches, vf.createIRI(sort), offset, limit,
+            return createPaginatedThingResponseJackson(uriInfo, branches, vf.createIRI(sort), offset, limit,
                     asc, filterFunction,
                     Branch.TYPE, transformer, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -1353,8 +1360,8 @@ public class CatalogRest {
                              @PathParam("recordId") String recordId) {
         try {
             Branch masterBranch = catalogManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId));
-            return Response.ok(thingToSkolemizedJsonObject(masterBranch, Branch.TYPE, transformer, bNodeService))
-                    .build();
+            return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -1386,7 +1393,8 @@ public class CatalogRest {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Branch " + branchId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedJsonObject(branch, Branch.TYPE, transformer, bNodeService)).build();
+            return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, transformer, bNodeService)
+                    .toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -1499,7 +1507,7 @@ public class CatalogRest {
         LinksUtils.validateParams(limit, offset);
 
         try {
-            JSONArray commitChain = new JSONArray();
+            ArrayNode commitChain = mapper.createArrayNode();
 
             final List<Commit> commits;
             if (StringUtils.isBlank(targetId)) {
@@ -1515,7 +1523,7 @@ public class CatalogRest {
                         .limit(limit);
             }
             result.map(r -> createCommitJson(r, vf, engineManager)).forEach(commitChain::add);
-            return createPaginatedResponseWithJson(uriInfo, commitChain, commits.size(), limit, offset);
+            return createPaginatedResponseWithJsonNode(uriInfo, commitChain, commits.size(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -1721,11 +1729,11 @@ public class CatalogRest {
             Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
             Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
             Set<Conflict> conflicts = catalogManager.getConflicts(sourceHead.getResource(), targetHead.getResource());
-            JSONArray array = new JSONArray();
+            ArrayNode array = mapper.createArrayNode();
             conflicts.stream()
                     .map(conflict -> conflictToJson(conflict, rdfFormat))
                     .forEach(array::add);
-            return Response.ok(array).build();
+            return Response.ok(array.toString()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -1961,7 +1969,7 @@ public class CatalogRest {
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(vf.createIRI(catalogId),
                     vf.createIRI(recordId), activeUser).orElseThrow(() ->
                     ErrorUtils.sendError("InProgressCommit could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format),
+            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format).toString(),
                     MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2054,7 +2062,7 @@ public class CatalogRest {
     @ApiOperation("Retrieves all the available record types.")
     public Response getRecordTypes() {
         try {
-            return Response.ok(JSONArray.fromObject(getRecordFactories().keySet())).build();
+            return Response.ok(mapper.valueToTree(getRecordFactories().keySet()).toString()).build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -2072,7 +2080,7 @@ public class CatalogRest {
     @ApiOperation("Retrieves all the available sorting options.")
     public Response getSortOptions() {
         try {
-            return Response.ok(JSONArray.fromObject(SORT_RESOURCES)).build();
+            return Response.ok(mapper.valueToTree(SORT_RESOURCES).toString()).build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -2089,7 +2097,7 @@ public class CatalogRest {
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
      *         statements.
      */
-    private JSONObject getCommitDifferenceObject(Resource commitId, String format) {
+    private ObjectNode getCommitDifferenceObject(Resource commitId, String format) {
         long start = System.currentTimeMillis();
         try {
             return getDifferenceJson(catalogManager.getCommitDifference(commitId), format);
@@ -2108,13 +2116,24 @@ public class CatalogRest {
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
      *         statements.
      */
-    private JSONObject getDifferenceJson(Difference difference, String format) {
+    private ObjectNode getDifferenceJson(Difference difference, String format) {
         long start = System.currentTimeMillis();
         try {
-            return new JSONObject().element("additions", modelToSkolemizedString(difference.getAdditions(), format,
-                    transformer, bNodeService))
-                    .element("deletions", modelToSkolemizedString(difference.getDeletions(), format, transformer,
-                            bNodeService));
+            ObjectNode differenceJson = mapper.createObjectNode();
+            if (format.equals("jsonld")) {
+                differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
+                        format, transformer, bNodeService)));
+                differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
+                        format, transformer, bNodeService)));
+            } else {
+                differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(),
+                        format, transformer, bNodeService));
+                differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(),
+                        format, transformer, bNodeService));
+            }
+            return differenceJson;
+        } catch (IOException e) {
+            throw new MobiException(e);
         } finally {
             LOG.trace("getDifferenceJson took {}ms", System.currentTimeMillis() - start);
         }
@@ -2181,11 +2200,11 @@ public class CatalogRest {
      * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference, and
      *         a key for the Conflict's right Difference.
      */
-    private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
-        JSONObject object = new JSONObject();
+    private ObjectNode conflictToJson(Conflict conflict, String rdfFormat) {
+        ObjectNode object = mapper.createObjectNode();
         object.put("iri", conflict.getIRI().stringValue());
-        object.put("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
-        object.put("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));
+        object.set("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
+        object.set("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));
         return object;
     }
 
