@@ -165,11 +165,29 @@
                     }
 
                     $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
-                        var ids = _.unionWith(_.map(dvm.os.listItem.inProgressCommit.additions, '@id'), _.map(dvm.os.listItem.inProgressCommit.deletions, '@id'), _.isEqual);
-                        dvm.list = _.map(ids, id => {
-                            var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
-                            var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
-
+                        console.time('savedChangesTab')
+                        var inProgressAdditions = _.map(dvm.os.listItem.inProgressCommit.additions, addition => {
+                            var additions = dvm.util.getPredicateAndObject(addition);
+                            var id = addition['@id'];
+                            return {id, additions}
+                        });
+                        var inProgressDeletions = _.map(dvm.os.listItem.inProgressCommit.deletions, deletion => {
+                            var deletions = dvm.util.getPredicateAndObject(deletion);
+                            var id = deletion['@id'];
+                            return {id, deletions}
+                        });
+                        var mergedInProgressCommits = Object.values(
+                            [].concat(inProgressAdditions, inProgressDeletions
+                            ).reduce((dict, currentItem) => {
+                                var existingValue = dict[currentItem['id']] || {};
+                                var mergedValue = Object.assign({ 'id' : '', 'additions' : [{}], 'deletions' : [{}]}, existingValue, currentItem);
+                                dict[currentItem.id] = mergedValue;
+                                return dict;  
+                            }, {}));
+                        dvm.list = _.map(mergedInProgressCommits, inProgressItem => {
+                            var id = inProgressItem.id;
+                            var additions = inProgressItem.additions;
+                            var deletions = inProgressItem.deletions;
                             return {
                                 id,
                                 additions,
@@ -177,9 +195,9 @@
                                 disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
                             }
                         });
-
                         dvm.list = _.sortBy(dvm.list, dvm.orderByIRI)
                         dvm.showList = getList();
+                        console.timeEnd('savedChangesTab');
                     });
 
                     function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {

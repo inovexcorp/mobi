@@ -601,6 +601,24 @@
             });
             return results;
         }
+
+        self.getPredicateAndObject = function(additionOrDeletion) {
+            var results = [];
+            _.forOwn(additionOrDeletion, (value, key) => {
+                if (key !== '@id') {
+                    var actualKey = key;
+                    if (key === '@type') {
+                        actualKey = prefixes.rdf + 'type';
+                    }
+                    if (_.isArray(value)) {
+                        _.forEach(value, item => results.push({p: actualKey, o: item}));
+                    } else {
+                        results.push({p: actualKey, o: value});
+                    }
+                }
+            });
+            return results;
+        }
         /**
          * @ngdoc method
          * @name getPredicateLocalName
