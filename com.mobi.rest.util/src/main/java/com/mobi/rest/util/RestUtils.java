@@ -23,6 +23,10 @@ package com.mobi.rest.util;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -47,11 +51,14 @@ import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +70,7 @@ import javax.ws.rs.core.UriInfo;
 public class RestUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Returns the specified RDFFormat. Currently supports Turtle, TRiG, RDF/XML, and JSON-LD.
@@ -405,6 +413,26 @@ public class RestUtils {
         return firstObject;
     }
 
+    public static ObjectNode getObjectNodeFromJsonld(String json) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode = null;
+        try {
+            jsonNode = mapper.readTree(json);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        JsonNode firstObject = jsonNode.get(0);
+        if (firstObject == null) {
+            return mapper.createObjectNode();
+        } else if (firstObject.has("@graph")) {
+            firstObject = firstObject.get("@graph").get(0);
+            if (firstObject == null) {
+                return mapper.createObjectNode();
+            }
+        }
+        return (ObjectNode) firstObject;
+    }
+
     /**
      * Retrieves a single entity object, of the type specified, from a JSON-LD string and returns it as a
      * {@link JSONObject}.
@@ -432,6 +460,31 @@ public class RestUtils {
                 }
             }
             return null;
+        } finally {
+            LOG.trace("getTypedObjectFromJsonld took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    public static JsonNode getTypedObjectNodeFromJsonld(String json, String type) {
+        long start = System.currentTimeMillis();
+        JsonNode arrayNode = null;
+        try {
+            arrayNode = mapper.readTree(json);
+
+            for (JsonNode o : arrayNode) {
+                if (o.isArray()) {
+                    o = getTypedObjectNodeFromJsonld(o.toString(), type);
+                } else if (o.has("@graph")) {
+                    o = getTypedObjectNodeFromJsonld(o.get("@graph").toString(), type);
+                }
+                if (o != null && o.has("@type")
+                        && mapper.convertValue(o.get("@type"), ArrayList.class).contains(type)) {
+                    return o;
+                }
+            }
+            return null;
+        }  catch (IOException e) {
+            throw new MobiException(e);
         } finally {
             LOG.trace("getTypedObjectFromJsonld took {}ms", System.currentTimeMillis() - start);
         }
@@ -465,6 +518,10 @@ public class RestUtils {
         return getTypedObjectFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD, transformer), type);
     }
 
+    public static JsonNode thingToObjectNode(Thing thing, String type, SesameTransformer transformer) {
+        return getTypedObjectNodeFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD, transformer), type);
+    }
+
     /**
      * Converts a Thing into a skolemized JSONObject by the first object of a specific type in the JSON-LD serialization
      * of the Thing's Model.
@@ -478,6 +535,12 @@ public class RestUtils {
     public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, SesameTransformer transformer,
                                                          BNodeService bNodeService) {
         return getTypedObjectFromJsonld(
+                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, transformer, bNodeService), type);
+    }
+
+    public static JsonNode thingToSkolemizedObjectNode(Thing thing, String type, SesameTransformer transformer,
+                                                         BNodeService bNodeService) {
+        return getTypedObjectNodeFromJsonld(
                 modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, transformer, bNodeService), type);
     }
 
@@ -536,6 +599,43 @@ public class RestUtils {
         }
     }
 
+    public static <T extends Thing> Response createPaginatedThingResponseJackson(UriInfo uriInfo, Set<T> things,
+                                                                          IRI sortIRI, int offset, int limit,
+                                                                          boolean asc,
+                                                                          Function<T, Boolean> filterFunction,
+                                                                          String type, SesameTransformer transformer,
+                                                                          BNodeService bNodeService) {
+        long start = System.currentTimeMillis();
+        try {
+            if (offset > things.size()) {
+                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+            }
+            Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
+
+            Stream<T> stream = things.stream();
+
+            if (!asc) {
+                comparator = comparator.reversed();
+            }
+
+            if (filterFunction != null) {
+                stream = stream.filter(filterFunction::apply);
+            }
+
+            List<T> filteredThings = stream.collect(Collectors.toList());
+            List<T> result = filteredThings.stream()
+                    .sorted(comparator)
+                    .skip(offset)
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+            return createPaginatedResponseJackson(uriInfo, result, filteredThings.size(),
+                    limit, offset, type, transformer, bNodeService);
+        } finally {
+            LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
     /**
      * Creates a Response for a list of paginated Things based on the passed URI information, page of items, the total
      * number of Things, the limit for each page, and the offset for the current page. Sets the "X-Total-Count" header
@@ -575,10 +675,10 @@ public class RestUtils {
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
      * pages if present.
      */
-    public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
-                                                                     int limit, int offset, String type,
-                                                                     SesameTransformer transformer,
-                                                                     BNodeService bNodeService) {
+    public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
+                                                                     int totalSize, int limit, int offset,
+                                                                     String type, SesameTransformer transformer,
+                                                                      BNodeService bNodeService) {
         JSONArray results;
         long start = System.currentTimeMillis();
 
@@ -593,6 +693,30 @@ public class RestUtils {
                         .collect(Collectors.toList()));
             }
             return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
+        } finally {
+            LOG.trace("createPaginatedResponse took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    public static <T extends Thing> Response createPaginatedResponseJackson(UriInfo uriInfo, Collection<T> items,
+                                                                            int totalSize, int limit,
+                                                                            int offset, String type,
+                                                                            SesameTransformer transformer,
+                                                                            BNodeService bNodeService) {
+        ArrayNode results;
+        long start = System.currentTimeMillis();
+
+        try {
+            if (bNodeService == null) {
+                results = mapper.valueToTree(items.stream()
+                        .map(thing -> thingToObjectNode(thing, type, transformer))
+                        .collect(Collectors.toList()));
+            } else {
+                results = mapper.valueToTree(items.stream()
+                        .map(thing -> thingToSkolemizedObjectNode(thing, type, transformer, bNodeService))
+                        .collect(Collectors.toList()));
+            }
+            return createPaginatedResponseWithJsonNode(uriInfo, results, totalSize, limit, offset);
         } finally {
             LOG.trace("createPaginatedResponse took {}ms", System.currentTimeMillis() - start);
         }
@@ -618,6 +742,25 @@ public class RestUtils {
             LinksUtils.validateParams(limit, offset);
             Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
             Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
+            if (links.getNext() != null) {
+                response = response.link(links.getBase() + links.getNext(), "next");
+            }
+            if (links.getPrev() != null) {
+                response = response.link(links.getBase() + links.getPrev(), "prev");
+            }
+            return response.build();
+        } finally {
+            LOG.trace("createPaginatedResponseWithJson took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    public static Response createPaginatedResponseWithJsonNode(UriInfo uriInfo, ArrayNode items,
+                                                               int totalSize, int limit, int offset) {
+        long start = System.currentTimeMillis();
+        try {
+            LinksUtils.validateParams(limit, offset);
+            Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
+            Response.ResponseBuilder response = Response.ok(items.toString()).header("X-Total-Count", totalSize);
             if (links.getNext() != null) {
                 response = response.link(links.getBase() + links.getNext(), "next");
             }
