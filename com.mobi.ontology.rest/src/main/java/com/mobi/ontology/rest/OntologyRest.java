@@ -25,13 +25,19 @@ package com.mobi.ontology.rest;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
+import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.modelToString;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -86,10 +92,6 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -166,6 +168,7 @@ public class OntologyRest {
     private OntologyCache ontologyCache;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
@@ -753,9 +756,11 @@ public class OntologyRest {
             watch.start();
 
             outputStream.write(", \"importedOntologies\": ".getBytes());
-            JSONArray arr = onlyImports.stream()
+
+            ArrayNode arr = mapper.createArrayNode();
+            onlyImports.stream()
                     .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
-                    .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+                    .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
 
             watch.stop();
@@ -765,7 +770,7 @@ public class OntologyRest {
             watch.start();
 
             outputStream.write(", \"failedImports\": ".getBytes());
-            outputStream.write(JSONArray.fromObject(getUnloadableImportIRIs(ontology)).toString().getBytes());
+            outputStream.write(mapper.valueToTree(getUnloadableImportIRIs(ontology)).toString().getBytes());
 
             watch.stop();
             log.trace("End failedImports: " + watch.getTime() + "ms");
@@ -783,7 +788,7 @@ public class OntologyRest {
             watch.start();
 
             outputStream.write(", \"individuals\": ".getBytes());
-            JSONObject classesWithIndividuals = JSONObject.fromObject(
+            ObjectNode classesWithIndividuals = mapper.valueToTree(
                     ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
             outputStream.write(classesWithIndividuals.toString().getBytes());
 
@@ -864,8 +869,8 @@ public class OntologyRest {
                                       @QueryParam("branchId") String branchIdStr,
                                       @QueryParam("commitId") String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
-            return Response.ok(result).build();
+            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs, true);
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -897,9 +902,9 @@ public class OntologyRest {
                                              @QueryParam("branchId") String branchIdStr,
                                              @QueryParam("commitId") String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getAnnotationIRIObject, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1002,9 +1007,9 @@ public class OntologyRest {
                                          @DefaultValue("true") @QueryParam("applyInProgressCommit")
                                                      boolean applyInProgressCommit) {
         try {
-            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
+            ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray,
                     applyInProgressCommit);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1103,9 +1108,9 @@ public class OntologyRest {
                                            @QueryParam("branchId") String branchIdStr,
                                            @QueryParam("commitId") String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDatatypeIRIObject, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1204,9 +1209,9 @@ public class OntologyRest {
                                                   @QueryParam("branchId") String branchIdStr,
                                                   @QueryParam("commitId") String commitIdStr) {
         try {
-            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1305,9 +1310,9 @@ public class OntologyRest {
                                                 @QueryParam("branchId") String branchIdStr,
                                                 @QueryParam("commitId") String commitIdStr) {
         try {
-            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ArrayNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getDataPropertyArray, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1406,9 +1411,9 @@ public class OntologyRest {
                                                   @QueryParam("branchId") String branchIdStr,
                                                   @QueryParam("commitId") String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            ObjectNode result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getNamedIndividualIRIObject, true);
-            return Response.ok(result).build();
+            return Response.ok(result.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1543,10 +1548,11 @@ public class OntologyRest {
                                       @QueryParam("commitId") String commitIdStr) {
         try {
             Set<Ontology> importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
-            JSONArray array = importedOntologies.stream()
+            ArrayNode arrayNode = mapper.createArrayNode();
+            importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
-                    .collect(JSONArray::new, JSONArray::add, JSONArray::add);
-            return array.size() == 0 ? Response.noContent().build() : Response.ok(array).build();
+                    .forEach(arrayNode::add);
+            return arrayNode.size() == 0 ? Response.noContent().build() : Response.ok(arrayNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2019,9 +2025,10 @@ public class OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            JSONObject response = new JSONObject().element("individuals",
-                    ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
-            return Response.ok(response).build();
+            ObjectNode objectNode = mapper.createObjectNode();
+            objectNode.set("individuals",
+                    mapper.valueToTree(ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap()));
+            return Response.ok(objectNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2067,7 +2074,7 @@ public class OntologyRest {
                 return Response.ok(modelToJsonld(results, sesameTransformer)).build();
             } else if (queryType.equals("select")) {
                 TupleQueryResult results = ontology.getEntityUsages(entityIRI);
-                return Response.ok(JSONQueryResults.getResponse(results)).build();
+                return Response.ok(JSONQueryResults.getResponse(results).toString()).build();
             } else {
                 throw ErrorUtils.sendError("The queryType parameter is not select or construct as expected.",
                         Response.Status.BAD_REQUEST);
@@ -2127,7 +2134,8 @@ public class OntologyRest {
                     }
                 }
             });
-            return response.size() == 0 ? Response.noContent().build() : Response.ok(JSONObject.fromObject(response))
+            return response.size() == 0 ? Response.noContent().build() :
+                    Response.ok(mapper.valueToTree(response).toString())
                     .build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2213,8 +2221,8 @@ public class OntologyRest {
                 if (parsedOperation instanceof ParsedTupleQuery) {
                     TupleQueryResult tupResults = ontology.getTupleQueryResults(queryString, includeImports);
                     if (tupResults.hasNext()) {
-                        JSONObject json = JSONQueryResults.getResponse(tupResults);
-                        return Response.ok(json, MediaType.APPLICATION_JSON_TYPE).build();
+                        ObjectNode json = JSONQueryResults.getResponse(tupResults);
+                        return Response.ok(json.toString(), MediaType.APPLICATION_JSON_TYPE).build();
                     } else {
                         return Response.noContent().build();
                     }
@@ -2258,9 +2266,9 @@ public class OntologyRest {
     private void writeHierarchyToStream(Hierarchy hierarchy, OutputStream outputStream, boolean includeNested,
                                         @Nullable Set<IRI> iris) throws IOException {
         outputStream.write("{\"parentMap\": ".getBytes());
-        outputStream.write(JSONObject.fromObject(hierarchy.getParentMap()).toString().getBytes());
+        outputStream.write(mapper.valueToTree(hierarchy.getParentMap()).toString().getBytes());
         outputStream.write(", \"childMap\": ".getBytes());
-        outputStream.write(JSONObject.fromObject(hierarchy.getChildMap()).toString().getBytes());
+        outputStream.write(mapper.valueToTree(hierarchy.getChildMap()).toString().getBytes());
         if (iris != null) {
             outputStream.write(", \"iris\": ".getBytes());
             outputStream.write(irisToJsonArray(iris).toString().getBytes());
@@ -2366,9 +2374,10 @@ public class OntologyRest {
      *                              applied to the return value
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
-    private <T extends JSON> T doWithOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                           String commitIdStr, Function<Ontology, T> iriFunction,
-                                              boolean applyInProgressCommit) {
+    private <T extends JsonNode> T doWithOntology(ContainerRequestContext context, String recordIdStr,
+                                                  String branchIdStr, String commitIdStr,
+                                                  Function<Ontology, T> iriFunction,
+                                                  boolean applyInProgressCommit) {
         Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit);
         if (optionalOntology.isPresent()) {
@@ -2391,7 +2400,7 @@ public class OntologyRest {
      */
     private Response doWithImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                               String branchIdStr, String commitIdStr,
-                                              Function<Ontology, JSONObject> iriFunction) {
+                                              Function<Ontology, ObjectNode> iriFunction) {
         Set<Ontology> importedOntologies;
         try {
             importedOntologies = getImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr);
@@ -2399,20 +2408,20 @@ public class OntologyRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         if (!importedOntologies.isEmpty()) {
-            return Response.ok(doWithOntologies(importedOntologies, iriFunction)).build();
+            return Response.ok(doWithOntologies(importedOntologies, iriFunction).toString()).build();
         } else {
             return Response.noContent().build();
         }
     }
 
-    private JSONArray doWithOntologies(Set<Ontology> ontologies, Function<Ontology, JSONObject> function) {
-        JSONArray array = new JSONArray();
+    private ArrayNode doWithOntologies(Set<Ontology> ontologies, Function<Ontology, ObjectNode> function) {
+        ArrayNode arrayNode = mapper.createArrayNode();
         for (Ontology ontology : ontologies) {
-            JSONObject object = function.apply(ontology);
+            ObjectNode object = function.apply(ontology);
             object.put("id", ontology.getOntologyId().getOntologyIdentifier().stringValue());
-            array.add(object);
+            arrayNode.add(object);
         }
-        return array;
+        return arrayNode;
     }
 
     /**
@@ -2440,9 +2449,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of Annotations from the provided Ontology.
      */
-    private JSONObject getAnnotationIRIObject(Ontology ontology) {
+    private ObjectNode getAnnotationIRIObject(Ontology ontology) {
         Set<IRI> iris = getAnnotationIRIs(ontology);
-        return new JSONObject().element("annotationProperties", irisToJsonArray(iris));
+        return getObjectArray("annotationProperties", irisToJsonArray(iris));
     }
 
     /**
@@ -2464,9 +2473,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the Classes from.
      * @return a JSONObject with a classes key to an array of Class IRIs from the provided Ontology.
      */
-    private JSONObject getClassIRIArray(Ontology ontology) {
+    private ObjectNode getClassIRIArray(Ontology ontology) {
         Set<IRI> iris = getClassIRIs(ontology);
-        return new JSONObject().element("classes", irisToJsonArray(iris));
+        return getObjectArray("classes", irisToJsonArray(iris));
     }
 
     /**
@@ -2488,13 +2497,15 @@ public class OntologyRest {
      * @param ontology the Ontology to get the Classes from.
      * @return a JSONArray of Classes form the provided Ontology.
      */
-    private JSONArray getClassArray(Ontology ontology) {
+    private ArrayNode getClassArray(Ontology ontology) {
+        ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
-        return ontology.getAllClasses().stream()
+        ontology.getAllClasses().stream()
                 .map(oClass -> model.filter(oClass.getIRI(), null, null))
                 .filter(m -> !m.isEmpty())
-                .map(m -> getObjectFromJsonld(modelToJsonld(m, sesameTransformer)))
-                .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+                .map(m -> getObjectNodeFromJsonld(modelToJsonld(m, sesameTransformer)))
+                .forEach(arrayNode::add);
+        return arrayNode;
     }
 
     /**
@@ -2503,12 +2514,12 @@ public class OntologyRest {
      * @param ontology the Ontology to get the Datatypes from.
      * @return a JSONObject with a datatypes key to an array of Datatype IRIs from the provided Ontology.
      */
-    private JSONObject getDatatypeIRIObject(Ontology ontology) {
+    private ObjectNode getDatatypeIRIObject(Ontology ontology) {
         Set<IRI> iris = ontology.getAllDatatypes()
                 .stream()
                 .map(Datatype::getIRI)
                 .collect(Collectors.toSet());
-        return new JSONObject().element("datatypes", irisToJsonArray(iris));
+        return getObjectArray("datatypes", irisToJsonArray(iris));
     }
 
     /**
@@ -2517,9 +2528,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the ObjectProperties from.
      * @return a JSONObject with a objectProperties key to an array of ObjectProperty IRIs from the provided Ontology.
      */
-    private JSONObject getObjectPropertyIRIObject(Ontology ontology) {
+    private ObjectNode getObjectPropertyIRIObject(Ontology ontology) {
         Set<IRI> iris = getObjectPropertyIRIs(ontology);
-        return new JSONObject().element("objectProperties", irisToJsonArray(iris));
+        return getObjectArray("objectProperties", irisToJsonArray(iris));
     }
 
     /**
@@ -2541,12 +2552,14 @@ public class OntologyRest {
      * @param ontology the Ontology to get the ObjectProperties from.
      * @return a JSONArray of ObjectProperties from the provided Ontology.
      */
-    private JSONArray getObjectPropertyArray(Ontology ontology) {
+    private ArrayNode getObjectPropertyArray(Ontology ontology) {
+        ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
-        return ontology.getAllObjectProperties().stream()
-                .map(property -> getObjectFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null),
+        ontology.getAllObjectProperties().stream()
+                .map(property -> getObjectNodeFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null),
                         sesameTransformer)))
-                .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+                .forEach(arrayNode::add);
+        return arrayNode;
     }
 
     /**
@@ -2555,9 +2568,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the DatatypeProperties from.
      * @return a JSONObject with a dataProperties key to an array of DatatypeProperty IRIs from the provided Ontology.
      */
-    private JSONObject getDataPropertyIRIObject(Ontology ontology) {
+    private ObjectNode getDataPropertyIRIObject(Ontology ontology) {
         Set<IRI> iris = getDataPropertyIRIs(ontology);
-        return new JSONObject().element("dataProperties", irisToJsonArray(iris));
+        return getObjectArray("dataProperties", irisToJsonArray(iris));
     }
 
     /**
@@ -2579,12 +2592,15 @@ public class OntologyRest {
      * @param ontology the Ontology to get the DatatypeProperties from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
-    private JSONArray getDataPropertyArray(Ontology ontology) {
+    private ArrayNode getDataPropertyArray(Ontology ontology) {
+        ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel(modelFactory);
-        return ontology.getAllDataProperties().stream()
-                .map(dataProperty -> getObjectFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(), null, null),
-                        sesameTransformer)))
-                .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+        ontology.getAllDataProperties().stream()
+                .map(dataProperty ->
+                        getObjectNodeFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(),
+                                null, null), sesameTransformer)))
+                .forEach(arrayNode::add);
+        return arrayNode;
     }
 
     /**
@@ -2593,9 +2609,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the NamedIndividuals from.
      * @return a JSONArray of NamedIndividuals from the provided Ontology.
      */
-    private JSONObject getNamedIndividualIRIObject(Ontology ontology) {
+    private ObjectNode getNamedIndividualIRIObject(Ontology ontology) {
         Set<IRI> iris = getNamedIndividualIRIs(ontology);
-        return new JSONObject().element("namedIndividuals", irisToJsonArray(iris));
+        return getObjectArray("namedIndividuals", irisToJsonArray(iris));
     }
 
     /**
@@ -2619,9 +2635,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the Concepts from.
      * @return a JSONObject with a concepts key to an array of Concept IRIs from the provided Ontology.
      */
-    private JSONObject getConceptIRIObject(Ontology ontology) {
+    private ObjectNode getConceptIRIObject(Ontology ontology) {
         Set<IRI> iris = getConceptIRIs(ontology);
-        return new JSONObject().element("concepts", irisToJsonArray(iris));
+        return getObjectArray("concepts", irisToJsonArray(iris));
     }
 
     /**
@@ -2642,9 +2658,9 @@ public class OntologyRest {
      * @param ontology the Ontology to get the ConceptSchemes from.
      * @return a JSONObject with a conceptSchemes key to an array of ConceptScheme IRIs from the provided Ontology.
      */
-    private JSONObject getConceptSchemeIRIObject(Ontology ontology) {
+    private ObjectNode getConceptSchemeIRIObject(Ontology ontology) {
         Set<IRI> iris = getConceptSchemeIRIs(ontology);
-        return new JSONObject().element("conceptSchemes", irisToJsonArray(iris));
+        return getObjectArray("conceptSchemes", irisToJsonArray(iris));
     }
 
     /**
@@ -2659,38 +2675,51 @@ public class OntologyRest {
                 .collect(Collectors.toSet());
     }
 
-    private JSONObject getDerivedConceptTypeIRIObject(Ontology ontology) {
-        return new JSONObject().element("derivedConcepts", getDerivedConceptTypeIRIArray(ontology));
+    private ObjectNode getDerivedConceptTypeIRIObject(Ontology ontology) {
+        return getObjectArray("derivedConcepts", getDerivedConceptTypeIRIArray(ontology));
     }
 
-    private JSONArray getDerivedConceptTypeIRIArray(Ontology ontology) {
+    private ArrayNode getDerivedConceptTypeIRIArray(Ontology ontology) {
         return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT)));
     }
 
-    private JSONObject getDerivedConceptSchemeTypeIRIObject(Ontology ontology) {
-        return new JSONObject().element("derivedConceptSchemes", getDerivedConceptSchemeTypeIRIArray(ontology));
+    private ObjectNode getDerivedConceptSchemeTypeIRIObject(Ontology ontology) {
+        return getObjectArray("derivedConceptSchemes", getDerivedConceptSchemeTypeIRIArray(ontology));
     }
 
-    private JSONArray getDerivedConceptSchemeTypeIRIArray(Ontology ontology) {
+    private ArrayNode getDerivedConceptSchemeTypeIRIArray(Ontology ontology) {
         return irisToJsonArray(ontology.getSubClassesFor(sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME)));
     }
 
-    private JSONObject getDerivedSemanticRelationIRIObject(Ontology ontology) {
-        return new JSONObject().element("derivedSemanticRelations", getDerivedSemanticRelationIRIArray(ontology));
+    private ObjectNode getDerivedSemanticRelationIRIObject(Ontology ontology) {
+        return getObjectArray("derivedSemanticRelations", getDerivedSemanticRelationIRIArray(ontology));
     }
 
-    private JSONArray getDerivedSemanticRelationIRIArray(Ontology ontology) {
+    private ArrayNode getDerivedSemanticRelationIRIArray(Ontology ontology) {
         return irisToJsonArray(ontology.getSubPropertiesFor(sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION)));
     }
 
     /**
-     * Creates a JSONArray of IRI strings from the passed Set of IRIs.
+     * Creates an ArrayNode of IRI strings from the passed Set of IRIs.
      *
-     * @param iris the Set of IRIs to turn into this JSONArray.
-     * @return a JSONArray of the IRI strings.
+     * @param iris the Set of IRIs to turn into this ArrayNode.
+     * @return an ArrayNode of the IRI strings.
      */
-    private JSONArray irisToJsonArray(Set<IRI> iris) {
-        return JSONArray.fromObject(iris.stream().map(Value::stringValue).collect(Collectors.toSet()));
+    private ArrayNode irisToJsonArray(Set<IRI> iris) {
+        return mapper.valueToTree(iris.stream().map(Value::stringValue).collect(Collectors.toSet()));
+    }
+
+    /**
+     * Creates an ObjectNode with a specified key out of an ArrayNode.
+     *
+     * @param field the key for the ObjectNode that will be returned.
+     * @param arrayNode the value for the ObjectNode that will be returned.
+     * @return an ObjectNode with a key of the passed in field and a value of the passed in ArrayNode
+     */
+    private ObjectNode getObjectArray(String field, ArrayNode arrayNode) {
+        ObjectNode jsonObject = mapper.createObjectNode();
+        jsonObject.set(field, arrayNode);
+        return jsonObject;
     }
 
     /**
@@ -2723,14 +2752,24 @@ public class OntologyRest {
      * @param rdfFormat the format to serialize the ontology in
      * @return a JSONObject with the document format and the ontology in that format
      */
-    private JSONObject getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
+    private ObjectNode getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
+        log.trace("Start getOntologyAsJsonObject");
         OntologyId ontologyId = ontology.getOntologyId();
         Optional<IRI> optIri = ontologyId.getOntologyIRI();
-        return new JSONObject()
-                .element("documentFormat", rdfFormat)
-                .element("id", ontologyId.getOntologyIdentifier().stringValue())
-                .element("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "")
-                .element("ontology", getOntologyAsRdf(ontology, rdfFormat, false));
+
+        ObjectNode objectNode = mapper.createObjectNode();
+        objectNode.put("documentFormat", rdfFormat);
+        objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
+        objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
+        long start = System.currentTimeMillis();
+        try {
+            objectNode.set("ontology", mapper.readTree(getOntologyAsRdf(ontology, rdfFormat, false)));
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+        log.trace("getOntologyAsJsonObject took {}ms", System.currentTimeMillis() - start);
+
+        return objectNode;
     }
 
     /**
@@ -2739,7 +2778,7 @@ public class OntologyRest {
      * @param ontology The Ontology from which to get component IRIs
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
-    private JSONObject getAllIRIs(Ontology ontology) {
+    private ObjectNode getAllIRIs(Ontology ontology) {
         return combineJsonObjects(getAnnotationIRIObject(ontology), getClassIRIArray(ontology),
                 getDatatypeIRIObject(ontology), getObjectPropertyIRIObject(ontology),
                 getDataPropertyIRIObject(ontology), getNamedIndividualIRIObject(ontology),
@@ -2748,7 +2787,7 @@ public class OntologyRest {
                 getDerivedSemanticRelationIRIObject(ontology));
     }
 
-    private JSONObject getVocabularyIRIs(Ontology ontology) {
+    private ObjectNode getVocabularyIRIs(Ontology ontology) {
         return combineJsonObjects(getConceptIRIObject(ontology), getConceptSchemeIRIObject(ontology));
     }
 
@@ -2758,15 +2797,16 @@ public class OntologyRest {
      * @param objects the JSONObjects to combine.
      * @return a JSONObject which has the combined key-value pairs from all of the provided JSONObjects.
      */
-    private JSONObject combineJsonObjects(JSONObject... objects) {
-        JSONObject json = new JSONObject();
+    private ObjectNode combineJsonObjects(ObjectNode... objects) {
+        ObjectNode objectNode = mapper.createObjectNode();
+
         if (objects.length == 0) {
-            return json;
+            return objectNode;
         }
-        for (JSONObject each : objects) {
-            each.keySet().forEach(key -> json.put(key, each.get(key)));
+        for (ObjectNode each : objects) {
+            objectNode.setAll(each);
         }
-        return json;
+        return objectNode;
     }
 
     /**
@@ -2847,13 +2887,25 @@ public class OntologyRest {
      */
     private void verifyJsonldType(String jsonldStr, String type) {
         try {
-            JSONObject json = JSONObject.fromObject(jsonldStr);
-            Optional<JSONArray> optTypeArray = Optional.ofNullable(json.optJSONArray("@type"));
-            if (!json.has("@id") || !optTypeArray.isPresent() || !optTypeArray.get().contains(type)) {
-                throw ErrorUtils.sendError("The JSON-LD does not contain the proper type: " + type + ".",
+            JsonNode json = mapper.readTree(jsonldStr);
+
+            if (!json.has("@type")) {
+                throw ErrorUtils.sendError("The JSON-LD does not contain \"@type\".", Response.Status.BAD_REQUEST);
+            }
+
+            JsonNode jsonNode = json.get("@type");
+            if (jsonNode.isArray()) {
+                ObjectReader reader = mapper.reader(new TypeReference<List<String>>() {});
+                List<String> values = reader.readValue(jsonNode);
+                if (!values.contains(type)) {
+                    throw ErrorUtils.sendError("The JSON-LD does not contain the proper type: " + type + ".",
+                            Response.Status.BAD_REQUEST);
+                }
+            } else {
+                throw ErrorUtils.sendError("The JSON-LD does not contain an array of types.",
                         Response.Status.BAD_REQUEST);
             }
-        } catch (JSONException e) {
+        } catch (IOException e) {
             throw ErrorUtils.sendError(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
@@ -2900,12 +2952,14 @@ public class OntologyRest {
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        JSONObject response = new JSONObject();
-        response.element("ontologyId", record.getOntologyIRI().get().toString());
-        response.element("recordId", record.getResource().stringValue());
-        response.element("branchId", branchId.toString());
-        response.element("commitId", commitId.toString());
 
-        return Response.status(Response.Status.CREATED).entity(response).build();
+        ObjectNode objectNode = mapper.createObjectNode();
+
+        objectNode.put("ontologyId", record.getOntologyIRI().get().toString());
+        objectNode.put("recordId", record.getResource().stringValue());
+        objectNode.put("branchId", branchId.toString());
+        objectNode.put("commitId", commitId.toString());
+
+        return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
 }
