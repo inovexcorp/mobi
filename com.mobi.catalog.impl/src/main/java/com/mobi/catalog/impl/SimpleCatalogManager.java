@@ -1229,8 +1229,11 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
+        long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getConflicts(leftId, rightId, conn);
+        } finally {
+            log.trace("getConflicts took {}ms", System.currentTimeMillis() - start);
         }
     }
 
