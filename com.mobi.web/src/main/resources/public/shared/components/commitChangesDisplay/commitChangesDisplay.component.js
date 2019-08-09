@@ -61,16 +61,10 @@
         dvm.chunkList = [];
         dvm.results = {};
 
-        dvm.$onInit = function() {
-            var adds = _.map(dvm.additions, '@id');
-            var deletes = _.map(dvm.deletions, '@id');
-            // Merge and dedupe addition and deletion ids
-            dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-            dvm.results = getResults();
-        }
         dvm.$onChanges = function() {
             var adds = _.map(dvm.additions, '@id');
             var deletes = _.map(dvm.deletions, '@id');
+            // Merge and dedupe addition and deletion ids
             dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
             dvm.size = 100;
             dvm.index = 0;

@@ -66,6 +66,12 @@ describe('Commit Changes Display component', function() {
         });
     });
     describe('controller methods', function() {
+        it('$onChanges should produce current number of list elements', function() {
+            this.controller.additions = _.map(_.range(0, 150), i => ({'@id': `${i}`}));
+            this.controller.deletions = _.map(_.range(50, 200), i => ({'@id': `${i}`}));
+            this.controller.$onChanges();
+            expect(this.controller.list.length).toEqual(200);
+        });
         it('should get more results', function() {
             this.controller.list = ['1', '2', '3', '4'];
             this.controller.size = 2;
@@ -135,12 +141,12 @@ describe('Commit Changes Display component', function() {
             expect(this.element.find('statement-display').length).toEqual(2);
         });
     });
-    it('$onInit correctly sets the controller variables', function() {
+    it('$onChanges correctly sets the controller variables', function() {
         this.controller.additions = [{'@id': '1'}, {'@id': '3'}];
         this.controller.deletions = [{'@id': '1'}, {'@id': '2'}, {'@id': '4'}];
         this.controller.size = 2;
         utilSvc.getChangesById.and.returnValue([]);
-        this.controller.$onInit();
+        this.controller.$onChanges();
         expect(this.controller.list).toEqual(['1', '3', '2', '4']);
         expect(this.controller.chunkList).toEqual([['1', '3'], ['2', '4']]);
         expect(this.controller.chunks).toEqual(1);
