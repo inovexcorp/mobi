@@ -180,7 +180,7 @@
                             [].concat(inProgressAdditions, inProgressDeletions
                             ).reduce((dict, currentItem) => {
                                 var existingValue = dict[currentItem['id']] || {};
-                                var mergedValue = Object.assign({ 'id' : '', 'additions' : [{}], 'deletions' : [{}]}, existingValue, currentItem);
+                                var mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue, currentItem);
                                 dict[currentItem.id] = mergedValue;
                                 return dict;  
                             }, {}));
