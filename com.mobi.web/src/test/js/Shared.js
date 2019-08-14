@@ -1050,7 +1050,7 @@ function mockUtil() {
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
-            this.getPredicateAndObject = jasmine.createSpy('getPredicateAndObject');
+            this.addPredicatesAndObjects = jasmine.createSpy('addPredicatesAndObjects');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
