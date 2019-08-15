@@ -506,7 +506,7 @@ describe('Util service', function() {
         }, {
             p: 'prop5', o: 'value5'
         }];
-        expect(utilSvc.addPredicatesAndObjects(addition)).toEqual(expected);
+        expect(utilSvc.getPredicatesAndObjects(addition)).toEqual(expected);
     })
     it("should return the localname of the split IRI for the provided object's p property", function() {
         splitIRIFilter.and.returnValue({end: 'localname'});

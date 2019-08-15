@@ -166,12 +166,12 @@
 
                     $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
                         var inProgressAdditions = _.map(dvm.os.listItem.inProgressCommit.additions, addition => {
-                            var additions = dvm.util.addPredicatesAndObjects(addition);
+                            var additions = dvm.util.getPredicatesAndObjects(addition);
                             var id = addition['@id'];
                             return {id, additions}
                         });
                         var inProgressDeletions = _.map(dvm.os.listItem.inProgressCommit.deletions, deletion => {
-                            var deletions = dvm.util.addPredicatesAndObjects(deletion);
+                            var deletions = dvm.util.getPredicatesAndObjects(deletion);
                             var id = deletion['@id'];
                             return {id, deletions}
                         });

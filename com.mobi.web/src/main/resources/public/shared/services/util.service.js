@@ -614,7 +614,7 @@
          * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
          * statements which have the provided id as a subject.
          */
-        self.addPredicatesAndObjects = function(additionOrDeletion) {
+        self.getPredicatesAndObjects = function(additionOrDeletion) {
             var results = [];
             _.forOwn(additionOrDeletion, (value, key) => {
                 if (key !== '@id') {
