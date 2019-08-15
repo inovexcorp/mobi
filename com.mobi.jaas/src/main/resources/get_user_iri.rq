@@ -1,0 +1,10 @@
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+
+SELECT ?userId
+WHERE {
+    ?userId a um:User ;
+        um:username ?username .
+    
+    FILTER (LCASE(STR(?username)) = LCASE(STR(?queryUsername)))
+    FILTER NOT EXISTS { ?userId a um:ExternalUser }
+}
