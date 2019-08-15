@@ -487,6 +487,27 @@ describe('Util service', function() {
         }];
         expect(utilSvc.getChangesById('id', array)).toEqual(expected);
     });
+    it('should get correct statement predicates and objects for the provided addition or deletion', function() {
+        var addition = {
+            '@id': 'id',
+            prop1: 'value1',
+            prop2: 'value2',
+            prop3: ['value3', 'value4'],
+            prop5: 'value5'
+        };
+        var expected = [{
+            p: 'prop1', o: 'value1'
+        }, {
+            p: 'prop2', o: 'value2'
+        }, {
+            p: 'prop3', o: 'value3'
+        }, {
+            p: 'prop3', o: 'value4'
+        }, {
+            p: 'prop5', o: 'value5'
+        }];
+        expect(utilSvc.getPredicatesAndObjects(addition)).toEqual(expected);
+    })
     it("should return the localname of the split IRI for the provided object's p property", function() {
         splitIRIFilter.and.returnValue({end: 'localname'});
         expect(utilSvc.getPredicateLocalName({p: 'predicate'})).toBe('localname');

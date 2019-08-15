@@ -601,6 +601,36 @@
             });
             return results;
         }
+
+        /**
+         * @ngdoc method
+         * @name getPredicatesAndObjects
+         * @methodOf shared.service:utilService
+         *
+         * @description
+         * Transforms an object containing addition or deletion information into an array of subject, predicate, object triples.
+         *
+         * @param {Object} additionOrDeletion An object containing the addition or deletion.
+         * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+         * statements which have the provided id as a subject.
+         */
+        self.getPredicatesAndObjects = function(additionOrDeletion) {
+            var results = [];
+            _.forOwn(additionOrDeletion, (value, key) => {
+                if (key !== '@id') {
+                    var actualKey = key;
+                    if (key === '@type') {
+                        actualKey = prefixes.rdf + 'type';
+                    }
+                    if (_.isArray(value)) {
+                        _.forEach(value, item => results.push({p: actualKey, o: item}));
+                    } else {
+                        results.push({p: actualKey, o: value});
+                    }
+                }
+            });
+            return results;
+        }
         /**
          * @ngdoc method
          * @name getPredicateLocalName
