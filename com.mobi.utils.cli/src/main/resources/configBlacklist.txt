@@ -1,0 +1,2 @@
+com.mobi.platform.server.cfg
+license.lic
