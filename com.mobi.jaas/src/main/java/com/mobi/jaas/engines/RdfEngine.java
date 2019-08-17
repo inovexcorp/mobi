@@ -42,8 +42,11 @@ import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontologies.foaf.Agent;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.QueryResults;
+import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -104,7 +107,12 @@ public class RdfEngine implements Engine {
     private static final String GET_USERS_QUERY;
     private static final String GET_GROUPS_QUERY;
     private static final String GET_USER_ROLES_QUERY;
+    private static final String GET_USER_IRI;
+    private static final String GET_GROUP_IRI;
     private static final String USER_BINDING = "userId";
+    private static final String GROUP_BINDING = "groupId";
+    private static final String QUERY_USERNAME_BINDING = "queryUsername";
+    private static final String QUERY_TITLE_BINDING = "queryTitle";
 
     static {
         try {
@@ -118,6 +126,14 @@ public class RdfEngine implements Engine {
             );
             GET_USER_ROLES_QUERY = IOUtils.toString(
                     RdfEngine.class.getResourceAsStream("/get_user_roles.rq"),
+                    "UTF-8"
+            );
+            GET_USER_IRI = IOUtils.toString(
+                    RdfEngine.class.getResourceAsStream("/get_user_iri.rq"),
+                    "UTF-8"
+            );
+            GET_GROUP_IRI = IOUtils.toString(
+                    RdfEngine.class.getResourceAsStream("/get_group_iri.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -143,8 +159,8 @@ public class RdfEngine implements Engine {
                                 vf.createIRI(DCTERMS.TITLE.stringValue()));
                         conn.add(adminRole.getModel(), context);
                     });
-            Resource adminIRI = createUserIri("admin");
-            if (!resourceExists(adminIRI)) {
+            if (!getUserId("admin").isPresent()) {
+                Resource adminIRI = createUserIri("admin");
                 Set<Role> allRoles = roles.stream()
                         .map(role -> roleFactory.createNew(vf.createIRI(roleNamespace + role)))
                         .collect(Collectors.toSet());
@@ -279,7 +295,7 @@ public class RdfEngine implements Engine {
 
     @Override
     public boolean userExists(String username) {
-        return userExists(createUserIri(username));
+        return getUserId(username).isPresent();
     }
 
     @Override
@@ -289,20 +305,21 @@ public class RdfEngine implements Engine {
 
     @Override
     public Optional<User> retrieveUser(String username) {
-        if (!userExists(username)) {
-            return Optional.empty();
-        }
-
-        Model userModel = mf.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(createUserIri(username),
-                    null, null, context);
+            Optional<Resource> optId = getUserId(username, conn);
+            if (!optId.isPresent()) {
+                return Optional.empty();
+            }
+
+            Model userModel = mf.createModel();
+            RepositoryResult<Statement> statements = conn.getStatements(optId.get(), null, null, context);
             statements.forEach(userModel::add);
             roles.stream()
                     .map(this::getRole)
                     .forEach(roleOptional -> roleOptional.ifPresent(role -> userModel.addAll(role.getModel())));
+
+            return userFactory.getExisting(optId.get(), userModel);
         }
-        return userFactory.getExisting(createUserIri(username), userModel);
     }
 
     @Override
@@ -318,12 +335,13 @@ public class RdfEngine implements Engine {
 
     @Override
     public void deleteUser(String username) {
-        if (!userExists(username)) {
-            throw new IllegalArgumentException("User with that id does not exist");
-        }
         try (RepositoryConnection conn = repository.getConnection()) {
-            conn.remove(createUserIri(username), null, null, context);
-            conn.remove(null, null, (Value) createUserIri(username), context);
+            Optional<Resource> optId = getUserId(username, conn);
+            if (!optId.isPresent()) {
+                throw new IllegalArgumentException("User with that id does not exist");
+            }
+            conn.remove(optId.get(), null, null, context);
+            conn.remove(null, null, (Value) optId.get(), context);
         }
     }
 
@@ -382,7 +400,7 @@ public class RdfEngine implements Engine {
 
     @Override
     public boolean groupExists(String groupTitle) {
-        return groupExists(createGroupIri(groupTitle));
+        return getGroupId(groupTitle).isPresent();
     }
 
     @Override
@@ -392,26 +410,26 @@ public class RdfEngine implements Engine {
 
     @Override
     public Optional<Group> retrieveGroup(String groupTitle) {
-        if (!groupExists(groupTitle)) {
-            return Optional.empty();
-        }
-
-        Model groupModel = mf.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(createGroupIri(groupTitle),
-                    null, null, context);
+            Optional<Resource> optId = getGroupId(groupTitle, conn);
+            if (!optId.isPresent()) {
+                return Optional.empty();
+            }
+
+            Model groupModel = mf.createModel();
+            RepositoryResult<Statement> statements = conn.getStatements(optId.get(), null, null, context);
             statements.forEach(groupModel::add);
             roles.stream()
                     .map(this::getRole)
                     .forEach(roleOptional -> roleOptional.ifPresent(role -> groupModel.addAll(role.getModel())));
-            groupModel.filter(createGroupIri(groupTitle), vf.createIRI(Group.member_IRI), null)
+            groupModel.filter(optId.get(), vf.createIRI(Group.member_IRI), null)
                     .objects().forEach(userIRI -> {
                         RepositoryResult<Statement> userStatements = conn.getStatements((Resource) userIRI, null, null,
                                 context);
                         userStatements.forEach(groupModel::add);
                     });
+            return groupFactory.getExisting(optId.get(), groupModel);
         }
-        return groupFactory.getExisting(createGroupIri(groupTitle), groupModel);
     }
 
     @Override
@@ -427,11 +445,12 @@ public class RdfEngine implements Engine {
 
     @Override
     public void deleteGroup(String groupTitle) {
-        if (!groupExists(groupTitle)) {
-            throw new IllegalArgumentException("Group with that id does not exist");
-        }
         try (RepositoryConnection conn = repository.getConnection()) {
-            conn.remove(createGroupIri(groupTitle), null, null, context);
+            Optional<Resource> optId = getGroupId(groupTitle, conn);
+            if (!optId.isPresent()) {
+                throw new IllegalArgumentException("Group with that id does not exist");
+            }
+            conn.remove(optId.get(), null, null, context);
         }
     }
 
@@ -534,8 +553,6 @@ public class RdfEngine implements Engine {
     private boolean resourceExists(Resource resource) {
         try (RepositoryConnection conn = repository.getConnection()) {
             return conn.getStatements(resource, null, null, context).hasNext();
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
     }
 
@@ -543,8 +560,6 @@ public class RdfEngine implements Engine {
         try (RepositoryConnection conn = repository.getConnection()) {
             return conn.getStatements(resource, vf.createIRI(RDF.TYPE.stringValue()),
                     vf.createIRI(typeString), context).hasNext();
-        } catch (RepositoryException e) {
-            throw new MobiException("Error in repository connection", e);
         }
     }
 
@@ -554,5 +569,37 @@ public class RdfEngine implements Engine {
 
     private Resource createGroupIri(String groupTitle) {
         return vf.createIRI(groupNamespace + DigestUtils.sha1Hex(groupTitle));
+    }
+
+    private Optional<Resource> getUserId(String username) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return getUserId(username, conn);
+        }
+    }
+
+    private Optional<Resource> getUserId(String username, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(GET_USER_IRI);
+        query.setBinding(QUERY_USERNAME_BINDING, vf.createLiteral(username));
+        TupleQueryResult result = query.evaluate();
+        if (!result.hasNext()) {
+            return Optional.empty();
+        }
+        return Optional.of(Bindings.requiredResource(result.next(), USER_BINDING));
+    }
+
+    private Optional<Resource> getGroupId(String groupTitle) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return getGroupId(groupTitle, conn);
+        }
+    }
+
+    private Optional<Resource> getGroupId(String groupTitle, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(GET_GROUP_IRI);
+        query.setBinding(QUERY_TITLE_BINDING, vf.createLiteral(groupTitle));
+        TupleQueryResult result = query.evaluate();
+        if (!result.hasNext()) {
+            return Optional.empty();
+        }
+        return Optional.of(Bindings.requiredResource(result.next(), GROUP_BINDING));
     }
 }
