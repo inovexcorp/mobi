@@ -94,9 +94,9 @@ describe('Saved Changes Tab directive', function() {
             expect(this.element.find('statement-display').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id', 'value': ['stuff']}];
             ontologyStateSvc.listItem.upToDate = false;
-            utilSvc.getChangesById.and.returnValue([{}]);
+            utilSvc.getPredicatesAndObjects.and.returnValue([{}]);
             scope.$apply();
-            expect(this.element.find('statement-display').length).toBe(2);
+            expect(this.element.find('statement-display').length).toBe(1);
         });
         it('depending on whether the list item is up to date', function() {
             expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);

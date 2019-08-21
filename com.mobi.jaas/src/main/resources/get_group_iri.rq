@@ -1,0 +1,11 @@
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+PREFIX dct: <http://purl.org/dc/terms/>
+
+SELECT ?groupId
+WHERE {
+    ?groupId a um:Group ;
+        dct:title ?title .
+    
+    FILTER (LCASE(STR(?title)) = LCASE(STR(?queryTitle)))
+    FILTER NOT EXISTS { ?groupId a um:ExternalGroup }
+}
