@@ -200,9 +200,10 @@ public class Restore implements Action {
             InvalidSyntaxException {
         // Copy config files to karaf.etc directory
 
-        List<String> repoFileNames = new ArrayList<>();
         List<String> repoServices = new ArrayList<>();
         File configDir = new File(RESTORE_PATH + File.separator + "configurations");
+
+        // Generate list of repoServices from the repository configuration filenames in the the backup
         File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
         if (repoFiles != null && repoFiles.length != 0) {
             for (File repoFile : repoFiles) {
@@ -214,31 +215,26 @@ public class Restore implements Action {
                 sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
                 sb.append("))");
                 repoServices.add(sb.toString());
-                repoFileNames.add(filename);
             }
         }
 
-        File etc = new File(System.getProperty("karaf.etc"));
-        File[] oldRepoFiles = etc.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
-        for (File oldRepoFile : oldRepoFiles) {
-            if (!repoFileNames.contains(oldRepoFile.getName())) {
-                oldRepoFile.delete();
+        // Merge directories, replacing any file that already exists
+        Path src = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator);
+        Path dest = Paths.get(System.getProperty("karaf.etc") + File.separator);
+        Files.walk(src).forEach(backupConfig -> {
+            try {
+                Path newFileDest = dest.resolve(src.relativize(backupConfig));
+                if (Files.isDirectory(backupConfig)) {
+                    if (!Files.exists(newFileDest)) {
+                        Files.createDirectory(newFileDest);
+                    }
+                    return;
+                }
+                Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                LOGGER.error("Could not copy file: " + backupConfig.getFileName());
             }
-        }
-
-        List<String> whitelistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configWhitelist.txt"),
-                "UTF-8");
-        whitelistedFiles.addAll(repoFileNames);
-        for (String whitelistedFile : whitelistedFiles) {
-            Path backupConfig = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator
-                    + whitelistedFile);
-            if (Files.exists(backupConfig)) {
-                Files.copy(backupConfig, Paths.get(System.getProperty("karaf.etc") + File.separator
-                        + whitelistedFile), StandardCopyOption.REPLACE_EXISTING);
-            } else {
-                LOGGER.info("Whitelisted file " + whitelistedFile + " does not exist in backup zip");
-            }
-        }
+        });
 
         System.out.println("Waiting for services to restart");
         TimeUnit.SECONDS.sleep(20);
