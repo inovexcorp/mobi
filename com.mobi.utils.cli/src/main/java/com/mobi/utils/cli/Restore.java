@@ -32,6 +32,8 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
+import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import net.sf.json.JSONObject;
@@ -273,8 +275,11 @@ public class Restore implements Action {
     private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
         // Clear populated repositories
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
-            try (RepositoryConnection connection = repo.getConnection()) {
-                connection.clear();
+            if (repo.getConfig() instanceof NativeRepositoryConfig
+                    || repo.getConfig() instanceof MemoryRepositoryConfig) {
+                try (RepositoryConnection connection = repo.getConnection()) {
+                    connection.clear();
+                }
             }
         });
 

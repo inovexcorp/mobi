@@ -106,7 +106,7 @@
                             com.mobi.repository.config; provide:=true,
                             com.mobi.query.api; provide:=true,
                             com.mobi.query; provide:=true,
-                            com.mobi.repository.impl.sesame
+                            com.mobi.repository.impl.sesame*
                         </Export-Package>
                         <_metatype>*</_metatype>
                         <Service-Component>*</Service-Component>

@@ -27,6 +27,9 @@ import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.rdf.export.RDFExportService;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.config.RepositoryConfig;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
+import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -105,19 +108,24 @@ public class Backup implements Action {
             JSONObject repositories = new JSONObject();
             Map<String, Repository> repos = repoManager.getAllRepositories();
             for (String repoId : repos.keySet()) {
-                LOGGER.trace("Backing up the " + repoId + " repository");
-                ByteArrayOutputStream repoOut = new ByteArrayOutputStream();
-                try (ZipOutputStream repoZip = new ZipOutputStream(repoOut)) {
-                    final ZipEntry repoEntry = new ZipEntry(repoId + ".trig");
-                    repoZip.putNextEntry(repoEntry);
-                    RDFExportConfig config = new RDFExportConfig.Builder(repoZip, RDFFormat.TRIG).build();
-                    exportService.export(config, repoId);
+                RepositoryConfig repoConfig = repos.get(repoId).getConfig();
+                if (repoConfig instanceof NativeRepositoryConfig || repoConfig instanceof MemoryRepositoryConfig) {
+                    LOGGER.trace("Backing up the " + repoId + " repository");
+                    ByteArrayOutputStream repoOut = new ByteArrayOutputStream();
+                    try (ZipOutputStream repoZip = new ZipOutputStream(repoOut)) {
+                        final ZipEntry repoEntry = new ZipEntry(repoId + ".trig");
+                        repoZip.putNextEntry(repoEntry);
+                        RDFExportConfig config = new RDFExportConfig.Builder(repoZip, RDFFormat.TRIG).build();
+                        exportService.export(config, repoId);
+                    }
+                    repositories.accumulate(repoId, "repos/" + repoId + ".zip");
+                    final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
+                    mainZip.putNextEntry(repoZipEntry);
+                    mainZip.write(repoOut.toByteArray());
+                    LOGGER.trace("Backed up the " + repoId + " repository");
+                } else {
+                    LOGGER.trace("Skipping back up of non Native/Memory Repository: " + repoId);
                 }
-                repositories.accumulate(repoId, "repos/" + repoId + ".zip");
-                final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
-                mainZip.putNextEntry(repoZipEntry);
-                mainZip.write(repoOut.toByteArray());
-                LOGGER.trace("Backed up the " + repoId + " repository");
             }
             LOGGER.trace("Backed up the repositories to the zip");
             manifest.accumulate("repositories", repositories);
