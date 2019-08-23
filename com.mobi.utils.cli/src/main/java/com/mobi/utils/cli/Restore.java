@@ -68,8 +68,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -273,13 +275,17 @@ public class Restore implements Action {
     }
 
     private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
+
         // Clear populated repositories
+        Set<String> remoteRepos = new HashSet<>();
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
             if (repo.getConfig() instanceof NativeRepositoryConfig
                     || repo.getConfig() instanceof MemoryRepositoryConfig) {
                 try (RepositoryConnection connection = repo.getConnection()) {
                     connection.clear();
                 }
+            } else {
+                remoteRepos.add(repoID);
             }
         });
 
@@ -293,14 +299,19 @@ public class Restore implements Action {
 
         for (Object key : repos.keySet()) {
             String repoName = key.toString();
-            String repoPath = repos.optString(key.toString());
-            String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
-            builder.repository(repoName);
-            File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
-                    + repoName + ".trig");
-            importService.importFile(builder.build(), repoFile);
-            LOGGER.trace("Data successfully loaded to " + repoName + " repository.");
-            System.out.println("Data successfully loaded to " + repoName + " repository.");
+            if (!remoteRepos.contains(repoName)) {
+                String repoPath = repos.optString(key.toString());
+                String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
+                builder.repository(repoName);
+                File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
+                        + repoName + ".trig");
+                importService.importFile(builder.build(), repoFile);
+                LOGGER.trace("Data successfully loaded to " + repoName + " repository.");
+                System.out.println("Data successfully loaded to " + repoName + " repository.");
+            } else {
+                LOGGER.trace("Skipping data load of remote repository " + repoName);
+                System.out.println("Skipping data load of remote repository " + repoName);
+            }
         }
 
         // Remove Policy Statements

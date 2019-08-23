@@ -122,8 +122,10 @@ public class Backup implements Action {
                     final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
                     mainZip.putNextEntry(repoZipEntry);
                     mainZip.write(repoOut.toByteArray());
+                    System.out.println("Backed up the " + repoId + " repository");
                     LOGGER.trace("Backed up the " + repoId + " repository");
                 } else {
+                    System.out.println("Skipping back up of non Native/Memory Repository: " + repoId);
                     LOGGER.trace("Skipping back up of non Native/Memory Repository: " + repoId);
                 }
             }
