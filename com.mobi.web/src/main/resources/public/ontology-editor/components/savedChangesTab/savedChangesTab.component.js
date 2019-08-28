@@ -87,23 +87,17 @@
                 id: deletion['@id']
             }));
             var mergedInProgressCommits = Object.values([].concat(inProgressAdditions, inProgressDeletions).reduce((dict, currentItem) => {
-                    var existingValue = dict[currentItem['id']] || {};
-                    var mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue, currentItem);
-                    dict[currentItem.id] = mergedValue;
-                    return dict;  
-                }, {}));
-            dvm.list = _.map(mergedInProgressCommits, inProgressItem => {
-                var id = inProgressItem.id;
-                var additions = inProgressItem.additions;
-                var deletions = inProgressItem.deletions;
-                return {
-                    id,
-                    additions,
-                    deletions,
-                    disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
-                }
-            });
-
+                var existingValue = dict[currentItem['id']] || {};
+                var mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue, currentItem);
+                dict[currentItem.id] = mergedValue;
+                return dict;  
+            }, {}));
+            dvm.list = _.map(mergedInProgressCommits, inProgressItem => ({
+                    id: inProgressItem.id,
+                    additions: inProgressItem.additions,
+                    deletions: inProgressItem.deletions,
+                    disableAll: hasSpecificType(inProgressItem.additions) || hasSpecificType(inProgressItem.deletions)
+            }));
             dvm.list = _.sortBy(dvm.list, dvm.orderByIRI)
             dvm.showList = getList();
         }
