@@ -84,6 +84,7 @@ import org.semanticweb.owlapi.model.MissingImportListener;
 import org.semanticweb.owlapi.model.MissingOntologyHeaderStrategy;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
@@ -970,7 +971,8 @@ public class SimpleOntology implements Ontology {
     }
 
     private boolean isDeclaredIndividual(OWLIndividual individual) {
-        return owlOntology.classAssertionAxioms(individual).count() > 0;
+        return owlOntology.axioms(OWLClassAssertionAxiom.class, OWLIndividual.class, individual, Imports.INCLUDED,
+                Navigation.IN_SUB_POSITION).count() > 0;
     }
 
     @Override

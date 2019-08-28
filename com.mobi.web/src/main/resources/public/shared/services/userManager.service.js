@@ -435,7 +435,8 @@
             };
             return $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/groups', config)
                 .then(response => {
-                    _.pull(_.get(_.find(self.groups, {title: groupTitle}), 'members'), username);
+                    var group = _.find(self.groups, {title: groupTitle});
+                    group.members = _.without(_.get(group, 'members'), username);
                 }, util.rejectError);
         }
         /**
