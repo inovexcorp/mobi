@@ -66,8 +66,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -178,8 +180,10 @@ public class Restore implements Action {
         }
 
         BundleContext bundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class).getBundleContext();
-        copyConfigFiles(bundleContext);
-        copyPolicyFiles(bundleContext);
+        copyConfigFiles(bundleContext, backupVersion);
+        if (!backupVersion.startsWith(mobiVersions.get(0))) {
+            copyPolicyFiles(bundleContext);
+        }
         restoreRepositories(manifest, backupVersion);
 
         File tempArchive = new File(RESTORE_PATH);
@@ -196,7 +200,7 @@ public class Restore implements Action {
         return null;
     }
 
-    private void copyConfigFiles(BundleContext bundleContext) throws IOException, InterruptedException,
+    private void copyConfigFiles(BundleContext bundleContext, String version) throws IOException, InterruptedException,
             InvalidSyntaxException {
         // Copy config files to karaf.etc directory
 
@@ -218,6 +222,17 @@ public class Restore implements Action {
             }
         }
 
+        Set<String> blacklistedFiles = new HashSet<>((IOUtils.readLines(getClass()
+                .getResourceAsStream("/configBlacklist.txt"), "UTF-8")));
+        if (version.startsWith(mobiVersions.get(0))) {
+            LOGGER.trace("1.12 Mobi version detected. Blacklisting additional files from backup.");
+            // Blacklist 1.12 default Karaf config files that have changed with Karaf 4.2.x upgrade
+            // Blacklist also includes VFS config file with added directory property
+            // Blacklist also includes PolicyCacheConfiguration config file for change between size to number of entries
+            blacklistedFiles.addAll(IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist-1.12.txt"),
+                    "UTF-8"));
+        }
+
         // Merge directories, replacing any file that already exists
         Path src = Paths.get(RESTORE_PATH + File.separator + "configurations" + File.separator);
         Path dest = Paths.get(System.getProperty("karaf.etc") + File.separator);
@@ -230,7 +245,11 @@ public class Restore implements Action {
                     }
                     return;
                 }
-                Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
+                if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
+                    Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
+                } else {
+                    LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+                }
             } catch (IOException e) {
                 LOGGER.error("Could not copy file: " + backupConfig.getFileName());
             }
