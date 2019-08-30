@@ -99,6 +99,7 @@ public class UserRestTest extends MobiRestTestNg {
     private Set<Group> groups;
     private Set<Role> roles;
     private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
+    private static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
     @Mock
     private EngineManager engineManager;
@@ -111,6 +112,9 @@ public class UserRestTest extends MobiRestTestNg {
 
     @Mock
     private UserFactory userFactoryMock;
+
+    @Mock
+    private User adminUserMock;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -434,6 +438,14 @@ public class UserRestTest extends MobiRestTestNg {
 
         Response response = target().path("users/error").request().delete();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void deleteMasterAdminUserTest() {
+        when(engineManager.retrieveUser("admin")).thenReturn(Optional.of(adminUserMock));
+        when(adminUserMock.getResource()).thenReturn(vf.createIRI(ADMIN_USER_IRI));
+        Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER).request().delete();
+        assertEquals(response.getStatus(), 405);
     }
 
     @Test
