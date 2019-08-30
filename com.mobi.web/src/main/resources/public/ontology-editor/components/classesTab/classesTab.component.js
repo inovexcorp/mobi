@@ -24,7 +24,7 @@
     'use strict';
 
     /**
-     * @ngdoc componentt
+     * @ngdoc component
      * @name ontology-editor.component:classesTab
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
@@ -48,7 +48,7 @@
         controller: classesTabComponentCtrl
     };
 
-    classesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService']
+    classesTabComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
 
     function classesTabComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, modalService) {
         var dvm = this;

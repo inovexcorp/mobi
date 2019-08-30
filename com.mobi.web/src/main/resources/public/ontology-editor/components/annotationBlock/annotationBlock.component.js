@@ -28,13 +28,14 @@
      * @name ontology-editor.component:annotationBlock
      * @requires shared.service:ontologyStateService
      * @requires ontology-editor.service:ontologyUtilsManagerService
+     * @requires shared.service:propertyManagerService
      * @requires shared.service:modalService
      *
      * @description
      * `annotationBlock` is a component that creates a section that displays the annotations on the
      * {@link shared.service:ontologyStateService selected entity} using
      * {@link ontology-editor.component:propertyValues}. The section header contains a button for adding an
-     * annotation. The directive houses the methods for opening the modal for
+     * annotation. The component houses the methods for opening the modal for
      * {@link ontology-editor.component:annotationOverlay editing, adding}, and removing annotations.
      */
     const annotationBlockComponent = {

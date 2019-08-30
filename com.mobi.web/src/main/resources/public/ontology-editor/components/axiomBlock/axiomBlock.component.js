@@ -35,7 +35,7 @@
      *
      * @description
      * `axiomBlock` is a component that creates a section that displays the appropriate axioms on the
-     * {@link shared.service:ontologyStateService selected entity} based on its type. The directives used for display
+     * {@link shared.service:ontologyStateService selected entity} based on its type. The components used for display
      * are {@link ontology-editor.component:classAxioms}, {@link ontology-editor.component:objectPropertyAxioms}, and
      * {@link ontology-editor.component:datatypePropertyAxioms}. The section header contains a button for adding
      * an axiom. The component houses the methods for opening the modal for

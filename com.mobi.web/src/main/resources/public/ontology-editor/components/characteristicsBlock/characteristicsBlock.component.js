@@ -24,8 +24,8 @@
     'use strict';
 
     /**
-     * @ngdoc directive
-     * @name characteristicsBlock.directive:characteristicsBlock
+     * @ngdoc component
+     * @name ontology-editor.component:characteristicsBlock
      * @requires shared.service:prefixes
      * @requires shared.service:ontologyStateService
      * @requires shared.service:ontologyManagerService

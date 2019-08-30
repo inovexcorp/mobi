@@ -36,7 +36,7 @@
      * `importsBlock` is a component that creates a section that displays the imports on the ontology represented by
      * the provided {@link shared.service:ontologyStateService list item}. The section contains buttons for adding an
      * import and reloading the imports. Each import is displayed as its IRI and with a remove button. The component
-     * houses the methods for opening the modal for {@link importsOverlay.directive:importsOverlay adding} and removing
+     * houses the methods for opening the modal for {@link ontology-editor.component:importsOverlay adding} and removing
      * imports.
      * 
      * @param {Object} listItem An object representing an ontology as defined by the

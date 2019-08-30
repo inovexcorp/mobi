@@ -60,6 +60,22 @@ describe('Characteristics Block component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('iri should be one way bound', function() {
+            this.controller.iri = 'test';
+            scope.$digest();
+            expect(scope.iri).toEqual('');
+        });
+        it('types should be one way bound', function() {
+            this.controller.types = [{}];
+            scope.$digest();
+            expect(scope.types).toEqual([]);
+        });
+        it('updateTypes should be called in the parent scope', function() {
+            this.controller.updateTypes({value: []});
+            expect(scope.updateTypes).toHaveBeenCalledWith([]);
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('CHARACTERISTICS-BLOCK');

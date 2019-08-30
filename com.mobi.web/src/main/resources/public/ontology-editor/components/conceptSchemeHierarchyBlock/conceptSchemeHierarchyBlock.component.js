@@ -25,7 +25,7 @@
 
     /**
      * @ngdoc component
-     * @name conceptSchemeHierarchyBlock.directive:conceptSchemeHierarchyBlock
+     * @name ontology-editor.component:conceptSchemeHierarchyBlock
      * @requires shared.service:ontologyStateService
      *
      * @description
