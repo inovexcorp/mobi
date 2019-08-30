@@ -242,10 +242,9 @@ public class Restore implements Action {
                 if (Files.isDirectory(backupConfig)) {
                     if (!Files.exists(newFileDest)) {
                         Files.createDirectory(newFileDest);
+                        LOGGER.trace("Created directory: " + newFileDest.getFileName().toString());
                     }
-                    return;
-                }
-                if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
+                } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
                     Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
                 } else {
                     LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
