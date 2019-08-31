@@ -99,7 +99,6 @@ public class UserRestTest extends MobiRestTestNg {
     private Set<Group> groups;
     private Set<Role> roles;
     private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
-    private static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
     @Mock
     private EngineManager engineManager;
@@ -443,7 +442,7 @@ public class UserRestTest extends MobiRestTestNg {
     @Test
     public void deleteMasterAdminUserTest() {
         when(engineManager.retrieveUser("admin")).thenReturn(Optional.of(adminUserMock));
-        when(adminUserMock.getResource()).thenReturn(vf.createIRI(ADMIN_USER_IRI));
+        when(adminUserMock.getResource()).thenReturn(vf.createIRI(UserRest.ADMIN_USER_IRI));
         Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER).request().delete();
         assertEquals(response.getStatus(), 405);
     }

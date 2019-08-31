@@ -687,7 +687,7 @@
         }
 
         self.isAdminUser = function(userIri) {
-            return (userIri === ADMIN_USER_IRI);
+            return userIri === ADMIN_USER_IRI;
         }
         /**
          * @ngdoc method
