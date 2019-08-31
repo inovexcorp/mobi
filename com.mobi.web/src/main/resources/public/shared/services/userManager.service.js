@@ -23,7 +23,7 @@
 (function() {
     'use strict';
 
-    userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
+    userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'ADMIN_USER_IRI', 'utilService', 'prefixes'];
 
     /**
      * @ngdoc service
@@ -37,10 +37,11 @@
      * `userManagerService` is a service that provides access to the Mobi users and groups REST endpoints for adding,
      * removing, and editing Mobi users and groups.
      */
-    function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
+    function userManagerService($http, $q, REST_PREFIX, ADMIN_USER_IRI, utilService, prefixes) {
         var self = this,
             userPrefix = REST_PREFIX + 'users',
             groupPrefix = REST_PREFIX + 'groups';
+            
         var util = utilService;
 
         /**
@@ -683,6 +684,10 @@
                 });
                 return _.includes(_.flatten(_.map(userGroups, 'roles')), 'admin');
             }
+        }
+
+        self.isAdminUser = function(userIri) {
+            return userIri === ADMIN_USER_IRI;
         }
         /**
          * @ngdoc method
