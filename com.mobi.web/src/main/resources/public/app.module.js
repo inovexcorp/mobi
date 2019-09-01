@@ -71,6 +71,7 @@
         })
         .constant('INDENT', 1.28571429)
         .constant('REST_PREFIX', '/mobirest/')
+        .constant('ADMIN_USER_IRI', 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997')
         .config(httpInterceptorConfig)
         .config(ignoreUnhandledRejectionsConfig)
         .config(ariaConfig)

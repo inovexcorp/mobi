@@ -112,6 +112,9 @@ public class UserRestTest extends MobiRestTestNg {
     @Mock
     private UserFactory userFactoryMock;
 
+    @Mock
+    private User adminUserMock;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
@@ -434,6 +437,14 @@ public class UserRestTest extends MobiRestTestNg {
 
         Response response = target().path("users/error").request().delete();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void deleteMasterAdminUserTest() {
+        when(engineManager.retrieveUser("admin")).thenReturn(Optional.of(adminUserMock));
+        when(adminUserMock.getResource()).thenReturn(vf.createIRI(UserRest.ADMIN_USER_IRI));
+        Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER).request().delete();
+        assertEquals(response.getStatus(), 405);
     }
 
     @Test
