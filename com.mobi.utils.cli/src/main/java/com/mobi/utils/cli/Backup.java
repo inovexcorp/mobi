@@ -29,6 +29,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Command;
@@ -51,6 +52,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -144,7 +146,7 @@ public class Backup implements Action {
             File etc = getConfigFileDir();
             ByteArrayOutputStream configOut = new ByteArrayOutputStream();
             try (ZipOutputStream configZip = new ZipOutputStream(configOut)) {
-                addFolderToZip(etc, etc, configZip);
+                addConfigFolderToZip(etc, etc, configZip);
             }
             final ZipEntry configZipEntry = new ZipEntry("configurations.zip");
             mainZip.putNextEntry(configZipEntry);
@@ -202,6 +204,16 @@ public class Backup implements Action {
     private void addFolderToZip(File rootPath, File srcFolder, ZipOutputStream zip) throws Exception {
         for (File fileName : Objects.requireNonNull(srcFolder.listFiles())) {
             addFileToZip(rootPath, fileName, zip);
+        }
+    }
+
+    private void addConfigFolderToZip(File rootPath, File srcFolder, ZipOutputStream zip) throws Exception {
+        List<String> blacklistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist.txt"),
+                "UTF-8");
+        for (File fileName : Objects.requireNonNull(srcFolder.listFiles())) {
+            if (!blacklistedFiles.contains(fileName.getName())) {
+                addFileToZip(rootPath, fileName, zip);
+            }
         }
     }
 
