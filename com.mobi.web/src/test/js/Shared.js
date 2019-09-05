@@ -104,6 +104,12 @@ function injectRestPathConstant() {
     });
 }
 
+function injectAdminUserIRIConstant() {
+    module(function($provide) {
+        $provide.constant('ADMIN_USER_IRI', 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997');
+    });
+}
+
 function injectIndentConstant() {
     module(function($provide) {
         $provide.constant('INDENT', 1);

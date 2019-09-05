@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
@@ -88,6 +89,7 @@ public class UserRest {
     private SesameTransformer transformer;
     private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);
+    static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
     @Reference
     void setEngineManager(EngineManager engineManager) {
@@ -377,10 +379,14 @@ public class UserRest {
         }
         isAuthorizedUser(context, username);
         try {
-            if (!engineManager.userExists(username)) {
+            Optional<User> user = engineManager.retrieveUser(username);
+            if (!user.isPresent()) {
                 throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
             }
-
+            String userIRI = user.get().getResource().stringValue();
+            if (userIRI.equals(ADMIN_USER_IRI)) {
+                throw ErrorUtils.sendError("The admin user cannot be deleted.", Response.Status.METHOD_NOT_ALLOWED);
+            }
             engineManager.deleteUser(rdfEngine.getEngineName(), username);
             logger.info("Deleted user " + username);
             return Response.ok().build();
