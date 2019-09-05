@@ -32,6 +32,8 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
+import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import net.sf.json.JSONObject;
@@ -289,10 +291,17 @@ public class Restore implements Action {
     }
 
     private void restoreRepositories(JSONObject manifest, String backupVersion) throws IOException {
+
         // Clear populated repositories
+        Set<String> remoteRepos = new HashSet<>();
         repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
-            try (RepositoryConnection connection = repo.getConnection()) {
-                connection.clear();
+            if (repo.getConfig() instanceof NativeRepositoryConfig
+                    || repo.getConfig() instanceof MemoryRepositoryConfig) {
+                try (RepositoryConnection connection = repo.getConnection()) {
+                    connection.clear();
+                }
+            } else {
+                remoteRepos.add(repoID);
             }
         });
 
@@ -306,14 +315,19 @@ public class Restore implements Action {
 
         for (Object key : repos.keySet()) {
             String repoName = key.toString();
-            String repoPath = repos.optString(key.toString());
-            String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
-            builder.repository(repoName);
-            File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
-                    + repoName + ".trig");
-            importService.importFile(builder.build(), repoFile);
-            LOGGER.trace("Data successfully loaded to " + repoName + " repository.");
-            System.out.println("Data successfully loaded to " + repoName + " repository.");
+            if (!remoteRepos.contains(repoName)) {
+                String repoPath = repos.optString(key.toString());
+                String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
+                builder.repository(repoName);
+                File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
+                        + repoName + ".trig");
+                importService.importFile(builder.build(), repoFile);
+                LOGGER.trace("Data successfully loaded to " + repoName + " repository.");
+                System.out.println("Data successfully loaded to " + repoName + " repository.");
+            } else {
+                LOGGER.trace("Skipping data load of remote repository " + repoName);
+                System.out.println("Skipping data load of remote repository " + repoName);
+            }
         }
 
         // Remove Policy Statements
