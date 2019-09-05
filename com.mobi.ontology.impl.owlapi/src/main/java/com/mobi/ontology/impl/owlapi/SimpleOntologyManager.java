@@ -60,7 +60,7 @@ import javax.cache.Cache;
 
 @Component(
         provide = { SimpleOntologyManager.class, OntologyManager.class },
-        configurationPolicy = ConfigurationPolicy.optional,
+        configurationPolicy = ConfigurationPolicy.require,
         designateFactory = OntologyManagerConfig.class,
         name = SimpleOntologyManager.COMPONENT_NAME
 )

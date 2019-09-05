@@ -26,7 +26,8 @@ package com.mobi.cache.impl.repository;
 import aQute.bnd.annotation.metatype.Meta;
 
 /**
- * Base configuration for CleanRepositoryCache service.
+ * Base configuration for CleanRepositoryCache service. Requires a "scheduler.expression" property to be set in the
+ * configuration file.
  */
 @Meta.OCD
 public interface CleanRepositoryCacheConfig {
