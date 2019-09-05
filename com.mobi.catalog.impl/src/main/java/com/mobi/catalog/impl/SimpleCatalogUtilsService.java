@@ -793,7 +793,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             return;
         }
 
-        List<Statement> oppositeGraphStatements = RepositoryResults.asList(conn.getStatements(null,
+        Set<Statement> oppositeGraphStatements = RepositoryResults.asSet(conn.getStatements(null,
                 null, null, oppositeNamedGraph));
 
         changes.forEach(statement -> {
