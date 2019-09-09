@@ -25,6 +25,7 @@ package com.mobi.cache.impl.repository;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
@@ -46,11 +47,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * CleanRepositoryCache is a reoccurring Scheduler job that runs based on a Quartz Cron statement. A statement like
- * "0 0 * * * ?" will have the job run every hour on the hour. The job determines if a dataset living in the repository
- * cache is past the expiration time. This time is set by the `expiry` property (in seconds) in the configuration. If
- * the time at which the job runs is past the last accessed time of the dataset plus the expiry time, then a safe delete
- * is performed on the dataset.
+ * CleanRepositoryCache is a reoccurring Scheduler job that runs based on a Quartz Cron statement. A
+ * "scheduler.expression" set to "0 0 * * * ?" will have the job run every hour on the hour. The job determines if a
+ * dataset living in the repository cache is past the expiration time. This time is set by the `expiry` property
+ * (in seconds) in the configuration. If the time at which the job runs is past the last accessed time of the dataset
+ * plus the expiry time, then a safe delete is performed on the dataset.
  */
 @Component(
         immediate = true,
@@ -59,7 +60,7 @@ import java.util.Map;
                 "scheduler.name=CleanRepositoryCache",
                 "scheduler.concurrent:Boolean=false"
         },
-        enabled = false
+        configurationPolicy = ConfigurationPolicy.require
 )
 public class CleanRepositoryCache implements Job {
     private final Logger log = LoggerFactory.getLogger(CleanRepositoryCache.class);
