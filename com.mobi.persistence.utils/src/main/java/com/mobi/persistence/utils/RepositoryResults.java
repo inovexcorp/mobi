@@ -29,7 +29,9 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.repository.base.RepositoryResult;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class RepositoryResults {
 
@@ -71,5 +73,18 @@ public class RepositoryResults {
         List<T> list = new ArrayList<>();
         results.forEach(list::add);
         return list;
+    }
+
+    /**
+     * Returns the Set containing all the Objects from a RepositoryResult.
+     *
+     * @param results - The RepositoryResult containing the Objects for the Set
+     * @param <T> - The type of Objects contained in the RepositoryResult
+     * @return the Set containing all the Objects from a RepositoryResult.
+     */
+    public static <T> Set<T> asSet(RepositoryResult<T> results) {
+        Set<T> set = new HashSet<>();
+        results.forEach(set::add);
+        return set;
     }
 }

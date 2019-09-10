@@ -113,10 +113,10 @@
             return $http.post(prefix, null, config)
                 .then(response => {
                     if (response.status === 200 && response.data.scope !== anon) {
-                        self.currentUser = response.data.sub;
-                        return userManagerService.getUser(self.currentUser)
+                        return userManagerService.getUser(response.data.sub)
                             .then(user => {
                                 self.currentUserIRI = user.iri;
+                                self.currentUser = user.username;
                                 $state.go('root.home');
                                 return true;
                             });
@@ -189,12 +189,12 @@
                 if (data.scope === anon) {
                     return $q.reject(data);
                 }
-                self.currentUser = data.sub;
                 var promises = [
                     stateManagerService.initialize(),
                     userManagerService.initialize(),
-                    userManagerService.getUser(self.currentUser).then(user => {
+                    userManagerService.getUser(data.sub).then(user => {
                         self.currentUserIRI = user.iri;
+                        self.currentUser = user.username;
                     })
                 ];
                 if (!self.weGood) {

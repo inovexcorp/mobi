@@ -25,12 +25,13 @@ package com.mobi.rest.util;
 
 import com.mobi.web.security.util.AuthenticationProps;
 
+import java.io.IOException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
-import java.io.IOException;
 
 public class UsernameTestFilter implements ContainerRequestFilter {
     public static final String USERNAME = "tester";
+    public static final String ADMIN_USER = "admin";
 
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {

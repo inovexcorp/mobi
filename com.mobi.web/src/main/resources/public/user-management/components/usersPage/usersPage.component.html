@@ -35,7 +35,7 @@
                     <users-list users="dvm.um.users" selected-user="dvm.state.selectedUser" click-event="dvm.selectUser(user)" search-text="dvm.state.userSearchString"></users-list>
                 </block-content>
                 <block-footer class="centered">
-                    <button class="btn btn-link" ng-click="dvm.confirmDeleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser || dvm.state.selectedUser.external">
+                    <button class="btn btn-link" ng-click="dvm.confirmDeleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.um.isAdminUser(dvm.state.selectedUser.iri) || dvm.state.selectedUser.username === dvm.lm.currentUser || dvm.state.selectedUser.external">
                         <i class="fa fa-trash"></i>Delete User
                     </button>
                 </block-footer>

@@ -25,6 +25,7 @@ package com.mobi.ontology.impl.repository;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
@@ -68,7 +69,7 @@ import javax.cache.Cache;
 @Component(
         provide = { SimpleOntologyManager.class, OntologyManager.class },
         name = SimpleOntologyManager.COMPONENT_NAME,
-        enabled = false
+        configurationPolicy = ConfigurationPolicy.require
 )
 public class SimpleOntologyManager extends AbstractOntologyManager {
 
