@@ -70,6 +70,20 @@ describe('Commit Changes Display component', function() {
         });
     });
     describe('controller methods', function() {
+        it('$onChanges should produce current number of list elements', function() {
+            this.controller.additions = _.map(_.range(0, 150), i => ({'@id': `${i}`}));
+            this.controller.deletions = _.map(_.range(50, 200), i => ({'@id': `${i}`}));
+            utilSvc.getChangesById.and.returnValue([]);
+            this.controller.$onChanges();
+            expect(this.controller.list.length).toEqual(200);
+            expect(this.controller.chunkList.length).toEqual(2);
+            expect(this.controller.chunkList[0].length).toEqual(100);
+            expect(this.controller.chunks).toEqual(1);
+            expect(this.controller.results).toEqual(jasmine.objectContaining({
+                '1': {additions: [], deletions: []},
+                '3': {additions: [], deletions: []}
+            }));
+        });
         it('should get more results', function() {
             this.controller.list = ['1', '2', '3', '4'];
             this.controller.size = 2;
@@ -139,30 +153,19 @@ describe('Commit Changes Display component', function() {
             expect(this.element.find('statement-display').length).toEqual(2);
         });
     });
-    it('$onInit correctly sets the controller variables', function() {
-        this.controller.additions = [{'@id': '1'}, {'@id': '3'}];
-        this.controller.deletions = [{'@id': '1'}, {'@id': '2'}, {'@id': '4'}];
-        this.controller.size = 2;
-        utilSvc.getChangesById.and.returnValue([]);
-        this.controller.$onInit();
-        expect(this.controller.list).toEqual(['1', '3', '2', '4']);
-        expect(this.controller.chunkList).toEqual([['1', '3'], ['2', '4']]);
-        expect(this.controller.chunks).toEqual(1);
-        expect(this.controller.results).toEqual({
-            '1': {additions: [], deletions: []},
-            '3': {additions: [], deletions: []}
-        });
-    });
     describe('$onChanges triggers when changing the', function() {
+        beforeEach(function() {
+            spyOn(this.controller, '$onChanges');
+        });
         it('additions', function() {
             scope.additions = [{'@id': 'test'}];
             scope.$apply();
-            expect(this.controller.list).toEqual(['test']);
+            expect(this.controller.$onChanges).toHaveBeenCalled();
         });
         it('deletions', function() {
             scope.deletions = [{'@id': 'test'}];
             scope.$apply();
-            expect(this.controller.list).toEqual(['test']);
+            expect(this.controller.$onChanges).toHaveBeenCalled();
         });
     });
 });

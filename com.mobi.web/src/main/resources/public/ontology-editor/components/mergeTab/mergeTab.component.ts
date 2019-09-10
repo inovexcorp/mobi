@@ -26,9 +26,7 @@ const template = require('./mergeTab.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:mergeTab
- * @requires shared.service:utilService
  * @requires shared.service:ontologyStateService
- * @requires shared.service:catalogManagerService
  *
  * @description
  * `mergeTab` is a component that creates a contains for performing a direct merge between two branches in the

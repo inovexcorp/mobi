@@ -69,6 +69,12 @@ describe('Edit Branch Overlay component', function() {
     });
 
     describe('controller bound variable', function() {
+        it('resolve should be one way bound', function() {
+            var original = angular.copy(scope.resolve);
+            this.controller.resolve = {};
+            scope.$digest();
+            expect(scope.resolve).toEqual(original);
+        });
         it('close should be called in the parent scope', function() {
             this.controller.close();
             expect(scope.close).toHaveBeenCalled();

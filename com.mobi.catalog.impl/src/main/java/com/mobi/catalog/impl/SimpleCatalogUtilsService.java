@@ -74,12 +74,13 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,6 +97,8 @@ import javax.annotation.Nullable;
 
 @Component(immediate = true)
 public class SimpleCatalogUtilsService implements CatalogUtilsService {
+    private static final Logger log = LoggerFactory.getLogger(SimpleCatalogUtilsService.class);
+
     private ModelFactory mf;
     private ValueFactory vf;
     private CatalogFactory catalogFactory;
@@ -790,7 +793,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             return;
         }
 
-        List<Statement> oppositeGraphStatements = RepositoryResults.asList(conn.getStatements(null,
+        Set<Statement> oppositeGraphStatements = RepositoryResults.asSet(conn.getStatements(null,
                 null, null, oppositeNamedGraph));
 
         changes.forEach(statement -> {
@@ -1007,6 +1010,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Set<Conflict> getConflicts(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn) {
+        long start = System.currentTimeMillis();
         // Does not take into account named graphs
         validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
         validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
@@ -1026,7 +1030,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Difference targetDiff = getCommitDifference(targetCommits, conn);
 
         Model sourceAdds = sourceDiff.getAdditions();
+        Set<Resource> sourceAddSubjects = sourceAdds.subjects();
         Model targetAdds = targetDiff.getAdditions();
+        Set<Resource> targetAddSubjects = targetAdds.subjects();
         Model sourceDels = sourceDiff.getDeletions();
         Model targetDels = targetDiff.getDeletions();
 
@@ -1054,7 +1060,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             // Check for deletion in left and addition in right if there are common parents
             if (commonCommits.size() != 0) {
                 Model targetSubjectAdd = targetAdds.filter(subject, null, null);
-                boolean sourceEntityDeleted = !sourceAdds.subjects().contains(subject)
+                boolean sourceEntityDeleted = !sourceAddSubjects.contains(subject)
                         && sourceDelSubjectStatements.equals(original.filter(subject, null, null));
                 boolean targetEntityDeleted = targetDels.containsAll(sourceDelSubjectStatements);
 
@@ -1070,10 +1076,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
         if (commonCommits.size() != 0) {
             targetDels.subjects().forEach(subject -> {
-                // Check for deletion in right and addition in left
+                // Check for deletion in right and addition in left if there are common parents
                 Model targetDelSubjectStatements = targetDels.filter(subject, null, null);
                 Model sourceSubjectAdd = sourceAdds.filter(subject, null, null);
-                boolean targetEntityDeleted = !targetAdds.subjects().contains(subject)
+                boolean targetEntityDeleted = !targetAddSubjects.contains(subject)
                         && targetDelSubjectStatements.equals(original.filter(subject, null, null));
                 boolean sourceEntityDeleted = sourceDels.containsAll(targetDelSubjectStatements);
 
@@ -1083,6 +1089,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             });
         }
 
+        log.trace("getConflicts took {}ms", System.currentTimeMillis() - start);
         return result;
     }
 

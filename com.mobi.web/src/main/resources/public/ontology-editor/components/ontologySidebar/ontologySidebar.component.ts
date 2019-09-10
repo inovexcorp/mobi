@@ -34,10 +34,10 @@ const template = require('./ontologySidebar.component.html');
  *
  * @description
  * `ontologySidebar` is a component that creates a `div` containing a button to
- * {@link ontologyDefaultTab.directive:ontologyDefaultTab open ontologies} and a `nav` of the
+ * {@link ontology-editor.component:ontologyDefaultTab open ontologies} and a `nav` of the
  * {@link shared.service:ontologyStateService opened ontologies}. The currently selected
  * {@link shared.service:ontologyStateService listItem} will have a
- * {@link ontologyBranchSelect.directive:ontologyBranchSelect} displayed underneath and a link to
+ * {@link ontology-editor.component:ontologyBranchSelect} displayed underneath and a link to
  * {@link ontology-editor.component:ontologyCloseOverlay close the ontology}. 
  */
 

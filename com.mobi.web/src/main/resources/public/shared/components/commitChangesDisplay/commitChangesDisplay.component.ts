@@ -65,12 +65,10 @@ function commitChangesDisplayComponentCtrl(utilService) {
     dvm.chunkList = [];
     dvm.results = {};
 
-    dvm.$onInit = function() {
-        dvm.list = unionWith(map(dvm.additions, '@id'), map(dvm.deletions, '@id'), isEqual);
-        dvm.results = getResults();
-    }
     dvm.$onChanges = function() {
-        dvm.list = unionWith(map(dvm.additions, '@id'), map(dvm.deletions, '@id'), isEqual);
+        var adds = map(dvm.additions, '@id');
+        var deletes = map(dvm.deletions, '@id');
+        dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
         dvm.size = 100;
         dvm.index = 0;
         dvm.results = getResults();

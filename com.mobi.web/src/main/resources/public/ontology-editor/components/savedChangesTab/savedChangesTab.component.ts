@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, chunk, intersection, find, sortBy, concat, forEach, map, filter, unionWith, isEqual } from 'lodash';
+import { get, chunk, intersection, find, concat, forEach, map, filter, sortBy } from 'lodash';
 
 import './savedChangesTab.component.scss';
 
@@ -72,7 +72,6 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
     dvm.util = utilService;
     dvm.list = [];
     dvm.showList = [];
-    // dvm.showList = getList();
     dvm.checkedStatements = {
         additions: [],
         deletions: []
@@ -82,19 +81,27 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
     dvm.size = 100;
 
     dvm.$onChanges = function() {
-        var ids = unionWith(map(dvm.os.listItem.inProgressCommit.additions, '@id'), map(dvm.os.listItem.inProgressCommit.deletions, '@id'), isEqual);
-        dvm.list = map(ids, id => {
-            var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
-            var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
-
-            return {
-                id,
-                additions,
-                deletions,
-                disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
-            }
-        });
-
+        var inProgressAdditions = map(dvm.os.listItem.inProgressCommit.additions, addition => ({
+            additions: dvm.util.getPredicatesAndObjects(addition),
+            id: addition['@id']
+        }));
+        var inProgressDeletions = map(dvm.os.listItem.inProgressCommit.deletions, deletion => ({
+            deletions: dvm.util.getPredicatesAndObjects(deletion),
+            id: deletion['@id']
+        }));
+        var mergedInProgressCommitsMap = [].concat(inProgressAdditions, inProgressDeletions).reduce((dict, currentItem) => {
+            var existingValue = dict[currentItem['id']] || {};
+            var mergedValue = Object.assign({ 'id' : '', 'additions' : [], 'deletions' : []}, existingValue, currentItem);
+            dict[currentItem.id] = mergedValue;
+            return dict;  
+        }, {});
+        var mergedInProgressCommits = Object.keys(mergedInProgressCommitsMap).map(key => mergedInProgressCommitsMap[key]);
+        dvm.list = map(mergedInProgressCommits, inProgressItem => ({
+                id: inProgressItem.id,
+                additions: inProgressItem.additions,
+                deletions: inProgressItem.deletions,
+                disableAll: hasSpecificType(inProgressItem.additions) || hasSpecificType(inProgressItem.deletions)
+        }));
         dvm.list = sortBy(dvm.list, dvm.orderByIRI)
         dvm.showList = getList();
     }
@@ -172,24 +179,6 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
         var currChunk = get(dvm.chunks, dvm.index, []);
         dvm.showList = concat(dvm.showList, currChunk);
     }
-
-    // $scope.$watchGroup(['dvm.os.listItem.inProgressCommit.additions', 'dvm.os.listItem.inProgressCommit.deletions'], () => {
-    //     var ids = unionWith(map(dvm.os.listItem.inProgressCommit.additions, '@id'), map(dvm.os.listItem.inProgressCommit.deletions, '@id'), isEqual);
-    //     dvm.list = map(ids, id => {
-    //         var additions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.additions);
-    //         var deletions = dvm.util.getChangesById(id, dvm.os.listItem.inProgressCommit.deletions);
-
-    //         return {
-    //             id,
-    //             additions,
-    //             deletions,
-    //             disableAll: hasSpecificType(additions) || hasSpecificType(deletions)
-    //         }
-    //     });
-
-    //     dvm.list = sortBy(dvm.list, dvm.orderByIRI)
-    //     dvm.showList = getList();
-    // });
 
     function changeUserBranchesCreatedFrom(oldCreatedFromId, newCreatedFromId) {
         forEach(dvm.os.listItem.branches, branch => {

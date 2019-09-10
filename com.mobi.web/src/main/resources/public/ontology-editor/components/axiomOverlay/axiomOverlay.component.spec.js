@@ -35,7 +35,7 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Axiom Overlay component', function() {
-    var $compile, scope, $q, ontologyStateSvc, util, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI, removeIriFromArray;
+    var $compile, scope, $q, ontologyStateSvc, util, propertyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI, removeIriFromArray;
 
     beforeEach(function() {
         angular.mock.module('ontology-editor');

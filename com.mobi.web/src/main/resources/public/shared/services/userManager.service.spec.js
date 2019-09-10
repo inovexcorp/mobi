@@ -35,6 +35,7 @@ describe('User Manager service', function() {
         mockUtil();
         mockPrefixes();
         injectRestPathConstant();
+        injectAdminUserIRIConstant();
 
         inject(function(userManagerService, _$q_, _$httpBackend_, _$rootScope_, _$httpParamSerializer_, _utilService_, _prefixes_) {
             userManagerSvc = userManagerService;

@@ -35,7 +35,7 @@ const template = require('./ontologyTab.component.html');
  * @requires shared.service:prefixes
  *
  * @description
- * `ontologyTab` is a component that creates a `div` containing all the directives necessary for
+ * `ontologyTab` is a component that creates a `div` containing all the components necessary for
  * displaying an ontology. This includes a {@link ontology-editor.component:mergeTab},
  * {@link ontology-editor.component:ontologyButtonStack}, and
  * {@link shared.component:materialTabset}. The `materialTabset` contains tabs for the

@@ -27,7 +27,6 @@ const template = require('./createAnnotationPropertyOverlay.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:createAnnotationPropertyOverlay
- * @requires shared.service:ontologyManagerService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:prefixes
  * @requires ontology-editor.service:ontologyUtilsManagerService
@@ -37,7 +36,7 @@ const template = require('./createAnnotationPropertyOverlay.component.html');
  * property in the current {@link shared.service:ontologyStateService selected ontology}.
  * The form in the modal contains a text input for the property name (which populates the
  * {@link ontology-editor.component:staticIri IRI}), a {@link shared.component:textArea} for the property
- * description, and an {@link ontology-editor.directive:advancedLanguageSelect}. Meant to be used in conjunction
+ * description, and an {@link ontology-editor.component:advancedLanguageSelect}. Meant to be used in conjunction
  * with the {@link shared.service:modalService}.
  *
  * @param {Function} close A function that closes the modal

@@ -156,7 +156,7 @@ describe('Open Ontology Select component', function() {
             expect(this.element.querySelectorAll('.open-ontology-select').length).toEqual(1);
         });
         it('with a ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toEqual(1);
         });
         it('depending on whether the current ontology has changes', function() {
             var select = this.element.find('ui-select');
@@ -186,24 +186,24 @@ describe('Open Ontology Select component', function() {
         it('depending on whether the current branch is a user branch', function() {
             catalogManagerSvc.isBranch.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toBe(0);
+            expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toEqual(0);
             catalogManagerSvc.isUserBranch.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toBe(1);
+            expect(this.element.querySelectorAll('.fa.fa-exclamation-triangle.fa-fw-red').length).toEqual(1);
         });
         it('depending on whether the user can modify record', function() {
             catalogManagerSvc.isBranch.and.returnValue(true);
             scope.listItem.userCanModify = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('.fa-trash-o').length).toBe(1);
-            expect(this.element.querySelectorAll('.fa-pencil').length).toBe(1);
+            expect(this.element.querySelectorAll('.fa-trash-o').length).toEqual(1);
+            expect(this.element.querySelectorAll('.fa-pencil').length).toEqual(1);
         });
         it('depending on whether the the user cannot modify record', function() {
             catalogManagerSvc.isBranch.and.returnValue(true);
             scope.listItem.userCanModify = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('.fa-trash-o').length).toBe(0);
-            expect(this.element.querySelectorAll('.fa-pencil').length).toBe(0);
+            expect(this.element.querySelectorAll('.fa-trash-o').length).toEqual(0);
+            expect(this.element.querySelectorAll('.fa-pencil').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
@@ -285,7 +285,7 @@ describe('Open Ontology Select component', function() {
                     });
                 });
                 it('when getBranchHeadCommit rejects', function() {
-                    expect(this.controller.deleteError).toBe('');
+                    expect(this.controller.deleteError).toEqual('');
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject(this.errorMessage));
                     this.controller.changeEntity(this.branch);
                     scope.$digest();
@@ -336,7 +336,7 @@ describe('Open Ontology Select component', function() {
                     });
                 });
                 it('when getCommit rejects', function() {
-                    expect(this.controller.deleteError).toBe('');
+                    expect(this.controller.deleteError).toEqual('');
                     catalogManagerSvc.getCommit.and.returnValue($q.reject(this.errorMessage));
                     this.controller.changeEntity(this.tag);
                     scope.$digest();

@@ -84,27 +84,29 @@ describe('Saved Changes Tab component', function() {
     describe('should update the list of changes when additions/deletions change', function() {
         beforeEach(function() {
             utilSvc.getChangesById.and.returnValue([{}]);
+            utilSvc.getPredicatesAndObjects.and.returnValue([{}]);
         });
         it('if there are less than 100 changes', function() {
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': '1', 'value': ['stuff']}];
             ontologyStateSvc.listItem.inProgressCommit.deletions = [{'@id': '1', 'value': ['otherstuff']}, {'@id': '2'}];
             this.controller.$onChanges();
-            expect(utilSvc.getChangesById).toHaveBeenCalledWith('1', ontologyStateSvc.listItem.inProgressCommit.additions);
-            expect(utilSvc.getChangesById).toHaveBeenCalledWith('1', ontologyStateSvc.listItem.inProgressCommit.deletions);
-            expect(utilSvc.getChangesById).toHaveBeenCalledWith('2', ontologyStateSvc.listItem.inProgressCommit.additions);
-            expect(utilSvc.getChangesById).toHaveBeenCalledWith('2', ontologyStateSvc.listItem.inProgressCommit.deletions);
+            _.forEach(ontologyStateSvc.listItem.inProgressCommit.additions, change => {
+                expect(utilSvc.getPredicatesAndObjects).toHaveBeenCalledWith(change);
+            });
+            _.forEach(ontologyStateSvc.listItem.inProgressCommit.deletions, change => {
+                expect(utilSvc.getPredicatesAndObjects).toHaveBeenCalledWith(change);
+            });
             expect(this.controller.showList).toEqual([
                 {id: '1', additions: [{}], deletions: [{}], disableAll: false},
-                {id: '2', additions: [{}], deletions: [{}], disableAll: false},
+                {id: '2', additions: [], deletions: [{}], disableAll: false},
             ]);
         });
         it('if there are more than 100 changes', function() {
             var ids = _.range(102);
             ontologyStateSvc.listItem.inProgressCommit.additions = _.map(ids, id => ({'@id': id}));
             this.controller.$onChanges();
-            _.forEach(ids, id => {
-                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, ontologyStateSvc.listItem.inProgressCommit.additions);
-                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, ontologyStateSvc.listItem.inProgressCommit.deletions);
+            _.forEach(ontologyStateSvc.listItem.inProgressCommit.additions, change => {
+                expect(utilSvc.getPredicatesAndObjects).toHaveBeenCalledWith(change);
             });
             expect(this.controller.showList.length).toEqual(100);
         });
@@ -145,6 +147,10 @@ describe('Saved Changes Tab component', function() {
             this.controller.showList = [{additions: [{}]}, {additions: [{}]}];
             scope.$digest();
             expect(this.element.find('statement-display').length).toBe(2);
+            // ontologyStateSvc.listItem.upToDate = false;
+            // utilSvc.getPredicatesAndObjects.and.returnValue([{}]);
+            // scope.$apply();
+            // expect(this.element.find('statement-display').length).toBe(1);
         });
         it('depending on whether the list item is up to date', function() {
             expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);

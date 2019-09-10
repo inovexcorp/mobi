@@ -115,6 +115,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
                     return userManagerService.getUser(self.currentUser)
                         .then(user => {
                             self.currentUserIRI = user.iri;
+                            self.currentUser = user.username;
                             $state.go('root.home');
                             return true;
                         });
@@ -187,12 +188,12 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             if (data.scope === anon) {
                 return $q.reject(data);
             }
-            self.currentUser = data.sub;
             var promises = [
                 stateManagerService.initialize(),
                 userManagerService.initialize(),
                 userManagerService.getUser(self.currentUser).then(user => {
                     self.currentUserIRI = user.iri;
+                    self.currentUser = user.username;
                 })
             ];
             if (!self.weGood) {

@@ -168,7 +168,8 @@ describe('Login Manager service', function() {
         it('if everything was passed correctly', function() {
             var params = this.params;
             var user = {
-                iri: 'userIRI'
+                iri: 'userIRI',
+                username: 'user'
             };
             userManagerSvc.getUser.and.returnValue($q.when(user));
             $httpBackend.expectPOST('/mobirest/session' + createQueryString(params)).respond(200, {sub: params.username});
@@ -180,7 +181,7 @@ describe('Login Manager service', function() {
                 });
             flushAndVerify($httpBackend);
             expect(state.go).toHaveBeenCalledWith('root.home');
-            expect(loginManagerSvc.currentUser).toBe(params.username);
+            expect(loginManagerSvc.currentUser).toBe(user.username);
             expect(loginManagerSvc.currentUserIRI).toBe(user.iri);
         });
     });
@@ -265,7 +266,8 @@ describe('Login Manager service', function() {
         describe('if a user is logged in', function() {
             beforeEach(function() {
                 this.user = {
-                    iri: 'userIRI'
+                    iri: 'userIRI',
+                    username: 'user'
                 };
                 spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
                 userManagerSvc.getUser.and.returnValue($q.when(this.user));

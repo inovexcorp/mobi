@@ -25,7 +25,7 @@ const template = require('./projectTab.component.html');
 
 /**
  * @ngdoc component
- * @name projectTab.directive:projectTab
+ * @name ontology-editor.component:projectTab
  * @requires shared.service:ontologyStateService
  *
  * @description

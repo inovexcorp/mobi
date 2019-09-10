@@ -318,6 +318,7 @@ function sparqlManagerService($http, $q, $httpParamSerializer, utilService, http
             .then(onSuccess, response => {
                 if (response.status === 401) {
                     util.createErrorToast(getMessage(response))
+                    self.infoMessage = 'Please submit a query to see results here.';
                 } else {
                     self.errorMessage = getMessage(response)
                 }

@@ -87,6 +87,12 @@ export function injectRestPathConstant() {
     });
 }
 
+export function injectAdminUserIRIConstant() {
+    angular.mock.module(function($provide) {
+        $provide.constant('ADMIN_USER_IRI', 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997');
+    });
+}
+
 export function injectIndentConstant() {
     angular.mock.module(function($provide) {
         $provide.constant('INDENT', 1);
@@ -1033,6 +1039,7 @@ export function mockUtil() {
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
+            this.getPredicatesAndObjects = jasmine.createSpy('getPredicatesAndObjects');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');

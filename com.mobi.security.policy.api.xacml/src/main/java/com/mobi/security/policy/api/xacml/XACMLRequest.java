@@ -33,7 +33,6 @@ import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_CATEGORY;
 import static com.mobi.security.policy.api.xacml.XACML.SUBJECT_ID;
 
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.LiteralUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
@@ -47,6 +46,7 @@ import com.mobi.vocabularies.xsd.XSD;
 
 import java.io.StringWriter;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +100,7 @@ public class XACMLRequest implements Request {
 
         AttributeValueType requestTimeAttributeValue = of.createAttributeValueType();
         requestTimeAttributeValue.setDataType(XSD.DATE_TIME);
-        requestTimeAttributeValue.getContent().add(LiteralUtils.OFFSET_TIME_FORMATTER.format(this.requestTime));
+        requestTimeAttributeValue.getContent().add(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(this.requestTime));
         AttributeType currentDateTimeAttribute = of.createAttributeType();
         currentDateTimeAttribute.setAttributeId(requestTimeAttribute.stringValue());
         currentDateTimeAttribute.getAttributeValue().add(requestTimeAttributeValue);

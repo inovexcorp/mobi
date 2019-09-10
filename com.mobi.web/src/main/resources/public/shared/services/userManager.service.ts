@@ -22,7 +22,7 @@
  */
 import { map, get, find, filter, identity, set, noop, forEach, has, merge, remove, pull, assign, union, includes, flatten, } from 'lodash';
 
-userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'prefixes'];
+userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'ADMIN_USER_IRI', 'utilService', 'prefixes'];
 
 /**
  * @ngdoc service
@@ -36,7 +36,7 @@ userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'utilService', 'pref
  * `userManagerService` is a service that provides access to the Mobi users and groups REST endpoints for adding,
  * removing, and editing Mobi users and groups.
  */
-function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
+function userManagerService($http, $q, REST_PREFIX, ADMIN_USER_IRI, utilService, prefixes) {
     var self = this,
         userPrefix = REST_PREFIX + 'users',
         groupPrefix = REST_PREFIX + 'groups';
@@ -681,6 +681,10 @@ function userManagerService($http, $q, REST_PREFIX, utilService, prefixes) {
             });
             return includes(flatten(map(userGroups, 'roles')), 'admin');
         }
+    }
+
+    self.isAdminUser = function(userIri) {
+        return userIri === ADMIN_USER_IRI;
     }
     /**
      * @ngdoc method

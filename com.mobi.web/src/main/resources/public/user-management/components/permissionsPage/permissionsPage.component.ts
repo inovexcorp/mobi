@@ -58,6 +58,7 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
     var util = utilService;
     var catalogId = '';
     var action = pm.actionCreate;
+    var systemRepoId = 'http://mobi.com/system-repo';
     var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
     var userRole = 'http://mobi.com/roles/user';
 
@@ -65,6 +66,7 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
 
     dvm.$onInit = function() {
         catalogId = get(catalogManagerService.localCatalog, '@id', '');
+        setPoliciesInQuestion();
         setPolicies();
     }
     dvm.updatePolicy = function(item, policyIndex) {
@@ -86,30 +88,36 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
         return some(dvm.policies, 'changed');
     }
 
+    function setPoliciesInQuestion() {
+        dvm.policiesInQuestion.push({ resourceId: catalogId, actionId: pm.actionCreate, subjectId: undefined, titleFunc: policy => 'Create ' + util.getBeautifulIRI(getRecordType(policy)) });
+        dvm.policiesInQuestion.push({ resourceId: systemRepoId, actionId: pm.actionRead, subjectId: undefined, titleFunc: () => 'Query System Repo' });
+    }
     function setPolicies() {
         dvm.policies = [];
-        pm.getPolicies(catalogId, undefined, action)
-            .then(result => {
-                dvm.policies = chain(result)
-                    .map(policy => ({
-                        policy,
-                        id: policy.PolicyId,
-                        type: getRecordType(policy),
-                        changed: false,
-                        everyone: false,
-                        users: [],
-                        groups: [],
-                        selectedUsers: [],
-                        selectedGroups: [],
-                        userSearchText: '',
-                        groupSearchText: '',
-                        selectedUser: undefined,
-                        selectedGroup: undefined
-                    }))
-                    .filter('type')
-                    .forEach(setInfo)
-                    .value();
-            }, util.createErrorToast);
+        $q.all(map(dvm.policiesInQuestion, policy => pm.getPolicies(policy.resourceId, policy.subjectId, policy.actionId)))
+                .then(results => {
+                    results.forEach((response, idx) => {
+                        dvm.policies = dvm.policies.concat(chain(response)
+                            .map(policy => ({
+                                policy,
+                                id: policy.PolicyId,
+                                title: dvm.policiesInQuestion[idx].titleFunc(policy),
+                                changed: false,
+                                everyone: false,
+                                users: [],
+                                groups: [],
+                                selectedUsers: [],
+                                selectedGroups: [],
+                                userSearchText: '',
+                                groupSearchText: '',
+                                selectedUser: undefined,
+                                selectedGroup: undefined
+                            }))
+                            .filter('title')
+                            .forEach(setInfo)
+                            .value());
+                    });
+                }, util.createErrorToast);
     }
     function getRecordType(policy) {
         return chain(policy)

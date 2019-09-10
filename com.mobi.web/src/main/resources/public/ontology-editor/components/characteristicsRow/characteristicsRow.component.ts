@@ -27,10 +27,8 @@ const template = require('./characteristicsRow.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:characteristicsRow
- * @requires shared.service:prefixes
- * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
- * @requires ontology-editor.service:ontologyUtilsManagerService
+ * @requires shared.service:ontologyStateService
  *
  * @description
  * `characteristicsRow` is a component that creates a Bootstrap `.row` that displays the

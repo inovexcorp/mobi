@@ -23,7 +23,6 @@
 import * as angular from 'angular';
 
 import ontologyUtilsManagerService from './services/ontologyUtilsManager.service';
-import prefixManagerService from './services/prefixManager.service';
 
 import advancedLanguageSelectComponent from './components/advancedLanguageSelect/advancedLanguageSelect.component';
 import annotationBlockComponent from './components/annotationBlock/annotationBlock.component';
@@ -119,7 +118,6 @@ import usagesBlockComponent from './components/usagesBlock/usagesBlock.component
  */
 angular.module('ontology-editor', [])
     .service('ontologyUtilsManagerService', ontologyUtilsManagerService)
-    .service('prefixManagerService', prefixManagerService)
     .component('advancedLanguageSelect', advancedLanguageSelectComponent)
     .component('annotationBlock', annotationBlockComponent)
     .component('annotationOverlay', annotationOverlayComponent)
