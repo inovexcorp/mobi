@@ -146,9 +146,12 @@
                                             <port>8443:8443</port>
                                         </ports>
                                         <wait>
+                                            <http>
+                                                <allowAllHosts>true</allowAllHosts>
+                                                <url>https://localhost:8443/mobi/index.html#/login</url>
+                                            </http>
                                             <!-- Check for this URL to return a 200 return code .... -->
-                                            <url>http://localhost:8443/mobi/</url>
-                                            <time>120000</time>
+                                            <time>30000</time>
                                         </wait>
                                     </run>
                                 </image>
