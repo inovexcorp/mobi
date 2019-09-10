@@ -22,7 +22,8 @@
  */
 /* Core variables */
 @import "../../../css/variables";
-annotation-overlay {
+
+datatype-property-overlay {
     .ui-select-bootstrap .ui-select-match-text {
         @include textOverflow();
     }

@@ -48,7 +48,7 @@
         controller: individualsTabComponentCtrl
     };
 
-    individualsTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService']
+    individualsTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
     function individualsTabComponentCtrl(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
         var dvm = this;

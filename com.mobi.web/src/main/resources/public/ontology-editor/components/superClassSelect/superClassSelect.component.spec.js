@@ -52,6 +52,10 @@ describe('Super Class Select component', function() {
             scope.$apply();
             expect(scope.bindModel).toEqual([]);
         });
+        it('changeEvent should be called in the parent scope', function() {
+            this.controller.changeEvent({values: []});
+            expect(scope.changeEvent).toHaveBeenCalledWith([]);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

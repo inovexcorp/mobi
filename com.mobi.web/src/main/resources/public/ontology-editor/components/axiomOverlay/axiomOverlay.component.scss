@@ -36,10 +36,6 @@ axiom-overlay {
         height: 200px;
     }
     .ui-select-bootstrap .ui-select-match-text {
-        float:none !important;
-    }
-    .ui-select-toggle.form-control {
         @include textOverflow();
     }
-
 }

@@ -121,6 +121,12 @@ describe('Tree Item component', function() {
             scope.$digest();
             expect(this.controller.path).toEqual('new');
         });
+        it('inProgressCommit should be one way bound', function() {
+            var original = angular.copy(scope.inProgressCommit);
+            this.controller.inProgressCommit = {test: true};
+            scope.$digest();
+            expect(scope.inProgressCommit).toEqual(original);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
