@@ -20,15 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUtil,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Class Mapping Select component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
+        mockUtil();
         injectTrustedFilter();
         injectHighlightFilter();
-        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;

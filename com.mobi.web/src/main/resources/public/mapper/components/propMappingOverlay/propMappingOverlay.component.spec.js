@@ -20,12 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockUtil,
+    mockPrefixes,
+    mockMappingManager,
+    mockMapperState,
+    mockOntologyManager,
+    mockPropertyManager,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Prop Mapping Overlay component', function() {
     var $compile, scope, prefixes, utilSvc, mappingManagerSvc, mapperStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockComponent('mapper', 'propSelect');
         mockComponent('mapper', 'propPreview');
         mockComponent('mapper', 'columnSelect');

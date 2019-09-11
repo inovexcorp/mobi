@@ -24,9 +24,9 @@ describe('Modal service', function() {
     var modalSvc, $uibModal, scope;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$uibModal', function($q) {
                 this.open = jasmine.createSpy('open').and.returnValue({result: $q.when()});
             });

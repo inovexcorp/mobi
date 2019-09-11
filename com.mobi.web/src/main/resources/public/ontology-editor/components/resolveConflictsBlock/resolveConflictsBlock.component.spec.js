@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Resolve Conflicts Block component', function() {
     var $compile, scope, $q, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockUtil();
 

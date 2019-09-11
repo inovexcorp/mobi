@@ -20,11 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockLoginManager,
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../test/js/Shared';
+
 describe('Branches To Display Filter', function() {
     var $filter, catalogManagerSvc, utilSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockLoginManager();
         mockCatalogManager();
         mockUtil();

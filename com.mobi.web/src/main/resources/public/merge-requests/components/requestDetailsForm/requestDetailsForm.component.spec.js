@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockMergeRequestsState,
+    mockUtil,
+    mockPrefixes,
+    mockUserManager,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Request Details Form component', function() {
     var $compile, scope, mergeRequestsStateSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
+        angular.mock.module('merge-requests');
         mockMergeRequestsState();
         mockUtil();
         mockPrefixes();

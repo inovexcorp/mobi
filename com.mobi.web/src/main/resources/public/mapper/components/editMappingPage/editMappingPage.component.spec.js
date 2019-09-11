@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockMappingManager,
+    mockMapperState,
+    mockDelimitedManager,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('Edit Mapping Page component', function() {
     var $compile, scope, $q, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockComponent('mapper', 'editMappingForm');
         mockComponent('mapper', 'rdfPreviewForm');
         mockComponent('mapper', 'previewDataGrid');

@@ -20,18 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState,
+    mockOntologyManager,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Preview Block component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, splitIRIFilter;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'serializationSelect');
         mockOntologyState();
         mockOntologyManager();
         injectSplitIRIFilter();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.value('jsonFilter', () => 'json');
         });
 

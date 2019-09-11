@@ -20,19 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyManager,
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    mockManchesterConverter,
+    mockModal,
+    injectPrefixationFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Selected Details component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, ontoUtils, manchesterConverterSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
         mockOntologyManager();
         mockOntologyState();
-        injectPrefixationFilter();
         mockOntologyUtilsManager();
         mockManchesterConverter();
         mockModal();
+        injectPrefixationFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _manchesterConverterService_, _modalService_) {
             $compile = _$compile_;

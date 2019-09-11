@@ -24,7 +24,7 @@ describe('Trusted filter', function() {
     var $filter, $sce;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$filter_, _$sce_) {
             $filter = _$filter_;

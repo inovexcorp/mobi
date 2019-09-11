@@ -20,23 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockDiscoverState,
+    mockPrefixes,
+    mockUtil,
+    mockExploreUtils,
+    mockModal
+} from '../../../../../../../test/js/Shared';
+
 describe('Property Value Overlay component', function() {
     var $compile, scope, discoverStateSvc, prefixes, exploreUtilsSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockDiscoverState();
         mockPrefixes();
         mockUtil();
         mockExploreUtils();
         mockModal();
-
-        module(function($provide) {
-            $provide.service('uuid', function() {
-                this.v4 = jasmine.createSpy('v4').and.returnValue('');
-            });
-        });
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_, _prefixes_, _exploreUtilsService_, _modalService_) {
             $compile = _$compile_;

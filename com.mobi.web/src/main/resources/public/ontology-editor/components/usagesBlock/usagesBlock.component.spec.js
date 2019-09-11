@@ -19,16 +19,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
+ * 
  */
+import {
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Usages Block component', function() {
     var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        injectSplitIRIFilter();
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockOntologyUtilsManager();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;

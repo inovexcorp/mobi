@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockCatalogManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Commit Overlay component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockCatalogManager();
         mockUtil();
@@ -169,8 +174,8 @@ describe('Commit Overlay component', function() {
                             it('and when updateOntologyState is resolved', function() {
                                 ontologyStateSvc.listItem.inProgressCommit.additions = ['test'];
                                 ontologyStateSvc.listItem.inProgressCommit.deletions = ['test'];
-                                oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
-                                oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
+                                var oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
+                                var oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
                                 ontologyStateSvc.updateOntologyState.and.returnValue($q.when(''));
                                 this.controller.commit();
                                 scope.$digest();
@@ -193,8 +198,8 @@ describe('Commit Overlay component', function() {
                             });
                             it('and when updateOntologyState is rejected', function() {
                                 ontologyStateSvc.updateOntologyState.and.returnValue($q.reject('error'));
-                                oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
-                                oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
+                                var oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
+                                var oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
                                 this.controller.commit();
                                 scope.$digest();
                                 expect(catalogManagerSvc.createRecordUserBranch).toHaveBeenCalledWith(ontologyStateSvc
@@ -213,8 +218,8 @@ describe('Commit Overlay component', function() {
                             });
                         });
                         it('when createBranchCommit is rejected', function() {
-                            oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
-                            oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
+                            var oldBranchId = ontologyStateSvc.listItem.ontologyRecord.branchId;
+                            var oldCommitId = ontologyStateSvc.listItem.ontologyRecord.commitId;
                             catalogManagerSvc.createBranchCommit.and.returnValue($q.reject('error'));
                             this.controller.commit();
                             scope.$digest();

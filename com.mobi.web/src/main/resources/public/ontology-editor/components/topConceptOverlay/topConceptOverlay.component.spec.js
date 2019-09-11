@@ -20,19 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyManager,
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    mockPrefixes,
+    mockUtil,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Top Concept Overlay component', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        injectHighlightFilter();
-        injectTrustedFilter();
+        angular.mock.module('ontology-editor');
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockPrefixes();
         mockUtil();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _prefixes_) {
             $compile = _$compile_;

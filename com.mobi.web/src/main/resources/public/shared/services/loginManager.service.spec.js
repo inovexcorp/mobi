@@ -20,11 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogManager,
+    mockCatalogState,
+    mockDatasetManager,
+    mockDatasetState,
+    mockDelimitedManager,
+    mockDiscoverState,
+    mockMapperState,
+    mockMergeRequestsState,
+    mockOntologyManager,
+    mockOntologyState,
+    mockSparqlManager,
+    mockStateManager,
+    mockUserManager,
+    mockUserState,
+    injectRestPathConstant,
+    flushAndVerify,
+    createQueryString
+} from '../../../../../test/js/Shared';
+
 describe('Login Manager service', function() {
     var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockCatalogManager();
         mockCatalogState();
         mockDatasetManager();
@@ -41,7 +61,7 @@ describe('Login Manager service', function() {
         mockUserState();
         injectRestPathConstant();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$state', function() {
                 this.go = jasmine.createSpy('go');
             });

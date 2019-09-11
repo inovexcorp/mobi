@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPolicyManager,
+    mockLoginManager,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('User Access Controls component', function() {
     var $compile, scope, policyManagerSvc, loginManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockPolicyManager();
         mockLoginManager();
         mockPrefixes();

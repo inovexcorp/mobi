@@ -20,17 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyManager,
+    mockMapperState,
+    mockUtil,
+    mockPrefixes,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Prop Preview component', function() {
     var $compile, scope, ontologyManagerSvc, mapperStateSvc, utilSvc, prefixes, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
-        injectSplitIRIFilter();
+        angular.mock.module('mapper');
         mockOntologyManager();
         mockMapperState();
         mockUtil();
         mockPrefixes();
+        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mapperStateService_, _utilService_, _prefixes_, _splitIRIFilter_) {
             $compile = _$compile_;

@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockUtil,
+    mockCatalogManager,
+    mockOntologyManager,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Saved Changes Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, utilSvc, catalogManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockCatalogManager();

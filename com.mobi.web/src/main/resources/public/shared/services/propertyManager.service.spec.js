@@ -20,11 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPrefixes
+} from '../../../../../test/js/Shared';
+
 describe('Property Manager service', function() {
     var propertyManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
 
         inject(function(propertyManagerService, _prefixes_) {

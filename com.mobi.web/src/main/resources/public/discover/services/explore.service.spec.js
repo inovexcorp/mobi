@@ -20,11 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockUtil,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
 describe('Explore Service', function() {
     var exploreSvc, $q, $httpBackend, utilSvc;
 
     beforeEach(function() {
-        module('discover');
+        angular.mock.module('discover');
         mockUtil();
         injectRestPathConstant();
 

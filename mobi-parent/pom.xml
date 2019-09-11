@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.16.51</version>
+    <version>1.16.52</version>
 
     <packaging>pom</packaging>
 
@@ -566,6 +566,7 @@
                     </excludes>
                     <extraExtensions>
                         <scss>java</scss>
+                        <ts>java</ts>
                     </extraExtensions>
                 </configuration>
                 <executions>

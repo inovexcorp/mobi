@@ -29,8 +29,6 @@
         <link rel="icon" href="images/favicon.ico">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <title ng-bind="$state.current.data.title + ' | Mobi'"></title>
-        <!-- inject:css -->
-        <!-- endinject -->
     </head>
     <body ng-class="{'collapsed-nav': $root.collapsedNav}" class="h-100">
         <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="container-fluid h-100">
@@ -42,7 +40,5 @@
         <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container h-100"></section>
         <footer ui-view="footer"></footer>
         <spinner ng-if="pendingRequests > 0"></spinner>
-        <!-- inject:js -->
-        <!-- endinject -->
     </body>
 </html>

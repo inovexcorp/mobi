@@ -20,12 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockOntologyState,
+    mockUtil,
+    mockOntologyUtilsManager,
+    mockPrefixes,
+    mockManchesterConverter,
+    mockOntologyManager,
+    mockPropertyManager,
+    injectHighlightFilter,
+    injectTrustedFilter,
+    injectSplitIRIFilter,
+    injectRemoveIriFromArrayFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Axiom Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc, util, propertyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI, removeIriFromArray;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();

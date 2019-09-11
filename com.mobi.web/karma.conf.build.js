@@ -1,11 +1,29 @@
 // Karma configuration
 // Generated on Tue Jan 17 2017 09:54:51 GMT-0500 (EST)
 
+const webpackConfig = require('./webpack-configs/webpack.common');
+
 module.exports = function(config) {
   config.set({
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
     frameworks: ['jasmine'],
+
+    files: [
+        'target/classes/build/vendor.*.js',
+        'target/classes/build/main.*.js',
+        'webpack.tests.js'
+    ],
+
+    preprocessors: {
+        'webpack.tests.js': ['webpack']
+    },
+
+    webpack: {
+        resolve: webpackConfig.resolve,
+        module: webpackConfig.module,
+        node: webpackConfig.node
+    },
 
     // test results reporter to use
     // possible values: 'dots', 'progress'

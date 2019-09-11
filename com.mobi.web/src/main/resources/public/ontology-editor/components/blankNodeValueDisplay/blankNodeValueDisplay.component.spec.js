@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyUtilsManager
+} from '../../../../../../test/js/Shared';
+
 describe('Blank Node Value Display component', function() {
     var $compile, scope, ontoUtils;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyUtilsManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyUtilsManagerService_) {

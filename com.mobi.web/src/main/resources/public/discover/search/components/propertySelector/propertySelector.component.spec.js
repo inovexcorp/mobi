@@ -20,31 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockDiscoverState,
+    mockUtil,
+    mockSearch,
+    mockPrefixes,
+    mockOntologyManager
+} from '../../../../../../../test/js/Shared';
+
 describe('Property Selector component', function() {
-    var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc, searchSvc, prefixes;
+    var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('search');
+        angular.mock.module('search');
         mockDiscoverState();
         mockUtil();
         mockSearch();
         mockPrefixes();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _discoverStateService_, _searchService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _discoverStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
             ontologyManagerSvc = _ontologyManagerService_;
             discoverStateSvc = _discoverStateService_;
-            searchSvc = _searchService_;
             prefixes = _prefixes_;
         });
 
-        ontologyManagerSvc.getEntityName.and.callFake(function(entity) {
-            return entity['@id'];
-        });
+        ontologyManagerSvc.getEntityName.and.callFake(entity => entity['@id']);
         discoverStateSvc.search.properties = {key: [{}]};
 
         scope.keys = ['key'];
@@ -63,7 +67,6 @@ describe('Property Selector component', function() {
         utilSvc = null;
         ontologyManagerSvc = null;
         discoverStateSvc = null;
-        searchSvc = null;
         prefixes = null;
         this.element.remove();
     });

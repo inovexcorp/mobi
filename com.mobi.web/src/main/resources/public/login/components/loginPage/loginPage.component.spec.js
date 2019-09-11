@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockLoginManager
+} from '../../../../../../test/js/Shared';
+
 describe('Login Page component', function() {
     var $compile, scope, $q, loginManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('login');
+        angular.mock.module('login');
         mockLoginManager();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _loginManagerService_) {

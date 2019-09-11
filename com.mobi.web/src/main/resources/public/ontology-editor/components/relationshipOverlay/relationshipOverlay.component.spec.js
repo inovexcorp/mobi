@@ -20,19 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyManager,
+    mockOntologyState,
+    mockUtil,
+    mockOntologyUtilsManager,
+    mockPropertyManager,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Relationship Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, util, ontoUtils, propertyManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        injectHighlightFilter();
-        injectTrustedFilter();
+        angular.mock.module('ontology-editor');
         mockOntologyManager();
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
         mockPropertyManager();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _ontologyUtilsManagerService_, _propertyManagerService_) {
             $compile = _$compile_;

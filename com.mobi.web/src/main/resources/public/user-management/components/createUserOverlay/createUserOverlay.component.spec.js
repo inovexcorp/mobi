@@ -20,16 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockUserManager,
+    mockUserState,
+    injectRegexConstant
+} from '../../../../../../test/js/Shared';
+
 describe('Create User Overlay component', function() {
     var $compile, $q, scope, userManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockComponent('user-management', 'permissionsInput');
-        injectRegexConstant();
         mockUserManager();
         mockUserState();
+        injectRegexConstant();
 
         inject(function( _$compile_, _$rootScope_, _$q_, _userManagerService_) {
             $compile = _$compile_;

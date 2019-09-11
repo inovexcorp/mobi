@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockDiscoverState,
+    mockUtil,
+    mockExplore
+} from '../../../../../../../test/js/Shared';
+
 describe('Class Cards component', function() {
     var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockDiscoverState();
         mockUtil();
         mockExplore();

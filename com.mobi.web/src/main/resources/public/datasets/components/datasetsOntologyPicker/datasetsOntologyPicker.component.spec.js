@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockHttpService,
+    mockDatasetState,
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Datasets Ontology Picker component', function() {
     var $compile, scope, $q, httpSvc, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('datasets');
+        angular.mock.module('datasets');
         mockHttpService();
         mockDatasetState();
         mockCatalogManager();
@@ -114,7 +123,6 @@ describe('Datasets Ontology Picker component', function() {
         scope = null;
         $q = null;
         httpSvc = null;
-        datasetManagerSvc = null;
         catalogManagerSvc = null;
         utilSvc = null;
         prefixes = null;

@@ -27,7 +27,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.16.51</version>
+        <version>1.16.52</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -120,23 +120,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>${antlr.version}</version>
-                <configuration>
-                    <options>
-                        <language>JavaScript</language>
-                    </options>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.3.2</version>
@@ -154,7 +137,6 @@
                             </arguments>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>npm run build (compile)</id>
                         <goals>
@@ -165,7 +147,7 @@
                             <executable>npm</executable>
                             <arguments>
                                 <argument>run</argument>
-                                <argument>${build.env}</argument>
+                                <argument>build:${build.env}</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -179,7 +161,7 @@
                             <executable>npm</executable>
                             <arguments>
                                 <argument>run</argument>
-                                <argument>test-${build.env}</argument>
+                                <argument>test</argument>
                             </arguments>
                             <skip>${skipTests}</skip>
                         </configuration>
@@ -234,15 +216,15 @@
                     <execution>
                         <id>copy-resources</id>
                         <!-- here the phase you need -->
-                        <phase>prepare-package</phase>
+                        <phase>process-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target/classes/build/shared/components/sidebar</outputDirectory>
+                            <outputDirectory>${basedir}/src/main/resources/public/shared/components/sidebar/filtered</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${basedir}/target/filtered-resources</directory>
+                                    <directory>${basedir}/src/main/resources/public/shared/components/sidebar</directory>
                                     <filtering>true</filtering>
                                     <includes>
                                         <include>*.html</include>

@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUtil,
+    mockOntologyState,
+    mockCatalogManager
+} from '../../../../../../test/js/Shared';
+
 describe('Merge Block component', function() {
     var $compile, scope, $q, ontologyStateSvc, util, catalogManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockUtil();
         mockOntologyState();
         mockCatalogManager();

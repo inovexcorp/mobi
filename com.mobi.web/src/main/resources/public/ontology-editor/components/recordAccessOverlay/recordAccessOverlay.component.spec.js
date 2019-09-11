@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUserManager,
+    mockRecordPermissionsManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Record Access Overlay component', function() {
     var $compile, scope, $q, utilSvc, userManagerSvc, recordPermissionsManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockUserManager();
         mockRecordPermissionsManager();
         mockUtil();

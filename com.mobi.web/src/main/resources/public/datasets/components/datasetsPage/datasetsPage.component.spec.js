@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent
+} from '../../../../../../test/js/Shared';
+
 describe('Datasets Page component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('datasets');
+        angular.mock.module('datasets');
         mockComponent('datasets', 'datasetsTabset');
 
         inject(function(_$compile_, _$rootScope_) {

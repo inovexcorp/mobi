@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockOntologyState,
+    mockPropertyManager,
+    mockUtil,
+    mockPrefixes,
+    mockOntologyUtilsManager,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Annotation Overlay component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, util;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockPropertyManager();
         mockUtil();

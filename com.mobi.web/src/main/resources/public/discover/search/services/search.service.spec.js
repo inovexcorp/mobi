@@ -20,11 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as sparqljs from 'sparqljs';
+
+import {
+    mockHttpService,
+    mockSparqlManager,
+    mockDiscoverState,
+    mockPrefixes,
+    mockDatasetManager,
+    mockOntologyManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Search Service', function() {
     var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes, util, datasetManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
-        module('search');
+        angular.mock.module('search');
         mockHttpService();
         mockSparqlManager();
         mockDiscoverState();
@@ -33,8 +45,8 @@ describe('Search Service', function() {
         mockOntologyManager();
         mockUtil();
 
-        module(function($provide) {
-            $provide.constant('sparqljs', window.sparqljs);
+        angular.mock.module(function($provide) {
+            $provide.constant('sparqljs', sparqljs);
         });
 
         inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_, _utilService_, _datasetManagerService_, _ontologyManagerService_) {
