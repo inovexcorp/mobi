@@ -29,14 +29,14 @@
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:propertyManagerService
      *
      * @description
      * `datatypePropertyOverlay` is a component that creates content for a modal that adds a data property value to the
      * {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a `ui-select` of
      * all the data properties in the ontology, a {@link shared.component:textArea} for the data property value, an
-     * {@link iriSelectOntology.directive:iriSelectOntology} for the datatype, and a
+     * {@link ontology-editor.component:iriSelectOntology} for the datatype, and a
      * {@link shared.component:languageSelect}. Meant to be used in conjunction with the
      * {@link shared.service:modalService}.
      *

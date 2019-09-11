@@ -83,7 +83,7 @@
                 url: '/ontology-editor',
                 views: {
                     'container@': {
-                        templateUrl: 'ontology-editor/ontology-editor.module.html'
+                        template: '<ontology-editor-page></ontology-editor-page>'
                     }
                 },
                 data: {

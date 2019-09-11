@@ -36,14 +36,14 @@
         <text-area bind-model="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value']"
                    change-event="dvm.property[dvm.prefixes.dcterms + 'description'][0]['@value'] = value"
                    display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <advanced-language-select ng-model="dvm.language"></advanced-language-select>
+        <advanced-language-select bind-model="dvm.language" change-event="dvm.language = value"></advanced-language-select>
         <div class="mt-2">
             <p class="identifier"><strong>Characteristics</strong></p>
             <checkbox ng-repeat="obj in dvm.characteristics track by obj.typeIRI" bind-model="obj.checked" change-event="obj.checked = value" display-text="obj.displayText"></checkbox>
         </div>
-        <iri-select-ontology ng-model="dvm.domains" display-text="'Domain'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris"></iri-select-ontology>
-        <iri-select-ontology ng-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange"></iri-select-ontology>
-        <super-property-select values="dvm.values" key="'dataProperties'"></super-property-select>
+        <iri-select-ontology bind-model="dvm.domains" display-text="'Domain'" muted-text="'(Optional)'" select-list="dvm.os.listItem.classes.iris" change-event="dvm.domains = value"></iri-select-ontology>
+        <iri-select-ontology bind-model="dvm.ranges" display-text="'Range'" muted-text="'(Optional)'" select-list="dvm.os.listItem.dataPropertyRange" change-event="dvm.ranges = value"></iri-select-ontology>
+        <super-property-select bind-model="dvm.values" key="'dataProperties'" change-event="dvm.values = values"></super-property-select>
     </form>
 </div>
 <div class="modal-footer">

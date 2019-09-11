@@ -3424,6 +3424,12 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.isCommittable({})).toBe(false);
         });
     });
+    it('should update the isSaved value', function() {
+        spyOn(ontologyStateSvc, 'isCommittable').and.returnValue(true);
+        ontologyStateSvc.updateIsSaved();
+        expect(ontologyStateSvc.listItem.isSaved).toEqual(true);
+        expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+    });
     describe('addEntityToHierarchy should add the entity to the proper maps', function() {
         it('where the parent entity has children', function() {
             ontologyStateSvc.addEntityToHierarchy(this.hierarchyInfo, 'new-node', 'node1a');

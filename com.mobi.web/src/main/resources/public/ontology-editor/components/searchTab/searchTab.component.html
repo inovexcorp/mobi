@@ -35,7 +35,8 @@
                             current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
                             is-active="dvm.os.getActiveEntityIRI() === item"
                             on-click="dvm.selectItem(item)"
-                            ng-dblclick="dvm.goToIfYouCan(item)"></tree-item>
+                            ng-dblclick="dvm.goToIfYouCan(item)"
+                            in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
                 </ul>
             </div>
         </div>

@@ -28,14 +28,14 @@
      * @name ontology-editor.component:propertyTree
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description
      * `propertyTree` is a component which creates a `div` containing a {@link shared.component:searchBar}
-     * and hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what
-     * is shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
+     * and hierarchy of {@link ontology-editor.component:treeItem}. When search text is provided, the hierarchy filters
+     * what is shown based on value matches with predicates in the
+     * {@link shared.service:ontologyManagerService entityNameProps}.
      *
      * @param {Object[]} datatypeProps An array which represents a flattened list of data properties
      * @param {Object[]} objectProps An array which represents a flattened list of object properties
@@ -55,15 +55,14 @@
         controller: propertyTreeComponentCtrl
     };
 
-    propertyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService', 'prefixes', 'INDENT'];
+    propertyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'prefixes', 'INDENT'];
 
-    function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService, prefixes, INDENT) {
+    function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService, utilService, prefixes, INDENT) {
         var dvm = this;
         var om = ontologyManagerService;
         var util = utilService;
         dvm.indent = INDENT;
         dvm.os = ontologyStateService;
-        dvm.ou = ontologyUtilsManagerService;
         dvm.searchText = '';
         dvm.filterText = '';
         dvm.flatPropertyTree = [];

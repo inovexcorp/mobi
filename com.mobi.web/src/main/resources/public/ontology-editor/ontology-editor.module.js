@@ -23,82 +23,13 @@
 (function() {
     'use strict';
 
-    angular
-        .module('ontology-editor', [
-            /* New Directives */
-            'advancedLanguageSelect',
-            'annotationBlock',
-            'annotationOverlay',
-            'associationBlock',
-            'axiomBlock',
-            'axiomOverlay',
-            'blankNodeValueDisplay',
-            'characteristicsBlock',
-            'characteristicsRow',
-            'classAxioms',
-            'classesTab',
-            'classHierarchyBlock',
-            'commitOverlay',
-            'commitsTab',
-            'conceptHierarchyBlock',
-            'conceptSchemeHierarchyBlock',
-            'conceptSchemesTab',
-            'conceptsTab',
-            'createAnnotationPropertyOverlay',
-            'createBranchOverlay',
-            'createClassOverlay',
-            'createConceptOverlay',
-            'createConceptSchemeOverlay',
-            'createEntityModal',
-            'createIndividualOverlay',
-            'datatypePropertyAxioms',
-            'datatypePropertyBlock',
-            'editBranchOverlay',
-            'everythingTree',
-            'importsBlock',
-            'individualsTab',
-            'individualHierarchyBlock',
-            'individualTree',
-            'individualTypesModal',
-            'iriSelectOntology',
-            'mergeBlock',
-            'mergeTab',
-            'newOntologyOverlay',
-            'objectPropertyAxioms',
-            'objectPropertyBlock',
-            'ontologyButtonStack',
-            'ontologyClassSelect',
-            'ontologyCloseOverlay',
-            'ontologyDownloadOverlay',
-            'ontologyTab',
-            'ontologyEditorPage',
-            'ontologyPropertiesBlock',
-            'ontologyPropertyOverlay',
-            'ontologySidebar',
-            'openOntologyTab',
-            'overviewTab',
-            'previewBlock',
-            'projectTab',
-            'propertiesTab',
-            'propertyValues',
-            'propertyHierarchyBlock',
-            'relationshipOverlay',
-            'relationshipsBlock',
-            'resolveConflictsBlock',
-            'savedChangesTab',
-            'selectedDetails',
-            'serializationSelect',
-            'staticIri',
-            'superClassSelect',
-            'superPropertySelect',
-            'topConceptOverlay',
-            'treeItem',
-            'uploadChangesOverlay',
-            'uploadOntologyOverlay',
-            'uploadSnackbar',
-            'usagesBlock',
-
-            /* Services */
-            'ontologyUtilsManager'
-        ]);
+    /**
+     * @ngdoc overview
+     * @name ontology-editor
+     *
+     * @description
+     * The `ontology-editor` module provides components and services that make up the Ontology Editor page of Mobi for
+     * creating, editing, and managing ontologies/vocabularies.
+     */
+    angular.module('ontology-editor', []);
 })();

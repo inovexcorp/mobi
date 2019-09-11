@@ -33,7 +33,7 @@
      * a manual 'tree' of the results grouped by entity type, and a display of the matching properties on the
      * selected search result. The search input performs a case-insensitive search among the property values on
      * entities in the ontology. A search result item can be doubled clicked to open it in its appropriate tab
-     * in the {@link ontologyTab.directive:ontologyTab}.
+     * in the {@link ontology-editor.component:ontologyTab}.
      */
     const searchTabComponent = {
         templateUrl: 'ontology-editor/components/searchTab/searchTab.component.html',
