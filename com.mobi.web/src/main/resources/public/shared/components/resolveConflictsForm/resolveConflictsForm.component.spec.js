@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockComponent,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Resolve Conflicts Form component', function() {
     var $compile, scope, util;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'statementContainer');
         mockComponent('shared', 'statementDisplay');
         mockUtil();

@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockMapperState
+} from '../../../../../../test/js/Shared';
+
 describe('Class Mapping Overlay component', function() {
     var $compile, scope, mapperStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockComponent('mapper', 'classSelect');
         mockComponent('mapper', 'classPreview');
         mockMapperState();

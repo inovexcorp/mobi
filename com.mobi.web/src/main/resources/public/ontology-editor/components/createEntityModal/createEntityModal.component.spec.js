@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('Create Entity Modal component', function() {
     var $compile, scope, ontologyStateSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockModal();
 
@@ -45,12 +49,8 @@ describe('Create Entity Modal component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
-        ontologyManagerSvc = null;
         ontologyStateSvc = null;
-        prefixes = null;
-        splitIRI = null;
-        ontoUtils = null;
+        modalSvc = null;
         this.element.remove();
     });
 

@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockComponent,
+    mockUtil,
+    mockCatalogManager,
+    mockHttpService,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Commit Compiled Resource component', function() {
     var $compile, scope, $q, httpSvc, catalogManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'infoMessage');
         mockComponent('shared', 'errorDisplay');
         mockCatalogManager();

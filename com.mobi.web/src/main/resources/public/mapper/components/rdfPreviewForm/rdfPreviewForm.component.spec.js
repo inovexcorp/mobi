@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockMapperState,
+    mockDelimitedManager
+} from '../../../../../../test/js/Shared';
+
 describe('RDF Preview Form component', function() {
     var $compile, scope, $q, delimitedManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockComponent('mapper', 'mapperSerializationSelect');
         mockMapperState();
         mockDelimitedManager();

@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Record Keywords component', function() {
     var $compile, scope, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _prefixes_) {

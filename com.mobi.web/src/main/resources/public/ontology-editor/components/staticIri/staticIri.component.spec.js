@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    mockModal,
+    injectSplitIRIFilter,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Static IRI component', function() {
     var $compile, scope, ontologyStateSvc, ontoUtils, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockOntologyUtilsManager();
         mockModal();

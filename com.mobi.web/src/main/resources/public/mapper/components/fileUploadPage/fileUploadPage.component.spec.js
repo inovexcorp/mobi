@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockMappingManager,
+    mockMapperState,
+    mockDelimitedManager,
+    mockUtil,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('File Upload Page component', function() {
     var $compile, scope, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockComponent('mapper', 'previewDataGrid');
         mockComponent('mapper', 'mappingPreview');
         mockComponent('mapper', 'fileUploadForm');

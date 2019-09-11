@@ -24,8 +24,7 @@ describe('Block header component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

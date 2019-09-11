@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogState
+} from '../../../../../../test/js/Shared';
+
 describe('Record Icon component', function() {
     var $compile, scope, catalogStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockCatalogState();
 
         inject(function(_$compile_, _$rootScope_, _catalogStateService_) {

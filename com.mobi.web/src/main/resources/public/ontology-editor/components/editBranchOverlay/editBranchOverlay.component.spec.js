@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogManager,
+    mockOntologyState,
+    mockPrefixes,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Edit Branch Overlay component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, prefixes, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockCatalogManager();
         mockOntologyState();
         mockPrefixes();

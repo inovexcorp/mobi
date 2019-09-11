@@ -20,21 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockCatalogManager,
+    mockOntologyManager,
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    mockUtil,
+    injectTrustedFilter,
+    injectHighlightFilter,
+    injectPrefixationFilter
+} from '../../../../../../test/js/Shared';
+
 describe('See History component', function() {
     var $compile, scope, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'staticIri');
-        injectTrustedFilter();
-        injectHighlightFilter();
-        injectPrefixationFilter();
         mockCatalogManager();
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockUtil();
+        injectTrustedFilter();
+        injectHighlightFilter();
+        injectPrefixationFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;

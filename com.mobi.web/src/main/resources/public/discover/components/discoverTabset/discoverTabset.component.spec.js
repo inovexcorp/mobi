@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Discover Tabset component', function() {
+import { 
+    mockComponent,
+    mockDiscoverState
+} from '../../../../../../test/js/Shared';
+
+ describe('Discover Tabset component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('discover');
+        angular.mock.module('discover');
         mockComponent('discover', 'exploreTab');
         mockComponent('discover', 'discoverSearchTab');
         mockComponent('discover', 'queryTab');

@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockSettingsManager
+} from '../../../../../../test/js/Shared';
+
 describe('Preferences Tab component', function() {
     var $compile, scope, settingsManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('settings');
+        angular.mock.module('settings');
         mockComponent('settings', 'customPreference');
         mockComponent('settings', 'preferencesContainer');
         mockSettingsManager();

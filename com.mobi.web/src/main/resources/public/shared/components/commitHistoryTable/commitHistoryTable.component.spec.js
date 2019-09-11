@@ -20,12 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockComponent,
+    mockOntologyState,
+    mockCatalogManager,
+    mockUtil,
+    mockHttpService,
+    mockUserManager,
+    mockModal,
+    injectChromaConstant
+} from '../../../../../../test/js/Shared';
+
 describe('Commit History Table component', function() {
     var $compile, scope, $q, catalogManagerSvc, Snap, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'errorDisplay');
         mockComponent('shared', 'infoMessage');
         injectChromaConstant();
@@ -36,7 +47,7 @@ describe('Commit History Table component', function() {
         mockModal();
         mockHttpService();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.constant('Snap', jasmine.createSpy('Snap').and.returnValue({
                 clear: jasmine.createSpy('clear'),
                 selectAll: jasmine.createSpy('selectAll').and.returnValue([])

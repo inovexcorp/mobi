@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    injectShowdownConstant,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Markdown Editor component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         injectShowdownConstant();
         injectTrustedFilter();
 

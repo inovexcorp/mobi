@@ -20,11 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPrefixes,
+    mockUtil,
+    mockHttpService,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
 describe('Catalog Manager service', function() {
     var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, httpSvc, $httpParamSerializer;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
         mockUtil();
         mockHttpService();

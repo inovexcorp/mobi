@@ -20,15 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyManager,
+    mockOntologyState,
+    mockCatalogManager,
+    mockPrefixes,
+    mockUtil,
+    mockMapperState,
+    mockHttpService,
+    mockPolicyEnforcement,
+    mockPolicyManager,
+    mockModal,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Open Ontology Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, prefixes, utilSvc, mapperStateSvc, catalogManagerSvc, policyManagerSvc, policyEnforcementSvc, httpSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'uploadSnackbar');
-        injectHighlightFilter();
-        injectTrustedFilter();
         mockOntologyManager();
         mockOntologyState();
         mockCatalogManager();
@@ -39,6 +52,8 @@ describe('Open Ontology Tab component', function() {
         mockPolicyEnforcement();
         mockPolicyManager();
         mockModal();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _prefixes_, _utilService_, _mapperStateService_, _catalogManagerService_, _policyManagerService_, _policyEnforcementService_, _httpService_, _modalService_) {
             $q = _$q_;

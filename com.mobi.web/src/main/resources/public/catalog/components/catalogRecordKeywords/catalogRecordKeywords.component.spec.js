@@ -20,23 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogState,
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Catalog Record Keywords component', function() {
-    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, utilSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockCatalogState();
         mockCatalogManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
-            catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
@@ -68,7 +73,6 @@ describe('Catalog Record Keywords component', function() {
         scope = null;
         $q = null;
         catalogManagerSvc = null;
-        catalogStateSvc = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();

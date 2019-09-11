@@ -20,12 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockDiscoverState,
+    mockUtil,
+    mockSearch,
+    mockPrefixes,
+    mockOntologyManager
+} from '../../../../../../../test/js/Shared';
+
 describe('Property Filter Overlay component', function() {
-    var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc, searchSvc;
+    var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('search');
+        angular.mock.module('search');
         mockComponent('search', 'propertySelector');
         mockComponent('search', 'filterSelector');
         mockDiscoverState();
@@ -34,13 +42,12 @@ describe('Property Filter Overlay component', function() {
         mockPrefixes();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _discoverStateService_, _searchService_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _discoverStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
             ontologyManagerSvc = _ontologyManagerService_;
             discoverStateSvc = _discoverStateService_;
-            searchSvc = _searchService_;
         });
 
         scope.close = jasmine.createSpy('close');
@@ -58,7 +65,6 @@ describe('Property Filter Overlay component', function() {
         utilSvc = null;
         ontologyManagerSvc = null;
         discoverStateSvc = null;
-        searchSvc = null;
         this.element.remove();
     });
 

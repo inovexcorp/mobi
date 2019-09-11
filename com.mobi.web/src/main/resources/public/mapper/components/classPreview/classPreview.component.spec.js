@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyManager,
+    mockMapperState
+} from '../../../../../../test/js/Shared';
+
 describe('Class Preview component', function() {
     var $compile, scope, ontologyManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockOntologyManager();
         mockMapperState();
 

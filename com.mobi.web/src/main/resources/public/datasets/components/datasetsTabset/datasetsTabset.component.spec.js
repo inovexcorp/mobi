@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockDatasetState,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('Datasets Tabset component', function() {
     var $compile, scope, datasetStateSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('datasets');
+        angular.mock.module('datasets');
         mockComponent('datasets', 'datasetsList');
         mockDatasetState();
         mockModal();

@@ -24,8 +24,7 @@ describe('Preferences Container component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('settings');
+        angular.mock.module('settings');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

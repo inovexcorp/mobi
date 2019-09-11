@@ -20,12 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState
+} from '../../../../../../test/js/Shared';
+
 describe('Upload Changes Overlay component', function() {
     var $compile, scope, $q, ontologyStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_) {

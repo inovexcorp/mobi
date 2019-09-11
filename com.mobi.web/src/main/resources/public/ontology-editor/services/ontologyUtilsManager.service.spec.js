@@ -20,6 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyManager,
+    mockOntologyState,
+    mockUpdateRefs,
+    mockPropertyManager,
+    mockPrefixes,
+    mockUtil,
+    injectSplitIRIFilter
+} from '../../../../../test/js/Shared';
+
 describe('Ontology Utils Manager service', function() {
     var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, propertyManagerSvc, prefixes, util, updateRefs, scope, $q;
     var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
@@ -28,14 +38,14 @@ describe('Ontology Utils Manager service', function() {
     var schemeToConcept = ['hasTopConcept'];
 
     beforeEach(function() {
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyManager();
         mockOntologyState();
         mockUpdateRefs();
         mockPropertyManager();
         mockPrefixes();
-        injectSplitIRIFilter();
         mockUtil();
+        injectSplitIRIFilter();
 
         inject(function(ontologyUtilsManagerService, _ontologyManagerService_, _ontologyStateService_, _propertyManagerService_, _prefixes_, _utilService_, _updateRefsService_, _$rootScope_, _$q_) {
             ontologyUtilsManagerSvc = ontologyUtilsManagerService;

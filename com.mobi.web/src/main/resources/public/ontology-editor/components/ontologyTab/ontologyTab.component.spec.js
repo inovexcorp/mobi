@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState,
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Ontology Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, catalogManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'seeHistory');
         mockComponent('ontology-editor', 'mergeTab');
         mockComponent('ontology-editor', 'projectTab');
@@ -55,7 +62,6 @@ describe('Ontology Tab component', function() {
             prefixes = _prefixes_;
         });
 
-        this.element = $compile(angular.element('<ontology-tab></ontology-tab>'))(scope);
         this.branchId = 'masterId';
         this.branch = {
             '@id': this.branchId,
@@ -84,6 +90,10 @@ describe('Ontology Tab component', function() {
         ontologyStateSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
         utilSvc.getDctermsValue.and.returnValue('MASTER');
         utilSvc.getPropertyId.and.returnValue(this.commitId);
+
+        this.element = $compile(angular.element('<ontology-tab></ontology-tab>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('ontologyTab');
     });
 
     afterEach(function() {
@@ -98,6 +108,10 @@ describe('Ontology Tab component', function() {
     });
 
     describe('should initialize calling the correct methods', function() {
+        beforeEach(function() {
+            ontologyStateSvc.updateOntology.calls.reset();
+            ontologyStateSvc.resetStateTabs.calls.reset();
+        });
         describe('when the ontology is open on a branch', function() {
             describe('and the branch does not exist', function() {
                 beforeEach(function() {
@@ -106,7 +120,8 @@ describe('Ontology Tab component', function() {
                 describe('and getBranchHeadCommit is resolved', function() {
                     it('and updateOntology is resolved', function() {
                         ontologyStateSvc.updateOntology.and.returnValue($q.when());
-                        scope.$digest();
+                        this.controller.$onInit();
+                        scope.$apply();
                         expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                             this.branchId, this.commitId, true);
@@ -114,37 +129,41 @@ describe('Ontology Tab component', function() {
                     });
                     it('and updateOntology does not resolve', function() {
                         ontologyStateSvc.updateOntology.and.returnValue($q.reject(this.errorMessage));
-                        scope.$digest();
+                        this.controller.$onInit();
+                        scope.$apply();
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
                         expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                     });
                 });
                 it('and getBranchHeadCommit does not resolve', function() {
                     catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject(this.errorMessage));
-                    scope.$digest();
+                    this.controller.$onInit();
+                        scope.$apply();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
                     expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                 });
             });
             it('and the branch exists', function() {
                 ontologyStateSvc.listItem.ontologyRecord.branchId = this.branchId;
-                scope.$digest();
+                this.controller.$onInit();
+                        scope.$apply();
                 expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
             });
         });
         it('when the ontology is not open on a branch', function() {
-            scope.$digest();
+            this.controller.$onInit();
+            scope.$apply();
             expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
             expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
             expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
         });
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            scope.$digest();
-        });
+        // beforeEach(function() {
+        //     scope.$digest();
+        // });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('ONTOLOGY-TAB');
             expect(this.element.querySelectorAll('.ontology-tab').length).toEqual(1);

@@ -20,20 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockPropertyManager,
+    mockUtil,
+    mockOntologyUtilsManager,
+    mockPrefixes,
+    injectRegexConstant,
+    injectHighlightFilter,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Ontology Property Overlay component', function() {
     var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, util, ontoUtils, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        injectRegexConstant();
-        injectHighlightFilter();
-        injectTrustedFilter();
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockPropertyManager();
         mockUtil();
         mockOntologyUtilsManager();
         mockPrefixes();
+        injectRegexConstant();
+        injectHighlightFilter();
+        injectTrustedFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;

@@ -20,12 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogManager,
+    mockOntologyState,
+    mockOntologyManager,
+    mockUtil,
+    mockStateManager,
+    mockPrefixes,
+    mockModal,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Open Ontology Select component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, utilSvc, prefixes, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockCatalogManager();
         mockOntologyState();
         mockOntologyManager();

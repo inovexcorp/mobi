@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogManager,
+    mockUtil,
+    mockPrefixes,
+    mockUserManager,
+    mockPolicyManager,
+    injectSplitIRIFilter,
+    injectBeautifyFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Permissions Page component', function() {
     var $compile, scope, $q, policyManagerSvc, catalogManagerSvc, utilSvc, userManagerSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockCatalogManager();
         mockUtil();
         mockPrefixes();

@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockPrefixes,
+    mockUtil,
+    mockPropertyManager,
+    mockModal
+} from '../../../../../../test/js/Shared';
+
 describe('Imports Block component', function() {
     var $compile, scope, $q, ontologyStateSvc, prefixes, propertyManagerSvc, modalSvc, util;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockOntologyState();
         mockPrefixes();
         mockUtil();

@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockComponent,
+    mockOntologyState,
+    mockOntologyManager,
+    mockOntologyUtilsManager,
+    mockPropertyManager,
+    mockModal,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Axiom Block component', function() {
     var $compile, scope, ontologyStateSvc, ontologyManagerSvc, propertyManagerSvc, ontoUtils, prefixes, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'classAxioms');
         mockComponent('ontology-editor', 'objectPropertyAxioms');
         mockComponent('ontology-editor', 'datatypePropertyAxioms');

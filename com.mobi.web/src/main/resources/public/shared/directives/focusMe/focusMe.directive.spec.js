@@ -24,7 +24,7 @@ describe('Focus Me directive', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

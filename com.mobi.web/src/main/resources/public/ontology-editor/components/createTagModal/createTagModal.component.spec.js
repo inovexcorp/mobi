@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogManager,
+    mockOntologyState,
+    mockLoginManager,
+    mockPrefixes,
+    injectRegexConstant,
+    injectCamelCaseFilter,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Create Tag Modal component', function() {
     var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockCatalogManager();
         mockOntologyState();
         mockLoginManager();

@@ -20,15 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockSettingsManager,
+    mockOntologyState,
+    injectRegexConstant
+} from '../../../../../../test/js/Shared';
+
 describe('Tree Item component', function() {
     var $compile, scope, ontologyStateSvc, settingsManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        injectRegexConstant();
+        angular.mock.module('ontology-editor');
         mockSettingsManager();
         mockOntologyState();
+        injectRegexConstant();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _settingsManagerService_) {
             $compile = _$compile_;

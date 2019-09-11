@@ -20,13 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockPrefixes,
+    mockOntologyManager,
+    mockOntologyState,
+    mockUtil,
+    injectUniqueKeyFilter,
+    injectIndentConstant
+} from '../../../../../../test/js/Shared';
 
 describe('Property Tree component', function() {
     var $compile, scope, ontologyManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
+        angular.mock.module('ontology-editor');
         mockComponent('ontology-editor', 'treeItem');
         mockPrefixes();
         mockOntologyManager();
