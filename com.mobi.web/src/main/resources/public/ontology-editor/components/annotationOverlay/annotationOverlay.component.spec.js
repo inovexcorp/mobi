@@ -80,7 +80,7 @@ describe('Annotation Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('ANNOTATION-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('ANNOTATION-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
@@ -103,24 +103,24 @@ describe('Annotation Overlay component', function() {
                 scope.$digest();
 
                 var header = this.element.find('h3');
-                expect(header.length).toBe(1);
-                expect(header[0].innerHTML).toBe(test.result);
+                expect(header.length).toEqual(1);
+                expect(header[0].innerHTML).toEqual(test.result);
             }, this);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     describe('controller methods', function() {
         it('disableProp should test whether an annotation is owl:deprecated and whether it has been set already', function() {
-            expect(this.controller.disableProp('test')).toBe(false);
-            expect(this.controller.disableProp(prefixes.owl + 'deprecated')).toBe(false);
+            expect(this.controller.disableProp('test')).toEqual(false);
+            expect(this.controller.disableProp(prefixes.owl + 'deprecated')).toEqual(false);
 
             ontologyStateSvc.listItem.selected[prefixes.owl + 'deprecated'] = [];
-            expect(this.controller.disableProp(prefixes.owl + 'deprecated')).toBe(true);
+            expect(this.controller.disableProp(prefixes.owl + 'deprecated')).toEqual(true);
         });
         describe('selectProp should set the correct state if it is', function() {
             it('owl:deprecated', function() {

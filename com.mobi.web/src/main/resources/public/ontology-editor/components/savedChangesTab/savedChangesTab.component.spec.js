@@ -106,78 +106,78 @@ describe('Saved Changes Tab component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('SAVED-CHANGES-TAB');
-            expect(this.element.querySelectorAll('.saved-changes-tab.row').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('SAVED-CHANGES-TAB');
+            expect(this.element.querySelectorAll('.saved-changes-tab.row').length).toEqual(1);
         });
         it('with a .has-changes', function() {
-            expect(this.element.querySelectorAll('.has-changes').length).toBe(0);
+            expect(this.element.querySelectorAll('.has-changes').length).toEqual(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.has-changes').length).toBe(1);
+            expect(this.element.querySelectorAll('.has-changes').length).toEqual(1);
         });
         it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(0);
+            expect(this.element.querySelectorAll('.btn-container').length).toEqual(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toEqual(1);
         });
         it('with .btn', function() {
-            expect(this.element.querySelectorAll('.btn-container .btn').length).toBe(0);
+            expect(this.element.querySelectorAll('.btn-container .btn').length).toEqual(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.btn-container .btn').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container .btn').length).toEqual(1);
         });
         it('with .list-group', function() {
-            expect(this.element.querySelectorAll('.list-group').length).toBe(0);
+            expect(this.element.querySelectorAll('.list-group').length).toEqual(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id'}];
             this.controller.showList = [{}];
             scope.$apply();
-            expect(this.element.querySelectorAll('.list-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.list-group').length).toEqual(1);
         });
         it('with statement-display dependent on how many additions/deletions there are', function() {
-            expect(this.element.find('statement-display').length).toBe(0);
+            expect(this.element.find('statement-display').length).toEqual(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id', 'value': ['stuff']}];
             this.controller.showList = [{additions: [{}]}, {additions: [{}]}];
             scope.$digest();
-            expect(this.element.find('statement-display').length).toBe(2);
+            expect(this.element.find('statement-display').length).toEqual(2);
             // ontologyStateSvc.listItem.upToDate = false;
             // utilSvc.getPredicatesAndObjects.and.returnValue([{}]);
             // scope.$apply();
-            // expect(this.element.find('statement-display').length).toBe(1);
+            // expect(this.element.find('statement-display').length).toEqual(1);
         });
         it('depending on whether the list item is up to date', function() {
-            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);
-            expect(this.element.querySelectorAll('.changes .text-center error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toEqual(1);
+            expect(this.element.querySelectorAll('.changes .text-center error-display').length).toEqual(0);
 
             ontologyStateSvc.listItem.upToDate = false;
             scope.$digest();
-            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toEqual(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toEqual(1);
 
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.changes-info error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes-info error-display').length).toEqual(1);
 
             ontologyStateSvc.listItem.upToDate = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('.changes-info error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.changes-info error-display').length).toEqual(0);
         });
         it('depending on whether the branch is a user branch', function() {
-            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(1);
-            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toEqual(1);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toEqual(0);
 
             ontologyStateSvc.listItem.userBranch = true;
             ontologyStateSvc.listItem.createdFromExists = true;
             scope.$digest();
 
-            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toEqual(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toEqual(1);
 
             ontologyStateSvc.listItem.createdFromExists = true;
             scope.$digest();
 
-            expect(this.element.querySelectorAll('.no-changes info-message').length).toBe(0);
-            expect(this.element.querySelectorAll('.no-changes error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.no-changes info-message').length).toEqual(0);
+            expect(this.element.querySelectorAll('.no-changes error-display').length).toEqual(1);
         });
         it('depending on whether the list item is committable', function() {
             ontologyStateSvc.listItem.inProgressCommit.additions = [{}];
@@ -261,12 +261,12 @@ describe('Saved Changes Tab component', function() {
                 expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                 expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
-                expect(this.controller.error).toBe('error');
+                expect(this.controller.error).toEqual('error');
             });
         });
         it('orderByIRI should call the correct method', function() {
             utilSvc.getBeautifulIRI.and.returnValue('iri');
-            expect(this.controller.orderByIRI({id: 'id'})).toBe('iri');
+            expect(this.controller.orderByIRI({id: 'id'})).toEqual('iri');
             expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith('id');
         });
 
@@ -402,7 +402,7 @@ describe('Saved Changes Tab component', function() {
                 this.controller.restoreBranchWithUserBranch();
                 scope.$apply();
                 expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, this.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                expect(this.controller.error).toBe(this.error);
+                expect(this.controller.error).toEqual(this.error);
             });
         });
         describe('mergeUserBranch calls the correct methods', function() {

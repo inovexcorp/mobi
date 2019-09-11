@@ -58,7 +58,7 @@ describe('Serialization Select component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('SERIALIZATION-SELECT');
+            expect(this.element.prop('tagName')).toEqual('SERIALIZATION-SELECT');
             expect(this.element.querySelectorAll('.serialization-select').length).toEqual(1);
             expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });

@@ -146,35 +146,35 @@ describe('Ontology Tab component', function() {
             scope.$digest();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('ONTOLOGY-TAB');
-            expect(this.element.querySelectorAll('.ontology-tab').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-TAB');
+            expect(this.element.querySelectorAll('.ontology-tab').length).toEqual(1);
         });
         it('with a material-tabset', function() {
-            expect(this.element.find('material-tabset').length).toBe(1);
+            expect(this.element.find('material-tabset').length).toEqual(1);
         });
         it('with material-tabs', function() {
-            expect(this.element.find('material-tab').length).toBe(10);
+            expect(this.element.find('material-tab').length).toEqual(10);
         });
         ['material-tabset', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(tag => {
             it('with a ' + tag, function() {
-                expect(this.element.find(tag).length).toBe(1);
+                expect(this.element.find(tag).length).toEqual(1);
             });
         });
         it('if branches are being merged', function() {
-            expect(this.element.find('merge-tab').length).toBe(0);
+            expect(this.element.find('merge-tab').length).toEqual(0);
 
             ontologyStateSvc.listItem.merge.active = true;
             scope.$digest();
-            expect(this.element.find('material-tabset').length).toBe(0);
-            expect(this.element.find('ontology-button-stack').length).toBe(0);
-            expect(this.element.find('merge-tab').length).toBe(1);
+            expect(this.element.find('material-tabset').length).toEqual(0);
+            expect(this.element.find('ontology-button-stack').length).toEqual(0);
+            expect(this.element.find('merge-tab').length).toEqual(1);
         });
         it('if a new entity was created', function() {
-            expect(this.element.find('open-entity-snackbar').length).toBe(0);
+            expect(this.element.find('open-entity-snackbar').length).toEqual(0);
             ontologyStateSvc.listItem.goTo.active = true;
             scope.$digest();
 
-            expect(this.element.find('open-entity-snackbar').length).toBe(1);
+            expect(this.element.find('open-entity-snackbar').length).toEqual(1);
         });
     });
 });

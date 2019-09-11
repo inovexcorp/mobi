@@ -83,48 +83,48 @@ describe('Create Concept Overlay component', function() {
     });
     it('initializes with the correct values', function() {
         expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-        expect(this.controller.prefix).toBe(this.iri);
-        expect(this.controller.concept['@id']).toBe(this.controller.prefix);
+        expect(this.controller.prefix).toEqual(this.iri);
+        expect(this.controller.concept['@id']).toEqual(this.controller.prefix);
         expect(this.controller.concept['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept']);
         expect(this.controller.schemeIRIs).toEqual(['scheme1']);
         expect(ontologyManagerSvc.getConceptSchemeIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConceptSchemes);
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('CREATE-CONCEPT-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('CREATE-CONCEPT-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toEqual(1);
         });
         it('with a static-iri', function() {
-            expect(this.element.find('static-iri').length).toBe(1);
+            expect(this.element.find('static-iri').length).toEqual(1);
         });
         it('with a custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(2);
+            expect(this.element.find('custom-label').length).toEqual(2);
         });
         it('with an advanced-language-select', function() {
-            expect(this.element.find('advanced-language-select').length).toBe(1);
+            expect(this.element.find('advanced-language-select').length).toEqual(1);
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.error = 'Error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on whether there are concept schemes', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toEqual(1);
 
             this.controller.schemeIRIs = [];
             scope.$digest();
-            expect(this.element.find('ui-select').length).toBe(0);
+            expect(this.element.find('ui-select').length).toEqual(0);
         });
         it('with buttons to create and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
@@ -141,8 +141,8 @@ describe('Create Concept Overlay component', function() {
             scope.$digest();
 
             var disabled = this.element.querySelectorAll('[disabled]');
-            expect(disabled.length).toBe(1);
-            expect(angular.element(disabled[0]).text()).toBe('Submit');
+            expect(disabled.length).toEqual(1);
+            expect(angular.element(disabled[0]).text()).toEqual('Submit');
         });
     });
     describe('controller methods', function() {
@@ -165,8 +165,8 @@ describe('Create Concept Overlay component', function() {
         });
         it('should change the iri based on the params', function() {
             this.controller.onEdit('begin', 'then', 'end');
-            expect(this.controller.concept['@id']).toBe('begin' + 'then' + 'end');
-            expect(this.controller.iriHasChanged).toBe(true);
+            expect(this.controller.concept['@id']).toEqual('begin' + 'then' + 'end');
+            expect(this.controller.iriHasChanged).toEqual(true);
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         it('should create a concept', function() {

@@ -77,19 +77,19 @@ describe('Create Branch Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('CREATE-BRANCH-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('CREATE-BRANCH-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         _.forEach(['form', 'error-display', 'text-input', 'text-area'], function(item) {
             it('with a ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toEqual(1);
             });
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
@@ -137,7 +137,7 @@ describe('Create Branch Overlay component', function() {
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
                             ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(ontologyStateSvc.updateOntologyState).toHaveBeenCalledWith({recordId: ontologyStateSvc.listItem.ontologyRecord.recordId, commitId: this.commitId, branchId: this.branchId});
-                        expect(this.controller.error).toBe(this.error);
+                        expect(this.controller.error).toEqual(this.error);
                         expect(scope.close).not.toHaveBeenCalled();
                     });
                 });
@@ -149,7 +149,7 @@ describe('Create Branch Overlay component', function() {
                         .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
                         ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
-                    expect(this.controller.error).toBe(this.error);
+                    expect(this.controller.error).toEqual(this.error);
                     expect(scope.close).not.toHaveBeenCalled();
                 });
             });
@@ -159,7 +159,7 @@ describe('Create Branch Overlay component', function() {
                 scope.$digest();
                 expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                expect(this.controller.error).toBe(this.error);
+                expect(this.controller.error).toEqual(this.error);
                 expect(scope.close).not.toHaveBeenCalled();
             });
         });

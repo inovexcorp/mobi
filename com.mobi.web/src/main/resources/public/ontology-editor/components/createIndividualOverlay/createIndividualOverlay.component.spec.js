@@ -62,8 +62,8 @@ describe('Create Individual Overlay component', function() {
 
     it('initializes with the correct values', function() {
         expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-        expect(this.controller.prefix).toBe(this.iri);
-        expect(this.controller.individual['@id']).toBe(this.controller.prefix);
+        expect(this.controller.prefix).toEqual(this.iri);
+        expect(this.controller.individual['@id']).toEqual(this.controller.prefix);
         expect(this.controller.individual['@type']).toEqual([]);
     });
     describe('controller bound variable', function() {
@@ -78,30 +78,30 @@ describe('Create Individual Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('CREATE-INDIVIDUAL-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('CREATE-INDIVIDUAL-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         _.forEach(['form', 'static-iri', 'ontology-class-select'], el => {
             it('with a ' + el, function() {
-                expect(this.element.find(el).length).toBe(1);
+                expect(this.element.find(el).length).toEqual(1);
             });
         });
         it('with an input for the individual name', function() {
-            expect(this.element.querySelectorAll('input[name="name"]').length).toBe(1);
+            expect(this.element.querySelectorAll('input[name="name"]').length).toEqual(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toEqual(true);
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
             this.controller.error = 'error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on the form validity', function() {
             this.controller.individual['@type'] = ['ClassA'];
@@ -128,8 +128,8 @@ describe('Create Individual Overlay component', function() {
             scope.$digest();
 
             var disabled = this.element.querySelectorAll('[disabled]');
-            expect(disabled.length).toBe(1);
-            expect(angular.element(disabled[0]).text().trim()).toBe('Submit');
+            expect(disabled.length).toEqual(1);
+            expect(angular.element(disabled[0]).text().trim()).toEqual('Submit');
         });
     });
     describe('controller methods', function() {
@@ -141,18 +141,18 @@ describe('Create Individual Overlay component', function() {
             it('unless the IRI has not changed', function() {
                 this.controller.iriHasChanged = false;
                 this.controller.nameChanged();
-                expect(this.controller.individual['@id']).toBe(this.controller.prefix + this.controller.name);
+                expect(this.controller.individual['@id']).toEqual(this.controller.prefix + this.controller.name);
             });
             it('if the IRI has changed', function() {
                 this.controller.iriHasChanged = true;
                 this.controller.nameChanged();
-                expect(this.controller.individual['@id']).toBe(this.id);
+                expect(this.controller.individual['@id']).toEqual(this.id);
             });
         });
         it('should change the individual IRI based on the params', function() {
             this.controller.onEdit('begin', 'then', 'end');
-            expect(this.controller.iriHasChanged).toBe(true);
-            expect(this.controller.individual['@id']).toBe('begin' + 'then' + 'end');
+            expect(this.controller.iriHasChanged).toEqual(true);
+            expect(this.controller.individual['@id']).toEqual('begin' + 'then' + 'end');
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('should create an individual', function() {

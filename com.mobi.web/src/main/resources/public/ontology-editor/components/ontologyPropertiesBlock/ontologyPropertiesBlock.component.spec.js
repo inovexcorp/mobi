@@ -79,39 +79,39 @@ describe('Ontology Properties Block component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('ONTOLOGY-PROPERTIES-BLOCK');
-            expect(this.element.querySelectorAll('.ontology-properties-block').length).toBe(1);
-            expect(this.element.querySelectorAll('.annotation-block').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-PROPERTIES-BLOCK');
+            expect(this.element.querySelectorAll('.ontology-properties-block').length).toEqual(1);
+            expect(this.element.querySelectorAll('.annotation-block').length).toEqual(1);
         });
         it('with a .section-header', function() {
-            expect(this.element.querySelectorAll('.section-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header').length).toEqual(1);
         });
         it('depending on how many ontology properties there are', function() {
-            expect(this.element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toEqual(2);
             this.controller.ontology = undefined;
             scope.$digest();
-            expect(this.element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toEqual(0);
         });
         it('with a link to add an ontology property when the user can modify branch', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
         });
         it('with no link to add an ontology property when the user cannot modify branch', function() {
             ontologyStateSvc.canModify.and.returnValue(false);
             scope.$digest();
-            expect(this.element.querySelectorAll('.section-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
     });
     describe('controller methods', function() {
         it('should set the correct manager values when opening the Add Overlay', function() {
             this.controller.openAddOverlay();
-            expect(ontologyStateSvc.editingOntologyProperty).toBe(false);
+            expect(ontologyStateSvc.editingOntologyProperty).toEqual(false);
             expect(ontologyStateSvc.ontologyProperty).toBeUndefined();
-            expect(ontologyStateSvc.ontologyPropertyValue).toBe('');
-            expect(ontologyStateSvc.ontologyPropertyIRI).toBe('');
+            expect(ontologyStateSvc.ontologyPropertyValue).toEqual('');
+            expect(ontologyStateSvc.ontologyPropertyIRI).toEqual('');
             expect(ontologyStateSvc.ontologyPropertyType).toBeUndefined();
-            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('');
+            expect(ontologyStateSvc.ontologyPropertyLanguage).toEqual('');
             expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyPropertyOverlay');
         });
         it('should set the correct manager values when opening the Remove Ontology Property Overlay', function() {
@@ -126,13 +126,13 @@ describe('Ontology Properties Block component', function() {
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];
             this.controller.editClicked(propertyIRI, 0);
-            expect(ontologyStateSvc.editingOntologyProperty).toBe(true);
+            expect(ontologyStateSvc.editingOntologyProperty).toEqual(true);
             expect(ontologyStateSvc.ontologyProperty).toEqual(propertyIRI);
-            expect(ontologyStateSvc.ontologyPropertyValue).toBe('value');
-            expect(ontologyStateSvc.ontologyPropertyIRI).toBe('id');
-            expect(ontologyStateSvc.ontologyPropertyType).toBe('type');
-            expect(ontologyStateSvc.ontologyPropertyIndex).toBe(0);
-            expect(ontologyStateSvc.ontologyPropertyLanguage).toBe('lang');
+            expect(ontologyStateSvc.ontologyPropertyValue).toEqual('value');
+            expect(ontologyStateSvc.ontologyPropertyIRI).toEqual('id');
+            expect(ontologyStateSvc.ontologyPropertyType).toEqual('type');
+            expect(ontologyStateSvc.ontologyPropertyIndex).toEqual(0);
+            expect(ontologyStateSvc.ontologyPropertyLanguage).toEqual('lang');
             expect(modalSvc.openModal).toHaveBeenCalledWith('ontologyPropertyOverlay');
         });
     });

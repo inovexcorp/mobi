@@ -59,33 +59,33 @@ describe('Super Class Select component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('SUPER-CLASS-SELECT');
-            expect(this.element.querySelectorAll('.super-class-select').length).toBe(1);
-            expect(this.element.querySelectorAll('.advanced-language-select').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('SUPER-CLASS-SELECT');
+            expect(this.element.querySelectorAll('.super-class-select').length).toEqual(1);
+            expect(this.element.querySelectorAll('.advanced-language-select').length).toEqual(1);
         });
         it('for correct links', function() {
-            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(1);
-            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(0);
+            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toEqual(1);
+            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toEqual(0);
             this.controller.isShown = true;
             scope.$apply();
-            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
-            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toEqual(0);
+            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toEqual(1);
         });
         it('with an ontology-class-select', function() {
-            expect(this.element.find('ontology-class-select').length).toBe(0);
+            expect(this.element.find('ontology-class-select').length).toEqual(0);
             this.controller.isShown = true;
             scope.$apply();
-            expect(this.element.find('ontology-class-select').length).toBe(1);
+            expect(this.element.find('ontology-class-select').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
         it('show sets the proper variables', function() {
             this.controller.show();
-            expect(this.controller.isShown).toBe(true);
+            expect(this.controller.isShown).toEqual(true);
         });
         it('hide sets the proper variables', function() {
             this.controller.hide();
-            expect(this.controller.isShown).toBe(false);
+            expect(this.controller.isShown).toEqual(false);
             expect(scope.changeEvent).toHaveBeenCalledWith([]);
         });
         it('onChange should call changeEvent', function() {

@@ -62,43 +62,43 @@ describe('Create Entity Modal component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('CREATE-ENTITY-MODAL');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('CREATE-ENTITY-MODAL');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a button to create a class', function() {
-            expect(this.element.querySelectorAll('button.create-class').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-class').length).toEqual(1);
         });
         it('with a button to create a data property', function() {
-            expect(this.element.querySelectorAll('button.create-data-property').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-data-property').length).toEqual(1);
         });
         it('with a button to create an object property', function() {
-            expect(this.element.querySelectorAll('button.create-object-property').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-object-property').length).toEqual(1);
         });
         it('with a button to create an annotation property', function() {
-            expect(this.element.querySelectorAll('button.create-annotation-property').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-annotation-property').length).toEqual(1);
         });
         it('with a button to create an individual', function() {
-            expect(this.element.querySelectorAll('button.create-individual').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-individual').length).toEqual(1);
         });
         it('with a button to create a concept if the ontology is a vocabulary', function() {
-            expect(this.element.querySelectorAll('button.create-concept').length).toBe(0);
+            expect(this.element.querySelectorAll('button.create-concept').length).toEqual(0);
 
             ontologyStateSvc.listItem.isVocabulary = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('button.create-concept').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-concept').length).toEqual(1);
         });
         it('with a button to create a concept scheme if the ontology is a vocabulary', function() {
-            expect(this.element.querySelectorAll('button.create-concept-scheme').length).toBe(0);
+            expect(this.element.querySelectorAll('button.create-concept-scheme').length).toEqual(0);
 
             ontologyStateSvc.listItem.isVocabulary = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('button.create-concept-scheme').length).toBe(1);
+            expect(this.element.querySelectorAll('button.create-concept-scheme').length).toEqual(1);
         });
         it('with a button to cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(1);
+            expect(buttons.length).toEqual(1);
             expect(angular.element(buttons[0]).text().trim()).toEqual('Cancel');
         });
     });

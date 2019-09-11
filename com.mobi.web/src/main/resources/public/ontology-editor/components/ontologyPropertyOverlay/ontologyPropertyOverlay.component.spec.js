@@ -83,16 +83,16 @@ describe('Ontology Property Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('ONTOLOGY-PROPERTY-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-PROPERTY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toEqual(1);
         });
         it('with a h3', function() {
-            expect(this.element.find('h3').length).toBe(1);
+            expect(this.element.find('h3').length).toEqual(1);
         });
         it('depending on whether a property is being edited', function() {
             [
@@ -109,35 +109,35 @@ describe('Ontology Property Overlay component', function() {
                 scope.$digest();
 
                 var header = this.element.find('h3');
-                expect(header.length).toBe(1);
-                expect(header[0].innerHTML).toBe(test.heading);
+                expect(header.length).toEqual(1);
+                expect(header[0].innerHTML).toEqual(test.heading);
             });
         });
         it('depending on whether it is owl:deprecated', function() {
             spyOn(this.controller, 'isAnnotationProperty').and.returnValue(true);
             ontologyStateSvc.ontologyProperty = prefixes.owl + 'deprecated';
             scope.$digest();
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
-            expect(this.element.find('text-area').length).toBe(0);
-            expect(this.element.find('language-select').length).toBe(0);
-            expect(this.element.find('radio-button').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
+            expect(this.element.find('text-area').length).toEqual(0);
+            expect(this.element.find('language-select').length).toEqual(0);
+            expect(this.element.find('radio-button').length).toEqual(2);
         });
         it('depending on whether it is an annotation', function() {
             spyOn(this.controller, 'isAnnotationProperty').and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
-            expect(this.element.find('text-area').length).toBe(1);
-            expect(this.element.find('language-select').length).toBe(1);
-            expect(this.element.find('radio-button').length).toBe(0);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
+            expect(this.element.find('text-area').length).toEqual(1);
+            expect(this.element.find('language-select').length).toEqual(1);
+            expect(this.element.find('radio-button').length).toEqual(0);
         });
         it('depending on whether it is an ontology property', function() {
             spyOn(this.controller, 'isOntologyProperty').and.returnValue(true);
             scope.$digest();
-            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
-            expect(this.element.find('custom-label').length).toBe(2);
-            expect(this.element.find('input').length).toBe(1);
-            expect(this.element.find('p').length).toBe(1);
-            expect(this.element.find('ng-message').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(2);
+            expect(this.element.find('custom-label').length).toEqual(2);
+            expect(this.element.find('input').length).toEqual(1);
+            expect(this.element.find('p').length).toEqual(1);
+            expect(this.element.find('ng-message').length).toEqual(2);
         });
     });
     describe('controller methods', function() {
@@ -161,7 +161,7 @@ describe('Ontology Property Overlay component', function() {
         describe('isOntologyProperty should return the proper value', function() {
             it('when ontologyStateService.ontologyProperty is falsy', function() {
                 ontologyStateSvc.ontologyProperty = '';
-                expect(this.controller.isOntologyProperty()).toBe(false);
+                expect(this.controller.isOntologyProperty()).toEqual(false);
             });
             describe('when ontologyStateService.ontologyProperty is truthy', function() {
                 beforeEach(function() {
@@ -169,22 +169,22 @@ describe('Ontology Property Overlay component', function() {
                 });
                 it('and propertyManagerService.ontologyProperties is empty', function() {
                     propertyManagerSvc.ontologyProperties = [];
-                    expect(this.controller.isOntologyProperty()).toBe(false);
+                    expect(this.controller.isOntologyProperty()).toEqual(false);
                 });
                 it('and propertyManagerService.ontologyProperties does not contain ontologyProperty', function() {
                     propertyManagerSvc.ontologyProperties = ['other'];
-                    expect(this.controller.isOntologyProperty()).toBe(false);
+                    expect(this.controller.isOntologyProperty()).toEqual(false);
                 });
                 it('and propertyManagerService.ontologyProperties does contain ontologyProperty', function() {
                     propertyManagerSvc.ontologyProperties = ['id'];
-                    expect(this.controller.isOntologyProperty()).toBe(true);
+                    expect(this.controller.isOntologyProperty()).toEqual(true);
                 });
             });
         });
         describe('isAnnotationProperty should return the proper value', function() {
             it('when ontologyStateService.ontologyProperty is falsy', function() {
                 ontologyStateSvc.ontologyProperty = '';
-                expect(this.controller.isAnnotationProperty()).toBe(false);
+                expect(this.controller.isAnnotationProperty()).toEqual(false);
             });
             describe('when ontologyStateService.ontologyProperty is truthy', function() {
                 beforeEach(function() {
@@ -192,15 +192,15 @@ describe('Ontology Property Overlay component', function() {
                 });
                 it('and annotations is empty', function() {
                     this.controller.annotations = [];
-                    expect(this.controller.isAnnotationProperty()).toBe(false);
+                    expect(this.controller.isAnnotationProperty()).toEqual(false);
                 });
                 it('and annotations does not contain ontologyProperty as a key', function() {
                     this.controller.annotations = ['other'];
-                    expect(this.controller.isAnnotationProperty()).toBe(false);
+                    expect(this.controller.isAnnotationProperty()).toEqual(false);
                 });
                 it('and annotations does contain ontologyProperty as a key', function() {
                     this.controller.annotations = ['id'];
-                    expect(this.controller.isAnnotationProperty()).toBe(true);
+                    expect(this.controller.isAnnotationProperty()).toEqual(true);
                 });
             });
         });
