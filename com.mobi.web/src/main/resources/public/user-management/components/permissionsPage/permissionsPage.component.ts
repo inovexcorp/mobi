@@ -57,12 +57,12 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
     var um = userManagerService;
     var util = utilService;
     var catalogId = '';
-    var action = pm.actionCreate;
     var systemRepoId = 'http://mobi.com/system-repo';
     var groupAttributeId = 'http://mobi.com/policy/prop-path(' + encodeURIComponent('^<' + prefixes.foaf + 'member' + '>') + ')';
     var userRole = 'http://mobi.com/roles/user';
 
     dvm.policies = [];
+    dvm.policiesInQuestion = [];
 
     dvm.$onInit = function() {
         catalogId = get(catalogManagerService.localCatalog, '@id', '');

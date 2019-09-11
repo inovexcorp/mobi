@@ -615,14 +615,14 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
          */
         self.getPredicatesAndObjects = function(additionOrDeletion) {
             var results = [];
-            _.forOwn(additionOrDeletion, (value, key) => {
+            forOwn(additionOrDeletion, (value, key) => {
                 if (key !== '@id') {
                     var actualKey = key;
                     if (key === '@type') {
                         actualKey = prefixes.rdf + 'type';
                     }
-                    if (_.isArray(value)) {
-                        _.forEach(value, item => results.push({p: actualKey, o: item}));
+                    if (isArray(value)) {
+                        forEach(value, item => results.push({p: actualKey, o: item}));
                     } else {
                         results.push({p: actualKey, o: value});
                     }

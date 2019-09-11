@@ -24,6 +24,7 @@ import {
     mockUtil,
     mockPrefixes,
     injectRestPathConstant,
+    injectAdminUserIRIConstant,
     flushAndVerify
 } from '../../../../../test/js/Shared';
 
