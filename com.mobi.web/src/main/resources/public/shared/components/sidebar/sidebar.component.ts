@@ -25,7 +25,7 @@ import { find, get } from 'lodash';
 
 import './sidebar.component.scss';
 
-const template = require('./sidebar.component.html');
+const template = require('./filtered/sidebar.component.html');
 
 /**
  * @ngdoc component

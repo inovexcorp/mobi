@@ -216,15 +216,15 @@
                     <execution>
                         <id>copy-resources</id>
                         <!-- here the phase you need -->
-                        <phase>prepare-package</phase>
+                        <phase>process-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target/classes/build/shared/components/sidebar</outputDirectory>
+                            <outputDirectory>${basedir}/src/main/resources/public/shared/components/sidebar/filtered</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${basedir}/target/filtered-resources</directory>
+                                    <directory>${basedir}/src/main/resources/public/shared/components/sidebar</directory>
                                     <filtering>true</filtering>
                                     <includes>
                                         <include>*.html</include>
