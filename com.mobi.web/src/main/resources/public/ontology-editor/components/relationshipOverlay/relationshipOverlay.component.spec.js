@@ -110,29 +110,29 @@ describe('Relationship Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('RELATIONSHIP-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('RELATIONSHIP-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toEqual(1);
         });
         it('with a h3', function() {
-            expect(this.element.find('h3').length).toBe(1);
+            expect(this.element.find('h3').length).toEqual(1);
         });
         it('with .form-groups', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(2);
         });
         it('with custom-labels', function() {
-            expect(this.element.find('custom-label').length).toBe(2);
+            expect(this.element.find('custom-label').length).toEqual(2);
         });
         it('with ui-selects', function() {
-            expect(this.element.find('ui-select').length).toBe(2);
+            expect(this.element.find('ui-select').length).toEqual(2);
         });
         it('with buttons to add and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });

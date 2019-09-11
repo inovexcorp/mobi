@@ -83,21 +83,21 @@ describe('Upload Ontology Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('UPLOAD-ONTOLOGY-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('UPLOAD-ONTOLOGY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         _.forEach(['form', 'h3', 'text-input', 'text-area', 'keyword-select'], function(tag) {
             it('with a ' + tag, function() {
-                expect(this.element.find(tag).length).toBe(1);
+                expect(this.element.find(tag).length).toEqual(1);
             });
         });
         it('with a regular .btn', function() {
-            expect(this.element.querySelectorAll('.modal-footer .btn:not(.btn-primary)').length).toBe(1);
+            expect(this.element.querySelectorAll('.modal-footer .btn:not(.btn-primary)').length).toEqual(1);
         });
         it('with .btn-primarys', function() {
-            expect(this.element.querySelectorAll('.modal-footer .btn-primary').length).toBe(2);
+            expect(this.element.querySelectorAll('.modal-footer .btn-primary').length).toEqual(2);
         });
     });
     describe('controller methods', function() {
@@ -113,9 +113,9 @@ describe('Upload Ontology Overlay component', function() {
                 it('less than controller.files.length', function() {
                     this.controller.submit();
                     expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', ['keywords'], this.newId);
-                    expect(this.controller.index).toBe(1);
-                    expect(this.controller.title).toBe('file2');
-                    expect(this.controller.description).toBe('');
+                    expect(this.controller.index).toEqual(1);
+                    expect(this.controller.title).toEqual('file2');
+                    expect(this.controller.description).toEqual('');
                     expect(this.controller.keywords).toEqual([]);
                     expect(scope.resolve.startUpload).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toContain({promise: jasmine.any(Object), id: this.newId, title: 'title', error: undefined});
@@ -155,7 +155,7 @@ describe('Upload Ontology Overlay component', function() {
             });
             this.controller.index = 0;
             this.controller.submitAll();
-            expect(this.controller.submit.calls.count()).toBe(2);
+            expect(this.controller.submit.calls.count()).toEqual(2);
         });
         it('cancel should call the correct method and set the correct variable', function() {
             ontologyStateSvc.uploadFiles = [{}];

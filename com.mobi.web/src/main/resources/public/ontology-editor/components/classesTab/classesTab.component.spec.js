@@ -67,12 +67,12 @@ describe('Classes Tab component', function() {
 
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('CLASSES-TAB');
-            expect(this.element.querySelectorAll('.classes-tab.row').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('CLASSES-TAB');
+            expect(this.element.querySelectorAll('.classes-tab.row').length).toEqual(1);
         });
         ['class-hierarchy-block', 'selected-details', 'annotation-block', 'axiom-block', 'usages-block'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
         it('with a button to delete a class if the user can modify', function() {

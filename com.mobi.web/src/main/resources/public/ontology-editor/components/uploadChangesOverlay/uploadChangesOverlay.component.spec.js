@@ -65,24 +65,24 @@ describe('Upload Changes Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('UPLOAD-CHANGES-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('UPLOAD-CHANGES-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with buttons', function() {
-            expect(this.element.find('button').length).toBe(3);
+            expect(this.element.find('button').length).toEqual(3);
         });
         _.forEach(['form', 'span', 'file-input'], function(tag) {
             it('with a ' + tag, function() {
-                expect(this.element.find(tag).length).toBe(1);
+                expect(this.element.find(tag).length).toEqual(1);
             });
         });
         it('with buttons for canceling and uploading', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
-            expect(['Submit', 'Cancel'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Submit', 'Cancel'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(2);
+            expect(['Submit', 'Cancel'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Submit', 'Cancel'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
         it('depending on whether the form is invalid', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
@@ -93,11 +93,11 @@ describe('Upload Changes Overlay component', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.error = true;
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
@@ -127,15 +127,15 @@ describe('Upload Changes Overlay component', function() {
                 this.controller.submit();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
-                expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(false);
-                expect(this.controller.error).toBe('Error message');
+                expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toEqual(false);
+                expect(this.controller.error).toEqual('Error message');
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('successfully', function() {
                 this.controller.submit();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
-                expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(true);
+                expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toEqual(true);
                 expect(this.controller.error).toBeFalsy();
                 expect(scope.close).toHaveBeenCalled();
             });

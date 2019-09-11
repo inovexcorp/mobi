@@ -86,27 +86,27 @@ describe('Edit Branch Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('EDIT-BRANCH-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('EDIT-BRANCH-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         _.forEach(['form', 'text-input', 'text-area'], item => {
             it('with a ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toEqual(1);
             });
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
             this.controller.error = 'error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('with custom buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
@@ -127,7 +127,7 @@ describe('Edit Branch Overlay component', function() {
                 it('when controller.branchDescription is empty', function() {
                     this.controller.branchDescription = '';
                     this.controller.edit();
-                    expect(_.has(scope.resolve.branch, prefixes.dcterms + 'description')).toBe(false);
+                    expect(_.has(scope.resolve.branch, prefixes.dcterms + 'description')).toEqual(false);
                 });
                 it('when controller.branchDescription is not empty', function() {
                     this.controller.branchDescription = 'new description';
@@ -148,7 +148,7 @@ describe('Edit Branch Overlay component', function() {
                 this.controller.edit();
                 scope.$apply();
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(scope.resolve.branch['@id'], ontologyStateSvc.listItem.ontologyRecord.recordId, '', scope.resolve.branch);
-                expect(this.controller.error).toBe(errorMessage);
+                expect(this.controller.error).toEqual(errorMessage);
                 expect(scope.close).not.toHaveBeenCalled();
             });
         });

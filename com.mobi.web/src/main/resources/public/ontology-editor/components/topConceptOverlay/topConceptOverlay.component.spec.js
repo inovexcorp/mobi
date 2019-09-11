@@ -87,29 +87,29 @@ describe('Top Concept Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('TOP-CONCEPT-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('TOP-CONCEPT-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toEqual(1);
         });
         it('with a h3', function() {
-            expect(this.element.find('h3').length).toBe(1);
+            expect(this.element.find('h3').length).toEqual(1);
         });
         it('with .form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
         it('with custom-label', function() {
-            expect(this.element.find('custom-label').length).toBe(1);
+            expect(this.element.find('custom-label').length).toEqual(1);
         });
         it('with ui-select', function() {
-            expect(this.element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toEqual(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });

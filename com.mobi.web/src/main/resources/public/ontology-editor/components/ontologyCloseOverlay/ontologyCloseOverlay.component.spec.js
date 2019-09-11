@@ -65,30 +65,30 @@ describe('Ontology Close Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('ONTOLOGY-CLOSE-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('ONTOLOGY-CLOSE-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a h3', function() {
-            expect(this.element.find('h3').length).toBe(1);
+            expect(this.element.find('h3').length).toEqual(1);
         });
         it('with a .main', function() {
-            expect(this.element.querySelectorAll('.main').length).toBe(1);
+            expect(this.element.querySelectorAll('.main').length).toEqual(1);
         });
         it('depending on whether an error occurred', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.error = true;
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('with custom buttons to save and close, close without saving, and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(3);
-            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[2]).text()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(3);
+            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Close Without Saving', 'Save and Close'].indexOf(angular.element(buttons[2]).text()) >= 0).toEqual(true);
         });
     });
     describe('controller methods', function() {
@@ -122,7 +122,7 @@ describe('Ontology Close Overlay component', function() {
                 ontologyStateSvc.saveChanges.and.returnValue($q.reject('error'));
                 this.controller.saveThenClose();
                 scope.$apply();
-                expect(this.controller.error).toBe('error');
+                expect(this.controller.error).toEqual('error');
             });
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {

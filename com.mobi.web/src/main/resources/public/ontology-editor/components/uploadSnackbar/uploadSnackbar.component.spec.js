@@ -82,20 +82,20 @@ describe('Upload Snackbar component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('UPLOAD-SNACKBAR');
-            expect(this.element.querySelectorAll('.upload-snackbar').length).toBe(1);
-            expect(this.element.querySelectorAll('.snackbar').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('UPLOAD-SNACKBAR');
+            expect(this.element.querySelectorAll('.upload-snackbar').length).toEqual(1);
+            expect(this.element.querySelectorAll('.snackbar').length).toEqual(1);
         });
         _.forEach(['snackbar-header', 'snackbar-body'], function(item) {
             it('with a .' + item, function() {
-                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
+                expect(this.element.querySelectorAll('.' + item).length).toEqual(1);
             });
         });
         it('with buttons', function() {
-            expect(this.element.querySelectorAll('.snackbar-header button').length).toBe(2);
+            expect(this.element.querySelectorAll('.snackbar-header button').length).toEqual(2);
         });
         it('depending on whether the snackbar should be shown', function() {
-            expect(this.element.querySelectorAll('.snackbar.show').length).toBe(1);
+            expect(this.element.querySelectorAll('.snackbar.show').length).toEqual(1);
 
             this.controller.showSnackbar = false;
             scope.$digest();
@@ -126,20 +126,20 @@ describe('Upload Snackbar component', function() {
                 };
             });
             it('equal', function() {
-                expect(this.controller.hasStatus(this.promise, 0)).toBe(true);
+                expect(this.controller.hasStatus(this.promise, 0)).toEqual(true);
             });
             it('not equal', function() {
-                expect(this.controller.hasStatus(this.promise, 1)).toBe(false);
+                expect(this.controller.hasStatus(this.promise, 1)).toEqual(false);
             });
         });
         it('isPending should determine whether an upload is pending', function() {
             var item = {id: 'id'}
             httpSvc.isPending.and.returnValue(false);
-            expect(this.controller.isPending(item)).toBe(false);
+            expect(this.controller.isPending(item)).toEqual(false);
             expect(httpSvc.isPending).toHaveBeenCalledWith(item.id);
 
             httpSvc.isPending.and.returnValue(true);
-            expect(this.controller.isPending(item)).toBe(true);
+            expect(this.controller.isPending(item)).toEqual(true);
             expect(httpSvc.isPending).toHaveBeenCalledWith(item.id);
         });
         describe('attemptClose should call the appropriate method if', function() {
@@ -176,13 +176,13 @@ describe('Upload Snackbar component', function() {
             });
             it('empty', function() {
                 httpSvc.isPending.and.returnValue(false);
-                expect(this.controller.hasPending()).toBe(false);
+                expect(this.controller.hasPending()).toEqual(false);
                 expect(httpSvc.isPending).toHaveBeenCalledWith('id');
                 expect(httpSvc.isPending).toHaveBeenCalledWith('id2');
             });
             it('populated', function() {
                 httpSvc.isPending.and.returnValue(true);
-                expect(this.controller.hasPending()).toBe(true);
+                expect(this.controller.hasPending()).toEqual(true);
                 expect(httpSvc.isPending).toHaveBeenCalledWith('id');
                 expect(httpSvc.isPending).not.toHaveBeenCalledWith('id2');
             });

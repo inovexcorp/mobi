@@ -93,31 +93,31 @@ describe('New Ontology Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('NEW-ONTOLOGY-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('NEW-ONTOLOGY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         _.forEach(['form', 'custom-label', 'text-input', 'text-area', 'keyword-select', 'advanced-language-select'], function(item) {
             it('with a ' + item, function() {
-                expect(this.element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toEqual(1);
             });
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
         it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
             this.controller.error = 'Error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on whether the ontology iri is valid', function() {
             var iriInput = angular.element(this.element.querySelectorAll('.form-group input')[0]);
-            expect(iriInput.hasClass('is-invalid')).toBe(false);
+            expect(iriInput.hasClass('is-invalid')).toEqual(false);
 
             this.controller.form = {
                 iri: {
@@ -127,7 +127,7 @@ describe('New Ontology Overlay component', function() {
                 }
             }
             scope.$digest();
-            expect(iriInput.hasClass('is-invalid')).toBe(true);
+            expect(iriInput.hasClass('is-invalid')).toEqual(true);
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
@@ -147,14 +147,14 @@ describe('New Ontology Overlay component', function() {
             });
             it('if the iri has not changed', function() {
                 this.controller.nameChanged();
-                expect(ontologyStateSvc.newOntology['@id']).toBe('ontologytitle');
+                expect(ontologyStateSvc.newOntology['@id']).toEqual('ontologytitle');
                 expect(splitIRI).toHaveBeenCalledWith(this.original);
                 expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(ontologyStateSvc.newOntology, prefixes.dcterms + 'title');
             });
             it('unless the iri has changed', function() {
                 this.controller.iriHasChanged = true;
                 this.controller.nameChanged();
-                expect(ontologyStateSvc.newOntology['@id']).toBe(this.original);
+                expect(ontologyStateSvc.newOntology['@id']).toEqual(this.original);
                 expect(splitIRI).not.toHaveBeenCalled();
             });
         });
@@ -178,7 +178,7 @@ describe('New Ontology Overlay component', function() {
                 scope.$apply();
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                 expect(ontologyStateSvc.createOntologyState).not.toHaveBeenCalled();
-                expect(this.controller.error).toBe(this.errorMessage);
+                expect(this.controller.error).toEqual(this.errorMessage);
                 expect(scope.close).not.toHaveBeenCalled();
             });
             it('unless an error occurs with creating ontology state', function() {
@@ -188,14 +188,14 @@ describe('New Ontology Overlay component', function() {
                 expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                 expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith({recordId: this.response.recordId, commitId: this.response.commitId, branchId: this.response.branchId});
                 expect(scope.close).not.toHaveBeenCalled();
-                expect(this.controller.error).toBe(this.errorMessage);
+                expect(this.controller.error).toEqual(this.errorMessage);
             });
             describe('successfully', function() {
                 it('with a description', function() {
                     this.controller.create();
                     scope.$apply();
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
-                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
+                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toEqual(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', 'description', ['one', 'two']);
                     expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith({recordId: this.response.recordId, commitId: this.response.commitId, branchId: this.response.branchId});
                     expect(scope.close).toHaveBeenCalled();
@@ -205,7 +205,7 @@ describe('New Ontology Overlay component', function() {
                     this.controller.create();
                     scope.$apply();
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(ontologyStateSvc.newOntology, ontologyStateSvc.newLanguage);
-                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toBe(false);
+                    expect(_.has(ontologyStateSvc.newOntology, prefixes.owl + 'imports')).toEqual(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(ontologyStateSvc.newOntology, 'title', '', ['one', 'two']);
                     expect(ontologyStateSvc.createOntologyState).toHaveBeenCalledWith({recordId: this.response.recordId, commitId: this.response.commitId, branchId: this.response.branchId});
                     expect(scope.close).toHaveBeenCalled();

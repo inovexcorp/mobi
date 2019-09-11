@@ -77,22 +77,22 @@ describe('Commit Overlay component', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('COMMIT-OVERLAY');
+            expect(this.element.prop('tagName')).toEqual('COMMIT-OVERLAY');
             expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toEqual(1);
         });
         it('depending on whether there is a error message', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
             this.controller.error = 'error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('with a text-area', function() {
-            expect(this.element.find('text-area').length).toBe(1);
+            expect(this.element.find('text-area').length).toEqual(1);
         });
         it('depending on the form validity', function() {
             var button = angular.element(this.element.querySelectorAll('.modal-footer button.btn-primary')[0]);
@@ -104,7 +104,7 @@ describe('Commit Overlay component', function() {
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
@@ -184,7 +184,7 @@ describe('Commit Overlay component', function() {
                                     oldBranchId);
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, ontologyStateSvc
                                     .listItem.ontologyRecord.recordId, this.catalogId);
-                                expect(ontologyStateSvc.listItem.branches.length).toBe(1);
+                                expect(ontologyStateSvc.listItem.branches.length).toEqual(1);
                                 expect(ontologyStateSvc.listItem.branches[0]).toEqual(this.branch);
                                 expect(ontologyStateSvc.listItem.ontologyRecord.branchId).toEqual(this.branchId);
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
@@ -207,7 +207,7 @@ describe('Commit Overlay component', function() {
                                     oldBranchId);
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, ontologyStateSvc
                                     .listItem.ontologyRecord.recordId, this.catalogId);
-                                expect(ontologyStateSvc.listItem.branches.length).toBe(1);
+                                expect(ontologyStateSvc.listItem.branches.length).toEqual(1);
                                 expect(ontologyStateSvc.listItem.branches[0]).toEqual(this.branch);
                                 expect(ontologyStateSvc.listItem.ontologyRecord.branchId).toEqual(this.branchId);
                                 expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(
@@ -228,7 +228,7 @@ describe('Commit Overlay component', function() {
                                 oldBranchId);
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, ontologyStateSvc
                                 .listItem.ontologyRecord.recordId, this.catalogId);
-                            expect(ontologyStateSvc.listItem.branches.length).toBe(1);
+                            expect(ontologyStateSvc.listItem.branches.length).toEqual(1);
                             expect(ontologyStateSvc.listItem.branches[0]).toEqual(this.branch);
                             expect(ontologyStateSvc.listItem.ontologyRecord.branchId).toEqual(this.branchId);
                             expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId,
