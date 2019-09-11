@@ -73,54 +73,64 @@ describe('Imports Overlay component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('IMPORTS-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('IMPORTS-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         ['h3', 'material-tabset', 'custom-label', 'search-bar', 'md-list'].forEach(test => {
             it('with a ' + test, function() {
-                expect(this.element.find(test).length).toBe(1);
+                expect(this.element.find(test).length).toEqual(1);
             });
         });
         it('with material-tabs', function() {
-            expect(this.element.find('material-tab').length).toBe(2);
+            expect(this.element.find('material-tab').length).toEqual(2);
         });
         it('depending on whether an error has occured on the URL tab', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.urlError = 'Error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('depending on whether an error has occured on the Server tab', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.serverError = 'Error';
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('with a .form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the url pattern is incorrect', function() {
             var formGroup = angular.element(this.element.querySelectorAll('.form-group input')[0]);
-            expect(formGroup.hasClass('is-invalid')).toBe(false);
+            expect(formGroup.hasClass('is-invalid')).toEqual(false);
             this.controller.form.url = {
                 '$error': {
                     pattern: true
                 }
             };
             scope.$digest();
-            expect(formGroup.hasClass('is-invalid')).toBe(true);
+            expect(formGroup.hasClass('is-invalid')).toEqual(true);
         });
         it('depending on how many ontologies there are', function() {
             expect(this.element.find('info-message').length).toEqual(1);
@@ -264,7 +274,7 @@ describe('Imports Overlay component', function() {
                     $httpBackend.expectGET('/mobirest/imported-ontologies/url').respond(400);
                     this.controller.addImport();
                     flushAndVerify($httpBackend);
-                    expect(this.controller.urlError).toBe('The provided URL was unresolvable.');
+                    expect(this.controller.urlError).toEqual('The provided URL was unresolvable.');
                 });
             });
             it('if importing Mobi ontologies', function() {
@@ -293,7 +303,7 @@ describe('Imports Overlay component', function() {
                 expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.isCommittable).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.listItem.isSaved).toBe(false);
+                expect(ontologyStateSvc.listItem.isSaved).toEqual(false);
                 expect(scope.close).not.toHaveBeenCalled();
                 expect(scope.dismiss).toHaveBeenCalled();
             });
@@ -326,7 +336,7 @@ describe('Imports Overlay component', function() {
                             expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                             expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-                            expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                            expect(ontologyStateSvc.listItem.isSaved).toEqual(true);
                             expect(scope.close).toHaveBeenCalled();
                             expect(scope.dismiss).not.toHaveBeenCalled();
                         });
@@ -343,7 +353,7 @@ describe('Imports Overlay component', function() {
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                             expect(scope.close).not.toHaveBeenCalled();
                             expect(scope.dismiss).not.toHaveBeenCalled();
-                            expect(this.controller.urlError).toBe('error');
+                            expect(this.controller.urlError).toEqual('error');
                         });
                     });
                     it('when after save rejects', function() {
@@ -359,7 +369,7 @@ describe('Imports Overlay component', function() {
                         expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                         expect(scope.close).not.toHaveBeenCalled();
                         expect(scope.dismiss).not.toHaveBeenCalled();
-                        expect(this.controller.urlError).toBe('error');
+                        expect(this.controller.urlError).toEqual('error');
                     });
                 });
                 it('when save changes rejects', function() {
@@ -374,7 +384,7 @@ describe('Imports Overlay component', function() {
                     expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
                     expect(scope.close).not.toHaveBeenCalled();
                     expect(scope.dismiss).not.toHaveBeenCalled();
-                    expect(this.controller.urlError).toBe('error');
+                    expect(this.controller.urlError).toEqual('error');
                 });
             });
         });

@@ -228,7 +228,7 @@
          * @description
          * `uploadFiles` holds an array of File objects for uploading ontologies. It is utilized in the
          * {@link uploadOntologyTab.directive:uploadOntologyTab} and
-         * {@link uploadOntologyOverlay.directive:uploadOntologyOverlay}.
+         * {@link ontology-editor.component:uploadOntologyOverlay}.
          */
         self.uploadFiles = [];
 
@@ -1460,6 +1460,9 @@
         }
         self.isCommittable = function(listItem) {
             return !!_.get(listItem, 'inProgressCommit.additions', []).length || !!_.get(listItem, 'inProgressCommit.deletions', []).length;
+        }
+        self.updateIsSaved = function() {
+            self.listItem.isSaved = self.isCommittable(self.listItem);
         }
         self.addEntityToHierarchy = function(hierarchyInfo, entityIRI, parentIRI) {
             if (parentIRI && _.has(hierarchyInfo.iris, parentIRI)) {

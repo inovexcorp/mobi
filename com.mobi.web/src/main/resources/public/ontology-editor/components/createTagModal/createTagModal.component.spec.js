@@ -67,32 +67,42 @@ describe('Create Tag Modal component', function() {
         this.element.remove();
     });
 
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('CREATE-TAG-MODAL');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('CREATE-TAG-MODAL');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         it('with a form', function() {
-            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toEqual(1);
         });
         it('if an error has occurred', function() {
-            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toEqual(0);
 
             this.controller.error = this.error;
             scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toEqual(1);
         });
         it('with a text-input', function() {
-            expect(this.element.find('text-input').length).toBe(1);
+            expect(this.element.find('text-input').length).toEqual(1);
         });
         it('with an input for the IRI', function() {
             expect(this.element.querySelectorAll('input[name="iri"]').length).toEqual(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
+            expect(buttons.length).toEqual(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
@@ -114,12 +124,12 @@ describe('Create Tag Modal component', function() {
                 this.controller.tagConfig.title = 'tag'
                 this.controller.nameChanged();
                 expect(splitIRI).toHaveBeenCalledWith(this.original);
-                expect(this.controller.tagConfig.iri).toBe('tag');
+                expect(this.controller.tagConfig.iri).toEqual('tag');
             });
             it('unless the iri has changed', function() {
                 this.controller.iriHasChanged = true;
                 this.controller.nameChanged();
-                expect(this.controller.tagConfig.iri).toBe(this.original);
+                expect(this.controller.tagConfig.iri).toEqual(this.original);
                 expect(splitIRI).not.toHaveBeenCalled();
             });
         });

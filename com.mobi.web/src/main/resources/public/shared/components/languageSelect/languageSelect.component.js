@@ -30,12 +30,12 @@
      *
      * @description
      * `languageSelect` is a component which provides options for a formatted ui-select for picking language tags. The
-     * select is bound to dvm.bindModel, but only one way. The provided `changeEvent` function is expected to update the
+     * select is bound to `bindModel`, but only one way. The provided `changeEvent` function is expected to update the
      * value of `bindModel`. The component provides an option to have a clear selection button. If the button is not
      * enabled, the choice defaults to English.
      *
      * @param {string} bindModel The variable to bind the value of the language to
-     * @package {Function} changeEvent A function that is called when the value of the select changes. Should update the
+     * @param {Function} changeEvent A function that is called when the value of the select changes. Should update the
      * value of `bindModel`. Expects an argument called `value`
      * @param {boolean} disableClear A boolean that indicates if the clear button should be disabled
      * @param {boolean} required Whether the select is a required field. The presence of the attribute is enough to set

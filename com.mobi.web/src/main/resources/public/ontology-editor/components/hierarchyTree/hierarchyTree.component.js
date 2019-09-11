@@ -28,13 +28,13 @@
      * @name ontology-editor.component:hierarchyTree
      * @requires shared.service:ontologyManagerService
      * @requires shared.service:ontologyStateService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:utilService
      * @requires shared.service:prefixes
      *
      * @description
      * `hierarchyTree` is a component which creates a `div` containing a {@link shared.component:searchBar} and
-     * hierarchy of {@link treeItem.directive:treeItem}. When search text is provided, the hierarchy filters what is
+     * hierarchy of {@link ontology-editor.component:treeItem}. When search text is provided, the hierarchy filters what is
      * shown based on value matches with predicates in the {@link shared.service:ontologyManagerService entityNameProps}.
      *
      * @param {Object[]} hierarchy An array which represents a flattened hierarchy
@@ -46,21 +46,21 @@
             hierarchy: '<',
             index: '<',
             updateSearch: '&',
-            resetIndex: '&'
+            resetIndex: '&',
+            clickItem: '&?'
         },
         controllerAs: 'dvm',
         controller: hierarchyTreeComponentCtrl
     };
 
-    hierarchyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'utilService', 'prefixes', 'INDENT'];
+    hierarchyTreeComponentCtrl.$inject = ['ontologyManagerService', 'ontologyStateService', 'utilService', 'INDENT'];
 
-    function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, utilService, prefixes, INDENT) {
+    function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService, utilService, INDENT) {
         var dvm = this;
         var om = ontologyManagerService;
         var util = utilService;
         dvm.indent = INDENT;
         dvm.os = ontologyStateService;
-        dvm.ou = ontologyUtilsManagerService;
         dvm.searchText = '';
         dvm.filterText = '';
         dvm.filteredHierarchy = [];
@@ -77,6 +77,12 @@
         dvm.$onDestroy = function() {
             if (dvm.os.listItem.editorTabStates) {
                 dvm.resetIndex();
+            }
+        }
+        dvm.click = function(entityIRI) {
+            dvm.os.selectItem(entityIRI);
+            if (dvm.clickItem) {
+                dvm.clickItem({iri: entityIRI});
             }
         }
         dvm.onKeyup = function() {

@@ -28,13 +28,13 @@
      * @name ontology-editor.component:objectPropertyOverlay
      * @requires shared.service:ontologyStateService
      * @requires shared.service:utilService
-     * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+     * @requires ontology-editor.service:ontologyUtilsManagerService
      * @requires shared.service:propertyManagerService
      *
      * @description
      * `objectPropertyOverlay` is a component that creates content for a modal that adds an object property value to the
      * {@link shared.service:ontologyStateService selected individual}. The form in the modal contains a `ui-select` of
-     * all the object properties in the ontology and an {@link iriSelectOntology.directive:iriSelectOntology} of all the
+     * all the object properties in the ontology and an {@link ontology-editor.component:iriSelectOntology} of all the
      * valid individuals for the object property value based on the range of the selected property. Meant to be used in
      * conjunction with the {@link shared.service:modalService}.
      *

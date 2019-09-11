@@ -22,26 +22,24 @@
  */
 
 describe('Property Tree component', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, ontologyUtils, utilSvc, prefixes;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('ontology-editor');
-        mockComponent('treeItem', 'treeItem');
+        mockComponent('ontology-editor', 'treeItem');
         mockPrefixes();
         mockOntologyManager();
         mockOntologyState();
-        mockOntologyUtilsManager();
         mockUtil();
         injectUniqueKeyFilter();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyUtils = _ontologyUtilsManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
@@ -80,7 +78,6 @@ describe('Property Tree component', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyUtils = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();
@@ -122,13 +119,13 @@ describe('Property Tree component', function() {
             scope.$apply();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('PROPERTY-TREE');
+            expect(this.element.prop('tagName')).toEqual('PROPERTY-TREE');
         });
         it('with a .repeater-container', function() {
-            expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.repeater-container').length).toEqual(1);
         });
         it('with a .tree-item-wrapper', function() {
-            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
+            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
@@ -186,7 +183,7 @@ describe('Property Tree component', function() {
             describe('has filter text', function() {
                 describe('and the entity has matching search properties', function() {
                     it('that have at least one matching text value', function() {
-                        expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                        expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
                     });
                     describe('that do not have a matching text value', function () {
@@ -200,30 +197,30 @@ describe('Property Tree component', function() {
                         });
                         describe('and does not have a matching entity local name', function () {
                             it('and the node has no children', function () {
-                                expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                                expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                             });
                             it('and the node has children', function () {
                                 this.filterNode.hasChildren = true;
-                                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                             });
                         });
                         it('and does have a matching entity local name', function() {
                             utilSvc.getBeautifulIRI.and.returnValue('title');
-                            expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });
                 });
                 it('and the entity does not have matching search properties', function() {
                     ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                 });
                 it('and the node is a folder', function() {
-                    expect(this.controller.searchFilter(this.filterNodeFolder)).toBe(true);
+                    expect(this.controller.searchFilter(this.filterNodeFolder)).toEqual(true);
                 })
             });
             it('does not have filter text', function() {
                 this.controller.filterText = '';
-                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
             });
         });
         describe('isShown filter', function() {
@@ -247,15 +244,15 @@ describe('Property Tree component', function() {
                     });
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
-                        expect(this.controller.isShown(this.node)).toBe(true);
+                        expect(this.controller.isShown(this.node)).toEqual(true);
                     });
                     it('and does not have a child with a text match', function() {
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(this.controller.isShown(this.node)).toBe(true);
+                    expect(this.controller.isShown(this.node)).toEqual(true);
                 });
             });
             describe('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
@@ -271,19 +268,19 @@ describe('Property Tree component', function() {
                     });
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
-                        expect(this.controller.isShown(this.node)).toBe(true);
+                        expect(this.controller.isShown(this.node)).toEqual(true);
                         expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                     });
                     it('and does not have a child with a text match', function() {
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                         expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(this.controller.isShown(this.node)).toBe(true);
+                    expect(this.controller.isShown(this.node)).toEqual(true);
                     expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                 });
@@ -300,18 +297,18 @@ describe('Property Tree component', function() {
                         beforeEach(function() {
                             this.controller.filterText = 'text';
                             this.node.parentNoMatch = true;
-                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.controller.isShown(this.node)).toEqual(false);
                         });
                         it('and has a child that has a text match', function() {
                             this.node.displayNode = true;
-                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.controller.isShown(this.node)).toEqual(false);
                         });
                         it('and does not have a child with a text match', function() {
-                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.controller.isShown(this.node)).toEqual(false);
                         });
                     });
                     it('and filterText is not set and is not a parent node without a text match', function() {
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                     });
                 });
                 describe('node.get is false', function() {
@@ -323,21 +320,21 @@ describe('Property Tree component', function() {
                         beforeEach(function() {
                             this.controller.filterText = 'text';
                             this.node.parentNoMatch = true;
-                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.controller.isShown(this.node)).toEqual(false);
                             expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         });
                         it('and has a child that has a text match', function() {
                             this.node.displayNode = true;
-                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.controller.isShown(this.node)).toEqual(false);
                             expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         });
                         it('and does not have a child with a text match', function() {
-                            expect(this.controller.isShown(this.node)).toBe(false);
+                            expect(this.controller.isShown(this.node)).toEqual(false);
                             expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         });
                     });
                     it('and filterText is not set and is not a parent node without a text match', function() {
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                         expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                     });
                 });
