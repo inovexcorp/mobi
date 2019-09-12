@@ -117,6 +117,7 @@
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.26.0</version>
+                        <extensions>true</extensions>
                         <executions>
                             <execution>
                                 <id>start</id>
@@ -139,16 +140,21 @@
                                 <image>
                                     <name>docker.io/mobi/test</name>
                                     <build>
-                                        <dockerFile>${project.basedir}/../../mobi-distribution/target/assembly/docker/Dockerfile</dockerFile>
+                                        <dockerFileDir>${project.basedir}/../../mobi-distribution/target</dockerFileDir>
+<!--                                        <dockerFile>${project.basedir}/../../mobi-distribution/target/assembly/docker/Dockerfile</dockerFile>-->
                                     </build>
                                     <run>
                                         <ports>
                                             <port>8443:8443</port>
                                         </ports>
                                         <wait>
-                                            <!-- Check for this URL to return a 200 return code .... -->
-                                            <url>http://localhost:8443/mobi/</url>
-                                            <time>120000</time>
+                                            <http>
+                                                <allowAllHosts>true</allowAllHosts>
+                                                <status>200..399</status>
+                                                <url>https://localhost:8443/mobi/index.html#/home</url>
+                                                <!-- Check for this URL to return a 200 return code .... -->
+                                            </http>
+                                            <time>30000</time>
                                         </wait>
                                     </run>
                                 </image>

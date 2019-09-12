@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -31,7 +31,7 @@ module.exports = {
       .useXpath()
       .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
       .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-      .setValue('//div[@class="form-group"]//input[@id="username"]', ''+username+'')
+      .setValue('//div[@class="form-group"]//input[@id="username"]', '' + username + '')
       .setValue('//div[@class="form-group"]//input[@id="password"]', 'admin')
       .click('//button[@type="submit"]')
   },
@@ -68,7 +68,7 @@ module.exports = {
     browser
       .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
       .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-      .setValue('//div[@class="form-group"]//input[@id="username"]', ''+username.toUpperCase()+'')
+      .setValue('//div[@class="form-group"]//input[@id="username"]', '' + username.toUpperCase() + '')
       .setValue('//div[@class="form-group"]//input[@id="password"]', 'admin')
       .click('//button[@type="submit"]')
   },
