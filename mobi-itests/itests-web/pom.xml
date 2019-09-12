@@ -151,7 +151,7 @@
                                                 <url>https://localhost:8443/mobi/index.html#/login</url>
                                             </http>
                                             <!-- Check for this URL to return a 200 return code .... -->
-                                            <time>30000</time>
+                                            <time>90000</time>
                                         </wait>
                                     </run>
                                 </image>
@@ -191,6 +191,12 @@
                                 </configuration>
                             </execution>
                         </executions>
+                        <configuration>
+                            <successCodes>
+                                <successCode>0</successCode>
+                                <successCode>5</successCode>
+                            </successCodes>
+                        </configuration>
                     </plugin>
 <!--                    <plugin>-->
 <!--                        <groupId>com.lazerycode.selenium</groupId>-->

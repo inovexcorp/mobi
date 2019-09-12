@@ -1,71 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites errors="0"
-            failures="0"
-            tests="9">
+<testsuites errors="1"
+            failures="1"
+            tests="1">
 
   <testsuite name="mobi.spec"
-    errors="0" failures="0" hostname="" id="" package="mobi.spec" skipped="0"
-    tests="9" time="4.257" timestamp="">
+    errors="1" failures="1" hostname="" id="" package="mobi.spec" skipped="0"
+    tests="1" time="13.81" timestamp="">
   
-    <testcase name="Step 1: login as admin" classname="mobi.spec" time="2.405" assertions="2">
+    <testcase name="Smoke test Mobi" classname="mobi.spec" time="13.81" assertions="2">
 
-    
+      <failure message="Testing if element &lt;.sidebar .current-user-box .user-title&gt; contains text: &#34;admin&#34;. Element could not be located in 1000 ms. - expected [0;32m&#34;admin&#34;[0m but got: [0;31m&#34;null&#34;[0m">    at Object.Smoke test Mobi (/Users/ben/projects/mobi/mobi-itests/itests-web/src/test/js/mobi.spec.js:33:17)
+    at process._tickCallback (internal/process/next_tick.js:68:7)</failure>
 
-    
-    </testcase>
-  
-    <testcase name="Step 2: check for visibility of home elements" classname="mobi.spec" time="0.6830" assertions="7">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    </testcase>
-  
-    <testcase name="Step 3: check for administration nav item" classname="mobi.spec" time="0.08200" assertions="1">
-
-    
-    </testcase>
-  
-    <testcase name="Step 4: check for and compare nav username text" classname="mobi.spec" time="0.1030" assertions="2">
-
-    
-
-    
-    </testcase>
-  
-    <testcase name="Step 5: logout" classname="mobi.spec" time="0.04600" assertions="0">
-    </testcase>
-  
-    <testcase name="Step 6: login as all caps admin" classname="mobi.spec" time="0.2230" assertions="2">
-
-    
-
-    
-    </testcase>
-  
-    <testcase name="Step 7: check for administration nav item" classname="mobi.spec" time="0.5550" assertions="2">
-
-    
-
-    
-    </testcase>
-  
-    <testcase name="Step 8: check for and compare nav username text" classname="mobi.spec" time="0.07700" assertions="1">
-
-    
-    </testcase>
-  
-    <testcase name="Step 9: logout" classname="mobi.spec" time="0.08300" assertions="0">
+    <failure message="    at Object.Smoke test Mobi (/Users/ben/projects/mobi/mobi-itests/itests-web/src/test/js/mobi.spec.js:33:17)">    at process._tickCallback (internal/process/next_tick.js:68:7)</failure>
     </testcase>
   
 
