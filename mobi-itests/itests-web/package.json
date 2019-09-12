@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "./node_modules/.bin/nightwatch --output ./target/nightwatch-reports src/test/js/"
+    "test": "./node_modules/.bin/nightwatch"
   },
   "devDependencies": {
     "chromedriver": "^76.0.1",
