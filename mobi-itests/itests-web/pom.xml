@@ -34,44 +34,6 @@
     <name>itests-web</name>
 
     <dependencies>
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-java</artifactId>
-            <version>4.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit</artifactId>
-            <version>4.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>3.141.59</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>net.masterthought</groupId>
-            <artifactId>cucumber-reporting</artifactId>
-            <version>4.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>22.0</version>
-        </dependency>
-
         <!-- Karaf Dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
@@ -85,20 +47,6 @@
                     <groupId>org.apache.karaf</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>itests-support</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Pax Exam Dependencies -->
-        <dependency>
-            <groupId>org.ops4j.pax.exam</groupId>
-            <artifactId>pax-exam-junit4</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -198,51 +146,8 @@
                             </successCodes>
                         </configuration>
                     </plugin>
-<!--                    <plugin>-->
-<!--                        <groupId>com.lazerycode.selenium</groupId>-->
-<!--                        <artifactId>driver-binary-downloader-maven-plugin</artifactId>-->
-<!--                        <version>1.0.14</version>-->
-<!--                        <configuration>-->
-<!--                            <rootStandaloneServerDirectory>${project.basedir}/target/webdrivers/binaries</rootStandaloneServerDirectory>-->
-<!--                            <downloadedZipFileDirectory>${project.basedir}/target/webdrivers/zips</downloadedZipFileDirectory>-->
-<!--                            <customRepositoryMap>${project.basedir}/src/test/resources/RepositoryMap.xml</customRepositoryMap>-->
-<!--                        </configuration>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <goals>-->
-<!--                                    <goal>selenium</goal>-->
-<!--                                </goals>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
                 </plugins>
             </build>
         </profile>
     </profiles>
-
-<!--    <build>-->
-<!--        <plugins>-->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-failsafe-plugin</artifactId>-->
-<!--                <version>2.18.1</version>-->
-<!--                <configuration>-->
-<!--                    <skipTests>${skipSelenium}</skipTests>-->
-<!--                    <systemPropertyVariables>-->
-<!--                        <webdriver.gecko.driver>${webdriver.gecko.driver}</webdriver.gecko.driver>-->
-<!--                        <webdriver.chrome.driver>${webdriver.chrome.driver}</webdriver.chrome.driver>-->
-<!--                    </systemPropertyVariables>-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>integration-test</id>-->
-<!--                        <goals>-->
-<!--                            <goal>integration-test</goal>-->
-<!--                            <goal>verify</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
-<!--        </plugins>-->
-<!--    </build>-->
 </project>
