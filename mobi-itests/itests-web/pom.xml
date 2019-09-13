@@ -62,6 +62,13 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.26.0</version>
@@ -136,15 +143,27 @@
                                         <argument>run</argument>
                                         <argument>test</argument>
                                     </arguments>
+                                    <successCodes>
+                                        <successCode>0</successCode>
+                                        <successCode>5</successCode>
+                                    </successCodes>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>verify</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>verify</phase>
+                                <configuration>
+                                    <executable>npm</executable>
+                                    <arguments>
+                                        <argument>run</argument>
+                                        <argument>verify</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>
-                        <configuration>
-                            <successCodes>
-                                <successCode>0</successCode>
-                                <successCode>5</successCode>
-                            </successCodes>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

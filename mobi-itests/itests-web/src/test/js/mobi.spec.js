@@ -27,7 +27,7 @@ module.exports = {
         .url('https://localhost:8443/mobi/')
         .waitForElementVisible('body')
         .setValue('input#username', 'admin')
-        .setValue('input#password', 'test')
+        .setValue('input#password', 'admin')
         .click('button[type=submit]')
         .pause(1000)
         .assert.containsText('.sidebar .current-user-box .user-title', 'admin')
