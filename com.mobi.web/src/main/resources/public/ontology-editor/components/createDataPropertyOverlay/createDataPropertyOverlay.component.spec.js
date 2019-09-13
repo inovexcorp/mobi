@@ -20,16 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState,
+    mockPrefixes,
+    mockOntologyUtilsManager,
+    injectCamelCaseFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Create Data Property Overlay component', function() {
     var $compile, scope, ontologyStateSvc, prefixes, ontoUtils;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        mockComponent('staticIri', 'staticIri');
-        mockComponent('advancedLanguageSelect', 'advancedLanguageSelect');
-        mockComponent('iriSelectOntology', 'iriSelectOntology');
-        mockComponent('superPropertySelect', 'superPropertySelect');
+        angular.mock.module('ontology-editor');
+        mockComponent('ontology-editor', 'staticIri');
+        mockComponent('ontology-editor', 'advancedLanguageSelect');
+        mockComponent('ontology-editor', 'iriSelectOntology');
+        mockComponent('ontology-editor', 'superPropertySelect');
         mockOntologyState();
         mockPrefixes();
         mockOntologyUtilsManager();
@@ -77,6 +84,16 @@ describe('Create Data Property Overlay component', function() {
                 displayText: 'Functional Property',
             }
         ]);
+    });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

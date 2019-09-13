@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogManager,
+    mockMergeRequestsState,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Request Record Select component', function() {
     var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
+        angular.mock.module('merge-requests');
         mockCatalogManager();
         mockMergeRequestsState();
         mockUtil();

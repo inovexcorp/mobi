@@ -20,17 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockCatalogManager,
+    mockCatalogState,
+    mockOntologyState,
+    mockPolicyEnforcement,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Record View component', function() {
     var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockComponent('catalog', 'entityPublisher');
         mockComponent('catalog', 'recordViewTabset');
         mockComponent('catalog', 'recordIcon');
         mockComponent('catalog', 'catalogRecordKeywords');
-        mockComponent('catalog', 'limit-description');
+        mockComponent('catalog', 'limitDescription');
+        mockComponent('catalog', 'openRecordButton');
         mockCatalogManager();
         mockCatalogState();
         mockOntologyState();

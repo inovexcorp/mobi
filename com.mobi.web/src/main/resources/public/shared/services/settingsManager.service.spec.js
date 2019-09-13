@@ -20,14 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPrefixes
+} from '../../../../../test/js/Shared';
+
 describe('Settings Manager service', function() {
     var settingsManagerSvc, $window, $cookies;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$window', function() {
                 this.Date = jasmine.createSpy('Date');
             });

@@ -20,14 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUtil,
+    mockPrefixes,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
 describe('Policy Manager service', function() {
     var policyManagerSvc, $q, $httpBackend, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
-        injectRestPathConstant();
         mockPrefixes();
+        injectRestPathConstant();
 
         inject(function(policyManagerService, _$q_, _$httpBackend_, _$httpParamSerializer_, _utilService_) {
             policyManagerSvc = policyManagerService;

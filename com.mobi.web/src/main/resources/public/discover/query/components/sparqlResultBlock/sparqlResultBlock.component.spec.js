@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockComponent,
+    mockSparqlManager,
+    mockModal
+} from '../../../../../../../test/js/Shared';
+
 describe('SPARQL Result Block component', function() {
     var $compile, scope, sparqlManagerSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('query');
+        angular.mock.module('query');
         mockComponent('discover', 'sparqlResultTable');
         mockSparqlManager();
         mockModal();

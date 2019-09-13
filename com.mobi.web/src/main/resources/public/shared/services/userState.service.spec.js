@@ -24,7 +24,7 @@ describe('User State service', function() {
     var userStateSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(userStateService) {
             userStateSvc = userStateService;

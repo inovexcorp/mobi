@@ -24,8 +24,7 @@ describe('Limit Description component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

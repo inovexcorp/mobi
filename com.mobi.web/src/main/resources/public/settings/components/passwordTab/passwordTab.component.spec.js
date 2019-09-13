@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUserManager,
+    mockLoginManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Password Tab component', function() {
     var $compile, scope, $q, userManagerSvc, loginManagerSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('settings');
+        angular.mock.module('settings');
         mockUserManager();
         mockLoginManager();
         mockUtil();

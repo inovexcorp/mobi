@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockComponent
+} from '../../../../../../test/js/Shared';
+
 describe('Keyword Select component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'customLabel');
 
         inject(function(_$compile_, _$rootScope_) {

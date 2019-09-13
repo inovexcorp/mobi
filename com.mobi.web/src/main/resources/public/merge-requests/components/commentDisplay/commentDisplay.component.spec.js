@@ -20,22 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockMergeRequestManager,
+    mockUserManager,
+    mockLoginManager,
+    mockUtil,
+    mockModal,
+    injectShowdownConstant,
+    injectTrustedFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Comment Display component', function() {
-    var $compile, scope, $q, mergeRequestManagerSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc, showdown;
+    var $compile, scope, $q, mergeRequestManagerSvc, userManagerSvc, loginManagerSvc, utilSvc, modalSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
-        injectShowdownConstant();
-        injectTrustedFilter();
+        angular.mock.module('merge-requests');
         mockMergeRequestManager();
         mockUserManager();
         mockLoginManager();
         mockUtil();
-        mockPrefixes();
         mockModal();
+        injectShowdownConstant();
+        injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestManagerService_, _userManagerService_, _loginManagerService_, _utilService_, _modalService_, _showdown_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestManagerService_, _userManagerService_, _loginManagerService_, _utilService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -44,7 +52,6 @@ describe('Comment Display component', function() {
             loginManagerSvc = _loginManagerService_;
             utilSvc = _utilService_;
             modalSvc = _modalService_;
-            showdown = _showdown_;
         });
 
         this.userId = 'user';
@@ -71,7 +78,6 @@ describe('Comment Display component', function() {
         loginManagerSvc = null;
         utilSvc = null;
         modalSvc = null;
-        showdown = null;
         this.element.remove();
     });
 

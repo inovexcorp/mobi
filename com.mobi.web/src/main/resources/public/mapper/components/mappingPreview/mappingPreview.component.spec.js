@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPrefixes,
+    mockUtil,
+    mockMappingManager
+} from '../../../../../../test/js/Shared';
+
 describe('Mapping Preview component', function() {
     var $compile, scope, utilSvc, prefixes, mappingManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockPrefixes();
         mockUtil();
         mockMappingManager();

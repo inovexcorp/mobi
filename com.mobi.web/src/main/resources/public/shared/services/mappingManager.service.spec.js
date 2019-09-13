@@ -20,31 +20,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPrefixes,
+    mockOntologyManager,
+    mockUtil,
+    injectCamelCaseFilter,
+    injectSplitIRIFilter,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
 describe('Mapping Manager service', function() {
-    var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
+    var mappingManagerSvc, $httpBackend, ontologyManagerSvc, utilSvc, uuidSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
-        injectCamelCaseFilter();
-        injectSplitIRIFilter();
         mockOntologyManager();
         mockUtil();
+        injectCamelCaseFilter();
+        injectSplitIRIFilter();
         injectRestPathConstant();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });
         });
 
-        inject(function(mappingManagerService, _ontologyManagerService_, _utilService_, _uuid_, _$httpBackend_, _$httpParamSerializer_, _prefixes_, _splitIRIFilter_, _camelCaseFilter_, _$q_, _$rootScope_) {
+        inject(function(mappingManagerService, _ontologyManagerService_, _utilService_, _uuid_, _$httpBackend_, _prefixes_, _splitIRIFilter_, _camelCaseFilter_, _$q_, _$rootScope_) {
             mappingManagerSvc = mappingManagerService;
             ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             uuidSvc = _uuid_;
             $httpBackend = _$httpBackend_;
-            $httpParamSerializer = _$httpParamSerializer_;
             prefixes = _prefixes_;
             splitIRI = _splitIRIFilter_;
             camelCase = _camelCaseFilter_;
@@ -58,7 +67,6 @@ describe('Mapping Manager service', function() {
     afterEach(function() {
         mappingManagerSvc = null;
         $httpBackend = null;
-        $httpParamSerializer = null;
         ontologyManagerSvc = null;
         utilSvc = null;
         uuidSvc = null;

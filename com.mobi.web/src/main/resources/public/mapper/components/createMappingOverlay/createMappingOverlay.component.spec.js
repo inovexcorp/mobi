@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockMappingManager,
+    mockMapperState
+} from '../../../../../../test/js/Shared';
+
 describe('Create Mapping Overlay component', function() {
     var $compile, scope, $q, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
         mockMappingManager();
         mockMapperState();
 

@@ -20,23 +20,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState,
+    mockOntologyManager,
+    mockOntologyUtilsManager,
+    mockHttpService,
+    injectPrefixationFilter,
+    injectTrustedFilter,
+    injectHighlightFilter,
+    injectBeautifyFilter,
+    injectSplitIRIFilter
+} from '../../../../../../test/js/Shared';
+
+
 describe('Search Tab component', function() {
     var $compile, scope, $q, ontologyStateSvc, ontoUtils, ontologyManagerSvc, httpSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        mockComponent('treeItem', 'treeItem');
-        mockComponent('selectedDetails', 'selectedDetails');
+        angular.mock.module('ontology-editor');
+        mockComponent('ontology-editor', 'treeItem');
+        mockComponent('ontology-editor', 'selectedDetails');
+        mockOntologyState();
+        mockOntologyManager();
+        mockOntologyUtilsManager();
+        mockHttpService();
         injectPrefixationFilter();
         injectTrustedFilter();
         injectHighlightFilter();
         injectBeautifyFilter();
         injectSplitIRIFilter();
-        mockOntologyState();
-        mockOntologyManager();
-        mockOntologyUtilsManager();
-        mockHttpService();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyUtilsManagerService_, _ontologyManagerService_, _httpService_) {
             $compile = _$compile_;

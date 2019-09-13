@@ -24,8 +24,7 @@ describe('Preview Data Grid component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
+        angular.mock.module('mapper');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

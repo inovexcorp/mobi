@@ -24,7 +24,7 @@ describe('Discover State Service', function() {
     var discoverStateSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(discoverStateService) {
             discoverStateSvc = discoverStateService;

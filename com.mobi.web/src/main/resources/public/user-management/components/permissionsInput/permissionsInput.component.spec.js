@@ -24,8 +24,7 @@ describe('Permissions Input component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

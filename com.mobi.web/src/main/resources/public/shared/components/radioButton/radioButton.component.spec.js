@@ -24,8 +24,7 @@ describe('Radio Button component', function() {
     var $compile, $timeout, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;

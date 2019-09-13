@@ -20,28 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockPrefixes,
+    mockUtil,
+    mockDatasetManager,
+    mockOntologyManager,
+    mockSparqlManager,
+    injectSparqljsConstant
+} from '../../../../../../test/js/Shared';
+
 describe('Explore Utils Service', function() {
-    var exploreUtilsSvc, scope, $q, utilSvc, prefixes, regex, utilSvc, datasetManagerSvc, ontologyManagerSvc, sparqlManagerSvc;
+    var exploreUtilsSvc, scope, $q, utilSvc, prefixes, utilSvc, datasetManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
-        module('explore');
+        angular.mock.module('explore');
         mockPrefixes();
-        injectRegexConstant();
         mockUtil();
         mockDatasetManager();
         mockOntologyManager();
         mockSparqlManager();
+        injectSparqljsConstant();
 
-        inject(function(exploreUtilsService, _$rootScope_, _$q_, _prefixes_, _REGEX_, _utilService_, _datasetManagerService_, _ontologyManagerService_, _sparqlManagerService_) {
+        inject(function(exploreUtilsService, _$rootScope_, _$q_, _prefixes_, _utilService_, _datasetManagerService_, _ontologyManagerService_) {
             exploreUtilsSvc = exploreUtilsService;
             scope = _$rootScope_;
             $q = _$q_;
             prefixes = _prefixes_;
-            regex = _REGEX_;
             utilSvc = _utilService_;
             datasetManagerSvc = _datasetManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            sparqlManagerSvc = _sparqlManagerService_;
         });
 
         this.fewProperties = [{
@@ -95,11 +102,9 @@ describe('Explore Utils Service', function() {
         $q = null;
         utilSvc = null;
         prefixes = null;
-        regex = null;
         utilSvc = null;
         datasetManagerSvc = null;
         ontologyManagerSvc = null;
-        sparqlManagerSvc = null;
     });
 
     it('getInputType should return the correct input type', function() {

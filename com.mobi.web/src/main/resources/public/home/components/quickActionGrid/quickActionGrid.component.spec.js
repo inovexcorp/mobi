@@ -20,16 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockOntologyState,
+    mockDiscoverState
+} from '../../../../../../test/js/Shared';
+
 describe('Quick Action Grid component', function() {
     var $compile, scope, $state, $window, ontologyStateSvc, discoverStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('home');
+        angular.mock.module('home');
         mockOntologyState();
         mockDiscoverState();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$state', function() {
                 this.go = jasmine.createSpy('go');
             });

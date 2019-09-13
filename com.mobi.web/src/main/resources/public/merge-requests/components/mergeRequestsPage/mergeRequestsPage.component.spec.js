@@ -20,21 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockMergeRequestsState
+} from '../../../../../../test/js/Shared';
+
 describe('Merge Requests Page component', function() {
-    var $compile, scope, $q, mergeRequestsStateSvc;
+    var $compile, scope, mergeRequestsStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
+        angular.mock.module('merge-requests');
         mockComponent('merge-requests', 'mergeRequestList');
         mockComponent('merge-requests', 'mergeRequestView');
         mockComponent('merge-requests', 'createRequest');
         mockMergeRequestsState();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_) {
+        inject(function(_$compile_, _$rootScope_, _mergeRequestsStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
         });
 
@@ -45,7 +48,6 @@ describe('Merge Requests Page component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         mergeRequestsStateSvc = null;
         this.element.remove();
     });

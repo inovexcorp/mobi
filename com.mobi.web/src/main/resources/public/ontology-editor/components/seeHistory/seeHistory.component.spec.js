@@ -20,21 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockCatalogManager,
+    mockOntologyManager,
+    mockOntologyState,
+    mockOntologyUtilsManager,
+    mockUtil,
+    injectTrustedFilter,
+    injectHighlightFilter,
+    injectPrefixationFilter
+} from '../../../../../../test/js/Shared';
+
 describe('See History component', function() {
     var $compile, scope, ontologyStateSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        mockComponent('staticIri', 'staticIri');
-        injectTrustedFilter();
-        injectHighlightFilter();
-        injectPrefixationFilter();
+        angular.mock.module('ontology-editor');
+        mockComponent('ontology-editor', 'staticIri');
         mockCatalogManager();
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
         mockUtil();
+        injectTrustedFilter();
+        injectHighlightFilter();
+        injectPrefixationFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
             $compile = _$compile_;
@@ -94,22 +105,22 @@ describe('See History component', function() {
         describe('should load a list of commits', function() {
             it('to `commits` in the controller when receiveCommits is called', function() {
                 this.controller.receiveCommits(this.commits);
-                expect(this.controller.commits).toBe(this.commits);
+                expect(this.controller.commits).toEqual(this.commits);
             });
             it('and set the default value in the dropdown to the latest commit for an entity', function() {
                 this.controller.receiveCommits(this.commits);
-                expect(this.controller.os.listItem.selectedCommit).toBe(this.commits[0]);
+                expect(this.controller.os.listItem.selectedCommit).toEqual(this.commits[0]);
             });
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('SEE-HISTORY');
-            expect(this.element.querySelectorAll('.see-history-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.see-history-title').length).toBe(1);
+            expect(this.element.querySelectorAll('.see-history-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.see-history-title').length).toEqual(1);
         });
         it('with .form-groups', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toEqual(2);
         });
         ['static-iri', 'select', 'commit-compiled-resource', 'commit-history-table'].forEach(test => {
             it('with a ' + test, function() {

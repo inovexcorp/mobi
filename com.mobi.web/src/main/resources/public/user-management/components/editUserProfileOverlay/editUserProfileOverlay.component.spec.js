@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUserManager,
+    mockUserState,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Edit User Profile Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, userStateSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockUserManager();
         mockUserState();
         mockPrefixes();

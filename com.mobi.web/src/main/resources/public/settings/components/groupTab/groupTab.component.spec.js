@@ -20,19 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUserManager,
+    mockLoginManager
+} from '../../../../../../test/js/Shared';
+
 describe('Group Tab component', function() {
-    var $compile, scope, $q, userManagerSvc, loginManagerSvc;
+    var $compile, scope, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('settings');
+        angular.mock.module('settings');
         mockUserManager();
         mockLoginManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _loginManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _userManagerService_, _loginManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
             userManagerSvc = _userManagerService_;
             loginManagerSvc = _loginManagerService_;
         });
@@ -50,7 +53,6 @@ describe('Group Tab component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q = null;
         userManagerSvc = null;
         loginManagerSvc = null;
         this.element.remove();

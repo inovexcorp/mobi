@@ -24,8 +24,7 @@ describe('Paging component', function() {
     var $compile, scope, $timeout;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$compile_, _$rootScope_, _$timeout_) {
             $compile = _$compile_;

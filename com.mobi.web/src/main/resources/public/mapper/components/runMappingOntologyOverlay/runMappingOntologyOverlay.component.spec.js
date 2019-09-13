@@ -20,14 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockMapperState,
+    mockDelimitedManager,
+    mockDatasetManager,
+    mockCatalogManager,
+    mockOntologyState,
+    mockUtil,
+    mockPrefixes,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Run Mapping Ontology Overlay component', function() {
     var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('mapper');
-        injectHighlightFilter();
-        injectTrustedFilter();
+        angular.mock.module('mapper');
         mockMapperState();
         mockDelimitedManager();
         mockDatasetManager();
@@ -35,6 +44,8 @@ describe('Run Mapping Ontology Overlay component', function() {
         mockOntologyState();
         mockUtil();
         mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _mapperStateService_, _delimitedManagerService_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;

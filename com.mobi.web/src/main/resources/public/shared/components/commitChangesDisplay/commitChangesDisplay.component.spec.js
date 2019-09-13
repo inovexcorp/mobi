@@ -20,22 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockComponent,
+    injectSplitIRIFilter,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Commit Changes Display component', function() {
     var $compile, scope, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'statementContainer');
         mockComponent('shared', 'statementDisplay');
         mockUtil();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
-            splitIRI = _splitIRIFilter_;
         });
 
         scope.additions = [];
@@ -49,7 +54,6 @@ describe('Commit Changes Display component', function() {
         $compile = null;
         scope = null;
         utilSvc = null;
-        ontologyUtilsManagerSvc = null;
         this.element.remove();
     });
 

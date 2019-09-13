@@ -24,9 +24,9 @@ describe('Update Refs service', function() {
     var updateRefsSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
                 return {
                     begin: 'aaa',
