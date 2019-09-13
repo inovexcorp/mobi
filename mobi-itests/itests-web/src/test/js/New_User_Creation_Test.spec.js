@@ -82,13 +82,12 @@ module.exports = {
     'Step 5: The new user is displayed in users list' : function(browser) {
         browser
             .useXpath()
-            .waitForElementNotPresent('//div[@class= "modal fade ng-scope ng-isolate-scope ng-animate ng-leave ng-leave-active"]')
-            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li[@class= 'ng-scope']//a/span[text() [contains(., '" + newName + "')]]", "user not visible in list.")
+            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() [contains(., '" + newName + "')]]", "new user is displayed")
     },
 
     'Step 6: The user clicks logout' : function(browser) {
         browser
-
+            .pause(2000)
             .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
     },
