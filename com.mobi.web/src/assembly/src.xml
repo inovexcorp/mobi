@@ -30,19 +30,11 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <includes>
-                <include>package.json</include>
-                <include>karma.conf.build.js</include>
-                <include>karma.conf.tdd.js</include>
-                <include>webpack.config.js</include>
-                <include>webpack.tests.js</include>
-                <include>tsconfig.json</include>
-                <include>webpack-configs/*</include>
-            </includes>
+            <directory>src/test/js</directory>
+            <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
         <fileSet>
             <directory>src/main/resources/public</directory>
-            <outputDirectory>src</outputDirectory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
     </fileSets>
