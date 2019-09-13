@@ -34,6 +34,9 @@
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
         <fileSet>
+            <excludes>
+                <exclude>src/main/resources/public/shared/components/sidebar/filtered/*</exclude>
+            </excludes>
             <directory>src/main/resources/public</directory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
