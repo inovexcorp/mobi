@@ -25,7 +25,7 @@
           "enabled" : true,
           "on_failure" : true,
           "on_error" : false,
-          "path" : "./target/nightwatch-screenshots src/test/js/"
+          "path" : "./target/nightwatch-screenshots/"
       }
     }
   }
