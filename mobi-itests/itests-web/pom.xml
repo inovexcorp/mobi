@@ -69,6 +69,34 @@
                         </configuration>
                     </plugin>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.1.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.mobi</groupId>
+                                    <artifactId>mobi-distribution</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <overWrite>false</overWrite>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.basedir}</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.31.0</version>
@@ -95,8 +123,8 @@
                                 <image>
                                     <name>docker.io/mobi/test</name>
                                     <build>
-                                        <contextDir>${project.basedir}/../../mobi-distribution/target</contextDir>
-                                        <dockerFile>${project.basedir}/../../mobi-distribution/target/assembly/docker/Dockerfile</dockerFile>
+                                        <contextDir>${project.basedir}/</contextDir>
+                                        <dockerFile>${project.basedir}/../../mobi-distribution/src/main/filtered-resources/docker/Dockerfile</dockerFile>
                                     </build>
                                     <run>
                                         <ports>

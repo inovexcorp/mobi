@@ -20,7 +20,7 @@ RUN set -ex \
 ENV NPM_CONFIG_LOGLEVEL info
 ENV NODE_VERSION 6.9.5
 # Maven filtered to produce correct versioning.
-ENV MOBI_VERSION ${project.version}
+ENV MOBI_VERSION 1.16.50-SNAPSHOT
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
   && curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
@@ -33,8 +33,8 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 RUN ["node"]
 # Base Mobi assembly in the /opt/mobi directory.
 WORKDIR /opt/mobi
-ADD ./${project.artifactId}-$MOBI_VERSION.tar.gz ./
-CMD ./${project.artifactId}-$MOBI_VERSION/bin/karaf
+ADD ./mobi-distribution-$MOBI_VERSION.tar.gz ./
+CMD ./mobi-distribution-$MOBI_VERSION/bin/karaf server
 
 EXPOSE 8443
 
