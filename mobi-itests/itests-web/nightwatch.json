@@ -1,6 +1,7 @@
 {
-  "src_folders" : ["./src/test/js"],
-  "output_folder" : "./target/nightwatch-reports src/test/js/",
+
+  "src_folders" : ["src/test/js"],
+  "output_folder" : "./target/nightwatch-reports/",
   "webdriver" : {
     "start_process": true,
     "server_path": "node_modules/.bin/chromedriver",
@@ -25,7 +26,7 @@
           "on_failure" : true,
           "on_error" : false,
           "path" : "./target/nightwatch-screenshots src/test/js/"
-        }
+      }
     }
   }
 }
