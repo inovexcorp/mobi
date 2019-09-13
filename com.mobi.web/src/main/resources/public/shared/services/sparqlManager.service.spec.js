@@ -20,11 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUtil,
+    mockHttpService,
+    injectRestPathConstant,
+    flushAndVerify
+} from '../../../../../test/js/Shared';
+
 describe('SPARQL Manager service', function() {
-    var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, utilSvc;
+    var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, utilSvc, httpSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockUtil();
         mockHttpService();
         injectRestPathConstant();
@@ -49,6 +56,7 @@ describe('SPARQL Manager service', function() {
         $httpBackend = null;
         $httpParamSerializer = null;
         utilSvc = null;
+        httpSvc = null;
     });
 
     it('should reset the state variables', function() {

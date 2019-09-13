@@ -20,12 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockProvManager,
+    mockUtil,
+    mockPrefixes,
+    mockHttpService
+} from '../../../../../../test/js/Shared';
+
 describe('Activity Card component', function() {
     var $compile, scope, $q, provManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('home');
+        angular.mock.module('home');
         mockComponent('home', 'activityTitle');
         mockProvManager();
         mockUtil();

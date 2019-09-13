@@ -20,28 +20,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockPrefixes,
+    mockOntologyManager,
+    mockOntologyState,
+    mockUtil,
+    injectUniqueKeyFilter,
+    injectIndentConstant
+} from '../../../../../../test/js/Shared';
 
 describe('Hierarchy Tree component', function() {
-    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, ontologyUtils, utilSvc, prefixes;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        mockComponent('treeItem', 'treeItem');
+        angular.mock.module('ontology-editor');
+        mockComponent('ontology-editor', 'treeItem');
         mockPrefixes();
         mockOntologyManager();
         mockOntologyState();
-        mockOntologyUtilsManager();
         mockUtil();
         injectUniqueKeyFilter();
         injectIndentConstant();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _ontologyUtilsManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyUtils = _ontologyUtilsManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
@@ -62,7 +68,8 @@ describe('Hierarchy Tree component', function() {
         scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
         scope.resetIndex = jasmine.createSpy('resetIndex');
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()"></hierarchy-tree>'))(scope);
+        scope.clickItem = jasmine.createSpy('clickItem');
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()" click-item="clickItem(iri)"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });
@@ -71,7 +78,6 @@ describe('Hierarchy Tree component', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
-        ontologyUtils = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();
@@ -106,13 +112,17 @@ describe('Hierarchy Tree component', function() {
             scope.$digest();
             expect(scope.index).toEqual(4);
         });
-        it('updateSearch is one way bound', function() {
+        it('updateSearch should be called in the parent scope', function() {
             this.controller.updateSearch({value: 'value'});
             expect(scope.updateSearch).toHaveBeenCalledWith('value');
         });
-        it('resetIndex is one way bound', function() {
+        it('resetIndex should be called in the parent scope', function() {
             this.controller.resetIndex();
             expect(scope.resetIndex).toHaveBeenCalled();
+        });
+        it('clickItem should be called in the parent scope', function() {
+            this.controller.clickItem({iri: 'iri'});
+            expect(scope.clickItem).toHaveBeenCalledWith('iri');
         });
     });
     describe('contains the correct html', function() {
@@ -121,16 +131,16 @@ describe('Hierarchy Tree component', function() {
             scope.$apply();
         });
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('HIERARCHY-TREE');
+            expect(this.element.prop('tagName')).toEqual('HIERARCHY-TREE');
         });
         it('based on .repeater-container', function() {
-            expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.repeater-container').length).toEqual(1);
         });
         it('based on tree-items', function() {
-            expect(this.element.find('tree-item').length).toBe(1);
+            expect(this.element.find('tree-item').length).toEqual(1);
         });
         it('based on .tree-item-wrapper', function() {
-            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(1);
+            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toEqual(1);
         });
     });
     describe('controller methods', function() {
@@ -142,6 +152,19 @@ describe('Hierarchy Tree component', function() {
             expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith('a.b', true);
             expect(this.controller.isShown).toHaveBeenCalled();
             expect(this.controller.filteredHierarchy).toEqual([]);
+        });
+        describe('click should call the correct methods', function() {
+            it('if clickItem has been provided', function() {
+                this.controller.click('iri');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(scope.clickItem).toHaveBeenCalledWith('iri');
+            });
+            it('if clickItem has not been provided', function() {
+                this.controller.clickItem = undefined;
+                this.controller.click('iri');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(scope.clickItem).not.toHaveBeenCalled();
+            });
         });
         describe('searchFilter', function() {
             beforeEach(function() {
@@ -169,7 +192,7 @@ describe('Hierarchy Tree component', function() {
             describe('has filter text', function() {
                 describe('and the entity has matching search properties', function() {
                     it('that have at least one matching text value', function() {
-                        expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                        expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
                     });
                     describe('that do not have a matching text value', function () {
@@ -182,27 +205,27 @@ describe('Hierarchy Tree component', function() {
                         });
                         describe('and does not have a matching entity local name', function () {
                             it('and the node has no children', function () {
-                                expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                                expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                             });
                             it('and the node has children', function () {
                                 this.filterNode.hasChildren = true;
-                                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                             });
                         });
                         it('and does have a matching entity local name', function() {
                             utilSvc.getBeautifulIRI.and.returnValue('title');
-                            expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });
                 });
                 it('and the entity does not have matching search properties', function() {
                     ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toBe(false);
+                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                 });
             });
             it('does not have filter text', function() {
                 this.controller.filterText = '';
-                expect(this.controller.searchFilter(this.filterNode)).toBe(true);
+                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
             });
         });
         describe('isShown filter', function () {
@@ -222,17 +245,17 @@ describe('Hierarchy Tree component', function() {
                     });
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
-                        expect(this.controller.isShown(this.node)).toBe(true);
+                        expect(this.controller.isShown(this.node)).toEqual(true);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                     });
                     it('and does not have a child with a text match', function() {
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(this.controller.isShown(this.node)).toBe(true);
+                    expect(this.controller.isShown(this.node)).toEqual(true);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                 });
             });
@@ -252,16 +275,16 @@ describe('Hierarchy Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                        expect(this.controller.isShown(this.node)).toBe(true);
+                        expect(this.controller.isShown(this.node)).toEqual(true);
                     });
                     it('and does not have a child with a text match', function() {
                         ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(this.controller.isShown(this.node)).toBe(true);
+                    expect(this.controller.isShown(this.node)).toEqual(true);
                 });
             });
             describe('indent is greater than 0 and areParentsOpen is false', function () {
@@ -280,17 +303,17 @@ describe('Hierarchy Tree component', function() {
                     });
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                     });
                     it('and does not have a child with a text match', function() {
-                        expect(this.controller.isShown(this.node)).toBe(false);
+                        expect(this.controller.isShown(this.node)).toEqual(false);
                         expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                    expect(this.controller.isShown(this.node)).toBe(false);
+                    expect(this.controller.isShown(this.node)).toEqual(false);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node);
                 });
             });

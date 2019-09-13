@@ -24,7 +24,7 @@ describe('Split IRI filter', function() {
     var $filter;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
 
         inject(function(_$filter_) {
             $filter = _$filter_;

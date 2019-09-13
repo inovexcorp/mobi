@@ -20,22 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockDatasetManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../test/js/Shared';
+
 describe('Dataset State service', function() {
-    var datasetStateSvc, $q, $timeout, datasetManagerSvc, utilSvc, prefixes;
+    var datasetStateSvc, $q, $timeout, datasetManagerSvc, utilSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockDatasetManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$q_, _$timeout_, datasetStateService, _datasetManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$q_, _$timeout_, datasetStateService, _datasetManagerService_, _utilService_) {
             $q = _$q_;
             $timeout = _$timeout_;
             datasetStateSvc = datasetStateService;
             datasetManagerSvc = _datasetManagerService_;
             utilSvc = _utilService_;
-            prefixes = _prefixes_;
         });
     });
 
@@ -45,7 +50,6 @@ describe('Dataset State service', function() {
         $timeout = null;
         datasetManagerSvc = null;
         utilSvc = null;
-        prefixes = null;
     });
 
     it('should reset all state variables', function() {

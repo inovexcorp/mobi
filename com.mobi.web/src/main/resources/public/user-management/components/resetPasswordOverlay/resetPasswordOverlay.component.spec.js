@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUserManager,
+    mockUserState
+} from '../../../../../../test/js/Shared';
+
 describe('Reset Password Overlay component', function() {
     var $compile, scope, $q, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('user-management');
+        angular.mock.module('user-management');
         mockUserManager();
         mockUserState();
 

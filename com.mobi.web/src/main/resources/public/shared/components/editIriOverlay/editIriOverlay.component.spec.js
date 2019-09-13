@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import {
+    mockComponent,
+    injectRegexConstant
+} from '../../../../../../test/js/Shared';
+
 describe('Edit IRI Overlay component', function() {
     var $compile, scope;
 
     beforeEach(function() {
-        module('templates');
-        module('shared');
+        angular.mock.module('shared');
         mockComponent('shared', 'errorDisplay')
         injectRegexConstant();
 

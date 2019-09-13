@@ -20,12 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockMergeRequestManager,
+    mockUtil
+} from '../../../../../../test/js/Shared';
+
 describe('Merge Request Discussion component', function() {
     var $compile, scope, $q, mergeRequestManagerSvc, utilSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('merge-requests');
+        angular.mock.module('merge-requests');
         mockComponent('merge-requests', 'commentDisplay');
         mockComponent('merge-requests', 'replyComment');
         mockMergeRequestManager();

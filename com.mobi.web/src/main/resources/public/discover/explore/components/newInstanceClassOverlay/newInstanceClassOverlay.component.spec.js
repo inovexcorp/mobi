@@ -20,18 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockDiscoverState,
+    mockExplore,
+    mockUtil,
+    injectSplitIRIFilter
+} from '../../../../../../../test/js/Shared';
+
 describe('New Instance Class Overlay component', function() {
     var $compile, scope, $q, discoverStateSvc, exploreSvc, util, splitIRI;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockDiscoverState();
         mockExplore();
         mockUtil();
         injectSplitIRIFilter();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('uuid', function() {
                 this.v4 = jasmine.createSpy('v4').and.returnValue('');
             });

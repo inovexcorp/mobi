@@ -20,12 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockDiscoverState,
+    mockUtil,
+    mockExploreUtils,
+    mockPrefixes
+} from '../../../../../../../test/js/Shared';
+
 describe('Instance View component', function() {
     var $compile, scope, discoverStateSvc, exploreUtilsSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockDiscoverState();
         mockUtil();
         mockExploreUtils();

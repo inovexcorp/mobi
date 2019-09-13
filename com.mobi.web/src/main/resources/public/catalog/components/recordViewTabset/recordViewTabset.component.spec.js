@@ -20,12 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockCatalogManager
+} from '../../../../../../test/js/Shared';
+
 describe('Record View Tabset component', function() {
     var $compile, scope, $q, catalogManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockComponent('catalog', 'branchList');
         mockComponent('catalog', 'recordMarkdown');
         mockCatalogManager();

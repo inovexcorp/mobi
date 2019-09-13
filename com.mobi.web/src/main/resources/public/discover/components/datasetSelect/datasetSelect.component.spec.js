@@ -20,17 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockUtil,
+    mockDatasetManager,
+    mockPrefixes,
+    injectTrustedFilter,
+    injectHighlightFilter
+ } from '../../../../../../test/js/Shared';
+
 describe('Dataset Select component', function() {
     var $compile, scope, datasetManagerSvc;
 
     beforeEach(function() {
-        module('templates');
-        module('discover');
-        injectTrustedFilter();
-        injectHighlightFilter();
+        angular.mock.module('discover');
         mockUtil();
         mockDatasetManager();
         mockPrefixes();
+        injectTrustedFilter();
+        injectHighlightFilter();
 
         inject(function(_$compile_, _$rootScope_, _datasetManagerService_) {
             $compile = _$compile_;

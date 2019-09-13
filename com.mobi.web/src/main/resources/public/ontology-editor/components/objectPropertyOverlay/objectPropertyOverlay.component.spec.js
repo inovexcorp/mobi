@@ -20,13 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockComponent,
+    mockOntologyState,
+    mockUtil,
+    mockOntologyUtilsManager,
+    mockPropertyManager,
+    injectTrustedFilter,
+    injectHighlightFilter
+} from '../../../../../../test/js/Shared';
+
 describe('Object Property Overlay component', function() {
     var $compile, scope, ontologyStateSvc, ontoUtils, propertyManagerSvc, util;
 
     beforeEach(function() {
-        module('templates');
-        module('ontology-editor');
-        mockComponent('iriSelectOntology', 'iriSelectOntology');
+        angular.mock.module('ontology-editor');
+        mockComponent('ontology-editor', 'iriSelectOntology');
         mockOntologyState();
         mockUtil();
         mockOntologyUtilsManager();
@@ -67,12 +76,22 @@ describe('Object Property Overlay component', function() {
     it('initializes with the correct values', function() {
         expect(this.controller.individuals).toEqual({indiv: 'ontology'});
     });
+    describe('controller bound variable', function() {
+        it('close should be called in the parent scope', function() {
+            this.controller.close();
+            expect(scope.close).toHaveBeenCalled();
+        });
+        it('dismiss should be called in the parent scope', function() {
+            this.controller.dismiss();
+            expect(scope.dismiss).toHaveBeenCalled();
+        });
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.prop('tagName')).toBe('OBJECT-PROPERTY-OVERLAY');
-            expect(this.element.querySelectorAll('.modal-header').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-body').length).toBe(1);
-            expect(this.element.querySelectorAll('.modal-footer').length).toBe(1);
+            expect(this.element.prop('tagName')).toEqual('OBJECT-PROPERTY-OVERLAY');
+            expect(this.element.querySelectorAll('.modal-header').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-body').length).toEqual(1);
+            expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
         ['h3', 'ui-select', 'iri-select-ontology'].forEach(tag => {
             it('with a ' + tag, function() {
@@ -81,9 +100,9 @@ describe('Object Property Overlay component', function() {
         });
         it('with buttons to submit and cancel', function() {
             var buttons = this.element.querySelectorAll('.modal-footer button');
-            expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(buttons.length).toEqual(2);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[0]).text()) >= 0).toEqual(true);
+            expect(['Cancel', 'Submit'].indexOf(angular.element(buttons[1]).text()) >= 0).toEqual(true);
         });
     });
     describe('controller methods', function() {

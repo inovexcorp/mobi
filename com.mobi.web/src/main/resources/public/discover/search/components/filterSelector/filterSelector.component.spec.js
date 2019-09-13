@@ -20,19 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../../test/js/Shared';
+
 describe('Filter Selector component', function() {
-    var $compile, scope, utilSvc, prefixes;
+    var $compile, scope, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('search');
+        angular.mock.module('search');
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
 
@@ -57,7 +60,6 @@ describe('Filter Selector component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        utilSvc = null;
         prefixes = null;
         this.element.remove();
     });

@@ -20,12 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockCatalogState,
+    mockMapperState,
+    mockOntologyState,
+    mockPolicyEnforcement,
+    mockPolicyManager,
+    mockUtil,
+    mockPrefixes
+} from '../../../../../../test/js/Shared';
+
 describe('Open Record Button component', function() {
     var $compile, $state, $q, scope, catalogStateSvc, mapperStateSvc, ontologyStateSvc, policyEnforcementSvc, utilSvc, prefixes;
 
     beforeEach(function() {
-        module('templates');
-        module('catalog');
+        angular.mock.module('catalog');
         mockCatalogState();
         mockMapperState();
         mockOntologyState();
@@ -34,7 +43,7 @@ describe('Open Record Button component', function() {
         mockUtil();
         mockPrefixes();
 
-        module(function($provide) {
+        angular.mock.module(function($provide) {
             $provide.service('$state', function() {
                 this.go = jasmine.createSpy('go');
             });

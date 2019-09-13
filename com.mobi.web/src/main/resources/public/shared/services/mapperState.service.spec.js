@@ -20,11 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+    mockPrefixes,
+    mockMappingManager,
+    mockOntologyManager,
+    mockDelimitedManager,
+    mockUtil,
+    mockCatalogManager
+} from '../../../../../test/js/Shared';
+
 describe('Mapper State service', function() {
     var mapperStateSvc, $q, scope, prefixes, ontologyManagerSvc, mappingManagerSvc, delimitedManagerSvc, utilSvc, catalogManagerSvc;
 
     beforeEach(function() {
-        module('shared');
+        angular.mock.module('shared');
         mockPrefixes();
         mockMappingManager();
         mockOntologyManager();

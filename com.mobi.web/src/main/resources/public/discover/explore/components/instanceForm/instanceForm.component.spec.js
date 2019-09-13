@@ -20,12 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { 
+    mockDiscoverState,
+    mockUtil,
+    mockExplore,
+    mockPrefixes,
+    mockExploreUtils,
+    mockModal,
+    injectRegexConstant,
+    injectSplitIRIFilter
+} from '../../../../../../../test/js/Shared';
+
 describe('Instance Form component', function() {
-    var $compile, scope, $q, discoverStateSvc, prefixes, exploreSvc, util, allProperties, regex, exploreUtilsSvc, modalSvc, splitIri;
+    var $compile, scope, $q, discoverStateSvc, prefixes, exploreSvc, util, exploreUtilsSvc, modalSvc, splitIri;
 
     beforeEach(function() {
-        module('templates');
-        module('explore');
+        angular.mock.module('explore');
         mockDiscoverState();
         mockUtil();
         mockExplore();
@@ -35,7 +45,7 @@ describe('Instance Form component', function() {
         injectRegexConstant();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _prefixes_, _exploreService_, _utilService_, _REGEX_, _exploreUtilsService_, _modalService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _discoverStateService_, _prefixes_, _exploreService_, _utilService_, _exploreUtilsService_, _modalService_, _splitIRIFilter_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -43,7 +53,6 @@ describe('Instance Form component', function() {
             exploreSvc = _exploreService_;
             prefixes = _prefixes_;
             util = _utilService_;
-            regex = _REGEX_;
             exploreUtilsSvc = _exploreUtilsService_;
             modalSvc = _modalService_;
             splitIri = _splitIRIFilter_;
@@ -80,37 +89,6 @@ describe('Instance Form component', function() {
             range: [prefixes.xsd + 'boolean']
         }];
         this.controller.changed = ['iri'];
-        allProperties = [{
-            propertyIRI: 'id1',
-            range: [prefixes.xsd + 'dateTime']
-        }, {
-            propertyIRI: 'id2',
-            range: [prefixes.xsd + 'dateTimeStamp']
-        }, {
-            propertyIRI: 'id3',
-            range: [prefixes.xsd + 'decimal']
-        }, {
-            propertyIRI: 'id4',
-            range: [prefixes.xsd + 'double']
-        }, {
-            propertyIRI: 'id5',
-            range: [prefixes.xsd + 'float']
-        }, {
-            propertyIRI: 'id6',
-            range: [prefixes.xsd + 'int']
-        }, {
-            propertyIRI: 'id7',
-            range: [prefixes.xsd + 'integer']
-        }, {
-            propertyIRI: 'id8',
-            range: [prefixes.xsd + 'long']
-        }, {
-            propertyIRI: 'id9',
-            range: [prefixes.xsd + 'short']
-        }, {
-            propertyIRI: 'id10',
-            range: [prefixes.xsd + 'other']
-        }];
     });
 
     afterEach(function() {
@@ -121,8 +99,6 @@ describe('Instance Form component', function() {
         prefixes = null;
         exploreSvc = null;
         util = null;
-        allProperties = null;
-        regex = null;
         exploreUtilsSvc = null;
         modalSvc = null;
         splitIri = null;
