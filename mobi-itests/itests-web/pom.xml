@@ -71,7 +71,7 @@
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
-                        <version>0.26.0</version>
+                        <version>0.31.0</version>
                         <extensions>true</extensions>
                         <executions>
                             <execution>
@@ -95,8 +95,8 @@
                                 <image>
                                     <name>docker.io/mobi/test</name>
                                     <build>
-                                        <dockerFileDir>${project.basedir}/../../mobi-distribution/target</dockerFileDir>
-<!--                                        <dockerFile>${project.basedir}/../../mobi-distribution/target/assembly/docker/Dockerfile</dockerFile>-->
+                                        <contextDir>${project.basedir}/../../mobi-distribution/target</contextDir>
+                                        <dockerFile>${project.basedir}/../../mobi-distribution/target/assembly/docker/Dockerfile</dockerFile>
                                     </build>
                                     <run>
                                         <ports>
