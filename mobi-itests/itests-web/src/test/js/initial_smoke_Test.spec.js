@@ -90,7 +90,6 @@ module.exports = {
                             browser.waitForElementVisible("//*[contains(@class, 'material-tabset-headings')]/ul/li/a/span[text()[contains(.,'Query')]]");
                             break;
                         default:
-                            System.out.println("No Sidebar Link given!");
                             break;
                     }
                 } catch (TimeoutException) {

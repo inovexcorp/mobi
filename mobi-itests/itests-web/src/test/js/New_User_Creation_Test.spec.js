@@ -42,12 +42,15 @@ module.exports = {
     },
 
     'Step 2: check for visibility of home page Element' : function(browser) {
+        /*div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]'*/
         browser
-            .waitForElementVisible('//div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]')
+            .useCss()
+            .waitForElementVisible('.home-page')
     },
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
         browser
+            .useXpath()
             .waitForElementVisible("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
             .click("//*[@ui-sref='root.user-management']/span[text()[contains(.,'Administration')]]")
     },
@@ -98,11 +101,13 @@ module.exports = {
 
     'Step 8: check for visibility of home elements' : function(browser) {
         browser
-            .waitForElementVisible('//div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]')
+            .useCss()
+            .waitForElementVisible('.home-page')
     },
 
     'Step 9: New User name is displayed in sidebar on left' : function(browser) {
         browser
+            .useXpath()
             .assert.visible('//a[@class="current-user-box p-2 my-2 text-truncate"]')
             .getText('//a[@class="current-user-box p-2 my-2 text-truncate"]', function(result) {browser.assert.ok(result.value == newName)})
     },

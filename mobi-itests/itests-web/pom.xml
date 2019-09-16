@@ -97,6 +97,28 @@
                         </configuration>
                     </plugin>
                     <plugin>
+                            <groupId>com.cj.jshintmojo</groupId>
+                            <artifactId>jshint-maven-plugin</artifactId>
+                            <version>1.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>lint</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <configFile>src/test/resources/jshint.conf.js</configFile>
+                            <directories>
+                                <directory>src/test/js</directory>
+                            </directories>
+                            <reporter>jslint</reporter>
+                            <reportFile>target/jshint.xml</reportFile>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.31.0</version>

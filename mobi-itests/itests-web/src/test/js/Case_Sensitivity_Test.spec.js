@@ -39,11 +39,13 @@ module.exports = {
 
   'Step 2: check for visibility of home element' : function(browser) {
     browser
-        .waitForElementVisible('//div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]')
+        .useCss()
+        .waitForElementVisible('.home-page')
   },
 
   'Step 3: Navigate to administration page' : function(browser) {
     browser
+      .useXpath()
       .assert.visible('//*[@ui-sref="root.user-management"]/span[text()[contains(.,"Administration")]]')
       .click('//*[@ui-sref="root.user-management"]/span[text()[contains(.,"Administration")]]')
   },
