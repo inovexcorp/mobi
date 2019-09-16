@@ -273,7 +273,6 @@ describe('Login Manager service', function() {
                 userManagerSvc.getUser.and.returnValue($q.when(this.user));
             });
             it('and this is the first time the method is called', function() {
-                
                 loginManagerSvc.isAuthenticated()
                     .then(_.noop, () => {
                         fail('Promise should have resolved');
@@ -287,6 +286,7 @@ describe('Login Manager service', function() {
                 expect(ontologyStateSvc.initialize).toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.initialize).toHaveBeenCalled();
                 expect(userManagerSvc.initialize).toHaveBeenCalled();
+                expect(userManagerSvc.getUser).toHaveBeenCalledWith('user');
                 expect(stateManagerSvc.initialize).toHaveBeenCalled();
                 expect(datasetManagerSvc.initialize).toHaveBeenCalled();
                 expect(state.go).not.toHaveBeenCalled();
@@ -305,6 +305,7 @@ describe('Login Manager service', function() {
                 expect(ontologyManagerSvc.initialize).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.initialize).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.initialize).not.toHaveBeenCalled();
+                expect(userManagerSvc.getUser).toHaveBeenCalledWith('user');
                 expect(userManagerSvc.initialize).toHaveBeenCalled();
                 expect(stateManagerSvc.initialize).toHaveBeenCalled();
                 expect(datasetManagerSvc.initialize).not.toHaveBeenCalled();
