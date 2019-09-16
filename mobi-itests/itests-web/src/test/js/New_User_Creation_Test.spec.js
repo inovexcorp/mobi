@@ -41,9 +41,9 @@ module.exports = {
             .click('//button[@type="submit"]')
     },
 
-    'Step 2: check for visibility of home elements' : function(browser) {
+    'Step 2: check for visibility of home page Element' : function(browser) {
         browser
-            .waitForElementVisible('//div[@class="home-page h-100 d-flex flex-column"]')
+            .waitForElementVisible('//div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]')
     },
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
@@ -98,13 +98,7 @@ module.exports = {
 
     'Step 8: check for visibility of home elements' : function(browser) {
         browser
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Search the Catalog")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Open an Ontology")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Read the Documentation")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Explore Data")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Query Data")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Ingest Data")]]')
-            .waitForElementVisible('//a[@class="nav-link active"][text()[contains(.,"Recent Activity")]]')
+            .waitForElementVisible('//div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]')
     },
 
     'Step 9: New User name is displayed in sidebar on left' : function(browser) {

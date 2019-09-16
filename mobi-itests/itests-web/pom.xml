@@ -52,10 +52,10 @@
 
     <profiles>
         <profile>
-            <id>run-selenium</id>
+            <id>run-functional</id>
             <activation>
                 <property>
-                    <name>skipSelenium</name>
+                    <name>skipFunctional</name>
                     <value>false</value>
                 </property>
             </activation>

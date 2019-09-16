@@ -37,9 +37,9 @@ module.exports = {
       .click('//button[@type="submit"]')
   },
 
-  'Step 2: check for visibility of home elements' : function(browser) {
+  'Step 2: check for visibility of home element' : function(browser) {
     browser
-        .waitForElementVisible('//div[@class="home-page h-100 d-flex flex-column"]')
+        .waitForElementVisible('//div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]')
   },
 
   'Step 3: Navigate to administration page' : function(browser) {
