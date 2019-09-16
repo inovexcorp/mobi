@@ -43,13 +43,7 @@ module.exports = {
 
     'Step 2: check for visibility of home elements' : function(browser) {
         browser
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Search the Catalog")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Open an Ontology")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Read the Documentation")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Explore Data")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Query Data")]]')
-            .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Ingest Data")]]')
-            .waitForElementVisible('//a[@class="nav-link active"][text()[contains(.,"Recent Activity")]]')
+            .waitForElementVisible('//div[@class="home-page h-100 d-flex flex-column"]')
     },
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
@@ -63,10 +57,10 @@ module.exports = {
             .waitForElementVisible("//button[text() [contains(., 'Create User')]]")
             .click("//button[text() [contains(., 'Create User')]]")
             .useCss()
-            .setValue('input[name=username]', '' + newUsername + '')
-            .setValue('input[name=password]', '' + newUserPassword + '')
-            .setValue('input[name=confirmPassword]', '' + newUserPassword + '')
-            .setValue('input[name=firstName]', '' + newName + '')
+            .setValue('input[name=username]', newUsername )
+            .setValue('input[name=password]', newUserPassword )
+            .setValue('input[name=confirmPassword]', newUserPassword )
+            .setValue('input[name=firstName]', '' + newName )
             .setValue('input[name=lastName]', 'testerly')
             .setValue('input[name=email]', 'test@gmail.com')
 

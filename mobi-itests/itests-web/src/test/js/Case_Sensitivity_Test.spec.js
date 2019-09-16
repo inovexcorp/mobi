@@ -39,13 +39,7 @@ module.exports = {
 
   'Step 2: check for visibility of home elements' : function(browser) {
     browser
-      .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Search the Catalog")]]')
-      .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Open an Ontology")]]')
-      .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Read the Documentation")]]')
-      .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Explore Data")]]')
-      .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Query Data")]]')
-      .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Ingest Data")]]')
-      .waitForElementVisible('//a[@class="nav-link active"][text()[contains(.,"Recent Activity")]]')
+        .waitForElementVisible('//div[@class="home-page h-100 d-flex flex-column"]')
   },
 
   'Step 3: Navigate to administration page' : function(browser) {
@@ -82,7 +76,7 @@ module.exports = {
   'Step 8: check for and compare nav username text' : function(browser) {
     browser
       .assert.visible('//a[@class="current-user-box p-2 my-2 text-truncate"]')
-        .getText('//a[@class="current-user-box p-2 my-2 text-truncate"]', function(result) {browser.assert.ok(result.value == adminUsername)})
+      .getText('//a[@class="current-user-box p-2 my-2 text-truncate"]', function(result) {browser.assert.ok(result.value == adminUsername)})
   },
 
   'Step 9: logout' : function(browser){
