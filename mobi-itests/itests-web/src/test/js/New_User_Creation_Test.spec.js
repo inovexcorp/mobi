@@ -20,7 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var username = "admin"
+var adminUsername = "admin"
+var adminPassword = "admin"
 var newUsername = "newUser"
 var newUserPassword = "test"
 var newName = "tester"
@@ -35,8 +36,8 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
             .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', '' + username + '')
-            .setValue('//div[@class="form-group"]//input[@id="password"]', 'admin')
+            .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername )
+            .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword )
             .click('//button[@type="submit"]')
     },
 
@@ -96,8 +97,8 @@ module.exports = {
         browser
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
             .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', '' + newUsername + '')
-            .setValue('//div[@class="form-group"]//input[@id="password"]', '' + newUserPassword + '')
+            .setValue('//div[@class="form-group"]//input[@id="username"]', newUsername )
+            .setValue('//div[@class="form-group"]//input[@id="password"]', newUserPassword )
             .click('//button[@type="submit"]')
     },
 

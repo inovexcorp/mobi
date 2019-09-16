@@ -93,8 +93,9 @@ module.exports = {
                             System.out.println("No Sidebar Link given!");
                             break;
                     }
-                }catch (TimeoutException)
-                {browser.waitForElementVisible("//li[contains(@class, 'active')]/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")}
+                } catch (TimeoutException) {
+                    browser.waitForElementVisible("//li[contains(@class, 'active')]/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
+                }
             }
     },
 
