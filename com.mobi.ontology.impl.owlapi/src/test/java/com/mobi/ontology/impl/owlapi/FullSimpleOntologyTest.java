@@ -180,6 +180,15 @@ public class FullSimpleOntologyTest {
         com.mobi.rdf.api.Model dctermsModel = dcterms.asModel(mf);
         when(ontologyManager.getOntologyModel(dctermsRecordIRI)).thenReturn(dctermsModel);
 
+        Resource skosIRI = vf.createIRI("http://www.w3.org/2004/02/skos/core");
+        Resource skosRecordIRI = vf.createIRI("https://mobi.com/record/skos");
+        InputStream skosStream = this.getClass().getResourceAsStream("/skos.rdf");
+        Ontology skos = new SimpleOntology(skosStream, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
+        when(ontologyManager.getOntologyRecordResource(skosIRI)).thenReturn(Optional.of(skosRecordIRI));
+        when(ontologyManager.retrieveOntology(skosRecordIRI)).thenReturn(Optional.of(skos));
+        com.mobi.rdf.api.Model skosModel = skos.asModel(mf);
+        when(ontologyManager.getOntologyModel(skosRecordIRI)).thenReturn(skosModel);
+
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService, repoManager, true, threadPool);
 
