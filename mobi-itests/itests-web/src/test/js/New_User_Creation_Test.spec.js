@@ -42,7 +42,6 @@ module.exports = {
     },
 
     'Step 2: check for visibility of home page Element' : function(browser) {
-        /*div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]'*/
         browser
             .useCss()
             .waitForElementVisible('.home-page')
