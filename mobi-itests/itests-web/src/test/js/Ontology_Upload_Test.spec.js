@@ -55,7 +55,22 @@ module.exports = {
 
     'Step 5: Upload an Ontology' : function (browser) {
         browser
-            .setValue('//input[@type="file"]', [ require('path').resolve( process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'), require('path').resolve( process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl') ])
+            .setValue('//input[@type="file"]', require('path').resolve( process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'))
+    },
+
+    'Step 6: Submit all ontology files' : function (browser) {
+        browser
+            .useCss()
+            .waitForElementVisible('upload-ontology-overlay')
+            .useXpath()
+            .click('//button[[text()[contains(.,"Submit all")]]')
+    },
+
+    'Step 7: Validate Ontology Appearance' : function (browser) {
+        browser
+            .useCss()
+            .waitForElementVisible('div.ontologies')
+            .assert.visibility('div.list-group')
     }
 
 

@@ -97,9 +97,9 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                            <groupId>com.cj.jshintmojo</groupId>
-                            <artifactId>jshint-maven-plugin</artifactId>
-                            <version>1.6.0</version>
+                        <groupId>com.cj.jshintmojo</groupId>
+                        <artifactId>jshint-maven-plugin</artifactId>
+                        <version>1.6.0</version>
                         <executions>
                             <execution>
                                 <phase>compile</phase>
