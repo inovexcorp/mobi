@@ -27,7 +27,7 @@ var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
 
 module.exports = {
-    '@tags': ['mobi', 'sanity', "ontology-editor"],
+    '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: login as admin' : function(browser) {
         browser
@@ -58,7 +58,7 @@ module.exports = {
     'Step 5: Upload an Ontology' : function (browser) {
         browser
             .setValue('input[type=file]', Onto1)
-            .click('button.btn')
+            .click('upload-ontology-overlay div.modal-footer button.btn')
             .assert.elementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto2)
             .click('upload-ontology-overlay div.modal-footer button.btn')
@@ -76,7 +76,12 @@ module.exports = {
         browser
             .waitForElementVisible('div.ontologies')
             .assert.elementNotPresent('div.modal-header')
-            .assert.visible('div.list-group')
+            .waitForElementVisible('div.ontologies')
+            .useXpath()
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-2.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-3.ttl")]]')
+            .useCss()
     },
 
     'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
@@ -93,10 +98,12 @@ module.exports = {
     'Step 10: Check for Ontology classes' : function (browser) {
         browser
             .waitForElementVisible('div.tree')
+            .useXpath()
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]//ancestor::a/i[contains(@class, "fa-plus-square-o")]')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+            .assert.attributeContains('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]//ancestor::tree-item', 'data-path-to', 'test-local-imports-2#Class2.http://mobi.com/ontology/test-local-imports-1#Class1')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
     }
 
