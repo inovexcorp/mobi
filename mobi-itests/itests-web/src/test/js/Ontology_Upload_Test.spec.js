@@ -27,7 +27,7 @@ var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
 
 module.exports = {
-    '@tags': ['mobi', 'sanity', "ontology-editor"],
+    '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: login as admin' : function(browser) {
         browser

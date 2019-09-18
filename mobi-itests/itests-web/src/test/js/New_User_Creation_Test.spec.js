@@ -28,7 +28,7 @@ var newName = "tester"
 var newUserRole = "admin"
 
 module.exports = {
-    '@tags': ['mobi', 'administration', 'sanity'],
+    '@tags': ['login', 'administration', 'sanity'],
 
     'Step 1: login as admin' : function(browser) {
         browser
