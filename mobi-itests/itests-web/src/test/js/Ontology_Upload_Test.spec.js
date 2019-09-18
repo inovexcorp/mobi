@@ -97,10 +97,12 @@ module.exports = {
     'Step 10: Check for Ontology classes' : function (browser) {
         browser
             .waitForElementVisible('div.tree')
+            .useXpath()
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]//ancestor::a/i[contains(@class, "fa-plus-square-o")]')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+            .assert.attributeEquals('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]//ancestor::tree-item', 'data-path-to', 'https://mobi.com/records#93cf697a-6e7e-4f2b-b537-93d81fe9db6d.http://mobi.com/ontology/test-local-imports-2#Class2.http://mobi.com/ontology/test-local-imports-1#Class1')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
     }
 
