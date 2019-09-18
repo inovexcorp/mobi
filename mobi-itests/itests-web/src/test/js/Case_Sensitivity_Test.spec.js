@@ -81,9 +81,11 @@ module.exports = {
       .getText('//a[@class="current-user-box p-2 my-2 text-truncate"]', function(result) {browser.assert.ok(result.value == adminUsername)})
   },
 
-  'Step 9: logout' : function(browser){
+  'Step 9: The user successfully logs out' : function(browser){
     browser
       .click('//i[@class= "fa fa-sign-out fa-fw"]/following-sibling::span[text()[contains(.,"Logout")]]')
+      .assert.visible('//div[@class="form-group"]//input[@id="username"]')
+      .assert.visible('//div[@class="form-group"]//input[@id="password"]')
   },
 
 };
