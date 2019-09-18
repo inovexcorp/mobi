@@ -57,7 +57,7 @@ module.exports = {
     'Step 5: Upload an Ontology' : function (browser) {
         browser
             .setValue('input[type=file]', Onto1)
-            .click('button.btn')
+            .click('upload-ontology-overlay div.modal-footer button.btn')
             .assert.elementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto2)
             .click('upload-ontology-overlay div.modal-footer button.btn')
