@@ -75,7 +75,12 @@ module.exports = {
         browser
             .waitForElementVisible('div.ontologies')
             .assert.elementNotPresent('div.modal-header')
-            .assert.visible('div.list-group')
+            .waitForElementVisible('div.ontologies')
+            .useXpath()
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-2.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-3.ttl")]]')
+            .useCss()
     },
 
     'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
