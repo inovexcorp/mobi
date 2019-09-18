@@ -24,7 +24,7 @@
 var pages = ["Catalog", "Ontology Editor", "Merge Requests", "Mapping Tool", "Datasets", "Discover"]
 
 module.exports = {
-    '@tags': ['mobi', 'login', 'sanity'],
+    '@tags': ['mobi', 'sanity'],
 
     'Step 1: login as admin' : function(browser) {
         browser

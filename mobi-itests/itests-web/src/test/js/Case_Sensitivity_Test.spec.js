@@ -24,7 +24,7 @@ var adminUsername = "admin"
 var adminPassword = "admin"
 
 module.exports = {
-  '@tags': ['mobi', 'login', 'sanity'],
+  '@tags': ['mobi', 'administration', 'sanity'],
 
   'Step 1: login as admin' : function(browser) {
     browser

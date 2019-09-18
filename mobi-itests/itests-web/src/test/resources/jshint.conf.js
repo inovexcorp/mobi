@@ -10,5 +10,7 @@
    */
   "globals": {
      "module": true,
+        "require": true,
+        "process": true
   }
 }
