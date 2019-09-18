@@ -22,7 +22,7 @@
  */
 var adminUsername = "admin"
 var adminPassword = "admin"
-var OntoSample = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
+var OntoSample = process.cwd()+ '/src/test/resources/ontologies/uhtc-ontology.ttl'
 
 
 module.exports = {
@@ -59,6 +59,28 @@ module.exports = {
             .setValue('input[type=file]', OntoSample)
             .waitForElementVisible('upload-ontology-overlay')
             .click('xpath', '//button[text()[contains(.,"Submit")]]')
+    },
+
+    'Step 6: Validate Ontology Appearance' : function (browser) {
+        browser
+            .waitForElementVisible('div.ontologies')
+            .assert.elementNotPresent('div.modal-header')
+            .assert.visible('div.list-group')
+    },
+
+    'Step 7: Navigate to datasets tab' : function (browser) {
+        browser
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/datasets"]')
+    },
+
+    'Step 8: Create a new Dataset' : function (browser) {
+        browser
+            .click('div.datasets-tabset button.btn-primary')
+            .waitForElementVisible('div.form-group')
+            .setValue('div.form-group input[name=title]', 'UHTC ontology data')
+            .setValue('div.form-group textarea.form-control', 'A dataset consisting of information recorded on various earthly materials')
+            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology.ttl")]]//ancestor::md-list-item//md-checkbox')
+            .click('div.modal-footer button.btn-primary')
     },
 
 
