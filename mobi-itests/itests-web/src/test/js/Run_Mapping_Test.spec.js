@@ -23,10 +23,11 @@
 var adminUsername = "admin"
 var adminPassword = "admin"
 var OntoSample = process.cwd()+ '/src/test/resources/ontologies/uhtc-ontology.ttl'
+var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
 
 
 module.exports = {
-    '@tags': ['mobi', 'sanity', "ontology-editor"],
+    '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: login as admin' : function(browser) {
         browser
@@ -65,7 +66,9 @@ module.exports = {
         browser
             .waitForElementVisible('div.ontologies')
             .assert.elementNotPresent('div.modal-header')
-            .assert.visible('div.list-group')
+            .useXpath()
+            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .useCss()
     },
 
     'Step 7: Navigate to datasets tab' : function (browser) {
@@ -82,6 +85,35 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology.ttl")]]//ancestor::md-list-item//md-checkbox')
             .click('div.modal-footer button.btn-primary')
     },
+
+    'Step 9: Validate dataset Appearance' : function (browser) {
+        browser
+            .useXpath()
+            .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"UHTC ontology data")]]')
+            .useCss()
+    },
+
+    'Step 10: Navigate to Mapping page' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/mapper"]')
+    },
+
+    'Step 11: Create new mapping' : function (browser) {
+        browser
+            .click('block-header button.btn')
+            .setValue('div.form-group input[name=title]', "UHTC material Mapping")
+            .setValue('div.form-group.text-area textarea.form-control', "A mapping of materials listed in the UHTC csv file to the UHTC ontology")
+            .click('div.modal-footer button.btn-primary')
+    },
+
+    'Step 12: Attach csv to mapping' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('div.file-input button.btn-light')
+            .setValue('input.hide[type=file]', OntoCSV)
+    }
+
 
 
 }
