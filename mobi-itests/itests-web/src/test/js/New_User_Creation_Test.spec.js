@@ -42,7 +42,6 @@ module.exports = {
     },
 
     'Step 2: check for visibility of home page Element' : function(browser) {
-        /*div[contains(concat(" ",normalize-space(@class)," ")," home-page ")]'*/
         browser
             .useCss()
             .waitForElementVisible('.home-page')
@@ -68,7 +67,7 @@ module.exports = {
             .setValue('input[name=email]', 'test@gmail.com')
 
         if (newUserRole == "admin"){
-            browser.click("input#checkbox-141")
+            browser.click("input[type='checkbox']")
         }
 
         browser
