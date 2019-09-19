@@ -20,23 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var username = "admin"
-var newUsername = "newUser"
-var newUserPassword = "test"
-var newName = "tester"
-var newUserRole = "admin"
-var testTitle = "myTitle"
-var testDescription = "myDescription"
 
 module.exports = {
-    '@tags': ['mobi', 'login', 'sanity'],
+    '@tags': ['mobi', 'ontology-editor', 'sanity'],
 
     'Step 1: login as admin' : function(browser) {
         browser
             .url('https://localhost:8443/mobi/index.html#/home')
             .waitForElementVisible('#username')
             .waitForElementVisible('#password')
-            .setValue('#username', username)
+            .setValue('#username', 'admin')
             .setValue('#password', 'admin')
             .click('button[type=submit]')
     },
@@ -49,13 +42,14 @@ module.exports = {
             .waitForElementVisible('//button[text()="New Ontology"]')
             .click('//button[text()="New Ontology"]')
             .useCss()
-            .waitForElementVisible('text-input[display-text="\'Title\'"] input')
-            .setValue('text-input[display-text="\'Title\'"] input', testTitle)
-            .waitForElementVisible('text-area[display-text="\'Description\'"] textarea')
-            .setValue('text-area[display-text="\'Description\'"] textarea', testDescription)
+            .waitForElementVisible('new-ontology-overlay text-input[display-text="\'Title\'"] input')
+            .setValue('new-ontology-overlay text-input[display-text="\'Title\'"] input', 'myTitle')
+            .waitForElementVisible('new-ontology-overlay text-area[display-text="\'Description\'"] textarea')
+            .setValue('new-ontology-overlay text-area[display-text="\'Description\'"] textarea', 'myDescription')
             .useXpath()
-            .click('//button[text()="Submit"]')
+            .click('//new-ontology-overlay//button[text()="Submit"]')
             .useCss()
+            .waitForElementNotPresent('new-ontology-overlay .modal-header h3')
     },
 
     'Step 3: A new ontology is created' : function(browser) {
@@ -72,17 +66,18 @@ module.exports = {
     'Step 4: Create a new branch' : function(browser) {
         browser
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
-            .waitForElementVisible('circle-button-stack .fa-code-fork') // Sometimes this never becomes visible?
+            .waitForElementVisible('circle-button-stack .fa-code-fork')
             .click('circle-button-stack .fa-code-fork')
-            .waitForElementVisible('.modal-title')
-            .assert.containsText('.modal-title', 'Create New Branch')
-            .waitForElementVisible('text-input[display-text="\'Title\'"] input')
-            .setValue('text-input[display-text="\'Title\'"] input', "newBranchTitle")
-            .waitForElementVisible('text-area[display-text="\'Description\'"] textarea')
-            .setValue('text-area[display-text="\'Description\'"] textarea', "newBranchDescription")
+            .waitForElementVisible('create-branch-overlay .modal-title')
+            .assert.containsText('create-branch-overlay .modal-title', 'Create New Branch')
+            .waitForElementVisible('create-branch-overlay text-input[display-text="\'Title\'"] input')
+            .setValue('create-branch-overlay text-input[display-text="\'Title\'"] input', "newBranchTitle")
+            .waitForElementVisible('create-branch-overlay text-area[display-text="\'Description\'"] textarea')
+            .setValue('create-branch-overlay text-area[display-text="\'Description\'"] textarea', "newBranchDescription")
             .useXpath()
-            .click('//button[text()="Submit"]')
+            .click('//create-branch-overlay//button[text()="Submit"]')
             .useCss()
+            .waitForElementNotPresent('create-branch-overlay .modal-title')
     },
 
     'Step 5: Verify a new branch was created' : function(browser) {
@@ -97,20 +92,21 @@ module.exports = {
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-code-fork')
             .click('circle-button-stack .hidden-buttons .fa-plus')
-            .waitForElementVisible('.modal-header > h3')
-            .assert.containsText('.modal-header > h3', 'Create Entity')
-            .click('.create-class')
-            .waitForElementVisible('.modal-header > h3')
-            .assert.containsText('.modal-header > h3', 'Create New OWL Class')
+            .waitForElementVisible('create-entity-modal .modal-header h3')
+            .assert.containsText('create-entity-modal .modal-header h3', 'Create Entity')
+            .click('create-entity-modal .create-class')
+            .waitForElementNotPresent('create-entity-modal .create-class')
+            .waitForElementVisible('create-class-overlay .modal-header h3')
+            .assert.containsText('create-class-overlay .modal-header h3', 'Create New OWL Class')
             .useXpath()
-            .waitForElementVisible('//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass')
-            .setValue('//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass') // This is necessary because the input box is not a child of the label
+            .waitForElementVisible('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass')
+            .setValue('//create-class-overlay//span[text()="Name"]/parent::label/parent::custom-label/following-sibling::input', 'firstClass') // This is necessary because the input box is not a child of the label
             .useCss()
-            .setValue('text-area[display-text="\'Description\'"] textarea', 'firstClassDescription') 
+            .setValue('create-class-overlay text-area[display-text="\'Description\'"] textarea', 'firstClassDescription') 
             .useXpath()
-            .click('//button[text()="Submit"]')
+            .click('//create-class-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('.modal-header > h3', 5000)
+            .waitForElementNotPresent('create-class-overlay .modal-header h3', 5000)
     },
 
     'Step 7: Verify class was created': function(browser) {
@@ -149,13 +145,13 @@ module.exports = {
             .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
             .waitForElementVisible('circle-button-stack .fa-git')
             .click('circle-button-stack .fa-git')
-            .waitForElementVisible('.modal-header > h3')
-            .assert.containsText('.modal-header > h3', 'Commit')
-            .setValue('textarea[name=comment]', 'commit123')
+            .waitForElementVisible('commit-overlay .modal-header h3')
+            .assert.containsText('commit-overlay .modal-header h3', 'Commit')
+            .setValue('commit-overlay textarea[name=comment]', 'commit123')
             .useXpath()
-            .click('//button[text()="Submit"]')
+            .click('//commit-overlay//button[text()="Submit"]')
             .useCss()
-            .waitForElementNotPresent('.modal-header > h3', 5000)
+            .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
     },
 
     'Step 10: Verify no changes are shown': function(browser) {
@@ -168,7 +164,7 @@ module.exports = {
 
     'Step 11: Verify Commit': function(browser) {
         browser
-            .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
+            .useXpath()
             .waitForElementVisible('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]')
             .click('//a[@class="nav-link"]//span[text()[contains(.,"Commits")]]//parent::a')
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
@@ -240,7 +236,7 @@ module.exports = {
 
     'Step 14: Validate Merged Commits': function(browser) {
         browser
-            .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
+            .useXpath()
             .useCss()
             .waitForElementNotPresent('.spinner')
             .useXpath()
