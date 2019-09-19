@@ -32,6 +32,9 @@
 
     <artifactId>itests-web</artifactId>
     <name>itests-web</name>
+    <properties>
+        <port>8443</port>
+    </properties>
 
     <dependencies>
         <!-- Karaf Dependencies -->
@@ -69,6 +72,29 @@
                         </configuration>
                     </plugin>
                     <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>copy-resources</id>
+                                <!-- here the phase you need -->
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${basedir}/target/distribution</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.basedir}/../../mobi-distribution/src/main/filtered-resources/docker/</directory>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <version>3.1.1</version>
@@ -83,6 +109,13 @@
                         </executions>
                         <configuration>
                             <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.mobi</groupId>
+                                    <artifactId>mobi-distribution</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <overWrite>false</overWrite>
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>com.mobi</groupId>
                                     <artifactId>mobi-distribution</artifactId>
@@ -157,7 +190,7 @@
                                                 <allowAllHosts>true</allowAllHosts>
                                                 <status>200..399</status>
                                                 <!-- Check for this URL to return a 200 return code .... -->
-                                                <url>https://localhost:8443/mobi/index.html#/home</url>
+                                                <url>https://localhost:${port}/mobi/index.html#/home</url>
                                             </http>
                                             <time>60000</time>
                                         </wait>
@@ -220,6 +253,12 @@
                         </executions>
                     </plugin>
                 </plugins>
+                <resources>
+                    <resource>
+                        <directory>src/test/resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
             </build>
         </profile>
     </profiles>
