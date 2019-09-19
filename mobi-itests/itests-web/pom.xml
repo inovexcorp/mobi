@@ -179,7 +179,7 @@
                                     <name>docker.io/mobi/test</name>
                                     <build>
                                         <contextDir>${project.basedir}/target/distribution</contextDir>
-                                        <dockerFile>${project.basedir}/../../mobi-distribution/src/main/filtered-resources/docker/Dockerfile</dockerFile>
+                                        <dockerFile>${project.basedir}/target/distribution/Dockerfile</dockerFile>
                                     </build>
                                     <run>
                                         <ports>
