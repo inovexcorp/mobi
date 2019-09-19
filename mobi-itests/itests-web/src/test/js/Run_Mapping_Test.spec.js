@@ -78,11 +78,13 @@ module.exports = {
 
     'Step 8: Create a new Dataset' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
             .click('div.datasets-tabset button.btn-primary')
             .waitForElementVisible('div.form-group')
             .setValue('div.form-group input[name=title]', 'UHTC ontology data')
             .setValue('div.form-group textarea.form-control', 'A dataset consisting of information recorded on various earthly materials')
             .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology.ttl")]]//ancestor::md-list-item//md-checkbox')
+            .waitForElementNotPresent('div.spinner')
             .click('div.modal-footer button.btn-primary')
     },
 
@@ -112,12 +114,15 @@ module.exports = {
             .waitForElementNotPresent('div.modal.fade')
             .click('div.file-input button.btn-light')
             .setValue('input.hide[type=file]', OntoCSV)
+            .waitForElementNotPresent('div.spinner')
             .click('div.block-footer button.continue-btn')
     },
 
     'Step 13: Click on uploaded ontology' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
             .waitForElementVisible('mapping-config-overlay')
+            .waitForElementNotPresent('div.spinner')
             .click('xpath', '//md-list-item//h4[text()[contains(.,"uhtc-ontology.ttl")]]')
             .click('button.btn-primary')
     },
@@ -153,19 +158,46 @@ module.exports = {
     },
 
     'Step 18: Add Property Mappings ' : function (browser) {
-        var properties = ["Chemical Formula", /*"Density", "Melting Point", "Title", "Description"*/]
+        var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description"]
 
-        for (var i = 0 ; i < properties.length; i++){
+        for (var i = 0 ; i < properties.length; i++)
+        {
                 browser.waitForElementNotPresent('div.modal.fade')
                 browser.click('div.properties-field-name button.btn.btn-link')
                 browser.click('div.ui-select-match span.ui-select-toggle')
-                browser.pause(3000)
-                browser.click('xpath', '//ui[contains(@class, "ui-select-choices")]//span[@class="ui-select-choices-row-inner"]')
+                browser.click('xpath', '//ul[contains(@class, "ui-select-choices")]//div[contains(@class, "ui-select-choices-row")]//span[text()[contains(., "' + properties[i] + '")]]')
+                browser.click('div.column-select')
+
+                switch (properties[i]){
+                case "Chemical Formula":
+                    browser.click('xpath', '//span[contains(@class, "ui-select-choices-row-inner")]//div[text()[contains(., "Source")]]')
+                    break;
+                case "Melting Point":
+                    browser.click('xpath', '//span[contains(@class, "ui-select-choices-row-inner")]//div[text()[contains(., "Melting point (ÎçC)")]]')
+                    break;
+
+                    default:
+                        browser.click('xpath', '//span[contains(@class, "ui-select-choices-row-inner")]//div[text()[contains(., "' + properties[i] + '")]]')
+                        break;
+                }
+                browser.click('div.modal-footer button.btn-primary')
         }
+    },
 
-    }
+    'Step 19: Verify Properties are visible' :function (browser) {
 
+    },
 
-
+    'Step 20: Add Crystal Mapping' : function (browser){
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('div.properties-field-name button.btn.btn-link')
+            .click('div.ui-select-match span.ui-select-toggle')
+            .click('xpath', '//ul[contains(@class, "ui-select-choices")]//div[contains(@class, "ui-select-choices-row")]//span[text()[contains(., "Crystal Structure")]]')
+            .pause(2000)
+            .click('div.range-class-select-container')
+            .click('xpath', '//ul[contains(@class, "ui-select-choices")]//span[text()[contains(., "New Crystal Structure")]]')
+            .click('div.modal-footer button.btn-primary')
+    },
 
 }
