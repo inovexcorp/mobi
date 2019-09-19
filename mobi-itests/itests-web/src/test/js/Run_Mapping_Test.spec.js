@@ -112,7 +112,59 @@ module.exports = {
             .waitForElementNotPresent('div.modal.fade')
             .click('div.file-input button.btn-light')
             .setValue('input.hide[type=file]', OntoCSV)
+            .click('div.block-footer button.continue-btn')
+    },
+
+    'Step 13: Click on uploaded ontology' : function (browser) {
+        browser
+            .waitForElementVisible('mapping-config-overlay')
+            .click('xpath', '//md-list-item//h4[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .click('button.btn-primary')
+    },
+
+    'Step 14: Add class to mapping' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .waitForElementVisible('form.edit-mapping-form')
+            .waitForElementNotPresent('span.ui-select-choices-row-inner.uis-transclude-append')
+            .click('div.class-mappings button.btn-link')
+            .click('div.ui-select-match  span.btn')
+            .click('div[title="http://matonto.org/ontologies/uhtc#Material"]')
+            .pause(3000)
+            .click('button.btn-primary')
+    },
+
+    'Step 15: Verify Mapping has been selected' : function (browser) {
+        browser
+            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "ui-select-match")]//span[text()[contains(., "UHTC Material")]]'})
+    },
+
+    'Step 16: Choose new IRI template' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('label.control-label button.btn.btn-link')
+            .setValue('div.modal-body select#endsWith', 'Material')
+            .click('div.modal-footer button.btn-primary')
+    },
+
+    'Step 17: Verify IRI tempate' : function (browser) {
+        browser
+            .pause(3000)
+    },
+
+    'Step 18: Add Property Mappings ' : function (browser) {
+        var properties = ["Chemical Formula", /*"Density", "Melting Point", "Title", "Description"*/]
+
+        for (var i = 0 ; i < properties.length; i++){
+                browser.waitForElementNotPresent('div.modal.fade')
+                browser.click('div.properties-field-name button.btn.btn-link')
+                browser.click('div.ui-select-match span.ui-select-toggle')
+                browser.pause(3000)
+                browser.click('xpath', '//ui[contains(@class, "ui-select-choices")]//span[@class="ui-select-choices-row-inner"]')
+        }
+
     }
+
 
 
 
