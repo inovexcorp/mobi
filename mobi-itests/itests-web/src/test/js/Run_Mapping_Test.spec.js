@@ -152,12 +152,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 17: Verify IRI tempate' : function (browser) {
-        browser
-            .pause(3000)
-    },
-
-    'Step 18: Add Property Mappings and verify addition' : function (browser) {
+    'Step 17: Add Property Mappings and verify addition' : function (browser) {
         var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description"]
 
         for (var i = 0 ; i < properties.length; i++)
@@ -188,7 +183,7 @@ module.exports = {
         }
     },
 
-    'Step 19: Add Crystal Mapping' : function (browser){
+    'Step 18: Add Crystal Mapping' : function (browser){
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.properties-field-name button.btn.btn-link')
@@ -199,7 +194,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 20: Verify Crystal Class addition' : function (browser) {
+    'Step 19: Verify Crystal Class addition' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .useXpath()
@@ -207,14 +202,14 @@ module.exports = {
             .useCss()
     },
 
-    'Step 21: Switch to crystal structure class' : function (browser) {
+    'Step 20: Switch to crystal structure class' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.ui-select-match span.form-control')
             .click('xpath', '//span[@class="ui-select-choices-row-inner"]//span[text()[contains(., "Crystal Structure")]]')
     },
 
-    'Step 22: Add crystal structure name property' : function (browser) {
+    'Step 21: Add crystal structure name property' : function (browser) {
         browser
             .click('div.properties-field-name button.btn.btn-link')
             .click('div.ui-select-match span.ui-select-toggle')
@@ -224,7 +219,7 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 23: Verify visibility of crystal structure name property' : function (browser) {
+    'Step 22: Verify visibility of crystal structure name property' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .useXpath()
@@ -232,13 +227,13 @@ module.exports = {
             .useCss()
     },
 
-    'Step 24: Save Mapping' : function (browser) {
+    'Step 23: Save Mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('button.btn.dropdown-toggle')
     },
 
-    'Step 25: Upload mapping to dataset' : function (browser) {
+    'Step 24: Upload mapping to dataset' : function (browser) {
         browser
             .click('button.run-dataset')
             .click('div.ui-select-container')
@@ -247,12 +242,12 @@ module.exports = {
             .click('div.modal-footer button.btn-primary')
     },
 
-    'Step 26: Verify user is back on main mapping page' : function (browser) {
+    'Step 25: Verify user is back on main mapping page' : function (browser) {
         browser
             .assert.visible('p.lead')
     },
 
-    'Step 27: Explore dataset mapping' : function (browser) {
+    'Step 26: Explore dataset mapping' : function (browser) {
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
@@ -260,7 +255,7 @@ module.exports = {
             .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
     },
 
-    'Step 28: Check for Material and Crystal structure cards' : function (browser) {
+    'Step 27: Check for Material and Crystal structure cards' : function (browser) {
         browser
             .useXpath()
             .assert.visible('//md-card//md-card-title//span[text()[contains(., "Crystal Structure")]]')
