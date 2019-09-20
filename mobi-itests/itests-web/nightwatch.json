@@ -1,9 +1,10 @@
 {
-
-  "src_folders" : ["src/test/js"],
-  "output_folder" : "./target/nightwatch-reports/",
-  "globals_path" : "target/classes/nightwatch-globals.js",
-  "webdriver" : {
+  "src_folders": [
+    "src/test/js"
+  ],
+  "output_folder": "./target/nightwatch-reports/",
+  "globals_path": "target/classes/nightwatch-globals.js",
+  "webdriver": {
     "start_process": true,
     "server_path": "node_modules/.bin/chromedriver",
     "cli_args": [
@@ -11,23 +12,26 @@
     ],
     "port": 9515
   },
-
-  "test_settings" : {
-    "default" : {
-      },
+  "test_settings": {
+    "default": {
       "desiredCapabilities": {
         "browserName": "chrome",
         "chromeOptions": {
-          "args" : ["--headless", "window-size=1920,1080", "--no-sandbox", "test-type"]
+          "args": [
+            "--headless",
+            "window-size=1920,1080",
+            "--no-sandbox",
+            "test-type"
+          ]
         },
         "acceptSslCerts": true
       },
-
-      "screenshots" : {
-          "enabled" : true,
-          "on_failure" : true,
-          "on_error" : false,
-          "path" : "./target/nightwatch-screenshots/"
+      "screenshots": {
+        "enabled": true,
+        "on_failure": true,
+        "on_error": false,
+        "path": "./target/nightwatch-screenshots/"
       }
     }
   }
+}
