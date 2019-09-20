@@ -34,6 +34,11 @@
     <name>itests-web</name>
     <properties>
         <port>8443</port>
+        <http-port>9081</http-port>
+        <https-port>9082</https-port>
+        <rmi-reg-port>1100</rmi-reg-port>
+        <ssh-port>8102</ssh-port>
+        <rmi-server-port></rmi-server-port>
     </properties>
 
     <dependencies>
@@ -179,18 +184,18 @@
                                     <name>docker.io/mobi/test</name>
                                     <build>
                                         <contextDir>${project.basedir}/target/distribution</contextDir>
-                                        <dockerFile>${project.basedir}/target/distribution/Dockerfile</dockerFile>
+                                        <dockerFile>${project.basedir}/target/classes/Dockerfile</dockerFile>
                                     </build>
                                     <run>
                                         <ports>
-                                            <port>8443:8443</port>
+                                            <port>${https-port}:${https-port}</port>
                                         </ports>
                                         <wait>
                                             <http>
                                                 <allowAllHosts>true</allowAllHosts>
                                                 <status>200..399</status>
                                                 <!-- Check for this URL to return a 200 return code .... -->
-                                                <url>https://localhost:${port}/mobi/index.html#/home</url>
+                                                <url>https://localhost:${https-port}/mobi/index.html#/home</url>
                                             </http>
                                             <time>60000</time>
                                         </wait>
