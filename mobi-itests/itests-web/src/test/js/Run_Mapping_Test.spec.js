@@ -124,6 +124,7 @@ module.exports = {
             .waitForElementVisible('mapping-config-overlay')
             .waitForElementNotPresent('div.spinner')
             .click('xpath', '//md-list-item//h4[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .waitForElementNotPresent('div.spinner')
             .click('button.btn-primary')
     },
 
@@ -135,7 +136,6 @@ module.exports = {
             .click('div.class-mappings button.btn-link')
             .click('div.ui-select-match  span.btn')
             .click('div[title="http://matonto.org/ontologies/uhtc#Material"]')
-            .pause(3000)
             .click('button.btn-primary')
     },
 
@@ -157,7 +157,7 @@ module.exports = {
             .pause(3000)
     },
 
-    'Step 18: Add Property Mappings ' : function (browser) {
+    'Step 18: Add Property Mappings and verify addition' : function (browser) {
         var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description"]
 
         for (var i = 0 ; i < properties.length; i++)
@@ -181,23 +181,89 @@ module.exports = {
                         break;
                 }
                 browser.click('div.modal-footer button.btn-primary')
+                browser.waitForElementNotPresent('div.modal.fade')
+                browser.useXpath()
+                browser.assert.visible('//div[contains(@class, "list-group-item")]//h4[text()[contains(., "' + properties[i] + '")]]')
+                browser.useCss()
         }
     },
 
-    'Step 19: Verify Properties are visible' :function (browser) {
-
-    },
-
-    'Step 20: Add Crystal Mapping' : function (browser){
+    'Step 19: Add Crystal Mapping' : function (browser){
         browser
             .waitForElementNotPresent('div.modal.fade')
             .click('div.properties-field-name button.btn.btn-link')
             .click('div.ui-select-match span.ui-select-toggle')
             .click('xpath', '//ul[contains(@class, "ui-select-choices")]//div[contains(@class, "ui-select-choices-row")]//span[text()[contains(., "Crystal Structure")]]')
-            .pause(2000)
             .click('div.range-class-select-container')
             .click('xpath', '//ul[contains(@class, "ui-select-choices")]//span[text()[contains(., "New Crystal Structure")]]')
             .click('div.modal-footer button.btn-primary')
     },
 
+    'Step 20: Verify Crystal Class addition' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .useXpath()
+            .assert.visible('//div[contains(@class, "list-group-item")]//h4[text()[contains(., "Crystal")]]')
+            .useCss()
+    },
+
+    'Step 21: Switch to crystal structure class' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('div.ui-select-match span.form-control')
+            .click('xpath', '//span[@class="ui-select-choices-row-inner"]//span[text()[contains(., "Crystal Structure")]]')
+    },
+
+    'Step 22: Add crystal structure name property' : function (browser) {
+        browser
+            .click('div.properties-field-name button.btn.btn-link')
+            .click('div.ui-select-match span.ui-select-toggle')
+            .click('xpath', '//ul[contains(@class, "ui-select-choices")]//div[contains(@class, "ui-select-choices-row")]//span[text()[contains(., "Crystal Structure Name")]]')
+            .click('div.column-select')
+            .click('xpath', '//span[contains(@class, "ui-select-choices-row-inner")]//div[text()[contains(., "Crystal")]]')
+            .click('div.modal-footer button.btn-primary')
+    },
+
+    'Step 23: Verify visibility of crystal structure name property' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .useXpath()
+            .assert.visible('//div[contains(@class, "list-group-item")]//h4[text()[contains(., "Crystal")]]')
+            .useCss()
+    },
+
+    'Step 24: Save Mapping' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('button.btn.dropdown-toggle')
+    },
+
+    'Step 25: Upload mapping to dataset' : function (browser) {
+        browser
+            .click('button.run-dataset')
+            .click('div.ui-select-container')
+            .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
+            .pause(200)
+            .click('div.modal-footer button.btn-primary')
+    },
+
+    'Step 26: Verify user is back on main mapping page' : function (browser) {
+        browser
+            .assert.visible('p.lead')
+    },
+
+    'Step 27: Explore dataset mapping' : function (browser) {
+        browser
+            .waitForElementNotPresent('div.modal.fade')
+            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
+            .click('div.ui-select-match')
+            .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
+    },
+
+    'Step 28: Check for Material and Crystal structure cards' : function (browser) {
+        browser
+            .useXpath()
+            .assert.visible('//md-card//md-card-title//span[text()[contains(., "Crystal Structure")]]')
+            .assert.visible('//md-card//md-card-title//span[text()[contains(., "UHTC Material")]]')
+    }
 }
