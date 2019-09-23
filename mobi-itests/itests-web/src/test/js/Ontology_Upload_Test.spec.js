@@ -60,7 +60,7 @@ module.exports = {
         browser
             .setValue('input[type=file]', Onto1)
             .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span') // might have to wait more than one second or wait for modal to disappear
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto2)
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
