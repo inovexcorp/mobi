@@ -51,6 +51,7 @@ module.exports = {
 
     'Step 4: click upload ontology' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
             .waitForElementVisible('div.btn-container button')
             .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
     },
@@ -59,10 +60,10 @@ module.exports = {
         browser
             .setValue('input[type=file]', Onto1)
             .click('upload-ontology-overlay div.modal-footer button.btn')
-            .assert.elementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span') // might have to wait more than one second or wait for modal to disappear
             .setValue('input[type=file]', Onto2)
             .click('upload-ontology-overlay div.modal-footer button.btn')
-            .assert.elementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto3)
     },
 
