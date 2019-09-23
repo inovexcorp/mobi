@@ -51,6 +51,7 @@ module.exports = {
 
     'Step 4: click upload ontology' : function (browser) {
         browser
+            .waitForElementNotPresent('div.spinner')
             .waitForElementVisible('div.btn-container button')
             .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
     },

@@ -22,7 +22,7 @@
  */
 
 module.exports = {
-    '@tags': ['mobi', 'ontology-editor', 'sanity'],
+    '@tags': ['ontology-editor', 'sanity'],
 
     'Step 1: login as admin' : function(browser) {
         browser
@@ -236,8 +236,6 @@ module.exports = {
 
     'Step 14: Validate Merged Commits': function(browser) {
         browser
-            .useXpath()
-            .useCss()
             .waitForElementNotPresent('.spinner')
             .useXpath()
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Commits")]]')
