@@ -1,3 +1,3 @@
 module.exports = {
-  "globalPort" : ""+${port}+""
+  "globalPort" : ""+${https-port}+""
 }

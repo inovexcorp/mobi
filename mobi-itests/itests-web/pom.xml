@@ -33,7 +33,6 @@
     <artifactId>itests-web</artifactId>
     <name>itests-web</name>
     <properties>
-        <port>8443</port>
         <http-port>9081</http-port>
         <https-port>9082</https-port>
         <rmi-reg-port>1100</rmi-reg-port>
@@ -184,7 +183,7 @@
                                     <name>docker.io/mobi/test</name>
                                     <build>
                                         <contextDir>${project.basedir}/target/distribution</contextDir>
-                                        <dockerFile>${project.basedir}/target/classes/Dockerfile</dockerFile>
+                                        <dockerFile>${project.basedir}/target/classes/filtered-resources/Dockerfile</dockerFile>
                                     </build>
                                     <run>
                                         <ports>

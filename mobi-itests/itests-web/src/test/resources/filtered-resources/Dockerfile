@@ -34,11 +34,11 @@ RUN ["node"]
 # Base Mobi assembly in the /opt/mobi directory.
 WORKDIR /opt/mobi
 ADD ./mobi-distribution-$MOBI_VERSION.tar.gz ./
-RUN bash -c echo "org.osgi.service.http.port=${http-port}" >> ./mobi-distribution-$MOBI_VERSION/etc/org.ops4j.pax.web.cfg
-RUN bash -c echo "org.osgi.service.http.port.secure=8443" >> ./mobi-distribution-$MOBI_VERSION/etc/org.ops4j.pax.web.cfg
-RUN   sed -i "s|rmiRegistryPort = 1099|rmiRegistryPort = ${rmi-registry-port} |g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.management.cfg
-RUN   sed -i "s|rmiServerPort = 44444|rmiServerPort = ${rmi-server-port}|g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.management.cfg
-RUN   sed -i "s|sshPort = 8101|sshPort = ${ssh-port} |g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.shell.cfg
+RUN echo "\norg.osgi.service.http.port=${http-port}" >> ./mobi-distribution-$MOBI_VERSION/etc/org.ops4j.pax.web.cfg \
+    && echo "\norg.osgi.service.http.port.secure=${https-port}" >> ./mobi-distribution-$MOBI_VERSION/etc/org.ops4j.pax.web.cfg \
+    && sed -i "s|rmiRegistryPort = 1099|rmiRegistryPort = ${rmi-registry-port} |g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.management.cfg \
+    && sed -i "s|rmiServerPort = 44444|rmiServerPort = ${rmi-server-port}|g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.management.cfg \
+    && sed -i "s|sshPort = 8101|sshPort = ${ssh-port} |g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.shell.cfg
 CMD ./mobi-distribution-$MOBI_VERSION/bin/karaf server
 
 EXPOSE 8443 9082 9081
