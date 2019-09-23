@@ -80,7 +80,7 @@ module.exports = {
         browser
             .waitForElementNotPresent('div.spinner')
             .click('div.datasets-tabset button.btn-primary')
-            .waitForElementVisible('div.form-group')
+            .waitForElementVisible('new-dataset-overlay')
             .setValue('div.form-group input[name=title]', 'UHTC ontology data')
             .setValue('div.form-group textarea.form-control', 'A dataset consisting of information recorded on various earthly materials')
             .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology.ttl")]]//ancestor::md-list-item//md-checkbox')
@@ -238,8 +238,8 @@ module.exports = {
             .click('button.run-dataset')
             .click('div.ui-select-container')
             .click('xpath' ,'//ul[contains(@class, "ui-select-choices")]//div[text()[contains(., "UHTC")]]')
-            .pause(200)
-            .click('div.modal-footer button.btn-primary')
+            .expect.element('run-mapping-dataset-overlay div.modal-footer button.btn-primary').to.not.have.attribute('disabled', 'Testing if submit does not contain disabled attribute');
+            browser.click('div.modal-footer button.btn-primary')
     },
 
     'Step 25: Verify user is back on main mapping page' : function (browser) {
