@@ -54,7 +54,9 @@ module.exports = {
                     browser.useXpath()
                     browser.waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
                     browser.click("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
-
+                    .useCss()
+                    browser.waitForElementNotPresent('.spinner', 5000)
+                    .useXpath()
                     switch (pages[i]) {
                         case "Home":
                             browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Search the Catalog')]]");
