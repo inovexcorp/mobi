@@ -48,7 +48,12 @@ public class SimpleDatatype implements Datatype {
         owlDatatype = new OWLDatatypeImpl(owlIri);
         builtin = owlDatatype.isBuiltIn();
     }
-    
+
+    public SimpleDatatype(OWLDatatype owlDatatype) {
+        this.iri = SimpleOntologyValues.mobiIRI(owlDatatype.getIRI());
+        this.owlDatatype = owlDatatype;
+        builtin = owlDatatype.isBuiltIn();
+    }
     
     @Override
     public boolean isString() {
