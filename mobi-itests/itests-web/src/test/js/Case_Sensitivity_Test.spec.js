@@ -28,8 +28,8 @@ module.exports = {
 
   'Step 1: login as admin' : function(browser) {
     browser
-      .url('https://localhost:8443/mobi/index.html#/home')
-      .useXpath()
+        .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
+        .useXpath()
       .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
       .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
       .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername)
