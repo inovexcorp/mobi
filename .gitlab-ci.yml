@@ -34,7 +34,7 @@ cache:
 .test: &test
   stage: test
   script:
-    - 'mvn $MAVEN_CLI_OPTS -pl -mobi-distribution test'
+    - 'mvn $MAVEN_CLI_OPTS -pl -mobi-distribution,-mobi-itests,-:itests-support,-:itests-orm,-:itests-web,-:itests-platform,-:itests-etl,-:itests-rest,-:itests-vfs test'
   except:
     - master
 
