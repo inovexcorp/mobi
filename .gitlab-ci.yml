@@ -34,7 +34,7 @@ cache:
 .test: &test
   stage: test
   script:
-    - 'mvn $MAVEN_CLI_OPTS test'
+    - 'mvn $MAVEN_CLI_OPTS -pl -mobi-distribution test'
   except:
     - master
 
