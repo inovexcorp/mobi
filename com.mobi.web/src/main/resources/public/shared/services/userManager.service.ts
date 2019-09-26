@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, get, find, filter, identity, set, noop, forEach, has, merge, remove, pull, assign, union, includes, flatten, } from 'lodash';
+import { map, get, find, filter, identity, set, noop, forEach, has, merge, remove, pull, assign, union, includes, flatten, without } from 'lodash';
 
 userManagerService.$inject = ['$http', '$q', 'REST_PREFIX', 'ADMIN_USER_IRI', 'utilService', 'prefixes'];
 
@@ -434,7 +434,8 @@ function userManagerService($http, $q, REST_PREFIX, ADMIN_USER_IRI, utilService,
         };
         return $http.delete(userPrefix + '/' + encodeURIComponent(username) + '/groups', config)
             .then(response => {
-                pull(get(find(self.groups, {title: groupTitle}), 'members'), username);
+                var group = find(self.groups, {title: groupTitle});
+                group.members = without(get(group, 'members'), username);
             }, util.rejectError);
     }
     /**

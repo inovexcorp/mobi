@@ -33,13 +33,13 @@ import static org.powermock.api.easymock.PowerMock.mockStaticPartial;
 import static org.powermock.api.easymock.PowerMock.replay;
 
 import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.Individual;
-import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.api.OClass;
-import com.mobi.ontology.core.api.Datatype;
 import com.mobi.ontology.core.api.AnnotationProperty;
 import com.mobi.ontology.core.api.DataProperty;
+import com.mobi.ontology.core.api.Datatype;
+import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.OClass;
 import com.mobi.ontology.core.api.ObjectProperty;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -315,6 +315,7 @@ public class SimpleOntologyValuesTest {
         IRI datatypeIRI = mock(IRI.class);
 
         expect(owlDatatype.getIRI()).andReturn(owlDatatypeIRI).anyTimes();
+        expect(owlDatatype.isBuiltIn()).andReturn(true).anyTimes();
         expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
 
         mockStaticPartial(SimpleOntologyValues.class, "mobiIRI", "owlapiIRI");
@@ -331,19 +332,18 @@ public class SimpleOntologyValuesTest {
     
     @Test
     public void testOwlapiDatatype() throws Exception {
+        String datatypeStr = "http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral";
         Datatype datatype = mock(Datatype.class);
         IRI datatypeIRI = mock(IRI.class);
-        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = mock(org.semanticweb.owlapi.model.IRI.class);
+        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = org.semanticweb.owlapi.model.IRI.create(datatypeStr);
 
         expect(datatype.getIRI()).andReturn(datatypeIRI).anyTimes();
-        expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
+        expect(datatypeIRI.stringValue()).andReturn(datatypeStr).anyTimes();
 
         mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
         expect(SimpleOntologyValues.owlapiIRI(datatypeIRI)).andReturn(owlDatatypeIRI).anyTimes();
 
-        mockStaticPartial(org.semanticweb.owlapi.model.IRI.class, "create");
-        expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class), isA(String.class))).andReturn(owlDatatypeIRI).anyTimes();
-        replay(datatype, owlDatatypeIRI, datatypeIRI, SimpleOntologyValues.class, org.semanticweb.owlapi.model.IRI.class);
+        replay(datatype, datatypeIRI, SimpleOntologyValues.class);
 
         assertEquals(owlDatatypeIRI, SimpleOntologyValues.owlapiDatatype(datatype).getIRI());
     }

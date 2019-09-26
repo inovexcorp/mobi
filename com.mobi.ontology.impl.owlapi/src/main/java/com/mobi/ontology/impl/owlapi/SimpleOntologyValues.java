@@ -168,8 +168,9 @@ public class SimpleOntologyValues {
         if (literal == null) {
             return null;
         }
-        Datatype datatype = new SimpleDatatype(literal.getDatatype());
-        return new OWLLiteralImpl(literal.getLabel(), literal.getLanguage().orElse(null), owlapiDatatype(datatype));
+        org.semanticweb.owlapi.model.IRI datatypeIRI = owlapiIRI(literal.getDatatype());
+        return new OWLLiteralImpl(literal.getLabel(), literal.getLanguage().orElse(null),
+                new OWLDatatypeImpl(datatypeIRI));
     }
 
     /**
@@ -317,7 +318,7 @@ public class SimpleOntologyValues {
         if (datatype == null) {
             return null;
         } else {
-            return new SimpleDatatype(mobiIRI(datatype.getIRI()));
+            return new SimpleDatatype(datatype);
         }
     }
 
