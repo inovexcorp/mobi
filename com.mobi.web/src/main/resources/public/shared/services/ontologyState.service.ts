@@ -1369,8 +1369,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }, $q.reject);
     }
     self.clearInProgressCommit = function() {
-        set(self.listItem, 'inProgressCommit.additions', []);
-        set(self.listItem, 'inProgressCommit.deletions', []);
+        self.listItem.inProgressCommit = {'additions': [], 'deletions': []}
     }
     self.setOpened = function(pathString, isOpened) {
         set(self.listItem.editorTabStates, getOpenPath(pathString, 'isOpened'), isOpened);
