@@ -26,52 +26,21 @@
     <parent>
         <artifactId>mobi-itests</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.16.56</version>
+        <version>1.16.57</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>itests-web</artifactId>
     <name>itests-web</name>
+    <properties>
+        <http-port>9081</http-port>
+        <https-port>9082</https-port>
+        <rmi-reg-port>1100</rmi-reg-port>
+        <ssh-port>8102</ssh-port>
+        <rmi-server-port></rmi-server-port>
+    </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-java</artifactId>
-            <version>4.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.cucumber</groupId>
-            <artifactId>cucumber-junit</artifactId>
-            <version>4.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>3.141.59</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>net.masterthought</groupId>
-            <artifactId>cucumber-reporting</artifactId>
-            <version>4.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>22.0</version>
-        </dependency>
-
         <!-- Karaf Dependencies -->
         <dependency>
             <groupId>com.mobi</groupId>
@@ -86,78 +55,185 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>itests-support</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Pax Exam Dependencies -->
-        <dependency>
-            <groupId>org.ops4j.pax.exam</groupId>
-            <artifactId>pax-exam-junit4</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <profiles>
         <profile>
-            <id>run-selenium</id>
+            <id>run-functional</id>
             <activation>
                 <property>
-                    <name>skipSelenium</name>
+                    <name>skipFunctional</name>
                     <value>false</value>
                 </property>
             </activation>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>com.lazerycode.selenium</groupId>
-                        <artifactId>driver-binary-downloader-maven-plugin</artifactId>
-                        <version>1.0.14</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
-                            <rootStandaloneServerDirectory>${project.basedir}/target/webdrivers/binaries</rootStandaloneServerDirectory>
-                            <downloadedZipFileDirectory>${project.basedir}/target/webdrivers/zips</downloadedZipFileDirectory>
-                            <customRepositoryMap>${project.basedir}/src/test/resources/RepositoryMap.xml</customRepositoryMap>
+                            <skipTests>true</skipTests>
                         </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.1.1</version>
                         <executions>
                             <execution>
+                                <id>copy</id>
+                                <phase>package</phase>
                                 <goals>
-                                    <goal>selenium</goal>
+                                    <goal>copy</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.mobi</groupId>
+                                    <artifactId>mobi-distribution</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>tar.gz</type>
+                                    <overWrite>false</overWrite>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.basedir}/target/distribution</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.cj.jshintmojo</groupId>
+                        <artifactId>jshint-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>lint</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <configFile>src/test/resources/jshint.conf.js</configFile>
+                            <directories>
+                                <directory>src/test/js</directory>
+                            </directories>
+                            <reporter>jslint</reporter>
+                            <reportFile>target/jshint.xml</reportFile>
+                            <failOnError>true</failOnError>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.31.0</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>start</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                    <goal>start</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>stop</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>docker.io/mobi/test</name>
+                                    <build>
+                                        <contextDir>${project.basedir}/target/distribution</contextDir>
+                                        <dockerFile>${project.basedir}/target/classes/Dockerfile</dockerFile>
+                                    </build>
+                                    <run>
+                                        <ports>
+                                            <port>${https-port}:${https-port}</port>
+                                        </ports>
+                                        <wait>
+                                            <http>
+                                                <allowAllHosts>true</allowAllHosts>
+                                                <status>200..399</status>
+                                                <!-- Check for this URL to return a 200 return code .... -->
+                                                <url>https://localhost:${https-port}/mobi/index.html#/home</url>
+                                            </http>
+                                            <time>60000</time>
+                                        </wait>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.3.2</version>
+                        <executions>
+                            <execution>
+                                <id>npm install</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>generate-test-sources</phase>
+                                <configuration>
+                                    <executable>npm</executable>
+                                    <arguments>
+                                        <argument>install</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>npm run tests</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>integration-test</phase>
+                                <configuration>
+                                    <executable>npm</executable>
+                                    <arguments>
+                                        <argument>run</argument>
+                                        <argument>test</argument>
+                                    </arguments>
+                                    <successCodes>
+                                        <successCode>0</successCode>
+                                        <successCode>1</successCode>
+                                        <successCode>5</successCode>
+                                    </successCodes>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>verify</id>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <phase>verify</phase>
+                                <configuration>
+                                    <executable>npm</executable>
+                                    <arguments>
+                                        <argument>run</argument>
+                                        <argument>verify</argument>
+                                    </arguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
+                <resources>
+                    <resource>
+                        <directory>${project.basedir}/src/test/resources/filtered-resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
             </build>
         </profile>
     </profiles>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.18.1</version>
-                <configuration>
-                    <skipTests>${skipSelenium}</skipTests>
-                    <systemPropertyVariables>
-                        <webdriver.gecko.driver>${webdriver.gecko.driver}</webdriver.gecko.driver>
-                        <webdriver.chrome.driver>${webdriver.chrome.driver}</webdriver.chrome.driver>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>integration-test</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
