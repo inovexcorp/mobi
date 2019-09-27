@@ -42,8 +42,10 @@ import static org.testng.Assert.fail;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.token.TokenManager;
+import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.web.security.util.RestSecurityUtils;
@@ -94,6 +96,8 @@ public class AuthRestTest extends MobiRestTestNg {
     private SignedJWT unauthSignedJWT;
     private Role requiredRole;
     private Role otherRole;
+    private User user;
+    private Literal usernameLit;
 
     @ObjectFactory
     public IObjectFactory getObjectFactory() {
@@ -104,6 +108,7 @@ public class AuthRestTest extends MobiRestTestNg {
     private void setupStaticMocks() throws Exception {
         reset(engineManager, tokenManager);
 
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUserRoles(anyString())).thenReturn(Collections.emptySet());
         when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(requiredRole));
 
@@ -135,10 +140,14 @@ public class AuthRestTest extends MobiRestTestNg {
         unauthSignedJWT = mock(SignedJWT.class);
         requiredRole = mock(Role.class);
         otherRole = mock(Role.class);
+        user = mock(User.class);
+        usernameLit = mock(Literal.class);
 
         authCookie = new NewCookie(TOKEN_NAME, USERNAME);
         unauthCookie = new NewCookie(TOKEN_NAME, ANON);
 
+        when(usernameLit.stringValue()).thenReturn(USERNAME);
+        when(user.getUsername()).thenReturn(Optional.of(usernameLit));
         when(requiredRole.getResource()).thenReturn(vf.createIRI("http://test.com/" + AuthRest.REQUIRED_ROLE));
         when(otherRole.getResource()).thenReturn(vf.createIRI("http://test.com/other"));
         when(signedJWT.getPayload()).thenReturn(new Payload(VALID_USER));
