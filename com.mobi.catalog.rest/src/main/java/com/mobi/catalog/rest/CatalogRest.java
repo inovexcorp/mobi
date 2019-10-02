@@ -76,6 +76,7 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
@@ -95,6 +96,7 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
@@ -150,6 +152,7 @@ public class CatalogRest {
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtilsService;
     private ValueFactory vf;
+    private ModelFactory mf;
     private VersioningManager versioningManager;
     private BNodeService bNodeService;
     private CatalogProvUtils provUtils;
@@ -195,6 +198,11 @@ public class CatalogRest {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    void setMf(ModelFactory mf) {
+        this.mf = mf;
     }
 
     @Reference
@@ -449,8 +457,8 @@ public class CatalogRest {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(record, Record.TYPE, transformer, bNodeService)
-                    .toString()).build();
+            return Response.ok(modelToSkolemizedString(removeContext(record.getModel()), RDFFormat.JSONLD, transformer,
+                    bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -2237,4 +2245,12 @@ public class CatalogRest {
                 factoryMap.put(factory.getTypeIRI().stringValue(), factory));
         return factoryMap;
     }
+
+    private Model removeContext(Model model) {
+        Model result = mf.createModel();
+        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return result;
+    }
+
+
 }

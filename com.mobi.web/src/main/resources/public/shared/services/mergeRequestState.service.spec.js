@@ -111,7 +111,7 @@ describe('Merge Requests State service', function() {
                 });
                 describe('and getRecord ', function() {
                     it('resolves', function() {
-                        catalogManagerSvc.getRecord.and.returnValue($q.when({'@id': 'recordId'}));
+                        catalogManagerSvc.getRecord.and.returnValue($q.when([{'@id': 'recordId'}]));
                         mergeRequestsStateSvc.setRequests(true);
                         scope.$apply();
                         expect(mergeRequestManagerSvc.getRequests).toHaveBeenCalledWith({accepted: true});
@@ -169,7 +169,7 @@ describe('Merge Requests State service', function() {
                 });
                 describe('and getRecord ', function() {
                     it('resolves', function() {
-                        catalogManagerSvc.getRecord.and.returnValue($q.when({'@id': 'recordId'}));
+                        catalogManagerSvc.getRecord.and.returnValue($q.when([{'@id': 'recordId'}]));
                         mergeRequestsStateSvc.setRequests();
                         scope.$apply();
                         expect(mergeRequestManagerSvc.getRequests).toHaveBeenCalledWith({accepted: false});

@@ -83,8 +83,13 @@ function datasetsListComponentCtrl($q, datasetManagerService, datasetStateServic
             var toRetrieve = filter(dvm.getIdentifiedOntologyIds(dataset), id => !includes(dvm.cachedOntologyIds, id));
             $q.all(map(toRetrieve, id => cm.getRecord(id, dvm.catalogId)))
                 .then(responses => {
-                    dvm.cachedOntologyIds = concat(dvm.cachedOntologyIds, map(responses, '@id'));
-                    cachedOntologyRecords = concat(cachedOntologyRecords, responses);
+                    var matchingRecords = map(responses, response => {
+                        return find(response, function(mr) {
+                            return toRetrieve.includes(mr['@id']);
+                        });
+                    });
+                    dvm.cachedOntologyIds = concat(dvm.cachedOntologyIds, map(matchingRecords, '@id'));
+                    cachedOntologyRecords = concat(cachedOntologyRecords, matchingRecords);
                 }, () => dvm.errorMessage = 'Unable to load all Dataset details.');
         }
     }

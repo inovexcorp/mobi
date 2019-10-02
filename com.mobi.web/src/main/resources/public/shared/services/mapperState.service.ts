@@ -346,6 +346,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
         if (openedMapping) {
             self.mapping = openedMapping;
         } else {
+            var recordId;
             mm.getMapping(record.id)
                 .then(jsonld => {
                     var mapping = {
@@ -357,11 +358,13 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
                         }
                     };
                     self.mapping = mapping;
-                    self.openedMappings.push(mapping);
-                    return cm.getRecord(get(mm.getSourceOntologyInfo(jsonld), 'recordId'), cm.localCatalog['@id']);
+                    self.openedMappings.push(mapping);                    
+                    recordId = get(mm.getSourceOntologyInfo(jsonld), 'recordId');
+                    return cm.getRecord(recordId, cm.localCatalog['@id']);
                 }, () => $q.reject('Mapping ' + record.title + ' could not be found'))
                 .then(ontologyRecord => {
-                    self.mapping.ontology = ontologyRecord;
+                    var matchingRecord = find(ontologyRecord, ['@id', recordId]);
+                    self.mapping.ontology = matchingRecord;
                 }, errorMessage => util.createErrorToast(startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
         }
     }

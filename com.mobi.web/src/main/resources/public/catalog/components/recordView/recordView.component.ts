@@ -64,6 +64,7 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
     var os = ontologyStateService;
     var util = utilService;
     dvm.record = undefined;
+    dvm.completeRecord = undefined;
     dvm.title = '';
     dvm.description = '';
     dvm.modified = '';
@@ -83,12 +84,15 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
     dvm.goBack = function() {
         state.selectedRecord = undefined;
     }
-    dvm.updateRecord = function(record) {
-        return cm.updateRecord(record['@id'], util.getPropertyId(record, prefixes.catalog + 'catalog'), record)
+    dvm.updateRecord = function(newRecord) {
+        // Is there a better way of replacing every element of array?
+        dvm.completeRecord = dvm.completeRecord.map(oldRecord => oldRecord['@id'] === newRecord['@id'] ? newRecord : oldRecord);
+
+        return cm.updateRecord(newRecord['@id'], util.getPropertyId(newRecord, prefixes.catalog + 'catalog'), dvm.completeRecord)
             .then(() => {
                 util.createSuccessToast('Successfully updated the record');
-                state.selectedRecord = record;
-                setInfo(record);
+                state.selectedRecord = newRecord;
+                setInfo(dvm.completeRecord);
             }, errorMessage => {
                 util.createErrorToast(errorMessage);
                 return $q.reject();
@@ -121,7 +125,10 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
     }
 
     function setInfo(record) {
-        dvm.record = angular.copy(record);
+        dvm.completeRecord = angular.copy(record);
+        var matchingRecord = find(record, ['@id', state.selectedRecord['@id']]);
+
+        dvm.record = matchingRecord;
         dvm.title = util.getDctermsValue(dvm.record, 'title');
         dvm.description = util.getDctermsValue(dvm.record, 'description');
         dvm.modified = util.getDate(util.getDctermsValue(dvm.record, 'modified'), 'short');
