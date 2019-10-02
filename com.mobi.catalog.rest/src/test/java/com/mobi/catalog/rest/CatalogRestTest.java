@@ -43,6 +43,9 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CatalogUtilsService;
@@ -149,6 +152,7 @@ public class CatalogRestTest extends MobiRestTestNg {
     private DeleteActivity deleteActivity;
     private Model compiledResource;
     private Model compiledResourceWithChanges;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String ERROR_IRI = "http://mobi.com/error";
     private static final String LOCAL_IRI = "http://mobi.com/catalogs/local";
     private static final String DISTRIBUTED_IRI = "http://mobi.com/catalogs/distributed";
@@ -717,10 +721,10 @@ public class CatalogRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory);
         try {
-            JSONArray arr = JSONArray.fromObject(response.readEntity(String.class));
-            JSONObject firstRecord = arr.getJSONObject(0);
-            assertTrue(firstRecord.containsKey("@id"));
-            assertEquals(firstRecord.getString("@id"), RECORD_IRI);
+            ArrayNode arr = (ArrayNode) mapper.readTree(response.readEntity(String.class));
+            JsonNode firstRecord = arr.get(0);
+            assertTrue(firstRecord.has("@id"));
+            assertEquals(firstRecord.get("@id").textValue(), RECORD_IRI);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -749,10 +753,10 @@ public class CatalogRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(newIRI), recordFactory);
         try {
-            JSONArray arr = JSONArray.fromObject(response.readEntity(String.class));
-            JSONObject firstRecord = arr.getJSONObject(0);
-            assertTrue(firstRecord.containsKey("@id"));
-            assertEquals(firstRecord.getString("@id"), newIRI);
+            ArrayNode arr = (ArrayNode) mapper.readTree(response.readEntity(String.class));
+            JsonNode firstRecord = arr.get(0);
+            assertTrue(firstRecord.has("@id"));
+            assertEquals(firstRecord.get("@id").textValue(), newIRI);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3389,17 +3393,6 @@ public class CatalogRestTest extends MobiRestTestNg {
             JSONObject record = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(record.containsKey("@id"));
             assertEquals(record.getString("@id"), id);
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
-    }
-
-    private void assertResponseContainsObjectWithId(Response response, String id) {
-        try {
-            JSONArray arr = JSONArray.fromObject(response.readEntity(String.class));
-            JSONObject firstRecord = arr.getJSONObject(0);
-            assertTrue(firstRecord.containsKey("@id"));
-            assertEquals(firstRecord.getString("@id"), id);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

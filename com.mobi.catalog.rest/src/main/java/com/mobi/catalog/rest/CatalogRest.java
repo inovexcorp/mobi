@@ -436,7 +436,6 @@ public class CatalogRest {
         }
     }
 
-    @ResourceId(type = ValueType.PATH, value = "recordId")
     /**
      * Returns the contents of the Record’s named graph, including the Record object
      *
@@ -451,6 +450,7 @@ public class CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Catalog record by its ID.")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(@PathParam("catalogId") String catalogId,
                        @PathParam("recordId") String recordId) {
         try {
