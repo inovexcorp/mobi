@@ -26,6 +26,7 @@ package com.mobi.jaas.rest;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.rest.util.ErrorUtils;
@@ -141,7 +142,10 @@ public class AuthRest {
         UserCredentials userCreds = userCredsOptional.get();
         log.debug("Attempting to login in as " + username);
         if (authenticated(userCreds.getUsername(), userCreds.getPassword())) {
-            SignedJWT token = tokenManager.generateAuthToken(userCreds.getUsername());
+            User user = engineManager.retrieveUser(userCreds.getUsername()).orElseThrow(() ->
+                    new IllegalStateException("User " + userCreds.getUsername() + " not found and should be present"));
+            SignedJWT token = tokenManager.generateAuthToken(user.getUsername()
+                    .orElseThrow(() -> new IllegalStateException("User must have username")).stringValue());
             log.debug("Authentication successful.");
             return createResponse(token);
         }
