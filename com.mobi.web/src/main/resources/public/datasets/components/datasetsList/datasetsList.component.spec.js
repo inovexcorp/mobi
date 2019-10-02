@@ -89,7 +89,7 @@ describe('Datasets List component', function() {
                 expect(datasetStateSvc.selectedDataset).toBeUndefined();
                 expect(datasetStateSvc.openedDatasetId).toBe('');
             });
-            fdescribe('if it was not open', function() {
+            describe('if it was not open', function() {
                 var dataset = {record: {'@id': 'notopen'}};
                 var ontologyId = 'ontologyId';
                 beforeEach(function() {
