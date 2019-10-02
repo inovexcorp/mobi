@@ -68,9 +68,9 @@ const commitHistoryTableComponent = {
     controller: commitHistoryTableComponentCtrl
 };
 
-commitHistoryTableComponentCtrl.$inject = ['httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
+commitHistoryTableComponentCtrl.$inject = ['$scope', 'httpService', 'catalogManagerService', 'utilService', 'userManagerService', 'modalService', 'Snap', 'chroma'];
 
-function commitHistoryTableComponentCtrl(httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
+function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerService, utilService, userManagerService, modalService, Snap, chroma) {
     var dvm = this;
     var titleWidth = 75;
     var cm = catalogManagerService;
@@ -79,7 +79,6 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
     var wrapper;
     var xI = 1;
     var colorIdx = 0;
-    
     dvm.util = utilService;
     dvm.um = userManagerService;
     dvm.snap = undefined;
@@ -95,7 +94,7 @@ function commitHistoryTableComponentCtrl(httpService, catalogManagerService, uti
     dvm.columnSpacing = 25;
     dvm.deltaX = 5 + dvm.circleRadius;
     dvm.deltaY = 56;
-    dvm.id = 'commit-history-table';
+    dvm.id = 'commit-history-table' + $scope.$id;
 
     dvm.$onInit = function() {
         dvm.showGraph = dvm.graph !== undefined;
