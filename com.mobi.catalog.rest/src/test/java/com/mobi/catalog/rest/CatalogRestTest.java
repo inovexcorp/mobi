@@ -275,6 +275,7 @@ public class CatalogRestTest extends MobiRestTestNg {
         rest = new CatalogRest();
         injectOrmFactoryReferencesIntoService(rest);
         rest.setVf(vf);
+        rest.setMf(mf);
         rest.setEngineManager(engineManager);
         rest.setTransformer(transformer);
         rest.setConfigProvider(configProvider);
@@ -715,7 +716,14 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory);
-        assertResponseIsObjectWithId(response, RECORD_IRI);
+        try {
+            JSONArray arr = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject firstRecord = arr.getJSONObject(0);
+            assertTrue(firstRecord.containsKey("@id"));
+            assertEquals(firstRecord.getString("@id"), RECORD_IRI);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 
     @Test
@@ -740,7 +748,14 @@ public class CatalogRestTest extends MobiRestTestNg {
                 .request().get();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).getRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(newIRI), recordFactory);
-        assertResponseIsObjectWithId(response, newIRI);
+        try {
+            JSONArray arr = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject firstRecord = arr.getJSONObject(0);
+            assertTrue(firstRecord.containsKey("@id"));
+            assertEquals(firstRecord.getString("@id"), newIRI);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
     }
 
     @Test
@@ -3374,6 +3389,17 @@ public class CatalogRestTest extends MobiRestTestNg {
             JSONObject record = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(record.containsKey("@id"));
             assertEquals(record.getString("@id"), id);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    private void assertResponseContainsObjectWithId(Response response, String id) {
+        try {
+            JSONArray arr = JSONArray.fromObject(response.readEntity(String.class));
+            JSONObject firstRecord = arr.getJSONObject(0);
+            assertTrue(firstRecord.containsKey("@id"));
+            assertEquals(firstRecord.getString("@id"), id);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

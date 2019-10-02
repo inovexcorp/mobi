@@ -34,6 +34,7 @@ import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
@@ -96,7 +97,6 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.rio.RDFFormat;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
@@ -438,13 +438,13 @@ public class CatalogRest {
 
     @ResourceId(type = ValueType.PATH, value = "recordId")
     /**
-     * Returns a Record with the provided ID.
+     * Returns the contents of the Record’s named graph, including the Record object
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @return A Record with the provided ID.
+     * @return An array with the contents of the Record’s named graph, including the Record object
      */
     @GET
     @Path("{catalogId}/records/{recordId}")
@@ -457,7 +457,7 @@ public class CatalogRest {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(modelToSkolemizedString(removeContext(record.getModel()), RDFFormat.JSONLD, transformer,
+            return Response.ok(modelToSkolemizedJsonld(removeContext(record.getModel()), transformer,
                     bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

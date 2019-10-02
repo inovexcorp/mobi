@@ -363,8 +363,7 @@ function mapperStateService($q, prefixes, mappingManagerService, ontologyManager
                     return cm.getRecord(recordId, cm.localCatalog['@id']);
                 }, () => $q.reject('Mapping ' + record.title + ' could not be found'))
                 .then(ontologyRecord => {
-                    var matchingRecord = find(ontologyRecord, ['@id', recordId]);
-                    self.mapping.ontology = matchingRecord;
+                    self.mapping.ontology = find(ontologyRecord, ['@id', recordId]);
                 }, errorMessage => util.createErrorToast(startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
         }
     }

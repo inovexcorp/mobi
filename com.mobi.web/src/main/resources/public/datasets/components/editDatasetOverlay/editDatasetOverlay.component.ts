@@ -84,11 +84,7 @@ function editDatasetOverlayComponentCtrl($q, datasetStateService, datasetManager
         $q.all(map(selectedOntologies, id => cm.getRecord(id, catalogId)))
             .then(responses => filter(responses, r => !!r), () => onError('A selected ontology could not be found'))
             .then(filteredList => {
-                var matchingRecords = map(filteredList, response => {
-                    return find(response, function(rec) {
-                        return selectedOntologies.includes(rec['@id']);
-                    });
-                });
+                var matchingRecords = map(filteredList, response => find(response, mr => selectedOntologies.includes(mr['@id'])));
                 dvm.selectedOntologies = sortBy(map(matchingRecords, record => ({
                     recordId: record['@id'],
                     ontologyIRI: dvm.getOntologyIRI(record),

@@ -213,11 +213,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                 return $q.all(map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
             }, $q.reject)
             .then(responses => {
-                var matchingRecords = map(responses, response => {
-                    return find(response, function(mr) {
-                        return recordsToRetrieve.includes(mr['@id']);
-                    });
-                });
+                var matchingRecords = map(responses, response => find(response, mr => recordsToRetrieve.includes(mr['@id'])));
                 forEach(matchingRecords, record => {
                     var title = util.getDctermsValue(record, 'title');
                     forEach(filter(self.requests, {recordIri: record['@id']}), request => request.recordTitle = title);

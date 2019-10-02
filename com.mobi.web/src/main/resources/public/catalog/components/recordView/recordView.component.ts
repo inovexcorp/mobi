@@ -85,9 +85,13 @@ function recordViewComponentCtrl($q, catalogStateService, catalogManagerService,
         state.selectedRecord = undefined;
     }
     dvm.updateRecord = function(newRecord) {
-        // Is there a better way of replacing every element of array?
-        dvm.completeRecord = dvm.completeRecord.map(oldRecord => oldRecord['@id'] === newRecord['@id'] ? newRecord : oldRecord);
-
+        var indexToUpdate = dvm.completeRecord.findIndex(oldRecord => oldRecord['@id'] === newRecord['@id']);
+        if (indexToUpdate !== -1) {
+            dvm.completeRecord[indexToUpdate] = newRecord;
+        } else {
+            util.createErrorToast("Could not find record: " + newRecord['@id']);
+        }
+        
         return cm.updateRecord(newRecord['@id'], util.getPropertyId(newRecord, prefixes.catalog + 'catalog'), dvm.completeRecord)
             .then(() => {
                 util.createSuccessToast('Successfully updated the record');
