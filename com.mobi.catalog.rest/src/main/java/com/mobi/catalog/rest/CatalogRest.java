@@ -34,6 +34,7 @@ import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
@@ -76,6 +77,7 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
@@ -150,6 +152,7 @@ public class CatalogRest {
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtilsService;
     private ValueFactory vf;
+    private ModelFactory mf;
     private VersioningManager versioningManager;
     private BNodeService bNodeService;
     private CatalogProvUtils provUtils;
@@ -195,6 +198,11 @@ public class CatalogRest {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    void setMf(ModelFactory mf) {
+        this.mf = mf;
     }
 
     @Reference
@@ -428,29 +436,29 @@ public class CatalogRest {
         }
     }
 
-    @ResourceId(type = ValueType.PATH, value = "recordId")
     /**
-     * Returns a Record with the provided ID.
+     * Returns the contents of the Record’s named graph, including the Record object
      *
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
      *                 with "_:".
-     * @return A Record with the provided ID.
+     * @return An array with the contents of the Record’s named graph, including the Record object
      */
     @GET
     @Path("{catalogId}/records/{recordId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Catalog record by its ID.")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getRecord(@PathParam("catalogId") String catalogId,
                        @PathParam("recordId") String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(thingToSkolemizedObjectNode(record, Record.TYPE, transformer, bNodeService)
-                    .toString()).build();
+            return Response.ok(modelToSkolemizedJsonld(removeContext(record.getModel()), transformer,
+                    bNodeService)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -2237,4 +2245,12 @@ public class CatalogRest {
                 factoryMap.put(factory.getTypeIRI().stringValue(), factory));
         return factoryMap;
     }
+
+    private Model removeContext(Model model) {
+        Model result = mf.createModel();
+        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return result;
+    }
+
+
 }

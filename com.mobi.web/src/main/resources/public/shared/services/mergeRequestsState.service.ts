@@ -205,14 +205,16 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * @param {boolean} [accepted=false] Whether the list should be accepted Merge Requests or just open ones.
      */
     self.setRequests = function(accepted = false) {
+        var recordsToRetrieve;
         mm.getRequests({accepted})
             .then(data => {
                 self.requests = map(data, self.getRequestObj);
-                var recordsToRetrieve = uniq(map(self.requests, 'recordIri'));
+                recordsToRetrieve = uniq(map(self.requests, 'recordIri'));
                 return $q.all(map(recordsToRetrieve, iri => cm.getRecord(iri, catalogId)));
             }, $q.reject)
             .then(responses => {
-                forEach(responses, record => {
+                var matchingRecords = map(responses, response => find(response, mr => recordsToRetrieve.includes(mr['@id'])));
+                forEach(matchingRecords, record => {
                     var title = util.getDctermsValue(record, 'title');
                     forEach(filter(self.requests, {recordIri: record['@id']}), request => request.recordTitle = title);
                 });
