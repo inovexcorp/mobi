@@ -94,7 +94,7 @@ describe('Datasets List component', function() {
                 var ontologyId = 'ontologyId';
                 beforeEach(function() {
                     catalogManagerSvc.getRecord.and.callFake(function(id) {
-                        return {'@id': id};
+                        return [{'@id': id}];
                     });
                 });
                 it('and it links to ontologies that have not been retrieved yet', function() {

@@ -73,7 +73,7 @@ describe('Record View component', function() {
         utilSvc.getDate.and.returnValue('date');
         utilSvc.updateDctermsValue.and.callFake((obj, prop, newVal) => obj[prefixes.dcterms + prop] = [{'@value': newVal}]);
         catalogStateSvc.selectedRecord = this.record;
-        catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
+        catalogManagerSvc.getRecord.and.returnValue($q.when([this.record]));
         this.element = $compile(angular.element('<record-view></record-view>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('recordView');
@@ -129,10 +129,11 @@ describe('Record View component', function() {
                 this.controller.issued = 'TEST';
             });
             it('if updateRecord resolves', function() {
+                this.controller.completeRecord = [angular.copy(this.record)]
                 this.controller.updateRecord(this.record)
                     .then(angular.noop, () => fail('Promise should have resolved'));
                 scope.$apply();
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, this.record);
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, [this.record]);
                 expect(this.controller.record).toEqual(this.record);
                 expect(catalogStateSvc.selectedRecord).toEqual(this.record);
                 expect(this.controller.title).toEqual('title');
@@ -143,11 +144,12 @@ describe('Record View component', function() {
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless updateRecord rejects', function() {
+                this.controller.completeRecord = [angular.copy(this.record)]
                 catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error message'));
                 this.controller.updateRecord(this.record)
                     .then(() => fail('Promise should have rejected'), angular.noop);
                 scope.$apply();
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, this.record);
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, this.catalogId, [this.record]);
                 expect(this.controller.title).toEqual('TEST');
                 expect(this.controller.description).toEqual('TEST');
                 expect(this.controller.modified).toEqual('TEST');

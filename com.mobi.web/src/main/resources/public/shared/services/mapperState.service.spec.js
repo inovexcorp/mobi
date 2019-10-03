@@ -128,7 +128,8 @@ describe('Mapper State service', function() {
                 var ontology = {'@id': 'ontology'};
                 var mapping = [{}];
                 mappingManagerSvc.getMapping.and.returnValue($q.when(mapping));
-                catalogManagerSvc.getRecord.and.returnValue($q.when(ontology));
+                mappingManagerSvc.getSourceOntologyInfo.and.returnValue({'recordId': 'ontology'});
+                catalogManagerSvc.getRecord.and.returnValue($q.when([ontology]));
                 mapperStateSvc.selectMapping(this.record);
                 scope.$apply();
                 expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.record.id);
