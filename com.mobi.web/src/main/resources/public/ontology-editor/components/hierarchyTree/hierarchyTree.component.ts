@@ -68,6 +68,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
+    dvm.nonImportsFlag = false;
 
     dvm.$onInit = function() {
         update();
@@ -103,46 +104,105 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         delete node.displayNode;
         delete node.entity;
         delete node.isOpened;
+
+
         node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
+        // Find out if the node is opened
         node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-        if (dvm.filterText) {
-            var searchValues = pick(node.entity, om.entityNameProps);
+        if (dvm.filterText || dvm.nonImportsFlag) {
             var match = false;
-            some(Object.keys(searchValues), key => some(searchValues[key], value => {
-                if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
-                    match = true;
-            }));
-            if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+            
+            ///////////////////////////////////////////////////////////////////////////////////////////////
+            // THIS IS WHERE ALL MATCHING LOGIC GOES
+            // Creates object of just entity and all the possible fields that can be used for entity name
+
+            var searchMatch = true;
+            var filterMatch = true;
+            if (dvm.filterText) {
+                searchMatch = false;
+                var searchValues = pick(node.entity, om.entityNameProps);
+
+                // Check all possible name fields and entity fields to see if the value matches the search text
+                some(Object.keys(searchValues), key => some(searchValues[key], value => {
+                    if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+                        searchMatch = true;
+                        // match = true;
+                }));
+
+                // Check if beautified entity id matches search text
+                if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                    searchMatch = true;
+                    // match = true;
+                }
+            }
+
+            if (dvm.nonImportsFlag) {
+                if (node.entity.hasOwnProperty('mobi')) {
+                    if (node.entity.mobi.imported) {
+                        filterMatch = false;
+                    }
+                }
+            }
+
+            if (searchMatch && filterMatch) {
                 match = true;
             }
+
+            //////////////////////////////////////////////////////////////////////////////////////////////////
+
             if (match) {
+                // set path to the ontology record
                 var path = node.path[0];
+
+                // only loops through if node.path has at least 3 items. Last entry in node.path will be the current child node that matched. The first entry will just be the ontology record. This loop is just looping through all the parents up the line.
+
+                // Set all the parents up the line to opened and diplayNode = true.
                 for (var i = 1; i < node.path.length - 1; i++) {
+
+                    // set iri to the concept IRI we are looking at
                     var iri = node.path[i];
+
+                    // update path to be ontology record <dot> concept IRI
                     path = path + '.' + iri;
+                    // open the path
                     dvm.os.setOpened(path, true);
 
+                    // Go through the whole hierarchy and find the concept IRI we are looking at
+                    // I think the purpose of these lines and the previous is to set the same IRI to opened in both the ontology state service and dvm.hierarchy
                     var parentNode = find(dvm.hierarchy, {'entityIRI': iri});
+
                     parentNode.isOpened = true;
                     parentNode.displayNode = true;
                 }
+                
+                // underline the node that matched
                 node.underline = true;
             }
+
+            // Always return true for parents, but if the parent is not a match, set a property called parentNoMatch = true
             if (!match && node.hasChildren) {
                 node.parentNoMatch = true;
                 return true;
             }
             return match;
         } else {
+            // If no filter text do not filter
             return true;
         }
     }
+
+    // if node.displayNode is true then we know one of it's children matched somewhere down the line
     dvm.isShown = function (node) {
+        // This will run if there is no filter text as well
+        // Only show roots unless parent is opened
         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || node.indent === 0;
-        if (dvm.filterText && node.parentNoMatch) {
+        // if there is a search term and it is a parent that did not match
+        if ((dvm.nonImportsFlag || dvm.filterText) && node.parentNoMatch) {
+            // if the node's displayNode wasn't set, don't show
             if (node.displayNode === undefined) {
                 return false;
             } else {
+                // if it would otherwise be displayed prior to search (displayNode) and it has a child that matched (node.displayNode)... show
                 return displayNode && node.displayNode;
             }
         }
@@ -150,8 +210,9 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     }
 
     function update() {
-        dvm.updateSearch({value: dvm.filterText});
-        dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.searchFilter);
+        dvm.updateSearch({value: dvm.filterText}); // set dvm.os.listItem.editorTabStates.concepts.searchText = filterText
+
+        dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.searchFilter); // filter(dvm.os.listItem.concepts.flat, with dvm.searchFilter function)
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
 }
