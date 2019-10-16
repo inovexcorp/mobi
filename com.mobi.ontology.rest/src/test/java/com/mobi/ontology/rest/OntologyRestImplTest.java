@@ -376,6 +376,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
         when(ontology.asJsonLD(anyBoolean())).thenReturn(ontologyJsonLd);
         when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
+        when(ontology.getImportedOntologyIRIs()).thenReturn(failedImports);
         when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
         when(ontology.getGraphQueryResults(anyString(), anyBoolean(), eq(mf))).thenReturn(mf.createModel(Collections.singleton(vf.createStatement(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test")))));
 
@@ -2869,6 +2870,22 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                         commitId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 204);
+    }
+
+    // Test get Ontology IRIs
+
+    @Test
+    public void testGetImportedOntologyIRIs() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontology-iris")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+
+        assertEquals(responseArray.size(), 1);
+        assertEquals(responseArray.get(0), "http://mobi.com/imported-ontology-id");
     }
 
     // Test get imports closure
