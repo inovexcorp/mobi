@@ -1531,11 +1531,23 @@ public class OntologyRest {
 
         try {
             ArrayNode arrayNode = mapper.createArrayNode();
-            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
-            optionalOntology.get().getImportedOntologyIRIs().stream()
-                    .map(iri -> iri.stringValue())
-                    .forEach(arrayNode::add);
-            return Response.ok(arrayNode.toString()).build();
+            Set<String> importedOntologyIris = new HashSet<>();
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false);
+            if(optionalOntology.isPresent()) {
+                Ontology ontology = optionalOntology.get();
+                ontology.getUnloadableImportIRIs().stream()
+                        .map(Value::stringValue)
+                        .forEach(importedOntologyIris::add);
+                OntologyUtils.getImportedOntologies(ontology).stream()
+                        .map(importedOntology -> importedOntology.getOntologyId().getOntologyIRI().get().stringValue())
+                        .forEach(importedOntologyIris::add);
+                for (String importedOntologyIri : importedOntologyIris) {
+                    arrayNode.add(importedOntologyIri);
+                }
+                return Response.ok(arrayNode.toString()).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
