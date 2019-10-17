@@ -20,28 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { UpgradeModule } from '@angular/upgrade/static';
-import { HttpModule } from '@angular/http';
-import { MODULE_NAME } from './app.module.ajs';
+import 'zone.js';
+import 'reflect-metadata';
 
-@NgModule({
-    imports: [
-        BrowserModule,
-        UpgradeModule,
-        HttpModule
-    ],
-    declarations: [],
-    entryComponents: [],
-    providers: []
-})
-export class AppModule {
-    constructor(private upgrade: UpgradeModule) {
+import { enableProdMode } from '@angular/core';
+import { setAngularLib } from '@angular/upgrade/static';
+import { platformBrowser } from '@angular/platform-browser';
 
-    }
+import * as angular from 'angular';
 
-    ngDoBootstrap() {
-        this.upgrade.bootstrap(document.documentElement, [MODULE_NAME], { strictDi: true });
-    }
-}
+import { AppModuleNgFactory } from '../aot/src/app.module.ngfactory';
+
+setAngularLib(angular);
+enableProdMode();
+platformBrowser().bootstrapModuleFactory(AppModuleNgFactory);
