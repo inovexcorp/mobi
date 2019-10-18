@@ -1518,6 +1518,41 @@ public class OntologyRest {
         }
     }
 
+    @GET
+    @Path("{recordId}/imported-ontology-iris")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the imported ontology IRIs of the identified ontology.")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getImportedOntologyIRIs(@Context ContainerRequestContext context,
+                                            @PathParam("recordId") String recordIdStr,
+                                            @QueryParam("branchId") String branchIdStr,
+                                            @QueryParam("commitId") String commitIdStr) {
+
+        try {
+            ArrayNode arrayNode = mapper.createArrayNode();
+            Set<String> importedOntologyIris = new HashSet<>();
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false);
+            if(optionalOntology.isPresent()) {
+                Ontology ontology = optionalOntology.get();
+                ontology.getUnloadableImportIRIs().stream()
+                        .map(Value::stringValue)
+                        .forEach(importedOntologyIris::add);
+                OntologyUtils.getImportedOntologies(ontology).stream()
+                        .map(importedOntology -> importedOntology.getOntologyId().getOntologyIRI().get().stringValue())
+                        .forEach(importedOntologyIris::add);
+                for (String importedOntologyIri : importedOntologyIris) {
+                    arrayNode.add(importedOntologyIri);
+                }
+                return Response.ok(arrayNode.toString()).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
      * Returns an array of the imports closure in the requested format from the ontology
      * with the requested ID.
