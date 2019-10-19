@@ -92,6 +92,8 @@ import './settings/settings.module';
 import './shared/shared.module';
 import './user-management/user-management.module';
 
+export const MODULE_NAME = 'app';
+
 angular
     .module('app', [
         /* Third Party */
@@ -169,5 +171,3 @@ function run($rootScope, $state, $transitions) {
         }
     });
 }
-
-export const MODULE_NAME = 'app';
