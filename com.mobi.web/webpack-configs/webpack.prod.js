@@ -1,7 +1,9 @@
+const path = require('path');
 const webpack = require('webpack');
 const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const ngToolsWebpack = require('@ngtools/webpack');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const extractCSS = new ExtractTextWebpackPlugin('vendor.css');
 const extractSCSS = new ExtractTextWebpackPlugin('app.css');
