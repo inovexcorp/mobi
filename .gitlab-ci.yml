@@ -66,8 +66,8 @@ update:
   only:
     variables:
       - $CI_COMMIT_TITLE =~ /Merge .* to master/
-    refs:
-      - master
+    # refs:
+    #   - master
   script:
     - NEW_VERSION="MAJOR.MINOR.$((MICRO+1))"
     - echo $NEW_VERSION
