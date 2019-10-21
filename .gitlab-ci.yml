@@ -9,6 +9,10 @@
 # * Verify but don't deploy merge requests.
 # * Deploy built artifacts from master branch only.
 
+stages:
+  - test
+  - update_master
+
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
   # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
@@ -37,10 +41,37 @@ cache:
     - 'mvn $MAVEN_CLI_OPTS -pl -mobi-distribution,-mobi-itests,-:itests-support,-:itests-orm,-:itests-web,-:itests-platform,-:itests-etl,-:itests-rest,-:itests-vfs test'
   except:
     - master
+  only:
+    - merge_requests
+
 
 # Verify merge requests using JDK8
 test:jdk8:
   <<: *test
+
+version_extract:
+  only:
+    variables:
+      - CI_COMMIT_TITLE =~ /Merge .* to master/
+    # refs:
+    #   - master
+  script:
+    - export POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+    - export REGEX="([0-9]+)\.([0-9]+)\.([0-9]+)"
+    - export MAJOR=$([[ $POM_VERSION =~ $REGEX ]] && echo ${BASH_REMATCH[1]})
+    - export MINOR=$([[ $POM_VERSION =~ $REGEX ]] && echo ${BASH_REMATCH[2]})
+    - export MICRO=$([[ $POM_VERSION =~ $REGEX ]] && echo ${BASH_REMATCH[3]})
+
+update:
+  only:
+    variables:
+      - CI_COMMIT_TITLE =~ /Merge .* to master/
+    refs:
+      - master
+  script:
+    - NEW_VERSION="MAJOR.MINOR.$((MICRO+1))"
+    - echo $NEW_VERSION
+
 
 # To deploy packages from CI, create a ci_settings.xml file
 # For deploying packages to GitLab's Maven Repository: See https://docs.gitlab.com/ee/user/project/packages/maven_repository.html#creating-maven-packages-with-gitlab-cicd for more details.
