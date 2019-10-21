@@ -12,6 +12,8 @@
 stages:
   - test
   - update_master
+  - new_master_version
+  - new_release
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -35,7 +37,7 @@ cache:
 
 # For merge requests do not `deploy` but only run `verify`.
 # See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
-.test: &test
+test:
   stage: test
   script:
     - 'mvn $MAVEN_CLI_OPTS -pl -mobi-distribution,-mobi-itests,-:itests-support,-:itests-orm,-:itests-web,-:itests-platform,-:itests-etl,-:itests-rest,-:itests-vfs test'
@@ -46,16 +48,16 @@ cache:
 
 
 # Verify merge requests using JDK8
-test:jdk8:
-  <<: *test
+# test:jdk8:
+#   <<: *test
 
 version_extract:
   stage: test
-  # only:
-    # variables:
-    #   - $CI_COMMIT_TITLE =~ /Merge .* to master/
-    # refs:
-    #   - master
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /Merge .* to master/
+    refs:
+      - master
   script:
     - export POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
     - export REGEX="([0-9]+)\.([0-9]+)\.([0-9]+)"
@@ -63,17 +65,64 @@ version_extract:
     - export MINOR=$([[ $POM_VERSION =~ $REGEX ]] && echo ${BASH_REMATCH[2]})
     - export MICRO=$([[ $POM_VERSION =~ $REGEX ]] && echo ${BASH_REMATCH[3]})
 
-update:
+update_master:
   stage: update_master
-  # only:
-    # variables:
-    #   - $CI_COMMIT_TITLE =~ /Merge .* to master/
-    # refs:
-    #   - master
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /Merge .* to master/
+    refs:
+      - master
   script:
     - NEW_VERSION="MAJOR.MINOR.$((MICRO+1))"
-    - echo $NEW_VERSION
+    - export $NEW_VERSION
+    - mvn versions:set -DnewVersion=$NEW_VERSION
+    - git add .
+    - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION"
+    - git push origin master
+    - mvn versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
+    - git add .
+    - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
+    - git push origin master
 
+unit_integration_test:
+  stage: new_master_version
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /AUTOMATED COMMIT - Updates Version to $NEW_VERSION/
+    refs:
+      - master
+  script:
+    - mvn clean install -DskipTests=false
+
+update_release:
+  stage: new_release
+  only:
+    tags:
+      - /release\d*\.\d*/
+  script:
+    - NEW_MASTER_VERSION="$MAJOR.$((MINOR+1)).0-SNAPSHOT"
+    - mvn versions:set -DnewVersion=$NEW_MASTER_VERSION
+    - git add .
+    - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
+    - git push origin master
+
+build_release_jar:
+  stage: new_release
+  only:
+    tags:
+      - /release\d*\.\d*/
+  script:
+    - mvn clean build
+    - echo "PUSHING TO ARTIFACTORY"
+
+build_release_docker:
+  stage: new_release
+  only:
+    tags:
+      - /release\d*\.\d*/
+  script:
+    - docker build -t mobi:$MAJOR.$MINOR.$MICRO .
+    - echo "PUSHING TO DOCKER"
 
 # To deploy packages from CI, create a ci_settings.xml file
 # For deploying packages to GitLab's Maven Repository: See https://docs.gitlab.com/ee/user/project/packages/maven_repository.html#creating-maven-packages-with-gitlab-cicd for more details.
