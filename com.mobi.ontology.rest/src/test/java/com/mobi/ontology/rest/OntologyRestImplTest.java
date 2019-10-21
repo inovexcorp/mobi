@@ -2871,6 +2871,57 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 204);
     }
 
+    // Test get Ontology IRIs
+
+    @Test
+    public void testGetImportedOntologyIRIs() {
+        when(ontology.getUnloadableImportIRIs()).thenReturn(Collections.singleton(vf.createIRI("http://mobi.com/failed-import-1")));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontology-iris")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+
+        assertEquals(responseArray.size(), 2);
+        assert(responseArray.contains("http://mobi.com/imported-ontology-id"));
+        assert(responseArray.contains("http://mobi.com/failed-import-1"));
+    }
+
+    @Test
+    public void testGetImportedOntologyIRIsWithDupes() {
+        when(ontology.getUnloadableImportIRIs()).thenReturn(Collections.singleton(vf.createIRI("http://mobi.com/imported-ontology-id")));
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontology-iris")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+
+        assertEquals(responseArray.size(), 1);
+        assertEquals(responseArray.get(0), "http://mobi.com/imported-ontology-id");
+    }
+
+    @Test
+    public void testGetImportedOntologyIRIsWithNoImports() {
+        when(ontology.getUnloadableImportIRIs()).thenReturn(Collections.EMPTY_SET);
+        when(ontology.getImportsClosure()).thenReturn(Collections.EMPTY_SET);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontology-iris")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+
+        assertEquals(responseArray.size(), 0);
+    }
+
     // Test get imports closure
 
     @Test
