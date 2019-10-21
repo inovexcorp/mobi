@@ -97,8 +97,8 @@ unit_integration_test:
 update_release:
   stage: new_release
   only:
-    tags:
-      - /release\d*\.\d*/
+    - tags
+    - /release\d*\.\d*/
   script:
     - NEW_MASTER_VERSION="$MAJOR.$((MINOR+1)).0-SNAPSHOT"
     - mvn versions:set -DnewVersion=$NEW_MASTER_VERSION
@@ -109,8 +109,8 @@ update_release:
 build_release_jar:
   stage: new_release
   only:
-    tags:
-      - /release\d*\.\d*/
+    - tags
+    - /release\d*\.\d*/
   script:
     - mvn clean build
     - echo "PUSHING TO ARTIFACTORY"
@@ -118,8 +118,8 @@ build_release_jar:
 build_release_docker:
   stage: new_release
   only:
-    tags:
-      - /release\d*\.\d*/
+    - tags
+    - /release\d*\.\d*/
   script:
     - docker build -t mobi:$MAJOR.$MINOR.$MICRO .
     - echo "PUSHING TO DOCKER"
