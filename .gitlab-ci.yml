@@ -52,7 +52,7 @@ test:jdk8:
 version_extract:
   only:
     variables:
-      - CI_COMMIT_TITLE =~ /Merge .* to master/
+      - $CI_COMMIT_TITLE =~ /Merge .* to master/
     # refs:
     #   - master
   script:
@@ -65,7 +65,7 @@ version_extract:
 update:
   only:
     variables:
-      - CI_COMMIT_TITLE =~ /Merge .* to master/
+      - $CI_COMMIT_TITLE =~ /Merge .* to master/
     refs:
       - master
   script:
