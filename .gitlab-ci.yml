@@ -50,9 +50,10 @@ test:jdk8:
   <<: *test
 
 version_extract:
-  only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /Merge .* to master/
+  stage: test
+  # only:
+    # variables:
+    #   - $CI_COMMIT_TITLE =~ /Merge .* to master/
     # refs:
     #   - master
   script:
@@ -63,9 +64,10 @@ version_extract:
     - export MICRO=$([[ $POM_VERSION =~ $REGEX ]] && echo ${BASH_REMATCH[3]})
 
 update:
-  only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /Merge .* to master/
+  stage: update_master
+  # only:
+    # variables:
+    #   - $CI_COMMIT_TITLE =~ /Merge .* to master/
     # refs:
     #   - master
   script:
