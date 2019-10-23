@@ -21,9 +21,15 @@
   #L%
   -->
 <div class="tree hierarchy-tree h-100 p-0 w-100 d-flex flex-column">
-    <div class="search pb-1">
+    <div class="d-flex flex-row search pb-1">
         <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
-        <checkbox display-text="'Only Non-Imports'" bind-model="dvm.nonImportsFlag" change-event="dvm.nonImportsFlag = value"></checkbox>
+        <span uib-dropdown is-open="dvm.dropdownOpen">
+            <a uib-dropdown-toggle id="ex4"><span class="p1 fa-stack fa has-badge" data-count="{{dvm.numCustomFilters}}"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></a>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation()">
+                <checkbox class="dropdown-item" display-text="'Active Entities Only'" bind-model="dvm.nonImportsFlag" change-event="dvm.nonImportsFlag = value"></checkbox>
+                <button class="btn btn-primary float-right" ng-click="dvm.onKeyup()" data-toggle="dropdown">Apply</button>
+            </ul>
+        </span>
     </div>
     <md-virtual-repeat-container class="flex-1 repeater-container w-100 remove-min-height" md-top-index="dvm.index">
         <div md-virtual-repeat="node in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
