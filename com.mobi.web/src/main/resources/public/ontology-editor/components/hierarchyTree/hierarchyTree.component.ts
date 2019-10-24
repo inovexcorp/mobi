@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { join, filter, some, pick, find } from 'lodash';
+import { join, filter, some, pick, find, every } from 'lodash';
 
 import './hierarchyTree.component.scss';
+import everythingTreeComponent from '../everythingTree/everythingTree.component';
 
 const template = require('./hierarchyTree.component.html');
 
@@ -68,9 +69,22 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.nonImportsFlag = false;
     dvm.dropdownOpen = false;
-    dvm.numFilters = 0;
+    dvm.numDropdownFilters = 0;
+    dvm.activeEntityFilter = {
+        flag: false, 
+        filter: function(node) {
+            var match = true;
+            if (node.entity.hasOwnProperty('mobi')) {
+                if (node.entity.mobi.imported) {
+                    match = false;
+                }
+            }
+            return match;
+        }
+    };
+
+    dvm.dropdownFilters = [dvm.activeEntityFilter];
 
     dvm.$onInit = function() {
         update();
@@ -93,14 +107,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.numFilters = 0;
+        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
         update();
-        if (dvm.filterText) {
-            dvm.numFilters++;
-        }
-        if (dvm.nonImportsFlag) {
-            dvm.numFilters++;
-        }
         dvm.dropdownOpen = false;
     }
     dvm.toggleOpen = function(node) {
@@ -109,19 +117,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
 
-    function nodeMatchesActiveFilter(node) {
-        var filterMatch = true;
-        if (dvm.nonImportsFlag) {
-            if (node.entity.hasOwnProperty('mobi')) {
-                if (node.entity.mobi.imported) {
-                    filterMatch = false;
-                }
-            }
-        }
-        return filterMatch;
-    }
-
-    function nodeMatchesSearch(node) {
+    function matchesSearchFilter(node) {
         var searchMatch = true;
         if (dvm.filterText) {
             searchMatch = false;
@@ -141,6 +137,16 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         return searchMatch;
     }
 
+    function matchesDropdownFilters(node) {
+        return every(dvm.dropdownFilters, filter => {
+            if(filter.flag) {
+                return filter.filter(node);
+            } else {
+                return true;
+            }
+        });
+    }
+
     dvm.processFilters = function(node) {
         delete node.underline;
         delete node.parentNoMatch;
@@ -151,10 +157,10 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
 
         node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-        if (dvm.filterText || dvm.nonImportsFlag) {
+        if (dvm.filterText || (dvm.numDropdownFilters > 0)) {
             var match = false;
             
-            if(nodeMatchesSearch(node) && nodeMatchesActiveFilter(node)) {
+            if(matchesSearchFilter(node) && matchesDropdownFilters(node)) {
                 match = true;
                 openAllParents(node);
                 node.underline = true;
@@ -203,7 +209,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         // Only show roots unless parent is opened
         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || node.indent === 0;
         // if there is a search term and it is a parent that did not match
-        if ((dvm.nonImportsFlag || dvm.filterText) && node.parentNoMatch) {
+        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node.parentNoMatch) {
             // if the node's displayNode wasn't set, don't show
             if (node.displayNode === undefined) {
                 return false;

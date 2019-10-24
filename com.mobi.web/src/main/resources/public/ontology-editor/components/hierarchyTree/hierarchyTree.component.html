@@ -24,10 +24,10 @@
     <div class="d-flex flex-row search pb-1">
         <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
         <span uib-dropdown is-open="dvm.dropdownOpen">
-            <a uib-dropdown-toggle id="ex4"><span class="p1 fa-stack fa has-badge" data-count="{{dvm.numCustomFilters}}"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></a>
+            <a uib-dropdown-toggle id="dropdown-filter"><span class="badge fa-stack fa" data-count="{{dvm.numDropdownFilters}}"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></a>
             <ul uib-dropdown-menu ng-click="$event.stopPropagation()">
-                <checkbox class="dropdown-item" display-text="'Active Entities Only'" bind-model="dvm.nonImportsFlag" change-event="dvm.nonImportsFlag = value"></checkbox>
-                <button class="btn btn-primary float-right" ng-click="dvm.onKeyup()" data-toggle="dropdown">Apply</button>
+                <checkbox class="dropdown-item" display-text="'Active Entities Only'" bind-model="dvm.activeEntityFilter.flag" change-event="dvm.activeEntityFilter.flag = value"></checkbox>
+                <div class="modal-footer"><button class="btn btn-primary float-right" ng-click="dvm.onKeyup()" data-toggle="dropdown">Apply</button></div>         
             </ul>
         </span>
     </div>
