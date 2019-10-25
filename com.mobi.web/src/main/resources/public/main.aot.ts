@@ -29,7 +29,7 @@ import { platformBrowser } from '@angular/platform-browser';
 
 import * as angular from 'angular';
 
-import { AppModuleNgFactory } from '../aot/src/app.module.ngfactory';
+import { AppModuleNgFactory } from '../../../../aot/src/main/resources/public/app.module.ngfactory';
 
 setAngularLib(angular);
 enableProdMode();
