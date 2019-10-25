@@ -95,7 +95,7 @@ import './user-management/user-management.module';
 export const MODULE_NAME = 'app';
 
 angular
-    .module('app', [
+    .module(MODULE_NAME, [
         /* Third Party */
         'angular-uuid',
         'ngAnimate',
