@@ -117,7 +117,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
 
-    function matchesSearchFilter(node) {
+    dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
         if (dvm.filterText) {
             searchMatch = false;
@@ -137,7 +137,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         return searchMatch;
     }
 
-    function matchesDropdownFilters(node) {
+    dvm.matchesDropdownFilters = function(node) {
         return every(dvm.dropdownFilters, filter => {
             if(filter.flag) {
                 return filter.filter(node);
@@ -160,9 +160,9 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         if (dvm.filterText || (dvm.numDropdownFilters > 0)) {
             var match = false;
             
-            if(matchesSearchFilter(node) && matchesDropdownFilters(node)) {
+            if(dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
                 match = true;
-                openAllParents(node);
+                dvm.openAllParents(node);
                 node.underline = true;
             }
 
@@ -177,7 +177,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         }
     }
 
-    function openAllParents(node) {
+    dvm.openAllParents = function(node) {
         // set path to the ontology record
         var path = node.path[0];
 
