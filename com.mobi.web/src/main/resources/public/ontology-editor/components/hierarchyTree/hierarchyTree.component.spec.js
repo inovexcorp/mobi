@@ -167,6 +167,38 @@ describe('Hierarchy Tree component', function() {
             });
         });
 
+        describe('matchesDropdownFilters', function() {
+            beforeEach(function() {
+                this.filterNode = {
+                    indent: 1,
+                    entityIRI: 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'iri']
+                };
+            });
+            it('returns true when all flagged dropdown filters return true', function() {
+                this.controller.dropdownFilters.forEach(filter => {
+                    filter.flag = true;
+                    spyOn(filter, 'filter').and.returnValue(true);
+                });
+                expect(this.controller.matchesDropdownFilters(this.filterNode)).toEqual(true);
+            });
+            it('returns true when all flagged dropdown filters do not return true', function() {
+                this.controller.dropdownFilters.forEach(filter => {
+                    filter.flag = true;
+                    spyOn(filter, 'filter').and.returnValue(false);
+                });
+                expect(this.controller.matchesDropdownFilters(this.filterNode)).toEqual(false);
+            });
+            it('returns true when there are no flagged dropdowns', function() {
+                this.controller.dropdownFilters.forEach(filter => {
+                    filter.flag = false;
+                    spyOn(filter, 'filter').and.returnValue(false);
+                });
+                expect(this.controller.matchesDropdownFilters(this.filterNode)).toEqual(true);
+            });
+        });
+
         describe('processMatches', function() {
             beforeEach(function() {
                 this.filterNode = {
