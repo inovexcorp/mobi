@@ -46,12 +46,6 @@ before_script:
   - git config --global user.email 'gitlab.runner@inovexcorp.com'
   - git config --global user.name 'Gitlab Runner'
 
-stages:
-  - test
-  - update_master
-  - new_master_version
-  - new_release
-
 # For merge requests do not `deploy` but only run `verify`.
 # See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
 test:
