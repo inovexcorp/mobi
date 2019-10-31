@@ -20,28 +20,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { UpgradeModule } from '@angular/upgrade/static';
-import { HttpModule } from '@angular/http';
-import { MODULE_NAME } from './app.module.ajs';
+import 'zone.js';
+import 'reflect-metadata';
 
-@NgModule({
-    imports: [
-        BrowserModule,
-        UpgradeModule,
-        HttpModule
-    ],
-    declarations: [],
-    entryComponents: [],
-    providers: []
-})
-export class AppModule {
-    constructor(private upgrade: UpgradeModule) {
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 
-    }
+import { setAngularLib } from '@angular/upgrade/static';
+import * as angular from 'angular';
 
-    ngDoBootstrap() {
-        this.upgrade.bootstrap(document.documentElement, [MODULE_NAME], { strictDi: true });
-    }
-}
+import { AppModule } from './app.module';
+
+setAngularLib(angular);
+platformBrowserDynamic().bootstrapModule(AppModule);
