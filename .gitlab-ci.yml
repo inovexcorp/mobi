@@ -2,7 +2,8 @@ stages:
   - test
   - update_master
   - new_master_version
-  - new_release
+  - new_release_build
+  - new_release_deploy
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -97,9 +98,14 @@ update_release:
     - git add .
     - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
     - git push -f origin HEAD:master
+  artifacts:
+    paths:
+      - mobi-distribution
 
 build_release:
   stage: new_release_deploy
+  dependencies:
+    - update_release
   only:
     - tags
     - /release\d*\.\d*/
@@ -110,6 +116,8 @@ build_release:
 
 build_release_docker:
   stage: new_release_deploy
+  dependencies:
+    - update_release
   only:
     - tags
     - /release\d*\.\d*/
