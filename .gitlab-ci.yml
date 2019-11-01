@@ -1,14 +1,3 @@
-# This file is a template, and might need editing before it works on your project.
-# Build JAVA applications using Apache Maven (http://maven.apache.org)
-# For docker image tags see https://hub.docker.com/_/maven/
-#
-# For general lifecycle information see https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
-
-# This template will build and test your projects
-# * Caches downloaded dependencies and plugins between invocation.
-# * Verify but don't deploy merge requests.
-# * Deploy built artifacts from master branch only.
-
 stages:
   - test
   - update_master
@@ -37,31 +26,26 @@ cache:
 
 before_script:
   - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://$GITLAB_USER_LOGIN:$ACCESS_TOKEN@|g").git"
-  - echo "export PRIVATE_URL=$PRIVATE_URL" >> variables
   - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
-  - export MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
-  - export MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
+  - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
+  - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
   - git remote set-url origin $PRIVATE_URL
   - git config --global user.email 'gitlab.runner@inovexcorp.com'
   - git config --global user.name 'Gitlab Runner'
 
-# For merge requests do not `deploy` but only run `verify`.
-# See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
+# For merge requests, just do an initial test
 test:
   before_script: []
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS -pl -mobi-distribution,-mobi-itests,-:itests-support,-:itests-orm,-:itests-web,-:itests-platform,-:itests-etl,-:itests-rest,-:itests-vfs test
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
   only:
     - merge_requests
 
-
-# Verify merge requests using JDK8
-# test:jdk8:
-#   <<: *test
+# Once a merge request is committed to master, need to update both the root level pom.xml and the parent pom.xml
 update_master:
   stage: update_master
   only:
@@ -72,12 +56,16 @@ update_master:
   script:
     - CURR_VERSION="$MAJOR.$MINOR.$MICRO"
     - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
-    - mvn $MVN_CLI_OPTS versions:set versions:commit -DnewVersion=$CURR_VERSION && mvn versions:commit
-    - git add pom.xml
+    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION
+    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
+    - mvn versions:commit
+    - git add pom.xml mobi-parent/pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $CURR_VERSION"
     - git push -f origin HEAD:master
-    - mvn versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && mvn versions:commit
-    - git add pom.xml
+    - mvn versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
+    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
+    - mvn versions:commit
+    - git add pom.xml mobi-parent/pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
     - git push -f origin HEAD:master
 
@@ -90,7 +78,7 @@ unit_integration_test:
     refs:
       - master
   script:
-    - mvn clean install -DskipTests=false
+    - mvn clean install -DskipITs=false
 
 update_release:
   stage: new_release
@@ -115,7 +103,7 @@ build_release:
     - tags
     - /release\d*\.\d*/
   script:
-    - mvn clean build
+    - mvn clean install -P release-build -DproductId=$GA_KEY
     - echo "PUSHING TO ARTIFACTORY"
 
 build_release_docker:
