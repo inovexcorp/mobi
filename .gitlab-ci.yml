@@ -14,7 +14,7 @@ variables:
   MAVEN_CLI_OPTS: "--batch-mode --errors --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
 
 # This template uses jdk8 for verifying and deploying images
-image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8-centos
+image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
 
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
