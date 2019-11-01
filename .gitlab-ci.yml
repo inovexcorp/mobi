@@ -69,6 +69,7 @@ update_master:
     - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
     - git push -f origin HEAD:master
 
+# Happens after NON snapshot commit to master
 unit_integration_test:
   stage: new_master_version
   before_script: []
@@ -80,8 +81,9 @@ unit_integration_test:
   script:
     - mvn clean install -DskipITs=false
 
+# Happens after release tag has been pushed. Deletes the tag, creates new branch based off of the tag name, and updates minor release on master
 update_release:
-  stage: new_release
+  stage: new_release_build
   only:
     - tags
     - /release\/\d+\.\d+/
@@ -97,17 +99,17 @@ update_release:
     - git push -f origin HEAD:master
 
 build_release:
-  stage: new_release
-  before_script: []
+  stage: new_release_deploy
   only:
     - tags
     - /release\d*\.\d*/
   script:
     - mvn clean install -P release-build -DproductId=$GA_KEY
-    - echo "PUSHING TO ARTIFACTORY"
+    - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "https://articaftory.inovexcorp.com/artifactory/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
+    - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "https://articaftory.inovexcorp.com/artifactory/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
 
 build_release_docker:
-  stage: new_release
+  stage: new_release_deploy
   only:
     - tags
     - /release\d*\.\d*/
