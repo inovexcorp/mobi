@@ -117,7 +117,7 @@ update_master:
     - git commit -m"AUTOMATED COMMIT - Updates version to $CURR_VERSION"
     - git push -f origin HEAD:master
     - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
-    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
+    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
     - mvn versions:commit
     - git add pom.xml mobi-parent/pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
