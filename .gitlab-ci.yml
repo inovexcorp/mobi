@@ -135,7 +135,7 @@ unit_integration_test:
   script:
     - mvn $MVN_CLI_OPTS clean install -DskipITs=false
     - if [[ "$?" -ne "0" ]]; then echo "Tests failed so not deploying to nexus" && exit 1; fi
-    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PASSWORD/$NEXUS_PW/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PW/$NEXUS_PW/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
     - cd $CI_BUILDS_DIR
@@ -185,7 +185,7 @@ build_release_docker:
     - tags
     - /release\d*\.\d*/
   script:
-    - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PASSWORD/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
     - cd mobi-distribution
     - mvn $MVN_CLI_OPTS docker:build -DpushImageTag -s $CI_BUILDS_DIR/.m2/ci_settings.xml
 
