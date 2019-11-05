@@ -163,7 +163,7 @@ update_release:
     paths:
       - mobi-distribution
 
-build_release:
+artifactory_release:
   stage: new_release_deploy
   dependencies:
     - update_release
@@ -177,7 +177,7 @@ build_release:
 
 # build and push the docker image, per instructions in mobi-distribution README
 # tag used to specify we want this job to happen w/ the docker builder runner
-build_release_docker:
+docker_release:
   stage: new_release_deploy
   tags:
     - docker-image-builder
