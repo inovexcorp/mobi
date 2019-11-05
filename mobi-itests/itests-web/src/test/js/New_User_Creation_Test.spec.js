@@ -106,13 +106,14 @@ module.exports = {
 
     'Step 9: New User name is displayed in sidebar on left' : function(browser) {
         browser
-            .useXpath()
-            .assert.visible('//a[@class="current-user-box p-2 my-2 text-truncate"]')
-            .getText('//a[@class="current-user-box p-2 my-2 text-truncate"]', function(result) {browser.assert.ok(result.value == newName)})
+            .useCss()
+            .assert.visible('a.current-user-box')
+            .getText('a.current-user-box', function(result) {browser.assert.ok(result.value == newName)})
     },
 
     'Step 10: The user successfully logs out' : function(browser) {
         browser
+            .useXpath()
             .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
             .assert.visible('//div[@class="form-group"]//input[@id="username"]')
             .assert.visible('//div[@class="form-group"]//input[@id="password"]')
