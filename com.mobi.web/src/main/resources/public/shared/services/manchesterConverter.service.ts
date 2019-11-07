@@ -145,10 +145,14 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
      * @return {string} A string containing the converted blank node with optional HTML tags for formatting
      */
     self.jsonldToManchester = function(id, jsonld, index, html = false) {
+        var test = render(id, jsonld, index, html);
+        debugger;
         return render(id, jsonld, index, html);
+
     }
 
     function render(id, jsonld, index, html, listKeyword = '') {
+        debugger;
         var entity = jsonld[index[id].position];
         var result = '';
         if (om.isClass(entity)) {
@@ -160,11 +164,7 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
                     keyword = surround(keyword, expressionClassName);
                 }
                 if (includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
-                    if (has(item, '@list')) {
-                        result += getValue(item['@list'][0], jsonld, index, html, keyword);
-                    } else {
                         result += renderList(item['@id'], jsonld, index, html, keyword);
-                    }
                 } else {
                     result += keyword + getValue(item, jsonld, index, html);
                 }
@@ -173,17 +173,29 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
                 }
             }
         } else if (om.isRestriction(entity)) {
-            var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
-            var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
+            var end = false;
+            while (!end) {
+                var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
+                var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
 
-            if (onProperty) {
-                var propertyRestriction = $filter('splitIRI')(onProperty).end;
-                var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
-                var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
-                if (prop.length === 1) {
-                    var item = head(entity[prop[0]]);
-                    var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
-                    result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
+                if (onProperty) {
+
+                    var propertyRestriction = $filter('splitIRI')(onProperty).end;
+                    var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
+                    var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
+                    if (prop.length === 1) {
+                        var item = head(entity[prop[0]]);
+                        if (has(item, '@list')) {
+                            var itemListObject = item['@list'][0];
+                            var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
+                            result += propertyRestriction + keyword + getValue(itemListObject, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
+                            end = true;
+                        } else {
+                            var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
+                            result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
+                            end = true;
+                        }
+                    }
                 }
             }
         } else if (om.isDatatype(entity)) {
@@ -258,6 +270,8 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
             var rest = head(entity[prefixes.rdf + 'rest']);
             result += getValue(first, jsonld, index, html);
             if (has(rest, '@list')) {
+                result += listKeyword;
+                result += getValue(rest['@list'][0], jsonld, index, html);
                 end = true;
             } else {
                 result += listKeyword;
