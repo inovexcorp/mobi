@@ -1,0 +1,206 @@
+
+<http://test.com/Test#ClassA> a <http://www.w3.org/2002/07/owl#Class> .
+
+<http://test.com/Test#ClassD> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "ClassD" .
+
+<http://test.com/Test#ObjPropA> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+  <http://www.w3.org/2000/01/rdf-schema#range> _:ead1a1e8-0a5f-406a-b0dc-0ba98edec1d8;
+  <http://www.w3.org/2002/07/owl#disjointWith> _:d0555e1f-aa9a-4503-a44f-80a53527e311 .
+
+_:d0555e1f-aa9a-4503-a44f-80a53527e311 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#intersectionOf> _:0a96e4dc-a82a-4b08-9765-c93c2caade0f .
+
+_:0a96e4dc-a82a-4b08-9765-c93c2caade0f a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassA>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:9dd31965-96ac-4eb7-9799-5fe545d7de0e .
+
+_:9dd31965-96ac-4eb7-9799-5fe545d7de0e a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:f133e051-a5f0-4c51-b299-46836d7e117a .
+
+_:f133e051-a5f0-4c51-b299-46836d7e117a a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#complementOf> <http://test.com/Test#ClassB> .
+
+_:9dd31965-96ac-4eb7-9799-5fe545d7de0e <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+<http://test.com/Test#ObjPropA> <http://www.w3.org/2002/07/owl#equivalentProperty>
+    _:94cfabb9-873f-4027-b66d-f6d2da6321ff .
+
+_:94cfabb9-873f-4027-b66d-f6d2da6321ff a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#unionOf> _:993f905a-9417-4529-9b3a-99670782b64c .
+
+_:993f905a-9417-4529-9b3a-99670782b64c a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:7af1103a-0dff-492c-b94c-3d1dbbf33341 .
+
+_:7af1103a-0dff-492c-b94c-3d1dbbf33341 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#complementOf> <http://test.com/Test#ClassA> .
+
+_:993f905a-9417-4529-9b3a-99670782b64c <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    _:945e578d-1357-4fcd-8151-2a46e4778215 .
+
+_:945e578d-1357-4fcd-8151-2a46e4778215 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:aed74ae6-5455-46d4-9a61-3197d315bdbc .
+
+_:aed74ae6-5455-46d4-9a61-3197d315bdbc a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#intersectionOf> _:991ef0ce-73a8-49ae-8c09-0ec7c8a68cc2 .
+
+_:991ef0ce-73a8-49ae-8c09-0ec7c8a68cc2 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:ebe71943-0540-4734-9c9f-44e3d43aba62 .
+
+_:ebe71943-0540-4734-9c9f-44e3d43aba62 a <http://www.w3.org/2002/07/owl#Restriction>;
+  <http://www.w3.org/2002/07/owl#minCardinality> "1"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger>;
+  <http://www.w3.org/2002/07/owl#onProperty> <http://test.com/Test#PropD> .
+
+_:991ef0ce-73a8-49ae-8c09-0ec7c8a68cc2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    _:1c0c4bb8-3b3d-4131-9811-b2df37f3fe1b .
+
+_:1c0c4bb8-3b3d-4131-9811-b2df37f3fe1b a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:37a0abea-436d-4705-919a-54842a807c34 .
+
+_:37a0abea-436d-4705-919a-54842a807c34 a <http://www.w3.org/2002/07/owl#Restriction>;
+  <http://www.w3.org/2002/07/owl#cardinality> "10"^^<http://www.w3.org/2001/XMLSchema#nonNegativeInteger>;
+  <http://www.w3.org/2002/07/owl#onProperty> <http://test.com/Test#PropE> .
+
+_:1c0c4bb8-3b3d-4131-9811-b2df37f3fe1b <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:945e578d-1357-4fcd-8151-2a46e4778215 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    _:098a2280-fb01-408d-8e65-af5b2e318297 .
+
+_:098a2280-fb01-408d-8e65-af5b2e318297 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:d78e1c20-c609-4a92-a423-6f3311f45ab9 .
+
+_:d78e1c20-c609-4a92-a423-6f3311f45ab9 a <http://www.w3.org/2002/07/owl#Restriction>;
+  <http://www.w3.org/2002/07/owl#onProperty> <http://test.com/Test#PropA>;
+  <http://www.w3.org/2002/07/owl#someValuesFrom> <http://test.com/Test#ClassB> .
+
+_:098a2280-fb01-408d-8e65-af5b2e318297 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    _:2a9df116-4b8d-4254-a6c8-905630202691 .
+
+_:2a9df116-4b8d-4254-a6c8-905630202691 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:d3954a18-eeb7-4253-9b18-79aed87e2c8d .
+
+_:d3954a18-eeb7-4253-9b18-79aed87e2c8d a <http://www.w3.org/2002/07/owl#Restriction>;
+  <http://www.w3.org/2002/07/owl#allValuesFrom> _:genid-af400dad270a49d68791152b08f0e343-b0 .
+
+_:genid-af400dad270a49d68791152b08f0e343-b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+    _:dfd4eb87-2810-4cd6-972e-06136f263abe .
+
+_:dfd4eb87-2810-4cd6-972e-06136f263abe a <http://www.w3.org/2002/07/owl#Restriction>;
+  <http://www.w3.org/2002/07/owl#hasValue> <http://test.com/Test#ClassC>;
+  <http://www.w3.org/2002/07/owl#onProperty> <http://test.com/Test#PropC> .
+
+_:genid-af400dad270a49d68791152b08f0e343-b0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:d3954a18-eeb7-4253-9b18-79aed87e2c8d <http://www.w3.org/2002/07/owl#onProperty>
+    <http://test.com/Test#PropB> .
+
+_:2a9df116-4b8d-4254-a6c8-905630202691 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+<http://test.com/Test#PropB> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "PropB" .
+
+<http://test.com/Test#ClassC> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "ClassC";
+  <http://www.w3.org/2002/07/owl#equivalentClass> _:d81730b8-f793-4cee-b174-f5445efed3c2 .
+
+_:d81730b8-f793-4cee-b174-f5445efed3c2 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#unionOf> _:d95115d1-86e3-4156-9b04-e0384dfacc3c .
+
+_:d95115d1-86e3-4156-9b04-e0384dfacc3c a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassD>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:e8e842ea-cc2c-46c5-b17b-cbf7be4e596c .
+
+_:e8e842ea-cc2c-46c5-b17b-cbf7be4e596c a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:67791371-ac41-47a1-abd6-ee306730730d .
+
+_:67791371-ac41-47a1-abd6-ee306730730d a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#intersectionOf> _:cde0d7e0-3ff3-4ba4-aea0-464492621bca .
+
+_:cde0d7e0-3ff3-4ba4-aea0-464492621bca a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassE>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:5567ee49-16ee-482c-ba62-81241c2ec3b8 .
+
+_:5567ee49-16ee-482c-ba62-81241c2ec3b8 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#PropE>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:e8e842ea-cc2c-46c5-b17b-cbf7be4e596c <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+<http://test.com/Test#PropA> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "PropA" .
+
+<http://test.com/Test#PropD> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "PropD" .
+
+<http://test.com/Test#ClassE> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "ClassE" .
+
+<http://test.com/Test#PropC> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "PropC" .
+
+<http://test.com/Test> a <http://www.w3.org/2002/07/owl#Ontology> .
+
+<http://test.com/Test#PropE> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "PropE" .
+
+<http://test.com/Test#ClassB> a <http://www.w3.org/2002/07/owl#Class> .
+
+_:a07cff95-382f-460f-be99-e426ced189b4 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassA>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:4ce80a38-135e-4b6e-95a7-b9bca5a36296 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:1f58a3de-a886-401e-8b02-aeafe1128eeb .
+
+_:1f58a3de-a886-401e-8b02-aeafe1128eeb a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#complementOf> _:7a9aeed9-dce6-4e3d-b46d-3404d80c8b50 .
+
+_:7a9aeed9-dce6-4e3d-b46d-3404d80c8b50 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#oneOf> _:783f44fe-61a4-4f4f-abb9-6fe8555a5930 .
+
+_:783f44fe-61a4-4f4f-abb9-6fe8555a5930 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassB>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:86537981-206a-45c9-be58-10f0327dc268 .
+
+_:86537981-206a-45c9-be58-10f0327dc268 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassC>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:a07cff95-382f-460f-be99-e426ced189b4 .
+
+_:4ce80a38-135e-4b6e-95a7-b9bca5a36296 <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:4a9c5eee-75cc-4932-8128-aabf6e8ae414 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#ClassE>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:4ce80a38-135e-4b6e-95a7-b9bca5a36296 .
+
+_:c01c825b-9b4a-44ab-aecf-6a71302fa5cb a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:14cfe155-1cdc-43dc-8b9e-bc97f10e0840 .
+
+_:14cfe155-1cdc-43dc-8b9e-bc97f10e0840 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#intersectionOf> _:4a9c5eee-75cc-4932-8128-aabf6e8ae414 .
+
+_:c01c825b-9b4a-44ab-aecf-6a71302fa5cb <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest>
+    _:0535158e-8b8c-414d-a44a-a104747cc548 .
+
+_:0535158e-8b8c-414d-a44a-a104747cc548 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://test.com/Test#PropB>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:genid-92c9aa4d018b439f8439b2f8a6c0eea3-node1dp1qvibkx157 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+    <http://test.com/Test#ClassB>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:genid-92c9aa4d018b439f8439b2f8a6c0eea3-6EC79F3ABDE3A037EB2358C5CE6C340A <http://www.w3.org/2002/07/owl#allValuesFrom>
+    _:genid-92c9aa4d018b439f8439b2f8a6c0eea3-CC4FE119DEA4FA5DE96EFEC104F63CE7 .
+
+_:genid-92c9aa4d018b439f8439b2f8a6c0eea3-CC4FE119DEA4FA5DE96EFEC104F63CE7 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+    _:genid-92c9aa4d018b439f8439b2f8a6c0eea3-DA9CB77486450F4DFFC89C2BB61121D6;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:ead1a1e8-0a5f-406a-b0dc-0ba98edec1d8 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#unionOf> _:c01c825b-9b4a-44ab-aecf-6a71302fa5cb .
