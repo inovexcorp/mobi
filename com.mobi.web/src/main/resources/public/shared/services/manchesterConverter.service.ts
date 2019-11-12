@@ -145,14 +145,10 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
      * @return {string} A string containing the converted blank node with optional HTML tags for formatting
      */
     self.jsonldToManchester = function(id, jsonld, index, html = false) {
-        var test = render(id, jsonld, index, html);
-        debugger;
         return render(id, jsonld, index, html);
-
     }
 
     function render(id, jsonld, index, html, listKeyword = '') {
-        debugger;
         var entity = jsonld[index[id].position];
         var result = '';
         if (om.isClass(entity)) {
@@ -173,28 +169,20 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
                 }
             }
         } else if (om.isRestriction(entity)) {
-            var end = false;
-            while (!end) {
-                var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
-                var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
-
-                if (onProperty) {
-
-                    var propertyRestriction = $filter('splitIRI')(onProperty).end;
-                    var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
-                    var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
-                    if (prop.length === 1) {
-                        var item = head(entity[prop[0]]);
-                        if (has(item, '@list')) {
-                            var itemListObject = item['@list'][0];
-                            var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
-                            result += propertyRestriction + keyword + getValue(itemListObject, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
-                            end = true;
-                        } else {
-                            var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
-                            result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
-                            end = true;
-                        }
+            var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
+            var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
+            if (onProperty) {
+                var propertyRestriction = $filter('splitIRI')(onProperty).end;
+                var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
+                var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
+                var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
+                if (prop.length === 1) {
+                    var item = head(entity[prop[0]]);
+                    if (has(item, '@list')) {
+                        var itemListObject = item['@list'][0];
+                        result += propertyRestriction + keyword + getValue(itemListObject, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
+                    } else {
+                        result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
                     }
                 }
             }

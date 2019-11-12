@@ -467,7 +467,7 @@ describe('Manchester Converter service', function() {
                 expect(result).toBe(this.blankNode['@id']);
             });
         });
-        describe('if given a restriction', function() { //where breaking has happened
+        describe('if given a restriction', function() {
             beforeEach(function() {
                 this.blankNode = {
                     '@id': '_:genid0',
