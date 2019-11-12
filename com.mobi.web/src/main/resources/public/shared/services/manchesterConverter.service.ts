@@ -175,9 +175,9 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
                 var propertyRestriction = $filter('splitIRI')(onProperty).end;
                 var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
                 var prop = intersection(Object.keys(entity), Object.keys(restrictionKeywords));
-                var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
                 if (prop.length === 1) {
                     var item = head(entity[prop[0]]);
+                    var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
                     if (has(item, '@list')) {
                         var itemListObject = item['@list'][0];
                         result += propertyRestriction + keyword + getValue(itemListObject, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
