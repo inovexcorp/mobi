@@ -1,13 +1,9 @@
-# This file is a template, and might need editing before it works on your project.
-# Build JAVA applications using Apache Maven (http://maven.apache.org)
-# For docker image tags see https://hub.docker.com/_/maven/
-#
-# For general lifecycle information see https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
-
-# This template will build and test your projects
-# * Caches downloaded dependencies and plugins between invocation.
-# * Verify but don't deploy merge requests.
-# * Deploy built artifacts from master branch only.
+stages:
+  - test
+  - update_master
+  - new_master_version
+  - new_release_build
+  - new_release_deploy
 
 variables:
   # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
@@ -17,6 +13,59 @@ variables:
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "--batch-mode --errors --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  ARTIFACTORY_BASE_URL: "https://articaftory.inovexcorp.com/artifactory/"
+  MAVEN_SETTINGS_DOCKER: <server>
+      <id>docker-hub</id>
+      <username>PLACEHOLDER_USERNAME</username>
+      <password>PLACEHOLDER_PW</password>
+      <configuration>
+        <email>PLACEHOLDER_EMAIL</email>
+      </configuration>
+    </server>
+  MAVEN_SETTINGS_NEXUS: <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+         http://maven.apache.org/xsd/settings-1.0.0.xsd">
+         <localRepository>/var/lib/jenkins/.m2/repository</localRepository>
+         <mirrors>
+                 <mirror>
+                         <id>inovex</id>
+                         <name>iNovex Sonatype Nexus</name>
+                         <url>http://nexus.inovexcorp.com/nexus/content/groups/public/</url>
+                         <mirrorOf>central</mirrorOf>
+                 </mirror>
+         </mirrors> 
+         <servers>
+                 <server>
+                         <id>inovex</id>
+                         <username>PLACEHOLDER_USERNAME</username>
+                         <password>PLACEHOLDER_PW</password>
+                 </server>
+                 <server>
+                         <id>inovex.hanover</id>
+                         <username>PLACEHOLDER_USERNAME</username>
+                         <password>PLACEHOLDER_PW</password>
+                 </server>
+         </servers> 
+         <profiles>
+                 <profile>
+                         <id>inovex</id>
+                         <activation>
+                                 <activeByDefault>true</activeByDefault>
+                         </activation>
+                         <repositories>
+                                 <repository>
+                                         <id>central</id>
+                                         <url>http://central</url>
+                                         <releases>
+                                                 <enabled>true</enabled>
+                                         </releases>
+                                         <snapshots>
+                                                 <enabled>true</enabled>
+                                         </snapshots>
+                                 </repository>
+                         </repositories>
+                 </profile>
+         </profiles> 
+    </settings>
 
 # This template uses jdk8 for verifying and deploying images
 image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
@@ -29,29 +78,116 @@ cache:
     - com.mobi.web/node_modules/
   key: one-key-to-rule-them-all
 
-# For merge requests do not `deploy` but only run `verify`.
-# See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
-.test: &test
+before_script:
+  - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://$GITLAB_USER_LOGIN:$ACCESS_TOKEN@|g").git"
+  - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+  - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
+  - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
+  - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
+  - git remote set-url origin $PRIVATE_URL
+  - git config --global user.email 'gitlab.runner@inovexcorp.com'
+  - git config --global user.name 'Gitlab Runner'
+
+# For merge requests, just do an initial test
+test:
+  before_script: []
   stage: test
   script:
-    - 'mvn $MAVEN_CLI_OPTS -pl -mobi-distribution,-mobi-itests,-:itests-support,-:itests-orm,-:itests-web,-:itests-platform,-:itests-etl,-:itests-rest,-:itests-vfs test'
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
+  only:
+    - merge_requests
 
-# Verify merge requests using JDK8
-test:jdk8:
-  <<: *test
+# Once a merge request is committed to master, need to update both the root level pom.xml and the parent pom.xml
+update_master:
+  stage: update_master
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
+    refs:
+      - master
+  script:
+    - CURR_VERSION="$MAJOR.$MINOR.$MICRO"
+    - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
+    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION
+    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
+    - mvn $MVN_CLI_OPTS versions:commit
+    - git add pom.xml mobi-parent/pom.xml
+    - git commit -m"AUTOMATED COMMIT - Updates version to $CURR_VERSION"
+    - git push -f origin HEAD:master
+    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
+    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
+    - mvn versions:commit
+    - git add pom.xml mobi-parent/pom.xml
+    - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
+    - git push -f origin HEAD:master
 
-# To deploy packages from CI, create a ci_settings.xml file
-# For deploying packages to GitLab's Maven Repository: See https://docs.gitlab.com/ee/user/project/packages/maven_repository.html#creating-maven-packages-with-gitlab-cicd for more details.
-# Please note: The GitLab Maven Repository is currently only available in GitLab Premium / Ultimate.
-# For `master` branch run `mvn deploy` automatically.
-#deploy:jdk8:
-#  stage: deploy
-#  script:
-#    - if [ ! -f ci_settings.xml ];
-#        then echo "CI settings missing\! If deploying to GitLab Maven Repository, please see https://docs.gitlab.com/ee/user/project/packages/maven_repository.html#creating-maven-packages-with-gitlab-cicd for instructions.";
-#      fi
-#    - 'mvn $MAVEN_CLI_OPTS deploy -s ci_settings.xml'
-#  only:
-#    - master
+# Happens after NON snapshot commit to master
+unit_integration_test:
+  stage: new_master_version
+  before_script:
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d\.\d\.\d$/
+    refs:
+      - master
+  script:
+    - mvn $MVN_CLI_OPTS clean install -DskipITs=false
+    - if [[ "$?" -ne "0" ]]; then echo "Tests failed so not deploying to nexus" && exit 1; fi
+    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PW/$NEXUS_PW/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - cd rdf-orm/rdf-orm-gradle-plugin
+    - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
+    - cd $CI_BUILDS_DIR
+    - mvn $MVN_CLI_OPTS deploy -s $CI_BUILDS_DIR/.m2/ci_settings.xml
+
+# Happens after release tag has been pushed. Deletes the tag, creates new branch based off of the tag name, and updates minor release on master
+update_release:
+  stage: new_release_build
+  only:
+    - tags
+    - /release\/\d+\.\d+/
+  script:
+    - git tag -d $CI_COMMIT_TAG
+    - git push origin :$CI_COMMIT_TAG
+    - git checkout -b $CI_COMMIT_TAG
+    - git push -f origin $CI_COMMIT_TAG
+    - NEW_MASTER_VERSION="$MAJOR.$((MINOR+1)).0-SNAPSHOT"
+    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION
+    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION-SNAPSHOT && cd ..
+    - mvn versions:commit
+    - git add pom.xml mobi-parent/pom.xml
+    - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
+    - git push -f origin HEAD:master
+  artifacts:
+    paths:
+      - mobi-distribution
+
+artifactory_release:
+  stage: new_release_deploy
+  dependencies:
+    - update_release
+  only:
+    - tags
+    - /release\d*\.\d*/
+  script:
+    - mvn $MVN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
+    - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
+    - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
+
+# build and push the docker image, per instructions in mobi-distribution README
+# tag used to specify we want this job to happen w/ the docker builder runner
+docker_release:
+  stage: new_release_deploy
+  tags:
+    - docker-image-builder
+  dependencies:
+    - update_release
+  only:
+    - tags
+    - /release\d*\.\d*/
+  script:
+    - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - cd mobi-distribution
+    - mvn $MVN_CLI_OPTS docker:build -DpushImageTag -s $CI_BUILDS_DIR/.m2/ci_settings.xml
+
