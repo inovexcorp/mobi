@@ -21,8 +21,16 @@
   #L%
   -->
 <div class="tree property-tree hierarchy-tree h-100 w-100 p-0 d-flex flex-column">
-    <div class="search pb-1">
+    <div class="d-flex flex-row search pb-1">
         <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
+        <span uib-dropdown is-open="dvm.dropdownOpen">
+            <a uib-dropdown-toggle id="dropdown-filter"><span ng-class="{'badge': (dvm.numDropdownFilters > 0) }" class="fa-stack fa" data-count="{{dvm.numDropdownFilters}}"><i class="fa fa-filter fa-stack-1x xfa-inverse"></i></a>
+            <ul uib-dropdown-menu ng-click="$event.stopPropagation()">
+                <checkbox class="dropdown-item" display-text="'Active Entities Only'" bind-model="dvm.activeEntityFilter.flag" change-event="dvm.activeEntityFilter.flag = value"></checkbox>
+                <div class="modal-footer"><button class="btn btn-primary float-right" ng-click="dvm.onKeyup()" data-toggle="dropdown">Apply</button></div>         
+            </ul>
+        </span>
+
     </div>
     <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height" md-top-index="dvm.index">
         <div md-virtual-repeat="node in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
@@ -41,5 +49,6 @@
                     in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
             </div>
         </div>
+        <info-message ng-if="!dvm.filteredHierarchy.length && (dvm.filterText || (dvm.numDropdownFilters > 0))" class="no-match">No entities match your filter.</info-message>
     </md-virtual-repeat-container>
 </div>
