@@ -1,8 +1,6 @@
-package io.cucumber.skeleton;
-
 /*-
  * #%L
- * itests-web
+ * com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -22,25 +20,15 @@ package io.cucumber.skeleton;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import 'zone.js';
+import 'reflect-metadata';
 
-import java.util.Arrays;
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 
-public enum SupportedBrowser {
-    CHROME ("Chrome"),
-    FIREFOX ("Firefox");
+import { setAngularLib } from '@angular/upgrade/static';
+import * as angular from 'angular';
 
-    private final String name;
+import { AppModule } from './app.module';
 
-    SupportedBrowser(String name) {
-        this.name = name;
-    }
-
-    String browserName() {
-        return name;
-    }
-
-    public static SupportedBrowser fromString(String name) {
-        return Arrays.stream(SupportedBrowser.values()).filter(s -> s.name.equalsIgnoreCase(name)).findFirst()
-                .orElse(SupportedBrowser.CHROME);
-    }
-}
+setAngularLib(angular);
+platformBrowserDynamic().bootstrapModule(AppModule);

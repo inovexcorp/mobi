@@ -191,7 +191,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             var promises = [
                 stateManagerService.initialize(),
                 userManagerService.initialize(),
-                userManagerService.getUser(self.currentUser).then(user => {
+                userManagerService.getUser(data.sub).then(user => {
                     self.currentUserIRI = user.iri;
                     self.currentUser = user.username;
                 })

@@ -57,6 +57,10 @@ function mappingCommitsPageComponentCtrl(mapperStateService, utilService, prefix
                 dvm.commitId = util.getPropertyId(state.mapping.branch, prefixes.catalog + 'head');
                 dvm.branchTitle = util.getDctermsValue(state.mapping.branch, 'title');
             });
+        }else
+        {
+            dvm.commitId = util.getPropertyId(state.mapping.branch, prefixes.catalog + 'head');
+            dvm.branchTitle = util.getDctermsValue(state.mapping.branch, 'title');
         }
     }
 }

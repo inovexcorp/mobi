@@ -11,7 +11,7 @@ module.exports = function(config) {
 
     files: [
         'target/classes/build/vendor.*.js',
-        'target/classes/build/main.*.js',
+        'target/classes/build/app.*.js',
         'webpack.tests.js'
     ],
 

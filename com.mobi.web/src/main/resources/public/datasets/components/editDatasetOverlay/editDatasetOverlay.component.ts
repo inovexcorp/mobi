@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { map, filter, get, sortBy, noop, remove, difference, includes, forEach, concat } from 'lodash';
+import { map, filter, get, sortBy, noop, remove, difference, includes, forEach, concat, find } from 'lodash';
 
 import './editDatasetOverlay.component.scss';
 
@@ -84,7 +84,8 @@ function editDatasetOverlayComponentCtrl($q, datasetStateService, datasetManager
         $q.all(map(selectedOntologies, id => cm.getRecord(id, catalogId)))
             .then(responses => filter(responses, r => !!r), () => onError('A selected ontology could not be found'))
             .then(filteredList => {
-                dvm.selectedOntologies = sortBy(map(filteredList, record => ({
+                var matchingRecords = map(filteredList, response => find(response, mr => selectedOntologies.includes(mr['@id'])));
+                dvm.selectedOntologies = sortBy(map(matchingRecords, record => ({
                     recordId: record['@id'],
                     ontologyIRI: dvm.getOntologyIRI(record),
                     title: dvm.util.getDctermsValue(record, 'title'),

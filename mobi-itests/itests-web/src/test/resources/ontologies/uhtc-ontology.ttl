@@ -1,0 +1,119 @@
+@prefix : <http://matonto.org/ontologies/uhtc#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://matonto.org/ontologies/uhtc> .
+
+<http://matonto.org/ontologies/uhtc> rdf:type owl:Ontology ;
+                                      <http://purl.org/dc/elements/1.1/description> "An ontology describing Ultra High Temperature Ceramic (UHTC) materials."^^xsd:string ;
+                                      <http://purl.org/dc/elements/1.1/title> "UHTC Ontology"^^xsd:string ;
+                                      rdfs:label "UHTC Ontology"^^xsd:string .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://purl.org/dc/terms/description
+<http://purl.org/dc/terms/description> rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/terms/title
+<http://purl.org/dc/terms/title> rdf:type owl:AnnotationProperty .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://matonto.org/ontologies/uhtc#crystalStructure
+:crystalStructure rdf:type owl:ObjectProperty ;
+                  rdfs:domain :Material ;
+                  rdfs:range :CrystalStructure ;
+                  rdfs:comment "The crystal structure of a material"^^xsd:string ;
+                  rdfs:label "Crystal Structure"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#element
+:element rdf:type owl:ObjectProperty ;
+         rdfs:domain :Material ;
+         rdfs:range :Element ;
+         <http://purl.org/dc/terms/description> "An element that makes up part of the material composition."^^xsd:string ;
+         <http://purl.org/dc/terms/title> "Element"^^xsd:string .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://matonto.org/ontologies/uhtc#chemicalFormula
+:chemicalFormula rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :Material ;
+                 rdfs:range xsd:string ;
+                 <http://purl.org/dc/terms/description> "The chemical formula of a material."^^xsd:string ;
+                 <http://purl.org/dc/terms/title> "Chemical Formula"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#crystalStructureName
+:crystalStructureName rdf:type owl:DatatypeProperty ;
+                      rdfs:domain :CrystalStructure ;
+                      rdfs:range xsd:string ;
+                      <http://purl.org/dc/terms/description> "The name of a crystal structure."^^xsd:string ;
+                      <http://purl.org/dc/terms/title> "Crystal Structure Name"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#density
+:density rdf:type owl:DatatypeProperty ;
+         rdfs:domain :Material ;
+         rdfs:range xsd:double ;
+         rdfs:comment "The density of a material"^^xsd:string ;
+         rdfs:label "Density"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#elementName
+:elementName rdf:type owl:DatatypeProperty ;
+             rdfs:domain :Element ;
+             rdfs:range xsd:string ;
+             <http://purl.org/dc/terms/title> "Element Name"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#meltingPoint
+:meltingPoint rdf:type owl:DatatypeProperty ;
+              rdfs:domain :Material ;
+              rdfs:range xsd:double ;
+              <http://purl.org/dc/terms/description> "A material melting point in degrees Celsius."^^xsd:string ;
+              <http://purl.org/dc/terms/title> "Melting Point"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#symbol
+:symbol rdf:type owl:DatatypeProperty ;
+        rdfs:domain :Element ;
+        rdfs:range xsd:string ;
+        <http://purl.org/dc/terms/description> "The element symbol."^^xsd:string ;
+        <http://purl.org/dc/terms/title> "Symbol"^^xsd:string .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://matonto.org/ontologies/uhtc#CrystalStructure
+:CrystalStructure rdf:type owl:Class ;
+                  rdfs:comment "In mineralogy and crystallography, a crystal structure is a unique arrangement of atoms in a crystal. A crystal structure is composed of a unit cell, a set of atoms arranged in a particular way; which is periodically repeated in three dimensions on a lattice."^^xsd:string ;
+                  rdfs:label "Crystal Structure"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#Element
+:Element rdf:type owl:Class ;
+         <http://purl.org/dc/terms/description> "A chemical element or element is a species of atoms having the same number of protons in their atomic nuclei (i.e. the same atomic number, or Z). There are 118 elements that have been identified, of which the first 94 occur naturally on Earth with the remaining 24 being synthetic elements."^^xsd:string ;
+         <http://purl.org/dc/terms/title> "Element"^^xsd:string .
+
+
+###  http://matonto.org/ontologies/uhtc#Material
+:Material rdf:type owl:Class ;
+          rdfs:comment "Ultra-high-temperature ceramics (UHTCs) are a class of refractory ceramics that offer excellent stability at temperatures exceeding 2000 °C being investigated as possible thermal protection system (TPS) materials, coatings for materials subjected to high temperatures, and bulk materials for heating elements."^^xsd:string ;
+          rdfs:label "UHTC Material"^^xsd:string .
+
+
+###  Generated by the OWL API (version 5.0.3.20160910-2120) https://github.com/owlcs/owlapi/

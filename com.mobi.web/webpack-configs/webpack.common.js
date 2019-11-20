@@ -4,7 +4,10 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
-    entry: './src/main/resources/public/app.module.ts',
+    entry: {
+        ajs: './src/main/resources/public/app.module.ajs.ts',
+        app: './src/main/resources/public/main.ts'
+    },
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, '../', 'target', 'classes', 'build')
@@ -14,11 +17,6 @@ module.exports = {
     },
     module: {
         rules: [
-            {
-                test: /\.ts?$/,
-                use: 'ts-loader',
-                exclude: /node_modules/
-            },
             {
                 test: /\.css?$/,
                 use: [
