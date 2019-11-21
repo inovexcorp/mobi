@@ -20,9 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { join, filter, pick, some, find, get, has } from 'lodash';
+import { join, filter, pick, some, find, get, has, every } from 'lodash';
 
 const template = require('./individualTree.component.html');
+
+import './individualTree.component.scss';
 
 /**
  * @ngdoc component
@@ -65,6 +67,23 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
+    dvm.dropdownOpen = false;
+    dvm.numDropdownFilters = 0;
+    dvm.activeEntityFilter = {
+        flag: false, 
+        filter: function(node) {
+            var match = true;
+            if (node.entity.hasOwnProperty('mobi')) {
+                if (node.entity.mobi.imported) {
+                    match = false;
+                }
+            }
+            return match;
+        }
+    };
+
+    dvm.dropdownFilters = [dvm.activeEntityFilter];
+
 
     dvm.$onInit = function() {
         update();
@@ -81,14 +100,76 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
+        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
         update();
+        dvm.dropdownOpen = false;
+
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
         dvm.os.setOpened(join(node.path, '.'), node.isOpened);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-    dvm.searchFilter = function (node) {
+    dvm.openAllParents = function(node) {
+        // set path to the ontology record
+        var path = node.path[0];
+
+        // only loops through if node.path has at least 3 items. Last entry in node.path will be the current child node that matched. The first entry will just be the ontology record. This loop is just looping through all the parents up the line.
+
+        // Set all the parents up the line to opened and diplayNode = true.
+        for (var i = 1; i < node.path.length - 1; i++) {
+
+            // set iri to the concept IRI we are looking at
+            var iri = node.path[i];
+
+            // update path to be ontology record <dot> concept IRI
+            path = path + '.' + iri;
+            // open the path
+            dvm.os.setOpened(path, true);
+
+            // Go through the whole hierarchy and find the concept IRI we are looking at
+            // I think the purpose of these lines and the previous is to set the same IRI to opened in both the ontology state service and dvm.hierarchy
+            var parentNode = find(dvm.hierarchy, {'entityIRI': iri});
+
+            parentNode.isOpened = true;
+            parentNode.displayNode = true;
+        }
+
+    }
+    dvm.matchesSearchFilter = function(node) {
+        var searchMatch = true;
+        if (dvm.filterText) {
+            searchMatch = false;
+            var searchValues = pick(node.entity, dvm.om.entityNameProps);
+
+            // Check all possible name fields and entity fields to see if the value matches the search text
+            some(Object.keys(searchValues), key => some(searchValues[key], value => {
+                if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+                    searchMatch = true;
+            }));
+
+            // Check if beautified entity id matches search text
+            if (dvm.util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+                searchMatch = true;
+            }
+        }
+        return searchMatch;
+
+    }
+    dvm.matchesDropdownFilters = function(node) {
+        return every(dvm.dropdownFilters, filter => {
+            if(filter.flag) {
+                return filter.filter(node);
+            } else {
+                return true;
+            }
+        });
+    }
+    dvm.shouldFilter = function() {
+        return (dvm.filterText || dvm.numDropdownFilters > 0);
+    }
+
+    dvm.processFilters = function (node) {
         delete node.underline;
         delete node.parentNoMatch;
         delete node.displayNode;
@@ -96,43 +177,27 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         delete node.isOpened;
         node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
         if (node.isClass) {
-            if (dvm.filterText) {
+            if (dvm.shouldFilter()) {
                 node.parentNoMatch = true;
             }
         } else {
             node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
-            if (dvm.filterText) {
-                var searchValues = pick(node.entity, dvm.om.entityNameProps);
+            if (dvm.shouldFilter()) {
                 var match = false;
-                some(Object.keys(searchValues), key => some(searchValues[key], value => {
-                    if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
-                        match = true;
-                }));
-                if (dvm.util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
-                    match = true;
-                }
-                if (match) {
-                    var path = node.path[0];
-                    for (var i = 1; i < node.path.length - 1; i++) {
-                        var iri = node.path[i];
-                        path = path + '.' + iri;
-                        dvm.os.setOpened(path, true);
 
-                        var parentNode = find(dvm.hierarchy, {'entityIRI': iri});
-                        parentNode.isOpened = true;
-                        parentNode.displayNode = true;
-                    }
+                if (dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
+                    match = true;
+                    dvm.openAllParents(node);
                     node.underline = true;
                 }
                 return match;
             }
         }
         return true;
-
     }
     dvm.isShown = function(node) {
         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.os.getOpened)) || (node.indent === 0 && get(node, 'path', []).length === 2);
-        if (dvm.filterText && node.parentNoMatch) {
+        if (dvm.shouldFilter() && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
             } else {
@@ -147,7 +212,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
 
     function update() {
         dvm.updateSearch({value: dvm.filterText});
-        dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.searchFilter);
+        dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
 }
