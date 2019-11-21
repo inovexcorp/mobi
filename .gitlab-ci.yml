@@ -79,7 +79,7 @@ cache:
   key: one-key-to-rule-them-all
 
 before_script:
-  - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://$GITLAB_USER_LOGIN:$ACCESS_TOKEN@|g").git"
+  - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
   - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
