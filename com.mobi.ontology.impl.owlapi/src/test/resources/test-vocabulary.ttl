@@ -8,7 +8,7 @@
 @base <https://mobi.com/vocabulary> .
 
 <https://mobi.com/vocabulary> rdf:type owl:Ontology ;
-                                  owl:imports <http://www.w3.org/2004/02/skos/core#> ;
+                                  owl:imports <http://www.w3.org/2004/02/skos/core> ;
                                   <http://purl.org/dc/terms/title> "Vocabulary"^^xsd:string ;
                                   <http://purl.org/dc/terms/description> "This is a test vocabulary."^^xsd:string .
 

@@ -66,7 +66,7 @@
                         <goals>
                             <goal>exec</goal>
                         </goals>
-                        <phase>compile</phase>
+                        <phase>install</phase>
                         <configuration>
                             <executable>${project.basedir}/${gradleBinary}</executable>
                             <arguments>
