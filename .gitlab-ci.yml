@@ -113,13 +113,13 @@ update_master:
     - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION
     - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
     - mvn $MVN_CLI_OPTS versions:commit
-    - git add pom.xml mobi-parent/pom.xml
+    - git add ./\*pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $CURR_VERSION"
     - git push -f origin HEAD:master
     - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
     - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
     - mvn versions:commit
-    - git add pom.xml mobi-parent/pom.xml
+    - git add ./\*pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
     - git push -f origin HEAD:master
 
@@ -129,7 +129,7 @@ unit_integration_test:
   before_script:
   only:
     variables:
-      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d\.\d\.\d$/
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
     refs:
       - master
   script:
@@ -156,7 +156,7 @@ update_release:
     - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION
     - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION-SNAPSHOT && cd ..
     - mvn versions:commit
-    - git add pom.xml mobi-parent/pom.xml
+    - git add ./\*pom.xml
     - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
     - git push -f origin HEAD:master
   artifacts:
