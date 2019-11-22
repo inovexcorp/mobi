@@ -93,7 +93,11 @@ test:
   before_script: []
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+    - pwd
+    - ls -l .m2/repository
+    - ls -l ~/.m2/repository
+    - whoami
+    # - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
   only:
