@@ -133,7 +133,7 @@ unit_integration_test:
     refs:
       - master
   script:
-    - mvn $MVN_CLI_OPTS clean install -DskipITs=false
+    - mvn --batch-mode --errors --show-version -DdeployAtEnd=true clean install -DskipITs=false
     - if [[ "$?" -ne "0" ]]; then echo "Tests failed so not deploying to nexus" && exit 1; fi
     - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PW/$NEXUS_PW/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
     - cd rdf-orm/rdf-orm-gradle-plugin
