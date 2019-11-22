@@ -110,14 +110,14 @@ update_master:
   script:
     - CURR_VERSION="$MAJOR.$MINOR.$MICRO"
     - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
-    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION
-    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
-    - mvn $MVN_CLI_OPTS versions:commit
+    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION
+    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
+    - mvn $MAVEN_CLI_OPTS versions:commit
     - git add ./\*pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $CURR_VERSION"
     - git push -f origin HEAD:master
-    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
-    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
+    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
+    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
     - mvn versions:commit
     - git add ./\*pom.xml
     - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
@@ -133,13 +133,13 @@ unit_integration_test:
     refs:
       - master
   script:
-    - mvn --batch-mode --errors --show-version -DdeployAtEnd=true clean install -DskipITs=false
+    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
     - if [[ "$?" -ne "0" ]]; then echo "Tests failed so not deploying to nexus" && exit 1; fi
     - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PW/$NEXUS_PW/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
     - cd $CI_BUILDS_DIR
-    - mvn $MVN_CLI_OPTS deploy -s $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - mvn $MAVEN_CLI_OPTS deploy -s $CI_BUILDS_DIR/.m2/ci_settings.xml
 
 # Happens after release tag has been pushed. Deletes the tag, creates new branch based off of the tag name, and updates minor release on master
 update_release:
@@ -153,8 +153,8 @@ update_release:
     - git checkout -b $CI_COMMIT_TAG
     - git push -f origin $CI_COMMIT_TAG
     - NEW_MASTER_VERSION="$MAJOR.$((MINOR+1)).0-SNAPSHOT"
-    - mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION
-    - cd mobi-parent && mvn $MVN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION-SNAPSHOT && cd ..
+    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION
+    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION-SNAPSHOT && cd ..
     - mvn versions:commit
     - git add ./\*pom.xml
     - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
@@ -171,7 +171,7 @@ artifactory_release:
     - tags
     - /release\d*\.\d*/
   script:
-    - mvn $MVN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
+    - mvn $MAVEN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
 
@@ -189,5 +189,5 @@ docker_release:
   script:
     - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
     - cd mobi-distribution
-    - mvn $MVN_CLI_OPTS docker:build -DpushImageTag -s $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s $CI_BUILDS_DIR/.m2/ci_settings.xml
 
