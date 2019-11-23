@@ -16,7 +16,18 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        file "file://.m2/repository/"
+        file "file:.m2/repository"
+    }
+    maven {
+        file "file:/.m2/repository"
+    }
+    maven {
+        file "file://.m2/repository"
+    }
+    maven {
+        url "./.m2/repository"
+    }
+    maven {
         url "https://artifactory.inovexcorp.com/artifactory/mobi-releases/"
     }
 }
