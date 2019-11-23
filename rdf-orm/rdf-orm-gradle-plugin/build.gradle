@@ -16,15 +16,6 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        file "file:.m2/repository"
-    }
-    maven {
-        file "file:/.m2/repository"
-    }
-    maven {
-        file "file://.m2/repository"
-    }
-    maven {
         url "./.m2/repository"
     }
     maven {
