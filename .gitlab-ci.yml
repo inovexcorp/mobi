@@ -93,10 +93,12 @@ test:
   before_script: []
   stage: test
   script:
+    - ls -la /root/.m2/
     - pwd
     - echo ~
     - mvn help:evaluate -Dexpression=settings.localRepository | grep -v '\[INFO\]'
     - mvn --version
+    - ls -la /root/.m2/
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
