@@ -16,7 +16,7 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        url "./.m2/repository"
+        url "../../.m2/repository"
     }
     maven {
         url "https://artifactory.inovexcorp.com/artifactory/mobi-releases/"
