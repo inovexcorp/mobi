@@ -93,12 +93,6 @@ test:
   before_script: []
   stage: test
   script:
-    - ls -la /root/.m2/
-    - pwd
-    - echo ~
-    - mvn help:evaluate -Dexpression=settings.localRepository | grep -v '\[INFO\]'
-    - mvn --version
-    - ls -la /root/.m2/
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
@@ -141,6 +135,11 @@ unit_integration_test:
   script:
     - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
     - if [[ "$?" -ne "0" ]]; then echo "Tests failed so not deploying to nexus" && exit 1; fi
+    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PW/$NEXUS_PW/" > /root/.m2/ci_settings.xml
+    - cd rdf-orm/rdf-orm-gradle-plugin
+    - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
+    - cd $CI_BUILDS_DIR
+    - mvn $MAVEN_CLI_OPTS deploy -s /root/.m2/ci_settings.xml
 
 # Happens after release tag has been pushed. Deletes the tag, creates new branch based off of the tag name, and updates minor release on master
 update_release:
@@ -188,7 +187,7 @@ docker_release:
     - tags
     - /release\d*\.\d*/
   script:
-    - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > /root/.m2/ci_settings.xml
     - cd mobi-distribution
-    - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s $CI_BUILDS_DIR/.m2/ci_settings.xml
+    - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s /root/.m2/ci_settings.xml
 
