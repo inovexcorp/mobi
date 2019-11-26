@@ -93,6 +93,9 @@ test:
   before_script: []
   stage: test
   script:
+    - echo $NEXUS_USERNAME
+    - echo "${NEXUS_USERNAME}"
+    - ./gradlew publish -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=bogus
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
