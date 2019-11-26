@@ -7,7 +7,6 @@ version "${version}"
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
-print nexusUsername
 
 sourceCompatibility = 1.8
 
