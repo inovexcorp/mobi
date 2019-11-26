@@ -94,8 +94,8 @@ test:
   stage: test
   script:
     - echo $NEXUS_USERNAME
-    - echo "test var: ${TEST_VAR}"
-    - echo "test var 2: ${TEST_VAR_2}"
+    - echo $TEST_VAR
+    - echo $TEST_VAR_2
     - echo "${NEXUS_USERNAME}"
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=bogus
