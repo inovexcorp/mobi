@@ -160,7 +160,13 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
                     keyword = surround(keyword, expressionClassName);
                 }
                 if (includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
+                    if (has(item, '@list')) {
+                        for (var i = 0; i < item['@list'].length; i++) {
+                            i == 0 ? result += getValue(item['@list'][i], jsonld, index, html) : result += keyword + getValue(item['@list'][i], jsonld, index, html);
+                        }
+                    } else {
                         result += renderList(item['@id'], jsonld, index, html, keyword);
+                    }
                 } else {
                     result += keyword + getValue(item, jsonld, index, html);
                 }
