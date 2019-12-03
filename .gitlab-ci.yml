@@ -93,10 +93,9 @@ test:
   before_script: []
   stage: test
   script:
-    - echo $NEXUS_USERNAME
-    - echo $TEST_VAR
     - echo $TEST_VAR_2
-    - echo "${NEXUS_USERNAME}"
+    - echo $CI_PROJECT_DIR
+    - echo $CI_BUILDS_DIR
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
