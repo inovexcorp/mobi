@@ -39,11 +39,6 @@ variables:
                          <username>PLACEHOLDER_USERNAME</username>
                          <password>PLACEHOLDER_PW</password>
                  </server>
-                 <server>
-                         <id>inovex.hanover</id>
-                         <username>PLACEHOLDER_USERNAME</username>
-                         <password>PLACEHOLDER_PW</password>
-                 </server>
          </servers> 
          <profiles>
                  <profile>
