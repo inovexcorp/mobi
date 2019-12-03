@@ -93,7 +93,7 @@ test:
   before_script: []
   stage: test
   script:
-    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" > /root/.m2/ci_settings.xml
+    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/g" > /root/.m2/ci_settings.xml
     - cat /root/.m2/ci_settings.xml
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
