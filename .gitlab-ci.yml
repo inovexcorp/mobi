@@ -39,6 +39,11 @@ variables:
                          <username>PLACEHOLDER_USERNAME</username>
                          <password>PLACEHOLDER_PW</password>
                  </server>
+		<server>
+                         <id>inovex.hanover</id>
+                         <username>PLACEHOLDER_USERNAME</username>
+                         <password>PLACEHOLDER_PW</password>
+                 </server>
          </servers> 
          <profiles>
                  <profile>
@@ -88,6 +93,8 @@ test:
   before_script: []
   stage: test
   script:
+    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" > /root/.m2/ci_settings.xml
+    - cat /root/.m2/ci_settings.xml
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
