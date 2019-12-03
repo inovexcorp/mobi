@@ -93,9 +93,6 @@ test:
   before_script: []
   stage: test
   script:
-    - echo $TEST_VAR_2
-    - echo $CI_PROJECT_DIR
-    - echo $CI_BUILDS_DIR
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
@@ -141,7 +138,7 @@ unit_integration_test:
     - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/" -e "s/PLACEHOLDER_PW/$NEXUS_PW/" > /root/.m2/ci_settings.xml
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
-    - cd $CI_BUILDS_DIR
+    - cd $CI_PROJECT_DIR
     - mvn $MAVEN_CLI_OPTS deploy -s /root/.m2/ci_settings.xml
 
 # Happens after release tag has been pushed. Deletes the tag, creates new branch based off of the tag name, and updates minor release on master
