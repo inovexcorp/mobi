@@ -13,7 +13,7 @@ variables:
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
-  ARTIFACTORY_BASE_URL: "https://articaftory.inovexcorp.com/artifactory/"
+  ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
   MAVEN_SETTINGS_DOCKER: <server>
       <id>docker-hub</id>
       <username>PLACEHOLDER_USERNAME</username>
