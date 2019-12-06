@@ -66,6 +66,7 @@ variables:
                  </profile>
          </profiles> 
     </settings>
+  NEEDS_GIT_SETTINGS: 1
 
 # This template uses jdk8 for verifying and deploying images
 image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
@@ -74,23 +75,28 @@ image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
 cache:
   paths:
-    - /root/.m2/repository
+#     - /root/.m2/repository
     - com.mobi.web/node_modules/
   key: one-key-to-rule-them-all
 
 before_script:
-  - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
+  - rm -r /root/.m2/repository && ln -s /mnt/.m2/repository /root/.m2/repository
   - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
   - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
-  - git remote set-url origin $PRIVATE_URL
-  - git config --global user.email 'gitlab.runner@inovexcorp.com'
-  - git config --global user.name 'Gitlab Runner'
+  # - ln -s /mnt/.node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
+  - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
+  -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
+  -   git remote set-url origin $PRIVATE_URL
+  -   git config --global user.email 'gitlab.runner@inovexcorp.com'
+  -   git config --global user.name 'Gitlab Runner'
+  - fi
 
 # For merge requests, just do an initial test
 test:
-  before_script: []
+  variables: 
+    NEEDS_GIT_SETTINGS: 0
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
@@ -126,7 +132,8 @@ update_master:
 # Happens after NON snapshot commit to master
 unit_integration_test:
   stage: new_master_version
-  before_script:
+  variables:
+    NEEDS_GIT_SETTINGS: 0
   only:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
