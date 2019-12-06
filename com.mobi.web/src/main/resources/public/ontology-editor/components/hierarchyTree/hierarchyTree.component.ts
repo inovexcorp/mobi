@@ -72,6 +72,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.dropdownOpen = false;
     dvm.numDropdownFilters = 0;
     dvm.activeEntityFilter = {
+        checked: false,
         flag: false, 
         filter: function(node) {
             var match = true;
@@ -107,6 +108,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
+        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
         dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
         update();
         dvm.dropdownOpen = false;
@@ -115,6 +117,12 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         node.isOpened = !node.isOpened;
         dvm.os.setOpened(join(node.path, '.'), node.isOpened);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
+    }
+
+    dvm.dropdownToggled = function(open) {
+        if (!open) {
+            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
+        }
     }
 
     dvm.matchesSearchFilter = function(node) {
