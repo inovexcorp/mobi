@@ -74,6 +74,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     dvm.dropdownOpen = false;
     dvm.numDropdownFilters = 0;
     dvm.activeEntityFilter = {
+        checked: false,
         flag: false, 
         filter: function(node) {
             var match = true;
@@ -105,9 +106,15 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
+        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
         dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
         update();
         dvm.dropdownOpen = false;
+    }
+    dvm.dropdownToggled = function(open) {
+        if (!open) {
+            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
+        }
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
