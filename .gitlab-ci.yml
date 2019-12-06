@@ -81,7 +81,7 @@ image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
 
 before_script:
   - rm -r /root/.m2/repository && ln -s /mnt/.m2/repository /root/.m2/repository
-  - ln -s /mnt/.node-modules $CI_PROJECT_DIR/com.mobi.web/node-modules
+  - ln -s /mnt/.node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
   - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
   -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
   -   POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
