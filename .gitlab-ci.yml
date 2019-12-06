@@ -81,13 +81,13 @@ cache:
 
 before_script:
   - rm -r /root/.m2/repository && ln -s /mnt/.m2/repository /root/.m2/repository
+  - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+  - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
+  - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
+  - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
   # - ln -s /mnt/.node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
   - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
   -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
-  -   POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
-  -   MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
-  -   MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
-  -   MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
   -   git remote set-url origin $PRIVATE_URL
   -   git config --global user.email 'gitlab.runner@inovexcorp.com'
   -   git config --global user.name 'Gitlab Runner'
