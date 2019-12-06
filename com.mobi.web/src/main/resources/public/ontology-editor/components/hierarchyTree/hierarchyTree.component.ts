@@ -23,7 +23,6 @@
 import { join, filter, some, pick, find, every } from 'lodash';
 
 import './hierarchyTree.component.scss';
-import everythingTreeComponent from '../everythingTree/everythingTree.component';
 
 const template = require('./hierarchyTree.component.html');
 
