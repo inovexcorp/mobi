@@ -98,11 +98,11 @@
         .fa-filter {
             font-size: 16px;
         }
-
-        .dropdown-item:hover {
-            background-color: inherit !important;
-        }
   
         &:after { content: none }
+    }
+
+    .dropdown-item:hover {
+        background-color: inherit !important;
     }
 }
