@@ -24,9 +24,9 @@
     <div class="image-container text-center pb-2">
         <a class="d-block" ui-sref="root.home"><img ng-src="{{$root.collapsedNav ? 'images/mobi-alternate-logo-icon.png' : 'images/mobi-alternate-logo.svg'}}" alt="Mobi Logo"></a>
     </div>
-    <a class="current-user-box p-2 my-2" ng-class="{'active': $state.is('root.settings'), 'text-truncate': !$root.collapsedNav}" ui-sref-active="active" ui-sref="root.settings">
-        <div class="avatar-box d-inline-block rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
-        <div class="user-title d-inline-block ml-1 align-middle collapsed-hide" ng-if="!$root.collapsedNav">{{dvm.getUserDisplay()}}</div>
+    <a class="current-user-box p-2 my-2 d-flex align-items-center" ng-class="{'active': $state.is('root.settings'), 'text-truncate': !$root.collapsedNav}" ui-sref-active="active" ui-sref="root.settings">
+        <div class="avatar-box rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
+        <div class="user-title flex-1 remove-min-width text-truncate ml-1 align-middle collapsed-hide" ng-if="!$root.collapsedNav">{{dvm.getUserDisplay()}}</div>
     </a>
     <ul class="main-nav nav flex-column flex-grow-1">
         <li class="nav-item" ng-repeat="per in dvm.perspectives" ng-class="{'active': per.isActive}" ui-sref-active="active">

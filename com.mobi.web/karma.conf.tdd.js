@@ -1,7 +1,10 @@
 // Karma configuration
 // Generated on Tue Jan 17 2017 09:54:51 GMT-0500 (EST)
 
-const webpackConfig = require('./webpack-configs/webpack.common');
+const commonConfig = require('./webpack-configs/webpack.common');
+const devConfig = require(`./webpack-configs/webpack.dev.js`);
+const webpackMerge = require('webpack-merge');
+const webpackConfig = webpackMerge.smart(commonConfig, devConfig);
 
 module.exports = function(config) {
   config.set({
