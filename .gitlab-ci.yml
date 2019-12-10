@@ -80,7 +80,7 @@ image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
   # key: one-key-to-rule-them-all
 
 before_script:
-  - rm -r /root/.m2/repository && ln -s /mnt/.m2/repository /root/.m2/repository
+  - rm -r /root/.m2/repository && ln -s /opt/m2/repository /root/.m2/repository
   - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
