@@ -99,8 +99,7 @@ test:
     NEEDS_GIT_SETTINGS: 0
   stage: test
   script:
-    # - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
-    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
   only:
