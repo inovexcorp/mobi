@@ -73,11 +73,11 @@ image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
 
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
-cache:
-  paths:
+# cache:
+#   paths:
 #     - /root/.m2/repository
-    - com.mobi.web/node_modules/
-  key: one-key-to-rule-them-all
+  #   - com.mobi.web/node_modules/
+  # key: one-key-to-rule-them-all
 
 before_script:
   - rm -r /root/.m2/repository && ln -s /mnt/.m2/repository /root/.m2/repository
@@ -85,7 +85,7 @@ before_script:
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
   - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
-  # - ln -s /mnt/.node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
+  - ln -s /opt/node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
   - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
   -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
   -   git remote set-url origin $PRIVATE_URL
@@ -99,7 +99,8 @@ test:
     NEEDS_GIT_SETTINGS: 0
   stage: test
   script:
-    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+    # - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
   except:
     - master
   only:
