@@ -156,14 +156,40 @@ describe('Everything Tree component', function() {
             expect(this.controller.isShown).toHaveBeenCalled();
             expect(this.controller.filteredHierarchy).toEqual([]);
         });
-        describe('searchFilter', function() {
+        describe('matchesDropdownFilters', function() {
             beforeEach(function() {
-                this.filterNodeParent = {
-                    indent: 0,
-                    '@id': 'otherIri',
-                    hasChildren: true,
-                    path: ['recordId', 'otherIri']
+                this.filterNode = {
+                    indent: 1,
+                    '@id': 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'iri']
                 };
+            });
+            it('returns true when all flagged dropdown filters return true', function() {
+                this.controller.dropdownFilters.forEach(filter => {
+                    filter.flag = true;
+                    spyOn(filter, 'filter').and.returnValue(true);
+                });
+                expect(this.controller.matchesDropdownFilters(this.filterNode)).toEqual(true);
+            });
+            it('returns true when all flagged dropdown filters do not return true', function() {
+                this.controller.dropdownFilters.forEach(filter => {
+                    filter.flag = true;
+                    spyOn(filter, 'filter').and.returnValue(false);
+                });
+                expect(this.controller.matchesDropdownFilters(this.filterNode)).toEqual(false);
+            });
+            it('returns true when there are no flagged dropdowns', function() {
+                this.controller.dropdownFilters.forEach(filter => {
+                    filter.flag = false;
+                    spyOn(filter, 'filter').and.returnValue(false);
+                });
+                expect(this.controller.matchesDropdownFilters(this.filterNode)).toEqual(true);
+            });
+        });
+
+        describe('matchesSearchFilter', function() {
+            beforeEach(function() {
                 this.filterNode = {
                     indent: 1,
                     '@id': 'iri',
@@ -176,49 +202,157 @@ describe('Everything Tree component', function() {
                     get: jasmine.createSpy('get').and.returnValue(true),
                     set: jasmine.createSpy('set')
                 };
-                this.controller.hierarchy = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
                 this.controller.filterText = 'ti';
                 ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
             });
             describe('has filter text', function() {
                 describe('and the node has matching search properties', function() {
                     it('that have at least one matching text value', function () {
-                        expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
-                        expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
+                        expect(this.controller.matchesSearchFilter(this.filterNode)).toEqual(true);
                     });
                     describe('that do not have a matching text value', function () {
                         beforeEach(function () {
                             delete this.filterNode[prefixes.dcterms + 'title'];
                             utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
-                        describe('and does not have a matching entity local name', function () {
-                            it('and the node has no children', function () {
-                                expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
-                            });
-                            it('and the node has children', function () {
-                                this.filterNode.hasChildren = true;
-                                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
-                            });
+                        it('and does not have a matching entity local name', function () {
+                            expect(this.controller.matchesSearchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
                             utilSvc.getBeautifulIRI.and.returnValue('title');
-                            expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
+                            expect(this.controller.matchesSearchFilter(this.filterNode)).toEqual(true);
                         });
                     });
                 });
                 it('and the node does not have matching search properties', function() {
                     ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
+                    expect(this.controller.matchesSearchFilter(this.filterNode)).toEqual(false);
                 });
-                it('and the node is a folder', function() {
-                    expect(this.controller.searchFilter(this.filterNodeFolder)).toEqual(true);
-                })
             });
             it('does not have filter text', function() {
                 this.controller.filterText = '';
-                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
+                expect(this.controller.matchesSearchFilter(this.filterNode)).toEqual(true);
             });
         });
+
+        describe('openAllParents', function() {
+            beforeEach(function() {
+                this.filterNode = {
+                    indent: 2,
+                    '@id': 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'anotherIri', 'iri']
+                };
+                this.filterNodeParent = {
+                    indent: 1,
+                    '@id': 'anotherIri',
+                    hasChildren: true,
+                    path: ['recordId', 'otherIri', 'anotherIri']
+                };
+                this.filterNodeParentParent = {
+                    indent: 0,
+                    '@id': 'otherIri',
+                    hasChildren: true,
+                    path: ['recordId', 'otherIri']
+                }
+                this.controller.hierarchy = [this.filterNodeParentParent, this.filterNodeParent, this.filterNode];
+            });
+            it('successfully opens all parents', function() {
+                this.controller.openAllParents(this.filterNode);
+                expect(ontologyStateSvc.setOpened).not.toHaveBeenCalledWith(this.filterNode.path[0], true);
+                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1], true);
+                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1] + '.' + this.filterNode.path[2], true);
+                expect(ontologyStateSvc.setOpened).not.toHaveBeenCalledWith(this.filterNode.path[0] + '.' + this.filterNode.path[1] + '.' + this.filterNode.path[2] + '.' + this.filterNode.path[3], true);
+            });    
+        });
+
+        describe('processFilters', function() {
+            beforeEach(function() {
+                this.filterNode = {
+                    indent: 1,
+                    entityIRI: 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'iri']
+                };
+                this.filterNodeFolder = {
+                    title: 'Properties',
+                    get: jasmine.createSpy('get').and.returnValue(true),
+                    set: jasmine.createSpy('set')
+                };
+                
+                spyOn(this.controller, 'openAllParents');
+            });
+            it('should return true when both the search and dropdown filter match', function() {
+                this.controller.filterText = 'ti';
+                this.controller.numDropdownFilters = 1;
+                spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
+                spyOn(this.controller, 'matchesSearchFilter').and.returnValue(true);
+                expect(this.controller.processFilters(this.filterNode)).toEqual(true);
+            });
+            it('should return false when the search filter matches and dropdown filter does not match', function() {
+                this.controller.filterText = 'ti';
+                this.controller.numDropdownFilters = 0;
+                spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(false);
+                spyOn(this.controller, 'matchesSearchFilter').and.returnValue(true);
+                expect(this.controller.processFilters(this.filterNode)).toEqual(false);
+            });
+            it('should return false when the search filter matches and dropdown filter does not match', function() {
+                this.controller.filterText = '';
+                this.controller.numDropdownFilters = 1;
+                spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
+                spyOn(this.controller, 'matchesSearchFilter').and.returnValue(false);
+                expect(this.controller.processFilters(this.filterNode)).toEqual(false);
+            });
+            it('should return true when both the search and dropdown filter do not match but the node has children', function() {
+                this.filterNode.hasChildren = true;
+                this.controller.filterText = '';
+                this.controller.numDropdownFilters = 1;
+                spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
+                spyOn(this.controller, 'matchesSearchFilter').and.returnValue(false);
+                expect(this.controller.processFilters(this.filterNode)).toEqual(true);
+            });
+            it('should return true when the node is a folder and has search or filter criteria', function() {
+                this.controller.numDropdownFilters = 1;
+                this.controller.filterText = '';
+                expect(this.controller.processFilters(this.filterNodeFolder)).toEqual(true);
+                expect(this.filterNodeFolder.set).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
+                expect(this.filterNodeFolder.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+            });
+            it('should return true when the node is a folder and does not have search or filter criteria', function() {
+                this.controller.numDropdownFilters = 0;
+                this.controller.filterText = '';
+                expect(this.controller.processFilters(this.filterNodeFolder)).toEqual(true);
+                expect(this.filterNodeFolder.set).not.toHaveBeenCalled();
+                expect(this.filterNodeFolder.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+            });
+        })
+
+        describe('the active entity filter', function() {
+            beforeEach(function() {
+                this.importedNode = {
+                    indent: 1,
+                    entityIRI: 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'iri'],
+                    mobi: {
+                        imported: true
+                    }
+                };
+                this.activeEntityNode = {
+                    indent: 1,
+                    entityIRI: 'iri',
+                    hasChildren: false,
+                    path: ['recordId', 'otherIri', 'iri'],
+                };
+            });
+            it('matches when an entity is not imported', function() {
+                expect(this.controller.activeEntityFilter.filter(this.activeEntityNode)).toEqual(true);
+            });
+            it('does not match when an entity imported', function() {
+                expect(this.controller.activeEntityFilter.filter(this.importedNode)).toEqual(false);
+            });
+        });
+
         describe('isShown filter', function() {
             describe('when node does not have an @id', function () {
                 beforeEach(function() {
