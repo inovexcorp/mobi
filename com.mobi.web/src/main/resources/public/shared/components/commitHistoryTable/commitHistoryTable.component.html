@@ -28,7 +28,7 @@
         <table class="table table-hover" ng-if="dvm.commits.length">
             <thead class="thead-default">
                 <tr>
-                    <th class="graph-column" ng-if="dvm.showGraph" ng-style="{'width': dvm.deltaX + 10 + 'px'}"></th>
+                    <th class="graph-column" ng-if="dvm.showGraph"></th>
                     <th class="fit">Creator</th>
                     <th class="fit">Commit</th>
                     <th>Message</th>
@@ -37,7 +37,7 @@
             </thead>
             <tbody>
                 <tr ng-repeat="commit in dvm.commits track by commit.id">
-                    <td class="graph-column" ng-if="dvm.showGraph"></td>
+                    <td class="graph-column" ng-if="dvm.showGraph" ng-style="{'min-width': dvm.deltaX + 10 + 'px'}"></td>
                     <td class="fit" title="Username: {{commit.creator.username}}">{{dvm.um.getUserDisplay(commit.creator)}}</td>
                     <td class="fit commit-id" title="{{commit.id}}"><a ng-click="dvm.openCommitOverlay(commit.id)">{{dvm.util.condenseCommitId(commit.id)}}</a></td>
                     <td title="{{commit.message}}" class="commit-message"><div><span>{{commit.message}}</span></div></td>
