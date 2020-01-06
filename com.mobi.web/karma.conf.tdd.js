@@ -13,11 +13,13 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
 
     files: [
-        'webpack.tests.tdd.js'
+        'webpack.tests.tdd.js',
+        'webpack.tests.ng.js'
     ],
 
     preprocessors: {
-        'webpack.tests.tdd.js': ['webpack', 'sourcemap']
+        'webpack.tests.tdd.js': ['webpack', 'sourcemap'],
+        'webpack.tests.ng.js': ['webpack', 'sourcemap']
     },
 
     webpack: {

@@ -1,28 +1,33 @@
 // Karma configuration
 // Generated on Tue Jan 17 2017 09:54:51 GMT-0500 (EST)
 
-const webpackConfig = require('./webpack-configs/webpack.common');
+const commonConfig = require('./webpack-configs/webpack.common');
+const devConfig = require(`./webpack-configs/webpack.dev.js`);
+const webpackMerge = require('webpack-merge');
+const webpackConfig = webpackMerge.smart(commonConfig, devConfig);
 
 module.exports = function(config) {
   config.set({
+    client: {
+        args: config.build ? ["--build"] : [],
+    },
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['parallel', 'jasmine'],
+    frameworks: (config.build ? ['parallel', 'jasmine'] : ['jasmine']),
 
     files: [
-        'target/classes/build/vendor.*.js',
-        'target/classes/build/app.*.js',
-        'webpack.tests.js'
+        'webpack.tests.ng.js'
     ],
 
     preprocessors: {
-        'webpack.tests.js': ['webpack']
+        'webpack.tests.ng.js': ['webpack', 'sourcemap']
     },
 
     webpack: {
         resolve: webpackConfig.resolve,
         module: webpackConfig.module,
-        node: webpackConfig.node
+        node: webpackConfig.node,
+        devtool: 'inline-source-map'
     },
 
     // test results reporter to use
@@ -49,16 +54,16 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
 
     // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: false,
+    autoWatch: true,
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: ['ChromeHeadlessNoSandbox'],
     customLaunchers: {
-      ChromeHeadlessNoSandbox: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox']
-      }
+        ChromeHeadlessNoSandbox: {
+          base: 'ChromeHeadless',
+          flags: ['--no-sandbox']
+        }
     },
 
     // Continuous Integration mode

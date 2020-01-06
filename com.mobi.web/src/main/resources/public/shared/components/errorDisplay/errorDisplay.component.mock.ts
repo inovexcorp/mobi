@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,20 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
-/**
- * @ngdoc component
- * @name shared.component:errorDisplay
- *
- * @description
- * `errorDisplay` is a component that creates a styled message for displaying errors from the transcluded content.
- * The content will have red colored text and will be next to an error icon.
- */
+import { ErrorDisplayComponent } from './errorDisplay.component';
+
 @Component({
     selector: 'error-display',
-    templateUrl: './errorDisplay.component.html'
+    template: ''
 })
-export class ErrorDisplayComponent {
-    constructor() {}
-}
+export class ErrorDisplayComponentMock implements ErrorDisplayComponent {}

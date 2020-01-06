@@ -20,20 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+export function loginManagerServiceFactory(i: any) {
+    return i.get('loginManagerService');
+}
 
-/**
- * @ngdoc component
- * @name shared.component:errorDisplay
- *
- * @description
- * `errorDisplay` is a component that creates a styled message for displaying errors from the transcluded content.
- * The content will have red colored text and will be next to an error icon.
- */
-@Component({
-    selector: 'error-display',
-    templateUrl: './errorDisplay.component.html'
-})
-export class ErrorDisplayComponent {
-    constructor() {}
+export const loginManagerServiceProvider = {
+    provide: 'loginManagerService',
+    useFactory: loginManagerServiceFactory,
+    deps: ['$injector']
 }

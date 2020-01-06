@@ -10,12 +10,14 @@
     "build:prod": "npm run build -- --env.env=prod",
     "build:dev": "npm run build -- --env.env=dev",
     "build": "npm run antlr && webpack --bail --progress",
-    "test": "karma start karma.conf.build.js",
-    "tdd": "karma start karma.conf.tdd.js"
+    "test": "karma start karma.conf.build.js && karma start karma.conf.ng.js --build",
+    "tdd": "karma start karma.conf.tdd.js",
+    "tdd-ng": "karma start karma.conf.ng.js --browsers Chrome --reporters progress --no-single-run"
   },
   "devDependencies": {
-    "@types/node": "^10.12.18",
     "@ngtools/webpack": "^1.8.5",
+    "@types/jasmine": "^3.5.0",
+    "@types/node": "^10.12.18",
     "angular2-template-loader": "^0.6.2",
     "antlr4ts-cli": "^0.5.0-alpha.3",
     "autoprefixer": "^9.4.4",
@@ -30,8 +32,10 @@
     "karma-chrome-launcher": "^2.2.0",
     "karma-html-reporter": "^0.2.7",
     "karma-jasmine": "^2.0.1",
+    "karma-parallel": "^0.3.1",
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^3.0.5",
+    "ng-bullet": "^1.0.3",
     "node-sass": "^4.11.0",
     "optimize-css-assets-webpack-plugin": "^3.2.0",
     "postcss-loader": "^3.0.0",

@@ -21,6 +21,11 @@
  * #L%
  */
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+import { downgradeComponent } from '@angular/upgrade/static';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -43,7 +48,6 @@ import editIriOverlayComponent from './components/editIriOverlay/editIriOverlay.
 import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
-import errorDisplayComponent from './components/errorDisplay/errorDisplay.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
 import infoMessageComponent from './components/infoMessage/infoMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
@@ -130,6 +134,11 @@ import userManagerService from './services/userManager.service';
 import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 
+// NgUpgrade
+import { loginManagerServiceProvider } from '../ajs.upgradedProviders';
+
+import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+
 /**
  * @ngdoc overview
  * @name shared
@@ -137,6 +146,28 @@ import utilService from './services/util.service';
  * @description
  * The `shared` module provides common components, directives, filters, and services that make up the Shared module in the Mobi application.
  */
+@NgModule({
+    imports: [
+        CommonModule,
+        FormsModule
+    ],
+    declarations: [
+        ErrorDisplayComponent
+    ],
+    entryComponents: [
+        ErrorDisplayComponent
+    ],
+    exports: [
+        CommonModule,
+        FormsModule,
+        ErrorDisplayComponent
+    ],
+    providers: [
+        loginManagerServiceProvider
+    ]
+})
+export class SharedModule {}
+
 angular.module('shared', [])
     .component('actionMenu', actionMenuComponent)
     .component('block', blockComponent)
@@ -159,7 +190,6 @@ angular.module('shared', [])
     .component('emailInput', emailInputComponent)
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
-    .component('errorDisplay', errorDisplayComponent)
     .component('fileInput', fileInputComponent)
     .component('infoMessage', infoMessageComponent)
     .component('inlineEdit', inlineEditComponent)
@@ -241,4 +271,5 @@ angular.module('shared', [])
     .service('userManagerService', userManagerService)
     .service('userStateService', userStateService)
     .service('utilService', utilService)
-    .factory('clickAnywhereButHereService', clickAnywhereButHereService);
+    .factory('clickAnywhereButHereService', clickAnywhereButHereService)
+    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory);

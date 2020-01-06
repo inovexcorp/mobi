@@ -24,13 +24,19 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
 import { HttpModule } from '@angular/http';
+
 import { MODULE_NAME } from './app.module.ajs';
+
+import { SharedModule } from './shared/shared.module';
+import { LoginModule } from './login/login.module';
 
 @NgModule({
     imports: [
         BrowserModule,
         UpgradeModule,
-        HttpModule
+        HttpModule,
+        SharedModule,
+        LoginModule
     ],
     declarations: [],
     entryComponents: [],

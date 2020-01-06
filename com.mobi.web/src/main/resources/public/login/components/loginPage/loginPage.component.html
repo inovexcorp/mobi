@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<!-- login.module.html -->
 <div class="login-page">
     <div class="center-section">
         <div class="img-container">
@@ -28,23 +27,23 @@
         </div>
         <div class="bg-light form-container">
             <h1 class="text-center">Sign In Here</h1>
-            <form name="dvm.form" ng-submit="dvm.login(dvm.form.$valid)" class="clearfix" novalidate>
-                <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+            <form #loginForm="ngForm" (ngSubmit)="login(loginForm.form.valid)" class="clearfix" novalidate>
+                <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
                 <div class="form-group">
                     <label for="username" class="sr-only">Username</label>
                     <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
-                        <input type="text" class="form-control" id="username" placeholder="Username" ng-model="dvm.form.username" ng-change="dvm.errorMessage = ''" required autofocus>
+                        <input type="text" name="username" class="form-control" id="username" placeholder="Username" #usernameModel="ngModel" [(ngModel)]="username" (change)="errorMessage = ''" required autofocus>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="password" class="sr-only">Password</label>
                     <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-                        <input type="password" class="form-control" id="password" placeholder="Password" ng-model="dvm.form.password" ng-change="dvm.errorMessage = ''" required>
+                        <input type="password" name="password" class="form-control" id="password" placeholder="Password" [(ngModel)]="password" #passwordModel="ngModel" (change)="errorMessage = ''" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" ng-disabled="dvm.form.$invalid">Login</button>
+                <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.form.invalid">Login</button>
             </form>
         </div>
     </div>
