@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Directive, ElementRef, Injector } from '@angular/core';
+import { UpgradeComponent } from '@angular/upgrade/static';
 import { filter, includes } from 'lodash';
 
 import './groupTab.component.scss';
@@ -35,7 +37,7 @@ const template = require('./groupTab.component.html');
  * @description
  * `groupTab` is a component which creates a Bootstrap list of groups a user is in.
  */
-const groupTabComponent = {
+export const groupTabComponent = {
     template,
     bindings: {},
     controllerAs: 'dvm',
@@ -55,4 +57,11 @@ function groupTabComponentCtrl(userManagerService, loginManagerService) {
     }
 }
 
-export default groupTabComponent;
+@Directive({
+    selector: 'group-tab'
+})
+export class GroupTabDirective extends UpgradeComponent {
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('groupTab', elementRef, injector);
+    }
+}

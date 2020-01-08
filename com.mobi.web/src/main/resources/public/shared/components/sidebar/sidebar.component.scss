@@ -68,7 +68,7 @@
     .nav-item.active,
     .current-user-box:hover,
     .current-user-box.active {
-        background-color: $mobi-primary-400;
+        background-color: map-get($mobi-primary, 400);
     }
     .current-user-box {
         .user-title {

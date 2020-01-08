@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Directive, ElementRef, Injector } from '@angular/core';
+import { UpgradeComponent } from '@angular/upgrade/static';
 import * as angular from 'angular';
 import { find } from 'lodash';
 
@@ -39,7 +41,7 @@ const template = require('./passwordTab.component.html');
  * a change. The new password is confirmed within a
  * {@link shared.component:passwordConfirmInput passwordConfirmInput}.
  */
-const passwordTabComponent = {
+export const passwordTabComponent = {
     template,
     bindings: {},
     controllerAs: 'dvm',
@@ -71,4 +73,11 @@ function passwordTabComponentCtrl(userManagerService, loginManagerService, utilS
     }
 }
 
-export default passwordTabComponent;
+@Directive({
+    selector: 'password-tab'
+})
+export class PasswordTabDirective extends UpgradeComponent {
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('passwordTab', elementRef, injector);
+    }
+}

@@ -25,4 +25,19 @@
 
 .settings-page {
     background-color: var(--light);
+    
+    .mat-tab-group {
+        height: 100%;
+
+        .mat-tab-labels {
+            justify-content: center;
+        }
+        .mat-tab-header {
+            background-color: white;
+        }
+        .mat-tab-body-wrapper {
+            flex: 1;
+            min-height: 0;
+        }
+    }
 }

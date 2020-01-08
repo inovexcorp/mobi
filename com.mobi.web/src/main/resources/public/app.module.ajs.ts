@@ -64,6 +64,7 @@ import 'handsontable/dist/handsontable.full.min.css';
 import 'ui-select/dist/select.min.css';
 import 'angular-toastr/dist/angular-toastr.css';
 import 'codemirror-minified/lib/codemirror.css';
+import './css/angular-material.scss';
 import './css/customMaterial.scss';
 import './css/manchestersyntax.scss';
 import './css/styles.scss';

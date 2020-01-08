@@ -21,14 +21,41 @@
  * #L%
  */
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
+import { downgradeComponent } from '@angular/upgrade/static';
+
+import { MatTabsModule } from '@angular/material/tabs';
+import { SharedModule } from '../shared/shared.module';
 
 import customPreferenceComponent from './components/customPreference/customPreference.component';
-import groupTabComponent from './components/groupTab/groupTab.component';
-import passwordTabComponent from './components/passwordTab/passwordTab.component';
+import { groupTabComponent } from './components/groupTab/groupTab.component';
+import { passwordTabComponent } from './components/passwordTab/passwordTab.component';
 import preferencesContainerComponent from './components/preferencesContainer/preferencesContainer.component';
 import preferencesTabComponent from './components/preferencesTab/preferencesTab.component';
-import profileTabComponent from './components/profileTab/profileTab.component';
-import settingsPageComponent from './components/settingsPage/settingsPage.component';
+import { profileTabComponent } from './components/profileTab/profileTab.component';
+
+// NgUpgrade
+import { GroupTabDirective } from './components/groupTab/groupTab.component';
+import { PasswordTabDirective } from './components/passwordTab/passwordTab.component';
+import { ProfileTabDirective } from './components/profileTab/profileTab.component';
+import { SettingsPageComponent } from './components/settingsPage/settingsPage.component';
+
+@NgModule({
+    imports: [
+        SharedModule,
+        MatTabsModule
+    ],
+    declarations: [
+        SettingsPageComponent,
+        ProfileTabDirective,
+        GroupTabDirective,
+        PasswordTabDirective
+    ],
+    entryComponents: [
+        SettingsPageComponent
+    ]
+})
+export class SettingsModule {}
 
 /**
  * @ngdoc overview
@@ -44,4 +71,4 @@ angular.module('settings', [])
     .component('preferencesContainer', preferencesContainerComponent)
     .component('preferencesTab', preferencesTabComponent)
     .component('profileTab', profileTabComponent)
-    .component('settingsPage', settingsPageComponent);
+    .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory);

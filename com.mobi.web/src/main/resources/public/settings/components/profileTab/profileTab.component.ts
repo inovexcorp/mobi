@@ -20,6 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Directive, ElementRef, Injector } from '@angular/core';
+import { UpgradeComponent } from '@angular/upgrade/static';
+
 import * as angular from 'angular';
 import { find } from 'lodash';
 
@@ -39,7 +42,7 @@ const template = require('./profileTab.component.html');
  * form allowing the current user to change their profile information. This information includes their first name, last
  * name, and email address.
  */
-const profileTabComponent = {
+export const profileTabComponent = {
     template,
     bindings: {},
     controllerAs: 'dvm',
@@ -72,4 +75,11 @@ function profileTabComponentCtrl(userManagerService, loginManagerService, prefix
     }
 }
 
-export default profileTabComponent;
+@Directive({
+    selector: 'profile-tab'
+})
+export class ProfileTabDirective extends UpgradeComponent {
+    constructor(elementRef: ElementRef, injector: Injector) {
+        super('profileTab', elementRef, injector);
+    }
+}
