@@ -89,11 +89,11 @@ describe('Login Page component', () => {
             expect(element.queryAll(By.css('label')).length).toEqual(2);
         });
         it('depending on whether an error occurred', () =>{
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
+            expect(element.query(By.css('error-display'))).toBeFalsy();
 
             component.errorMessage = 'test';
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.query(By.css('error-display'))).toBeTruthy();
         });
         it('if the form is invalid', fakeAsync(() => {
             fixture.detectChanges();
