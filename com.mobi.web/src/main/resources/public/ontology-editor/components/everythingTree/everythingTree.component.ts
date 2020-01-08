@@ -86,6 +86,8 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         update();
     }
     dvm.$onChanges = function(changesObj) {
+        dvm.searchText = '';
+        dvm.filterText = '';
         if (!changesObj.hierarchy.isFirstChange()) {
             update();
         }

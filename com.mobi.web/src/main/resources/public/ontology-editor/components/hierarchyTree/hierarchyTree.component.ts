@@ -90,6 +90,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         update();
     }
     dvm.$onChanges = function(changesObj) {
+        dvm.searchText = '';
+        dvm.filterText = '';
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             update();
         }

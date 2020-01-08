@@ -94,6 +94,8 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         update();
     }
     dvm.$onChanges = function(changesObj) {
+        dvm.searchText = '';
+        dvm.filterText = '';
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
