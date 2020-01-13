@@ -94,8 +94,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        dvm.searchText = '';
-        dvm.filterText = '';
+        clearSelection();
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
@@ -256,6 +255,15 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     function addGetToArrayItems(array, get) {
         return map(array, item => merge(item, {get}));
     }
+
+    function clearSelection() {
+        dvm.searchText = '';
+        dvm.filterText = '';
+        dvm.activeEntityFilter.checked = false;
+        dvm.activeEntityFilter.flag = false;
+        dvm.numDropdownFilters = 0;
+    }
+
     function constructFlatPropertyTree() {
         var result = [];
         if (dvm.datatypeProps !== undefined && dvm.datatypeProps.length) {
