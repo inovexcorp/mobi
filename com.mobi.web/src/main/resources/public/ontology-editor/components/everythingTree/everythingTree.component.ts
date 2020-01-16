@@ -231,8 +231,10 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.activeEntityFilter.checked = false;
-        dvm.activeEntityFilter.flag = false;
+        dvm.dropdownFilters.forEach(df => {
+            df.checked = false;
+            df.flag = false;
+        });
         dvm.numDropdownFilters = 0;
     }
 }
