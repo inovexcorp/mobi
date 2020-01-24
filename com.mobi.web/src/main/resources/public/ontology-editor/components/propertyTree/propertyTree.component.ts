@@ -22,7 +22,8 @@
  */
 import { join, filter, pick, some, find, has, concat, map, merge, every } from 'lodash';
 
-import './propertyTree.component.scss';
+import '../../../css/styles.scss';
+
 
 const template = require('./propertyTree.component.html');
 

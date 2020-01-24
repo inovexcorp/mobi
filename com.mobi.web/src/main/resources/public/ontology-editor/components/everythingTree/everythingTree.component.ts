@@ -24,7 +24,7 @@ import { filter, join, has, findIndex, find, some, pick, get, every } from 'loda
 
 const template = require('./everythingTree.component.html');
 
-import './everythingTree.component.scss';
+import '../../../css/styles.scss';
 
 /**
  * @ngdoc component

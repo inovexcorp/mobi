@@ -24,7 +24,7 @@ import { join, filter, pick, some, find, get, has, every } from 'lodash';
 
 const template = require('./individualTree.component.html');
 
-import './individualTree.component.scss';
+import '../../../css/styles.scss';
 
 /**
  * @ngdoc component
