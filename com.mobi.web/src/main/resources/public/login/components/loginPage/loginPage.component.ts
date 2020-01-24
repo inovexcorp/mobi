@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, Inject } from '@angular/core';
+import {FormBuilder, Validators} from '@angular/forms';
 
 import './loginPage.component.scss';
 
@@ -36,20 +36,21 @@ import './loginPage.component.scss';
  */
 @Component({
     selector: 'login-page',
-    templateUrl: './loginPage.component.html'
+    templateUrl: './loginPage.component.html',
 })
 export class LoginPageComponent {
-    @ViewChild('loginForm') loginForm: NgForm;
-    errorMessage: string;
-    username: string;
-    password: string;
+    public loginForm = this.fb.group({
+        username: ['', [Validators.required]],
+        password: ['', [Validators.required]]
+    });
+    public errorMessage: string;
 
-    constructor(@Inject('loginManagerService') private loginManagerService) {
+    constructor(@Inject('loginManagerService') private loginManagerService, private fb: FormBuilder) {
         this.errorMessage = '';
     }
 
     login() {
-        this.loginManagerService.login(this.username, this.password)
+        this.loginManagerService.login(this.loginForm.controls['username'].value, this.loginForm.controls['password'].value)
             .then(() => this.errorMessage = '', errorMessage => this.errorMessage = errorMessage);
     }
 }

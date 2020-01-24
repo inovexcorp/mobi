@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 import { downgradeComponent } from '@angular/upgrade/static';
 
@@ -149,7 +149,8 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
 @NgModule({
     imports: [
         CommonModule,
-        FormsModule
+        FormsModule,
+        ReactiveFormsModule
     ],
     declarations: [
         ErrorDisplayComponent
@@ -160,6 +161,7 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
     exports: [
         CommonModule,
         FormsModule,
+        ReactiveFormsModule,
         ErrorDisplayComponent
     ],
     providers: [

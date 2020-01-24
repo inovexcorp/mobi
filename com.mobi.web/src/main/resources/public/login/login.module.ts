@@ -29,6 +29,7 @@ import { SharedModule } from '../shared/shared.module';
 
 // NgUpgrade
 import { LoginPageComponent } from './components/loginPage/loginPage.component';
+import {ReactiveFormsModule} from "@angular/forms";
 
 /**
  * @ngdoc overview
