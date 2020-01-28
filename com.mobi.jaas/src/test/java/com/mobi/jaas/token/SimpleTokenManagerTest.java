@@ -148,7 +148,7 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateUnauthTokenExceptionTest() throws Exception {
-        // Setup
+        // Setup:
         when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenThrow(new JOSEException(""));
         thrown.expect(MobiException.class);
 
@@ -159,7 +159,7 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateAuthTokenTest() throws Exception {
-        // Setup
+        // Setup:
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", 1);
         manager.start(config);
@@ -171,7 +171,7 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateZeroTokenTest() throws Exception {
-        // Setup
+        // Setup:
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", 0);
         manager.start(config);
@@ -183,11 +183,11 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateNegativeTokenTest() throws Exception {
-        // Setup
+        // Setup:
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", -500000);
         manager.start(config);
-        
+
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
         verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 86400000, null);
@@ -195,7 +195,7 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateAuthTokenExceptionTest() throws Exception {
-        // Setup
+        // Setup:
         when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenThrow(new JOSEException(""));
         thrown.expect(MobiException.class);
 
