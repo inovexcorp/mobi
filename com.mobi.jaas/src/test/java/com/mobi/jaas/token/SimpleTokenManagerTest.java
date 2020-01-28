@@ -78,17 +78,10 @@ public class SimpleTokenManagerTest {
     private HttpServletRequest servletRequest;
 
     @Mock
-    private NewCookie newCookie;
-
-    @Mock
     private Cookie servletCookie;
 
     @Mock
     private javax.ws.rs.core.Cookie cookie;
-
-    @Mock
-    private static SimpleTokenManager stm;
-
 
     @Before
     public void setup() throws Exception {
@@ -108,11 +101,9 @@ public class SimpleTokenManagerTest {
         cookies.put(SimpleTokenManager.TOKEN_NAME, cookie);
         when(requestContext.getCookies()).thenReturn(cookies);
         when(servletRequest.getCookies()).thenReturn(new Cookie[]{servletCookie});
-//        stm = new SimpleTokenManager();
 
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", 86400000);
-
 
         manager = new SimpleTokenManager();
         manager.setMobiTokenVerifier(mobiTokenVerifier);
@@ -168,9 +159,11 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateAuthTokenTest() throws Exception {
+        // Setup
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", 1);
         manager.start(config);
+
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
         verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 1, null);
@@ -178,9 +171,11 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateZeroTokenTest() throws Exception {
+        // Setup
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", 0);
         manager.start(config);
+
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
         verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 86400000, null);
@@ -188,9 +183,11 @@ public class SimpleTokenManagerTest {
 
     @Test
     public void generateNegativeTokenTest() throws Exception {
+        // Setup
         Map<String, Object> config = new HashMap<>();
         config.put("defaultTokenDuration", -500000);
         manager.start(config);
+        
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
         verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 86400000, null);
