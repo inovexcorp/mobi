@@ -175,7 +175,6 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.shouldFilter = function() {
         return (dvm.filterText || dvm.numDropdownFilters > 0);
     }
-
     dvm.processFilters = function (node) {
         delete node.underline;
         delete node.parentNoMatch;
@@ -222,7 +221,6 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';

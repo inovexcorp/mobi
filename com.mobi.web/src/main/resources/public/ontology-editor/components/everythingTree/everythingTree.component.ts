@@ -142,7 +142,6 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         return true;
     }
-
     dvm.matchesDropdownFilters = function(node) {
         return every(dvm.dropdownFilters, filter => {
             if(filter.flag) {
@@ -152,7 +151,6 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             }
         });
     }
-
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
         if (dvm.filterText) {
@@ -172,9 +170,6 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         return searchMatch;
     }
-
-
-
     dvm.openAllParents = function(node) {
         // set path to the ontology record
         var path = node.path[0];
@@ -200,8 +195,6 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             parentNode.displayNode = true;
         }
     }
-
-
     dvm.isShown = function(node) {
         var displayNode = !has(node, '@id') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && get(node, 'path', []).length === 2);
         // If the Properties folder is the last item in the preFilteredHierarchy, we know there are no matching properties, so we don't show
@@ -227,7 +220,6 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
