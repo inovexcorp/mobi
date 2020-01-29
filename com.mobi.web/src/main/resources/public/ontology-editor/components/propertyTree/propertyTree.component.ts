@@ -94,6 +94,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         update();
     }
     dvm.$onChanges = function(changesObj) {
+        clearSelection();
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
@@ -125,15 +126,12 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         }
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-
     dvm.shouldFilter = function() {
         return (dvm.filterText || dvm.numDropdownFilters > 0);
     }
-
     dvm.isFolder = function(node) {
         return !!node.title;
     }
-
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
         if (dvm.filterText) {
@@ -153,7 +151,6 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         }
         return searchMatch;
     }
-
     dvm.openAllParents = function(node) {
         var path = node.path[0];
         for (var i = 1; i < node.path.length - 1; i++) {
@@ -166,7 +163,6 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             parentNode.displayNode = true;
         }
     }
-
     dvm.openPropertyFolders = function(node) {
         if (node.entity['@type'][0] === prefixes.owl + 'DatatypeProperty') {
             var propertyFolder = find(dvm.flatPropertyTree, {title: 'Data Properties'});
@@ -190,7 +186,6 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             delete node.parentNoMatch;
         }
     }
-
     dvm.processFilters = function (node) {
         delete node.underline;
         delete node.parentNoMatch;
@@ -223,7 +218,6 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         }
         return true;
     }
-
     dvm.matchesDropdownFilters = function(node) {
         return every(dvm.dropdownFilters, filter => {
             if(filter.flag) {
@@ -233,7 +227,6 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             }
         });
     }
-
     dvm.isShown = function (node) {
         var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
         if (dvm.shouldFilter() && node.parentNoMatch) {
@@ -253,6 +246,15 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
     function addGetToArrayItems(array, get) {
         return map(array, item => merge(item, {get}));
+    }
+    function clearSelection() {
+        dvm.searchText = '';
+        dvm.filterText = '';
+        dvm.dropdownFilters.forEach(df => {
+            df.checked = false;
+            df.flag = false;
+        });
+        dvm.numDropdownFilters = 0;
     }
     function constructFlatPropertyTree() {
         var result = [];
