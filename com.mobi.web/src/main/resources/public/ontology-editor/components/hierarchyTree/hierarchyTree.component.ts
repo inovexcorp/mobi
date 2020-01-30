@@ -90,6 +90,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         update();
     }
     dvm.$onChanges = function(changesObj) {
+        clearSelection();
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             update();
         }
@@ -117,13 +118,11 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         dvm.os.setOpened(join(node.path, '.'), node.isOpened);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-
     dvm.dropdownToggled = function(open) {
         if (!open) {
             dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
         }
     }
-
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
         if (dvm.filterText) {
@@ -143,7 +142,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         }
         return searchMatch;
     }
-
     dvm.matchesDropdownFilters = function(node) {
         return every(dvm.dropdownFilters, filter => {
             if(filter.flag) {
@@ -153,7 +151,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
             }
         });
     }
-
     dvm.processFilters = function(node) {
         delete node.underline;
         delete node.parentNoMatch;
@@ -183,7 +180,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
             return true;
         }
     }
-
     dvm.openAllParents = function(node) {
         // set path to the ontology record
         var path = node.path[0];
@@ -209,7 +205,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
             parentNode.displayNode = true;
         }
     }
-
     // if node.displayNode is true then we know one of it's children matched somewhere down the line
     dvm.isShown = function (node) {
         // This will run if there is no filter text as well
@@ -233,6 +228,15 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
 
         dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters); // filter(dvm.os.listItem.concepts.flat, with dvm.processFilters function)
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
+    }
+    function clearSelection() {
+        dvm.searchText = '';
+        dvm.filterText = '';
+        dvm.dropdownFilters.forEach(df => {
+            df.checked = false;
+            df.flag = false;
+        });
+        dvm.numDropdownFilters = 0;
     }
 }
 
