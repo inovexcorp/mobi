@@ -79,15 +79,15 @@ module.exports = {
             .assert.elementNotPresent('div.modal-header')
             .waitForElementVisible('div.ontologies')
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"test-local-imports-3.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
             .useCss()
     },
 
     'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
         browser
-            .click('xpath', '//div[contains(@class, "list-group")]//div//span[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-1.ttl")]]')
     },
 
     'Step 9: Click classes tab' : function (browser) {
