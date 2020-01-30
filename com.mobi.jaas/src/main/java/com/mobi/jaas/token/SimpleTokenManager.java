@@ -174,12 +174,13 @@ public class SimpleTokenManager implements TokenManager {
         Cookie cookie = new Cookie(TOKEN_NAME, token.serialize());
         cookie.setSecure(true);
         cookie.setPath("/");
+        cookie.setMaxAge((int) (tokenDuration / 1000));
 
         return cookie;
     }
 
     @Override
     public NewCookie createSecureTokenNewCookie(SignedJWT token) {
-        return new NewCookie(TOKEN_NAME, token.serialize(), "/", null, null, -1, true);
+        return new NewCookie(TOKEN_NAME, token.serialize(), "/", null, null, (int) (tokenDuration / 1000), true);
     }
 }
