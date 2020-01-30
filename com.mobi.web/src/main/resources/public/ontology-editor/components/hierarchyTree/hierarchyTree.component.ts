@@ -69,9 +69,9 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -108,23 +108,14 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
-        dvm.dropdownOpen = false;
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
         dvm.os.setOpened(join(node.path, '.'), node.isOpened);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
-    }
-
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
         if (dvm.filterText) {
@@ -144,7 +135,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         }
         return searchMatch;
     }
-
     dvm.matchesDropdownFilters = function(node) {
         return every(dvm.dropdownFilters, filter => {
             if(filter.flag) {
@@ -154,7 +144,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
             }
         });
     }
-
     dvm.processFilters = function(node) {
         delete node.underline;
         delete node.parentNoMatch;
@@ -165,7 +154,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
 
         node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-        if (dvm.filterText || (dvm.numDropdownFilters > 0)) {
+        if (dvm.filterText || dvm.dropdownFilterActive) {
             var match = false;
             
             if(dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
@@ -217,7 +206,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         // Only show roots unless parent is opened
         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || node.indent === 0;
         // if there is a search term and it is a parent that did not match
-        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node.parentNoMatch) {
+        if ((dvm.dropdownFilterActive || dvm.filterText) && node.parentNoMatch) {
             // if the node's displayNode wasn't set, don't show
             if (node.displayNode === undefined) {
                 return false;

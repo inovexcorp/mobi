@@ -183,21 +183,21 @@ describe('Property Tree component', function() {
             });
             it('should return true when both the search and dropdown filter match', function() {
                 this.controller.filterText = 'ti';
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(true);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(true);
             });
             it('should return false when the search filter matches and dropdown filter does not match', function() {
                 this.controller.filterText = 'ti';
-                this.controller.numDropdownFilters = 0;
+                this.controller.dropdownFilterActive = false;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(false);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(true);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(false);
             });
             it('should return false when the search filter matches and dropdown filter does not match', function() {
                 this.controller.filterText = '';
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(false);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(false);
@@ -205,20 +205,20 @@ describe('Property Tree component', function() {
             it('should return true when both the search and dropdown filter do not match but the node has children', function() {
                 this.filterNode.hasChildren = true;
                 this.controller.filterText = '';
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(false);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(true);
             });
             it('should return true when the node is a folder and has search or filter criteria', function() {
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 this.controller.filterText = '';
                 expect(this.controller.processFilters(this.filterNodeFolder)).toEqual(true);
                 expect(this.filterNodeFolder.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(this.filterNodeFolder.parentNoMatch).toEqual(true);
             });
             it('should return true when the node is a folder and does not have search or filter criteria', function() {
-                this.controller.numDropdownFilters = 0;
+                this.controller.dropdownFilterActive = false;
                 this.controller.filterText = '';
                 expect(this.controller.processFilters(this.filterNodeFolder)).toEqual(true);
                 expect(this.filterNodeFolder.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);

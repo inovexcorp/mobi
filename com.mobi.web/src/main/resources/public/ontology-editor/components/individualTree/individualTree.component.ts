@@ -67,9 +67,9 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -100,16 +100,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
-        dvm.dropdownOpen = false;
-
-    }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
@@ -160,7 +152,6 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             }
         }
         return searchMatch;
-
     }
     dvm.matchesDropdownFilters = function(node) {
         return every(dvm.dropdownFilters, filter => {
@@ -172,9 +163,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         });
     }
     dvm.shouldFilter = function() {
-        return (dvm.filterText || dvm.numDropdownFilters > 0);
+        return (dvm.filterText || dvm.dropdownFilterActive);
     }
-
     dvm.processFilters = function (node) {
         delete node.underline;
         delete node.parentNoMatch;

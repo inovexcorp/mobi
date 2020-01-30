@@ -72,9 +72,9 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     dvm.flatPropertyTree = [];
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -107,15 +107,8 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
-        dvm.dropdownOpen = false;
-    }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
@@ -128,11 +121,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
 
     dvm.shouldFilter = function() {
-        return (dvm.filterText || dvm.numDropdownFilters > 0);
-    }
-
-    dvm.isFolder = function(node) {
-        return !!node.title;
+        return (dvm.filterText || dvm.dropdownFilterActive);
     }
 
     dvm.matchesSearchFilter = function(node) {
