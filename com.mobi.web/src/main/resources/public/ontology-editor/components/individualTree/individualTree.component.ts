@@ -24,8 +24,6 @@ import { join, filter, pick, some, find, get, has, every } from 'lodash';
 
 const template = require('./individualTree.component.html');
 
-import '../../../css/styles.scss';
-
 /**
  * @ngdoc component
  * @name ontology-editor.component:individualTree

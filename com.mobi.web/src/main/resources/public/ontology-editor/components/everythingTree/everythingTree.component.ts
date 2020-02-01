@@ -24,8 +24,6 @@ import { filter, join, has, findIndex, find, some, pick, get, every } from 'loda
 
 const template = require('./everythingTree.component.html');
 
-import '../../../css/styles.scss';
-
 /**
  * @ngdoc component
  * @name ontology-editor.component:everythingTree

@@ -29,19 +29,14 @@ import './hierarchyFilter.component.scss';
 
 /**
  * @ngdoc component
- * @name ontology-editor.component:everythingTree
- * @requires shared.service:ontologyManagerService
- * @requires shared.service:ontologyStateService
- * @requires shared.service:utilService
+ * @name ontology-editor.component:hierarchyFilter
  *
  * @description
- * `hierarchyFilter` is a component that creates a a `div` containing a {@link shared.component:searchBar} and
- * hierarchy of {@link ontology-editor.component:treeItem}. When search text is provided, the hierarchy filters
- * what is shown based on value matches with predicates in the
- * {@link shared.service:ontologyManagerService entityNameProps}.
+ * `hierarchyFilter` is a component that displays a filter icon that opens a dropdown when clicked. The dropdown has a checkbox for each filter that was passed in the filters object to the component.
  *
- * @param {Object[]} hierarchy An array which represents a flattened everything hierarchy
- * @param {Function} updateSearch A function to update the state variable used to track the search filter text
+ * @param {Object[]} filters An array of objects that represents filters. This component expects each filter to have both a flag property to denote whether a filter has been applied and a checked property to denote whether the checkbox associated with the filter has been checked. Each filter should also have a property called filter that contains a function that is the logic for the actual filter matching. Each filter should also have a name property that is used to display the name of the filter next to its checkbox.
+ * @param {Function} updateFilters A function to update the filters array in the parent scope.
+ * @param {Function} submitEvent A function to apply the filters in the filters array.
  */
 const hierarchyFilterComponent = {
     template,
