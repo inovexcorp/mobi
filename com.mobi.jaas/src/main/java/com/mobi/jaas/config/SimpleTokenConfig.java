@@ -1,10 +1,12 @@
+package com.mobi.jaas.config;
+
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.jaas
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,28 +22,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
 
-.open-ontology-tab {
-    .ontology-info .details {
-        cursor: pointer;
+import aQute.bnd.annotation.metatype.Meta;
 
-        .header h3 {
-            max-width: 75%;
-        }
-        .header-title{
-            display: inline-block;
-            vertical-align: bottom;
-            max-width: 22vw;
-        }
-    }
+@Meta.OCD
+public interface SimpleTokenConfig {
 
-    .spinner {
-        z-index: 60;
-    }
-}
-
-small {
-    max-width: 740px;
+    @Meta.AD(deflt = "86400000", required = false)
+    long defaultTokenDuration();
 }

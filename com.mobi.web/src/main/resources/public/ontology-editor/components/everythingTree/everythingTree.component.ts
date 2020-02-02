@@ -83,6 +83,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         update();
     }
     dvm.$onChanges = function(changesObj) {
+        clearSelection();
         if (!changesObj.hierarchy.isFirstChange()) {
             update();
         }
@@ -207,6 +208,15 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.updateSearch({value: dvm.filterText});
         dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
+    }
+    function clearSelection() {
+        dvm.searchText = '';
+        dvm.filterText = '';
+        dvm.dropdownFilters.forEach(df => {
+            df.checked = false;
+            df.flag = false;
+        });
+        dvm.numDropdownFilters = 0;
     }
 }
 

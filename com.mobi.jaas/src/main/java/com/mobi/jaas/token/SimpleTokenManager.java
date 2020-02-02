@@ -23,11 +23,16 @@ package com.mobi.jaas.token;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
+import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.jaas.api.token.TokenVerifier;
+import com.mobi.jaas.config.SimpleTokenConfig;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
@@ -41,15 +46,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.NewCookie;
 
-@Component(immediate = true)
+@Component(
+        immediate = true,
+        configurationPolicy = ConfigurationPolicy.optional,
+        designateFactory = SimpleTokenConfig.class,
+        name = SimpleTokenManager.COMPONENT_NAME
+)
 public class SimpleTokenManager implements TokenManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleTokenManager.class.getName());
     static final String TOKEN_NAME = "mobi_web_token";
+    static final String COMPONENT_NAME = "com.mobi.jaas.SimpleTokenManager";
 
     private static final long ONE_DAY_SEC = 24 * 60 * 60;
     private static final long ONE_DAY_MS = ONE_DAY_SEC * 1000;
-    static final long TOKEN_DURATION = ONE_DAY_MS;
+    private long tokenDuration;
     static final String ISSUER = "http://mobi.com/";
     static final String ANON_SCOPE = "self anon";
     static final String AUTH_SCOPE = "self /*";
@@ -70,6 +81,23 @@ public class SimpleTokenManager implements TokenManager {
 
     void removeVerifier(TokenVerifier verifier) {
         verifiers.remove(verifier.getName());
+    }
+
+    @Activate
+    public void start(Map<String, Object> props) {
+        SimpleTokenConfig config = Configurable.createConfigurable(SimpleTokenConfig.class, props);
+        if (Long.valueOf(config.defaultTokenDuration()) > 0) {
+            LOG.debug("Token duration was set to: " + config.defaultTokenDuration() + " ms");
+            tokenDuration = config.defaultTokenDuration();
+        } else {
+            LOG.debug("Token duration was invalid, setting token duration to default of 1 day");
+            tokenDuration = ONE_DAY_MS;
+        }
+    }
+
+    @Modified
+    public void modified(Map<String, Object> props) {
+        start(props);
     }
 
     @Override
@@ -94,7 +122,7 @@ public class SimpleTokenManager implements TokenManager {
     @Override
     public SignedJWT generateUnauthToken() {
         try {
-            return mobiTokenVerifier.generateToken("anon", ISSUER, ANON_SCOPE, TOKEN_DURATION, null);
+            return mobiTokenVerifier.generateToken("anon", ISSUER, ANON_SCOPE, tokenDuration, null);
         } catch (JOSEException e) {
             String msg = "Problem Creating JWT Token";
             LOG.error(msg, e);
@@ -105,7 +133,7 @@ public class SimpleTokenManager implements TokenManager {
     @Override
     public SignedJWT generateAuthToken(String username) {
         try {
-            return mobiTokenVerifier.generateToken(username, ISSUER, AUTH_SCOPE, TOKEN_DURATION, null);
+            return mobiTokenVerifier.generateToken(username, ISSUER, AUTH_SCOPE, tokenDuration, null);
         } catch (JOSEException e) {
             String msg = "Problem Creating JWT Token";
             LOG.error(msg, e);
@@ -146,12 +174,13 @@ public class SimpleTokenManager implements TokenManager {
         Cookie cookie = new Cookie(TOKEN_NAME, token.serialize());
         cookie.setSecure(true);
         cookie.setPath("/");
+        cookie.setMaxAge((int) (tokenDuration / 1000));
 
         return cookie;
     }
 
     @Override
     public NewCookie createSecureTokenNewCookie(SignedJWT token) {
-        return new NewCookie(TOKEN_NAME, token.serialize(), "/", null, null, -1, true);
+        return new NewCookie(TOKEN_NAME, token.serialize(), "/", null, null, (int) (tokenDuration / 1000), true);
     }
 }
