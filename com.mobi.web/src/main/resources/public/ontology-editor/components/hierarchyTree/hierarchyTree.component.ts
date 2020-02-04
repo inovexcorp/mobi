@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
+
 import { join, filter, some, pick, find, every } from 'lodash';
 
 import './hierarchyTree.component.scss';
@@ -84,7 +86,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         }
     };
 
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
         update();
@@ -225,11 +227,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
 }
 

@@ -54,6 +54,11 @@ function hierarchyFilterComponentCtrl() {
     dvm.numFilters = 0;
     dvm.dropdownOpen = false;
 
+    dvm.$onChanges = function() {
+        dvm.numFilters = 0;
+        dvm.dropdownOpen = false;
+    }
+
     dvm.dropdownToggled = function(open) {
         if (!open) {
             dvm.filters.forEach(filter => { filter.checked = filter.flag; });

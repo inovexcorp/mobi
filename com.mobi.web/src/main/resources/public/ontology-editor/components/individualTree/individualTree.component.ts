@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
+
 import { join, filter, pick, some, find, get, has, every } from 'lodash';
 
 const template = require('./individualTree.component.html');
@@ -81,7 +83,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
     };
 
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
         update();
@@ -213,11 +215,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
 }
 

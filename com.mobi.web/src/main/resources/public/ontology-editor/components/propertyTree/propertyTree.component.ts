@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
+
 import { join, filter, pick, some, find, has, concat, map, merge, every } from 'lodash';
 
 const template = require('./propertyTree.component.html');
@@ -85,7 +87,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         }
     };
 
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
         dvm.flatPropertyTree = constructFlatPropertyTree();
@@ -238,11 +240,8 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
     function constructFlatPropertyTree() {
         var result = [];
