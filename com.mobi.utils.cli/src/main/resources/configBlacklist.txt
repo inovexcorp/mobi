@@ -1,2 +1,6 @@
+profile.cfg
+org.apache.karaf.features.cfg
+branding-ssh.properties
+branding.properties
 com.mobi.platform.server.cfg
 license.lic
