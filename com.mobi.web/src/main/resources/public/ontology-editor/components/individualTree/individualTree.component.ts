@@ -155,13 +155,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         return searchMatch;
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.shouldFilter = function() {
         return (dvm.filterText || dvm.dropdownFilterActive);

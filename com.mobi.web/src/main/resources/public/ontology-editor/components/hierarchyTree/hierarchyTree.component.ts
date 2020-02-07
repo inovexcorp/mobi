@@ -138,13 +138,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         return searchMatch;
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.processFilters = function(node) {
         delete node.underline;

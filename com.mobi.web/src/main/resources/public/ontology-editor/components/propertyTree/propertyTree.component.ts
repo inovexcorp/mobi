@@ -209,13 +209,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         return true;
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.isShown = function (node) {
         var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
