@@ -68,7 +68,7 @@ module.exports = {
             .waitForElementVisible('div.ontologies')
             .assert.elementNotPresent('div.modal-header')
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
             .useCss()
     },
 
