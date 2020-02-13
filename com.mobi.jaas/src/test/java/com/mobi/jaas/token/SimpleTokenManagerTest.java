@@ -103,7 +103,7 @@ public class SimpleTokenManagerTest {
         when(servletRequest.getCookies()).thenReturn(new Cookie[]{servletCookie});
 
         Map<String, Object> config = new HashMap<>();
-        config.put("defaultTokenDuration", 86400000);
+        config.put("tokenDurationMs", 86400000);
 
         manager = new SimpleTokenManager();
         manager.setMobiTokenVerifier(mobiTokenVerifier);
@@ -161,7 +161,7 @@ public class SimpleTokenManagerTest {
     public void generateAuthTokenTest() throws Exception {
         // Setup:
         Map<String, Object> config = new HashMap<>();
-        config.put("defaultTokenDuration", 1);
+        config.put("tokenDurationMs", 1);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
@@ -173,7 +173,7 @@ public class SimpleTokenManagerTest {
     public void generateZeroTokenTest() throws Exception {
         // Setup:
         Map<String, Object> config = new HashMap<>();
-        config.put("defaultTokenDuration", 0);
+        config.put("tokenDurationMs", 0);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
@@ -185,7 +185,7 @@ public class SimpleTokenManagerTest {
     public void generateNegativeTokenTest() throws Exception {
         // Setup:
         Map<String, Object> config = new HashMap<>();
-        config.put("defaultTokenDuration", -500000);
+        config.put("tokenDurationMs", -500000);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");

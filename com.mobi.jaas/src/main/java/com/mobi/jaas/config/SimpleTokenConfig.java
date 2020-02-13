@@ -29,5 +29,5 @@ import aQute.bnd.annotation.metatype.Meta;
 public interface SimpleTokenConfig {
 
     @Meta.AD(deflt = "86400000", required = false)
-    long defaultTokenDuration();
+    long tokenDurationMs();
 }
