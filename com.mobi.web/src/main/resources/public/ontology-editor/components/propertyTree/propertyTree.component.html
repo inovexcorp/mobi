@@ -22,7 +22,7 @@
   -->
 <div class="tree property-tree hierarchy-tree h-100 w-100 p-0 d-flex flex-column">
     <div class="d-flex flex-row search pb-1">
-        <search-bar bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
+        <search-bar class="flex-1 remove-min-width" bind-model="dvm.searchText" change-event="dvm.searchText = value" submit-event="dvm.onKeyup()"></search-bar>
         <hierarchy-filter filters="dvm.dropdownFilters" update-filters="dvm.dropdownFilters = value" submit-event="dvm.onKeyup()"></hierarchy-filter>
     </div>
     <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height" md-top-index="dvm.index">
