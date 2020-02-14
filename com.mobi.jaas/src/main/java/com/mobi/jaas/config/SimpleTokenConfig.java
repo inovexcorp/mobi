@@ -28,6 +28,6 @@ import aQute.bnd.annotation.metatype.Meta;
 @Meta.OCD
 public interface SimpleTokenConfig {
 
-    @Meta.AD(deflt = "86400000", required = false)
-    long tokenDurationMs();
+    @Meta.AD(deflt = "1440", required = false)
+    long tokenDurationMins();
 }

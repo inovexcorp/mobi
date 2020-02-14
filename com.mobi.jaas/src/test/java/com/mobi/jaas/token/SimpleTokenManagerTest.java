@@ -6,7 +6,7 @@ package com.mobi.jaas.token;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -103,7 +103,7 @@ public class SimpleTokenManagerTest {
         when(servletRequest.getCookies()).thenReturn(new Cookie[]{servletCookie});
 
         Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMs", 86400000);
+        config.put("tokenDurationMins", 1440);
 
         manager = new SimpleTokenManager();
         manager.setMobiTokenVerifier(mobiTokenVerifier);
@@ -161,19 +161,19 @@ public class SimpleTokenManagerTest {
     public void generateAuthTokenTest() throws Exception {
         // Setup:
         Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMs", 1);
+        config.put("tokenDurationMins", 1);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
-        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 1, null);
+        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 60000, null);
     }
 
     @Test
     public void generateZeroTokenTest() throws Exception {
         // Setup:
         Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMs", 0);
+        config.put("tokenDurationMins", 0);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
@@ -185,7 +185,7 @@ public class SimpleTokenManagerTest {
     public void generateNegativeTokenTest() throws Exception {
         // Setup:
         Map<String, Object> config = new HashMap<>();
-        config.put("tokenDurationMs", -500000);
+        config.put("tokenDurationMins", -500000);
         manager.start(config);
 
         SignedJWT result = manager.generateAuthToken("username");
