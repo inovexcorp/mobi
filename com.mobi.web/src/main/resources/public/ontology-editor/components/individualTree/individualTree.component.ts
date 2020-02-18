@@ -89,7 +89,9 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        clearSelection();
+        if (!(Object.keys(changesObj).length === 1 && changesObj.index)) {
+            clearSelection();
+        }
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             update();
         }
