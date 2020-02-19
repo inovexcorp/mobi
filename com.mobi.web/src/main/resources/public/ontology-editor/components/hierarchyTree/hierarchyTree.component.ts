@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
+
 import { join, filter, some, pick, find, every } from 'lodash';
 
 import './hierarchyTree.component.scss';
@@ -68,9 +70,9 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -84,13 +86,15 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         }
     };
 
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        clearSelection();
+        if (!(Object.keys(changesObj).length === 1 && changesObj.index)) {
+            clearSelection();
+        }
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             update();
         }
@@ -108,20 +112,13 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
-        dvm.dropdownOpen = false;
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
         dvm.os.setOpened(join(node.path, '.'), node.isOpened);
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
-    }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
     }
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
@@ -143,13 +140,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         return searchMatch;
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.processFilters = function(node) {
         delete node.underline;
@@ -161,7 +152,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
 
         node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-        if (dvm.filterText || (dvm.numDropdownFilters > 0)) {
+        if (dvm.filterText || dvm.dropdownFilterActive) {
             var match = false;
             
             if(dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
@@ -211,7 +202,7 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         // Only show roots unless parent is opened
         var displayNode = (node.indent > 0 && dvm.os.areParentsOpen(node)) || node.indent === 0;
         // if there is a search term and it is a parent that did not match
-        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node.parentNoMatch) {
+        if ((dvm.dropdownFilterActive || dvm.filterText) && node.parentNoMatch) {
             // if the node's displayNode wasn't set, don't show
             if (node.displayNode === undefined) {
                 return false;
@@ -232,11 +223,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
 }
 

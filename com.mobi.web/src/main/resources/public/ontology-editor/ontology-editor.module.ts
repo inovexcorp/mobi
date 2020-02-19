@@ -57,6 +57,7 @@ import datatypePropertyBlockComponent from './components/datatypePropertyBlock/d
 import datatypePropertyOverlayComponent from './components/datatypePropertyOverlay/datatypePropertyOverlay.component';
 import editBranchOverlayComponent from './components/editBranchOverlay/editBranchOverlay.component';
 import everythingTreeComponent from './components/everythingTree/everythingTree.component';
+import hierarchyFilterComponent from './components/hierarchyFilter/hierarchyFilter.component';
 import hierarchyTreeComponent from './components/hierarchyTree/hierarchyTree.component';
 import importsBlockComponent from './components/importsBlock/importsBlock.component';
 import importsOverlayComponent from './components/importsOverlay/importsOverlay.component';
@@ -151,6 +152,7 @@ angular.module('ontology-editor', [])
     .component('datatypePropertyOverlay', datatypePropertyOverlayComponent)
     .component('editBranchOverlay', editBranchOverlayComponent)
     .component('everythingTree', everythingTreeComponent)
+    .component('hierarchyFilter', hierarchyFilterComponent)
     .component('hierarchyTree', hierarchyTreeComponent)
     .component('importsBlock', importsBlockComponent)
     .component('importsOverlay', importsOverlayComponent)
