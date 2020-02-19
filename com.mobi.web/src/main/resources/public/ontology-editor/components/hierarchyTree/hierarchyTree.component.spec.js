@@ -216,21 +216,21 @@ describe('Hierarchy Tree component', function() {
             });
             it('should return true when both the search and dropdown filter match', function() {
                 this.controller.filterText = 'ti';
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(true);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(true);
             });
             it('should return false when the search filter matches and dropdown filter does not match', function() {
                 this.controller.filterText = 'ti';
-                this.controller.numDropdownFilters = 0;
+                this.controller.dropdownFilterActive = false;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(false);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(true);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(false);
             });
             it('should return false when the search filter matches and dropdown filter does not match', function() {
                 this.controller.filterText = '';
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(false);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(false);
@@ -238,7 +238,7 @@ describe('Hierarchy Tree component', function() {
             it('should return true when both the search and dropdown filter do not match but the node has children', function() {
                 this.filterNode.hasChildren = true;
                 this.controller.filterText = '';
-                this.controller.numDropdownFilters = 1;
+                this.controller.dropdownFilterActive = true;
                 spyOn(this.controller, 'matchesDropdownFilters').and.returnValue(true);
                 spyOn(this.controller, 'matchesSearchFilter').and.returnValue(false);
                 expect(this.controller.processFilters(this.filterNode)).toEqual(true);

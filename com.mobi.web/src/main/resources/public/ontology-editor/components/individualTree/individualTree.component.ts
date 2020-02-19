@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
+
 import { join, filter, pick, some, find, get, has, every } from 'lodash';
 
 const template = require('./individualTree.component.html');
-
-import './individualTree.component.scss';
 
 /**
  * @ngdoc component
@@ -67,9 +67,9 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -83,13 +83,15 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
     };
 
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        clearSelection();
+        if (!(Object.keys(changesObj).length === 1 && changesObj.index)) {
+            clearSelection();
+        }
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
             update();
         }
@@ -101,16 +103,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
-        dvm.dropdownOpen = false;
-
-    }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
@@ -161,19 +155,12 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             }
         }
         return searchMatch;
-
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.shouldFilter = function() {
-        return (dvm.filterText || dvm.numDropdownFilters > 0);
+        return (dvm.filterText || dvm.dropdownFilterActive);
     }
     dvm.processFilters = function (node) {
         delete node.underline;
@@ -224,11 +211,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
 }
 

@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import * as angular from 'angular';
+
 import { filter, join, has, findIndex, find, some, pick, get, every } from 'lodash';
 
 const template = require('./everythingTree.component.html');
-
-import './everythingTree.component.scss';
 
 /**
  * @ngdoc component
@@ -63,13 +63,13 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.searchText = '';
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
+    dvm.dropdownFilterActive = false;
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (node.hasOwnProperty('mobi')) {
                 if (node.mobi.imported) {
@@ -79,8 +79,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             return match;
         }
     };
-
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
         update();
@@ -93,10 +92,8 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag')
         update();
-        dvm.dropdownOpen = false;
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
@@ -107,24 +104,19 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
-    }
     dvm.processFilters = function(node) {
         delete node.underline;
         delete node.parentNoMatch;
         delete node.displayNode;
         delete node.isOpened;
         if (node.title) {  // If node is a folder
-            if (dvm.filterText || dvm.numDropdownFilters > 0) {
+            if (dvm.filterText || dvm.dropdownFilterActive) {
                 node.set(dvm.os.listItem.ontologyRecord.recordId, true);
             }
             node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
         } else {
             node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-            if (dvm.filterText || (dvm.numDropdownFilters > 0)) {
+            if (dvm.filterText || dvm.dropdownFilterActive) {
                 var match = false;
 
                 if (dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
@@ -143,13 +135,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         return true;
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = true;
@@ -188,7 +174,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             dvm.os.setOpened(path, true);
 
             // Go through the whole hierarchy and find the concept IRI we are looking at
-            // I think the purpose of these lines and the previous is to set the same IRI to opened in both the ontology state service and dvm.hierarchy
+            // Set the same IRI to opened in both the ontology state service and dvm.hierarchy
             var parentNode = find(dvm.hierarchy, {'@id': iri});
 
             parentNode.isOpened = true;
@@ -198,14 +184,14 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.isShown = function(node) {
         var displayNode = !has(node, '@id') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && get(node, 'path', []).length === 2);
         // If the Properties folder is the last item in the preFilteredHierarchy, we know there are no matching properties, so we don't show
-        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node['title']) {
+        if ((dvm.dropdownFilterActive || dvm.filterText) && node['title']) {
             var position = findIndex(dvm.preFilteredHierarchy, 'title');
             if (position === dvm.preFilteredHierarchy.length - 1) {
                 node.set(dvm.os.listItem.ontologyRecord.recordId, false);
                 return false;
             }
         }
-        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node.parentNoMatch) {
+        if ((dvm.dropdownFilterActive || dvm.filterText) && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
             } else {
@@ -214,7 +200,6 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         return displayNode;
     }
-
     function update() {
         dvm.updateSearch({value: dvm.filterText});
         dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters);
@@ -223,11 +208,8 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     function clearSelection() {
         dvm.searchText = '';
         dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
 }
 
