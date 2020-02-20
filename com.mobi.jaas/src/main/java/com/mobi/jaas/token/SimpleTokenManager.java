@@ -86,9 +86,9 @@ public class SimpleTokenManager implements TokenManager {
     @Activate
     public void start(Map<String, Object> props) {
         SimpleTokenConfig config = Configurable.createConfigurable(SimpleTokenConfig.class, props);
-        if (Long.valueOf(config.defaultTokenDuration()) > 0) {
-            LOG.debug("Token duration was set to: " + config.defaultTokenDuration() + " ms");
-            tokenDuration = config.defaultTokenDuration();
+        if (Long.valueOf(config.tokenDurationMins()) > 0) {
+            LOG.debug("Token duration was set to: " + config.tokenDurationMins() + " mins");
+            tokenDuration = config.tokenDurationMins() * 60 * 1000;
         } else {
             LOG.debug("Token duration was invalid, setting token duration to default of 1 day");
             tokenDuration = ONE_DAY_MS;
