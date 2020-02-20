@@ -24,7 +24,7 @@
     <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
     <info-message ng-if="!dvm.commits.length && !dvm.error">No commits to display</info-message>
     <div class="wrapper">
-        <div class="h-100" style="width: 100px; position: absolute; overflow-x: auto; direction: rtl;">
+        <div class="h-100 commit-graph-wrapper">
             <svg class="commit-graph" ng-style="{'height': (dvm.showGraph ? dvm.commits.length * dvm.circleSpacing + dvm.deltaY : 0) + 'px', 'width': (dvm.showGraph ? dvm.deltaX + 10 : 0) + 'px'}"></svg>
         </div>
         <table class="table table-hover" ng-if="dvm.commits.length">
