@@ -37,6 +37,7 @@
                             on-click="dvm.selectItem(item)"
                             ng-dblclick="dvm.goToIfYouCan(item)"
                             in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
+                    <info-message ng-if="value.length === 500">Results were truncated to 500 items.</info-message>
                 </ul>
             </div>
         </div>
