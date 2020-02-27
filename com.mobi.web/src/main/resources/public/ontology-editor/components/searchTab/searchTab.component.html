@@ -29,6 +29,7 @@
             <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
+                <warning-message ng-if="value.length === 500">Search results truncated because they exceeded 500 items.</warning-message>
                 <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-up': isClosed, 'fa-chevron-down': !isClosed}"></i></div>
                 <ul class="tree" ng-if="!isClosed">
                     <tree-item ng-repeat="item in value track by item"
@@ -37,7 +38,6 @@
                             on-click="dvm.selectItem(item)"
                             ng-dblclick="dvm.goToIfYouCan(item)"
                             in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
-                    <info-message ng-if="value.length === 500">Results were truncated to 500 items.</info-message>
                 </ul>
             </div>
         </div>
