@@ -45,6 +45,12 @@ public interface Ontology {
 
     OutputStream asOwlXml() throws MobiOntologyException;
 
+    OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException;
+
+    OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException;
+
+    OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException;
+
     /**
      * Returns the Ontology as JSON-LD in an OutputStream.
      *
@@ -53,6 +59,16 @@ public interface Ontology {
      * @throws MobiOntologyException If an error occurs while parsing
      */
     OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException;
+
+    /**
+     * Returns the Ontology as JSON-LD in an OutputStream.
+     *
+     * @param skolemize Whether or not blank node ids should be skolemized before rendering
+     * @param
+     * @return the OutputStream that was written to
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
+    OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException;
 
     /**
      * Returns the OntologyID that describes the Ontology IRI, Version IRI,

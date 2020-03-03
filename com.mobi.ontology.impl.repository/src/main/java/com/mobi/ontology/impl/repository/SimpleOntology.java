@@ -443,7 +443,17 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
+    public OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException {
+        return getOntologyOutputStream(RDFFormat.TURTLE);
+    }
+
+    @Override
     public OutputStream asRdfXml() throws MobiOntologyException {
+        return getOntologyOutputStream(RDFFormat.RDFXML);
+    }
+
+    @Override
+    public OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException {
         return getOntologyOutputStream(RDFFormat.RDFXML);
     }
 
@@ -453,8 +463,18 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
+    public OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException {
+        throw new NotImplementedException("OWL/XML format is not yet implemented.");
+    }
+
+    @Override
     public OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
+        return asJsonLD(skolemize, outputStream);
+    }
+
+    @Override
+    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException {
         WriterConfig config = new WriterConfig();
         try {
             long startTime = getStartTime();
@@ -463,7 +483,7 @@ public class SimpleOntology implements Ontology {
                 model = bNodeService.skolemize(model);
             }
             Rio.write(transformer.sesameModel(model), outputStream, RDFFormat.JSONLD, config);
-            logTrace("asJsonLD(skolemize)", startTime);
+            logTrace("asJsonLD(skolemize, outputStream)", startTime);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
@@ -471,15 +491,19 @@ public class SimpleOntology implements Ontology {
     }
 
     private OutputStream getOntologyOutputStream(RDFFormat format) {
-        long startTime = getStartTime();
         OutputStream outputStream = new ByteArrayOutputStream();
+        return getOntologyOutputStream(format, outputStream);
+    }
+
+    private OutputStream getOntologyOutputStream(RDFFormat format, OutputStream outputStream) {
+        long startTime = getStartTime();
         try {
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
             Rio.write(transformer.sesameModel(asModel(mf)), rdfWriter);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
-        logTrace("getOntologyOutputStream(" + format.getName() + ")", startTime);
+        logTrace("getOntologyOutputStream(" + format.getName() + ", outputStream)", startTime);
         return outputStream;
     }
 
