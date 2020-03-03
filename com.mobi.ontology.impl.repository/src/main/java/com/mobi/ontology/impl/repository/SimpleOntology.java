@@ -444,7 +444,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException {
-        return getOntologyOutputStream(RDFFormat.TURTLE);
+        return getOntologyOutputStream(RDFFormat.TURTLE, outputStream);
     }
 
     @Override
@@ -454,7 +454,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException {
-        return getOntologyOutputStream(RDFFormat.RDFXML);
+        return getOntologyOutputStream(RDFFormat.RDFXML, outputStream);
     }
 
     @Override
