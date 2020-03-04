@@ -497,6 +497,7 @@ public class SimpleOntology implements Ontology {
             } else {
                 com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, removeContextSH);
             }
+            undoApplyDifferenceIfPresent(conn);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
