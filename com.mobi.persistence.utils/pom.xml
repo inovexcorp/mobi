@@ -101,6 +101,7 @@
                         <Export-Package>
                             com.mobi.persistence.utils.api; provide:=true,
                             com.mobi.persistence.utils.exception,
+                            com.mobi.persistence.utils.rio,
                             com.mobi.persistence.utils
                         </Export-Package>
                         <Service-Component>*</Service-Component>
