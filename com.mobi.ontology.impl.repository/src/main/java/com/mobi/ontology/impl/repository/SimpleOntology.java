@@ -77,7 +77,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -489,7 +488,7 @@ public class SimpleOntology implements Ontology {
         try (DatasetConnection conn = getDatasetConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null,
                     conn.getSystemDefaultNamedGraph());
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
+            RDFHandler rdfWriter = Rio.createWriter(format, outputStream);
             RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
             if (skolemize) {
                 SkolemizeHandler skolemizeSH = new SkolemizeHandler(bNodeService);
