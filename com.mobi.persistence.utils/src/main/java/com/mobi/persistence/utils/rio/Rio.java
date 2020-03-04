@@ -49,10 +49,11 @@ public class Rio {
         }
 
         for (final Statement st : iterable) {
+            Statement handledStatement = st;
             for (StatementHandler statementHandler : statementHandlers) {
-                statementHandler.handleStatement(st);
+                handledStatement = statementHandler.handleStatement(handledStatement);
             }
-            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(st);
+            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
             writer.handleStatement(sesameStatement);
         }
         writer.endRDF();
