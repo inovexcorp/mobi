@@ -28,4 +28,74 @@ export const loginManagerServiceProvider = {
     provide: 'loginManagerService',
     useFactory: loginManagerServiceFactory,
     deps: ['$injector']
+};
+
+export function utilServiceFactory(i: any) {
+    return i.get('utilService');
 }
+
+export const utilServiceProvider = {
+    provide: 'utilService',
+    useFactory: utilServiceFactory,
+    deps: ['$injector']
+};
+
+export function provManagerServiceFactory(i: any) {
+    return i.get('provManagerService');
+}
+
+export const provManagerServiceProvider = {
+    provide: 'provManagerService',
+    useFactory: provManagerServiceFactory,
+    deps: ['$injector']
+};
+
+export function prefixesFactory(i: any) {
+    return i.get('prefixes');
+}
+
+export const prefixesProvider = {
+    provide: 'prefixes',
+    useFactory: prefixesFactory,
+    deps: ['$injector']
+};
+
+export function httpServiceFactory(i: any) {
+    return i.get('httpService');
+}
+
+export const httpServiceProvider = {
+    provide: 'httpService',
+    useFactory: httpServiceFactory,
+    deps: ['$injector']
+};
+
+export function userManagerServiceFactory(i: any) {
+    return i.get('userManagerService');
+}
+
+export const userManagerServiceProvider = {
+    provide: 'userManagerService',
+    useFactory: userManagerServiceFactory,
+    deps: ['$injector']
+};
+
+export function ontologyStateServiceFactory(i: any) {
+    return i.get('ontologyStateService');
+}
+
+export const ontologyStateServiceProvider = {
+    provide: 'ontologyStateService',
+    useFactory: ontologyStateServiceFactory,
+    deps: ['$injector']
+};
+
+export function discoverStateServiceFactory(i: any) {
+    return i.get('discoverStateService');
+}
+
+export const discoverStateServiceProvider = {
+    provide: 'discoverStateService',
+    useFactory: discoverStateServiceFactory,
+    deps: ['$injector']
+};

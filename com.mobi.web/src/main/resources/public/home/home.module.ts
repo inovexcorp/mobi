@@ -22,10 +22,13 @@
  */
 import * as angular from 'angular';
 
-import activityCardComponent from './components/activityCard/activityCard.component';
-import activityTitleComponent from './components/activityTitle/activityTitle.component';
-import homePageComponent from './components/homePage/homePage.component';
-import quickActionGridComponent from './components/quickActionGrid/quickActionGrid.component';
+import {ActivityCardComponent} from './components/activityCard/activityCard.component';
+import {ActivityTitleComponent} from './components/activityTitle/activityTitle.component';
+import {HomePageComponent} from './components/homePage/homePage.component';
+import {QuickActionGridComponent} from './components/quickActionGrid/quickActionGrid.component';
+import {NgModule} from "@angular/core";
+import {SharedModule} from "../shared/shared.module";
+import {downgradeComponent} from "@angular/upgrade/static";
 
 /**
  * @ngdoc overview
@@ -34,8 +37,30 @@ import quickActionGridComponent from './components/quickActionGrid/quickActionGr
  * @description
  * The `home` module provides components that make up the Home module in the Mobi application.
  */
+@NgModule({
+    imports: [
+        SharedModule
+    ],
+    declarations: [
+        ActivityCardComponent,
+        ActivityTitleComponent,
+        HomePageComponent,
+        QuickActionGridComponent
+    ],
+    providers: [
+        {provide: '$state', useFactory: ($injector: any) => $injector.get('$state'), deps: ['$injector']}
+    ],
+    entryComponents: [
+        ActivityCardComponent,
+        ActivityTitleComponent,
+        HomePageComponent,
+        QuickActionGridComponent
+    ]
+})
+export class HomeModule {}
+
 angular.module('home', [])
-    .component('activityCard', activityCardComponent)
-    .component('activityTitle', activityTitleComponent)
-    .component('homePage', homePageComponent)
-    .component('quickActionGrid', quickActionGridComponent);
+    .directive('activityCard', downgradeComponent({component: ActivityCardComponent}) as angular.IDirectiveFactory)
+    .directive('activityTitle', downgradeComponent({component: ActivityTitleComponent}) as angular.IDirectiveFactory)
+    .directive('homePage', downgradeComponent({component: HomePageComponent}) as angular.IDirectiveFactory)
+    .directive('quickActionGrid', downgradeComponent({component: QuickActionGridComponent}) as angular.IDirectiveFactory);

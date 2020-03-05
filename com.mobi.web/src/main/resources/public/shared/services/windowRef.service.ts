@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,22 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import './homePage.component.scss';
-import {Component} from "@angular/core";
+import {Injectable} from "@angular/core";
 
-/**
- * @ngdoc component
- * @name home.component:homePage
- *
- * @description
- * `homePage` is a component which creates the main page of the Home module. The page contains a welcome banner image
- * along with a {@link home.component:quickActionGrid grid of quick actions} and a
- * {@link home.component:activityCard list of activities} within the Mobi instance.
- */
-@Component({
-    selector: 'home-page',
-    templateUrl: './homePage.component.html'
-})
-export class HomePageComponent {
+
+@Injectable()
+export class WindowRef {
     constructor() {}
+
+    getNativeWindow() {
+        return window;
+    }
 }

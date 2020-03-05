@@ -135,9 +135,19 @@ import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 
 // NgUpgrade
-import { loginManagerServiceProvider } from '../ajs.upgradedProviders';
+import {
+    httpServiceProvider,
+    loginManagerServiceProvider,
+    prefixesProvider,
+    provManagerServiceProvider,
+    userManagerServiceProvider,
+    utilServiceProvider,
+    ontologyStateServiceProvider,
+    discoverStateServiceProvider,
+} from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import {WindowRef} from "./services/windowRef.service";
 
 /**
  * @ngdoc overview
@@ -162,10 +172,18 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
         CommonModule,
         FormsModule,
         ReactiveFormsModule,
-        ErrorDisplayComponent
+        ErrorDisplayComponent,
     ],
     providers: [
-        loginManagerServiceProvider
+        loginManagerServiceProvider,
+        utilServiceProvider,
+        provManagerServiceProvider,
+        prefixesProvider,
+        httpServiceProvider,
+        userManagerServiceProvider,
+        ontologyStateServiceProvider,
+        discoverStateServiceProvider,
+        WindowRef
     ]
 })
 export class SharedModule {}

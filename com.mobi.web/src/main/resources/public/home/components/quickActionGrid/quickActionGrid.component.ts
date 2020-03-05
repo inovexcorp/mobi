@@ -21,10 +21,9 @@
  * #L%
  */
 import { chunk, isEmpty } from 'lodash';
-
 import './quickActionGrid.component.scss';
-
-const template = require('./quickActionGrid.component.html');
+import {Component, Inject, OnInit} from "@angular/core";
+import {WindowRef} from "../../../shared/services/windowRef.service";
 
 /**
  * @ngdoc component
@@ -37,84 +36,78 @@ const template = require('./quickActionGrid.component.html');
  * common actions in the application. These actions are searching the catalog, opening an ontology, reading the
  * documentation, exploring data, querying data, and ingesting data.
  */
-const quickActionGridComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: quickActionGridComponentCtrl
-};
+@Component({
+    selector: 'quick-action-grid',
+    templateUrl: './quickActionGrid.component.html'
+})
+export class QuickActionGridComponent implements OnInit {
+    public actions = [];
 
-quickActionGridComponentCtrl.$inject = ['$window', '$state', 'ontologyStateService', 'discoverStateService'];
-
-function quickActionGridComponentCtrl($window, $state, ontologyStateService, discoverStateService) {
-    var dvm = this;
-    var os = ontologyStateService;
-    var ds = discoverStateService;
-    dvm.actions = [];
-
-    dvm.$onInit = function() {
-        var actions = [
+    constructor(private windowRef: WindowRef, @Inject('$state') private $state, @Inject('ontologyStateService') private os,
+                @Inject('discoverStateService') private ds) {
+    }
+    
+    ngOnInit(): void {
+        let actions = [
             {
                 title: 'Search the Catalog',
                 icon: 'fa-book',
-                action: dvm.searchTheCatalog
+                action: this.searchTheCatalog
             },
             {
                 title: 'Open an Ontology',
                 icon: 'fa-folder-open',
-                action: dvm.openAnOntology
+                action: this.openAnOntology
             },
             {
                 title: 'Read the Documentation',
                 icon: 'fa-book',
-                action: dvm.readTheDocumentation
+                action: this.readTheDocumentation
             },
             {
                 title: 'Explore Data',
                 icon: 'fa-database',
-                action: dvm.exploreData
+                action: this.exploreData
             },
             {
                 title: 'Query Data',
                 icon: 'fa-search',
-                action: dvm.queryData
+                action: this.queryData
             },
             {
                 title: 'Ingest Data',
                 icon: 'fa-map',
-                action: dvm.ingestData
+                action: this.ingestData
             },
         ];
-        dvm.actions = chunk(actions, 3);
+        this.actions = chunk(actions, 3);
     }
-    dvm.searchTheCatalog = function() {
-        $state.go('root.catalog');
+    searchTheCatalog() {
+        this.$state.go('root.catalog');
     }
-    dvm.openAnOntology = function() {
-        $state.go('root.ontology-editor');
-        if (!isEmpty(os.listItem)) {
-            os.listItem.active = false;
+    openAnOntology() {
+        this.$state.go('root.ontology-editor');
+        if (!isEmpty(this.os.listItem)) {
+            this.os.listItem.active = false;
         }
-        os.listItem = {};
+        this.os.listItem = {};
     }
-    dvm.readTheDocumentation = function() {
-        $window.open('https://mobi.inovexcorp.com/docs/', '_blank');
+    readTheDocumentation() {
+        this.windowRef.getNativeWindow().open('https://mobi.inovexcorp.com/docs/', '_blank');
     }
-    dvm.exploreData = function() {
-        $state.go('root.discover');
-        ds.explore.active = true;
-        ds.search.active = false;
-        ds.query.active = false;
+    exploreData() {
+        this.$state.go('root.discover');
+        this.ds.explore.active = true;
+        this.ds.search.active = false;
+        this.ds.query.active = false;
     }
-    dvm.queryData = function() {
-        $state.go('root.discover');
-        ds.explore.active = false;
-        ds.search.active = false;
-        ds.query.active = true;
+    queryData() {
+        this.$state.go('root.discover');
+        this.ds.explore.active = false;
+        this.ds.search.active = false;
+        this.ds.query.active = true;
     }
-    dvm.ingestData = function() {
-        $state.go('root.mapper');
+    ingestData() {
+        this.$state.go('root.mapper');
     }
 }
-
-export default quickActionGridComponent;
