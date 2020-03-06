@@ -1,5 +1,0 @@
-select DISTINCT ?o
-where {
-  ?s ?p ?o
-  filter isLiteral(?o)
-}
