@@ -2656,10 +2656,7 @@ public class OntologyRest {
      * @return a Set of Individual IRIs from the provided Ontology.
      */
     private Set<IRI> getNamedIndividualIRIs(Ontology ontology) {
-        Model model = ontology.asModel(modelFactory);
         return ontology.getAllIndividuals().stream()
-                .filter(individual -> model.contains(individual.getIRI(),
-                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .map(Individual::getIRI)
                 .collect(Collectors.toSet());
     }

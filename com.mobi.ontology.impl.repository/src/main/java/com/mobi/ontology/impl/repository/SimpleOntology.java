@@ -132,7 +132,6 @@ public class SimpleOntology implements Ontology {
     private static final String GET_INDIVIDUALS_OF_TYPE;
     private static final String GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES;
     private static final String GET_ALL_NO_DOMAIN_DATA_PROPERTIES;
-    private static final String GET_ALL_DATATYPES;
     private static final String GET_ALL_INDIVIDUALS;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
@@ -216,10 +215,6 @@ public class SimpleOntology implements Ontology {
             );
             GET_ALL_NO_DOMAIN_DATA_PROPERTIES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-no-domain-data-properties.rq"),
-                    "UTF-8"
-            );
-            GET_ALL_DATATYPES = IOUtils.toString(
-                    SimpleOntology.class.getResourceAsStream("/get-all-datatypes.rq"),
                     "UTF-8"
             );
             GET_ALL_INDIVIDUALS = IOUtils.toString(
@@ -675,11 +670,20 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Datatype> getAllDatatypes() {
-        return getIRISet(runQueryOnOntology(GET_ALL_DATATYPES, null,
-                "getAllDatatypes()", false))
-                .stream()
-                .map(SimpleDatatype::new)
-                .collect(Collectors.toSet());
+        try (DatasetConnection conn = getDatasetConnection()) {
+            long start = getStartTime();
+            List<Statement> statements = RepositoryResults.asList(conn.getStatements(null,
+                    vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(com.mobi.ontologies.rdfs.Datatype.TYPE),
+                    conn.getSystemDefaultNamedGraph()));
+            Set<Datatype> dataTypes = statements.stream()
+                    .map(Statement::getSubject)
+                    .filter(iri -> iri instanceof IRI)
+                    .map(subject -> new SimpleDatatype((IRI) subject))
+                    .collect(Collectors.toSet());
+            undoApplyDifferenceIfPresent(conn);
+            logTrace("getAllDatatypes()", start);
+            return dataTypes;
+        }
     }
 
     @Override
