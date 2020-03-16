@@ -23,22 +23,14 @@ package com.mobi.repository.base;
  * #L%
  */
 
-import com.mobi.repository.api.DelegatingRepository;
 import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.exception.RepositoryException;
 
-import java.io.File;
-import java.util.Optional;
-
-public abstract class ConfigurationBasedRepositoryWrapper<T extends RepositoryConfig> implements DelegatingRepository {
+public abstract class ConfigurationBasedRepositoryWrapper<T extends RepositoryConfig> extends AbstractRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "default";
-
-    private volatile Repository delegate;
-    protected String repositoryID;
 
     /**
      * Creates a new <tt>RepositoryWrapper</tt>.
@@ -52,54 +44,6 @@ public abstract class ConfigurationBasedRepositoryWrapper<T extends RepositoryCo
      */
     public ConfigurationBasedRepositoryWrapper(Repository delegate) {
         setDelegate(delegate);
-    }
-
-    @Override
-    public Repository getDelegate() {
-        return delegate;
-    }
-
-    @Override
-    public void setDelegate(Repository delegate) {
-        this.delegate = delegate;
-    }
-
-    public String getRepositoryID() {
-        return this.repositoryID;
-    }
-
-    public void setRepositoryID(String repositoryID) {
-        this.repositoryID = repositoryID;
-    }
-
-    @Override
-    public RepositoryConnection getConnection() throws RepositoryException {
-        return delegate.getConnection();
-    }
-
-    @Override
-    public RepositoryConfig getConfig() {
-        return delegate.getConfig();
-    }
-
-    @Override
-    public Optional<File> getDataDir() {
-        return delegate.getDataDir();
-    }
-
-    @Override
-    public void initialize() {
-        throw new UnsupportedOperationException("A shared service cannot be initialized by a third party");
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return delegate.isInitialized();
-    }
-
-    @Override
-    public void shutDown() {
-        throw new UnsupportedOperationException("A shared service cannot be destroyed by a third party");
     }
 
     protected void start(T config) {
