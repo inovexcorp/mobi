@@ -107,11 +107,11 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         OntologyId id = ontologyManager.createOntologyId(ontology);
         IRI ontologyIRI = id.getOntologyIRI().orElse((IRI) id.getOntologyIdentifier());
 
-        Optional<Resource> firstOntologyResource = ontology
-                .filter(null, typeIri, ontologyType).stream()
-                .findFirst()
-                .flatMap(statement -> Optional.of(statement.getSubject()));
         if (!id.getOntologyIRI().isPresent()) {
+            Optional<Resource> firstOntologyResource = ontology
+                    .filter(null, typeIri, ontologyType).stream()
+                    .findFirst()
+                    .flatMap(statement -> Optional.of(statement.getSubject()));
             if (firstOntologyResource.isPresent()) {
                 // Handle Blank Node Ontology Resource
                 ontology.filter(firstOntologyResource.get(), null, null).forEach(statement ->
