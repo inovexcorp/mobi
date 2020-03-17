@@ -32,7 +32,7 @@ import com.mobi.repository.exception.RepositoryException;
 import java.io.File;
 import java.util.Optional;
 
-public class AbstractRepositoryWrapper implements DelegatingRepository {
+public abstract class AbstractRepositoryWrapper implements DelegatingRepository {
 
     private volatile Repository delegate;
     protected String repositoryID;
