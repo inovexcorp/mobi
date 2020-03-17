@@ -6,9 +6,6 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @base <http://mobi.com/ontology> .
 
-[] rdf:type owl:Ontology ;
-       <http://purl.org/dc/terms/title> "Test Ontology"^^xsd:string ;
-       <http://purl.org/dc/terms/description> "This is a test ontology."^^xsd:string .
 
 #################################################################
 #    Annotation properties

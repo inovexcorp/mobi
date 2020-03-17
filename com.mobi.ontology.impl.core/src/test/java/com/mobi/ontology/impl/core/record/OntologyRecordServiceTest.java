@@ -416,7 +416,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void createWithBlankNodeOntology() throws Exception {
+    public void createWithBlankNodeOntology() {
         // Setup:
         RecordOperationConfig config = new OperationConfig();
         Set<String> names = new LinkedHashSet<>();
@@ -426,6 +426,55 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        // TODO: Maybe this prefix should be on the OntologyId Interface...
+        String defaultPrefix = "http://mobi.com/ontologies/";
+        IRI identifier = VALUE_FACTORY.createIRI(defaultPrefix + "test");
+        OntologyId ontologyId = mock(OntologyId.class);
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.empty());
+        when(ontologyId.getVersionIRI()).thenReturn(Optional.empty());
+        when(ontologyId.getOntologyIdentifier()).thenReturn(identifier);
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId);
+
+        // When:
+        recordService.create(user, config, connection);
+
+        // Then:
+        verify(ontologyId, times(2)).getOntologyIRI();
+        verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyManager).createOntologyId(any(Model.class));
+        verify(utilsService, times(2)).addObject(any(Record.class),
+                any(RepositoryConnection.class));
+        verify(provUtils).startCreateActivity(eq(user));
+        verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+
+        ArgumentCaptor<Model> argument = ArgumentCaptor.forClass(Model.class);
+        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
+                anyString(), argument.capture(), eq(null), any(RepositoryConnection.class));
+        Model storedOntology = argument.getValue();
+        Model ontologySubjects = storedOntology.filter(null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue()));
+        Resource subject = ontologySubjects.stream().findFirst().get().getSubject();
+        assertEquals(1, ontologySubjects.size());
+        assertTrue(subject instanceof IRI);
+        assertEquals(identifier, subject);
+    }
+
+    @Test
+    public void createWithNoOntology() {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-ont.ttl"));
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);

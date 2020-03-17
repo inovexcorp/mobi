@@ -111,11 +111,16 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
                 .filter(null, typeIri, ontologyType).stream()
                 .findFirst()
                 .flatMap(statement -> Optional.of(statement.getSubject()));
-        if (!id.getOntologyIRI().isPresent() && firstOntologyResource.isPresent()) {
-            // Handle Blank Node Ontology Resource
-            ontology.filter(firstOntologyResource.get(), null, null).forEach(statement ->
-                    ontology.add(ontologyIRI, statement.getPredicate(), statement.getObject()));
-            ontology.remove(firstOntologyResource.get(), null, null);
+        if (!id.getOntologyIRI().isPresent()) {
+            if (firstOntologyResource.isPresent()) {
+                // Handle Blank Node Ontology Resource
+                ontology.filter(firstOntologyResource.get(), null, null).forEach(statement ->
+                        ontology.add(ontologyIRI, statement.getPredicate(), statement.getObject()));
+                ontology.remove(firstOntologyResource.get(), null, null);
+            } else {
+                // Handle missing Ontology Resource
+                ontology.add(ontologyIRI, typeIri, ontologyType);
+            }
         }
 
         validateOntology(ontologyIRI);
