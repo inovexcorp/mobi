@@ -31,6 +31,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -82,6 +83,8 @@ import com.mobi.repository.exception.RepositoryException;
 import com.mobi.security.policy.api.ontologies.policy.Policy;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
@@ -91,6 +94,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -353,7 +357,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(ontologyId1).getOntologyIRI();
+        verify(ontologyId1, times(2)).getOntologyIRI();
         verify(ontologyId1).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
@@ -402,13 +406,62 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
-        verify(ontologyId2).getOntologyIRI();
+        verify(ontologyId2, times(2)).getOntologyIRI();
         verify(ontologyId2).getOntologyIdentifier();
         verify(ontologyManager).createOntologyId(any(Model.class));
         verify(utilsService, times(2)).addObject(any(Record.class),
                 any(RepositoryConnection.class));
         verify(provUtils).startCreateActivity(eq(user));
         verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+    }
+
+    @Test
+    public void createWithBlankNodeOntology() throws Exception {
+        // Setup:
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> names = new LinkedHashSet<>();
+        names.add("Rick");
+        names.add("Morty");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+
+        // TODO: Maybe this prefix should be on the OntologyId Interface...
+        String defaultPrefix = "http://mobi.com/ontologies/";
+        IRI identifier = VALUE_FACTORY.createIRI(defaultPrefix + "test");
+        OntologyId ontologyId = mock(OntologyId.class);
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.empty());
+        when(ontologyId.getVersionIRI()).thenReturn(Optional.empty());
+        when(ontologyId.getOntologyIdentifier()).thenReturn(identifier);
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyId);
+
+        // When:
+        recordService.create(user, config, connection);
+
+        // Then:
+        verify(ontologyId, times(2)).getOntologyIRI();
+        verify(ontologyId).getOntologyIdentifier();
+        verify(ontologyManager).createOntologyId(any(Model.class));
+        verify(utilsService, times(2)).addObject(any(Record.class),
+                any(RepositoryConnection.class));
+        verify(provUtils).startCreateActivity(eq(user));
+        verify(provUtils).endCreateActivity(any(CreateActivity.class), any(IRI.class));
+
+        ArgumentCaptor<Model> argument = ArgumentCaptor.forClass(Model.class);
+        verify(versioningManager).commit(eq(catalogId), any(IRI.class), any(IRI.class), eq(user),
+                anyString(), argument.capture(), eq(null), any(RepositoryConnection.class));
+        Model storedOntology = argument.getValue();
+        Model ontologySubjects = storedOntology.filter(null, VALUE_FACTORY.createIRI(RDF.TYPE.stringValue()),
+                VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue()));
+        Resource subject = ontologySubjects.stream().findFirst().get().getSubject();
+        assertEquals(1, ontologySubjects.size());
+        assertTrue(subject instanceof IRI);
+        assertEquals(identifier, subject);
     }
 
     @Test

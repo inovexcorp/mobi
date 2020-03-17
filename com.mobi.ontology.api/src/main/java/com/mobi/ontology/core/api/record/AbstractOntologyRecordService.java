@@ -43,6 +43,7 @@ import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
@@ -103,12 +104,20 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     private void setOntologyToRecord(T record, Model ontology) {
         IRI typeIri = valueFactory.createIRI(RDF.TYPE.stringValue());
         IRI ontologyType = valueFactory.createIRI(OWL.ONTOLOGY.stringValue());
-        Model ontologyIriModel = ontology.filter(null, typeIri, ontologyType);
         OntologyId id = ontologyManager.createOntologyId(ontology);
         IRI ontologyIRI = id.getOntologyIRI().orElse((IRI) id.getOntologyIdentifier());
-        if (ontologyIriModel.size() == 0) {
-            ontology.add(ontologyIRI, typeIri, ontologyType);
+
+        Optional<Resource> firstOntologyResource = ontology
+                .filter(null, typeIri, ontologyType).stream()
+                .findFirst()
+                .flatMap(statement -> Optional.of(statement.getSubject()));
+        if (!id.getOntologyIRI().isPresent() && firstOntologyResource.isPresent()) {
+            // Handle Blank Node Ontology Resource
+            ontology.filter(firstOntologyResource.get(), null, null).forEach(statement ->
+                    ontology.add(ontologyIRI, statement.getPredicate(), statement.getObject()));
+            ontology.remove(firstOntologyResource.get(), null, null);
         }
+
         validateOntology(ontologyIRI);
         record.setOntologyIRI(ontologyIRI);
     }
