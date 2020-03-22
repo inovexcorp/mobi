@@ -1,0 +1,9 @@
+resourcePackages:
+  - com.mobi.ontology.rest
+prettyPrint: true
+cacheTTL: 0
+openAPI:
+  info:
+    version: ${project.version}
+    title: Mobi
+    description: 'Mobi REST API Documentation'
