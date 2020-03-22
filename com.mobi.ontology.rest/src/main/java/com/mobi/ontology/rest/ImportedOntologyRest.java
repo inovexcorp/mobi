@@ -24,8 +24,9 @@ package com.mobi.ontology.rest;
  */
 
 import com.mobi.rest.util.ErrorUtils;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.osgi.service.component.annotations.Component;
 
 import java.io.IOException;
@@ -38,22 +39,21 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 @Path("/imported-ontologies")
-@Api(value = "/imported-ontologies")
 @Component(service = ImportedOntologyRest.class, immediate = true)
 public class ImportedOntologyRest {
 
-    /**
-     * Checks to see if the provided URL is resolvable.
-     *
-     * @param url the String representing the URL to verify
-     * @return OK if the provided URL is resolvable. BAD_REQUEST if the URL is not resolvable. INTERNAL_SERVER_ERROR if
-     *         a HttpURLConnection cannot be made.
-     */
     @GET
     @Path("{url}")
+    @Operation(summary = "Checks to see if the provided URL is resolvable.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "URL is resolvable"),
+                    @ApiResponse(responseCode = "400", description = "URL is not resolvable"),
+                    @ApiResponse(responseCode = "500", description = "An HttpURLConnection cannot be made"),
+    })
     @RolesAllowed("user")
-    @ApiOperation("Checks to see if the provided URL is resolvable.")
-    public Response verifyUrl(@PathParam("url") String url) {
+    public Response verifyUrl(
+            @Parameter(description = "The String representing the URL to verify.", required = true) @PathParam("url") String url
+    ) {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(url).openConnection();

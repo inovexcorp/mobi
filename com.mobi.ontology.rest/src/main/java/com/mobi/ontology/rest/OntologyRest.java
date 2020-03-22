@@ -90,8 +90,6 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -151,10 +149,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-//import com.mobi.query.exception.MalformedQueryException;
 
 @Path("/ontologies")
-@Api(value = "/ontologies")
 @Component(service = OntologyRest.class, immediate = true)
 public class OntologyRest {
 
@@ -228,7 +224,7 @@ public class OntologyRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Uploads an ontology file to the data store.")
+////    @ApiOperation("Uploads an ontology file to the data store.")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context ContainerRequestContext context,
@@ -267,7 +263,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Uploads ontology JSON-LD to the data store.")
+//    @ApiOperation("Uploads ontology JSON-LD to the data store.")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadOntologyJson(@Context ContainerRequestContext context, @QueryParam("title") String title,
@@ -311,7 +307,7 @@ public class OntologyRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the ontology in the requested format.")
+//    @ApiOperation("Retrieves the ontology in the requested format.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntology(@Context ContainerRequestContext context,
                                 @PathParam("recordId") String recordIdStr,
@@ -348,7 +344,7 @@ public class OntologyRest {
     @DELETE
     @Path("{recordId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
+//    @ApiOperation("Deletes the OntologyRecord with the requested recordId.")
     @ActionId(Delete.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteOntology(@Context ContainerRequestContext context,
@@ -385,7 +381,7 @@ public class OntologyRest {
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
-    @ApiOperation("Streams the associated ontology to an OutputStream.")
+//    @ApiOperation("Streams the associated ontology to an OutputStream.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response downloadOntologyFile(@Context ContainerRequestContext context,
                                          @PathParam("recordId") String recordIdStr,
@@ -434,7 +430,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates the requester's InProgressCommit with the provided entity.")
+//    @ApiOperation("Updates the requester's InProgressCommit with the provided entity.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response saveChangesToOntology(@Context ContainerRequestContext context,
@@ -480,7 +476,7 @@ public class OntologyRest {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Updates the specified ontology branch and commit with the data provided.")
+//    @ApiOperation("Updates the specified ontology branch and commit with the data provided.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response uploadChangesToOntology(@Context ContainerRequestContext context,
@@ -559,7 +555,7 @@ public class OntologyRest {
     @DELETE
     @Path("{recordId}/branches/{branchId}")
     @RolesAllowed("user")
-    @ApiOperation("Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId.")
+//    @ApiOperation("Deletes the Branch with the requested BranchId from the OntologyRecord with the provided recordId.")
     @ActionId(Modify.TYPE)
     @ActionAttributes(
             @AttributeValue(type = ValueType.PATH, id = VersionedRDFRecord.branch_IRI, value = "branchId")
@@ -601,7 +597,7 @@ public class OntologyRest {
     @Path("{recordId}/vocabulary-stuff")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a JSON representation of all the SKOS vocabulary related information about the ontology")
+//    @ApiOperation("Gets a JSON representation of all the SKOS vocabulary related information about the ontology")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVocabularyStuff(@Context ContainerRequestContext context,
                                        @PathParam("recordId") String recordIdStr,
@@ -709,7 +705,7 @@ public class OntologyRest {
     @Path("{recordId}/ontology-stuff")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a JSON representation of all the OWL ontology related information about the ontology")
+//    @ApiOperation("Gets a JSON representation of all the OWL ontology related information about the ontology")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyStuff(@Context ContainerRequestContext context,
                                      @PathParam("recordId") String recordIdStr,
@@ -862,7 +858,7 @@ public class OntologyRest {
     @Path("{recordId}/iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the IRIs in the identified ontology.")
+//    @ApiOperation("Gets the IRIs in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInOntology(@Context ContainerRequestContext context,
                                       @PathParam("recordId") String recordIdStr,
@@ -895,7 +891,7 @@ public class OntologyRest {
     @Path("{recordId}/annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the annotations in the identified ontology.")
+//    @ApiOperation("Gets the annotations in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInOntology(@Context ContainerRequestContext context,
                                              @PathParam("recordId") String recordIdStr,
@@ -925,7 +921,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new annotation to the identified ontology.")
+//    @ApiOperation("Adds a new annotation to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addAnnotationToOntology(@Context ContainerRequestContext context,
@@ -962,7 +958,7 @@ public class OntologyRest {
     @Path("{recordId}/annotations/{annotationId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified annotation from the identified ontology.")
+//    @ApiOperation("Deletes the identified annotation from the identified ontology.")
     public Response deleteAnnotationFromOntology(@Context ContainerRequestContext context,
                                                  @PathParam("recordId") String recordIdStr,
                                                  @PathParam("annotationId") String annotationIdStr,
@@ -998,7 +994,7 @@ public class OntologyRest {
     @Path("{recordId}/classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the classes in the identified ontology.")
+//    @ApiOperation("Gets the classes in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInOntology(@Context ContainerRequestContext context,
                                          @PathParam("recordId") String recordIdStr,
@@ -1030,7 +1026,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new class to the identified ontology.")
+//    @ApiOperation("Adds a new class to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addClassToOntology(@Context ContainerRequestContext context,
@@ -1065,7 +1061,7 @@ public class OntologyRest {
     @Path("{recordId}/classes/{classId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified class from the identified ontology.")
+//    @ApiOperation("Deletes the identified class from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteClassFromOntology(@Context ContainerRequestContext context,
@@ -1101,7 +1097,7 @@ public class OntologyRest {
     @Path("{recordId}/datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the datatypes in the identified ontology.")
+//    @ApiOperation("Gets the datatypes in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInOntology(@Context ContainerRequestContext context,
                                            @PathParam("recordId") String recordIdStr,
@@ -1131,7 +1127,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new datatype to the identified ontology.")
+//    @ApiOperation("Adds a new datatype to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDatatypeToOntology(@Context ContainerRequestContext context,
@@ -1166,7 +1162,7 @@ public class OntologyRest {
     @Path("{recordId}/datatypes/{datatypeId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified datatype from the identified ontology.")
+//    @ApiOperation("Deletes the identified datatype from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDatatypeFromOntology(@Context ContainerRequestContext context,
@@ -1202,7 +1198,7 @@ public class OntologyRest {
     @Path("{recordId}/object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the object properties in the identified ontology.")
+//    @ApiOperation("Gets the object properties in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInOntology(@Context ContainerRequestContext context,
                                                   @PathParam("recordId") String recordIdStr,
@@ -1232,7 +1228,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new object property to the identified ontology.")
+//    @ApiOperation("Adds a new object property to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addObjectPropertyToOntology(@Context ContainerRequestContext context,
@@ -1267,7 +1263,7 @@ public class OntologyRest {
     @Path("{recordId}/object-properties/{objectPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified object property from the identified ontology.")
+//    @ApiOperation("Deletes the identified object property from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteObjectPropertyFromOntology(@Context ContainerRequestContext context,
@@ -1303,7 +1299,7 @@ public class OntologyRest {
     @Path("{recordId}/data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data properties from the identified ontology.")
+//    @ApiOperation("Gets the data properties from the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInOntology(@Context ContainerRequestContext context,
                                                 @PathParam("recordId") String recordIdStr,
@@ -1333,7 +1329,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new data property to the identified ontology.")
+//    @ApiOperation("Adds a new data property to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addDataPropertyToOntology(@Context ContainerRequestContext context,
@@ -1368,7 +1364,7 @@ public class OntologyRest {
     @Path("{recordId}/data-properties/{dataPropertyId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified data property from the identified ontology.")
+//    @ApiOperation("Deletes the identified data property from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteDataPropertyFromOntology(@Context ContainerRequestContext context,
@@ -1404,7 +1400,7 @@ public class OntologyRest {
     @Path("{recordId}/named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the individuals in the identified ontology.")
+//    @ApiOperation("Gets the individuals in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInOntology(@Context ContainerRequestContext context,
                                                   @PathParam("recordId") String recordIdStr,
@@ -1434,7 +1430,7 @@ public class OntologyRest {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Adds a new individual to the identified ontology.")
+//    @ApiOperation("Adds a new individual to the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response addIndividualToOntology(@Context ContainerRequestContext context,
@@ -1469,7 +1465,7 @@ public class OntologyRest {
     @Path("{recordId}/named-individuals/{individualId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Deletes the identified individual from the identified ontology.")
+//    @ApiOperation("Deletes the identified individual from the identified ontology.")
     @ActionId(Modify.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteIndividualFromOntology(@Context ContainerRequestContext context,
@@ -1505,7 +1501,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the IRIs from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the IRIs from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getIRIsInImportedOntologies(@Context ContainerRequestContext context,
                                                 @PathParam("recordId") String recordIdStr,
@@ -1522,7 +1518,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-ontology-iris")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the imported ontology IRIs of the identified ontology.")
+//    @ApiOperation("Gets the imported ontology IRIs of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportedOntologyIRIs(@Context ContainerRequestContext context,
                                             @PathParam("recordId") String recordIdStr,
@@ -1574,7 +1570,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
+//    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getImportsClosure(@Context ContainerRequestContext context,
                                       @PathParam("recordId") String recordIdStr,
@@ -1612,7 +1608,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-annotations")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the annotations from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the annotations from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getAnnotationsInImportedOntologies(@Context ContainerRequestContext context,
                                                        @PathParam("recordId") String recordIdStr,
@@ -1645,7 +1641,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-classes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the classes from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the classes from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesInImportedOntologies(@Context ContainerRequestContext context,
                                                    @PathParam("recordId") String recordIdStr,
@@ -1677,7 +1673,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-datatypes")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the datatypes from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the datatypes from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDatatypesInImportedOntologies(@Context ContainerRequestContext context,
                                                      @PathParam("recordId") String recordIdStr,
@@ -1709,7 +1705,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-object-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the object properties from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the object properties from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getObjectPropertiesInImportedOntologies(@Context ContainerRequestContext context,
                                                             @PathParam("recordId") String recordIdStr,
@@ -1742,7 +1738,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-data-properties")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data properties from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the data properties from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getDataPropertiesInImportedOntologies(@Context ContainerRequestContext context,
                                                           @PathParam("recordId") String recordIdStr,
@@ -1775,7 +1771,7 @@ public class OntologyRest {
     @Path("{recordId}/imported-named-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the named individuals from the imported ontologies of the identified ontology.")
+//    @ApiOperation("Gets the named individuals from the imported ontologies of the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getNamedIndividualsInImportedOntologies(@Context ContainerRequestContext context,
                                                             @PathParam("recordId") String recordIdStr,
@@ -1811,7 +1807,7 @@ public class OntologyRest {
     @Path("{recordId}/class-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the class hierarchies for the identified ontology.")
+//    @ApiOperation("Gets the class hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyClassHierarchy(@Context ContainerRequestContext context,
                                               @PathParam("recordId") String recordIdStr,
@@ -1851,7 +1847,7 @@ public class OntologyRest {
     @Path("{recordId}/object-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the object property hierarchies for the identified ontology.")
+//    @ApiOperation("Gets the object property hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyObjectPropertyHierarchy(@Context ContainerRequestContext context,
                                                        @PathParam("recordId") String recordIdStr,
@@ -1891,7 +1887,7 @@ public class OntologyRest {
     @Path("{recordId}/data-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
+//    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyDataPropertyHierarchy(@Context ContainerRequestContext context,
                                                      @PathParam("recordId") String recordIdStr,
@@ -1932,7 +1928,7 @@ public class OntologyRest {
     @Path("{recordId}/annotation-property-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
+//    @ApiOperation("Gets the data property hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getOntologyAnnotationPropertyHierarchy(@Context ContainerRequestContext context,
                                                            @PathParam("recordId") String recordIdStr,
@@ -1972,7 +1968,7 @@ public class OntologyRest {
     @Path("{recordId}/concept-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
+//    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptHierarchy(@Context ContainerRequestContext context,
                                         @PathParam("recordId") String recordIdStr,
@@ -2013,7 +2009,7 @@ public class OntologyRest {
     @Path("{recordId}/concept-scheme-hierarchies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
+//    @ApiOperation("Gets the concept hierarchies for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getConceptSchemeHierarchy(@Context ContainerRequestContext context,
                                               @PathParam("recordId") String recordIdStr,
@@ -2051,7 +2047,7 @@ public class OntologyRest {
     @Path("{recordId}/classes-with-individuals")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the classes with individuals in a hierarchical structure for the identified ontology.")
+//    @ApiOperation("Gets the classes with individuals in a hierarchical structure for the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getClassesWithIndividuals(@Context ContainerRequestContext context,
                                               @PathParam("recordId") String recordIdStr,
@@ -2092,7 +2088,7 @@ public class OntologyRest {
     @Path("{recordId}/entity-usages/{entityIri}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the usages of the identified entity in the identified ontology.")
+//    @ApiOperation("Gets the usages of the identified entity in the identified ontology.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityUsages(@Context ContainerRequestContext context,
                                     @PathParam("recordId") String recordIdStr,
@@ -2141,7 +2137,7 @@ public class OntologyRest {
     @Path("{recordId}/search-results")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets the search results from the identified ontology using the provided searchText.")
+//    @ApiOperation("Gets the search results from the identified ontology using the provided searchText.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getSearchResults(@Context ContainerRequestContext context,
                                      @PathParam("recordId") String recordIdStr,
@@ -2196,7 +2192,7 @@ public class OntologyRest {
     @Path("{recordId}/failed-imports")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Gets a list of ontology IRIs that were not imported.")
+//    @ApiOperation("Gets a list of ontology IRIs that were not imported.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getFailedImports(@Context ContainerRequestContext context,
                                      @PathParam("recordId") String recordIdStr,
@@ -2235,7 +2231,7 @@ public class OntologyRest {
     @Path("{recordId}/query")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")
+//    @ApiOperation("Retrieves the SPARQL query results of an ontology, and its import closures in the requested format.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response queryOntology(@Context ContainerRequestContext context,
                                   @PathParam("recordId") String recordIdStr,
