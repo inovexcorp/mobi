@@ -90,6 +90,8 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -223,15 +225,27 @@ public class OntologyRest {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Uploads an ontology file to the data store.",
+            description = "Uploads and imports an ontology file to a data store and creates an associated " +
+                    "OntologyRecord using the form data. A master Branch is created and stored with an initial " +
+                    "Commit containing the data provided in the ontology file.",
+            responses = {
+                    // TODO: We can actually dcoument the structure of the response with the "content" attribute
+                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
+                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
+                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
+            }
+    )
     @RolesAllowed("user")
-////    @ApiOperation("Uploads an ontology file to the data store.")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadFile(@Context ContainerRequestContext context,
-                               @FormDataParam("file") InputStream fileInputStream, @FormDataParam("title") String title,
-                               @FormDataParam("description") String description,
-                               @FormDataParam("markdown") String markdown,
-                               @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+    public Response uploadFile(
+            @Context ContainerRequestContext context,
+            @FormDataParam("file") InputStream fileInputStream, @FormDataParam("title") String title,
+            @FormDataParam("description") String description,
+            @FormDataParam("markdown") String markdown,
+            @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
