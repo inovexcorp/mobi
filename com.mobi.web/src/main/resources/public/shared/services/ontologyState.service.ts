@@ -1003,26 +1003,27 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var sortedParentMap = mapValues(hierarchyInfo.parentMap, arr => arr.sort((s1, s2) => compareEntityName(s1, s2, listItem)));
         var result = [];
         forEach(topLevel, iri => {
-            addNodeToFlatHierarchy(iri, result, 0, [listItem.ontologyRecord.recordId], sortedParentMap, listItem);
+            addNodeToFlatHierarchy(iri, result, 0, [listItem.ontologyRecord.recordId], sortedParentMap, listItem, listItem.ontologyRecord.recordId);
         });
         return result;
     }
     function compareEntityName(s1, s2, listItem) {
         return lowerCase(self.getEntityNameByIndex(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByIndex(s2, listItem)));
     }
-    function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem) {
+    function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem, joinedPath) {
         var newPath = concat(path, iri);
+        var newJoinedPath = joinedPath + '.' + iri;
         var item = {
             entityIRI: iri,
             hasChildren: has(parentMap, iri),
             indent,
             path: newPath,
             entity: getEntityFromListItem(listItem, iri),
-            joinedPath: self.joinPath(newPath)
+            joinedPath: newJoinedPath
         };
         result.push(item);
         forEach(get(parentMap, iri, []), child => {
-            addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap, listItem);
+            addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap, listItem, newJoinedPath);
         });
     }
     /**
@@ -1117,7 +1118,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     result.push(merge({}, node, {isClass: true}));
                     var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
                     forEach(sortedIndividuals, entityIRI => {
-                        addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem);
+                        addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem, self.joinPath(node.path));
                     });
                 }
             });

@@ -142,7 +142,8 @@ describe('Ontology State Service', function() {
             tab: {
                 active: true,
                 entityIRI: 'entityIRI',
-                usages: []
+                usages: [],
+                open: {}
             },
             other: {active: false}
         };
@@ -2215,22 +2216,30 @@ describe('Ontology State Service', function() {
             entityIRI: 'Class A',
             hasChildren: false,
             path: [this.recordId, 'Class A'],
-            indent: 0
+            joinedPath: this.recordId + '.Class A',
+            indent: 0,
+            entity: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [this.recordId, 'Class B'],
-            indent: 0
+            joinedPath: this.recordId + '.Class B',
+            indent: 0,
+            entity: undefined
         }, {
             entityIRI: 'Class B1',
             hasChildren: false,
             path: [this.recordId, 'Class B', 'Class B1'],
-            indent: 1
+            joinedPath: this.recordId + '.Class B.Class B1',
+            indent: 1,
+            entity: undefined
         }, {
             entityIRI: 'Class B2',
             hasChildren: false,
             path: [this.recordId, 'Class B', 'Class B2'],
-            indent: 1
+            joinedPath: this.recordId + '.Class B.Class B2',
+            indent: 1,
+            entity: undefined
         }]);
     });
     it('createFlatEverythingTree creates the correct array', function() {
@@ -2246,12 +2255,14 @@ describe('Ontology State Service', function() {
             '@type': [prefixes.owl + 'Class'],
             hasChildren: true,
             indent: 0,
-            path: [this.recordId, this.classId]
+            path: [this.recordId, this.classId],
+            joinedPath: this.recordId + '.' + this.classId
         }, {
             '@id': 'property1',
             hasChildren: false,
             indent: 1,
-            path: [this.recordId, this.classId, 'property1']
+            path: [this.recordId, this.classId, 'property1'],
+            joinedPath: this.recordId + '.' + this.classId + '.property1'
         }, {
             title: 'Properties',
             get: ontologyStateSvc.getNoDomainsOpened,
@@ -2261,7 +2272,8 @@ describe('Ontology State Service', function() {
             hasChildren: false,
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened,
-            path: [this.recordId, 'property2']
+            path: [this.recordId, 'property2'],
+            joinedPath: this.recordId + '.property2'
         }]);
         expect(ontologyManagerSvc.getClassProperties).toHaveBeenCalledWith([[]], this.classId);
         expect(ontologyManagerSvc.getNoDomainProperties).toHaveBeenCalledWith([[]]);
@@ -2277,56 +2289,76 @@ describe('Ontology State Service', function() {
                 entityIRI: 'Class A',
                 hasChildren: false,
                 path: [this.recordId, 'Class A'],
-                indent: 0
+                joinedPath: this.recordId + '.Class A',
+                indent: 0,
+                entity: undefined
             }, {
                 entityIRI: 'Class B',
                 hasChildren: true,
                 path: [this.recordId, 'Class B'],
-                indent: 0
+                joinedPath: this.recordId + '.Class B',
+                indent: 0,
+                entity: undefined
             }, {
                 entityIRI: 'Class B1',
                 hasChildren: false,
                 path: [this.recordId, 'Class B', 'Class B1'],
-                indent: 1
+                joinedPath: this.recordId + '.Class B.Class B1',
+                indent: 1,
+                entity: undefined
             }, {
                 entityIRI: 'Class B2',
                 hasChildren: false,
                 path: [this.recordId, 'Class B', 'Class B2'],
-                indent: 1
+                joinedPath: this.recordId + '.Class B.Class B2',
+                indent: 1,
+                entity: undefined
             }] }
         })).toEqual([{
             entityIRI: 'Class A',
             hasChildren: false,
             path: [this.recordId, 'Class A'],
+            joinedPath: this.recordId + '.Class A',
             indent: 0,
+            entity: undefined,
             isClass: true
         }, {
             entityIRI: 'Individual A1',
             hasChildren: false,
             path: [this.recordId, 'Class A', 'Individual A1'],
-            indent: 1
+            joinedPath: this.recordId + '.Class A.Individual A1',
+            indent: 1,
+            entity: undefined
         }, {
             entityIRI: 'Individual A2',
             hasChildren: false,
             path: [this.recordId, 'Class A', 'Individual A2'],
-            indent: 1
+            joinedPath: this.recordId + '.Class A.Individual A2',
+            indent: 1,
+            entity: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [this.recordId, 'Class B'],
+            joinedPath: this.recordId + '.Class B',
             indent: 0,
+            entity: undefined,
             isClass: true
         }, {
             entityIRI: 'Class B1',
             hasChildren: false,
             path: [this.recordId, 'Class B', 'Class B1'],
+            joinedPath: this.recordId + '.Class B.Class B1',
             indent: 1,
+            entity: undefined,
             isClass: true
         }, {
             entityIRI: 'Individual B1',
             hasChildren: false,
             path: [this.recordId, 'Class B', 'Class B1', 'Individual B1'],
-            indent: 2
+            joinedPath: this.recordId + '.Class B.Class B1.Individual B1',
+            indent: 2,
+            entity: undefined
         }]);
         expect(ontologyStateSvc.createFlatIndividualTree({})).toEqual([]);
     });
@@ -3071,25 +3103,6 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.listItem.inProgressCommit.additions).toEqual([]);
         expect(ontologyStateSvc.listItem.inProgressCommit.deletions).toEqual([]);
     });
-    it('setOpened sets the correct property on the state object', function() {
-        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-        _.forEach([true, false], value => {
-            ontologyStateSvc.setOpened(this.path, value);
-            expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.isOpened')).toBe(value);
-        });
-    });
-    describe('getOpened gets the correct property value on the state object', function() {
-        it('when path is not found, returns false', function() {
-            expect(ontologyStateSvc.getOpened(this.path)).toBe(false);
-        });
-        it('when path is found', function() {
-            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
-            _.forEach([true, false], value => {
-                _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(this.path) + '.isOpened', value);
-                expect(ontologyStateSvc.getOpened(this.path)).toBe(value);
-            });
-        });
-    });
     it('setNoDomainsOpened sets the correct property on the state object', function() {
         spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
         _.forEach([true, false], value => {
@@ -3307,19 +3320,17 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'resetSearchTab');
             ontologyStateSvc.listItem.selected = {};
         });
-        it('when getActiveKey is not project', function() {
-            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
+        it('when getActiveKey is not project or search', function() {
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('classes');
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.resetSearchTab).toHaveBeenCalled();
-            expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({});
-            expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: this.newOntologyIRI, preview: ''});
+            expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({open: {}, searchText: ''});
             expect(ontologyStateSvc.listItem.selected).toBeUndefined();
         });
         it('when getActiveKey is project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.resetSearchTab).toHaveBeenCalled();
-            expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({});
             expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: this.newOntologyIRI, preview: ''});
             expect(ontologyStateSvc.listItem.selected).toEqual({'@id': this.newOntologyIRI});
         });
@@ -3502,22 +3513,28 @@ describe('Ontology State Service', function() {
             this.node = {
                 indent: 1,
                 entityIRI: 'iri',
-                path: [this.recordId, 'otherIRI', 'andAnotherIRI', 'iri']
+                path: [this.recordId, 'otherIRI', 'andAnotherIRI', 'iri'],
+                joinedPath: this.recordId + '.otherIRI.andAnotherIRI.iri'
             };
+            this.tab = 'tab';
         });
         it('true when all parent paths are open', function() {
-            spyOn(ontologyStateSvc, 'getOpened').and.returnValue(true);
-            expect(ontologyStateSvc.areParentsOpen(this.node)).toBe(true);
-            expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith(this.recordId + '.otherIRI');
-            expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith(this.recordId + '.otherIRI.andAnotherIRI');
-            expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith(this.recordId);
+            ontologyStateSvc.listItem.editorTabStates[this.tab].open = {
+                [this.node.joinedPath]: true,
+                [this.recordId + '.otherIRI.andAnotherIRI']: true,
+                [this.recordId + '.otherIRI']: true
+            };
+            expect(ontologyStateSvc.areParentsOpen(this.node, this.tab)).toBe(true);
+        });
+        it('false when only some parent paths are open', function() {
+            ontologyStateSvc.listItem.editorTabStates[this.tab].open = {
+                [this.node.joinedPath]: true,
+                [this.recordId + '.otherIRI.andAnotherIRI']: true
+            };
+            expect(ontologyStateSvc.areParentsOpen(this.node, this.tab)).toBe(false);
         });
         it('false when all parent paths are not open', function() {
-            spyOn(ontologyStateSvc, 'getOpened').and.returnValue(false);
-            expect(ontologyStateSvc.areParentsOpen(this.node)).toBe(false);
-            expect(ontologyStateSvc.getOpened).toHaveBeenCalledWith(this.recordId + '.otherIRI');
-            expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith(this.recordId + '.otherIRI.andAnotherIRI');
-            expect(ontologyStateSvc.getOpened).not.toHaveBeenCalledWith(this.recordId);
+            expect(ontologyStateSvc.areParentsOpen(this.node, this.tab)).toBe(false);
         });
     });
     it('joinPath joins the provided array correctly', function() {
@@ -3878,23 +3895,22 @@ describe('Ontology State Service', function() {
     });
     it('openAt sets all parents open', function() {
         $document.querySelectorAll.and.returnValue([{offsetTop: 25}]);
-        spyOn(ontologyStateSvc, 'setOpened');
+        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('tab');
         ontologyStateSvc.openAt([{
             entityIRI: 'iri-a',
-            path: [this.recordId, 'iri-a']
+            path: [this.recordId, 'iri-a'],
+            joinedPath: this.recordId + '.iri-a'
         }, {
             entityIRI: 'iri-b',
-            path: [this.recordId, 'iri-a', 'iri-b']
+            path: [this.recordId, 'iri-a', 'iri-b'],
+            joinedPath: this.recordId + '.iri-a.iri-b'
         }, {
             entityIRI: 'iri-c',
-            path: [this.recordId, 'iri-a', 'iri-b', 'iri-c']
+            path: [this.recordId, 'iri-a', 'iri-b', 'iri-c'],
+            joinedPath: this.recordId + '.iri-a.iri-b.iri-c'
         }], 'iri-c');
-        expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.recordId + '.iri-a', true);
-        expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.recordId + '.iri-a.iri-b', true);
-        // $scope.apply();
-        // expect($document.querySelectorAll).toHaveBeenCalledWith('[class*=hierarchy-block] .repeater-container');
-        // expect($document.querySelectorAll).toHaveBeenCalledWith('[data-path-to="' + this.recordId + '.iri-a.iri-b.iri-c"]');
-        // expect(item[0].scrollTop).toBe(25);
+        expect(ontologyStateSvc.listItem.editorTabStates['tab'].open[this.recordId + '.iri-a']).toEqual(true);
+        expect(ontologyStateSvc.listItem.editorTabStates['tab'].open[this.recordId + '.iri-a.iri-b']).toEqual(true);
     });
     describe('getDefaultPrefix returns the proper value for the prefix associated with ontology', function() {
         beforeEach(function() {

@@ -128,7 +128,6 @@ describe('Everything Tree component', function() {
             expect(this.element.querySelectorAll('.tree').length).toEqual(1);
             expect(this.element.querySelectorAll('.everything-tree').length).toEqual(1);
             expect(this.element.querySelectorAll('.hierarchy-tree').length).toEqual(1);
-            expect(this.element.querySelectorAll('.h-100').length).toEqual(1);
         });
         it('based on .repeater-container', function() {
             expect(this.element.querySelectorAll('.repeater-container').length).toEqual(1);
