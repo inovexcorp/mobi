@@ -204,7 +204,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
 
     function update() {
-        if (dvm.filterText) {
+        if (dvm.shouldFilter()) {
             dvm.os.listItem.editorTabStates[dvm.activeTab].open = {};
         }
         dvm.updateSearch({value: dvm.filterText});
