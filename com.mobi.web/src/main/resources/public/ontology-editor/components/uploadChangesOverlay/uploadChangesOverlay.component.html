@@ -27,7 +27,7 @@
 <div class="modal-body">
     <form name="dvm.form" novalidate autocomplete="off">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <file-input display-text="'Select a file'" bind-model="dvm.file" change-event="dvm.update(value)" accept="'.owl,.ttl,.xml,.jsonld,.owx,.rdf'" required></file-input>
+        <file-input display-text="'Select a file'" bind-model="dvm.file" change-event="dvm.update(value)" accept="'.owl,.ttl,.xml,.jsonld,.owx,.rdf,.obo'" required></file-input>
     </form>
 </div>
 <div class="modal-footer">
