@@ -95,8 +95,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         update();
     }
     function clearSelection() {
-        // dvm.dropdownFilterActive = false;
-        // dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
         dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
         dvm.filterText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
     }
