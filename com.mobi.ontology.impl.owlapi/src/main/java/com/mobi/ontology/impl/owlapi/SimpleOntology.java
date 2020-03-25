@@ -55,6 +55,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
@@ -1030,7 +1031,11 @@ public class SimpleOntology implements Ontology {
     @Override
     public OutputStream asTurtle() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
+        return asTurtle(outputStream);
+    }
 
+    @Override
+    public OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException {
         try {
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TURTLE, outputStream));
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
@@ -1044,6 +1049,11 @@ public class SimpleOntology implements Ontology {
     @Override
     public OutputStream asRdfXml() throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
+        return asRdfXml(outputStream);
+    }
+
+    @Override
+    public OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException {
         try {
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.RDFXML, outputStream));
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();
@@ -1060,8 +1070,19 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
+    public OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException {
+        throw new NotImplementedException("OWL/XML format to a given outputStream is not yet implemented. "
+              +  "This class will be DEPRECATED in favor of com.mobi.ontology.repository.SimpleOntology.");
+    }
+
+    @Override
     public @Nonnull OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
+        return asJsonLD(skolemize, outputStream);
+    }
+
+    @Override
+    public @Nonnull OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException {
         WriterConfig config = new WriterConfig();
         try {
             org.eclipse.rdf4j.model.Model sesameModel = asSesameModel();

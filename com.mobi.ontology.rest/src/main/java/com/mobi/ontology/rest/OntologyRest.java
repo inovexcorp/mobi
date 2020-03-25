@@ -329,9 +329,11 @@ public class OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit)
                     .orElseThrow(() ->
                             ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat, skolemize);
-            Response.ResponseBuilder ok = Response.ok(ontologyAsRdf);
-            return ok.build();
+
+            StreamingOutput output = outputStream -> {
+                writeOntologyToStream(ontology, rdfFormat, skolemize, outputStream);
+            };
+            return Response.ok(output).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -2752,6 +2754,28 @@ public class OntologyRest {
         ObjectNode jsonObject = mapper.createObjectNode();
         jsonObject.set(field, arrayNode);
         return jsonObject;
+    }
+
+    /**
+     * Gets the requested serialization of the provided Ontology.
+     *
+     * @param ontology  the Ontology you want to serialize in a different format.
+     * @param rdfFormat the format you want.
+     * @param skolemize whether or not the Ontology should be skoelmized before serialized (NOTE: only applies to
+     *                  serializing as JSON-LD)
+     * @param outputStream the OutputStream that the rdf should be written to
+     */
+    private OutputStream writeOntologyToStream(Ontology ontology, String rdfFormat, boolean skolemize, OutputStream outputStream) {
+        switch (rdfFormat.toLowerCase()) {
+            case "rdf/xml":
+                return ontology.asRdfXml(outputStream);
+            case "owl/xml":
+                return ontology.asOwlXml(outputStream);
+            case "turtle":
+                return ontology.asTurtle(outputStream);
+            default:
+                return ontology.asJsonLD(skolemize, outputStream);
+        }
     }
 
     /**
