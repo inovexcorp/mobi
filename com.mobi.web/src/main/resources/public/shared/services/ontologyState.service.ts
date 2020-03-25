@@ -1011,11 +1011,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return lowerCase(self.getEntityNameByIndex(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByIndex(s2, listItem)));
     }
     function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem, joinedPath) {
-        var newPath = concat(path, iri);
+        var newPath = path.concat(iri);
         var newJoinedPath = joinedPath + '.' + iri;
         var item = {
             entityIRI: iri,
-            hasChildren: has(parentMap, iri),
+            hasChildren: parentMap.hasOwnProperty(iri),
             indent,
             path: newPath,
             entity: getEntityFromListItem(listItem, iri),

@@ -73,9 +73,9 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
     dvm.changeTarget = function(value) {
         dvm.os.listItem.merge.target = value;
         if (dvm.os.listItem.merge.target) {
-            cm.getBranchHeadCommit(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
+            cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                 .then(target => {
-                    dvm.targetHeadCommitId = target.commit['@id'];
+                    dvm.targetHeadCommitId = target["http://mobi.com/ontologies/catalog#head"][0]["@id"];
                     return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId);
                     }, $q.reject)
                 .then( diff => {
