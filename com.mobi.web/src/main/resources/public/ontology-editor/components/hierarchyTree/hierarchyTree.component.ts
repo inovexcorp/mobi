@@ -52,7 +52,8 @@ const hierarchyTreeComponent = {
         index: '<',
         updateSearch: '&',
         resetIndex: '&',
-        clickItem: '&?'
+        clickItem: '&?',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: hierarchyTreeComponentCtrl
@@ -94,15 +95,17 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         dvm.activeTab = dvm.os.getActiveKey();
         update();
     }
-    function clearSelection() {
+    function removeFilters() {
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
-        dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
-        dvm.filterText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
+        dvm.searchText = '';
+        dvm.filterText = '';
     }
     dvm.$onChanges = function(changesObj) {
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
-            clearSelection();
+            if (changesObj.branchId) {
+                removeFilters();
+            }
             update();
         }
     }

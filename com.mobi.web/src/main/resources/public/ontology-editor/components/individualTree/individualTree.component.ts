@@ -48,7 +48,8 @@ const individualTreeComponent = {
     bindings: {
         hierarchy: '<',
         index: '<',
-        updateSearch: '&'
+        updateSearch: '&',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: individualTreeComponentCtrl
@@ -92,7 +93,9 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
     dvm.$onChanges = function(changesObj) {
         if (!changesObj.hierarchy || !changesObj.hierarchy.isFirstChange()) {
-            clearSelection();
+            if (changesObj.branchId) {
+                removeFilters();
+            }
             update();
         }
     }
@@ -101,7 +104,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             dvm.os.listItem.editorTabStates.individuals.index = 0;
         }
     }
-    function clearSelection() {
+    function removeFilters() {
         dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
         dvm.filterText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
         dvm.dropdownFilterActive = false;

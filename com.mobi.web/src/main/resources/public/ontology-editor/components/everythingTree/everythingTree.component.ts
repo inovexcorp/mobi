@@ -46,7 +46,8 @@ const everythingTreeComponent = {
     template,
     bindings: {
         updateSearch: '&',
-        hierarchy: '<'
+        hierarchy: '<',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: everythingTreeComponentCtrl
@@ -89,15 +90,17 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
     dvm.$onChanges = function(changesObj) {
         if (!changesObj.hierarchy.isFirstChange()) {
-            clearSelection();
+            if (changesObj.branchId) {
+                removeFilters();
+            }
             update();
         }
     }
-    function clearSelection() {
+    function removeFilters() {
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
-        dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
-        dvm.filterText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
+        dvm.searchText = '';
+        dvm.filterText = '';
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;

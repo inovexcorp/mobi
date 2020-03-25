@@ -52,7 +52,8 @@ const propertyTreeComponent = {
         objectProps: '<',
         annotationProps: '<',
         index: '<',
-        updateSearch: '&'
+        updateSearch: '&',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: propertyTreeComponentCtrl
@@ -97,7 +98,9 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
     dvm.$onChanges = function(changesObj) {
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
-            clearSelection();
+            if (changesObj.branchId) {
+                removeFilters();
+            }
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
         }
@@ -107,7 +110,7 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             dvm.os.listItem.editorTabStates.properties.index = 0;
         }
     }
-    function clearSelection() {
+    function removeFilters() {
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
         dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
