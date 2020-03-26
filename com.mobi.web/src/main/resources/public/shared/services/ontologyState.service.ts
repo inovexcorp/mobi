@@ -107,32 +107,38 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         },
         overview: {
             active: false,
-            searchText: ''
+            searchText: '',
+            open: {}
         },
         classes: {
             active: false,
             searchText: '',
-            index: 0
+            index: 0,
+            open: {}
         },
         properties: {
             active: false,
             searchText: '',
-            index: 0
+            index: 0,
+            open: {}
         },
         individuals: {
             active: false,
             searchText: '',
-            index: 0
+            index: 0,
+            open: {}
         },
         concepts: {
             active: false,
             searchText: '',
-            index: 0
+            index: 0,
+            open: {}
         },
         schemes: {
             active: false,
             searchText: '',
-            index: 0
+            index: 0,
+            open: {}
         },
         search: {
             active: false
@@ -997,24 +1003,27 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var sortedParentMap = mapValues(hierarchyInfo.parentMap, arr => arr.sort((s1, s2) => compareEntityName(s1, s2, listItem)));
         var result = [];
         forEach(topLevel, iri => {
-            addNodeToFlatHierarchy(iri, result, 0, [listItem.ontologyRecord.recordId], sortedParentMap);
+            addNodeToFlatHierarchy(iri, result, 0, [listItem.ontologyRecord.recordId], sortedParentMap, listItem, listItem.ontologyRecord.recordId);
         });
         return result;
     }
     function compareEntityName(s1, s2, listItem) {
         return lowerCase(self.getEntityNameByIndex(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByIndex(s2, listItem)));
     }
-    function addNodeToFlatHierarchy(iri, result, indent, path, parentMap) {
-        var newPath = concat(path, iri);
+    function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem, joinedPath) {
+        var newPath = path.concat(iri);
+        var newJoinedPath = joinedPath + '.' + iri;
         var item = {
             entityIRI: iri,
-            hasChildren: has(parentMap, iri),
+            hasChildren: parentMap.hasOwnProperty(iri),
             indent,
-            path: newPath
+            path: newPath,
+            entity: getEntityFromListItem(listItem, iri),
+            joinedPath: newJoinedPath
         };
         result.push(item);
         forEach(get(parentMap, iri, []), child => {
-            addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap);
+            addNodeToFlatHierarchy(child, result, indent + 1, newPath, parentMap, listItem, newJoinedPath);
         });
     }
     /**
@@ -1055,13 +1064,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             result.push(merge({}, clazz, {
                 indent: 0,
                 hasChildren: !!orderedProperties.length,
-                path
+                path,
+                joinedPath: self.joinPath(path)
             }));
             forEach(orderedProperties, property => {
                 result.push(merge({}, property, {
                     indent: 1,
                     hasChildren: false,
-                    path: concat(path, property['@id'])
+                    path: concat(path, property['@id']),
+                    joinedPath: self.joinPath(concat(path, property['@id']))
                 }));
             });
         });
@@ -1078,7 +1089,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     indent: 1,
                     hasChildren: false,
                     get: self.getNoDomainsOpened,
-                    path: [listItem.ontologyRecord.recordId, property['@id']]
+                    path: [listItem.ontologyRecord.recordId, property['@id']],
+                    joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property['@id']])
                 }));
             });
         }
@@ -1106,7 +1118,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     result.push(merge({}, node, {isClass: true}));
                     var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
                     forEach(sortedIndividuals, entityIRI => {
-                        addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {});
+                        addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem, self.joinPath(node.path));
                     });
                 }
             });
@@ -1371,12 +1383,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.clearInProgressCommit = function() {
         self.listItem.inProgressCommit = {'additions': [], 'deletions': []}
     }
-    self.setOpened = function(pathString, isOpened) {
-        set(self.listItem.editorTabStates, getOpenPath(pathString, 'isOpened'), isOpened);
-    }
-    self.getOpened = function(pathString) {
-        return get(self.listItem.editorTabStates, getOpenPath(pathString, 'isOpened'), false);
-    }
     self.setNoDomainsOpened = function(recordId, isOpened) {
         set(self.listItem.editorTabStates, getOpenPath(recordId, 'noDomainsOpened'), isOpened);
     }
@@ -1444,9 +1450,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
     self.resetStateTabs = function(listItem = self.listItem) {
         forOwn(listItem.editorTabStates, (value, key) => {
-            if (key !== 'project') {
+            if(key == 'search') {
                 unset(value, 'entityIRI');
-            } else {
+                unset(value, encodeURIComponent(listItem.ontologyRecord.recordId));
+                value.open = {};
+            }
+            else if (key !== 'project' && key !== 'search') {
+                unset(value, 'entityIRI');
+                unset(value, encodeURIComponent(listItem.ontologyRecord.recordId));
+                value.open = {};
+                value.searchText = '';
+            }
+            else {
                 value.entityIRI = om.getOntologyIRI(listItem.ontology);
                 value.preview = '';
             }
@@ -1564,13 +1579,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return result;
     }
-    self.areParentsOpen = function(node, get = self.getOpened) {
-        var pathString = first(node.path);
-        var pathCopy = tail(initial(node.path));
-        return every(pathCopy, pathPart => {
-            pathString += '.' + pathPart;
-            return get(pathString);
-        });
+    self.areParentsOpen = function(node, tab) {
+        var allOpen = true;
+        for (var i = node.path.length - 1; i > 1; i--) {
+            var fullPath = self.joinPath(node.path.slice(0, i));
+
+            if (!self.listItem.editorTabStates[tab].open[fullPath]) {
+                allOpen = false;
+                break;
+            };
+        }
+        return allOpen;
     }
     self.joinPath = function(path) {
         return join(path, '.');
@@ -1630,7 +1649,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             var pathString = head(path);
             forEach(tail(initial(path)), pathPart => {
                 pathString += '.' + pathPart;
-                self.setOpened(pathString, true);
+                self.listItem.editorTabStates[self.getActiveKey()].open[pathString] = true;
             });
         }
     }
@@ -1758,9 +1777,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         for (var i = 0; i < index; i++) {
             var node = flatHierarchy[i];
-            if (!property && ((node.indent > 0 && self.areParentsOpen(node)) || node.indent === 0)) {
+            if (!property && ((node.indent > 0 && self.areParentsOpen(node, self.getActiveKey())) || node.indent === 0)) {
                 scrollIndex++;
-            } else if (property && self.areParentsOpen(node) && checkPropertyOpened(self.listItem.ontologyRecord.recordId)) {
+            } else if (property && self.areParentsOpen(node, self.getActiveKey()) && checkPropertyOpened(self.listItem.ontologyRecord.recordId)) {
                 scrollIndex++;
             }
         }

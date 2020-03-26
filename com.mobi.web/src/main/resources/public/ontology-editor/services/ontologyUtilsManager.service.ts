@@ -349,22 +349,22 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         var newLabel = om.getEntityName(os.listItem.selected);
         if (has(os.listItem.index, "['" + os.listItem.selected['@id'] + "'].label") && os.listItem.index[os.listItem.selected['@id']].label !== newLabel) {
             os.listItem.index[os.listItem.selected['@id']].label = newLabel;
-            if (om.isClass(os.listItem.selected)) {
-                os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);
-                os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
-            } else if (om.isDataTypeProperty(os.listItem.selected)) {
-                os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties);
-                os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
-            } else if (om.isObjectProperty(os.listItem.selected)) {
-                os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties);
-                os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
-            } else if (om.isAnnotation(os.listItem.selected)) {
-                os.listItem.annotations.flat = os.flattenHierarchy(os.listItem.annotations);
-            } else if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
-                os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts);
-            } else if (om.isConceptScheme(os.listItem.selected, os.listItem.derivedConceptSchemes)) {
-                os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes);
-            }
+        }
+        if (om.isClass(os.listItem.selected)) {
+            os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);
+            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
+        } else if (om.isDataTypeProperty(os.listItem.selected)) {
+            os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties);
+            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
+        } else if (om.isObjectProperty(os.listItem.selected)) {
+            os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties);
+            os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
+        } else if (om.isAnnotation(os.listItem.selected)) {
+            os.listItem.annotations.flat = os.flattenHierarchy(os.listItem.annotations);
+        } else if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
+            os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts);
+        } else if (om.isConceptScheme(os.listItem.selected, os.listItem.derivedConceptSchemes)) {
+            os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes);
         }
     }
 
@@ -492,7 +492,9 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         }
         return self.saveCurrentChanges()
             .then(() => {
-                self.updateLabel();
+                if (om.entityNameProps.includes(key)) {
+                    self.updateLabel();
+                }
                 return axiomObject;
             });
     }

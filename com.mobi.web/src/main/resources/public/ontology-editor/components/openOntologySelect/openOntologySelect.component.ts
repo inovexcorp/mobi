@@ -111,9 +111,9 @@ function openOntologySelectComponentCtrl($q, $timeout, catalogManagerService, on
         if (dvm.cm.isBranch(item)) {
             var branchId = item['@id'];
             var commitId = dvm.util.getPropertyId(find(dvm.state.model, {[prefixes.ontologyState + 'branch']: [{'@id': branchId}]}), prefixes.ontologyState + 'commit');
-            dvm.cm.getBranchHeadCommit(branchId, dvm.listItem.ontologyRecord.recordId, catalogId)
+            dvm.cm.getRecordBranch(branchId, dvm.listItem.ontologyRecord.recordId, catalogId)
                 .then(headCommit => {
-                    var headCommitId = get(headCommit, "commit['@id']", '');
+                    var headCommitId = get(headCommit, ["http://mobi.com/ontologies/catalog#head", 0, "@id"], '');
                     if (!commitId) {
                         commitId = headCommitId;
                     }
