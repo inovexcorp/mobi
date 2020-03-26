@@ -1,14 +1,12 @@
-@Version("7.5.0.${build}")
-
-package com.mobi.ontology.core.api;
+package com.mobi.persistence.utils.rio;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.persistence.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,19 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.rdf.api.Statement;
+
+public class SkolemizeHandler implements StatementHandler {
+
+    private BNodeService service;
+
+    public SkolemizeHandler(BNodeService service) {
+        this.service = service;
+    }
+
+    @Override
+    public Statement handleStatement(Statement st) {
+        return service.skolemize(st);
+    }
+}

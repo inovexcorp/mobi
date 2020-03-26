@@ -1,14 +1,12 @@
-@Version("7.5.0.${build}")
-
-package com.mobi.ontology.core.api;
+package com.mobi.persistence.utils.rio;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.persistence.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,19 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.ValueFactory;
+
+public class RemoveContextHandler implements StatementHandler {
+
+    ValueFactory vf;
+
+    public RemoveContextHandler(ValueFactory valueFactory) {
+        this.vf = valueFactory;
+    }
+
+    @Override
+    public Statement handleStatement(Statement st) {
+        return vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject());
+    }
+}

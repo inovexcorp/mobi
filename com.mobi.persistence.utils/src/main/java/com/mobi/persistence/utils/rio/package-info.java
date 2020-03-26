@@ -1,10 +1,10 @@
-@Version("7.5.0.${build}")
+@Version("1.0.0.${build}")
 
-package com.mobi.ontology.core.api;
+package com.mobi.persistence.utils.rio;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.persistence.utils
  * $Id:$
  * $HeadURL:$
  * %%

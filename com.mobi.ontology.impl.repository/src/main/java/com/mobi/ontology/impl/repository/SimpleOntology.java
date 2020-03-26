@@ -51,6 +51,8 @@ import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.persistence.utils.rio.RemoveContextHandler;
+import com.mobi.persistence.utils.rio.SkolemizeHandler;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.GraphQuery;
@@ -65,6 +67,7 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
@@ -74,7 +77,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -439,12 +441,22 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OutputStream asTurtle() throws MobiOntologyException {
-        return getOntologyOutputStream(RDFFormat.TURTLE);
+        return getOntologyOutputStream(false, true, RDFFormat.TURTLE);
+    }
+
+    @Override
+    public OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException {
+        return getOntologyOutputStream(false, true, RDFFormat.TURTLE, outputStream);
     }
 
     @Override
     public OutputStream asRdfXml() throws MobiOntologyException {
-        return getOntologyOutputStream(RDFFormat.RDFXML);
+        return getOntologyOutputStream(false, true, RDFFormat.RDFXML);
+    }
+
+    @Override
+    public OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException {
+        return getOntologyOutputStream(false, true, RDFFormat.RDFXML, outputStream);
     }
 
     @Override
@@ -453,33 +465,51 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException {
-        OutputStream outputStream = new ByteArrayOutputStream();
-        WriterConfig config = new WriterConfig();
-        try {
-            long startTime = getStartTime();
-            Model model = asModel(mf);
-            if (skolemize) {
-                model = bNodeService.skolemize(model);
-            }
-            Rio.write(transformer.sesameModel(model), outputStream, RDFFormat.JSONLD, config);
-            logTrace("asJsonLD(skolemize)", startTime);
-        } catch (RDFHandlerException e) {
-            throw new MobiOntologyException("Error while writing Ontology.");
-        }
-        return outputStream;
+    public OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException {
+        throw new NotImplementedException("OWL/XML format is not yet implemented.");
     }
 
-    private OutputStream getOntologyOutputStream(RDFFormat format) {
-        long startTime = getStartTime();
+    @Override
+    public OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException {
+        return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD);
+    }
+
+    @Override
+    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException {
+        return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD, outputStream);
+    }
+
+    private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format) {
         OutputStream outputStream = new ByteArrayOutputStream();
-        try {
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
-            Rio.write(transformer.sesameModel(asModel(mf)), rdfWriter);
+        return getOntologyOutputStream(skolemize, prettyPrint, format, outputStream);
+    }
+
+    private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format, OutputStream outputStream) {
+        long startTime = getStartTime();
+        try (DatasetConnection conn = getDatasetConnection()) {
+            RepositoryResult<Statement> statements = conn.getStatements(null, null, null,
+                    conn.getSystemDefaultNamedGraph());
+
+            RDFHandler rdfWriter;
+            if (prettyPrint) {
+                rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
+            } else {
+                rdfWriter = Rio.createWriter(format, outputStream);
+            }
+
+            RemoveContextHandler removeContextSH = new RemoveContextHandler(vf);
+            if (skolemize) {
+                SkolemizeHandler skolemizeSH = new SkolemizeHandler(bNodeService);
+                com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, skolemizeSH, removeContextSH);
+            } else {
+                com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, transformer, removeContextSH);
+            }
+
+            undoApplyDifferenceIfPresent(conn);
         } catch (RDFHandlerException e) {
             throw new MobiOntologyException("Error while writing Ontology.");
         }
-        logTrace("getOntologyOutputStream(" + format.getName() + ")", startTime);
+        logTrace("getOntologyOutputStream(" + format.getName() + ", outputStream)", startTime);
         return outputStream;
     }
 
