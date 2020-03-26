@@ -105,8 +105,8 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
     }
     function removeFilters() {
-        dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
-        dvm.filterText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
+        dvm.searchText = '';
+        dvm.filterText = '';
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }

@@ -113,8 +113,8 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     function removeFilters() {
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
-        dvm.searchText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
-        dvm.filterText = dvm.os.listItem.editorTabStates[dvm.activeTab].searchText;
+        dvm.searchText = '';
+        dvm.filterText = '';
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
