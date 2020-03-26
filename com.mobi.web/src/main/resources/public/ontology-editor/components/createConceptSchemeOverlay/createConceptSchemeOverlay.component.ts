@@ -63,7 +63,6 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
-    // dvm.conceptIRIs = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
     dvm.conceptIRIs = Object.keys(dvm.os.listItem.concepts.iris);
     dvm.concepts = [];
     dvm.selectedConcepts = [];
