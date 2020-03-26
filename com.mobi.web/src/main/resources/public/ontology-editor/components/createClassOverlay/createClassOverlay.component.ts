@@ -99,6 +99,9 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
             if (dvm.ontoUtils.containsDerivedConcept(superClassIds)) {
                 dvm.os.listItem.derivedConcepts.push(dvm.clazz['@id']);
             }
+            else if (dvm.ontoUtils.containsDerivedConceptScheme(superClassIds)) {
+                dvm.os.listItem.derivedConceptSchemes.push(dvm.clazz['@id']);
+            }
             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], superClassIds);
         } else {
             dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes);
