@@ -91,6 +91,7 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -231,7 +232,7 @@ public class OntologyRest {
                     "OntologyRecord using the form data. A master Branch is created and stored with an initial " +
                     "Commit containing the data provided in the ontology file.",
             responses = {
-                    // TODO: We can actually dcoument the structure of the response with the "content" attribute
+                    // TODO: We can actually document the structure of the response with the "content" attribute
                     @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
                     @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
                     @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
@@ -259,31 +260,31 @@ public class OntologyRest {
         return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
-    /**
-     * Ingests/uploads the JSON-LD of an ontology to a data store and creates and stores an OntologyRecord using the
-     * form data in the repository to track the work done on it. A master Branch is created and stored with an initial
-     * Commit containing the data provided in the JSON-LD for the ontology.
-     *
-     * @param context      the context of the request.
-     * @param title        the title for the OntologyRecord.
-     * @param description  the optional description for the OntologyRecord.
-     * @param markdown     the optional markdown abstract for the new OntologyRecord.
-     * @param keywords     the optional list of keyword strings for the OntologyRecord.
-     * @param ontologyJson the ontology JSON-LD to upload.
-     * @return OK with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
-     *      SERVER ERROR if there is a problem creating the OntologyRecord.
-     */
     @POST
+    @Path("#json")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Uploads JSON-LD representing an ontology to the data store.",
+            description = "Uploads and imports a JSON-LD representing an ontology  to a data store and creates an " +
+                    "associated OntologyRecord using the form data. A master Branch is created and stored with an " +
+                    "initial Commit containing the data provided in the ontology JSON-LD.",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
+                    @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
+                    @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
+            }
+    )
     @RolesAllowed("user")
-//    @ApiOperation("Uploads ontology JSON-LD to the data store.")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadOntologyJson(@Context ContainerRequestContext context, @QueryParam("title") String title,
-                                       @QueryParam("description") String description,
-                                       @QueryParam("markdown") String markdown,
-                                       @QueryParam("keywords") List<String> keywords, String ontologyJson) {
+    public Response uploadOntologyJson(
+            @Context ContainerRequestContext context,
+            @Parameter(description = "The title for the OntologyRecord.", required = true) @QueryParam("title") String title,
+            @Parameter(description = "The optional description for the OntologyRecord.") @QueryParam("description") String description,
+            @Parameter(description = "The optional markdown abstract for the new OntologyRecord.") @QueryParam("markdown") String markdown,
+            @Parameter(description = "The optional list of keyword strings for the OntologyRecord.") @QueryParam("keywords") List<String> keywords, String ontologyJson
+    ) {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
         Set<String> keywordSet = Collections.emptySet();
