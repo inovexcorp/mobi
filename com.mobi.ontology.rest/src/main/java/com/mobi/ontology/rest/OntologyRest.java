@@ -92,6 +92,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -209,20 +210,6 @@ public class OntologyRest {
         this.ontologyCache = ontologyCache;
     }
 
-    /**
-     * Ingests/uploads an ontology file to a data store and creates and stores an OntologyRecord using the form data in
-     * the repository to track the work done on it. A master Branch is created and stored with an initial Commit
-     * containing the data provided in the ontology file.
-     *
-     * @param context         the context of the request.
-     * @param fileInputStream the ontology file to upload.
-     * @param title           the title for the OntologyRecord.
-     * @param description     the optional description for the OntologyRecord.
-     * @param markdown        the optional markdown abstract for the new OntologyRecord.
-     * @param keywords        the optional list of keyword strings for the OntologyRecord.
-     * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
-     *      SERVER ERROR if there is a problem creating the OntologyRecord.
-     */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
@@ -243,9 +230,20 @@ public class OntologyRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(
             @Context ContainerRequestContext context,
-            @FormDataParam("file") InputStream fileInputStream, @FormDataParam("title") String title,
+
+            @Parameter(schema = @Schema(type = "string", format = "binary", description = "The ontology file to upload.", required = true))
+            @FormDataParam("file") InputStream fileInputStream,
+
+            @Parameter(schema = @Schema(type = "string", description = "The title for the OntologyRecord.", required = true))
+            @FormDataParam("title") String title,
+
+            @Parameter(schema = @Schema(type = "string", description = "The optional description for the OntologyRecord."))
             @FormDataParam("description") String description,
+
+            @Parameter(schema = @Schema(type = "string", description = "The optional markdown abstract for the new OntologyRecord."))
             @FormDataParam("markdown") String markdown,
+
+            @Parameter(schema = @Schema(type = "string", description = "The optional list of keyword strings for the OntologyRecord."))
             @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null) {
@@ -321,18 +319,47 @@ public class OntologyRest {
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Operation(
+            summary = "Returns the ontology associated with the requested record ID in the requested format.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format"),
+            }
+    )
     @RolesAllowed("user")
-//    @ApiOperation("Retrieves the ontology in the requested format.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getOntology(@Context ContainerRequestContext context,
-                                @PathParam("recordId") String recordIdStr,
-                                @QueryParam("branchId") String branchIdStr,
-                                @QueryParam("commitId") String commitIdStr,
-                                @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                                @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
-                                @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
-                                @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                            boolean applyInProgressCommit) {
+    public Response getOntology(
+            @Context ContainerRequestContext context,
+
+            @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an " +
+                    "IRI unless String begins with \"_:\".", required = true)
+            @PathParam("recordId") String recordIdStr,
+
+            @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id " +
+                    "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
+            @QueryParam("branchId") String branchIdStr,
+
+            @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id " +
+                    "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The " +
+                    "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing " +
+                    "will be returned.")
+            @QueryParam("commitId") String commitIdStr,
+
+            @Parameter(description = "The desired RDF return format.",
+                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+
+            @Parameter(description = "Whether or not the cached version of the identified Ontology should be cleared " +
+                    "before retrieval.")
+            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
+
+            @Parameter(description = "Whether or not the JSON-LD of the ontology should be skolemized.")
+            @DefaultValue("false") @QueryParam("skolemize") boolean skolemize,
+
+            @Parameter(description = "Whether or not any in progress commits by user should be applied to the return " +
+                    "value.")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit")
+                    boolean applyInProgressCommit
+    ) {
         try {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
@@ -393,7 +420,7 @@ public class OntologyRest {
      * @return the ontology associated with requested record ID to download.
      */
     @GET
-    @Path("{recordId}")
+    @Path("{recordId}#file")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
 //    @ApiOperation("Streams the associated ontology to an OutputStream.")
