@@ -122,6 +122,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -151,8 +152,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-//import com.mobi.query.exception.MalformedQueryException;
-
 @Path("/ontologies")
 @Api(value = "/ontologies")
 @Component(service = OntologyRest.class, immediate = true)
@@ -169,6 +168,17 @@ public class OntologyRest {
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String GET_ENTITY_QUERY;
+
+    static {
+        try {
+            GET_ENTITY_QUERY = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/retrieve-entity.rq"), StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
@@ -2264,15 +2274,7 @@ public class OntologyRest {
                         return Response.noContent().build();
                     }
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    Model modelResult = ontology.getGraphQueryResults(queryString, includeImports, modelFactory);
-                    if (modelResult.size() >= 1) {
-                        String modelStr = modelToString(modelResult, format, sesameTransformer);
-                        MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE
-                                : MediaType.TEXT_PLAIN_TYPE;
-                        return Response.ok(modelStr, type).build();
-                    } else {
-                        return Response.noContent().build();
-                    }
+                    return getReponseForGraphQuery(ontology, queryString, includeImports, format);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
                 }
@@ -2283,6 +2285,60 @@ public class OntologyRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.
+     *
+     * @param context        the context of the request.
+     * @param recordIdStr    the String representing the record Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param entityIdStr    the String representing the entity Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param branchIdStr    the String representing the Branch Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                       master Branch.
+     * @param commitIdStr    the String representing the Commit Resource ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                       head Commit. The provided commitId must be on the Branch identified by the provided
+     *                       branchId; otherwise, nothing will be returned.
+     * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
+     *                       "rdf/xml", and "trig"
+     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @return The RDF triples for a specified entity including all of is transitively attached Blank Nodes.
+     */
+    @GET
+    @Path("{recordId}/entities/{entityId}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the triples for a specified entity including all of is transitively attached Blank Nodes.")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getEntity(@Context ContainerRequestContext context,
+                              @PathParam("recordId") String recordIdStr,
+                              @PathParam("entityId") String entityIdStr,
+                              @QueryParam("branchId") String branchIdStr,
+                              @QueryParam("commitId") String commitIdStr,
+                              @DefaultValue("jsonld") @QueryParam("format") String format,
+                              @DefaultValue("true") @QueryParam("includeImports") boolean includeImports) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+
+            return getReponseForGraphQuery(ontology, GET_ENTITY_QUERY, includeImports, format);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, String format) {
+        Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
+        if (entityData.size() >= 1) {
+            String modelStr = modelToString(entityData, format, sesameTransformer);
+            MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE;
+            return Response.ok(modelStr, type).build();
+        } else {
+            return Response.noContent().build();
         }
     }
 
