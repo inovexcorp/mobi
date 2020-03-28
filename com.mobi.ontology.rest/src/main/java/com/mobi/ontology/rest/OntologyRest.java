@@ -71,6 +71,7 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.BNode;
@@ -165,6 +166,7 @@ public class OntologyRest {
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private OntologyCache ontologyCache;
+    private BNodeService bNodeService;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -218,6 +220,11 @@ public class OntologyRest {
     @Reference
     void setOntologyCache(OntologyCache ontologyCache) {
         this.ontologyCache = ontologyCache;
+    }
+
+    @Reference
+    void setbNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
     }
 
     /**
@@ -2274,7 +2281,7 @@ public class OntologyRest {
                         return Response.noContent().build();
                     }
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return getReponseForGraphQuery(ontology, queryString, includeImports, format);
+                    return getReponseForGraphQuery(ontology, queryString, includeImports, false, format);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
                 }
@@ -2326,16 +2333,21 @@ public class OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
             IRI entity = valueFactory.createIRI(entityIdStr);
-            String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", entity.stringValue());
+            String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
 
-            return getReponseForGraphQuery(ontology, queryString, includeImports, format);
+            return getReponseForGraphQuery(ontology, queryString, includeImports, true, format);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, String format) {
+    private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize, String format) {
         Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
+
+        if (skolemize) {
+            entityData = bNodeService.skolemize(entityData);
+        }
+
         if (entityData.size() >= 1) {
             String modelStr = modelToString(entityData, format, sesameTransformer);
             MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE;

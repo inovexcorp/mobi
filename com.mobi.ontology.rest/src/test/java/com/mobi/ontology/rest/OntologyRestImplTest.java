@@ -42,6 +42,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
@@ -80,7 +81,10 @@ import com.mobi.ontology.impl.owlapi.SimpleDatatype;
 import com.mobi.ontology.impl.owlapi.SimpleIndividual;
 import com.mobi.ontology.impl.owlapi.SimpleObjectProperty;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.persistence.utils.impl.SimpleBNodeService;
+import com.mobi.query.api.GraphQuery;
 import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -114,6 +118,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -125,9 +130,13 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -233,6 +242,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Repository repo;
     private static String INVALID_JSON = "{id: 'invalid";
     private IRI missingIRI;
+    private Repository getEntityRepo;
+    private SimpleBNodeService bNodeService;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -248,6 +259,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         try (RepositoryConnection connection = repo.getConnection()) {
             connection.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
+
+        getEntityRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        getEntityRepo.initialize();
 
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -339,6 +353,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setOntologyCache(ontologyCache);
+
+        bNodeService = new SimpleBNodeService();
+        bNodeService.setModelFactory(mf);
+        bNodeService.setValueFactory(vf);
+
+        rest.setbNodeService(bNodeService);
 
         return new ResourceConfig()
                 .register(rest)
@@ -481,6 +501,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void resetMocks() {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology,
                 catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
+        repo.shutDown();
+        getEntityRepo.shutDown();
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -4703,5 +4725,120 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void query01_NoBlankNodes() throws IOException {
+        setupGetEntityTests();
+
+        Model data = getModel("/queryData/01_NoBlankNodes-data.ttl");
+        Model expectedResults = getModel("/queryData/01_NoBlankNodes-results.ttl");
+
+        Model results;
+        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+            results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
+        }
+
+        try {
+            Assert.assertEquals(expectedResults, results);
+        } catch (AssertionError e) {
+            printModel("Expected Results", expectedResults);
+            printModel("Actual Results", results);
+            fail(e.getMessage(), e);
+        }
+    }
+
+    @Test
+    public void query02_RestrictionOnRealClass() throws IOException {
+        setupGetEntityTests();
+
+        Model data = getModel("/queryData/02_RestrictionOnRealClass-data.ttl");
+        Model expectedResults = getModel("/queryData/02_RestrictionOnRealClass-results.ttl");
+
+        Model results;
+        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+            results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
+        }
+
+        try {
+            Assert.assertEquals(expectedResults, results);
+        } catch (AssertionError e) {
+            printModel("Expected Results", expectedResults);
+            printModel("Actual Results", results);
+            fail(e.getMessage(), e);
+        }
+    }
+
+//    @Test
+//    public void query03_RestrictionOnList() throws IOException {
+//        setupGetEntityTests();
+//
+//        Model data = getModel("/queryData/03_RestrictionOnList-data.ttl");
+//        Model expectedResults = bNodeService.skolemize(getModel("/queryData/03_RestrictionOnList-results.ttl"));
+//
+//        Model results;
+//        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+//            results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
+//        }
+//
+//        try {
+//            Assert.assertEquals(results, expectedResults);
+//        } catch (AssertionError e) {
+//            printModel("Expected Results", expectedResults);
+//            printModel("Actual Results", results);
+//            fail(e.getMessage(), e);
+//        }
+//    }
+
+//    @Test
+//    public void query04_RestrictionsInList() throws IOException {
+//        Model data = getModel("/queryData/04_RestrictionsInList-data.ttl");
+//        Model expectedResults = getModel("/queryData/04_RestrictionsInList-results.ttl");
+//
+//        Model results;
+//        try(RepositoryConnection conn = repo.getConnection()) {
+//            results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#DualMountedMainLandingGear");
+//        }
+//
+//        try {
+//            Assert.assertEquals(expectedResults, results);
+//        } catch (Throwable t) {
+//            printModel("Expected Results", expectedResults);
+//            printModel("Actual Results", results);
+//            collector.addError(t);
+//        }
+//    }
+
+    private void setupGetEntityTests() {
+        when(ontology.getGraphQueryResults(any(String.class), eq(true), any(ModelFactory.class))).thenAnswer(invocationOnMock -> {
+            String query = invocationOnMock.getArgumentAt(0, String.class);
+            try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+                GraphQuery graphQuery = conn.prepareGraphQuery(query);
+                return QueryResults.asModel(graphQuery.evaluate(), mf);
+            }
+        });
+    }
+
+    private Model getModel(String path) throws IOException {
+        return sesameTransformer.mobiModel(Rio.parse(this.getClass().getResourceAsStream(path), "", RDFFormat.TURTLE));
+    }
+
+    private Model getResults(RepositoryConnection conn, Model data, String resource) throws IOException {
+        conn.add(data);
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entities/" + encode(resource))
+                .request().get();
+        String resultData = response.readEntity(String.class);
+
+        return sesameTransformer.mobiModel(Rio.parse(new StringReader(resultData), "", RDFFormat.JSONLD));
+    }
+
+    private void printModel(String prefix, Model model) {
+        List<Statement> list = new ArrayList<>(model);
+        list.sort(Comparator.comparing(o -> o.getSubject().stringValue()));
+
+        System.out.println();
+        System.out.println(prefix);
+        list.forEach(System.out::println);
+        System.out.println();
     }
 }
