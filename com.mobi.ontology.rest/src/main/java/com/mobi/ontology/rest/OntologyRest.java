@@ -2325,7 +2325,10 @@ public class OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
-            return getReponseForGraphQuery(ontology, GET_ENTITY_QUERY, includeImports, format);
+            IRI entity = valueFactory.createIRI(entityIdStr);
+            String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", entity.stringValue());
+
+            return getReponseForGraphQuery(ontology, queryString, includeImports, format);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }

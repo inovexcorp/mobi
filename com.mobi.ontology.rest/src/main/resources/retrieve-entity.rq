@@ -1,10 +1,10 @@
 PREFIX : <urn:ex:>
 
 CONSTRUCT {
-    ?entity ?p ?o .
+    %ENTITY% ?p ?o .
     ?attachedObj ?p2 ?o2 .
 } WHERE {
-    ?entity (:|!:)* ?attachedObj ;
+    %ENTITY% (:|!:)* ?attachedObj ;
         ?p ?o .
 
     OPTIONAL {
