@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 import static com.mobi.rest.util.RestUtils.modelToString;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -2344,12 +2345,13 @@ public class OntologyRest {
     private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize, String format) {
         Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
 
-        if (skolemize) {
-            entityData = bNodeService.skolemize(entityData);
-        }
-
         if (entityData.size() >= 1) {
-            String modelStr = modelToString(entityData, format, sesameTransformer);
+            String modelStr;
+            if (skolemize) {
+                modelStr = modelToSkolemizedString(entityData, format, sesameTransformer, bNodeService);
+            } else {
+                modelStr = modelToString(entityData, format, sesameTransformer);
+            }
             MediaType type = format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE;
             return Response.ok(modelStr, type).build();
         } else {
