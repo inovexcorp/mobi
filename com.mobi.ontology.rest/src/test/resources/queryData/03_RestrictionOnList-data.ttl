@@ -26,6 +26,10 @@ _:genid120 a owl:Class ;
 
 _:genid122 a rdf:List ;
   rdf:first :FinSubComponent ;
+  rdf:rest _:genid300 .
+
+_:genid300 a rdf:List ;
+  rdf:first :AircraftSubComponent ;
   rdf:rest _:genid121 .
 
 _:genid121 a rdf:List ;
