@@ -125,6 +125,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -501,8 +502,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void resetMocks() {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology,
                 catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
-        repo.shutDown();
         getEntityRepo.shutDown();
+    }
+
+    @AfterSuite
+    public void tearDown() {
+        repo.shutDown();
     }
 
     private JSONObject getResource(String path) throws Exception {
