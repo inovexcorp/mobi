@@ -2314,6 +2314,7 @@ public class OntologyRest {
      * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
      *                       "rdf/xml", and "trig"
      * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
+     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
      * @return The RDF triples for a specified entity including all of is transitively attached Blank Nodes.
      */
     @GET
@@ -2328,9 +2329,11 @@ public class OntologyRest {
                               @QueryParam("branchId") String branchIdStr,
                               @QueryParam("commitId") String commitIdStr,
                               @DefaultValue("jsonld") @QueryParam("format") String format,
-                              @DefaultValue("true") @QueryParam("includeImports") boolean includeImports) {
+                              @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+                              @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+    ) {
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
             IRI entity = valueFactory.createIRI(entityIdStr);
