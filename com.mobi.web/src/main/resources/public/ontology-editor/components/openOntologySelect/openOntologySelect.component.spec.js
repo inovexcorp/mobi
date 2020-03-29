@@ -248,7 +248,7 @@ describe('Open Ontology Select component', function() {
                 beforeEach(function() {
                     catalogManagerSvc.isBranch.and.returnValue(true);
                 });
-                describe('when getBranchHeadCommit resolves', function() {
+                describe('when getRecordBranch resolves', function() {
                     beforeEach(function() {
                         var ontoState = {
                             model: [
@@ -262,14 +262,14 @@ describe('Open Ontology Select component', function() {
                                 }
                             ]
                         };
-                        catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({ commit: { '@id': this.commitId } }));
+                        catalogManagerSvc.getRecordBranch.and.returnValue($q.when({ 'http://mobi.com/ontologies/catalog#head': [ {'@id': this.commitId} ] }));
                         ontologyStateSvc.getOntologyStateByRecordId.and.returnValue(ontoState);
                     });
                     it('when updateOntology resolves', function() {
                         ontologyStateSvc.updateOntology.and.returnValue($q.when());
                         this.controller.changeEntity(this.branch);
                         scope.$apply();
-                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, true);
                         expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalledWith(scope.listItem);
                         expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -278,18 +278,18 @@ describe('Open Ontology Select component', function() {
                         ontologyStateSvc.updateOntology.and.returnValue($q.reject(this.errorMessage));
                         this.controller.changeEntity(this.branch);
                         scope.$digest()
-                        expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, true);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
                         expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
                     });
                 });
-                it('when getBranchHeadCommit rejects', function() {
+                it('when getRecordBranch rejects', function() {
                     expect(this.controller.deleteError).toEqual('');
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.reject(this.errorMessage));
+                    catalogManagerSvc.getRecordBranch.and.returnValue($q.reject(this.errorMessage));
                     this.controller.changeEntity(this.branch);
                     scope.$digest();
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
                     expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith(this.errorMessage);
                     expect(ontologyStateSvc.resetStateTabs).not.toHaveBeenCalled();
@@ -349,7 +349,7 @@ describe('Open Ontology Select component', function() {
             it('if the entity is a commit', function() {
                 catalogManagerSvc.isBranch.and.returnValue(false);
                 this.controller.changeEntity(this.branch);
-                expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled()
+                expect(catalogManagerSvc.getRecordBranch).not.toHaveBeenCalled()
             });
         });
         describe('openDeleteConfirmation calls the correct methods if the entity is', function() {
