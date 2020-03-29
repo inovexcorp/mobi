@@ -2339,7 +2339,7 @@ public class OntologyRest {
             IRI entity = valueFactory.createIRI(entityIdStr);
             String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
 
-            return getReponseForGraphQuery(ontology, queryString, includeImports, true, format);
+            return getReponseForGraphQuery(ontology, queryString, includeImports, format.equals("jsonld"), format);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
