@@ -259,6 +259,7 @@ public class OntologyRest {
     }
 
     @POST
+    // TODO: This breaks things
     @Path("#json")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -422,6 +423,7 @@ public class OntologyRest {
      * @return the ontology associated with requested record ID to download.
      */
     @GET
+    // TODO: This breaks things
     @Path("{recordId}#file")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")

@@ -179,6 +179,7 @@
                             <!-- For some reason BND is not including these -->
                             com.mobi.ontology.core.api.classexpression,
                             com.mobi.ontology.core.api.datarange,
+                            !io.swagger.v3.*,
                             *
                         </Import-Package>
                         <build>${maven.build.timestamp}</build>

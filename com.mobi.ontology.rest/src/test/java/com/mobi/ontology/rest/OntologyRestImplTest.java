@@ -832,7 +832,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies/#json")
+        Response response = target().path("ontologies")
                 .queryParam("title", "title")
                 .queryParam("markdown", "#markdown")
                 .queryParam("description", "description")
