@@ -2245,11 +2245,12 @@ public class OntologyRest {
                                   @QueryParam("branchId") String branchIdStr,
                                   @QueryParam("commitId") String commitIdStr,
                                   @DefaultValue("jsonld") @QueryParam("format") String format,
-                                  @DefaultValue("true") @QueryParam("includeImports") boolean includeImports) {
+                                  @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+                                  @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, false).orElseThrow(() ->
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
             ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
