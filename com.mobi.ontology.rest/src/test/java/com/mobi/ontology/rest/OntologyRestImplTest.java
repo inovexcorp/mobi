@@ -1359,6 +1359,60 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
     }
 
+    @Test
+    public void testGetOntologyStuffPropertyToRangesNoResults() {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertTrue(responseObject.containsKey("propertyToRanges"));
+        assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
+    }
+
+//    @Test
+//    public void testGetOntologyStuffClassToAssociatedProperties() throws Exception {
+//        setupTupleQueryMock();
+//
+//        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
+//        JSONObject expectedResults = getResource("/getOntologyStuffData/propertyToRanges-results.json");
+//
+//        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+//            conn.add(data);
+//        }
+//
+//        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+//                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+//                .get();
+//        JSONObject responseObject = getResponse(response);
+//
+//        assertEquals(response.getStatus(), 200);
+//        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+//        assertGetOntology(true);
+//        assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
+//    }
+
+    @Test
+    public void testGetOntologyStuffClassToAssociatedPropertiesNoResults() {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertTrue(responseObject.containsKey("classToAssociatedProperties"));
+        assertEquals(responseObject.getJSONObject("classToAssociatedProperties"), expectedResults);
+    }
+
     // Test get IRIs in ontology
 
     @Test

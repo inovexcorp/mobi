@@ -860,6 +860,15 @@ public class OntologyRest {
             watch.stop();
             log.trace("End propertyToRanges: " + watch.getTime() + "ms");
 
+            watch.reset();
+            log.trace("Start classToAssociatedProperties");
+            watch.start();
+            outputStream.write(", \"classToAssociatedProperties\": ".getBytes());
+            outputStream.write("{}".getBytes());
+//            writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
+            watch.stop();
+            log.trace("End classToAssociatedProperties: " + watch.getTime() + "ms");
+
             outputStream.write("}".getBytes());
         };
     }
