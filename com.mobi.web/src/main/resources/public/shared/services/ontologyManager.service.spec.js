@@ -1124,7 +1124,9 @@ describe('Ontology Manager service', function() {
                 query: this.query,
                 branchId: this.branchId,
                 commitId: this.commitId,
-                format: this.format
+                format: this.format,
+                applyInProgressCommit: false,
+                includeImports: true
             });
         });
         it('succeeds', function() {

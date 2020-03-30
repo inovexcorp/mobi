@@ -706,7 +706,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param id The id to link this REST call to.
      * @return {Promise} A promise containing the SPARQL query results
      */
-    self.getQueryResults = function(recordId, branchId, commitId, query, format, includeImports = true, applyInProgressCommit = false, id = '') {
+    self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
         var config = { params: { query, branchId, commitId, format, includeImports, applyInProgressCommit } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/query';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);

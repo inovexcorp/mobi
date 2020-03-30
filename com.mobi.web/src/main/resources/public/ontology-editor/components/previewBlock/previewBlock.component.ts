@@ -54,7 +54,7 @@ previewBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontolog
 function previewBlockComponentCtrl($filter, ontologyStateService, ontologyManagerService) {
     var dvm = this;
     var om = ontologyManagerService;
-    var previewQuery = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . }"
+    var previewQuery = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000"
     dvm.os = ontologyStateService;
     dvm.options = {
         mode: '',
@@ -68,18 +68,7 @@ function previewBlockComponentCtrl($filter, ontologyStateService, ontologyManage
     }
     dvm.getPreview = function() {
         setMode(dvm.activePage.serialization);
-        om.getOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.activePage.serialization, false, true)
-            .then(ontology => {
-                dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology);
-                dvm.changeEvent({value: dvm.activePage});
-            }, response => {
-                dvm.activePage.preview = response;
-                dvm.changeEvent({value: dvm.activePage});
-            });
-    }
-    dvm.getPreviewModified = function() {
-        setMode(dvm.activePage.serialization);
-        om.getQueryResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, previewQuery, dvm.activePage.serialization, false, true)
+        om.getQueryResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, previewQuery, dvm.activePage.serialization, '', false, true)
             .then(ontology => {
                 dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology);
                 dvm.changeEvent({value: dvm.activePage});
