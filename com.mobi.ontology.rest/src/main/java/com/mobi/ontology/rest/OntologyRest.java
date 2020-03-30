@@ -2345,7 +2345,8 @@ public class OntologyRest {
         }
     }
 
-    private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize, String format) {
+    private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize,
+                                             String format) {
         Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
 
         if (entityData.size() >= 1) {
