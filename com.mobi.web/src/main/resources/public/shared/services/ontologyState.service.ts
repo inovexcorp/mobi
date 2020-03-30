@@ -239,6 +239,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         classesAndIndividuals: {},
         classesWithIndividuals: [],
         individualsParentPath: [],
+        propertyIcons: {},
+        noDomaininProperties: [],
+        classToChildProperties: {},
         iriList: [],
         selected: {},
         failedImports: [],
@@ -876,7 +879,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem.individuals.iris, iri, ontologyId));
             get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem.concepts.iris, iri, ontologyId));
             get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem.conceptSchemes.iris, iri, ontologyId));
-            listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
+            listItem.propertyIcons = get(response, 'propertyIris', []);
+                listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
             get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem.dataPropertyRange, iri, ontologyId));
@@ -1802,9 +1806,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else {
                 set(entity, 'mobi.anonymous', ontologyId + ' (Anonymous Ontology)');
             }
-            if (om.isProperty(entity)) {
-                setPropertyIcon(entity);
-            } else if (om.isBlankNode(entity)) {
+            if (om.isBlankNode(entity)) {
                 blankNodes[get(entity, '@id')] = undefined;
             } else if (om.isIndividual(entity)) {
                 findValuesMissingDatatypes(entity);
@@ -1838,7 +1840,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        set(entity, 'mobi.icon', getIcon(entity));
+        set(self.listItem.propertyIcons.entity, 'mobi.icon', getIcon(entity));
     }
     function getIcon(property) {
         var range = get(property, prefixes.rdfs + 'range');
@@ -1939,7 +1941,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     blankNodes[entity['@id']] =  undefined;
                 }
             }
-            self.updatePropertyIcon(entity);
             set(entity, 'mobi.imported', true);
             set(entity, 'mobi.importedIRI', importedOntObj.ontologyId);
         });
