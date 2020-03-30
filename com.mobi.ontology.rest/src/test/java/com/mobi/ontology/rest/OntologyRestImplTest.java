@@ -1359,6 +1359,21 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
     }
 
+    @Test
+    public void testGetOntologyStuffPropertyToRangesNoResults() {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
+    }
+
     // Test get IRIs in ontology
 
     @Test
