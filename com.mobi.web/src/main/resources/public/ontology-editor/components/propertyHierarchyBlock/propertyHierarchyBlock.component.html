@@ -22,5 +22,5 @@
   -->
 <div class="property-hierarchy-block h-100 py-1">
     <info-message ng-if="!dvm.os.listItem.dataProperties.flat.length && !dvm.os.listItem.objectProperties.flat.length && !dvm.os.listItem.annotations.flat.length">(No properties defined)</info-message>
-    <property-tree ng-if="dvm.os.listItem.dataProperties.flat.length || dvm.os.listItem.objectProperties.flat.length || dvm.os.listItem.annotations.flat.length" datatype-props="dvm.os.listItem.dataProperties.flat" object-props="dvm.os.listItem.objectProperties.flat" annotation-props="dvm.os.listItem.annotations.flat" index="dvm.os.listItem.editorTabStates.properties.index" update-search="dvm.updateSearch(value)"></property-tree>
+    <property-tree ng-if="dvm.os.listItem.dataProperties.flat.length || dvm.os.listItem.objectProperties.flat.length || dvm.os.listItem.annotations.flat.length" datatype-props="dvm.os.listItem.dataProperties.flat" object-props="dvm.os.listItem.objectProperties.flat" annotation-props="dvm.os.listItem.annotations.flat" index="dvm.os.listItem.editorTabStates.properties.index" update-search="dvm.updateSearch(value)" branch-id="dvm.os.listItem.ontologyRecord.branchId"></property-tree>
 </div>

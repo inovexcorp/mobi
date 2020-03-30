@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { filter, join, has, findIndex, find, some, pick, get, every } from 'lodash';
+import * as angular from 'angular';
+
+import { filter, has, findIndex, some, get, every } from 'lodash';
 
 const template = require('./everythingTree.component.html');
-
-import './everythingTree.component.scss';
 
 /**
  * @ngdoc component
@@ -46,7 +46,8 @@ const everythingTreeComponent = {
     template,
     bindings: {
         updateSearch: '&',
-        hierarchy: '<'
+        hierarchy: '<',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: everythingTreeComponentCtrl
@@ -64,12 +65,14 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.filterText = '';
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.midFilteredHierarchy = [];
+    dvm.activeTab = '';
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
-        filter: function(node) {
+        filter: node => {
             var match = true;
             if (node.hasOwnProperty('mobi')) {
                 if (node.mobi.imported) {
@@ -79,60 +82,80 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             return match;
         }
     };
-
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
+        dvm.activeTab = dvm.os.getActiveKey();
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        clearSelection();
         if (!changesObj.hierarchy.isFirstChange()) {
+            if (changesObj.branchId) {
+                removeFilters();
+            }
             update();
         }
     }
+    function removeFilters() {
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+        dvm.searchText = '';
+        dvm.filterText = '';
+    }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag')
         update();
-        dvm.dropdownOpen = false;
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
-        if (!node.title) {
-            dvm.os.setOpened(join(node.path, '.'), node.isOpened);
-        } else {
+        if (node.title) {
             node.set(dvm.os.listItem.ontologyRecord.recordId, node.isOpened);
         }
+        node.isOpened ? dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath] = true : delete dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
+    dvm.matchesSearchFilter = function(node) {
+        var searchMatch = false;
+        // Check all possible name fields and entity fields to see if the value matches the search text
+        some(dvm.om.entityNameProps, key => some(node[key], value => {
+            if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+                searchMatch = true;
+        }));
+
+        if (searchMatch) {
+            return true;
         }
+
+        // Check if beautified entity id matches search text
+        if (util.getBeautifulIRI(node['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+            searchMatch = true;
+        }
+        
+        return searchMatch;
     }
-    dvm.processFilters = function(node) {
+    dvm.matchesDropdownFilters = function(node) {
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
+    }
+    dvm.searchFilter = function(node) {
         delete node.underline;
         delete node.parentNoMatch;
         delete node.displayNode;
-        delete node.isOpened;
-        if (node.title) {  // If node is a folder
-            if (dvm.filterText || dvm.numDropdownFilters > 0) {
+        if (node.title) {
+            if (dvm.filterText || dvm.dropdownFilterActive) {
                 node.set(dvm.os.listItem.ontologyRecord.recordId, true);
             }
             node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
         } else {
-            node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-            if (dvm.filterText || (dvm.numDropdownFilters > 0)) {
+            if (dvm.filterText || dvm.dropdownFilterActive) {
+                delete node.isOpened;
                 var match = false;
-
+                
                 if (dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
                     match = true;
                     dvm.openAllParents(node);
-                    node.underline = true;
+                    node.underline = true;    
                 }
-
                 if (!match && node.hasChildren) {
                     node.parentNoMatch = true;
                     return true;
@@ -142,70 +165,38 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
         return true;
     }
-    dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
-    }
-    dvm.matchesSearchFilter = function(node) {
-        var searchMatch = true;
-        if (dvm.filterText) {
-            searchMatch = false;
-            var searchValues = pick(node, dvm.om.entityNameProps);
-
-            // Check all possible name fields and entity fields to see if the value matches the search text
-            some(Object.keys(searchValues), key => some(searchValues[key], value => {
-                if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
-                    searchMatch = true;
-            }));
-
-            // Check if beautified entity id matches search text
-            if (util.getBeautifulIRI(node['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
-                searchMatch = true;
-            }
-        }
-        return searchMatch;
-    }
+    // Start at the current node and go up through the parents marking each path as an iriToOpen. If a path is already present in dvm.os.listItem.editorTabStates[dvm.activeTab].open, it means it was already marked as an iriToOpen by another one of it's children. In that scenario we know all of it's parents will also be open, and we can break out of the loop.
     dvm.openAllParents = function(node) {
-        // set path to the ontology record
-        var path = node.path[0];
+        for (var i = node.path.length - 1; i > 1; i--) {
+            var fullPath = dvm.os.joinPath(node.path.slice(0, i));
 
-        // only loops through if node.path has at least 3 items. Last entry in node.path will be the current child node that matched. The first entry will just be the ontology record. This loop is just looping through all the parents up the line.
+            if (dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath]) {
+                break;
+            }
 
-        // Set all the parents up the line to opened and diplayNode = true.
-        for (var i = 1; i < node.path.length - 1; i++) {
-
-            // set iri to the concept IRI we are looking at
-            var iri = node.path[i];
-
-            // update path to be ontology record <dot> concept IRI
-            path = path + '.' + iri;
-            // open the path
-            dvm.os.setOpened(path, true);
-
-            // Go through the whole hierarchy and find the concept IRI we are looking at
-            // I think the purpose of these lines and the previous is to set the same IRI to opened in both the ontology state service and dvm.hierarchy
-            var parentNode = find(dvm.hierarchy, {'@id': iri});
-
-            parentNode.isOpened = true;
-            parentNode.displayNode = true;
+            dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath] = true;
         }
+    }
+    dvm.openEntities = function(node) {
+        var toOpen = dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
+        if (toOpen) {
+            if (!node.isOpened) {
+                node.isOpened = true;
+            }
+            node.displayNode = true; 
+        }
+        return true;
     }
     dvm.isShown = function(node) {
-        var displayNode = !has(node, '@id') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node)) || (node.indent === 0 && get(node, 'path', []).length === 2);
-        // If the Properties folder is the last item in the preFilteredHierarchy, we know there are no matching properties, so we don't show
-        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node['title']) {
+        var displayNode = !has(node, '@id') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node, dvm.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
+        if ((dvm.dropdownFilterActive || dvm.filterText) && node['title']) {
             var position = findIndex(dvm.preFilteredHierarchy, 'title');
             if (position === dvm.preFilteredHierarchy.length - 1) {
                 node.set(dvm.os.listItem.ontologyRecord.recordId, false);
                 return false;
             }
         }
-        if (((dvm.numDropdownFilters > 0) || dvm.filterText) && node.parentNoMatch) {
+        if ((dvm.dropdownFilterActive || dvm.filterText) && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
             } else {
@@ -216,18 +207,13 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     }
 
     function update() {
+        if (dvm.filterText || dvm.dropdownFilterActive) {
+            dvm.os.listItem.editorTabStates[dvm.activeTab].open = {};
+        }
         dvm.updateSearch({value: dvm.filterText});
-        dvm.preFilteredHierarchy = filter(dvm.hierarchy, dvm.processFilters);
-        dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
-    }
-    function clearSelection() {
-        dvm.searchText = '';
-        dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
+        dvm.preFilteredHierarchy = dvm.hierarchy.filter(dvm.searchFilter);
+        dvm.midFilteredHierarchy = dvm.preFilteredHierarchy.filter(dvm.openEntities);
+        dvm.filteredHierarchy = dvm.midFilteredHierarchy.filter(dvm.isShown);
     }
 }
 

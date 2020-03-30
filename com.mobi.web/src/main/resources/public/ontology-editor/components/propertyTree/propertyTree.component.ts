@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { join, filter, pick, some, find, has, concat, map, merge, every } from 'lodash';
+import * as angular from 'angular';
 
-import './propertyTree.component.scss';
+import { every, filter, some, has, concat, map, merge, includes } from 'lodash';
 
 const template = require('./propertyTree.component.html');
 
@@ -52,7 +52,8 @@ const propertyTreeComponent = {
         objectProps: '<',
         annotationProps: '<',
         index: '<',
-        updateSearch: '&'
+        updateSearch: '&',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: propertyTreeComponentCtrl
@@ -71,9 +72,11 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     dvm.flatPropertyTree = [];
     dvm.filteredHierarchy = [];
     dvm.preFilteredHierarchy = [];
-    dvm.dropdownOpen = false;
-    dvm.numDropdownFilters = 0;
+    dvm.midFilteredHierarchy = [];
+    dvm.activeTab = '';
+    dvm.dropdownFilterActive = false;
     dvm.activeEntityFilter = {
+        name: 'Active Entities Only',
         checked: false,
         flag: false, 
         filter: function(node) {
@@ -86,16 +89,18 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             return match;
         }
     };
-
-    dvm.dropdownFilters = [dvm.activeEntityFilter];
+    dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
 
     dvm.$onInit = function() {
+        dvm.activeTab = dvm.os.getActiveKey();
         dvm.flatPropertyTree = constructFlatPropertyTree();
         update();
     }
     dvm.$onChanges = function(changesObj) {
-        clearSelection();
         if (!changesObj.datatypeProps || !changesObj.datatypeProps.isFirstChange()) {
+            if (changesObj.branchId) {
+                removeFilters();
+            }
             dvm.flatPropertyTree = constructFlatPropertyTree();
             update();
         }
@@ -105,130 +110,130 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
             dvm.os.listItem.editorTabStates.properties.index = 0;
         }
     }
+    function removeFilters() {
+        dvm.dropdownFilterActive = false;
+        dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
+        dvm.searchText = '';
+        dvm.filterText = '';
+    }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
-        dvm.dropdownFilters.forEach(df =>{ df.flag = df.checked});
-        dvm.numDropdownFilters = filter(dvm.dropdownFilters, 'flag').length;
+        dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');
         update();
-        dvm.dropdownOpen = false;
     }
-    dvm.dropdownToggled = function(open) {
-        if (!open) {
-            dvm.dropdownFilters.forEach(df =>{ df.checked = df.flag});
-        }
+    dvm.shouldFilter = function() {
+        return (dvm.filterText || dvm.dropdownFilterActive);
     }
     dvm.toggleOpen = function(node) {
         node.isOpened = !node.isOpened;
         if (!node.title) {
-            dvm.os.setOpened(join(node.path, '.'), node.isOpened);
+            dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath] = node.isOpened;
         } else {
             node.set(dvm.os.listItem.ontologyRecord.recordId, node.isOpened);
+            dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title] = node.isOpened;
         }
         dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
     }
-    dvm.shouldFilter = function() {
-        return (dvm.filterText || dvm.numDropdownFilters > 0);
-    }
-    dvm.isFolder = function(node) {
-        return !!node.title;
-    }
     dvm.matchesSearchFilter = function(node) {
-        var searchMatch = true;
-        if (dvm.filterText) {
-            searchMatch = false;
-            var searchValues = pick(node.entity, om.entityNameProps);
-
-            // Check all possible name fields and entity fields to see if the value matches the search text
-            some(Object.keys(searchValues), key => some(searchValues[key], value => {
-                if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
-                    searchMatch = true;
-            }));
-
-            // Check if beautified entity id matches search text
-            if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        var searchMatch = false;
+        // Check all possible name fields and entity fields to see if the value matches the search text
+        some(om.entityNameProps, key => some(node.entity[key], value => {
+            if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
-            }
+        }));
+
+        if (searchMatch) {
+            return true;
         }
+
+        // Check if beautified entity id matches search text
+        if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+            searchMatch = true;
+        }
+        
         return searchMatch;
     }
+    // Start at the current node and go up through the parents marking each path as an iriToOpen. If a path is already present in dvm.os.listItem.editorTabStates[dvm.activeTab].open, it means it was already marked as an iriToOpen by another one of it's children. In that scenario we know all of it's parents will also be open, and we can break out of the loop.
     dvm.openAllParents = function(node) {
-        var path = node.path[0];
-        for (var i = 1; i < node.path.length - 1; i++) {
-            var iri = node.path[i];
-            path = path + '.' + iri;
-            dvm.os.setOpened(path, true);
+        for (var i = node.path.length - 1; i > 1; i--) {
+            var fullPath = dvm.os.joinPath(node.path.slice(0, i));
 
-            var parentNode = find(dvm.flatPropertyTree, {'entityIRI': iri});
-            parentNode.isOpened = true;
-            parentNode.displayNode = true;
+            if (dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath]) {
+                break;
+            }
+
+            dvm.os.listItem.editorTabStates[dvm.activeTab].open[fullPath] = true;
         }
     }
-    dvm.openPropertyFolders = function(node) {
-        if (node.entity['@type'][0] === prefixes.owl + 'DatatypeProperty') {
-            var propertyFolder = find(dvm.flatPropertyTree, {title: 'Data Properties'});
-            propertyFolder.set(dvm.os.listItem.ontologyRecord.recordId, true);
-            propertyFolder.displayNode = true;
-            propertyFolder.isOpened = true;
-            delete node.parentNoMatch;
-        }
-        if (node.entity['@type'][0] === prefixes.owl + 'ObjectProperty') {
-            var propertyFolder = find(dvm.flatPropertyTree, {title: 'Object Properties'});
-            propertyFolder.set(dvm.os.listItem.ontologyRecord.recordId, true);
-            propertyFolder.displayNode = true;
-            propertyFolder.isOpened = true;
-            delete node.parentNoMatch;
-        }
-        if (node.entity['@type'][0] === prefixes.owl + 'AnnotationProperty') {
-            var propertyFolder = find(dvm.flatPropertyTree, {title: 'Annotation Properties'});
-            propertyFolder.set(dvm.os.listItem.ontologyRecord.recordId, true);
-            propertyFolder.displayNode = true;
-            propertyFolder.isOpened = true;
-            delete node.parentNoMatch;
+    dvm.openEntities = function(node) {
+        if (node.title) {
+            var toOpen = dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title];
+            if (toOpen) {
+                if (!node.isOpened) {
+                    node.isOpened = true;
+                    node.set(dvm.os.listItem.ontologyRecord.recordId, true);
+                }
+                node.displayNode = true;
+            }
+            return true;
+        } else {
+            var toOpen = dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.joinedPath];
+            if (toOpen) {
+                if (!node.isOpened) {
+                    node.isOpened = true;
+                }
+                node.displayNode = true; 
+            }
+            return true;
         }
     }
-    dvm.processFilters = function (node) {
+    dvm.searchFilter = function (node) {
         delete node.underline;
         delete node.parentNoMatch;
         delete node.displayNode;
-        delete node.isOpened;
-        delete node.entity;
+
         if (node.title) {
+            node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
             if (dvm.shouldFilter()) {
                 node.parentNoMatch = true;
+            } else {
+                dvm.os.listItem.editorTabStates[dvm.activeTab].open[node.title] = node.isOpened;
             }
-            node.isOpened = node.get(dvm.os.listItem.ontologyRecord.recordId);
         } else {
-            node.isOpened = dvm.os.getOpened(dvm.os.joinPath(node.path));
-            node.entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI);
             if (dvm.shouldFilter()) {
+                delete node.isOpened;
                 var match = false;
                 if (dvm.matchesSearchFilter(node) && dvm.matchesDropdownFilters(node)) {
                     match = true;
                     dvm.openAllParents(node);
-                    dvm.openPropertyFolders(node);
                     node.underline = true;
+                    if (includes(node.entity['@type'], prefixes.owl + 'DatatypeProperty')) {
+                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Data Properties'] = true;
+                        delete node.parentNoMatch;
+                    }
+                    if (includes(node.entity['@type'], prefixes.owl + 'ObjectProperty')) {
+                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Object Properties'] = true;
+                        delete node.parentNoMatch;
+                    }
+                    if (includes(node.entity['@type'], prefixes.owl + 'AnnotationProperty')) {
+                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Annotation Properties'] = true;
+                        delete node.parentNoMatch;
+                    }
                 }
-                
                 if (!match && node.hasChildren) {
                     node.parentNoMatch = true;
                     return true;
                 }
                 return match;
-            } 
+            }
         }
         return true;
     }
     dvm.matchesDropdownFilters = function(node) {
-        return every(dvm.dropdownFilters, filter => {
-            if(filter.flag) {
-                return filter.filter(node);
-            } else {
-                return true;
-            }
-        });
+        return every(dvm.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     dvm.isShown = function (node) {
-        var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
+        var displayNode = !has(node, 'entityIRI') || (dvm.os.areParentsOpen(node, dvm.activeTab) && node.get(dvm.os.listItem.ontologyRecord.recordId));
         if (dvm.shouldFilter() && node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;
@@ -240,21 +245,16 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
     }
 
     function update() {
+        if (dvm.shouldFilter()) {
+            dvm.os.listItem.editorTabStates[dvm.activeTab].open = {};
+        }
         dvm.updateSearch({value: dvm.filterText});
-        dvm.preFilteredHierarchy = filter(dvm.flatPropertyTree, dvm.processFilters);
-        dvm.filteredHierarchy = filter(dvm.preFilteredHierarchy, dvm.isShown);
+        dvm.preFilteredHierarchy = dvm.flatPropertyTree.filter(dvm.searchFilter);
+        dvm.midFilteredHierarchy = dvm.preFilteredHierarchy.filter(dvm.openEntities);
+        dvm.filteredHierarchy = dvm.midFilteredHierarchy.filter(dvm.isShown);
     }
     function addGetToArrayItems(array, get) {
         return map(array, item => merge(item, {get}));
-    }
-    function clearSelection() {
-        dvm.searchText = '';
-        dvm.filterText = '';
-        dvm.dropdownFilters.forEach(df => {
-            df.checked = false;
-            df.flag = false;
-        });
-        dvm.numDropdownFilters = 0;
     }
     function constructFlatPropertyTree() {
         var result = [];

@@ -118,6 +118,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -138,6 +139,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 public class OntologyRestImplTest extends MobiRestTestNg {
     private OntologyRest rest;
@@ -226,6 +228,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private JSONObject basicHierarchyResults;
     private JSONArray importedOntologyResults;
     private OutputStream ontologyJsonLd;
+    private StreamingOutput ontologyJsonLdStream;
     private OutputStream importedOntologyJsonLd;
     private Repository repo;
     private static String INVALID_JSON = "{id: 'invalid";
@@ -375,6 +378,14 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT_SCHEME))).thenReturn(conceptSchemes);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
         when(ontology.asJsonLD(anyBoolean())).thenReturn(ontologyJsonLd);
+        when(ontology.asJsonLD(anyBoolean(), any())).thenAnswer((Answer<OutputStream>) invocation -> {
+            Object[] args = invocation.getArguments();
+            OutputStream os = (OutputStream) args[1];
+            WriterConfig config = new WriterConfig();
+            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+            Rio.write(Values.sesameModel(ontologyModel), os, RDFFormat.JSONLD, config);
+            return os;
+        });
         when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
         when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
         when(ontology.getGraphQueryResults(anyString(), anyBoolean(), eq(mf))).thenReturn(mf.createModel(Collections.singleton(vf.createStatement(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test")))));
@@ -394,6 +405,14 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT))).thenReturn(concepts);
         when(importedOntology.getIndividualsOfType(Values.mobiIRI(SKOS.CONCEPT_SCHEME))).thenReturn(conceptSchemes);
         when(importedOntology.asJsonLD(anyBoolean())).thenReturn(importedOntologyJsonLd);
+        when(importedOntology.asJsonLD(anyBoolean(), any())).thenAnswer((Answer<OutputStream>) invocation -> {
+            Object[] args = invocation.getArguments();
+            OutputStream os = (OutputStream) args[1];
+            WriterConfig config = new WriterConfig();
+            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+            Rio.write(Values.sesameModel(ontologyModel), os, RDFFormat.JSONLD, config);
+            return os;
+        });
         when(importedOntology.getImportsClosure()).thenReturn(Collections.singleton(importedOntology));
 
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);

@@ -64,7 +64,7 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
-    dvm.schemeIRIs = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
+    dvm.schemeIRIs = Object.keys(dvm.os.listItem.conceptSchemes.iris);
     dvm.schemes = [];
     dvm.selectedSchemes = [];
     dvm.prefix = dvm.os.getDefaultPrefix();
@@ -88,6 +88,14 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
+        // add the entity to the ontology
+        dvm.os.addEntity(dvm.os.listItem, dvm.concept);
+        // update relevant lists
+        dvm.os.listItem.concepts.iris[dvm.concept['@id']] = dvm.os.listItem.ontologyId;
+        dvm.ontoUtils.addConcept(dvm.concept);
+        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
+        dvm.ontoUtils.addIndividual(dvm.concept);
         if (dvm.selectedSchemes.length) {
             forEach(dvm.selectedSchemes, scheme => {
                 var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, scheme['@id']);
@@ -97,14 +105,6 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
             });
             dvm.os.listItem.conceptSchemes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemes);
         }
-        dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
-        // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.concept);
-        // update relevant lists
-        dvm.os.listItem.concepts.iris[dvm.concept['@id']] = dvm.os.listItem.ontologyId;
-        dvm.ontoUtils.addConcept(dvm.concept);
-        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
-        dvm.ontoUtils.addIndividual(dvm.concept);
         // Save the changes to the ontology
         dvm.ontoUtils.saveCurrentChanges();
         // Open snackbar

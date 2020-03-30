@@ -57,10 +57,11 @@ const annotationOverlayComponent = {
     controller: annotationOverlayComponentCtrl
 };
 
-annotationOverlayComponentCtrl.$inject = ['propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
+annotationOverlayComponentCtrl.$inject = ['ontologyManagerService', 'propertyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
 
-function annotationOverlayComponentCtrl(propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
+function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
     var dvm = this;
+    var om = ontologyManagerService;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.pm = propertyManagerService;
     dvm.os = ontologyStateService;
@@ -103,7 +104,9 @@ function annotationOverlayComponentCtrl(propertyManagerService, ontologyStateSer
         if (added) {
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
             dvm.ontoUtils.saveCurrentChanges();
-            dvm.ontoUtils.updateLabel();
+            if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
+                dvm.ontoUtils.updateLabel();
+            }
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
@@ -116,7 +119,9 @@ function annotationOverlayComponentCtrl(propertyManagerService, ontologyStateSer
             dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
             dvm.ontoUtils.saveCurrentChanges();
-            dvm.ontoUtils.updateLabel();
+            if (om.entityNameProps.includes(dvm.os.annotationSelect)) {
+                dvm.ontoUtils.updateLabel();
+            }
         } else {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }

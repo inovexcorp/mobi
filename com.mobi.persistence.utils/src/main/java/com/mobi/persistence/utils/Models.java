@@ -37,17 +37,32 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.obolibrary.obo2owl.OWLAPIObo2Owl;
+import org.obolibrary.oboformat.model.OBODoc;
+import org.obolibrary.oboformat.parser.OBOFormatParser;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLRuntimeException;
+import org.semanticweb.owlapi.model.OntologyConfigurator;
+import org.semanticweb.owlapi.rio.RioRenderer;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
@@ -238,6 +253,43 @@ public class Models {
                     } catch (Exception e) {
                         rdfData.reset();
                     }
+                }
+            }
+            if (model.isEmpty()) {
+                // Check OBOFormat
+                try {
+                    OBOFormatParser parser = new OBOFormatParser();
+                    OBODoc obodoc;
+
+                    // Parse into an OBODoc
+                    try (InputStreamReader isReader = new InputStreamReader(rdfData, StandardCharsets.UTF_8);
+                         BufferedReader bufferedReader = new BufferedReader(isReader)) {
+                        parser.setReader(new BufferedReader(bufferedReader));
+                        obodoc = new OBODoc();
+                        parser.parseOBODoc(obodoc);
+                    }
+
+                    // Convert to an OWLOntology
+                    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+                    manager.setOntologyConfigurator(new OntologyConfigurator());
+                    OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
+                    OWLOntology ontology;
+                    try {
+                        ontology = bridge.convert(obodoc);
+                    } catch (OWLOntologyCreationException e) {
+                        throw new OWLRuntimeException(e);
+                    }
+
+                    // Render into an RDF4J Model
+                    org.eclipse.rdf4j.model.Model sesameModel = new org.eclipse.rdf4j.model.impl.LinkedHashModel();
+                    RDFHandler rdfHandler = new StatementCollector(sesameModel);
+                    OWLDocumentFormat format = ontology.getFormat();
+                    format.setAddMissingTypes(false);
+                    RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
+                    renderer.render();
+                    model = sesameModel;
+                } catch (Exception e) {
+                    rdfData.reset();
                 }
             }
         } finally {

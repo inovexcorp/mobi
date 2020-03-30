@@ -7,3 +7,5 @@ WHERE {
     FILTER ISLITERAL(?o)
     FILTER CONTAINS(LCASE(STR(?o)), STR(?searchText))
 }
+
+LIMIT 500
