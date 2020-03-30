@@ -757,139 +757,110 @@ public class OntologyRest {
 
         return outputStream -> {
             StopWatch watch = new StopWatch();
+
             log.trace("Start iriList");
             watch.start();
-
             outputStream.write("{ \"iriList\": ".getBytes());
             outputStream.write(getAllIRIs(ontology).toString().getBytes());
-
             watch.stop();
             log.trace("End iriList: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start importedIRIs");
             watch.start();
-
             outputStream.write(", \"importedIRIs\": ".getBytes());
             outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
                     .getBytes());
-
             watch.stop();
             log.trace("End importedIRIs: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start importedOntologies");
             watch.start();
-
             outputStream.write(", \"importedOntologies\": ".getBytes());
-
             ArrayNode arr = mapper.createArrayNode();
             onlyImports.stream()
                     .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
                     .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
-
             watch.stop();
             log.trace("End importedOntologies: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start failedImports");
             watch.start();
-
             outputStream.write(", \"failedImports\": ".getBytes());
             outputStream.write(mapper.valueToTree(getUnloadableImportIRIs(ontology)).toString().getBytes());
-
             watch.stop();
             log.trace("End failedImports: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start classHierarchy");
             watch.start();
-
             outputStream.write(", \"classHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubClassesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End classHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start individuals");
             watch.start();
-
             outputStream.write(", \"individuals\": ".getBytes());
             ObjectNode classesWithIndividuals = mapper.valueToTree(
                     ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
             outputStream.write(classesWithIndividuals.toString().getBytes());
-
             watch.stop();
             log.trace("End individuals: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start dataPropertyHierarchy");
             watch.start();
-
             outputStream.write(", \"dataPropertyHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start objectPropertyHierarchy");
             watch.start();
-
             outputStream.write(", \"objectPropertyHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubObjectPropertiesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start annotationHierarchy");
             watch.start();
-
             outputStream.write(", \"annotationHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start conceptHierarchy");
             watch.start();
-
             outputStream.write(", \"conceptHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start conceptSchemeHierarchy");
             watch.start();
-
             outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start propertyToRanges");
             watch.start();
-
             outputStream.write(", \"propertyToRanges\": ".getBytes());
-
-            Map<String, Set<String>> propertyMap = new HashMap<>();
-
-            TupleQueryResult tupleQueryResults = ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true);
-
-            tupleQueryResults.forEach(bindings -> {
-                String prop = Bindings.requiredResource(bindings, "prop").stringValue();
-                String range = Bindings.requiredResource(bindings, "range").stringValue();
-                if (propertyMap.containsKey(prop)) {
-                    propertyMap.get(prop).add(range);
-                } else {
-                    Set<String> ranges = new HashSet<>();
-                    ranges.add(range);
-                    propertyMap.put(prop, ranges);
-                }
-            });
-
-            outputStream.write(mapper.valueToTree(propertyMap).toString().getBytes());
-            outputStream.write("}".getBytes());
-
+            writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
             watch.stop();
             log.trace("End propertyToRanges: " + watch.getTime() + "ms");
+
+            outputStream.write("}".getBytes());
         };
     }
 
@@ -2422,6 +2393,28 @@ public class OntologyRest {
             hierarchy.writeHierarchyString(sesameTransformer, outputStream);
         }
         outputStream.write("}".getBytes());
+    }
+
+    /**
+     * Writes the ranges for each property from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "prop" and "range" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writePropertyRangesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        Map<String, Set<String>> propertyMap = new HashMap<>();
+        tupleQueryResults.forEach(bindings -> {
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            String range = Bindings.requiredResource(bindings, "range").stringValue();
+            if (propertyMap.containsKey(prop)) {
+                propertyMap.get(prop).add(range);
+            } else {
+                Set<String> ranges = new HashSet<>();
+                ranges.add(range);
+                propertyMap.put(prop, ranges);
+            }
+        });
+        outputStream.write(mapper.valueToTree(propertyMap).toString().getBytes());
     }
 
     /**
