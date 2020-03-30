@@ -85,6 +85,7 @@ import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -1335,6 +1336,53 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetOntologyStuffPropertyToRanges() throws Exception {
+        when(ontology.getTupleQueryResults(any(String.class), eq(true))).thenAnswer(invocationOnMock -> {
+            String query = invocationOnMock.getArgumentAt(0, String.class);
+            try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+                TupleQuery graphQuery = conn.prepareTupleQuery(query);
+                return graphQuery.evaluateAndReturn();
+            }
+        });
+
+        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
+        JSONObject expectedResults = getResource("/getOntologyStuffData/propertyToRanges-results.json");
+
+        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+            conn.add(data);
+        }
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
+
+//        assertGetOntology(true);
+//        assertGetOntologyStuff(response);
+//
+//
+//        Model expectedResults = getModel("/queryData/02_RestrictionOnRealClass-results.ttl");
+//
+//        Model results;
+//        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+//            results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
+//        }
+//
+//        try {
+//            Assert.assertEquals(expectedResults, results);
+//        } catch (AssertionError e) {
+//            printModel("Expected Results", expectedResults);
+//            printModel("Actual Results", results);
+//            fail(e.getMessage(), e);
+//        }
     }
 
     // Test get IRIs in ontology
@@ -4731,6 +4779,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         assertEquals(response.getStatus(), 400);
     }
+
+    // Test getEntity
 
     @Test
     public void query01_NoBlankNodes() throws IOException {

@@ -172,11 +172,15 @@ public class OntologyRest {
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String GET_ENTITY_QUERY;
+    private static final String GET_PROPERTY_RANGES;
 
     static {
         try {
             GET_ENTITY_QUERY = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/retrieve-entity.rq"), StandardCharsets.UTF_8
+            );
+            GET_PROPERTY_RANGES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-property-ranges.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -856,10 +860,36 @@ public class OntologyRest {
 
             outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
-            outputStream.write("}".getBytes());
 
             watch.stop();
             log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start propertyToRanges");
+            watch.start();
+
+            outputStream.write(", \"propertyToRanges\": ".getBytes());
+
+            Map<String, Set<String>> propertyMap = new HashMap<>();
+
+            TupleQueryResult tupleQueryResults = ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true);
+
+            tupleQueryResults.forEach(bindings -> {
+                String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+                String range = Bindings.requiredResource(bindings, "range").stringValue();
+                if (propertyMap.containsKey(prop)) {
+                    propertyMap.get(prop).add(range);
+                } else {
+                    Set<String> ranges = new HashSet<>();
+                    ranges.add(range);
+                    propertyMap.put(prop, ranges);
+                }
+            });
+
+            outputStream.write(mapper.valueToTree(propertyMap).toString().getBytes());
+            outputStream.write("}".getBytes());
+
+            watch.stop();
+            log.trace("End propertyToRanges: " + watch.getTime() + "ms");
         };
     }
 
