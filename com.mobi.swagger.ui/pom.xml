@@ -95,7 +95,7 @@
                 <version>${swagger.version}</version>
                 <configuration>
                     <outputFileName>openapi</outputFileName>
-                    <outputPath>${project.build.directory}/generatedtest</outputPath>
+                    <outputPath>${project.build.directory}/swagger-docs</outputPath>
                     <outputFormat>YAML</outputFormat>
                     <configurationFilePath>${project.build.directory}/classes/swagger-config.yaml</configurationFilePath>
                 </configuration>
