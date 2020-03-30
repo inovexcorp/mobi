@@ -1543,7 +1543,6 @@ public class OntologyRest {
                                             @PathParam("recordId") String recordIdStr,
                                             @QueryParam("branchId") String branchIdStr,
                                             @QueryParam("commitId") String commitIdStr) {
-
         try {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
