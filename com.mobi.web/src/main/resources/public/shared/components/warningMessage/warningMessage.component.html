@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="concept-scheme-hierarchy-block h-100 py-1">
-    <info-message ng-if="!dvm.os.listItem.conceptSchemes.flat.length">(No concept schemes defined)</info-message>
-    <hierarchy-tree ng-if="dvm.os.listItem.conceptSchemes.flat.length" hierarchy="dvm.os.listItem.conceptSchemes.flat" update-search="dvm.updateSearch(value)" index="dvm.os.listItem.editorTabStates.schemes.index" reset-index="dvm.resetIndex()" click-item="dvm.click(iri)" branch-id="dvm.os.listItem.ontologyRecord.branchId"></hierarchy-tree>
-</div>
+<p class="warning-message text-warning font-weight-bold">
+    <i class="fa fa-warning fa-fw"></i><span ng-transclude></span>
+</p>

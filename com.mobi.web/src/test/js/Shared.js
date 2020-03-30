@@ -552,32 +552,38 @@ export function mockOntologyState() {
                    },
                    overview: {
                        active: false,
-                       searchText: ''
+                       searchText: '',
+                       open: {}
                    },
                    classes: {
                        active: false,
                        searchText: '',
-                       index: 0
+                       index: 0,
+                       open: {}
                    },
                    properties: {
                        active: false,
                        searchText: '',
-                       index: 0
+                       index: 0,
+                       open: {}
                    },
                    individuals: {
                        active: false,
                        searchText: '',
-                       index: 0
+                       index: 0,
+                       open: {}
                    },
                    concepts: {
                        active: false,
                        searchText: '',
-                       index: 0
+                       index: 0,
+                       open: {}
                    },
                    schemes: {
                        active: false,
                        searchText: '',
-                       index: 0
+                       index: 0,
+                       open: {}
                    },
                    search: {
                        active: false
@@ -712,8 +718,6 @@ export function mockOntologyState() {
             this.removeBranch = jasmine.createSpy('removeBranch');
             this.afterSave = jasmine.createSpy('afterSave').and.returnValue($q.when([]));
             this.clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
-            this.setOpened = jasmine.createSpy('setOpened');
-            this.getOpened = jasmine.createSpy('getOpened').and.returnValue(false);
             this.setNoDomainsOpened = jasmine.createSpy('setNoDomainsOpened');
             this.getNoDomainsOpened = jasmine.createSpy('getNoDomainsOpened').and.returnValue(true);
             this.getUnsavedEntities = jasmine.createSpy('getUnsavedEntities');

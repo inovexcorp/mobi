@@ -73,7 +73,7 @@ describe('Hierarchy Filter component', function() {
             expect(this.element.querySelectorAll('ul').length).toEqual(1);
         });
     });
-    fdescribe('controller methods', function() {
+    describe('controller methods', function() {
         it('should update flag with checked value in this and parent scopes on apply', function() {
             this.controller.filters = [{checked: true, flag: false}];
             this.controller.apply();

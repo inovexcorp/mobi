@@ -121,7 +121,7 @@ describe('Merge Block component', function() {
             it('unless the target is empty', function() {
                 this.controller.changeTarget();
                 expect(ontologyStateSvc.listItem.merge.target).toBeUndefined();
-                expect(catalogManagerSvc.getBranchHeadCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getRecordBranch).not.toHaveBeenCalled();
                 expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
             });
@@ -130,24 +130,24 @@ describe('Merge Block component', function() {
                     this.branch = {'@id': 'target'};
                 });
                 it('unless an error occurs', function() {
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
+                    catalogManagerSvc.getRecordBranch.and.returnValue($q.when({'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
                     catalogManagerSvc.getDifference.and.returnValue($q.reject('Error'));
                     this.controller.changeTarget(this.branch);
                     scope.$apply();
                     expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalled();
                     expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
                     expect(util.createErrorToast).toHaveBeenCalledWith('Error');
                     expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
                 });
                 it('successfully', function() {
                     var difference = {additions: [], deletions: []};
-                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({'commit': {'@id': 'targetHead'}}));
+                    catalogManagerSvc.getRecordBranch.and.returnValue($q.when({'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
                     catalogManagerSvc.getDifference.and.returnValue($q.when(difference));
                     this.controller.changeTarget(this.branch);
                     scope.$apply();
                     expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalled();
                     expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
                     expect(util.createErrorToast).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.listItem.merge.difference).toEqual(difference);
