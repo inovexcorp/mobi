@@ -259,8 +259,6 @@ public class OntologyRest {
     }
 
     @POST
-    // TODO: This breaks things
-    @Path("#json")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -272,7 +270,9 @@ public class OntologyRest {
                     @ApiResponse(responseCode = "201", description = "OntologyRecord created"),
                     @ApiResponse(responseCode = "400", description = "Publisher can't be found"),
                     @ApiResponse(responseCode = "500", description = "Problem creating OntologyRecord")
-            }
+            },
+            // TODO: We can't generate swagger docs here because of the limitations on overloaded paths in the OpenAPI Spec
+            hidden = true
     )
     @RolesAllowed("user")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
@@ -296,27 +296,6 @@ public class OntologyRest {
         return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
-    /**
-     * Returns the ontology associated with the requested record ID in the requested format.
-     *
-     * @param context     the context of the request
-     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                    master Branch.
-     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                    otherwise, nothing will be returned.
-     * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before
-     *                    retrieval
-     * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
-     *                              applied to the return value
-     * @return a Response with the ontology in the requested format.
-     */
     @GET
     @Path("{recordId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
@@ -423,18 +402,42 @@ public class OntologyRest {
      * @return the ontology associated with requested record ID to download.
      */
     @GET
-    // TODO: This breaks things
-    @Path("{recordId}#file")
+    @Path("{recordId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @Operation(
+            summary = "Streams the ontology associated with the requested record ID to an OutputStream.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The Ontology associated with requested record ID to download")
+            },
+            // TODO: We can't generate swagger docs here because of the limitations on overloaded paths in the OpenAPI Spec
+            hidden = true
+    )
     @RolesAllowed("user")
-//    @ApiOperation("Streams the associated ontology to an OutputStream.")
     @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response downloadOntologyFile(@Context ContainerRequestContext context,
-                                         @PathParam("recordId") String recordIdStr,
-                                         @QueryParam("branchId") String branchIdStr,
-                                         @QueryParam("commitId") String commitIdStr,
-                                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                                         @DefaultValue("ontology") @QueryParam("fileName") String fileName) {
+    public Response downloadOntologyFile(
+            @Context ContainerRequestContext context,
+
+            @Parameter(description = "The String representing the Record Resource id. NOTE: Assumes id represents an " +
+                    "IRI unless String begins with \"_:\".", required = true)
+            @PathParam("recordId") String recordIdStr,
+
+            @Parameter(description = "The optional String representing the Branch Resource id. NOTE: Assumes id " +
+                    "represents an IRI unless String begins with \"_:\". Defaults to Master branch if missing.")
+            @QueryParam("branchId") String branchIdStr,
+
+            @Parameter(description = "The optional String representing the Commit Resource id. NOTE: Assumes id " +
+                    "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The " +
+                    "provided commitId must be on the Branch identified by the provided branchId; otherwise, nothing " +
+                    "will be returned.")
+            @QueryParam("commitId") String commitIdStr,
+
+            @Parameter(description = "The desired RDF return format.",
+                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
+            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+
+            @Parameter(description = "the file name for the ontology file")
+            @DefaultValue("ontology") @QueryParam("fileName") String fileName
+    ) {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
