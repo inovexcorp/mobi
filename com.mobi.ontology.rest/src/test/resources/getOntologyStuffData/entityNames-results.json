@@ -1,0 +1,72 @@
+{
+  "http://test.com/Ontology1": {
+    "label": "Ontology 1",
+    "names": {
+      "http://www.w3.org/2000/01/rdf-schema#label": ["Ontology 1"],
+      "http://purl.org/dc/terms/title": ["Ontology 1"]
+    }
+  },
+  "http://test.com/Ontology1#prop1": {
+    "label": "property 1",
+    "names": {
+      "http://purl.org/dc/elements/1.1/title": ["property 1"]
+    }
+  },
+  "http://test.com/Ontology1#prop2": {
+    "label": "alt property 2",
+    "names": {
+      "http://purl.org/dc/terms/title": ["property 2", "another alt property 2", "alt property 2"]
+    }
+  },
+  "http://test.com/Ontology1#prop3": {
+    "label": "property 3",
+    "names": {
+      "http://www.w3.org/2004/02/skos/core#prefLabel": ["property 3"]
+    }
+  },
+  "http://test.com/Ontology1#prop4": {
+    "label": "property 4",
+    "names": {
+      "http://purl.org/dc/terms/title": ["property 4"],
+      "http://www.w3.org/2004/02/skos/core#altLabel": ["alt property 4"]
+    }
+  },
+  "http://test.com/Ontology1#prop5": {
+    "label": "property 5",
+    "names": {
+      "http://purl.org/dc/terms/title": ["property 5"],
+      "http://www.w3.org/2008/05/skos-xl#": ["property 5 literal form"]
+    }
+  },
+  "http://test.com/Ontology1#classA": {
+    "label": "class A",
+    "names": {
+      "http://www.w3.org/2000/01/rdf-schema#label": ["class A"],
+      "http://www.w3.org/2004/02/skos/core#prefLabel": ["class A pref"]
+    }
+  },
+  "http://test.com/Ontology2": {
+    "label": "Ontology 2",
+    "names": {
+      "http://purl.org/dc/terms/title": ["Ontology 2"]
+    }
+  },
+  "http://test.com/Ontology2#prop1": {
+    "label": "property 1",
+    "names": {
+      "http://purl.org/dc/elements/1.1/title": ["property 1"]
+    }
+  },
+  "http://test.com/Ontology2#prop2": {
+    "label": "property 2",
+    "names": {
+      "http://purl.org/dc/terms/title": ["property 2"]
+    }
+  },
+  "http://test.com/Ontology2#prop3": {
+    "label": "property 3",
+    "names": {
+      "http://purl.org/dc/elements/1.1/title": ["property 3"]
+    }
+  }
+}
