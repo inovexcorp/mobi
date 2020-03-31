@@ -48,6 +48,14 @@ function characteristicsRowComponentCtrl(ontologyManagerService, ontologyStateSe
     var dvm = this;
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
+
+    dvm.updateTypes = function(types) {
+        dvm.os.listItem.selected['@types'] = types;
+        // TODO: Remove when the full RDF list is removed
+        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']);
+        entityFromFullList['@types'] = types; 
+
+    }
 }
 
 export default characteristicsRowComponent;

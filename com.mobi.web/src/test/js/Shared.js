@@ -232,6 +232,7 @@ export function mockOntologyManager() {
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
+            this.getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue($q.when([]));
             this.isDeprecated = jasmine.createSpy('isDeprecated');
             this.isOntology = jasmine.createSpy('isOntology');
             this.hasOntologyEntity = jasmine.createSpy('hasOntologyEntity');
@@ -542,6 +543,7 @@ export function mockOntologyState() {
                 selected: {
                     '@id': 'id'
                 },
+                selectedBlankNodes: [],
                 active: true,
                 upToDate: true,
                 isVocabulary: false,
@@ -708,6 +710,10 @@ export function mockOntologyState() {
             this.removeEntity = jasmine.createSpy('removeEntity');
             this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId').and.returnValue({});
             this.getEntityByRecordId = jasmine.createSpy('getEntityByRecordId');
+            this.getEntity = jasmine.createSpy('getEntity').and.returnValue($q.when([]));
+            this.getEntityNoBlankNodes = jasmine.createSpy('getEntityNoBlankNodes').and.returnValue($q.when({}));
+            this.existsInIndices = jasmine.createSpy('existsInIndices').and.returnValue(true);
+            this.getFromIndices = jasmine.createSpy('getFromIndices').and.returnValue({});
             this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
             this.getEntityNameByIndex = jasmine.createSpy('getEntityNameByIndex');
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
