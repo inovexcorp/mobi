@@ -1,0 +1,37 @@
+@prefix : <http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ont1: <http://test.com/Ontology1#> .
+@prefix ont2: <http://test.com/Ontology2#> .
+
+<http://test.com/Ontology1> a owl:Ontology ;
+    dcterms:title "Ontology 1" .
+
+ont1:prop1 a owl:ObjectProperty ;
+    dcterms:title "property 1" ;
+    rdfs:range ont1:class1 .
+
+ont1:prop2 a owl:DatatypeProperty ;
+    dcterms:title "property 2" ;
+    rdfs:range xsd:string .
+
+ont1:prop3 a owl:AnnotationProperty ;
+    dcterms:title "property 3" .
+
+ont1:prop4 a owl:AnnotationProperty ;
+    dcterms:title "property 4" ;
+    rdfs:range xsd:string .
+
+<http://test.com/Ontology2> a owl:Ontology ;
+    dcterms:title "Ontology 2" .
+
+ont2:prop1 a owl:DatatypeProperty ;
+    dcterms:title "property 1" ;
+    rdfs:range xsd:string .
+
+ont2:prop2 a owl:DatatypeProperty ;
+    dcterms:title "property 2" ;
+    rdfs:range xsd:string, xsd:double .
