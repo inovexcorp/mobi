@@ -1459,6 +1459,44 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(responseObject.getJSONArray("noDomainProperties"), expectedResults);
     }
 
+//    @Test
+//    public void testGetOntologyStuffClassToAssociatedProperties() throws Exception {
+//        setupTupleQueryMock();
+//
+//        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
+//        JSONObject expectedResults = getResource("/getOntologyStuffData/classToAssociatedProperties-results.json");
+//
+//        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+//            conn.add(data);
+//        }
+//
+//        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+//                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+//                .get();
+//        JSONObject responseObject = getResponse(response);
+//
+//        assertEquals(response.getStatus(), 200);
+//        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+//        assertGetOntology(true);
+//        assertEquals(responseObject.getJSONObject("classToAssociatedProperties"), expectedResults);
+//    }
+
+    @Test
+    public void testGetOntologyStuffEntityNamesNoResults() {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertTrue(responseObject.containsKey("entityNames"));
+        assertEquals(responseObject.getJSONObject("entityNames"), expectedResults);
+    }
+
     // Test get IRIs in ontology
 
     @Test

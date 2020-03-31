@@ -885,6 +885,15 @@ public class OntologyRest {
             watch.stop();
             log.trace("End noDomainProperties: " + watch.getTime() + "ms");
 
+            watch.reset();
+            log.trace("Start entityNames");
+            watch.start();
+            outputStream.write(", \"entityNames\": ".getBytes());
+            outputStream.write("{}".getBytes());
+//            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true), outputStream);
+            watch.stop();
+            log.trace("End entityNames: " + watch.getTime() + "ms");
+
             outputStream.write("}".getBytes());
         };
     }
