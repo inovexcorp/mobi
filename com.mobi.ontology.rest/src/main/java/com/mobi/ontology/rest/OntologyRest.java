@@ -125,6 +125,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -174,6 +175,7 @@ public class OntologyRest {
     private static final String GET_ENTITY_QUERY;
     private static final String GET_PROPERTY_RANGES;
     private static final String GET_CLASS_PROPERTIES;
+    private static final String GET_NO_DOMAIN_PROPERTIES;
 
     static {
         try {
@@ -185,6 +187,9 @@ public class OntologyRest {
             );
             GET_CLASS_PROPERTIES = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/query-class-properties.rq"), StandardCharsets.UTF_8
+            );
+            GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -876,8 +881,7 @@ public class OntologyRest {
             log.trace("Start noDomainProperties");
             watch.start();
             outputStream.write(", \"noDomainProperties\": ".getBytes());
-            outputStream.write("[]".getBytes());
-//            writeClassPropertiesToStream(ontology.getTupleQueryResults(GET_CLASS_PROPERTIES, true), outputStream);
+            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true), outputStream);
             watch.stop();
             log.trace("End noDomainProperties: " + watch.getTime() + "ms");
 
@@ -2472,6 +2476,21 @@ public class OntologyRest {
             }
         });
         outputStream.write(mapper.valueToTree(classMap).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated no domain properties from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "prop" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeNoDomainPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        List<String> props = new ArrayList<>();
+        tupleQueryResults.forEach(bindings -> {
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            props.add(prop);
+        });
+        outputStream.write(mapper.valueToTree(props).toString().getBytes());
     }
 
     /**
