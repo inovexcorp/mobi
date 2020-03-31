@@ -173,6 +173,7 @@ public class OntologyRest {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String GET_ENTITY_QUERY;
     private static final String GET_PROPERTY_RANGES;
+    private static final String GET_CLASS_PROPERTIES;
 
     static {
         try {
@@ -181,6 +182,9 @@ public class OntologyRest {
             );
             GET_PROPERTY_RANGES = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/query-property-ranges.rq"), StandardCharsets.UTF_8
+            );
+            GET_CLASS_PROPERTIES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-class-properties.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -864,8 +868,7 @@ public class OntologyRest {
             log.trace("Start classToAssociatedProperties");
             watch.start();
             outputStream.write(", \"classToAssociatedProperties\": ".getBytes());
-            outputStream.write("{}".getBytes());
-//            writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
+            writeClassPropertiesToStream(ontology.getTupleQueryResults(GET_CLASS_PROPERTIES, true), outputStream);
             watch.stop();
             log.trace("End classToAssociatedProperties: " + watch.getTime() + "ms");
 
@@ -2424,6 +2427,28 @@ public class OntologyRest {
             }
         });
         outputStream.write(mapper.valueToTree(propertyMap).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated properties for each class from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "class" and "prop" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeClassPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        Map<String, Set<String>> classMap = new HashMap<>();
+        tupleQueryResults.forEach(bindings -> {
+            String clazz = Bindings.requiredResource(bindings, "class").stringValue();
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            if (classMap.containsKey(clazz)) {
+                classMap.get(clazz).add(prop);
+            } else {
+                Set<String> props = new HashSet<>();
+                props.add(prop);
+                classMap.put(clazz, props);
+            }
+        });
+        outputStream.write(mapper.valueToTree(classMap).toString().getBytes());
     }
 
     /**
