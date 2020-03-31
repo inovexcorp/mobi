@@ -8,14 +8,17 @@
 @prefix ont2: <http://test.com/Ontology2#> .
 
 <http://test.com/Ontology1> a owl:Ontology ;
-    dcterms:title "Ontology 1" .
+    dcterms:title "Ontology 1" ;
+    owl:imports <http://test.com/Ontology2> .
 
 ont1:prop1 a owl:ObjectProperty ;
     dcterms:title "property 1" ;
-    rdfs:range ont1:class1 .
+    rdfs:domain ont1:classA ;
+    rdfs:range ont2:class1 .
 
 ont1:prop2 a owl:DatatypeProperty ;
     dcterms:title "property 2" ;
+    rdfs:domain ont2:class1 ;
     rdfs:range xsd:string .
 
 ont1:prop3 a owl:AnnotationProperty ;
@@ -23,15 +26,28 @@ ont1:prop3 a owl:AnnotationProperty ;
 
 ont1:prop4 a owl:AnnotationProperty ;
     dcterms:title "property 4" ;
+    rdfs:domain ont1:classB ;
     rdfs:range xsd:string .
+
+ont1:classA a owl:Class .
+
+ont1:classB a owl:Class .
+
+ont1:classC a owl:Class .
 
 <http://test.com/Ontology2> a owl:Ontology ;
     dcterms:title "Ontology 2" .
 
 ont2:prop1 a owl:DatatypeProperty ;
     dcterms:title "property 1" ;
+    rdfs:domain ont2:class1 ;
     rdfs:range xsd:string .
 
 ont2:prop2 a owl:DatatypeProperty ;
     dcterms:title "property 2" ;
+    rdfs:domain ont2:class1 , ont2:class2 ;
     rdfs:range xsd:string, xsd:double .
+
+ont2:class1 a owl:Class .
+
+ont2:class2 a owl:Class .
