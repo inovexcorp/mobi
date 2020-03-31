@@ -3417,6 +3417,23 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
+        it('when the entity is an individual', function() {
+            ontologyManagerSvc.isIndividual.and.returnValue(true);
+            this.object['urn:prop'] = [{'@value': 'test'}];
+            ontologyStateSvc.setSelected(this.id, false, listItem);
+            scope.$apply();
+            expect(ontologyManagerSvc.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, this.id);
+            expect(listItem.selected).toEqual(this.object);
+            expect(listItem.selected['urn:prop']).toEqual([{'@value': 'test', '@type': prefixes.xsd + 'string'}]);
+            expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
+            expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
+            expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
+            // TODO: Remove this once these properties are in their own maps
+            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
+            
+            expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
+        });
         // TODO: Remove this once these properties are in their own maps
         it('when the entity is imported', function() {
             listItem.importedOntologies = [{index: {[this.id]: {}}, ontologyId: 'imported'}];
@@ -3431,6 +3448,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
+
     });
     describe('setEntityUsages should call the correct function', function() {
         beforeEach(function() {

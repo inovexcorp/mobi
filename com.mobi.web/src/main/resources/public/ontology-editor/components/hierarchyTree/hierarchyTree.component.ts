@@ -52,7 +52,6 @@ const hierarchyTreeComponent = {
         index: '<',
         updateSearch: '&',
         resetIndex: '&',
-        clickItem: '&?',
         branchId: '<'
     },
     controllerAs: 'dvm',
@@ -112,12 +111,6 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     dvm.$onDestroy = function() {
         if (dvm.os.listItem.editorTabStates) {
             dvm.resetIndex();
-        }
-    }
-    dvm.click = function(entityIRI) {
-        dvm.os.selectItem(entityIRI);
-        if (dvm.clickItem) {
-            dvm.clickItem({iri: entityIRI});
         }
     }
     dvm.onKeyup = function() {

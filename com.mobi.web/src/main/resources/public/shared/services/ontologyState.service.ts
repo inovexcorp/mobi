@@ -1510,6 +1510,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem.selectedBlankNodes.forEach(bnode => {
                     listItem.blankNodes[bnode['@id']] = mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
                 });
+                if (om.isIndividual(listItem.selected)) {
+                    findValuesMissingDatatypes(listItem.selected);
+                }
                 
                 // TODO: Remove these once these properties are in their own maps
                 self.updatePropertyIcon(listItem.selected);
@@ -1775,9 +1778,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return prefixIri;
     }
-    self.getOntologiesArray = function() {
-        return getOntologiesArrayByListItem(self.listItem);
-    }
     self.updatePropertyIcon = function(entity) {
         if (om.isProperty(entity)) {
             setPropertyIcon(entity);
@@ -1903,9 +1903,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function existenceCheck(iriObj, iri) {
         return has(iriObj, "['" + iri + "']");
     }
-    function getOntologiesArrayByListItem(listItem) {
-        return concat([listItem.ontology], map(listItem.importedOntologies, 'ontology'));
-    }
     function getIndices(listItem) {
         return concat([get(listItem, 'index')], map(get(listItem, 'importedOntologies'), 'index'));
     }
@@ -1951,15 +1948,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             if (om.isProperty(entity)) {
                 setPropertyIcon(entity);
-            // } else if (om.isBlankNode(entity)) {
-                // blankNodes[get(entity, '@id')] = undefined;
             } else if (om.isIndividual(entity)) {
                 findValuesMissingDatatypes(entity);
             }
         });
-        // forEach(blankNodes, (value, id) => {
-        //     blankNodes[id] = mc.jsonldToManchester(id, ontology, index);
-        // });
         listItem.ontologyId = ontologyId;
         listItem.editorTabStates.project.entityIRI = ontologyId;
         listItem.ontologyRecord.title = title;
@@ -2074,7 +2066,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function addImportedOntologyToListItem(listItem, importedOntObj) {
         var index = {};
-        // var blankNodes = {};
         forEach(importedOntObj.ontology, (entity, i) => {
             if (has(entity, '@id')) {
                 index[entity['@id']] = {
@@ -2082,23 +2073,16 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     label: om.getEntityName(entity),
                     ontologyIri: importedOntObj.id
                 }
-                // if (om.isBlankNode(entity)) {
-                //     blankNodes[entity['@id']] = undefined;
-                // }
             }
             self.updatePropertyIcon(entity);
             set(entity, 'mobi.imported', true);
             set(entity, 'mobi.importedIRI', importedOntObj.ontologyId);
         });
-        // forEach(blankNodes, (value, id) => {
-        //     blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index);
-        // });
         var importedOntologyListItem = {
             id: importedOntObj.id,
             ontologyId: importedOntObj.ontologyId,
             ontology: importedOntObj.ontology,
             index,
-            // blankNodes
         };
         listItem.importedOntologyIds.push(importedOntObj.id);
         listItem.importedOntologies.push(importedOntologyListItem);

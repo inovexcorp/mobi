@@ -25,7 +25,6 @@ import {
     mockOntologyManager,
     mockOntologyState,
     mockOntologyUtilsManager,
-    mockPropertyManager,
     mockModal
 } from '../../../../../../test/js/Shared';
 
@@ -43,16 +42,14 @@ describe('Concept Schemes Tab component', function() {
         mockOntologyManager();
         mockOntologyState();
         mockOntologyUtilsManager();
-        mockPropertyManager();
         mockModal();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _propertyManagerService_, _modalService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_, _modalService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
-            propertyManagerSvc = _propertyManagerService_;
             modalSvc = _modalService_;
         });
 
@@ -67,7 +64,6 @@ describe('Concept Schemes Tab component', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         ontologyUtilsManagerSvc = null;
-        propertyManagerSvc = null;
         modalSvc = null;
         this.element.remove();
     });
@@ -151,27 +147,6 @@ describe('Concept Schemes Tab component', function() {
                 expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.listItem.derivedConceptSchemes);
                 expect(ontologyUtilsManagerSvc.deleteConcept).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteConceptScheme).toHaveBeenCalled();
-            });
-        });
-        describe('should update dvm.relationshipList when a', function() {
-            beforeEach(function () {
-                propertyManagerSvc.conceptSchemeRelationshipList = ['relationshipA', 'relationshipB'];
-                propertyManagerSvc.schemeRelationshipList = ['relationshipD'];
-                ontologyStateSvc.listItem.iriList = ['relationshipA'];
-                ontologyStateSvc.listItem.derivedSemanticRelations = ['relationshipC'];
-            });
-            it('Concept is selected', function() {
-                ontologyStateSvc.listItem.selected = {new: true};
-                ontologyManagerSvc.isConcept.and.returnValue(true);
-                this.controller.clickItem();
-                expect(this.controller.relationshipList).toEqual(['relationshipC', 'relationshipA']);
-            });
-            it('ConceptScheme is selected', function() {
-                ontologyStateSvc.listItem.selected = {new: true};
-                ontologyManagerSvc.isConcept.and.returnValue(false);
-                ontologyManagerSvc.isConceptScheme.and.returnValue(true);
-                this.controller.clickItem();
-                expect(this.controller.relationshipList).toEqual(['relationshipD']);
             });
         });
     });
