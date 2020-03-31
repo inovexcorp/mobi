@@ -40,8 +40,7 @@ const template = require('./conceptSchemesTab.component.html');
  * selected entity from that list. The selected entity display includes a
  * {@link ontology-editor.component:selectedDetails}, a button to delete the entity, an
  * {@link ontology-editor.component:annotationBlock}, a {@link ontology-editor.component:datatypePropertyBlock},
- * a {@link ontology-editor.component:relationshipsBlock}, and a
- * {@link ontology-editor.component:usagesBlock}. The component houses the method for opening a modal for
+ * and a {@link ontology-editor.component:usagesBlock}. The component houses the method for opening a modal for
  * deleting concepts or concept schemes.
  */
 const conceptSchemesTabComponent = {
