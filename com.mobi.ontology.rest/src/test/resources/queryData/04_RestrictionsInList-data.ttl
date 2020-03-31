@@ -80,11 +80,22 @@ _:genid90 a owl:Restriction;
 :TankSystem a owl:Class ;
   rdfs:comment "a TankSystem can be a part of other aircraft components" .
 
+:MainLandingGear a owl:Class ;
+  rdfs:comment "Main Landing Gear" ;
+  rdfs:subClassOf _:genid400 .
+
+_:genid400 a owl:Restriction ;
+  owl:onClass :Rudder ;
+  owl:onProperty :hasRudder ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
 :Fuselage a owl:Class ;
   rdfs:subClassOf :AircraftSubComponent .
 
 :Wing a owl:Class ;
   rdfs:subClassOf :AircraftSubComponent .
+
+:Rudder a owl:Class .
 
 ### Object Properties
 
