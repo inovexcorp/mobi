@@ -1,0 +1,34 @@
+@prefix : <http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:DualMountedMainLandingGear a owl:Class ;
+  rdfs:comment "a MainLandingGear that is mounted to the wing and to the fuselage (e.g. A340, A380)";
+  owl:equivalentClass _:genid88 .
+
+_:genid88 a owl:Class ;
+  owl:intersectionOf _:genid93 .
+
+_:genid93 a rdf:List ;
+  rdf:first :MainLandingGear ;
+  rdf:rest _:genid91 .
+
+_:genid91 a rdf:List ;
+  rdf:first _:genid92 ;
+  rdf:rest _:genid89 .
+
+_:genid92 a owl:Restriction ;
+  owl:onClass :Fuselage;
+  owl:onProperty :isConnectedTo;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
+_:genid89 a rdf:List;
+  rdf:first _:genid90 ;
+  rdf:rest rdf:nil .
+
+_:genid90 a owl:Restriction;
+  owl:onClass :Wing;
+  owl:onProperty :isConnectedTo;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
