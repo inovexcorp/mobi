@@ -41,6 +41,7 @@ import {
     has,
     uniq,
     difference,
+    mapKeys,
     mapValues,
     lowerCase,
     sortBy,
@@ -869,6 +870,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordBranches(recordId, catalogId),
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
+            for (let [key, value] of Object.entries(response[0].propertyToRanges)) {
+                set(listItem.propertyIcons, [key,'mobi','icon'], getIcon(value))
+            };
+            listItem.noDomaininProperties = response[0].noDomainProperties;
+            listItem.classToChildProperties = response[0].classToAssociatedProperties;
             listItem.iriList.push(listItem.ontologyId);
             var responseIriList = get(response[0], 'iriList', {});
             listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
@@ -879,8 +885,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem.individuals.iris, iri, ontologyId));
             get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem.concepts.iris, iri, ontologyId));
             get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem.conceptSchemes.iris, iri, ontologyId));
-            listItem.propertyIcons = get(response, 'propertyIris', []);
-                listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
+            listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
             get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem.dataPropertyRange, iri, ontologyId));
@@ -1063,7 +1068,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
         forEach(orderedClasses, clazz => {
             var classProps = om.getClassProperties([allProps], clazz['@id']);
-            orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
+            var classProps2 = get(listItem.classToChildProperties, clazz['@id']);
+
+            /* STICKYNOTE: we'll be removing the above methods for grabbing the entities and then directly grabbing the
+            the entity and sticking it on the items.
+             */
+            orderedProperties = classProps2.sort((s1, s2) => compareEntityName(s1, s2, listItem));
             path = [listItem.ontologyRecord.recordId, clazz['@id']];
             result.push(merge({}, clazz, {
                 indent: 0,
@@ -1072,16 +1082,19 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 joinedPath: self.joinPath(path)
             }));
             forEach(orderedProperties, property => {
-                result.push(merge({}, property, {
-                    indent: 1,
-                    hasChildren: false,
-                    path: concat(path, property['@id']),
-                    joinedPath: self.joinPath(concat(path, property['@id']))
-                }));
+                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)
+                    , {
+                indent: 1,
+                hasChildren: false,
+                path: concat(path, property['@id']),
+                joinedPath: self.joinPath(concat(path, property['@id']))
+                 }));
             });
         });
         var noDomainProps = om.getNoDomainProperties([allProps]);
-        var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
+        var noDomainProps2 = listItem.noDomaininProperties;
+
+        var orderedNoDomainProperties = noDomainProps2.sort((s1, s2) => compareEntityName(s1, s2, listItem));
         if (orderedNoDomainProperties.length) {
             result.push({
                 title: 'Properties',
@@ -1840,14 +1853,20 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        set(self.listItem.propertyIcons.entity, 'mobi.icon', getIcon(entity));
+        set(self.listItem.propertyIcons, [entity["@id"],'mobi','icon'], getIcon(entity));
     }
     function getIcon(property) {
         var range = get(property, prefixes.rdfs + 'range');
+        var value;
+        if (!range) {
+            range = property;
+            value = property[0];
+        }
+        else { value = get(range[0]['@id']); }
         var icon = 'fa-square-o';
         if (range) {
             if (range.length === 1) {
-                switch(range[0]['@id']) {
+                switch(value) {
                     case prefixes.xsd + 'string':
                     case prefixes.rdf + 'langString':
                         icon = 'fa-font';

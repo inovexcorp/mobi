@@ -34,11 +34,12 @@ const treeItemComponent = {
         isBold: '<',
         onClick: '&',
         currentEntity: '<',
+        currentIri: '<',
         isOpened: '<',
         path: '<',
         underline: '<',
         toggleOpen: '&',
-        inProgressCommit: '<'
+        inProgressCommit: '<',
     },
     controllerAs: 'dvm',
     controller: treeItemComponentCtrl
@@ -48,9 +49,10 @@ treeItemComponentCtrl.$inject = ['settingsManagerService', 'ontologyStateService
 
 function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
     var dvm = this;
-    var os = ontologyStateService;
+    dvm.os = ontologyStateService;
     dvm.treeDisplaySetting = '';
     dvm.treeDisplay = '';
+    dvm.icon = '';
 
     dvm.$onChanges = function(changesObj) {
         if (get(changesObj, 'currentEntity.isFirstChange')) {
@@ -59,12 +61,14 @@ function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
         dvm.saved = dvm.isSaved();
         dvm.treeDisplay = dvm.getTreeDisplay();
     }
+
     dvm.getTreeDisplay = function() {
         if (dvm.treeDisplaySetting === 'pretty') {
-            return os.getEntityNameByIndex(get(dvm.currentEntity, '@id'), os.listItem);
+            return dvm.os.getEntityNameByIndex(get(dvm.currentEntity, '@id'), dvm.os.listItem);
         }
         return get(dvm.currentEntity, 'mobi.anonymous', '');
     }
+
     dvm.isSaved = function() {
         var ids = unionWith(map(dvm.inProgressCommit.additions, '@id'), map(dvm.inProgressCommit.deletions, '@id'), isEqual);
         return includes(ids, get(dvm.currentEntity, '@id'));
