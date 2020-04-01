@@ -24,6 +24,7 @@ import * as angular from 'angular';
 import { forEach, isEmpty, omit } from 'lodash';
 
 import './searchTab.component.scss';
+import themingConfig from '../../../theming.config';
 
 const template = require('./searchTab.component.html');
 
@@ -88,8 +89,10 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
         }
     }
     dvm.selectItem = function(item) {
-        dvm.os.selectItem(item, false);
-        dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+        dvm.os.selectItem(item, false)
+            .then(() => {
+                dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+            });
     }
     dvm.unselectItem = function() {
         dvm.os.unSelectItem();

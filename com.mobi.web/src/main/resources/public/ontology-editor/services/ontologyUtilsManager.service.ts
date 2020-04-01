@@ -323,7 +323,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @methodOf ontology-editor.service:ontologyUtilsManagerService
      *
      * @description
-     * Determines whether the provided id is "linkable", i.e. that ta link could be made to take a user to that entity.
+     * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.
      * Id must be present in the indices of the current `listItem` in {@link shared.service:ontologyStateService} and
      * not be a blank node id.
      *

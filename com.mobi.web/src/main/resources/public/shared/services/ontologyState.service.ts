@@ -1489,11 +1489,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Sets the `selected`, `selectedBlankNodes`, and `blankNodes` properties on the provided `listItem` based on the
      * response from {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns a Promise indicating
      * the success of the action. If the provided `entityIRI` or `listItem` are not valid, returns a Promise that
-     * resolves. Sets the entity usages if the provided `getUsages` parameter is true.
+     * resolves. Sets the entity usages if the provided `getUsages` parameter is true. Also accepts a spinner id to use
+     * in the call to fetch the entity.
      *
      * @param {string} entityIRI The IRI of the entity to retrieve
      * @param {string} [getUsages=true] Whether to set the usages of the entity after fetching
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {string} [spinnerId=''] A spinner id to attach to the call to fetch the entity
      * @return {Promise} A promise indicating the success of the action
      */
     self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem, spinnerId = '') {
@@ -1610,6 +1612,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getActiveEntityIRI = function() {
         return get(self.getActivePage(), 'entityIRI');
     }
+    /**
+     * @ngdoc method
+     * @name selectItem
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Selects the entity with the specified IRI in the current `listItem`. Optionally can set the usages of the entity.
+     * Also accepts a spinner id to use in the call to fetch the entity. Returns a Promise indicating the success of the
+     * action.
+     * 
+     * @param {string} entityIRI The IRI of an entity in the current `listItem`
+     * @param {boolean} [getUsages=true] Whether to set the usages of the specified entity
+     * @param {string} [spinnerId=''] A spinner id to attach to the call to fetch the entity
+     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     */
     self.selectItem = function(entityIRI, getUsages = true, spinnerId = '') {
         if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
             set(self.getActivePage(), 'entityIRI', entityIRI);
@@ -1617,7 +1634,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 self.setEntityUsages(entityIRI);
             }
         }
-        self.setSelected(entityIRI, false, self.listItem, spinnerId);
+        return self.setSelected(entityIRI, false, self.listItem, spinnerId);
     }
     /**
      * @ngdoc method

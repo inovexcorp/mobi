@@ -3587,10 +3587,14 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue(ontologyStateSvc.listItem.editorTabStates.tab);
             spyOn(ontologyStateSvc, 'setEntityUsages');
-            spyOn(ontologyStateSvc, 'setSelected');
+            spyOn(ontologyStateSvc, 'setSelected').and.returnValue($q.when());
         });
         it('when entityIRI is undefined', function() {
-            ontologyStateSvc.selectItem(undefined);
+            ontologyStateSvc.selectItem(undefined)
+                .then(_.noop, () => {
+                    fail('Promise should have resolved');
+                })
+            scope.$apply();
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith(undefined, false, ontologyStateSvc.listItem, '');
@@ -3600,21 +3604,33 @@ describe('Ontology State Service', function() {
                 this.newId = 'newId';
             });
             it('and getUsages is true', function() {
-                ontologyStateSvc.selectItem(this.newId, true);
+                ontologyStateSvc.selectItem(this.newId, true)
+                    .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
                 expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.editorTabStates.tab.entityIRI).toEqual(this.newId);
                 expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(this.newId);
                 expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith(this.newId, false, ontologyStateSvc.listItem, '');
             });
             it('and getUsages is false', function() {
-                ontologyStateSvc.selectItem(this.newId, false);
+                ontologyStateSvc.selectItem(this.newId, false)
+                    .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
                 expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.editorTabStates.tab.entityIRI).toEqual(this.newId);
                 expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith(this.newId, false, ontologyStateSvc.listItem, '');
             });
             it('and spinnerId is provided', function() {
-                ontologyStateSvc.selectItem(this.newId, undefined, 'id');
+                ontologyStateSvc.selectItem(this.newId, undefined, 'id')
+                .then(_.noop, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
                 expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.editorTabStates.tab.entityIRI).toEqual(this.newId);
                 expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(this.newId);

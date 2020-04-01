@@ -748,7 +748,7 @@ export function mockOntologyState() {
             this.getActiveKey = jasmine.createSpy('getActiveKey').and.returnValue('');
             this.getActivePage = jasmine.createSpy('getActivePage').and.returnValue({});
             this.getActiveEntityIRI = jasmine.createSpy('getActiveEntityIRI');
-            this.selectItem = jasmine.createSpy('selectItem');
+            this.selectItem = jasmine.createSpy('selectItem').and.returnValue($q.when());
             this.unSelectItem = jasmine.createSpy('unSelectItem');
             this.hasChanges = jasmine.createSpy('hasChanges').and.returnValue(true);
             this.isCommittable = jasmine.createSpy('isCommittable');
