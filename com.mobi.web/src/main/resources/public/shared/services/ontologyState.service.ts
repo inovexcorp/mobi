@@ -1068,7 +1068,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
         forEach(orderedClasses, clazz => {
             var classProps = om.getClassProperties([allProps], clazz['@id']);
-            var classProps2 = get(listItem.classToChildProperties, clazz['@id']);
+            var classProps2 = get(listItem.classToChildProperties, clazz['@id'], []);
 
             /* STICKYNOTE: we'll be removing the above methods for grabbing the entities and then directly grabbing the
             the entity and sticking it on the items.
@@ -1082,8 +1082,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 joinedPath: self.joinPath(path)
             }));
             forEach(orderedProperties, property => {
-                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)
-                    , {
+                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
                 indent: 1,
                 hasChildren: false,
                 path: concat(path, property['@id']),
@@ -1102,7 +1101,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 set: self.setNoDomainsOpened
             });
             forEach(orderedNoDomainProperties, property => {
-                result.push(merge({}, property, {
+                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
                     indent: 1,
                     hasChildren: false,
                     get: self.getNoDomainsOpened,
@@ -1862,7 +1861,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             range = property;
             value = property[0];
         }
-        else { value = get(range[0]['@id']); }
+        else { value = range[0]['@id']; }
         var icon = 'fa-square-o';
         if (range) {
             if (range.length === 1) {
