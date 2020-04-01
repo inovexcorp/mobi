@@ -24,7 +24,6 @@ import * as angular from 'angular';
 import { forEach, isEmpty, omit } from 'lodash';
 
 import './searchTab.component.scss';
-import themingConfig from '../../../theming.config';
 
 const template = require('./searchTab.component.html');
 
