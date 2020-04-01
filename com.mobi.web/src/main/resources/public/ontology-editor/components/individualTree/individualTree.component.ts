@@ -110,6 +110,9 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.dropdownFilterActive = false;
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
     }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.individuals.targetedSpinnerId);
+    }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
         dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');

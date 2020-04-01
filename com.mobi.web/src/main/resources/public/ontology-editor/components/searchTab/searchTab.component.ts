@@ -88,8 +88,10 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
         }
     }
     dvm.selectItem = function(item) {
-        dvm.os.selectItem(item, false);
-        dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+        dvm.os.selectItem(item, false)
+            .then(() => {
+                dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+            });
     }
     dvm.unselectItem = function() {
         dvm.os.unSelectItem();

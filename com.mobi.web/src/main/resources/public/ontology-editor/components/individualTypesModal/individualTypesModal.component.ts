@@ -72,6 +72,8 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
             return;
         }
         var originalTypes = angular.copy(dvm.os.listItem.selected['@type']);
+        // TODO: Remove when the full RDF list is removed
+        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']); 
 
         // Handle vocabulary stuff
         var wasConcept = dvm.ontoUtils.containsDerivedConcept(originalTypes);
@@ -85,6 +87,8 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
         }
 
         dvm.os.listItem.selected['@type'] = dvm.types;
+        // TODO: Remove when the full RDF list is removed
+        entityFromFullList['@type'] = dvm.types; 
 
         var addedTypes = difference(dvm.types, originalTypes);
         var removedTypes = difference(originalTypes, dvm.types);

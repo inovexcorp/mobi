@@ -32,3 +32,8 @@ _:genid90 a owl:Restriction;
   owl:onClass :Wing;
   owl:onProperty :isConnectedTo;
   owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
+_:genid400 a owl:Restriction ;
+  owl:onClass :Rudder ;
+  owl:onProperty :hasRudder ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .

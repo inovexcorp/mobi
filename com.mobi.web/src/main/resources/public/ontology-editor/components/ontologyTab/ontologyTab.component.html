@@ -27,37 +27,37 @@
         <material-tabset>
             <material-tab heading="'Project'" active="dvm.os.listItem.editorTabStates.project.active"
                  set-active="dvm.os.listItem.editorTabStates.project.active = value"
-                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.project.entityIRI, false)">
+                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.project.entityIRI, false, undefined, dvm.os.listItem.editorTabStates.project.targetedSpinnerId)">
                 <project-tab></project-tab>
             </material-tab>
             <material-tab heading="'Overview'" active="dvm.os.listItem.editorTabStates.overview.active"
                  set-active="dvm.os.listItem.editorTabStates.overview.active = value"
-                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.overview.entityIRI)">
+                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.overview.entityIRI, undefined, undefined, dvm.os.listItem.editorTabStates.overview.targetedSpinnerId)">
                 <overview-tab></overview-tab>
             </material-tab>
             <material-tab heading="'Classes'" active="dvm.os.listItem.editorTabStates.classes.active"
                  set-active="dvm.os.listItem.editorTabStates.classes.active = value"
-                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.classes.entityIRI)">
+                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.classes.entityIRI, undefined, undefined, dvm.os.listItem.editorTabStates.classes.targetedSpinnerId)">
                 <classes-tab></classes-tab>
             </material-tab>
             <material-tab heading="'Properties'" active="dvm.os.listItem.editorTabStates.properties.active"
                  set-active="dvm.os.listItem.editorTabStates.properties.active = value"
-                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.properties.entityIRI)">
+                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.properties.entityIRI, undefined, undefined, dvm.os.listItem.editorTabStates.properties.targetedSpinnerId)">
                 <properties-tab></properties-tab>
             </material-tab>
             <material-tab heading="'Individuals'" active="dvm.os.listItem.editorTabStates.individuals.active"
                  set-active="dvm.os.listItem.editorTabStates.individuals.active = value"
-                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.individuals.entityIRI, false)">
+                 on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.individuals.entityIRI, false, undefined, dvm.os.listItem.editorTabStates.individuals.targetedSpinnerId)">
                 <individuals-tab></individuals-tab>
             </material-tab>
             <material-tab heading="'Schemes'" active="dvm.os.listItem.editorTabStates.schemes.active" hide-tab="!dvm.os.listItem.isVocabulary"
                  set-active="dvm.os.listItem.editorTabStates.schemes.active = value"
-                on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.schemes.entityIRI, false)">
+                on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.schemes.entityIRI, false, undefined, dvm.os.listItem.editorTabStates.schemes.targetedSpinnerId)">
                 <concept-schemes-tab></concept-schemes-tab>
             </material-tab>
             <material-tab heading="'Concepts'" active="dvm.os.listItem.editorTabStates.concepts.active" hide-tab="!dvm.os.listItem.isVocabulary"
                  set-active="dvm.os.listItem.editorTabStates.concepts.active = value"
-                on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.concepts.entityIRI, false)">
+                on-click="dvm.os.setSelected(dvm.os.listItem.editorTabStates.concepts.entityIRI, false, undefined, dvm.os.listItem.editorTabStates.concepts.targetedSpinnerId)">
                 <concepts-tab></concepts-tab>
             </material-tab>
             <material-tab heading="'Search'" active="dvm.os.listItem.editorTabStates.search.active"
