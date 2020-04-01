@@ -26,13 +26,14 @@ ont1:prop3 a owl:AnnotationProperty ;
 
 ont1:prop4 a owl:AnnotationProperty ;
     dcterms:title "property 4" ;
-    rdfs:domain ont1:classB ;
     rdfs:range xsd:string .
+
 
 ont1:prop5 a owl:DatatypeProperty ;
     dcterms:title "property 5" .
 
-ont1:classA a owl:Class .
+ont1:classA a owl:Class ;
+    rdfs:domain ont1:classB .
 
 ont1:classB a owl:Class .
 
