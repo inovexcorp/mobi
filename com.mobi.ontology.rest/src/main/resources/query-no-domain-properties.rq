@@ -6,8 +6,6 @@ SELECT ?prop WHERE {
         ?prop a owl:ObjectProperty .
     } UNION {
         ?prop a owl:DatatypeProperty .
-    } UNION {
-        ?prop a owl:AnnotationProperty .
     }
 
     FILTER NOT EXISTS {
