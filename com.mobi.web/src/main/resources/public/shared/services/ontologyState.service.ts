@@ -101,42 +101,49 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     var ontologyEditorTabStates = {
         project: {
             entityIRI: '',
-            active: true
+            active: true,
+            targetedSpinnerId: 'project-entity-spinner'
         },
         overview: {
             active: false,
             searchText: '',
-            open: {}
+            open: {},
+            targetedSpinnerId: 'overview-entity-spinner'
         },
         classes: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'classes-entity-spinner'
         },
         properties: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'properties-entity-spinner'
         },
         individuals: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'individuals-entity-spinner'
         },
         concepts: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'concepts-entity-spinner'
         },
         schemes: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'schemes-entity-spinner'
         },
         search: {
             active: false
@@ -1489,7 +1496,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
      * @return {Promise} A promise indicating the success of the action
      */
-    self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem) {
+    self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem, spinnerId = '') {
         if  (!entityIRI || !listItem) {
             if (listItem) {
                 listItem.selected = undefined;
@@ -1498,8 +1505,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             return $q.when();
         }
+        if (spinnerId) {
+            httpService.cancel(spinnerId);
+        }
         // TODO: Add targeted spinner for
-        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI)
+        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI, undefined, undefined, undefined, spinnerId)
             .then(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
                 listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
@@ -1572,7 +1582,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             listItem.selectedBlankNodes = [];
             listItem.blankNodes = {};
         } else {
-            self.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem);
+            self.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem, 'project');
         }
     }
     self.resetSearchTab = function(listItem = self.listItem) {
@@ -1600,14 +1610,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getActiveEntityIRI = function() {
         return get(self.getActivePage(), 'entityIRI');
     }
-    self.selectItem = function(entityIRI, getUsages = true) {
+    self.selectItem = function(entityIRI, getUsages = true, spinnerId = '') {
         if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
             set(self.getActivePage(), 'entityIRI', entityIRI);
             if (getUsages) {
                 self.setEntityUsages(entityIRI);
             }
         }
-        self.setSelected(entityIRI, false);
+        self.setSelected(entityIRI, false, self.listItem, spinnerId);
     }
     /**
      * @ngdoc method
@@ -1908,7 +1918,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function commonGoTo(key, iri, flatHierarchy = undefined) {
         self.setActivePage(key);
-        self.selectItem(iri);
+        self.selectItem(iri, undefined, self.getActivePage().vocabularySpinnerId);
         if (flatHierarchy) {
             self.openAt(flatHierarchy, iri);
         }

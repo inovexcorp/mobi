@@ -105,11 +105,11 @@ describe('Concept Schemes Tab component', function() {
             expect(angular.element(button[0]).text()).toEqual('See History');
         });
         it('based on whether something is selected', function() {
-            expect(this.element.querySelectorAll('.selected-entity').length).toEqual(1);
+            expect(this.element.querySelectorAll('.selected-entity div').length).toBeGreaterThan(0);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('.selected-entity').length).toEqual(0);
+            expect(this.element.querySelectorAll('.selected-entity div').length).toEqual(0);
         });
         it('depending on whether the selected entity is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);

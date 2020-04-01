@@ -550,42 +550,49 @@ export function mockOntologyState() {
                 editorTabStates: {
                    project: {
                        active: true,
-                       entityIRI: ''
+                       entityIRI: '',
+                       targetedSpinnerId: 'project'
                    },
                    overview: {
                        active: false,
                        searchText: '',
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'overview'
                    },
                    classes: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'classes'
                    },
                    properties: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'properties'
                    },
                    individuals: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'individuals'
                    },
                    concepts: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'concepts'
                    },
                    schemes: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'schemes'
                    },
                    search: {
                        active: false

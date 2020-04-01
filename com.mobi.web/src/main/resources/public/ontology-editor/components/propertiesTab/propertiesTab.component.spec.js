@@ -102,11 +102,11 @@ describe('Properties Tab component', function() {
             expect(angular.element(button[0]).text()).toEqual('See History');
         });
         it('depending on whether something is selected', function() {
-            expect(this.element.querySelectorAll('.selected-property').length).toEqual(1);
+            expect(this.element.querySelectorAll('.selected-property div').length).toBeGreaterThan(0);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('.selected-property').length).toEqual(0);
+            expect(this.element.querySelectorAll('.selected-property div').length).toEqual(0);
         });
         it('depending on whether the selected property is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);

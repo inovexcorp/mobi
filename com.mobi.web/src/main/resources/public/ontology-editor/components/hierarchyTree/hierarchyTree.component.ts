@@ -113,6 +113,9 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
             dvm.resetIndex();
         }
     }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.getActivePage().targetedSpinnerId);
+    }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
         dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag');

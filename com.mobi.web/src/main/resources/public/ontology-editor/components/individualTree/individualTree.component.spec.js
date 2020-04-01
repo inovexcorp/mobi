@@ -145,6 +145,10 @@ describe('Individual Tree component', function() {
         });
     });
     describe('controller methods', function() {
+        it('clickItem should call the correct method', function() {
+            this.controller.clickItem('iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, ontologyStateSvc.listItem.editorTabStates.individuals.targetedSpinnerId);
+        });
         it('isImported returns the correct value', function() {
             ontologyStateSvc.listItem.index = {iri: {}};
             expect(this.controller.isImported('iri')).toEqual(false);
