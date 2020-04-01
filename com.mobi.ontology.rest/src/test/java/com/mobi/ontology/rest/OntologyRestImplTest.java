@@ -85,6 +85,7 @@ import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.query.api.GraphQuery;
+import com.mobi.query.api.TupleQuery;
 import com.mobi.query.exception.MalformedQueryException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -98,6 +99,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.query.EmptyQueryResult;
 import com.mobi.repository.impl.sesame.query.TestQueryResult;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
@@ -149,7 +151,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 
 public class OntologyRestImplTest extends MobiRestTestNg {
     private OntologyRest rest;
@@ -238,12 +239,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private JSONObject basicHierarchyResults;
     private JSONArray importedOntologyResults;
     private OutputStream ontologyJsonLd;
-    private StreamingOutput ontologyJsonLdStream;
     private OutputStream importedOntologyJsonLd;
     private Repository repo;
     private static String INVALID_JSON = "{id: 'invalid";
     private IRI missingIRI;
-    private Repository getEntityRepo;
+    private Repository testQueryRepo;
     private SimpleBNodeService bNodeService;
 
     @Override
@@ -405,7 +405,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             return os;
         });
         when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
-        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new EmptyQueryResult());
         when(ontology.getGraphQueryResults(anyString(), anyBoolean(), eq(mf))).thenReturn(mf.createModel(Collections.singleton(vf.createStatement(vf.createIRI("urn:test"), vf.createIRI("urn:prop"), vf.createLiteral("test")))));
 
         when(importedOntologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
@@ -494,15 +494,15 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
 
-        getEntityRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
-        getEntityRepo.initialize();
+        testQueryRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        testQueryRepo.initialize();
     }
 
     @AfterMethod
     public void resetMocks() {
         reset(engineManager, ontologyId, ontology, importedOntologyId, importedOntology,
                 catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
-        getEntityRepo.shutDown();
+        testQueryRepo.shutDown();
     }
 
     @AfterSuite
@@ -1335,6 +1335,43 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetOntologyStuffPropertyToRanges() throws Exception {
+        setupTupleQueryMock();
+
+        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
+        JSONObject expectedResults = getResource("/getOntologyStuffData/propertyToRanges-results.json");
+
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+            conn.add(data);
+        }
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
+    }
+
+    @Test
+    public void testGetOntologyStuffPropertyToRangesNoResults() {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject.getJSONObject("propertyToRanges"), expectedResults);
     }
 
     // Test get IRIs in ontology
@@ -4591,6 +4628,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testQueryOntologyWithSelect() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
         String query = "select * { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -4682,6 +4722,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testQueryOntologyMissingBranchId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
         String query = "select * { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("commitId", commitId.stringValue())
@@ -4695,6 +4738,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testQueryOntologyMissingCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
         String query = "select * { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("branchId", branchId.stringValue())
@@ -4708,6 +4754,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testQueryOntologyMissingBranchIdAndCommitId() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i ->
+                new TestQueryResult(Collections.singletonList("s"), Collections.singletonList("urn:test"), 1, vf));
+
         String query = "select * { ?s ?p ?o }";
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/query")
                 .queryParam("query", encode(query))
@@ -4732,15 +4781,17 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 400);
     }
 
+    // Test getEntity
+
     @Test
     public void query01_NoBlankNodes() throws IOException {
-        setupGetEntityTests();
+        setupGraphQueryMock();
 
         Model data = getModel("/queryData/01_NoBlankNodes-data.ttl");
         Model expectedResults = getModel("/queryData/01_NoBlankNodes-results.ttl");
 
         Model results;
-        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
             results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
         }
 
@@ -4755,13 +4806,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void query02_RestrictionOnRealClass() throws IOException {
-        setupGetEntityTests();
+        setupGraphQueryMock();
 
         Model data = getModel("/queryData/02_RestrictionOnRealClass-data.ttl");
         Model expectedResults = getModel("/queryData/02_RestrictionOnRealClass-results.ttl");
 
         Model results;
-        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
             results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
         }
 
@@ -4776,13 +4827,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void query03_RestrictionOnList() throws IOException {
-        setupGetEntityTests();
+        setupGraphQueryMock();
 
         Model data = getModel("/queryData/03_RestrictionOnList-data.ttl");
         Model expectedResults = bNodeService.skolemize(getModel("/queryData/03_RestrictionOnList-results.ttl"));
 
         Model results;
-        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
             results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#Fin");
         }
 
@@ -4799,13 +4850,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void query04_RestrictionsInList() throws IOException {
-        setupGetEntityTests();
+        setupGraphQueryMock();
 
         Model data = getModel("/queryData/04_RestrictionsInList-data.ttl");
         Model expectedResults = bNodeService.skolemize(getModel("/queryData/04_RestrictionsInList-results.ttl"));
 
         Model results;
-        try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
             results = getResults(conn, data, "http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#DualMountedMainLandingGear");
         }
 
@@ -4820,12 +4871,22 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         }
     }
 
-    private void setupGetEntityTests() {
+    private void setupGraphQueryMock() {
         when(ontology.getGraphQueryResults(any(String.class), eq(true), any(ModelFactory.class))).thenAnswer(invocationOnMock -> {
             String query = invocationOnMock.getArgumentAt(0, String.class);
-            try(RepositoryConnection conn = getEntityRepo.getConnection()) {
+            try(RepositoryConnection conn = testQueryRepo.getConnection()) {
                 GraphQuery graphQuery = conn.prepareGraphQuery(query);
                 return QueryResults.asModel(graphQuery.evaluate(), mf);
+            }
+        });
+    }
+
+    private void setupTupleQueryMock() {
+        when(ontology.getTupleQueryResults(any(String.class), eq(true))).thenAnswer(invocationOnMock -> {
+            String query = invocationOnMock.getArgumentAt(0, String.class);
+            try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+                TupleQuery graphQuery = conn.prepareTupleQuery(query);
+                return graphQuery.evaluateAndReturn();
             }
         });
     }
