@@ -27,7 +27,7 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Characteristics Row component', function() {
-    var $compile, scope, ontologyManagerSvc;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         angular.mock.module('ontology-editor');
@@ -35,20 +35,23 @@ describe('Characteristics Row component', function() {
         mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
         this.element = $compile(angular.element('<characteristics-row></characteristics-row>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('characteristicsRow');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
         ontologyManagerSvc = null;
+        ontologyStateSvc = null;
         this.element.remove();
     });
 
@@ -90,6 +93,16 @@ describe('Characteristics Row component', function() {
             it('for a characteristics-block', function() {
                 expect(this.element.find('characteristics-block').length).toEqual(1);
             });
+        });
+    });
+    describe('controller methods', function() {
+        it('update the types of the selected object', function() {
+            this.object = {};
+            ontologyStateSvc.getEntityByRecordId.and.returnValue(this.object);
+            this.controller.updateTypes(['test']);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+            expect(ontologyStateSvc.listItem.selected['@types']).toEqual(['test']);
+            expect(this.object['@types']).toEqual(['test']);
         });
     });
 });

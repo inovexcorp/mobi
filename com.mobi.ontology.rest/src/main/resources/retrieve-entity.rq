@@ -7,17 +7,6 @@ CONSTRUCT {
     %ENTITY% (:|!:)* ?attachedObj ;
         ?p ?o .
 
-    FILTER NOT EXISTS {
-        {
-            SELECT DISTINCT ?iris WHERE {
-                %ENTITY% (:|!:)* ?iris .
-                FILTER(isIRI(?iris))
-                FILTER(?iris != %ENTITY%)
-            }
-        }
-        ?iris (:|!:)* ?attachedObj .
-    }
-
     OPTIONAL {
         ?attachedObj ?p2 ?o2 .
         FILTER(isBlank(?attachedObj))

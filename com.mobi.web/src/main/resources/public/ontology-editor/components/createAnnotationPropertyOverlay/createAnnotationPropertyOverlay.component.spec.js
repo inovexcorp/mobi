@@ -163,7 +163,6 @@ describe('Create Annotation Overlay component', function() {
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
                 this.controller.property['@id'] = 'property-iri';
                 this.controller.property[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
-                ontologyStateSvc.getOntologiesArray.and.returnValue([]);
             });
             it('if the property is an annotation property', function() {
                 this.controller.property[prefixes.dcterms + 'description'] = [{'@value': 'description'}];

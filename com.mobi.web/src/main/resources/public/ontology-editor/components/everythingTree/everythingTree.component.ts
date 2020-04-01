@@ -103,6 +103,9 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.searchText = '';
         dvm.filterText = '';
     }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.overview.targetedSpinnerId);
+    }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
         dvm.dropdownFilterActive = some(dvm.dropdownFilters, 'flag')
