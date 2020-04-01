@@ -1,6 +1,6 @@
 {
   "http://test.com/Ontology1#prop1": [
-    "http://test.com/Ontology1#class1"
+    "http://test.com/Ontology2#class1"
   ],
   "http://test.com/Ontology1#prop2": [
     "http://www.w3.org/2001/XMLSchema#string"
