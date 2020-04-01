@@ -1058,18 +1058,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var classes = map(listItem.classes.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds));
         var orderedClasses = sortBy(classes, entity => lowerCase(getEntityNameByIndex(entity['@id'], indices)));
 
-        var allProps = concat(
-            map(listItem.dataProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-            map(listItem.objectProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-            map(listItem.annotations.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-        );
+        // var allProps = concat(
+        //     map(listItem.dataProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+        //     map(listItem.objectProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+        //     map(listItem.annotations.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+        // );
         var orderedProperties = [];
         var path = [];
 
         forEach(orderedClasses, clazz => {
-            var classProps = om.getClassProperties([allProps], clazz['@id']);
+            //var classProps = om.getClassProperties([allProps], clazz['@id']);
             var classProps2 = get(listItem.classToChildProperties, clazz['@id'], []);
-
+get
             /* STICKYNOTE: we'll be removing the above methods for grabbing the entities and then directly grabbing the
             the entity and sticking it on the items.
              */
@@ -1090,7 +1090,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                  }));
             });
         });
-        var noDomainProps = om.getNoDomainProperties([allProps]);
+        //var noDomainProps = om.getNoDomainProperties([allProps]);
         var noDomainProps2 = listItem.noDomaininProperties;
 
         var orderedNoDomainProperties = noDomainProps2.sort((s1, s2) => compareEntityName(s1, s2, listItem));
