@@ -1,14 +1,12 @@
-@Version("7.2.2.${build}")
-
-package com.mobi.ontology.rest;
+package com.mobi.repository.impl.sesame.query;
 
 /*-
  * #%L
- * com.mobi.ontology.rest
+ * com.mobi.repository.impl.sesame
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,29 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.BindingSet;
+import com.mobi.query.exception.QueryEvaluationException;
+
+import java.util.Collections;
+import java.util.List;
+
+public class EmptyQueryResult extends TupleQueryResult {
+    @Override
+    public List<String> getBindingNames() throws QueryEvaluationException {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void close() {}
+
+    @Override
+    public boolean hasNext() {
+        return false;
+    }
+
+    @Override
+    public BindingSet next() {
+        return null;
+    }
+}
