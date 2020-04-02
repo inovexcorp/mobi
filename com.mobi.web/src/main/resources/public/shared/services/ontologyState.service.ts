@@ -41,7 +41,6 @@ import {
     has,
     uniq,
     difference,
-    mapKeys,
     mapValues,
     lowerCase,
     sortBy,
@@ -1076,12 +1075,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
 
         forEach(orderedClasses, clazz => {
             //var classProps = om.getClassProperties([allProps], clazz['@id']);
-            var classProps2 = get(listItem.classToChildProperties, clazz['@id'], []);
+            var classProps = get(listItem.classToChildProperties, clazz['@id'], []);
 get
             /* STICKYNOTE: we'll be removing the above methods for grabbing the entities and then directly grabbing the
             the entity and sticking it on the items.
              */
-            orderedProperties = classProps2.sort((s1, s2) => compareEntityName(s1, s2, listItem));
+            orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
             path = [listItem.ontologyRecord.recordId, clazz['@id']];
             result.push(merge({}, clazz, {
                 indent: 0,
@@ -1099,9 +1098,9 @@ get
             });
         });
         //var noDomainProps = om.getNoDomainProperties([allProps]);
-        var noDomainProps2 = listItem.noDomaininProperties;
+        var noDomainProps = listItem.noDomaininProperties;
 
-        var orderedNoDomainProperties = noDomainProps2.sort((s1, s2) => compareEntityName(s1, s2, listItem));
+        var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
         if (orderedNoDomainProperties.length) {
             result.push({
                 title: 'Properties',
@@ -1940,6 +1939,60 @@ get
     self.existsInIndices = function(iri, listItem = self.listItem) {
         var indices = getIndices(listItem);
         return some(indices, index => iri in index);
+    }
+    /**
+     * @ngdoc method
+     * @name checkForDomain
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether a deleted classes set of properties still has a domain or not
+     *
+     * @param {string} The iri of the entity to be deleted
+     */
+    self.checkForDomain = function(entity) {
+        var hasDomain = false;
+        var classProperties = get(self.listItem.classToChildProperties, entity, {});
+        delete self.listItem.classToChildProperties[entity];
+        classProperties.forEach(property => {
+            forEach(self.listItem.classToChildProperties, clasWithProp => {
+                hasDomain = includes(clasWithProp, property);
+                if (hasDomain) {
+                    return false;
+                }
+            });
+            if (!hasDomain) {
+                self.listItem.noDomaininProperties.push(property);
+            }
+        });
+    }
+    self.deleteProperty = function(property) {
+        for(let [key,value] of Object.entries(self.listItem.classToChildProperties)) {
+            var hasProperty = self.listItem.classToChildProperties[key].includes(property);
+            var classObj = key;
+            console.log(classObj);
+            if (hasProperty) {
+                remove(self.listItem.classToChildProperties[classObj], properties => {
+                   return properties == property;
+                });
+            }
+        }
+    }
+    self.addProperty = function(property) {
+        var domainPath = prefixes.rdfs + 'domain';
+        if (property[domainPath] == [] || property[domainPath] == undefined ){
+            self.listItem.noDomaininProperties.push(property['@id'])
+        }
+        else {
+            property[domainPath].forEach(domain => {
+                var classIRI = domain['@id'];
+                var path =  self.listItem.classToChildProperties[classIRI];
+                if (!path){
+                    self.listItem.classToChildProperties[classIRI] = {}
+                }
+                self.listItem.classToChildProperties[classIRI].push(property ['@id']);
+            });
+        }
     }
 
     /* Private helper functions */

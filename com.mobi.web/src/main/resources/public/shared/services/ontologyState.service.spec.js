@@ -2591,6 +2591,7 @@ describe('Ontology State Service', function() {
                 '@id': this.userBranchId
             }
             ontologyManagerSvc.getOntologyStuff.and.returnValue($q.when({
+                propertyToRanges: {},
                 iriList: {
                     annotationProperties: [this.annotationId],
                     classes: [this.classId],
