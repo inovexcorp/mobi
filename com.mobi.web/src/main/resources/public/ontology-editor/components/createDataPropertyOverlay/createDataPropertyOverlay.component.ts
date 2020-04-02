@@ -113,7 +113,7 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
-        dvm.os.addProperty(dvm.property);
+        dvm.os.createNewProperty(dvm.property);
         // add the entity to the ontology
         dvm.os.addEntity(dvm.os.listItem, dvm.property);
         // update lists

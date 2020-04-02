@@ -122,7 +122,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(dvm.om.entityNameProps, key => some(node[key], value => { //STICKYNOTE: will be grabbing off of node.entity now
+        some(dvm.om.entityNameProps, key => some(node[key], value => {
             if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
         }));
@@ -132,7 +132,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         }
 
         // Check if beautified entity id matches search text
-        if (util.getBeautifulIRI(node['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) { //STICKYNOTE: will be grabbed off of node.entity now
+        if (util.getBeautifulIRI(node['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
             searchMatch = true;
         }
         

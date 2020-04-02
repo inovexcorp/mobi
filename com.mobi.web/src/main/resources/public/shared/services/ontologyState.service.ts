@@ -1065,21 +1065,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var classes = map(listItem.classes.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds));
         var orderedClasses = sortBy(classes, entity => lowerCase(getEntityNameByIndex(entity['@id'], indices)));
 
-        // var allProps = concat(
-        //     map(listItem.dataProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-        //     map(listItem.objectProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-        //     map(listItem.annotations.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-        // );
         var orderedProperties = [];
         var path = [];
 
         forEach(orderedClasses, clazz => {
-            //var classProps = om.getClassProperties([allProps], clazz['@id']);
             var classProps = get(listItem.classToChildProperties, clazz['@id'], []);
-get
-            /* STICKYNOTE: we'll be removing the above methods for grabbing the entities and then directly grabbing the
-            the entity and sticking it on the items.
-             */
+
             orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
             path = [listItem.ontologyRecord.recordId, clazz['@id']];
             result.push(merge({}, clazz, {
@@ -1097,7 +1088,6 @@ get
                  }));
             });
         });
-        //var noDomainProps = om.getNoDomainProperties([allProps]);
         var noDomainProps = listItem.noDomainProperties;
 
         var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
@@ -1942,7 +1932,7 @@ get
     }
     /**
      * @ngdoc method
-     * @name checkForDomain
+     * @name checkForClassPropertiesDomain
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1950,13 +1940,23 @@ get
      *
      * @param {string} The iri of the entity to be deleted
      */
-    self.checkForDomain = function(classEntity) {
+    self.checkClassPropertiesForDomain = function(classEntity) {
         var classProperties = get(self.listItem.classToChildProperties, classEntity, {});
         delete self.listItem.classToChildProperties[classEntity];
         classProperties.forEach(property => {
             checkForPropertyDomains(property);
         });
     }
+    /**
+     * @ngdoc method
+     * @name deleteProperty
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Deletes traces of a removed property from the noDomainProperty and classToChild maps
+     *
+     * @param {string} The iri of the property to be deleted
+     */
     self.deleteProperty = function(property) {
         for(let [key,value] of Object.entries(self.listItem.classToChildProperties)) {
             let hasProperty = self.listItem.classToChildProperties[key].includes(property);
@@ -1968,7 +1968,17 @@ get
             }
         }
     }
-    self.addProperty = function(property) {
+    /**
+     * @ngdoc method
+     * @name createNewProperty
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * adds property iri to the correct map; either noDomainProperties or classToChildProperties
+     *
+     * @param {string} The iri of the property to be added to either map
+     */
+    self.createNewProperty = function(property) {
         var domainPath = prefixes.rdfs + 'domain';
         if (property[domainPath] == [] || property[domainPath] == undefined ){
             self.listItem.noDomainProperties.push(property['@id'])
@@ -1984,6 +1994,17 @@ get
             });
         }
     }
+    /**
+     * @ngdoc method
+     * @name changePropertyHierarchy
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether a deleted classes set of properties still has a domain or not
+     *
+     * @param {string} The iri of the property being altered in the hierarchy
+     * @param {Array} An array of values that are being added to the property.
+     */
     self.changePropertyHierarchy = function(property, values){
         values.forEach(parentclass => {
             if (!self.listItem.classToChildProperties[parentclass]){
@@ -1997,6 +2018,17 @@ get
             })
         }
     }
+    /**
+     * @ngdoc method
+     * @name removePropertyFromEntity
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether a deleted classes set of properties still has a domain or not
+     *
+     * @param {string} The iri of the property to be removed
+     * @param {string} The iri of the entity the property is being removed from
+     */
     self.removePropertyFromEntity = function(property, entity){
         if (self.listItem.classToChildProperties[entity].includes(property)){
             remove(self.listItem.classToChildProperties[entity], classproperties =>{
