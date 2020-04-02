@@ -66,6 +66,7 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
@@ -97,9 +98,13 @@ import io.swagger.annotations.ApiOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.eclipse.rdf4j.model.vocabulary.DC;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
+import org.eclipse.rdf4j.model.vocabulary.SKOSXL;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
@@ -126,6 +131,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -176,6 +182,7 @@ public class OntologyRest {
     private static final String GET_PROPERTY_RANGES;
     private static final String GET_CLASS_PROPERTIES;
     private static final String GET_NO_DOMAIN_PROPERTIES;
+    private static final String GET_ENTITY_NAMES;
 
     static {
         try {
@@ -190,6 +197,9 @@ public class OntologyRest {
             );
             GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"), StandardCharsets.UTF_8
+            );
+            GET_ENTITY_NAMES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-entity-names.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -889,8 +899,7 @@ public class OntologyRest {
             log.trace("Start entityNames");
             watch.start();
             outputStream.write(", \"entityNames\": ".getBytes());
-            outputStream.write("{}".getBytes());
-//            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true), outputStream);
+            writeEntityNamesToStream(ontology.getTupleQueryResults(GET_ENTITY_NAMES, true), outputStream);
             watch.stop();
             log.trace("End entityNames: " + watch.getTime() + "ms");
 
@@ -2500,6 +2509,55 @@ public class OntologyRest {
             props.add(prop);
         });
         outputStream.write(mapper.valueToTree(props).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated entity names from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "entity", "prefName", and "name" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        Map<String, EntityNames> entityNamesMap = new HashMap<>();
+        String rdfsLabelKey = RDFS.LABEL.stringValue();
+        String dctermsTitleKey = DCTERMS.TITLE.stringValue();
+        String dcTitleKey = DC.TITLE.toString();
+        String skosPrefLabelKey = SKOS.PREF_LABEL.stringValue();
+        String skosAltLabelKey = SKOS.ALT_LABEL.stringValue();
+        String skosxlPrefLabelKey = SKOSXL.PREF_LABEL.stringValue();
+        String skosxlAltLabelKey = SKOSXL.ALT_LABEL.stringValue();
+        String splitter = "&#44;";
+        tupleQueryResults.forEach(bindings -> {
+            String entity = Bindings.requiredResource(bindings, "entity").stringValue();
+            String label = Bindings.requiredLiteral(bindings, "prefName").stringValue();
+            Optional<Value> rdfsLabel = bindings.getValue("rdfs_label");
+            Optional<Value> dctermsTitle = bindings.getValue("dcterms_title");
+            Optional<Value> dcTitle = bindings.getValue("dc_title");
+            Optional<Value> skosPrefLabel = bindings.getValue("skos_prefLabel");
+            Optional<Value> skosAltLabel = bindings.getValue("skos_altLabel");
+            Optional<Value> skosxlPrefLabel = bindings.getValue("skosxl_prefLabel");
+            Optional<Value> skosxlAltLabel = bindings.getValue("skosxl_altLabel");
+            EntityNames entityNames;
+            Map<String, List<String>> names;
+            if (entityNamesMap.containsKey(entity)) {
+                entityNames = entityNamesMap.get(entity);
+                names = entityNames.getNames();
+            } else {
+                entityNames = new EntityNames();
+                names = new HashMap<>();
+            }
+            entityNames.label = label;
+            rdfsLabel.ifPresent(value -> names.put(rdfsLabelKey, Arrays.asList(StringUtils.split(rdfsLabel.get().stringValue(), splitter))));
+            dctermsTitle.ifPresent(value -> names.put(dctermsTitleKey, Arrays.asList(StringUtils.split(dctermsTitle.get().stringValue(), splitter))));
+            dcTitle.ifPresent(value -> names.put(dcTitleKey, Arrays.asList(StringUtils.split(dcTitle.get().stringValue(), splitter))));
+            skosPrefLabel.ifPresent(value -> names.put(skosPrefLabelKey, Arrays.asList(StringUtils.split(skosPrefLabel.get().stringValue(), splitter))));
+            skosAltLabel.ifPresent(value -> names.put(skosAltLabelKey, Arrays.asList(StringUtils.split(skosAltLabel.get().stringValue(), splitter))));
+            skosxlPrefLabel.ifPresent(value -> names.put(skosxlPrefLabelKey, Arrays.asList(StringUtils.split(skosxlPrefLabel.get().stringValue(), splitter))));
+            skosxlAltLabel.ifPresent(value -> names.put(skosxlAltLabelKey, Arrays.asList(StringUtils.split(skosxlAltLabel.get().stringValue(), splitter))));
+            entityNamesMap.putIfAbsent(entity, entityNames);
+        });
+
+        outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
     }
 
     /**
