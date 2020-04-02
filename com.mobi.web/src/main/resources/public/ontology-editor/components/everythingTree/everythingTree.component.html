@@ -33,9 +33,8 @@
                 </a>
             </div>
             <div ng-if="item.entityIRI" ng-style="{'padding-left': (dvm.indent * item.indent) + 'em'}">
-                <tree-item is-active="dvm.os.getActiveEntityIRI() === item.entityIRI"
-                    entity-info="item"
-                    on-click="dvm.os.selectItem(item.entityIRI)" has-children="item.hasChildren"
+                <tree-item is-active="dvm.os.getActiveEntityIRI() === item.entityIRI" entity-info="item"
+                    on-click="dvm.clickItem(item.entityIRI)" has-children="item.hasChildren"
                     path="item.path" is-opened="item.isOpened"
                     underline="item.underline"
                     toggle-open="dvm.toggleOpen(item)"

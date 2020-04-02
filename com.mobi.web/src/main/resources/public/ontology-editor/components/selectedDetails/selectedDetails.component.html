@@ -28,6 +28,6 @@
     <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper">
         <span class="type-label">Type(s):</span>
         <span class="types text-muted">{{dvm.getTypes()}}</span>
-        <a ng-if="dvm.om.isIndividual(dvm.os.listItem.selected) && !dvm.readOnly && !dvm.os.listItem.selected.mobi.imported && dvm.os.canModify()" ng-click="dvm.showTypesOverlay()"><i class="fa fa-pencil"></i></a>
+        <a ng-if="dvm.om.isIndividual(dvm.os.listItem.selected) && !dvm.readOnly && !dvm.os.isImported() && dvm.os.canModify()" ng-click="dvm.showTypesOverlay()"><i class="fa fa-pencil"></i></a>
     </p>
 </div>

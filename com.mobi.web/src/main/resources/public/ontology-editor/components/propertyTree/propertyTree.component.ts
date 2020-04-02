@@ -81,10 +81,8 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         flag: false, 
         filter: function(node) {
             var match = true;
-            if (node.entity.hasOwnProperty('mobi')) {
-                if (node.entity.mobi.imported) {
-                    match = false;
-                }
+            if (dvm.os.isImported(node.entityIRI)) {
+                match = false;
             }
             return match;
         }
@@ -115,6 +113,9 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
         dvm.searchText = '';
         dvm.filterText = '';
+    }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.properties.targetedSpinnerId);
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;
@@ -206,18 +207,19 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
                     match = true;
                     dvm.openAllParents(node);
                     node.underline = true;
-                    if (includes(node.entity['@type'], prefixes.owl + 'DatatypeProperty')) {
-                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Data Properties'] = true;
-                        delete node.parentNoMatch;
-                    }
-                    if (includes(node.entity['@type'], prefixes.owl + 'ObjectProperty')) {
-                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Object Properties'] = true;
-                        delete node.parentNoMatch;
-                    }
-                    if (includes(node.entity['@type'], prefixes.owl + 'AnnotationProperty')) {
-                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Annotation Properties'] = true;
-                        delete node.parentNoMatch;
-                    }
+                    // TODO: fix this part with Khalil's work
+                    // if (includes(node.entity['@type'], prefixes.owl + 'DatatypeProperty')) {
+                    //     dvm.os.listItem.editorTabStates[dvm.activeTab].open['Data Properties'] = true;
+                    //     delete node.parentNoMatch;
+                    // }
+                    // if (includes(node.entity['@type'], prefixes.owl + 'ObjectProperty')) {
+                    //     dvm.os.listItem.editorTabStates[dvm.activeTab].open['Object Properties'] = true;
+                    //     delete node.parentNoMatch;
+                    // }
+                    // if (includes(node.entity['@type'], prefixes.owl + 'AnnotationProperty')) {
+                    //     dvm.os.listItem.editorTabStates[dvm.activeTab].open['Annotation Properties'] = true;
+                    //     delete node.parentNoMatch;
+                    // }
                 }
                 if (!match && node.hasChildren) {
                     node.parentNoMatch = true;

@@ -101,7 +101,7 @@ describe('Static IRI component', function() {
             scope.$digest();
             expect(this.element.find('a').length).toEqual(1);
 
-            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            ontologyStateSvc.isImported.and.returnValue(true);
             scope.$digest();
             expect(this.element.find('a').length).toEqual(0);
         });
@@ -140,7 +140,6 @@ describe('Static IRI component', function() {
                 expect(this.strong.hasClass('duplicate-iri')).toEqual(false);
             });
             it('is read only', function() {
-                ontologyStateSvc.listItem.selected.mobi = {imported: false};
                 ontologyStateSvc.canModify.and.returnValue(true);
                 scope.readOnly = true;
                 scope.$digest();

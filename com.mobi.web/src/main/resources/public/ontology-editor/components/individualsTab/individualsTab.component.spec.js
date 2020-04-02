@@ -93,11 +93,11 @@ describe('Individuals Tab component', function() {
             expect(angular.element(button[0]).text()).toEqual('See History');
         });
         it('based on whether something is selected', function() {
-            expect(this.element.querySelectorAll('.selected-individual').length).toEqual(1);
+            expect(this.element.querySelectorAll('.selected-individual div').length).toBeGreaterThan(0);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('.selected-individual').length).toEqual(0);
+            expect(this.element.querySelectorAll('.selected-individual div').length).toEqual(0);
         });
         it('depending on whether the selected individual is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
@@ -107,7 +107,7 @@ describe('Individuals Tab component', function() {
             expect(historyButton.attr('disabled')).toBeFalsy();
             expect(deleteButton.attr('disabled')).toBeFalsy();
 
-            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            ontologyStateSvc.isImported.and.returnValue(true);
             scope.$digest();
             expect(historyButton.attr('disabled')).toBeTruthy();
             expect(deleteButton.attr('disabled')).toBeTruthy();

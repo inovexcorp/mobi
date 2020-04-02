@@ -162,16 +162,19 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @param {Object} axiomObject The JSON-LD of the value that was removed
      */
     self.removeFromVocabularyHierarchies = function(relationshipIRI, axiomObject) {
-        var targetEntity = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, axiomObject['@id'], os.listItem);
-        if (isVocabPropAndEntity(relationshipIRI, broaderRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, broaderRelations, narrowerRelations, relationshipIRI, self.containsDerivedConcept)) {
-            deleteFromConceptHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
-        } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, narrowerRelations, broaderRelations, relationshipIRI, self.containsDerivedConcept)) {
-            deleteFromConceptHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
-        } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, conceptToScheme, schemeToConcept, relationshipIRI, self.containsDerivedConceptScheme)) {
-            deleteFromSchemeHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
-        } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme) && shouldUpdateVocabHierarchy(targetEntity, schemeToConcept, conceptToScheme, relationshipIRI, self.containsDerivedConcept)) {
-            deleteFromSchemeHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
-        }
+        os.getEntityNoBlankNodes(axiomObject['@id'], os.listItem).then(targetEntity => {
+            if (isVocabPropAndEntity(relationshipIRI, broaderRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, broaderRelations, narrowerRelations, relationshipIRI, self.containsDerivedConcept)) {
+                deleteFromConceptHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
+            } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, narrowerRelations, broaderRelations, relationshipIRI, self.containsDerivedConcept)) {
+                deleteFromConceptHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
+            } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, conceptToScheme, schemeToConcept, relationshipIRI, self.containsDerivedConceptScheme)) {
+                deleteFromSchemeHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
+            } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme) && shouldUpdateVocabHierarchy(targetEntity, schemeToConcept, conceptToScheme, relationshipIRI, self.containsDerivedConcept)) {
+                deleteFromSchemeHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
+            }
+        }, error => {
+            console.error(error);
+        });
     }
 
     self.addConcept = function(concept) {
@@ -245,7 +248,6 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
 
     self.deleteObjectProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
-        var types = os.listItem.selected['@type'];
         delete os.listItem.objectProperties.iris[entityIRI];
         os.deleteEntityFromHierarchy(os.listItem.objectProperties, entityIRI);
         os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties);
@@ -295,22 +297,41 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         removeIndividual(entityIRI);
         self.commonDelete(entityIRI);
     }
-
+    /**
+     * @ngdoc method
+     * @name getBlankNodeValue
+     * @methodOf ontology-editor.service:ontologyUtilsManagerService
+     *
+     * @description
+     * Retrieves the Manchester Syntax value for the provided blank node id if it exists in the blankNodes map of the
+     * current `listItem` in {@link shared.service:ontologyStateService}. If the value is not a blank node id, returns
+     * undefined. If the Manchester Syntax string is not set, returns the blank node id back.
+     *
+     * @param {string} id A blank node id
+     * @returns {string} The Manchester Syntax string for the provided id if it is a blank node id and exists in the
+     * blankNodes map; undefined otherwise 
+     */
     self.getBlankNodeValue = function(id) {
-        var result;
         if (om.isBlankNodeId(id)) {
-            if (get(os.listItem.selected, 'mobi.imported')) {
-                var ontologyObj = find(os.listItem.importedOntologies, {ontologyId: os.listItem.selected.mobi.importedIRI});
-                result = get(ontologyObj.blankNodes, id, id)
-            } else {
-                result = get(os.listItem.blankNodes, id, id);
-            }
+            return get(os.listItem.blankNodes, id, id);
         }
-        return result;
+        return;
     }
-
+    /**
+     * @ngdoc method
+     * @name isLinkable
+     * @methodOf ontology-editor.service:ontologyUtilsManagerService
+     *
+     * @description
+     * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.
+     * Id must be present in the indices of the current `listItem` in {@link shared.service:ontologyStateService} and
+     * not be a blank node id.
+     *
+     * @param {string} id An id from the current ontology
+     * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
+     */
     self.isLinkable = function(id) {
-        return !!os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, id) && !om.isBlankNodeId(id);
+        return !!os.existsInIndices(id, os.listItem) && !om.isBlankNodeId(id);
     }
 
     self.getNameByNode = function(node) {
@@ -476,6 +497,9 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @return {Promise} A Promise that resolves with the JSON-LD value object that was removed
      */
     self.removeProperty = function(key, index) {
+        // TODO: Remove when full RDF list is removed
+        var entityFromFullList = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, os.listItem.selected['@id']);
+
         var axiomObject = os.listItem.selected[key][index];
         var json = {
             '@id': os.listItem.selected['@id'],
@@ -484,13 +508,23 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         os.addToDeletions(os.listItem.ontologyRecord.recordId, json);
         if (om.isBlankNodeId(axiomObject['@id'])) {
             var removed = os.removeEntity(os.listItem, axiomObject['@id']);
-            forEach(removed, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
+            forEach(removed, entity => {
+                os.listItem.selectedBlankNodes.splice(os.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === entity['@id']), 1);
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, entity)
+            });
         }
         pm.remove(os.listItem.selected, key, index);
+        
+        // TODO: Remove when full RDF list is removed
+        pm.remove(entityFromFullList, key, index);
+
         if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
         } else if (prefixes.rdfs + 'range' === key) {
             os.updatePropertyIcon(os.listItem.selected);
+            // TODO: Remove when full RDF list is removed
+            os.updatePropertyIcon(entityFromFullList);
+
         }
         return self.saveCurrentChanges()
             .then(() => {
@@ -513,17 +547,21 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
             && validateTargetType(targetEntity['@type']);
     }
     function commonAddToVocabHierarchy(relationshipIRI, values, entityIRI, parentIRI, targetArray, otherArray, key, validateTargetType) {
-        var update = false;
-        forEach(values, value => {
-            var targetEntity = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, value['@id'], os.listItem);
-            if (shouldUpdateVocabHierarchy(targetEntity, targetArray, otherArray, relationshipIRI, validateTargetType)) {
-                os.addEntityToHierarchy(os.listItem[key], entityIRI || targetEntity['@id'], parentIRI || targetEntity['@id']);
-                update = true;
-            }
-        });
-        if (update) {
-            os.listItem[key].flat = os.flattenHierarchy(os.listItem[key]);
-        }
+        $q.all(map(values, value => os.getEntityNoBlankNodes(value['@id'], os.listItem)))
+            .then(entities => {
+                var update = false;
+                forEach(entities, targetEntity => {
+                    if (shouldUpdateVocabHierarchy(targetEntity, targetArray, otherArray, relationshipIRI, validateTargetType)) {
+                        os.addEntityToHierarchy(os.listItem[key], entityIRI || targetEntity['@id'], parentIRI || targetEntity['@id']);
+                        update = true;
+                    }
+                });
+                if (update) {
+                    os.listItem[key].flat = os.flattenHierarchy(os.listItem[key]);
+                }
+            }, error => {
+                console.error(error);
+            });
     }
     function deleteFromConceptHierarchy(entityIRI, parentIRI) {
         os.deleteEntityFromParentInHierarchy(os.listItem.concepts, entityIRI, parentIRI);

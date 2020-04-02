@@ -137,6 +137,10 @@ describe('Everything Tree component', function() {
         });
     });
     describe('controller methods', function() {
+        it('clickItem should call the correct method', function() {
+            this.controller.clickItem('iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, ontologyStateSvc.listItem.editorTabStates.overview.targetedSpinnerId);
+        });
         it('toggleOpen should set the correct values', function() {
             spyOn(this.controller, 'isShown').and.returnValue(false);
             var node = {isOpened: false, path: ['a', 'b'], joinedPath: 'a.b'};
@@ -249,10 +253,7 @@ describe('Everything Tree component', function() {
                     indent: 1,
                     entityIRI: 'iri',
                     hasChildren: false,
-                    path: ['recordId', 'otherIri', 'iri'],
-                    mobi: {
-                        imported: true
-                    }
+                    path: ['recordId', 'otherIri', 'iri']
                 };
                 this.activeEntityNode = {
                     indent: 1,
@@ -265,6 +266,7 @@ describe('Everything Tree component', function() {
                 expect(this.controller.activeEntityFilter.filter(this.activeEntityNode)).toEqual(true);
             });
             it('does not match when an entity imported', function() {
+                ontologyStateSvc.isImported.and.returnValue(true);
                 expect(this.controller.activeEntityFilter.filter(this.importedNode)).toEqual(false);
             });
         });

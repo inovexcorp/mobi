@@ -74,10 +74,8 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         flag: false, 
         filter: node => {
             var match = true;
-            if (node.hasOwnProperty('mobi')) {
-                if (node.mobi.imported) {
-                    match = false;
-                }
+            if (dvm.os.isImported(node.entityIRI)) {
+                match = false;
             }
             return match;
         }
@@ -101,6 +99,9 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         dvm.dropdownFilters = [angular.copy(dvm.activeEntityFilter)];
         dvm.searchText = '';
         dvm.filterText = '';
+    }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.listItem.editorTabStates.overview.targetedSpinnerId);
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;

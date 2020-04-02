@@ -222,12 +222,12 @@ describe('Search Tab component', function() {
             ontologyStateSvc.listItem.selected = {
                 '@id': 'id',
                 '@type': ['test'],
-                mobi: {},
                 prop: [{'@value': 'test'}]
             };
             this.controller.selectItem({});
+            scope.$apply();
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith({}, false);
-            expect(ontologyStateSvc.listItem.editorTabStates.search.selected).toEqual({prop: [{'@value': 'test'}]});
+            expect(angular.copy(ontologyStateSvc.listItem.editorTabStates.search.selected)).toEqual({prop: [{'@value': 'test'}]});
         });
         it('should unselect an item in the list', function() {
             this.controller.unselectItem();

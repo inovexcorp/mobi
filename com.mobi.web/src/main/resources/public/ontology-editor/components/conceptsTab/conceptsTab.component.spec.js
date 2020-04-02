@@ -104,11 +104,11 @@ describe('Concepts Tab components', function() {
             expect(angular.element(button[0]).text()).toEqual('See History');
         });
         it('depending on whether something is selected', function() {
-            expect(this.element.querySelectorAll('.selected-concept').length).toEqual(1);
+            expect(this.element.querySelectorAll('.selected-concept div').length).toBeGreaterThan(0);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('.selected-concept').length).toEqual(0);
+            expect(this.element.querySelectorAll('.selected-concept div').length).toEqual(0);
         });
         it('depending on whether the selected concept is imported', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
@@ -118,7 +118,7 @@ describe('Concepts Tab components', function() {
             expect(historyButton.attr('disabled')).toBeFalsy();
             expect(deleteButton.attr('disabled')).toBeFalsy();
 
-            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            ontologyStateSvc.isImported.and.returnValue(true);
             scope.$digest();
             expect(historyButton.attr('disabled')).toBeTruthy();
             expect(deleteButton.attr('disabled')).toBeTruthy();

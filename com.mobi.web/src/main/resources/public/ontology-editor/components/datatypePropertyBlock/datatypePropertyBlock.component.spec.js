@@ -93,7 +93,7 @@ describe('Datatype Property Block component', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
 
-            ontologyStateSvc.listItem.selected.mobi = {imported: true};
+            ontologyStateSvc.isImported.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
         });
