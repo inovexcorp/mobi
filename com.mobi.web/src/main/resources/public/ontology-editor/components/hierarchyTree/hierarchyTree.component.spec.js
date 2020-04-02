@@ -70,8 +70,7 @@ describe('Hierarchy Tree component', function() {
         scope.index = 4;
         scope.updateSearch = jasmine.createSpy('updateSearch');
         scope.resetIndex = jasmine.createSpy('resetIndex');
-        scope.clickItem = jasmine.createSpy('clickItem');
-        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()" click-item="clickItem(iri)"></hierarchy-tree>'))(scope);
+        this.element = $compile(angular.element('<hierarchy-tree hierarchy="hierarchy" index="index" update-search="updateSearch(value)" reset-index="resetIndex()"></hierarchy-tree>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('hierarchyTree');
     });
@@ -105,10 +104,6 @@ describe('Hierarchy Tree component', function() {
             this.controller.resetIndex();
             expect(scope.resetIndex).toHaveBeenCalled();
         });
-        it('clickItem should be called in the parent scope', function() {
-            this.controller.clickItem({iri: 'iri'});
-            expect(scope.clickItem).toHaveBeenCalledWith('iri');
-        });
     });
     describe('contains the correct html', function() {
         beforeEach(function() {
@@ -129,6 +124,12 @@ describe('Hierarchy Tree component', function() {
         });
     });
     describe('controller methods', function() {
+        it('clickItem should call the correct method', function() {
+            ontologyStateSvc.getActivePage.and.returnValue({targetedSpinnerId: 'spinner'})
+            this.controller.clickItem('iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
+            expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
+        });
         it('toggleOpen should set the correct values', function() {
             spyOn(this.controller, 'isShown').and.returnValue(false);
             var node = {isOpened: false, path: ['a', 'b'], joinedPath: 'a.b'};
@@ -137,19 +138,6 @@ describe('Hierarchy Tree component', function() {
             expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[node.joinedPath]).toEqual(true);
             expect(this.controller.isShown).toHaveBeenCalled();
             expect(this.controller.filteredHierarchy).toEqual([]);
-        });
-        describe('click should call the correct methods', function() {
-            it('if clickItem has been provided', function() {
-                this.controller.click('iri');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(scope.clickItem).toHaveBeenCalledWith('iri');
-            });
-            it('if clickItem has not been provided', function() {
-                this.controller.clickItem = undefined;
-                this.controller.click('iri');
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-                expect(scope.clickItem).not.toHaveBeenCalled();
-            });
         });
         describe('matchesDropdownFilters', function() {
             beforeEach(function() {

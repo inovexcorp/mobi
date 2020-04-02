@@ -85,6 +85,10 @@ function datatypePropertyOverlayComponentCtrl(ontologyStateService, utilService,
         var lang = getLang(language);
         var realType = getType(lang, type);
         var added = pm.addValue(dvm.os.listItem.selected, select, value, realType, lang);
+        // TODO: Remove when the full RDF list is removed
+        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']);
+        pm.addValue(entityFromFullList, select, value, realType, lang);
+
         if (added) {
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
             dvm.ontoUtils.saveCurrentChanges();
@@ -98,6 +102,10 @@ function datatypePropertyOverlayComponentCtrl(ontologyStateService, utilService,
         var lang = getLang(language);
         var realType = getType(lang, type);
         var edited = pm.editValue(dvm.os.listItem.selected, select, dvm.os.propertyIndex, value, realType, lang);
+        // TODO: Remove when the full RDF list is removed
+        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']);
+        pm.editValue(entityFromFullList, select, dvm.os.propertyIndex, value, realType, lang);
+       
         if (edited) {
             dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, oldObj));
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, pm.createValueObj(value, realType, lang)));
