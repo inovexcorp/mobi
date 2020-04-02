@@ -250,7 +250,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteObjectProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
         delete os.listItem.objectProperties.iris[entityIRI];
-        delete os.listItem.noDomaininProperties[entityIRI];
+        delete os.listItem.noDomainProperties[entityIRI];
         delete os.listItem.propertyIcons[entityIRI];
         os.deleteProperty(entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.objectProperties, entityIRI);
@@ -264,7 +264,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteDataTypeProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
         delete os.listItem.dataProperties.iris[entityIRI];
-        delete os.listItem.noDomaininProperties[entityIRI];
+        delete os.listItem.noDomainProperties[entityIRI];
         delete os.listItem.propertyIcons[entityIRI];
         os.deleteProperty(entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.dataProperties, entityIRI);
@@ -524,6 +524,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         pm.remove(entityFromFullList, key, index);
 
         if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
+            os.removePropertyFromEntity(json['@id'], axiomObject['@id']);
             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
         } else if (prefixes.rdfs + 'range' === key) {
             os.updatePropertyIcon(os.listItem.selected);

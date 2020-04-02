@@ -80,6 +80,7 @@ function axiomBlockComponentCtrl(ontologyStateService, ontologyManagerService, o
         if (updatedAxiomObj.axiom === prefixes.rdfs + 'subPropertyOf' && updatedAxiomObj.values.length) {
             ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], updatedAxiomObj.values, 'dataProperties');
         } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
+            dvm.os.changePropertyHierarchy(dvm.os.listItem.selected['@id'], updatedAxiomObj.values)
             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
         }
     }
@@ -91,6 +92,7 @@ function axiomBlockComponentCtrl(ontologyStateService, ontologyManagerService, o
             }
         } else if (updatedAxiomObj.axiom === prefixes.rdfs + 'domain' && updatedAxiomObj.values.length) {
             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);
+            dvm.os.changePropertyHierarchy(dvm.os.listItem.selected['@id'], updatedAxiomObj.values)
         }
     }
 }

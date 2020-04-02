@@ -2372,7 +2372,7 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.listItem = angular.copy(listItem);
         ontologyStateSvc.listItem.classes = {iris: {[this.classId]: this.ontologyId}};
         ontologyStateSvc.listItem.classToChildProperties = {'https://classId.com': [{'@id': 'property1'}]};
-        ontologyStateSvc.listItem.noDomaininProperties = [{'@id': 'property2'}],
+        ontologyStateSvc.listItem.noDomainProperties = [{'@id': 'property2'}],
         expect(ontologyStateSvc.createFlatEverythingTree(ontologyStateSvc.listItem)).toEqual([{
             '@id': this.classId,
             '@type': [prefixes.owl + 'Class'],

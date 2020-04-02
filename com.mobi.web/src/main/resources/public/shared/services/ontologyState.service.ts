@@ -245,7 +245,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         classesWithIndividuals: [],
         individualsParentPath: [],
         propertyIcons: {},
-        noDomaininProperties: [],
+        noDomainProperties: [],
         classToChildProperties: {},
         iriList: [],
         selected: {},
@@ -877,10 +877,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordBranches(recordId, catalogId),
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
-            for (let [key, value] of Object.entries(response[0].propertyToRanges)) {
-                set(listItem.propertyIcons, [key,'mobi','icon'], getIcon(value))
-            };
-            listItem.noDomaininProperties = response[0].noDomainProperties;
+            forEach(response[0].propertyToRanges, (properties, key) => {
+                set(listItem.propertyIcons, [key, 'mobi', 'icon'], getIcon(properties))
+            });
+            listItem.noDomainProperties = response[0].noDomainProperties;
             listItem.classToChildProperties = response[0].classToAssociatedProperties;
             listItem.iriList.push(listItem.ontologyId);
             var responseIriList = get(response[0], 'iriList', {});
@@ -1098,7 +1098,7 @@ get
             });
         });
         //var noDomainProps = om.getNoDomainProperties([allProps]);
-        var noDomainProps = listItem.noDomaininProperties;
+        var noDomainProps = listItem.noDomainProperties;
 
         var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
         if (orderedNoDomainProperties.length) {
@@ -1950,27 +1950,17 @@ get
      *
      * @param {string} The iri of the entity to be deleted
      */
-    self.checkForDomain = function(entity) {
-        var hasDomain = false;
-        var classProperties = get(self.listItem.classToChildProperties, entity, {});
-        delete self.listItem.classToChildProperties[entity];
+    self.checkForDomain = function(classEntity) {
+        var classProperties = get(self.listItem.classToChildProperties, classEntity, {});
+        delete self.listItem.classToChildProperties[classEntity];
         classProperties.forEach(property => {
-            forEach(self.listItem.classToChildProperties, clasWithProp => {
-                hasDomain = includes(clasWithProp, property);
-                if (hasDomain) {
-                    return false;
-                }
-            });
-            if (!hasDomain) {
-                self.listItem.noDomaininProperties.push(property);
-            }
+            checkForPropertyDomains(property);
         });
     }
     self.deleteProperty = function(property) {
         for(let [key,value] of Object.entries(self.listItem.classToChildProperties)) {
-            var hasProperty = self.listItem.classToChildProperties[key].includes(property);
-            var classObj = key;
-            console.log(classObj);
+            let hasProperty = self.listItem.classToChildProperties[key].includes(property);
+            let classObj = key;
             if (hasProperty) {
                 remove(self.listItem.classToChildProperties[classObj], properties => {
                    return properties == property;
@@ -1981,21 +1971,54 @@ get
     self.addProperty = function(property) {
         var domainPath = prefixes.rdfs + 'domain';
         if (property[domainPath] == [] || property[domainPath] == undefined ){
-            self.listItem.noDomaininProperties.push(property['@id'])
+            self.listItem.noDomainProperties.push(property['@id'])
         }
         else {
             property[domainPath].forEach(domain => {
                 var classIRI = domain['@id'];
                 var path =  self.listItem.classToChildProperties[classIRI];
                 if (!path){
-                    self.listItem.classToChildProperties[classIRI] = {}
+                    self.listItem.classToChildProperties[classIRI] = []
                 }
                 self.listItem.classToChildProperties[classIRI].push(property ['@id']);
             });
         }
     }
+    self.changePropertyHierarchy = function(property, values){
+        values.forEach(parentclass => {
+            if (!self.listItem.classToChildProperties[parentclass]){
+                self.listItem.classToChildProperties[parentclass] = [];
+            }
+            self.listItem.classToChildProperties[parentclass].push(property);
+        });
+        if (self.listItem.noDomainProperties.includes(property)){
+            remove(self.listItem.noDomainProperties, properties => {
+                return properties == property;
+            })
+        }
+    }
+    self.removePropertyFromEntity = function(property, entity){
+        if (self.listItem.classToChildProperties[entity].includes(property)){
+            remove(self.listItem.classToChildProperties[entity], classproperties =>{
+                return classproperties == property;
+            });
+        }
+        checkForPropertyDomains(property);
+    }
 
     /* Private helper functions */
+    function checkForPropertyDomains(property) {
+        let hasDomain = false;
+        forEach(self.listItem.classToChildProperties, (propertyIRIs) =>{
+            if (propertyIRIs.includes(property)){
+                hasDomain = true;
+                return false;
+            }
+        })
+        if (hasDomain == false){
+            self.listItem.noDomainProperties.push(property);
+        }
+    }
     function existenceCheck(iriObj, iri) {
         return has(iriObj, "['" + iri + "']");
     }
