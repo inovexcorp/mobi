@@ -60,7 +60,7 @@
   "http://test.com/Ontology2#prop2": {
     "label": "property 2",
     "names": {
-      "http://purl.org/dc/terms/title": ["property 2"]
+      "http://purl.org/dc/terms/title": ["prop,erty 2"]
     }
   },
   "http://test.com/Ontology2#prop3": {
