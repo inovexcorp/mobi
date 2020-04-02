@@ -33,7 +33,7 @@ const treeItemComponent = {
         isActive: '<',
         isBold: '<',
         onClick: '&',
-        currentEntity: '<',
+        entityInfo: '<',
         isOpened: '<',
         path: '<',
         underline: '<',
@@ -49,25 +49,14 @@ treeItemComponentCtrl.$inject = ['settingsManagerService', 'ontologyStateService
 function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
     var dvm = this;
     var os = ontologyStateService;
-    dvm.treeDisplaySetting = '';
-    dvm.treeDisplay = '';
 
-    dvm.$onChanges = function(changesObj) {
-        if (get(changesObj, 'currentEntity.isFirstChange')) {
-            dvm.treeDisplaySetting = settingsManagerService.getTreeDisplay();
-        }
+    dvm.$onChanges = function() {
         dvm.saved = dvm.isSaved();
-        dvm.treeDisplay = dvm.getTreeDisplay();
-    }
-    dvm.getTreeDisplay = function() {
-        if (dvm.treeDisplaySetting === 'pretty') {
-            return os.getEntityNameByIndex(get(dvm.currentEntity, '@id'), os.listItem);
-        }
-        return get(dvm.currentEntity, 'mobi.anonymous', '');
+        // TODO: add something to keep the label up to date
     }
     dvm.isSaved = function() {
         var ids = unionWith(map(dvm.inProgressCommit.additions, '@id'), map(dvm.inProgressCommit.deletions, '@id'), isEqual);
-        return includes(ids, get(dvm.currentEntity, '@id'));
+        return includes(ids, get(os.listItem.selected, '@id'));
     }
 }
 

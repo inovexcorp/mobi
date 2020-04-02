@@ -263,7 +263,6 @@ describe('Ontology State Service', function() {
             ontology: this.ontology
         };
         listItem = {
-            ontology: this.ontology,
             ontologyId: this.ontologyId,
             importedOntologies: [],
             importedOntologyIds: [],
@@ -283,21 +282,21 @@ describe('Ontology State Service', function() {
             },
             branches: [this.branch],
             tags: [this.tag],
-            index: {
+            entityInfo: {
                 ontologyId: {
-                    position: 0,
                     label: 'ontology',
-                    ontologyIri: this.ontologyId
+                    names: ['ontology'],
+                    ontologyId: this.ontologyId
                 },
                 'https://classId.com': {
-                    position: 1,
                     label: 'class',
-                    ontologyIri: this.ontologyId
+                    names: ['class'],
+                    ontologyId: this.ontologyId
                 },
                 dataPropertyId: {
-                    position: 2,
                     label: 'data property',
-                    ontologyIri: this.ontologyId
+                    names: ['data property'],
+                    ontologyId: this.ontologyId
                 },
             },
             upToDate: true,
@@ -1961,15 +1960,16 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getListItemByRecordId('other')).toEqual(undefined);
         });
     });
-    describe('getOntologyByRecordId should return the correct object', function() {
-        it('when the ontologyId is in the list', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            expect(ontologyStateSvc.getOntologyByRecordId(this.recordId)).toEqual(listItem.ontology);
-        });
-        it('when the ontologyId is not in the list', function() {
-            expect(ontologyStateSvc.getOntologyByRecordId('other')).toEqual([]);
-        });
-    });
+    // TODO: we shouldn't need this method anymore
+    // describe('getOntologyByRecordId should return the correct object', function() {
+    //     it('when the ontologyId is in the list', function() {
+    //         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
+    //         expect(ontologyStateSvc.getOntologyByRecordId(this.recordId)).toEqual(listItem.ontology);
+    //     });
+    //     it('when the ontologyId is not in the list', function() {
+    //         expect(ontologyStateSvc.getOntologyByRecordId('other')).toEqual([]);
+    //     });
+    // });
     describe('createOntology calls the correct methods', function() {
         describe('when uploadJson succeeds', function() {
             beforeEach(function() {
@@ -2015,14 +2015,13 @@ describe('Ontology State Service', function() {
     describe('getEntityByRecordId returns', function() {
         it('object when present using index', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            expect(ontologyStateSvc.getEntityByRecordId(this.recordId, this.classId)).toEqual(this.classObj);
+            expect(ontologyStateSvc.getEntityByRecordId(this.recordId, this.classId)).toEqual(listItem.entityInfo[this.classId]);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
         });
         //the operation to retrieve the object if it isn't in the index is too expensive
         //so we are no longer doing that.
         it('undefined when present not using index', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({
-                ontology: this.ontology,
                 ontologyId: this.ontologyId,
                 recordId: this.recordId,
                 commitId: this.commitId,
@@ -2040,41 +2039,10 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('');
         });
     });
-    describe('removeEntity removes the entity from the provided ontology and index', function() {
-        it('if it points to blank nodes', function() {
-            listItem.index = {
-                classA: {position: 0},
-                bnode0: {position: 1},
-                classB: {position: 2},
-                bnode1: {position: 3},
-                bnode2: {position: 4},
-                classC: {position: 5}
-            };
-            listItem.ontology = [
-                {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
-                {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
-                {'@id': 'classB'},
-                {'@id': 'bnode1', propA: [{'@id': 'classB'}]},
-                {'@id': 'bnode2'},
-                {'@id': 'classC'}
-            ];
-            listItem.iriList = ['classA'];
-            ontologyManagerSvc.isBlankNodeId.and.callFake(iri => _.startsWith(iri, 'bnode'));
-            expect(ontologyStateSvc.removeEntity(listItem, 'classA')).toEqual([
-                {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
-                {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
-                {'@id': 'bnode2'},
-                {'@id': 'bnode1', propA: [{'@id': 'classB'}]}
-            ]);
-            expect(listItem.index).toEqual({classB: {position: 0}, classC: {position: 1}});
-            expect(listItem.iriList).toEqual([]);
-        });
-        it('if it does not point to blank nodes', function() {
-            expect(ontologyStateSvc.removeEntity(listItem, this.classId)).toEqual([this.classObj]);
-            expect(_.has(listItem.index, this.classId)).toBe(false);
-            expect(listItem.index.dataPropertyId.position).toEqual(1);
-            expect(listItem.iriList).not.toContain(this.classId);
-        });
+    it('removeEntity removes the entity from the iriList and index', function() {
+        ontologyStateSvc.removeEntity(listItem, this.classId);
+        expect(_.has(listItem.entityInfo, this.classId)).toBe(false);
+        expect(listItem.iriList).not.toContain(this.classId);
     });
     describe('setVocabularyStuff sets the appropriate state variables on', function() {
         beforeEach(function() {
@@ -2251,14 +2219,17 @@ describe('Ontology State Service', function() {
         ontologyManagerSvc.getClassProperties.and.returnValue([{'@id': 'property1'}]);
         ontologyManagerSvc.getNoDomainProperties.and.returnValue([{'@id': 'property2'}]);
         expect(ontologyStateSvc.createFlatEverythingTree(ontologyStateSvc.listItem)).toEqual([{
-            '@id': this.classId,
-            '@type': [prefixes.owl + 'Class'],
+            entityIRI: this.classId,
+            label: 'class',
+            names: ['class'],
             hasChildren: true,
             indent: 0,
             path: [this.recordId, this.classId],
             joinedPath: this.recordId + '.' + this.classId
         }, {
-            '@id': 'property1',
+            entityIRI: 'property1',
+            label: 'data property',
+            names: ['data property'],
             hasChildren: false,
             indent: 1,
             path: [this.recordId, this.classId, 'property1'],
@@ -2364,89 +2335,36 @@ describe('Ontology State Service', function() {
     });
     it('addEntity adds the entity to the provided ontology and index', function() {
         ontologyManagerSvc.getEntityName.and.returnValue('name');
+        ontologyManagerSvc.getEntityNames.and.returnValue(['name']);
         ontologyStateSvc.addEntity(listItem, this.individualObj);
-        expect(this.ontology.length).toBe(4);
-        expect(this.ontology[3]).toEqual(this.individualObj);
-        expect(_.has(listItem.index, this.individualId)).toBe(true);
-        expect(listItem.index[this.individualId].position).toEqual(3);
+        expect(_.has(listItem.entityInfo, this.individualId)).toBe(true);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(this.individualObj);
-        expect(listItem.index[this.individualId].label).toBe('name');
-        expect(listItem.index[this.individualId].ontologyIri).toBe(this.ontologyId);
+        expect(listItem.entityInfo[this.individualId].label).toBe('name');
+        expect(ontologyManagerSvc.getEntityNames).toHaveBeenCalledWith(this.individualObj);
+        expect(listItem.entityInfo[this.individualId].names).toEqual(['name']);
+        expect(listItem.entityInfo[this.individualId].ontologyId).toBe(this.ontologyId);
     });
     describe('getEntityNameByIndex should return the proper value', function() {
-        it('when the entityIRI is in the index', function() {
+        it('when the entityIRI is in the entityInfo', function() {
             expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
+                entityInfo: {
                     iri: {
                         label: 'name'
                     }
                 }
             })).toBe('name');
         });
-        it('when the entityIRI is in the imported index', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
-                    nomatchiri: {
-                        label: 'name'
-                    }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                            label: 'importedname'
-                        }
-                    }
-                }]
-            })).toBe('importedname');
-        });
-        it('when the entityIRI is in multiple indices', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
-                    iri: {
-                        label: 'name'
-                    }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                            label: 'importedname'
-                        }
-                    }
-                }]
-            })).toBe('importedname');
-        });
-        it('when the entityIRI is in multiple indices with only one label', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
-                    iri: {
-                    }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                            label: 'importedname'
-                        }
-                    }
-                }]
-            })).toBe('importedname');
-        });
-        it('when the entityIRI is in multiple indices and no labels exist', function() {
+        it('when the entityIRI has no labels', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
             expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
+                entityInfo: {
                     iri: {
                     }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                        }
-                    }
-                }]
+                }
             })).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
-        it('when the entityIRI is not in the index', function() {
+        it('when the entityIRI is not in the entityInfo', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
             expect(ontologyStateSvc.getEntityNameByIndex('iri')).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
@@ -2471,6 +2389,7 @@ describe('Ontology State Service', function() {
             this.userBranch = {
                 '@id': this.userBranchId
             }
+            // TODO: should update this to include the new entityNames map
             ontologyManagerSvc.getOntologyStuff.and.returnValue($q.when({
                 iriList: {
                     annotationProperties: [this.annotationId],
@@ -2604,10 +2523,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId',
-                            ontology: [],
-                            index: {},
-                            blankNodes: {}
+                            ontologyId: 'importId'
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(false);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
@@ -2700,10 +2616,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId',
-                            ontology: [],
-                            index: {},
-                            blankNodes: {}
+                            ontologyId: 'importId'
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
@@ -2797,10 +2710,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId',
-                            ontology: [],
-                            index: {},
-                            blankNodes: {}
+                            ontologyId: 'importId'
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(false);
@@ -3932,14 +3842,14 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('https://mobi.com/blank-node-namespace/test#');
         });
-        it('when the iri is a blank node and there is something in the index', function() {
+        it('when the iri is a blank node and there is something in the entityInfo', function() {
             splitIRI.and.returnValue({begin: 'http://matonto.org/ontologies/uhtc', then: '#'});
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
-            ontologyStateSvc.listItem.index = {
+            ontologyStateSvc.listItem.entityInfo = {
                 'http://matonto.org/ontologies/uhtc#Element': {
-                    position: 0,
                     label: 'test',
-                    ontologyIri: 'https://mobi.com/.well-known/genid/genid1#'
+                    names: ['test'],
+                    ontologyId: 'https://mobi.com/.well-known/genid/genid1#'
                 }
             };
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('http://matonto.org/ontologies/uhtc#');

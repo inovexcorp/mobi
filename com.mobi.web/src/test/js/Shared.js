@@ -278,6 +278,7 @@ export function mockOntologyManager() {
             this.getBlankNodes = jasmine.createSpy('getBlankNodes').and.returnValue([]);
             this.getEntity = jasmine.createSpy('getEntity').and.returnValue({});
             this.getEntityName = jasmine.createSpy('getEntityName').and.callFake((ontology, entity) => _.has(entity, '@id') ? entity['@id'] : '');
+            this.getEntityNames = jasmine.createSpy('getEntityNames').and.callFake((ontology, entity) => _.has(entity, '@id') ? [entity['@id']] : ['']);
             this.getEntityDescription = jasmine.createSpy('getEntityDescription').and.returnValue('');
             this.isConcept = jasmine.createSpy('isConcept').and.returnValue(true);
             this.hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);

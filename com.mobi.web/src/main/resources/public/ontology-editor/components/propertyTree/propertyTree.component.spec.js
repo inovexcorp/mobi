@@ -199,9 +199,8 @@ describe('Property Tree component', function() {
         describe('searchFilter', function() {
             beforeEach(function() {
                 this.filterEntity = {
-                    '@id': 'urn:id',
-                    '@type': [prefixes.owl + 'DatatypeProperty'],
-                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
+                    entityIRI: 'urn:id',
+                    names: ['Title']
                 };
                 this.filterNode = {
                     indent: 1,
@@ -209,7 +208,7 @@ describe('Property Tree component', function() {
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri'],
                     joinedPath: 'recordId.otherIri.iri',
-                    entity: this.filterEntity
+                    names: ['Title']
                 };
                 this.filterNodeParent = {
                     indent: 0,
@@ -239,28 +238,18 @@ describe('Property Tree component', function() {
                 });
             });
             describe('has filter text', function() {
-                describe('and the entity has matching search properties', function() {
-                    it('that have at least one matching text value', function() {
+                describe('and the entity names', function() {
+                    it('have at least one matching text value', function() {
                         expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
                     });
-                    describe('that do not have a matching text value', function () {
+                    describe('do not have a matching text value', function () {
                         beforeEach(function () {
-                            var noMatchEntity = {
-                                '@id': 'urn:title',
-                                '@type': [prefixes.owl + 'DatatypeProperty']
-                            };
-                            this.filterNode.entity = noMatchEntity;
-                            utilSvc.getBeautifulIRI.and.returnValue('id');
+                            this.filterNode.names = [];
                         });
-                        describe('and does not have a matching entity local name', function () {
-                            it('and the node has no children', function () {
-                                expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
-                            });
-                            it('and the node has children', function () {
-                                this.filterNode.hasChildren = true;
-                                expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
-                            });
+                        it('and does not have a matching entity local name', function () {
+                            utilSvc.getBeautifulIRI.and.returnValue('id');
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
                             utilSvc.getBeautifulIRI.and.returnValue('title');
@@ -268,13 +257,6 @@ describe('Property Tree component', function() {
                         });
                     });
                 });
-                it('and the entity does not have matching search properties', function() {
-                    ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
-                });
-                it('and the node is a folder', function() {
-                    expect(this.controller.searchFilter(this.filterNodeFolder)).toEqual(true);
-                })
             });
             it('does not have filter text', function() {
                 this.controller.filterText = '';

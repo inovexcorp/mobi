@@ -64,28 +64,10 @@ describe('Tree Item component', function() {
         this.element.remove();
     });
 
-    describe('should update on changes', function() {
-        beforeEach(function() {
-            spyOn(this.controller, 'isSaved').and.returnValue(true);
-            spyOn(this.controller, 'getTreeDisplay').and.returnValue('test');
-            settingsManagerSvc.getTreeDisplay.calls.reset();
-        });
-        it('if it is the first change', function() {
-            settingsManagerSvc.getTreeDisplay.and.returnValue('test');
-            this.controller.$onChanges({currentEntity: {isFirstChange: true}});
-            expect(settingsManagerSvc.getTreeDisplay).toHaveBeenCalled();
-            expect(this.controller.treeDisplaySetting).toEqual('test');
-            expect(this.controller.saved).toEqual(true);
-            expect(this.controller.treeDisplay).toEqual('test');
-        });
-        it('if it is not the first change', function() {
-            settingsManagerSvc.getTreeDisplay.and.returnValue('test');
-            this.controller.$onChanges({});
-            expect(settingsManagerSvc.getTreeDisplay).not.toHaveBeenCalled();
-            expect(this.controller.treeDisplaySetting).toEqual('');
-            expect(this.controller.saved).toEqual(true);
-            expect(this.controller.treeDisplay).toEqual('test');
-        });
+    it('should update on changes', function() {
+        spyOn(this.controller, 'isSaved').and.returnValue(true);
+        this.controller.$onChanges();
+        expect(this.controller.saved).toEqual(true);
     });
     describe('controller bound variable', function() {
         it('hasChildren should be one way bound', function() {
@@ -179,22 +161,6 @@ describe('Tree Item component', function() {
         });
     });
     describe('controller methods', function() {
-        describe('getTreeDisplay', function() {
-            beforeEach(function() {
-                this.entityName = 'Entity Name';
-                ontologyStateSvc.getEntityNameByIndex.and.returnValue(this.entityName);
-            });
-            it('should return anonymous when not pretty', function() {
-                this.controller.currentEntity = {mobi: {anonymous: 'anon'}};
-                expect(this.controller.getTreeDisplay()).toEqual('anon');
-                expect(ontologyStateSvc.getEntityNameByIndex).not.toHaveBeenCalled();
-            });
-            it('should call getEntityNameByIndex if pretty', function() {
-                this.controller.treeDisplaySetting = 'pretty';
-                expect(this.controller.getTreeDisplay()).toEqual(this.entityName);
-                expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
-            });
-        });
         describe('isSaved', function() {
             it('check correct value for inProgress.additions is returned', function() {
                 this.controller.currentEntity = {'@id': 'id'};

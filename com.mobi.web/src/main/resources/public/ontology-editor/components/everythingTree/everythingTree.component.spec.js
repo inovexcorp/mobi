@@ -181,16 +181,16 @@ describe('Everything Tree component', function() {
             beforeEach(function() {
                 this.filterNodeParent = {
                     indent: 0,
-                    '@id': 'otherIri',
+                    entityIRI: 'otherIri',
                     hasChildren: true,
                     path: ['recordId', 'otherIri']
                 };
                 this.filterNode = {
                     indent: 1,
-                    '@id': 'iri',
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri'],
-                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
+                    entityIRI: 'iri',
+                    names: ['Title']
                 };
                 this.filterNodeFolder = {
                     title: 'Properties',

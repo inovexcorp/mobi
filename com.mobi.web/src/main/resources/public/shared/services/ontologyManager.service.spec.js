@@ -1203,15 +1203,6 @@ describe('Ontology Manager service', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
             expect(ontologyManagerSvc.getOntologyIRI([this.ontologyObj])).toBe(this.ontologyId);
         });
-        it('mobi.anonymous if there is an ontology entity without @id', function() {
-            var obj = {
-                '@type': prefixes.owl + 'Ontology',
-                mobi: {
-                    anonymous: this.anonymous
-                }
-            }
-            expect(ontologyManagerSvc.getOntologyIRI([obj])).toBe(this.anonymous);
-        });
         it('"" if none are present or no ontology entity', function() {
             expect(ontologyManagerSvc.getOntologyIRI([])).toBe('');
         });

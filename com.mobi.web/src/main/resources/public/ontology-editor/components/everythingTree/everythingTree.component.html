@@ -26,18 +26,19 @@
         <hierarchy-filter filters="dvm.dropdownFilters" update-filters="dvm.dropdownFilters = value" submit-event="dvm.onKeyup()"></hierarchy-filter>
     </div>
     <md-virtual-repeat-container class="repeater-container w-100 flex-1 remove-min-height">
-        <div md-virtual-repeat="entity in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
-            <div ng-if="!entity['@id']" class="tree-item">
-                <a ng-click="dvm.toggleOpen(entity); $event.stopPropagation()">
-                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.isOpened, 'fa-folder-o': !entity.isOpened}"></i><span>{{entity.title}}</span>
+        <div md-virtual-repeat="item in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
+            <div ng-if="!item.entityIRI" class="tree-item">
+                <a ng-click="dvm.toggleOpen(item); $event.stopPropagation()">
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': item.isOpened, 'fa-folder-o': !item.isOpened}"></i><span>{{item.title}}</span>
                 </a>
             </div>
-            <div ng-if="entity['@id']" ng-style="{'padding-left': (dvm.indent * entity.indent) + 'em'}">
-                <tree-item is-active="dvm.os.getActiveEntityIRI() === entity['@id']" current-entity="entity"
-                    on-click="dvm.os.selectItem(entity['@id'])" has-children="entity.hasChildren"
-                    path="entity.path" is-opened="entity.isOpened"
-                    underline="entity.underline"
-                    toggle-open="dvm.toggleOpen(entity)"
+            <div ng-if="item.entityIRI" ng-style="{'padding-left': (dvm.indent * item.indent) + 'em'}">
+                <tree-item is-active="dvm.os.getActiveEntityIRI() === item.entityIRI"
+                    entity-info="item"
+                    on-click="dvm.os.selectItem(item.entityIRI)" has-children="item.hasChildren"
+                    path="item.path" is-opened="item.isOpened"
+                    underline="item.underline"
+                    toggle-open="dvm.toggleOpen(item)"
                     in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
             </div>
         </div>

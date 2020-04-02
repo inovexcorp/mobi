@@ -129,17 +129,17 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(dvm.om.entityNameProps, key => some(node.entity[key], value => {
-            if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+        some(node.names, name => {
+            if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
-        }));
+        });
 
         if (searchMatch) {
             return true;
         }
 
         // Check if beautified entity id matches search text
-        if (dvm.util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        if (dvm.util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(dvm.filterText.toLowerCase())) {
             searchMatch = true;
         }
         
@@ -201,9 +201,6 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
             }
         }
         return displayNode;
-    }
-    dvm.isImported = function(entityIRI) {
-        return !has(dvm.os.listItem.index, entityIRI);
     }
 
     function update() {

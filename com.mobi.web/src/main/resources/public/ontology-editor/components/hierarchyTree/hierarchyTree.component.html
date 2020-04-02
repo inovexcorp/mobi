@@ -29,7 +29,7 @@
         <div md-virtual-repeat="node in dvm.filteredHierarchy" class="tree-item-wrapper" md-item-size="26">
             <div ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}">
                 <tree-item is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
-                    current-entity="node.entity"
+                    entity-info="node.entityInfo"
                     on-click="dvm.click(node.entityIRI)" has-children="node.hasChildren"
                     path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="node.isOpened"
                     underline="node.underline"

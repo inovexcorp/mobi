@@ -347,8 +347,10 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
 
     self.updateLabel = function() {
         var newLabel = om.getEntityName(os.listItem.selected);
-        if (has(os.listItem.index, "['" + os.listItem.selected['@id'] + "'].label") && os.listItem.index[os.listItem.selected['@id']].label !== newLabel) {
-            os.listItem.index[os.listItem.selected['@id']].label = newLabel;
+        var iri = os.listItem.selected['@id'];
+        if (has(os.listItem.entityInfo, "['" + iri + "'].label") && os.listItem.entityInfo[iri].label !== newLabel) {
+            os.listItem.entityInfo[iri].label = newLabel;
+            os.listItem.entityInfo[iri].names = om.getEntityNames(os.listItem.selected);
         }
         if (om.isClass(os.listItem.selected)) {
             os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);
