@@ -878,7 +878,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
             forEach(response[0].propertyToRanges, (properties, key) => {
-                set(listItem.propertyIcons, key, getIcon(properties))
+                set(listItem.propertyIcons, [key], getIcon(properties))
             });
             listItem.noDomainProperties = response[0].noDomainProperties;
             listItem.classToChildProperties = response[0].classToAssociatedProperties;
