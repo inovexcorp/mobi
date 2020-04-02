@@ -30,7 +30,6 @@ const template = require('./conceptSchemesTab.component.html');
  * @requires shared.service:ontologyStateService
  * @requires shared.service:ontologyManagerService
  * @requires ontology-editor.service:ontologyUtilsManagerService
- * @requires shared.service:propertyManagerService
  * @requires shared.service:modalService
  *
  * @description
@@ -50,13 +49,11 @@ const conceptSchemesTabComponent = {
     controller: conceptSchemesTabComponentCtrl
 };
 
-conceptSchemesTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
+conceptSchemesTabComponentCtrl.$inject = ['ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService', 'modalService'];
 
-function conceptSchemesTabComponentCtrl(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, propertyManagerService, modalService) {
+function conceptSchemesTabComponentCtrl(ontologyStateService, ontologyManagerService, ontologyUtilsManagerService, modalService) {
     var dvm = this;
-    var pm = propertyManagerService;
     var ontoUtils = ontologyUtilsManagerService;
-    dvm.relationshipList = [];
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
 
@@ -72,14 +69,6 @@ function conceptSchemesTabComponentCtrl(ontologyStateService, ontologyManagerSer
     }
     dvm.seeHistory = function() {
         dvm.os.listItem.seeHistory = true;
-    }
-    dvm.clickItem = function() {
-        if (dvm.om.isConcept(dvm.os.listItem.selected, dvm.os.listItem.derivedConcepts)) {
-            var schemeRelationships = filter(pm.conceptSchemeRelationshipList, iri => includes(dvm.os.listItem.iriList, iri));
-            dvm.relationshipList = concat(dvm.os.listItem.derivedSemanticRelations, schemeRelationships);
-        } else if (dvm.om.isConceptScheme(dvm.os.listItem.selected, dvm.os.listItem.derivedConceptSchemes)) {
-            dvm.relationshipList = pm.schemeRelationshipList;
-        }
     }
 }
 

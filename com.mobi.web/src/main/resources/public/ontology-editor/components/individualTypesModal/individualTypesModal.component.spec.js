@@ -112,11 +112,18 @@ describe('Individual Types Modal component', function() {
                 ontologyStateSvc.flattenHierarchy.and.returnValue([this.iri]);
                 ontoUtils.containsDerivedConcept.and.callFake(arr => _.some(arr, iri => _.includes(iri, 'concept')));
                 ontoUtils.containsDerivedConceptScheme.and.callFake(arr => _.some(arr, iri => _.includes(iri, 'scheme')));
+                // TODO: Remove when the full RDF list is removed
+                this.object = {};
+                ontologyStateSvc.getEntityByRecordId.and.returnValue(this.object);
+
             });
             it('if a type was added', function() {
                 this.controller.types.push('new');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'new']);
+                // TODO: Remove when the full RDF list is removed
+                expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'new']);
+
                 expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'type1': [this.iri], 'type2': [this.iri], 'new': [this.iri]});
                 expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['type1', 'type2', 'new']);
                 expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
@@ -132,6 +139,9 @@ describe('Individual Types Modal component', function() {
                 this.controller.types = [prefixes.owl + 'NamedIndividual', 'type1'];
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                // TODO: Remove when the full RDF list is removed
+                expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                 expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'type1': [this.iri]});
                 expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['type1']);
                 expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
@@ -147,6 +157,9 @@ describe('Individual Types Modal component', function() {
                 this.controller.types.push('concept');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'concept']);
+                // TODO: Remove when the full RDF list is removed
+                expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'concept']);
+
                 expect(ontoUtils.addConcept).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
@@ -172,6 +185,9 @@ describe('Individual Types Modal component', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('concepts');
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                         expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
@@ -183,6 +199,9 @@ describe('Individual Types Modal component', function() {
                     it('and the concepts page is not active', function() {
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                         expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
@@ -203,6 +222,9 @@ describe('Individual Types Modal component', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('schemes');
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                         expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
@@ -214,6 +236,9 @@ describe('Individual Types Modal component', function() {
                     it('and the schemes page is not active', function() {
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                         expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
@@ -226,6 +251,9 @@ describe('Individual Types Modal component', function() {
                 it('and is not selected elsewhere', function() {
                     this.controller.submit();
                     expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                     expect(ontologyStateSvc.listItem.concepts.iris).toEqual({});
                     expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts, this.iri);
                     expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
@@ -238,6 +266,9 @@ describe('Individual Types Modal component', function() {
                 this.controller.types.push('scheme');
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'scheme']);
+                // TODO: Remove when the full RDF list is removed
+                expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2', 'scheme']);
+
                 expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@id', jasmine.anything());
                 expect(ontoUtils.updateVocabularyHierarchies).not.toHaveBeenCalledWith('@type', jasmine.anything());
@@ -262,6 +293,9 @@ describe('Individual Types Modal component', function() {
                         ontologyStateSvc.getActiveKey.and.returnValue('schemes');
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                         expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({});
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
@@ -271,6 +305,9 @@ describe('Individual Types Modal component', function() {
                     it('and the schemes page is not active', function() {
                         this.controller.submit();
                         expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                         expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({});
                         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                         expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
@@ -281,6 +318,9 @@ describe('Individual Types Modal component', function() {
                 it('and the individual is not selected elsewhere', function() {
                     this.controller.submit();
                     expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1']);
+
                     expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({});
                     expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, this.iri);
                     expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
@@ -307,6 +347,9 @@ describe('Individual Types Modal component', function() {
             it('unless nothing changed', function() {
                 this.controller.submit();
                 expect(ontologyStateSvc.listItem.selected['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
+                // TODO: Remove when the full RDF list is removed
+                expect(this.object['@type']).toEqual([prefixes.owl + 'NamedIndividual', 'type1', 'type2']);
+
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });

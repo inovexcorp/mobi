@@ -125,6 +125,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -172,11 +173,23 @@ public class OntologyRest {
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String GET_ENTITY_QUERY;
+    private static final String GET_PROPERTY_RANGES;
+    private static final String GET_CLASS_PROPERTIES;
+    private static final String GET_NO_DOMAIN_PROPERTIES;
 
     static {
         try {
             GET_ENTITY_QUERY = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/retrieve-entity.rq"), StandardCharsets.UTF_8
+            );
+            GET_PROPERTY_RANGES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-property-ranges.rq"), StandardCharsets.UTF_8
+            );
+            GET_CLASS_PROPERTIES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-class-properties.rq"), StandardCharsets.UTF_8
+            );
+            GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -753,113 +766,126 @@ public class OntologyRest {
 
         return outputStream -> {
             StopWatch watch = new StopWatch();
+
             log.trace("Start iriList");
             watch.start();
-
             outputStream.write("{ \"iriList\": ".getBytes());
             outputStream.write(getAllIRIs(ontology).toString().getBytes());
-
             watch.stop();
             log.trace("End iriList: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start importedIRIs");
             watch.start();
-
             outputStream.write(", \"importedIRIs\": ".getBytes());
             outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
                     .getBytes());
-
             watch.stop();
             log.trace("End importedIRIs: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start importedOntologies");
             watch.start();
-
             outputStream.write(", \"importedOntologies\": ".getBytes());
-
             ArrayNode arr = mapper.createArrayNode();
             onlyImports.stream()
                     .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
                     .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
-
             watch.stop();
             log.trace("End importedOntologies: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start failedImports");
             watch.start();
-
             outputStream.write(", \"failedImports\": ".getBytes());
             outputStream.write(mapper.valueToTree(getUnloadableImportIRIs(ontology)).toString().getBytes());
-
             watch.stop();
             log.trace("End failedImports: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start classHierarchy");
             watch.start();
-
             outputStream.write(", \"classHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubClassesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End classHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start individuals");
             watch.start();
-
             outputStream.write(", \"individuals\": ".getBytes());
             ObjectNode classesWithIndividuals = mapper.valueToTree(
                     ontology.getClassesWithIndividuals(valueFactory, modelFactory).getParentMap());
             outputStream.write(classesWithIndividuals.toString().getBytes());
-
             watch.stop();
             log.trace("End individuals: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start dataPropertyHierarchy");
             watch.start();
-
             outputStream.write(", \"dataPropertyHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start objectPropertyHierarchy");
             watch.start();
-
             outputStream.write(", \"objectPropertyHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubObjectPropertiesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start annotationHierarchy");
             watch.start();
-
             outputStream.write(", \"annotationHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start conceptHierarchy");
             watch.start();
-
             outputStream.write(", \"conceptHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptRelationships(valueFactory, modelFactory), outputStream);
-
             watch.stop();
             log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+
             watch.reset();
             log.trace("Start conceptSchemeHierarchy");
             watch.start();
-
             outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptSchemeRelationships(valueFactory, modelFactory), outputStream);
-            outputStream.write("}".getBytes());
-
             watch.stop();
             log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+
+            watch.reset();
+            log.trace("Start propertyToRanges");
+            watch.start();
+            outputStream.write(", \"propertyToRanges\": ".getBytes());
+            writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
+            watch.stop();
+            log.trace("End propertyToRanges: " + watch.getTime() + "ms");
+
+            watch.reset();
+            log.trace("Start classToAssociatedProperties");
+            watch.start();
+            outputStream.write(", \"classToAssociatedProperties\": ".getBytes());
+            writeClassPropertiesToStream(ontology.getTupleQueryResults(GET_CLASS_PROPERTIES, true), outputStream);
+            watch.stop();
+            log.trace("End classToAssociatedProperties: " + watch.getTime() + "ms");
+
+            watch.reset();
+            log.trace("Start noDomainProperties");
+            watch.start();
+            outputStream.write(", \"noDomainProperties\": ".getBytes());
+            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true), outputStream);
+            watch.stop();
+            log.trace("End noDomainProperties: " + watch.getTime() + "ms");
+
+            outputStream.write("}".getBytes());
         };
     }
 
@@ -2406,6 +2432,65 @@ public class OntologyRest {
             hierarchy.writeHierarchyString(sesameTransformer, outputStream);
         }
         outputStream.write("}".getBytes());
+    }
+
+    /**
+     * Writes the ranges for each property from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "prop" and "range" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writePropertyRangesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        Map<String, Set<String>> propertyMap = new HashMap<>();
+        tupleQueryResults.forEach(bindings -> {
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            String range = Bindings.requiredResource(bindings, "range").stringValue();
+            if (propertyMap.containsKey(prop)) {
+                propertyMap.get(prop).add(range);
+            } else {
+                Set<String> ranges = new HashSet<>();
+                ranges.add(range);
+                propertyMap.put(prop, ranges);
+            }
+        });
+        outputStream.write(mapper.valueToTree(propertyMap).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated properties for each class from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "class" and "prop" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeClassPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        Map<String, Set<String>> classMap = new HashMap<>();
+        tupleQueryResults.forEach(bindings -> {
+            String clazz = Bindings.requiredResource(bindings, "class").stringValue();
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            if (classMap.containsKey(clazz)) {
+                classMap.get(clazz).add(prop);
+            } else {
+                Set<String> props = new HashSet<>();
+                props.add(prop);
+                classMap.put(clazz, props);
+            }
+        });
+        outputStream.write(mapper.valueToTree(classMap).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated no domain properties from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "prop" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeNoDomainPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        List<String> props = new ArrayList<>();
+        tupleQueryResults.forEach(bindings -> {
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            props.add(prop);
+        });
+        outputStream.write(mapper.valueToTree(props).toString().getBytes());
     }
 
     /**

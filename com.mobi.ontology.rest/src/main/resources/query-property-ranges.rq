@@ -1,0 +1,15 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?prop ?range WHERE {
+    {
+        ?prop a owl:ObjectProperty ;
+            rdfs:range ?range .
+    } UNION {
+        ?prop a owl:DatatypeProperty ;
+            rdfs:range ?range .
+    } UNION {
+         ?prop a owl:AnnotationProperty ;
+             rdfs:range ?range .
+     }
+}
