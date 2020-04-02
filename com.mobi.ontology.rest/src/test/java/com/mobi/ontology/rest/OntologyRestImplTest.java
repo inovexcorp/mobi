@@ -140,6 +140,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -1411,6 +1412,51 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertTrue(responseObject.containsKey("classToAssociatedProperties"));
         assertEquals(responseObject.getJSONObject("classToAssociatedProperties"), expectedResults);
+    }
+
+    @Test
+    public void testGetOntologyStuffNoDomainProperties() throws Exception {
+        setupTupleQueryMock();
+
+        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
+        JSONArray expectedResults = getResourceArray("/getOntologyStuffData/noDomainProperties-results.json");
+
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+            conn.add(data);
+        }
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+
+        Set<String> actual = new HashSet<>();
+        responseObject.getJSONArray("noDomainProperties").forEach(o -> actual.add((String) o));
+
+        Set<String> expected = new HashSet<>();
+        expectedResults.forEach(o -> expected.add((String) o));
+
+        assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testGetOntologyStuffNoDomainPropertiesNoResults() {
+        JSONArray expectedResults = new JSONArray();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertTrue(responseObject.containsKey("noDomainProperties"));
+        assertEquals(responseObject.getJSONArray("noDomainProperties"), expectedResults);
     }
 
     // Test get IRIs in ontology

@@ -28,6 +28,9 @@ ont1:prop4 a owl:AnnotationProperty ;
     dcterms:title "property 4" ;
     rdfs:range xsd:string .
 
+ont1:prop5 a owl:DatatypeProperty ;
+    dcterms:title "property 5" .
+
 ont1:classA a owl:Class ;
     rdfs:domain ont1:classB .
 
@@ -47,6 +50,9 @@ ont2:prop2 a owl:DatatypeProperty ;
     dcterms:title "property 2" ;
     rdfs:domain ont2:class1 , ont2:class2 ;
     rdfs:range xsd:string, xsd:double .
+
+ont2:prop3 a owl:ObjectProperty ;
+    dcterms:title "property 3" .
 
 ont2:class1 a owl:Class .
 
