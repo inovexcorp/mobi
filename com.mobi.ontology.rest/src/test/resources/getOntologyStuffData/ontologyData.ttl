@@ -28,7 +28,6 @@ ont1:prop4 a owl:AnnotationProperty ;
     dcterms:title "property 4" ;
     rdfs:range xsd:string .
 
-
 ont1:prop5 a owl:DatatypeProperty ;
     dcterms:title "property 5" .
 
