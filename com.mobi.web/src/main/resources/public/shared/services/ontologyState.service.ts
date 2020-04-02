@@ -57,9 +57,7 @@ import {
     findKey,
     tail,
     initial,
-    first,
     join,
-    every,
     replace,
     findIndex,
     isObject, 
@@ -103,42 +101,49 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     var ontologyEditorTabStates = {
         project: {
             entityIRI: '',
-            active: true
+            active: true,
+            targetedSpinnerId: 'project-entity-spinner'
         },
         overview: {
             active: false,
             searchText: '',
-            open: {}
+            open: {},
+            targetedSpinnerId: 'overview-entity-spinner'
         },
         classes: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'classes-entity-spinner'
         },
         properties: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'properties-entity-spinner'
         },
         individuals: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'individuals-entity-spinner'
         },
         concepts: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'concepts-entity-spinner'
         },
         schemes: {
             active: false,
             searchText: '',
             index: 0,
-            open: {}
+            open: {},
+            targetedSpinnerId: 'schemes-entity-spinner'
         },
         search: {
             active: false
@@ -241,6 +246,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         individualsParentPath: [],
         iriList: [],
         selected: {},
+        selectedBlankNodes: [],
         failedImports: [],
         goTo: {
             entityIRI: '',
@@ -797,10 +803,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem = response;
                 listItem.editorTabStates = oldListItem.editorTabStates;
                 if (listItem.ontologyId !== oldListItem.ontologyId) {
-                    self.setSelected(listItem.ontologyId, true, listItem);
                     self.resetStateTabs(listItem);
                 } else {
                     listItem.selected = oldListItem.selected;
+                    listItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
+                    listItem.blankNodes = oldListItem.blankNodes;
                 }
                 return self.updateOntologyState({recordId, commitId, branchId});
             }, $q.reject)
@@ -835,10 +842,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem = response;
                 listItem.editorTabStates = oldListItem.editorTabStates;
                 if (listItem.ontologyId !== oldListItem.ontologyId) {
-                    self.setSelected(listItem.ontologyId, true, listItem);
                     self.resetStateTabs(listItem);
                 } else {
                     listItem.selected = oldListItem.selected;
+                    listItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
+                    listItem.blankNodes = oldListItem.blankNodes;
                 }
                 return tagId ? self.updateOntologyState({recordId, commitId, tagId}) : self.updateOntologyState({recordId, commitId});
             }, $q.reject)
@@ -1190,6 +1198,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             var newPosition = get(listItem.index, "['" + obj.entityIRI + "'].position");
             pull(listItem.iriList, obj.entityIRI);
             unset(listItem.index, obj.entityIRI);
+            if (om.isBlankNodeId(obj.entityIRI)) {
+                delete listItem.blankNodes[obj.entityIRI];
+            }
             forOwn(listItem.index, (value, key) => {
                 if (value.position > newPosition) {
                     listItem.index[key].position = value.position - 1;
@@ -1247,6 +1258,41 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             return getEntityFromListItem(listItem, entityIRI);
         }
         return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntity
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Gets entity with the provided IRI from the ontology in the provided `listItem` using
+     * {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns the resulting promise with a
+     * JSON-LD array with the entity and its blank nodes.
+     *
+     * @param {string} entityIRI The IRI of the entity that you want
+     * @param {Object} listItem The `listItem` to perform this action against
+     * @returns {Promise} A Promise that resolves with a JSON-LD array containing the entity and its blank nodes;
+     * rejects otherwise.
+     */
+    self.getEntity = function(entityIRI, listItem = self.listItem) {
+        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNoBlankNodes
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Gets entity with the provided IRI from the ontology in the provided `listItem` using
+     * {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns the resulting promise with a
+     * JSON-LD object for the entity.
+     *
+     * @param {string} entityIRI The IRI of the entity that you want
+     * @param {Object} listItem The `listItem` to perform this action against
+     * @returns {Promise} A Promise that resolves with a JSON-LD object for the entity; rejects otherwise.
+     */
+    self.getEntityNoBlankNodes = function(entityIRI, listItem = self.listItem) {
+        return self.getEntity(entityIRI, listItem).then(arr => find(arr, {'@id': entityIRI}), $q.reject);
     }
     /**
      * @ngdoc method
@@ -1407,6 +1453,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getAnnotationPropertiesOpened = function(recordId) {
         return get(self.listItem.editorTabStates, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
     }
+    // TODO: Keep an eye on this
     self.onEdit = function(iriBegin, iriThen, iriEnd) {
         var newIRI = iriBegin + iriThen + iriEnd;
         var oldEntity = omit(angular.copy(self.listItem.selected), 'mobi');
@@ -1433,11 +1480,64 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         set(self.listItem, 'iriBegin', iriBegin);
         set(self.listItem, 'iriThen', iriThen);
     }
-    self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem) {
-        listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, entityIRI, listItem);
-        if (getUsages && !has(self.getActivePage(), 'usages') && listItem.selected) {
-            self.setEntityUsages(entityIRI);
+    /**
+     * @ngdoc method
+     * @name setSelected
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Sets the `selected`, `selectedBlankNodes`, and `blankNodes` properties on the provided `listItem` based on the
+     * response from {@link shared.service:ontologyManagerService getEntityAndBlankNodes}. Returns a Promise indicating
+     * the success of the action. If the provided `entityIRI` or `listItem` are not valid, returns a Promise that
+     * resolves. Sets the entity usages if the provided `getUsages` parameter is true. Also accepts a spinner id to use
+     * in the call to fetch the entity.
+     *
+     * @param {string} entityIRI The IRI of the entity to retrieve
+     * @param {string} [getUsages=true] Whether to set the usages of the entity after fetching
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @param {string} [spinnerId=''] A spinner id to attach to the call to fetch the entity
+     * @return {Promise} A promise indicating the success of the action
+     */
+    self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem, spinnerId = '') {
+        if  (!entityIRI || !listItem) {
+            if (listItem) {
+                listItem.selected = undefined;
+                listItem.selectedBlankNodes = [];
+                listItem.blankNodes = {};
+            }
+            return $q.when();
         }
+        if (spinnerId) {
+            httpService.cancel(spinnerId);
+        }
+        // TODO: Add targeted spinner for
+        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI, undefined, undefined, undefined, spinnerId)
+            .then(arr => {
+                listItem.selected = find(arr, {'@id': entityIRI});
+                listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
+                var bnodeIndex = {};
+                listItem.selectedBlankNodes.forEach((bnode, idx) => {
+                    bnodeIndex[bnode['@id']] = {position: idx};
+                });
+                listItem.selectedBlankNodes.forEach(bnode => {
+                    listItem.blankNodes[bnode['@id']] = mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
+                });
+                if (om.isIndividual(listItem.selected)) {
+                    findValuesMissingDatatypes(listItem.selected);
+                }
+                
+                // TODO: Remove these once these properties are in their own maps
+                self.updatePropertyIcon(listItem.selected);
+                var importedOntObj = find(listItem.importedOntologies, ont => entityIRI in ont.index);
+                if (importedOntObj) {
+                    set(listItem.selected, 'mobi.imported', true);
+                    set(listItem.selected, 'mobi.importedIRI', importedOntObj.ontologyId);
+                }
+
+                if (getUsages && !has(self.getActivePage(), 'usages') && listItem.selected) {
+                    self.setEntityUsages(entityIRI);
+                }
+            });
     }
     self.setEntityUsages = function(entityIRI) {
         var page = self.getActivePage();
@@ -1447,10 +1547,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             .then(bindings => set(page, 'usages', bindings),
                 response => set(page, 'usages', []));
     }
-
+    /**
+     * @ngdoc method
+     * @name resetStateTabs
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Resets the state of each of the tabs in the provided `listItem`. If the active tab is the project tab, sets the
+     * selected entity back to the Ontology object. If the active tab is not the project tab, unsets the selected entity
+     * and its blank nodes.
+     *
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     */
     self.resetStateTabs = function(listItem = self.listItem) {
         forOwn(listItem.editorTabStates, (value, key) => {
-            if(key == 'search') {
+            if (key == 'search') {
                 unset(value, 'entityIRI');
                 unset(value, encodeURIComponent(listItem.ontologyRecord.recordId));
                 value.open = {};
@@ -1470,8 +1581,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         self.resetSearchTab(listItem);
         if (self.getActiveKey() !== 'project') {
             listItem.selected = undefined;
+            listItem.selectedBlankNodes = [];
+            listItem.blankNodes = {};
         } else {
-            listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, listItem.editorTabStates.project.entityIRI);
+            self.setSelected(listItem.editorTabStates.project.entityIRI, false, listItem, 'project');
         }
     }
     self.resetSearchTab = function(listItem = self.listItem) {
@@ -1499,20 +1612,46 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getActiveEntityIRI = function() {
         return get(self.getActivePage(), 'entityIRI');
     }
-    self.selectItem = function(entityIRI, getUsages = true) {
+    /**
+     * @ngdoc method
+     * @name selectItem
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Selects the entity with the specified IRI in the current `listItem`. Optionally can set the usages of the entity.
+     * Also accepts a spinner id to use in the call to fetch the entity. Returns a Promise indicating the success of the
+     * action.
+     * 
+     * @param {string} entityIRI The IRI of an entity in the current `listItem`
+     * @param {boolean} [getUsages=true] Whether to set the usages of the specified entity
+     * @param {string} [spinnerId=''] A spinner id to attach to the call to fetch the entity
+     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     */
+    self.selectItem = function(entityIRI, getUsages = true, spinnerId = '') {
         if (entityIRI && entityIRI !== self.getActiveEntityIRI()) {
             set(self.getActivePage(), 'entityIRI', entityIRI);
             if (getUsages) {
                 self.setEntityUsages(entityIRI);
             }
         }
-        self.setSelected(entityIRI, false);
+        return self.setSelected(entityIRI, false, self.listItem, spinnerId);
     }
+    /**
+     * @ngdoc method
+     * @name unSelectItem
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Unselects the currently selected entity. This includes wiping the usages, stored RDF, and the related blank
+     * nodes.
+     */
     self.unSelectItem = function() {
         var activePage = self.getActivePage();
         unset(activePage, 'entityIRI');
         unset(activePage, 'usages');
         self.listItem.selected = undefined;
+        self.listItem.selectedBlankNodes = [];
+        self.listItem.blankNodes = {};
     }
     self.hasChanges = function(listItem) {
         return !!get(listItem, 'additions', []).length || !!get(listItem, 'deletions', []).length;
@@ -1666,9 +1805,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return prefixIri;
     }
-    self.getOntologiesArray = function() {
-        return getOntologiesArrayByListItem(self.listItem);
-    }
     self.updatePropertyIcon = function(entity) {
         if (om.isProperty(entity)) {
             setPropertyIcon(entity);
@@ -1751,20 +1887,55 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             return self.listItem.userCanModify;
         }
     }
+    /**
+     * @ngdoc method
+     * @name getFromIndices
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Retrieves the combined index value for the provided IRI from the defined ontology index and all the imported
+     * ontology indices inside the provided `listItem`.
+     *
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {Object} The merged index value for the provided IRI from all indices
+     */
+    self.getFromIndices = function(iri, listItem = self.listItem) {
+        var indices = getIndices(listItem);
+        var found = [];
+        forEach(indices, index => {
+            var entity = index[iri];
+            if (entity) {
+                found.push(entity);
+            }
+        });
+        return merge.apply({}, found);
+    }
+    /**
+     * @ngdoc method
+     * @name existsInIndices
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether the provided IRI exists in any index within the provided `listItem`. Returns a boolean.
+     *
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the IRI exists in one of the indices; false otherwise
+     */
+    self.existsInIndices = function(iri, listItem = self.listItem) {
+        var indices = getIndices(listItem);
+        return some(indices, index => iri in index);
+    }
 
     /* Private helper functions */
     function existenceCheck(iriObj, iri) {
         return has(iriObj, "['" + iri + "']");
-    }
-    function getOntologiesArrayByListItem(listItem) {
-        return concat([listItem.ontology], map(listItem.importedOntologies, 'ontology'));
     }
     function getIndices(listItem) {
         return concat([get(listItem, 'index')], map(get(listItem, 'importedOntologies'), 'index'));
     }
     function commonGoTo(key, iri, flatHierarchy = undefined) {
         self.setActivePage(key);
-        self.selectItem(iri);
+        self.selectItem(iri, undefined, self.getActivePage().vocabularySpinnerId);
         if (flatHierarchy) {
             self.openAt(flatHierarchy, iri);
         }
@@ -1804,14 +1975,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             if (om.isProperty(entity)) {
                 setPropertyIcon(entity);
-            } else if (om.isBlankNode(entity)) {
-                blankNodes[get(entity, '@id')] = undefined;
             } else if (om.isIndividual(entity)) {
                 findValuesMissingDatatypes(entity);
             }
-        });
-        forEach(blankNodes, (value, id) => {
-            blankNodes[id] = mc.jsonldToManchester(id, ontology, index);
         });
         listItem.ontologyId = ontologyId;
         listItem.editorTabStates.project.entityIRI = ontologyId;
@@ -1927,7 +2093,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function addImportedOntologyToListItem(listItem, importedOntObj) {
         var index = {};
-        var blankNodes = {};
         forEach(importedOntObj.ontology, (entity, i) => {
             if (has(entity, '@id')) {
                 index[entity['@id']] = {
@@ -1935,23 +2100,16 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     label: om.getEntityName(entity),
                     ontologyIri: importedOntObj.id
                 }
-                if (om.isBlankNode(entity)) {
-                    blankNodes[entity['@id']] =  undefined;
-                }
             }
             self.updatePropertyIcon(entity);
             set(entity, 'mobi.imported', true);
             set(entity, 'mobi.importedIRI', importedOntObj.ontologyId);
-        });
-        forEach(blankNodes, (value, id) => {
-            blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index);
         });
         var importedOntologyListItem = {
             id: importedOntObj.id,
             ontologyId: importedOntObj.ontologyId,
             ontology: importedOntObj.ontology,
             index,
-            blankNodes
         };
         listItem.importedOntologyIds.push(importedOntObj.id);
         listItem.importedOntologies.push(importedOntologyListItem);
@@ -1960,6 +2118,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}});
         obj.parentMap = hierarchyInfo.parentMap;
         obj.childMap = hierarchyInfo.childMap;
+    }
+    function getArrWithoutEntity(iri, arr) {
+        if (!arr || !arr.length) {
+            return [];
+        }
+        arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
+        return arr;
     }
 }
 
