@@ -252,7 +252,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         delete os.listItem.objectProperties.iris[entityIRI];
         delete os.listItem.noDomainProperties[entityIRI];
         delete os.listItem.propertyIcons[entityIRI];
-        os.deleteProperty(entityIRI);
+        os.handleDeletedProperty(entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.objectProperties, entityIRI);
         os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties);
         self.commonDelete(entityIRI, true)
@@ -266,7 +266,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         delete os.listItem.dataProperties.iris[entityIRI];
         delete os.listItem.noDomainProperties[entityIRI];
         delete os.listItem.propertyIcons[entityIRI];
-        os.deleteProperty(entityIRI);
+        os.handleDeletedProperty(entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.dataProperties, entityIRI);
         os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties);
         self.commonDelete(entityIRI, true);

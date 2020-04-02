@@ -878,7 +878,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
             forEach(response[0].propertyToRanges, (properties, key) => {
-                set(listItem.propertyIcons, [key, 'mobi', 'icon'], getIcon(properties))
+                set(listItem.propertyIcons, key, getIcon(properties))
             });
             listItem.noDomainProperties = response[0].noDomainProperties;
             listItem.classToChildProperties = response[0].classToAssociatedProperties;
@@ -1081,10 +1081,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }));
             forEach(orderedProperties, property => {
                 result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
-                indent: 1,
-                hasChildren: false,
-                path: concat(path, property['@id']),
-                joinedPath: self.joinPath(concat(path, property['@id']))
+                    indent: 1,
+                    hasChildren: false,
+                    path: concat(path, property['@id']),
+                    joinedPath: self.joinPath(concat(path, property['@id']))
                  }));
             });
         });
@@ -1949,7 +1949,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name deleteProperty
+     * @name handleDeletedProperty
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1957,20 +1957,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @param {string} The iri of the property to be deleted
      */
-    self.deleteProperty = function(property) {
-        for(let [key,value] of Object.entries(self.listItem.classToChildProperties)) {
+    self.handleDeletedProperty = function(property) {
+        forEach(self.listItem.classToChildProperties, (value,key) => {
             let hasProperty = self.listItem.classToChildProperties[key].includes(property);
-            let classObj = key;
+            let classIRI = key;
             if (hasProperty) {
-                remove(self.listItem.classToChildProperties[classObj], properties => {
-                   return properties == property;
-                });
+                pull(self.listItem.classToChildProperties[classIRI], property);
             }
-        }
+        });
     }
     /**
      * @ngdoc method
-     * @name createNewProperty
+     * @name handleNewProperty
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1978,17 +1976,16 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @param {string} The iri of the property to be added to either map
      */
-    self.createNewProperty = function(property) {
+    self.handleNewProperty = function(property) {
         var domainPath = prefixes.rdfs + 'domain';
         if (property[domainPath] == [] || property[domainPath] == undefined ){
             self.listItem.noDomainProperties.push(property['@id'])
-        }
-        else {
+        } else {
             property[domainPath].forEach(domain => {
                 var classIRI = domain['@id'];
                 var path =  self.listItem.classToChildProperties[classIRI];
                 if (!path){
-                    self.listItem.classToChildProperties[classIRI] = []
+                    self.listItem.classToChildProperties[classIRI] = [];
                 }
                 self.listItem.classToChildProperties[classIRI].push(property ['@id']);
             });
@@ -2128,7 +2125,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        set(self.listItem.propertyIcons, [entity["@id"],'mobi','icon'], getIcon(entity));
+        set(self.listItem.propertyIcons, entity["@id"], getIcon(entity));
     }
     function getIcon(property) {
         var range = get(property, prefixes.rdfs + 'range');

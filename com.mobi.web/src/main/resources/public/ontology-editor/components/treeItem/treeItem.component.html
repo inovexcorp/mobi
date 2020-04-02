@@ -22,7 +22,7 @@
   -->
 <div class="tree-item" ng-class="{'saved': dvm.saved , 'imported': dvm.currentEntity.mobi.imported}">
     <a ng-if="!dvm.hasChildren" ng-click="dvm.onClick()" ng-class="{'active': dvm.isActive}">
-        <i class="fa fa-fw {{dvm.os.listItem.propertyIcons[dvm.currentIri].mobi.icon || 'fa-square-o'}}"></i>
+        <i class="fa fa-fw {{dvm.os.listItem.propertyIcons[dvm.currentIri] || 'fa-square-o'}}"></i>
         <span ng-class="{'bold': dvm.isBold, 'underlined': dvm.underline}">{{dvm.treeDisplay}}</span>
         <i class="fa fa-fw fa-caret-left"></i>
     </a>

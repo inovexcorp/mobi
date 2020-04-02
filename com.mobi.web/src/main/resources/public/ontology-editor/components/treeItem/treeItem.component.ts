@@ -39,7 +39,7 @@ const treeItemComponent = {
         path: '<',
         underline: '<',
         toggleOpen: '&',
-        inProgressCommit: '<',
+        inProgressCommit: '<'
     },
     controllerAs: 'dvm',
     controller: treeItemComponentCtrl
@@ -52,7 +52,6 @@ function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
     dvm.os = ontologyStateService;
     dvm.treeDisplaySetting = '';
     dvm.treeDisplay = '';
-    dvm.icon = '';
 
     dvm.$onChanges = function(changesObj) {
         if (get(changesObj, 'currentEntity.isFirstChange')) {
@@ -64,7 +63,7 @@ function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
 
     dvm.getTreeDisplay = function() {
         if (dvm.treeDisplaySetting === 'pretty') {
-            return dvm.os.getEntityNameByIndex(get(dvm.currentEntity, '@id'), dvm.os.listItem);
+            return dvm.os.getEntityNameByIndex(dvm.currentIri, dvm.os.listItem);
         }
         return get(dvm.currentEntity, 'mobi.anonymous', '');
     }
