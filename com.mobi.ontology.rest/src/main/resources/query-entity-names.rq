@@ -20,7 +20,7 @@ WHERE {
     {
         SELECT
             ?entity
-            (SAMPLE(?enLabel) as ?enLabel)
+            (SAMPLE(?label) as ?enLabel)
             (SAMPLE(?dctTitle) as ?enDctTitle)
             (SAMPLE(?dceTitle) as ?enDceTitle)
             (SAMPLE(?prefLabel) as ?enPrefLabel)
@@ -109,4 +109,4 @@ WHERE {
         ?prefNameSkosXLAltLabel) as ?prefNames)
 
     FILTER(BOUND(?prefNames))
-} GROUP BY ?entity ?name
+} GROUP BY ?entity ?prefNames
