@@ -303,7 +303,18 @@ describe('Ontology State Service', function() {
             },
             upToDate: true,
             blankNodes: {},
-            iriList: [this.ontologyId, this.classId, this.dataPropertyId]
+            iriList: [this.ontologyId, this.classId, this.dataPropertyId],
+            noDomainProperties: [],
+            propertyIcons: {
+                'iri1': 'icon',
+                'iri2': 'icon',
+                'iri3': 'icon'
+            },
+            classToChildProperties: {
+                'class1': ['iri1', 'iri2'],
+                'class2': ['iri2', 'iri5'],
+                'class3': ['iri3', 'iri4']
+            }
         };
 
         this.stateId = 'state-id';
@@ -4175,14 +4186,14 @@ describe('Ontology State Service', function() {
             it('with more than one range', function() {
                 this.entity[prefixes.rdfs + 'range'] = [{'@id': '1'}, {'@id': '2'}];
                 ontologyStateSvc.updatePropertyIcon(this.entity);
-                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-cubes');
+                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-cubes');
             });
             it('with a range of xsd:string or rdf:langString', function() {
                 this.tests = [prefixes.xsd + 'string', prefixes.rdf + 'langString'];
                 _.forEach(this.tests, test => {
                     _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(this.entity);
-                    expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-font');
+                    expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-font');
                 });
             });
             it('with a range of xsd:decimal, xsd:double, xsd:float, xsd:int, xsd:integer, xsd:long, or xsd:nonNegativeInteger', function() {
@@ -4190,41 +4201,41 @@ describe('Ontology State Service', function() {
                 _.forEach(tests, test => {
                     _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(this.entity);
-                    expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-calculator');
+                    expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-calculator');
                 });
             });
             it('with a range of xsd:language', function() {
                 _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.xsd + 'language');
                 ontologyStateSvc.updatePropertyIcon(this.entity);
-                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-language');
+                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-language');
             });
             it('with a range of xsd:anyURI', function() {
                 _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.xsd + 'anyURI');
                 ontologyStateSvc.updatePropertyIcon(this.entity);
-                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-external-link');
+                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-external-link');
             });
             it('with a range of xsd:anyURI', function() {
                 _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.xsd + 'dateTime');
                 ontologyStateSvc.updatePropertyIcon(this.entity);
-                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-clock-o');
+                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-clock-o');
             });
             it('with a range of xsd:boolean or xsd:byte', function() {
                 var tests = [prefixes.xsd + 'boolean', prefixes.xsd + 'byte'];
                 _.forEach(tests, test => {
                     _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(this.entity);
-                    expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-signal');
+                    expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-signal');
                 });
             });
             it('with a range of rdfs:Literal', function() {
                 _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.rdfs + 'Literal');
                 ontologyStateSvc.updatePropertyIcon(this.entity);
-                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-cube');
+                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-cube');
             });
             it('with a range that is not predefined', function() {
                 _.set(this.entity, "['" + prefixes.rdfs + "range'][0]['@id']", 'test');
                 ontologyStateSvc.updatePropertyIcon(this.entity);
-                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id'], 'mobi','icon'])).toBe('fa-link');
+                expect(_.get(ontologyStateSvc.listItem.propertyIcons, [this.entity['@id']])).toBe('fa-link');
             });
         });
     });
@@ -4657,6 +4668,92 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
             ontologyStateSvc.listItem.masterBranchIRI = 'master';
             expect(ontologyStateSvc.canModify()).toEqual(true);
+        });
+    });
+    describe('checkClassPropertiesForDomain should add the entity to the proper maps', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem.noDomainProperties = [];
+            ontologyStateSvc.listItem.propertyIcons = {
+                'iri1': 'icon',
+                'iri2': 'icon',
+                'iri3': 'icon'
+            };
+            ontologyStateSvc.listItem.classToChildProperties = {
+                'class1': ['iri1', 'iri2'],
+                'class2': ['iri2', 'iri4'],
+                'class3': ['iri3', 'iri4']
+            };
+        });
+        it('when the property has no domains', function() {
+            ontologyStateSvc.checkClassPropertiesForDomain('class1');
+            expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
+        });
+        it('when the property has a domain', function() {
+            ontologyStateSvc.checkClassPropertiesForDomain('class2');
+            expect(ontologyStateSvc.listItem.noDomainProperties).toEqual([]);
+        });
+    });
+    it('handleDeletedProperties should add the entity to the proper maps', function() {
+        ontologyStateSvc.listItem.classToChildProperties = {
+            'class1': ['iri1', 'iri2'],
+            'class2': ['iri2', 'iri5'],
+            'class3': ['iri3', 'iri4']
+        };
+        ontologyStateSvc.handleDeletedProperty('iri1');
+        expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
+    });
+    describe('handleNewProperty should add the entity to the proper maps', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem.noDomainProperties = [];
+            ontologyStateSvc.listItem.classToChildProperties = {
+                'class1': [],
+                'class2': ['iri2', 'iri5'],
+                'class3': ['iri3', 'iri4']
+            };
+        });
+        it('when the property has domains', function() {
+            this.property = {
+                '@id': 'iri1',
+                "rdfs:domain": [{'@id': "class1"}]
+            }
+            ontologyStateSvc.handleNewProperty(this.property);
+            expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri1']);
+        });
+        it('when the property has no domain', function() {
+            this.property = {
+                '@id': 'iri1',
+            }
+            ontologyStateSvc.handleNewProperty(this.property);
+            expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
+        });
+    });
+    it('changePropertyHierarchy should add the entity to the proper maps', function() {
+        ontologyStateSvc.listItem.noDomainProperties = [];
+        ontologyStateSvc.listItem.classToChildProperties = {
+            'class1': ['iri1', 'iri2'],
+            'class2': ['iri2', 'iri5'],
+            'class3': ['iri3', 'iri4']
+        };
+        ontologyStateSvc.changePropertyHierarchy('iri1', ['class2']);
+        expect(ontologyStateSvc.listItem.classToChildProperties['class2']).toEqual(['iri2','iri5','iri1']);
+    });
+    describe('removePropertyFromEntity should add the entity to the proper maps', function() {
+        beforeEach(function() {
+            ontologyStateSvc.listItem.noDomainProperties = [];
+            ontologyStateSvc.listItem.classToChildProperties = {
+                'class1': ['iri1', 'iri2'],
+                'class2': ['iri2', 'iri5'],
+                'class3': ['iri3', 'iri4']
+            };
+        });
+        it('when the property has no domains', function() {
+            ontologyStateSvc.removePropertyFromEntity('iri1', 'class1');
+            expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
+            expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
+        });
+        it('when the property has a domain', function() {
+            ontologyStateSvc.removePropertyFromEntity('iri2', 'class2');
+            expect(ontologyStateSvc.listItem.noDomainProperties).toEqual([]);
         });
     });
 });

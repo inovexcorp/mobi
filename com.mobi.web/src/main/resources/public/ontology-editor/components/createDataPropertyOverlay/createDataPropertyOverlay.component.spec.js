@@ -211,6 +211,7 @@ describe('Create Data Property Overlay component', function() {
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
+                    expect(ontologyStateSvc.handleNewProperty).toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties);
@@ -227,6 +228,7 @@ describe('Create Data Property Overlay component', function() {
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.listItem.dataProperties.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
+                    expect(ontologyStateSvc.handleNewProperty).toHaveBeenCalled();
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
                     expect(this.controller.property[prefixes.rdfs + 'subPropertyOf']).toEqual([{'@id': 'propertyA'}]);

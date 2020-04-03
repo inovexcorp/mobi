@@ -233,7 +233,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteClass = function() {
         var entityIRI = os.getActiveEntityIRI();
         os.removeFromClassIRIs(os.listItem, entityIRI);
-        os.checkForDomain(entityIRI);
+        os.checkClassPropertiesForDomain(entityIRI);
         pull(os.listItem.classesWithIndividuals, entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.classes, entityIRI);
         os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);
@@ -250,7 +250,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteObjectProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
         delete os.listItem.objectProperties.iris[entityIRI];
-        delete os.listItem.noDomainProperties[entityIRI];
+        pull(os.listItem.noDomainProperties, entityIRI);
         delete os.listItem.propertyIcons[entityIRI];
         os.handleDeletedProperty(entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.objectProperties, entityIRI);
@@ -264,7 +264,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteDataTypeProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
         delete os.listItem.dataProperties.iris[entityIRI];
-        delete os.listItem.noDomainProperties[entityIRI];
+        pull(os.listItem.noDomainProperties, entityIRI);
         delete os.listItem.propertyIcons[entityIRI];
         os.handleDeletedProperty(entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.dataProperties, entityIRI);

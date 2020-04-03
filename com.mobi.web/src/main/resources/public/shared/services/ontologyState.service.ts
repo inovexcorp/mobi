@@ -2009,10 +2009,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             self.listItem.classToChildProperties[parentclass].push(property);
         });
-        if (self.listItem.noDomainProperties.includes(property)){
-            remove(self.listItem.noDomainProperties, properties => {
-                return properties == property;
-            })
+        if (self.listItem.noDomainProperties.includes(property)) {
+            pull(self.listItem.noDomainProperties, property);
         }
     }
     /**
@@ -2125,7 +2123,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        set(self.listItem.propertyIcons, entity["@id"], getIcon(entity));
+        set(self.listItem.propertyIcons, [entity["@id"]], getIcon(entity));
     }
     function getIcon(property) {
         var range = get(property, prefixes.rdfs + 'range');
@@ -2252,6 +2250,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
         return arr;
     }
+
 }
 
 export default ontologyStateService;

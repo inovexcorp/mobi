@@ -511,6 +511,8 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
     });
     it('deleteObjectProperty should call the proper methods', function() {
+        ontologyStateSvc.listItem.noDomainProperties = ['iri'];
+        ontologyStateSvc.listItem.propertyIcons = ['iri'];
         spyOn(ontologyUtilsManagerSvc, 'commonDelete').and.returnValue($q.when());
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('iri');
         ontologyStateSvc.listItem.objectProperties.iris = {iri: 'ontology'};
@@ -525,6 +527,8 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
     });
     it('deleteDataTypeProperty should call the proper methods', function() {
+        ontologyStateSvc.listItem.noDomainProperties = ['iri'];
+        ontologyStateSvc.listItem.propertyIcons = ['iri'];
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('iri');
         ontologyStateSvc.listItem.dataProperties.iris = {iri: 'ontology'};
