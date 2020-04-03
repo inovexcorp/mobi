@@ -1429,7 +1429,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         var names = [];
         forEach(self.entityNameProps, prop => {
             if (has(entity, prop)) {
-                concat(names, map(get(entity, prop), '@value'));
+                names = concat(names, map(get(entity, prop), '@value'));
             } 
         });
         return uniq(names);
