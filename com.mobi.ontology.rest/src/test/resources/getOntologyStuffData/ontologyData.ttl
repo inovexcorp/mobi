@@ -10,8 +10,6 @@
 @prefix ont1: <http://test.com/Ontology1#> .
 @prefix ont2: <http://test.com/Ontology2#> .
 
-# TODO: Add languages
-
 <http://test.com/Ontology1> a owl:Ontology ;
     dcterms:title "Ontology 1" ;
     rdfs:label "Ontology 1" ;
