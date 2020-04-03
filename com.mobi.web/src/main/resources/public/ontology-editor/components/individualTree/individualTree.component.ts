@@ -130,7 +130,7 @@ function individualTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(node.names, name => {
+        some(node.entityInfo.names, name => {
             if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
         });
