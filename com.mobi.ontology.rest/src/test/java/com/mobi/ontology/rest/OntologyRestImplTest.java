@@ -44,6 +44,9 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -80,6 +83,7 @@ import com.mobi.ontology.impl.owlapi.SimpleDataProperty;
 import com.mobi.ontology.impl.owlapi.SimpleDatatype;
 import com.mobi.ontology.impl.owlapi.SimpleIndividual;
 import com.mobi.ontology.impl.owlapi.SimpleObjectProperty;
+import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -137,11 +141,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -246,6 +252,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private IRI missingIRI;
     private Repository testQueryRepo;
     private SimpleBNodeService bNodeService;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected Application configureApp() throws Exception {
@@ -515,6 +522,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         return JSONObject.fromObject(IOUtils.toString(getClass().getResourceAsStream(path)));
     }
 
+    private String getResourceString(String path) throws IOException {
+        return IOUtils.toString(getClass().getResourceAsStream(path), StandardCharsets.UTF_8);
+    }
+
     private JSONArray getResourceArray(String path) throws Exception {
         return JSONArray.fromObject(IOUtils.toString(getClass().getResourceAsStream(path)));
     }
@@ -707,6 +718,10 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     private JSONArray getResponseArray(Response response) {
         return JSONArray.fromObject(response.readEntity(String.class));
+    }
+
+    private JsonNode getResponseNode(Response response, String node) throws IOException {
+        return objectMapper.readTree(response.readEntity(String.class)).get(node);
     }
 
     private JSONObject createJsonOfType(String type) {
@@ -1473,12 +1488,21 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
-        JSONObject responseObject = getResponse(response);
+
+        Map<String, EntityNames> expectedValues = objectMapper.readValue(
+                getResourceString("/getOntologyStuffData/entityNames-results.json"),
+                new TypeReference<Map<String, EntityNames>>() {});
+
+        Map<String, EntityNames> actualValues = objectMapper.convertValue(
+                getResponseNode(response, "entityNames"),
+                new TypeReference<Map<String, EntityNames>>(){});
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertEquals(responseObject.getJSONObject("entityNames"), expectedResults);
+        assertEquals(actualValues.keySet(), expectedValues.keySet());
+        actualValues.forEach((s, entityNames1) ->
+                assertEquals(entityNames1.getNames(), expectedValues.get(s).getNames(), entityNames1.getNames().toString()));
     }
 
     @Test

@@ -76,6 +76,7 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -95,6 +96,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -131,7 +133,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -183,6 +184,7 @@ public class OntologyRest {
     private static final String GET_CLASS_PROPERTIES;
     private static final String GET_NO_DOMAIN_PROPERTIES;
     private static final String GET_ENTITY_NAMES;
+    private static final String NAME_SPLITTER = "�";
 
     static {
         try {
@@ -2514,11 +2516,20 @@ public class OntologyRest {
     /**
      * Writes the associated entity names from the query results to the provided output stream.
      *
-     * @param tupleQueryResults the query results that contain "entity", "prefName", and "name" bindings
+     * @param tupleQueryResults the query results that contain "entity", "prefName", and optional label bindings
      * @param outputStream the output stream to write the results to
      */
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
+        String entityBinding = "entity";
+        String prefNameBinding = "prefName";
+        String rdfsLabelBinding = "rdfs_label";
+        String dctermsTitleBinding = "dcterms_title";
+        String dcTitleBinding = "dc_title";
+        String skosPrefLabelBinding = "skos_prefLabel";
+        String skosAltLabelBinding = "skos_altLabel";
+        String skosxlPrefLabelBinding = "skosxl_prefLabel";
+        String skosxlAltLabelBinding = "skosxl_altLabel";
         String rdfsLabelKey = RDFS.LABEL.stringValue();
         String dctermsTitleKey = DCTERMS.TITLE.stringValue();
         String dcTitleKey = DC.TITLE.toString();
@@ -2526,19 +2537,11 @@ public class OntologyRest {
         String skosAltLabelKey = SKOS.ALT_LABEL.stringValue();
         String skosxlPrefLabelKey = SKOSXL.PREF_LABEL.stringValue();
         String skosxlAltLabelKey = SKOSXL.ALT_LABEL.stringValue();
-        String splitter = "&#44;";
         tupleQueryResults.forEach(bindings -> {
-            String entity = Bindings.requiredResource(bindings, "entity").stringValue();
-            String label = Bindings.requiredLiteral(bindings, "prefName").stringValue();
-            Optional<Value> rdfsLabel = bindings.getValue("rdfs_label");
-            Optional<Value> dctermsTitle = bindings.getValue("dcterms_title");
-            Optional<Value> dcTitle = bindings.getValue("dc_title");
-            Optional<Value> skosPrefLabel = bindings.getValue("skos_prefLabel");
-            Optional<Value> skosAltLabel = bindings.getValue("skos_altLabel");
-            Optional<Value> skosxlPrefLabel = bindings.getValue("skosxl_prefLabel");
-            Optional<Value> skosxlAltLabel = bindings.getValue("skosxl_altLabel");
+            String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
+            String label = Bindings.requiredLiteral(bindings, prefNameBinding).stringValue();
             EntityNames entityNames;
-            Map<String, List<String>> names;
+            Map<String, Set<String>> names;
             if (entityNamesMap.containsKey(entity)) {
                 entityNames = entityNamesMap.get(entity);
                 names = entityNames.getNames();
@@ -2547,17 +2550,29 @@ public class OntologyRest {
                 names = new HashMap<>();
             }
             entityNames.label = label;
-            rdfsLabel.ifPresent(value -> names.put(rdfsLabelKey, Arrays.asList(StringUtils.split(rdfsLabel.get().stringValue(), splitter))));
-            dctermsTitle.ifPresent(value -> names.put(dctermsTitleKey, Arrays.asList(StringUtils.split(dctermsTitle.get().stringValue(), splitter))));
-            dcTitle.ifPresent(value -> names.put(dcTitleKey, Arrays.asList(StringUtils.split(dcTitle.get().stringValue(), splitter))));
-            skosPrefLabel.ifPresent(value -> names.put(skosPrefLabelKey, Arrays.asList(StringUtils.split(skosPrefLabel.get().stringValue(), splitter))));
-            skosAltLabel.ifPresent(value -> names.put(skosAltLabelKey, Arrays.asList(StringUtils.split(skosAltLabel.get().stringValue(), splitter))));
-            skosxlPrefLabel.ifPresent(value -> names.put(skosxlPrefLabelKey, Arrays.asList(StringUtils.split(skosxlPrefLabel.get().stringValue(), splitter))));
-            skosxlAltLabel.ifPresent(value -> names.put(skosxlAltLabelKey, Arrays.asList(StringUtils.split(skosxlAltLabel.get().stringValue(), splitter))));
+            getNameValues(bindings, rdfsLabelBinding).ifPresent(values -> names.put(rdfsLabelKey, values));
+            getNameValues(bindings, dctermsTitleBinding).ifPresent(values -> names.put(dctermsTitleKey, values));
+            getNameValues(bindings, dcTitleBinding).ifPresent(values -> names.put(dcTitleKey, values));
+            getNameValues(bindings, skosPrefLabelBinding).ifPresent(values -> names.put(skosPrefLabelKey, values));
+            getNameValues(bindings, skosAltLabelBinding).ifPresent(values -> names.put(skosAltLabelKey, values));
+            getNameValues(bindings, skosxlPrefLabelBinding).ifPresent(values -> names.put(skosxlPrefLabelKey, values));
+            getNameValues(bindings, skosxlAltLabelBinding).ifPresent(values -> names.put(skosxlAltLabelKey, values));
+            entityNames.setNames(names);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
 
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
+    }
+
+    private Optional<Set<String>> getNameValues(BindingSet bindings, String binding) {
+        Optional<Value> value = bindings.getValue(binding);
+        if (value.isPresent() && !StringUtils.isEmpty(value.get().stringValue())) {
+            Set<String> set = new HashSet<>();
+            CollectionUtils.addAll(set, StringUtils.split(value.get().stringValue(), NAME_SPLITTER));
+            return Optional.of(set);
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**

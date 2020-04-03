@@ -65,7 +65,7 @@ ont2:prop2 a owl:DatatypeProperty ;
     rdfs:range xsd:string, xsd:double .
 
 ont2:prop3 a owl:ObjectProperty ;
-    dcterms:title "property 3" .
+    dc:title "property 3" .
 
 ont2:class1 a owl:Class .
 

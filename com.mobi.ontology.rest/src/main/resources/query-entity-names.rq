@@ -9,13 +9,13 @@ PREFIX skos-xl: <http://www.w3.org/2008/05/skos-xl#>
 SELECT
     ?entity
     (SAMPLE(?prefNames) as ?prefName)
-    (GROUP_CONCAT(DISTINCT ?label;separator="&#44;") as ?rdfs_label)
-    (GROUP_CONCAT(DISTINCT ?dctTitle;separator="&#44;") as ?dcterms_title)
-    (GROUP_CONCAT(DISTINCT ?dceTitle;separator="&#44;") as ?dc_title)
-    (GROUP_CONCAT(DISTINCT ?prefLabel;separator="&#44;") as ?skos_prefLabel)
-    (GROUP_CONCAT(DISTINCT ?altLabel;separator="&#44;") as ?skos_altLabel)
-    (GROUP_CONCAT(DISTINCT ?skosXLPrefLiteralForm;separator="&#44;") as ?skosxl_prefLabel)
-    (GROUP_CONCAT(DISTINCT ?skosXLAltLiteralForm;separator="&#44;") as ?skosxl_altLabel)
+    (GROUP_CONCAT(DISTINCT ?label;separator="�") as ?rdfs_label)
+    (GROUP_CONCAT(DISTINCT ?dctTitle;separator="�") as ?dcterms_title)
+    (GROUP_CONCAT(DISTINCT ?dceTitle;separator="�") as ?dc_title)
+    (GROUP_CONCAT(DISTINCT ?prefLabel;separator="�") as ?skos_prefLabel)
+    (GROUP_CONCAT(DISTINCT ?altLabel;separator="�") as ?skos_altLabel)
+    (GROUP_CONCAT(DISTINCT ?skosXLPrefLiteralForm;separator="�") as ?skosxl_prefLabel)
+    (GROUP_CONCAT(DISTINCT ?skosXLAltLiteralForm;separator="�") as ?skosxl_altLabel)
 WHERE {
     {
         SELECT
