@@ -2509,9 +2509,10 @@ public class OntologyRest {
     }
 
     /**
-     * Writes the associated entity names from the query results to the provided output stream.
+     * Writes the associated entity names from the query results to the provided output stream. Note, entities without
+     * labels are not included in the results.
      *
-     * @param tupleQueryResults the query results that contain "entity", "prefName", and optional label bindings
+     * @param tupleQueryResults the query results that contain "entity", "prefName", and ?names_array bindings
      * @param outputStream the output stream to write the results to
      */
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
