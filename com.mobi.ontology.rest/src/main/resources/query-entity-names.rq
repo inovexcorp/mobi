@@ -9,28 +9,26 @@ PREFIX skos-xl: <http://www.w3.org/2008/05/skos-xl#>
 SELECT
     ?entity
     (SAMPLE(?finalPrefNames) as ?prefName)
-    (GROUP_CONCAT(DISTINCT ?label;separator="�") as ?rdfs_label)
-    (GROUP_CONCAT(DISTINCT ?dctTitle;separator="�") as ?dcterms_title)
-    (GROUP_CONCAT(DISTINCT ?dceTitle;separator="�") as ?dc_title)
-    (GROUP_CONCAT(DISTINCT ?prefLabel;separator="�") as ?skos_prefLabel)
-    (GROUP_CONCAT(DISTINCT ?altLabel;separator="�") as ?skos_altLabel)
-    (GROUP_CONCAT(DISTINCT ?skosXLPrefLiteralForm;separator="�") as ?skosxl_prefLabel)
-    (GROUP_CONCAT(DISTINCT ?skosXLAltLiteralForm;separator="�") as ?skosxl_altLabel)
+    (GROUP_CONCAT(DISTINCT ?names;separator="�") as ?names_array)
 WHERE {
     {
         SELECT
             ?entity
             ?prefNames
-            ?label
-            ?dctTitle
-            ?dceTitle
-            ?prefLabel
-            ?altLabel
-            ?skosXLPrefLiteralForm
-            ?skosXLAltLiteralForm
+            ?names
         WHERE {
             ?entity a ?type .
             FILTER(isIRI(?entity))
+
+            ?entity
+                rdfs:label|
+                dcterms:title|
+                dc:title|
+                skos:prefLabel|
+                skos:altLabel|
+                (skos-xl:prefLabel/skos-xl:literalForm)|
+                (skos-xl:altLabel/skos-xl:literalForm)
+            ?names .
 
             OPTIONAL {
                 ?entity rdfs:label ?label .

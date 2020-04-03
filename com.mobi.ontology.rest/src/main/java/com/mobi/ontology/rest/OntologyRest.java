@@ -76,7 +76,6 @@ import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
-import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -100,13 +99,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.eclipse.rdf4j.model.vocabulary.DC;
-import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
-import org.eclipse.rdf4j.model.vocabulary.SKOSXL;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
@@ -2523,56 +2518,20 @@ public class OntologyRest {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
         String entityBinding = "entity";
         String prefNameBinding = "prefName";
-        String rdfsLabelBinding = "rdfs_label";
-        String dctermsTitleBinding = "dcterms_title";
-        String dcTitleBinding = "dc_title";
-        String skosPrefLabelBinding = "skos_prefLabel";
-        String skosAltLabelBinding = "skos_altLabel";
-        String skosxlPrefLabelBinding = "skosxl_prefLabel";
-        String skosxlAltLabelBinding = "skosxl_altLabel";
-        String rdfsLabelKey = RDFS.LABEL.stringValue();
-        String dctermsTitleKey = DCTERMS.TITLE.stringValue();
-        String dcTitleKey = DC.TITLE.toString();
-        String skosPrefLabelKey = SKOS.PREF_LABEL.stringValue();
-        String skosAltLabelKey = SKOS.ALT_LABEL.stringValue();
-        String skosxlPrefLabelKey = SKOSXL.PREF_LABEL.stringValue();
-        String skosxlAltLabelKey = SKOSXL.ALT_LABEL.stringValue();
+        String namesBinding = "names_array";
         tupleQueryResults.forEach(bindings -> {
             String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
             String label = Bindings.requiredLiteral(bindings, prefNameBinding).stringValue();
-            EntityNames entityNames;
-            Map<String, Set<String>> names;
-            if (entityNamesMap.containsKey(entity)) {
-                entityNames = entityNamesMap.get(entity);
-                names = entityNames.getNames();
-            } else {
-                entityNames = new EntityNames();
-                names = new HashMap<>();
-            }
+            String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
+            EntityNames entityNames = new EntityNames();
             entityNames.label = label;
-            getNameValues(bindings, rdfsLabelBinding).ifPresent(values -> names.put(rdfsLabelKey, values));
-            getNameValues(bindings, dctermsTitleBinding).ifPresent(values -> names.put(dctermsTitleKey, values));
-            getNameValues(bindings, dcTitleBinding).ifPresent(values -> names.put(dcTitleKey, values));
-            getNameValues(bindings, skosPrefLabelBinding).ifPresent(values -> names.put(skosPrefLabelKey, values));
-            getNameValues(bindings, skosAltLabelBinding).ifPresent(values -> names.put(skosAltLabelKey, values));
-            getNameValues(bindings, skosxlPrefLabelBinding).ifPresent(values -> names.put(skosxlPrefLabelKey, values));
-            getNameValues(bindings, skosxlAltLabelBinding).ifPresent(values -> names.put(skosxlAltLabelKey, values));
-            entityNames.setNames(names);
+            Set<String> set = new HashSet<>();
+            CollectionUtils.addAll(set, StringUtils.split(namesString, NAME_SPLITTER));
+            entityNames.setNames(set);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
 
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
-    }
-
-    private Optional<Set<String>> getNameValues(BindingSet bindings, String binding) {
-        Optional<Value> value = bindings.getValue(binding);
-        if (value.isPresent() && !StringUtils.isEmpty(value.get().stringValue())) {
-            Set<String> set = new HashSet<>();
-            CollectionUtils.addAll(set, StringUtils.split(value.get().stringValue(), NAME_SPLITTER));
-            return Optional.of(set);
-        } else {
-            return Optional.empty();
-        }
     }
 
     /**
