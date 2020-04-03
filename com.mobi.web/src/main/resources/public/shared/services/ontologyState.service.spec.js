@@ -4670,7 +4670,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.canModify()).toEqual(true);
         });
     });
-    describe('checkClassPropertiesForDomain should add the entity to the proper maps', function() {
+    describe('handleDeletedClass should add the entity to the proper maps', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.noDomainProperties = [];
             ontologyStateSvc.listItem.propertyIcons = {
@@ -4685,11 +4685,11 @@ describe('Ontology State Service', function() {
             };
         });
         it('when the property has no domains', function() {
-            ontologyStateSvc.checkClassPropertiesForDomain('class1');
+            ontologyStateSvc.handleDeletedClass('class1');
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
         });
         it('when the property has a domain', function() {
-            ontologyStateSvc.checkClassPropertiesForDomain('class2');
+            ontologyStateSvc.handleDeletedClass('class2');
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual([]);
         });
     });
@@ -4727,14 +4727,14 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
         });
     });
-    it('changePropertyHierarchy should add the entity to the proper maps', function() {
+    it('addPropertyToClasses should add the entity to the proper maps', function() {
         ontologyStateSvc.listItem.noDomainProperties = [];
         ontologyStateSvc.listItem.classToChildProperties = {
             'class1': ['iri1', 'iri2'],
             'class2': ['iri2', 'iri5'],
             'class3': ['iri3', 'iri4']
         };
-        ontologyStateSvc.changePropertyHierarchy('iri1', ['class2']);
+        ontologyStateSvc.addPropertyToClasses('iri1', ['class2']);
         expect(ontologyStateSvc.listItem.classToChildProperties['class2']).toEqual(['iri2','iri5','iri1']);
     });
     describe('removePropertyFromEntity should add the entity to the proper maps', function() {
@@ -4747,12 +4747,12 @@ describe('Ontology State Service', function() {
             };
         });
         it('when the property has no domains', function() {
-            ontologyStateSvc.removePropertyFromEntity('iri1', 'class1');
+            ontologyStateSvc.removePropertyFromClass('iri1', 'class1');
             expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
         });
         it('when the property has a domain', function() {
-            ontologyStateSvc.removePropertyFromEntity('iri2', 'class2');
+            ontologyStateSvc.removePropertyFromClass('iri2', 'class2');
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual([]);
         });
     });

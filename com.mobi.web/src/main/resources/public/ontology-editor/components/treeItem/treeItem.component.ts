@@ -63,7 +63,7 @@ function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
 
     dvm.getTreeDisplay = function() {
         if (dvm.treeDisplaySetting === 'pretty') {
-            return dvm.os.getEntityNameByIndex(get(dvm.currentEntity, '@id'), dvm.os.listItem);
+            return dvm.os.getEntityNameByIndex(dvm.currentIri, dvm.os.listItem);
         }
         return get(dvm.currentEntity, 'mobi.anonymous', '');
     }

@@ -793,9 +793,9 @@ export function mockOntologyState() {
             this.isStateBranch = jasmine.createSpy('isStateBranch').and.returnValue(false);
             this.handleNewProperty = jasmine.createSpy('handleNewProperty');
             this.handleDeletedProperty = jasmine.createSpy('handleDeletedProperty');
-            this.changePropertyHierarchy = jasmine.createSpy('changePropertyHierarchy');
-            this.checkClassPropertiesForDomain = jasmine.createSpy('checkClassPropertiesForDomain');
-            this.removePropertyFromEntity = jasmine.createSpy('removePropertyFromEntity');
+            this.addPropertyToClasses = jasmine.createSpy('addPropertyToClasses');
+            this.handleDeletedClass = jasmine.createSpy('handleDeletedClass');
+            this.removePropertyFromClass = jasmine.createSpy('removePropertyFromClass');
         });
     });
 }

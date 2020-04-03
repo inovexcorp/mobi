@@ -524,7 +524,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         pm.remove(entityFromFullList, key, index);
 
         if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
-            os.removePropertyFromEntity(json['@id'], axiomObject['@id']);
+            os.removePropertyFromClass(json['@id'], axiomObject['@id']);
             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
         } else if (prefixes.rdfs + 'range' === key) {
             os.updatePropertyIcon(os.listItem.selected);

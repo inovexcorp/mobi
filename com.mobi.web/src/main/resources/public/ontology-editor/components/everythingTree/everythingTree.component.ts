@@ -47,7 +47,7 @@ const everythingTreeComponent = {
     bindings: {
         updateSearch: '&',
         hierarchy: '<',
-        branchId: '<',
+        branchId: '<'
     },
     controllerAs: 'dvm',
     controller: everythingTreeComponentCtrl

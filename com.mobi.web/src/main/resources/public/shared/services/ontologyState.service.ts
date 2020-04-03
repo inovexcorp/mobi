@@ -1987,23 +1987,23 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 if (!path){
                     self.listItem.classToChildProperties[classIRI] = [];
                 }
-                self.listItem.classToChildProperties[classIRI].push(property ['@id']);
+                self.listItem.classToChildProperties[classIRI].push(property['@id']);
             });
         }
     }
     /**
      * @ngdoc method
-     * @name changePropertyHierarchy
+     * @name addPropertyToClasses
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Determines whether a deleted classes set of properties still has a domain or not
+     *Updates map appropriately if domains are added to a property
      *
      * @param {string} The iri of the property being altered in the hierarchy
      * @param {Array} An array of values that are being added to the property.
      */
-    self.changePropertyHierarchy = function(property, values){
-        values.forEach(parentclass => {
+    self.addPropertyToClasses = function(property, classIris){
+        classIris.forEach(parentclass => {
             if (!self.listItem.classToChildProperties[parentclass]){
                 self.listItem.classToChildProperties[parentclass] = [];
             }
@@ -2015,7 +2015,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name removePropertyFromEntity
+     * @name removePropertyFromClass
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -2024,11 +2024,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} The iri of the property to be removed
      * @param {string} The iri of the entity the property is being removed from
      */
-    self.removePropertyFromEntity = function(property, entity){
-        if (self.listItem.classToChildProperties[entity].includes(property)){
-            remove(self.listItem.classToChildProperties[entity], classproperties =>{
-                return classproperties == property;
-            });
+    self.removePropertyFromClass = function(property, classIri){
+        if (self.listItem.classToChildProperties[classIri].includes(property)){
+            pull(self.listItem.classToChildProperties[classIri], property);
         }
         checkForPropertyDomains(property);
     }
@@ -2042,7 +2040,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 return false;
             }
         })
-        if (hasDomain == false){
+        if (!hasDomain){
             self.listItem.noDomainProperties.push(property);
         }
     }
@@ -2121,7 +2119,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        set(self.listItem.propertyIcons, [entity["@id"]], getIcon(entity));
+        self.listItem.propertyIcons[entity["@id"]] = getIcon(entity);
     }
     function getIcon(property) {
         var range = get(property, prefixes.rdfs + 'range');
@@ -2248,7 +2246,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
         return arr;
     }
-
 }
 
 export default ontologyStateService;

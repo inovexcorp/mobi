@@ -192,7 +192,7 @@ describe('Tree Item component', function() {
             it('should call getEntityNameByIndex if pretty', function() {
                 this.controller.treeDisplaySetting = 'pretty';
                 expect(this.controller.getTreeDisplay()).toEqual(this.entityName);
-                expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('entity Name', ontologyStateSvc.listItem);
             });
         });
         describe('isSaved', function() {
