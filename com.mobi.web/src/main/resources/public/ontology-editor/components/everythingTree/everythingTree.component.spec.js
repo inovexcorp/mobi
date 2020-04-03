@@ -216,7 +216,7 @@ describe('Everything Tree component', function() {
                     });
                     describe('that do not have a matching text value', function () {
                         beforeEach(function () {
-                            delete this.filterNode[prefixes.dcterms + 'title'];
+                            this.filterNode.names = [];
                             utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
                         describe('and does not have a matching entity local name', function () {
@@ -233,10 +233,6 @@ describe('Everything Tree component', function() {
                             expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });
-                });
-                it('and the node does not have matching search properties', function() {
-                    ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                 });
                 it('and the node is a folder', function() {
                     expect(this.controller.searchFilter(this.filterNodeFolder)).toEqual(true);

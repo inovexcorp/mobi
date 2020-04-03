@@ -1134,9 +1134,6 @@ describe('Ontology Utils Manager service', function() {
             this.index = 0;
             this.key = 'test';
             ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
-            // TODO: Remove when the full RDF list is removed
-            ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-
         });
         it('if the selected key is rdfs:range', function() {
             this.key = prefixes.rdfs + 'range';
@@ -1149,15 +1146,9 @@ describe('Ontology Utils Manager service', function() {
             scope.$apply();
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
-            // TODO: Remove when the full RDF list is removed
-            expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, this.key, this.index);
-
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-            // TODO: Remove when the full RDF list is removed
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith({});
-
             expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
             expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
         });
@@ -1172,9 +1163,6 @@ describe('Ontology Utils Manager service', function() {
             scope.$apply();
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
-            // TODO: Remove when the full RDF list is removed
-            expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, this.key, this.index);
-
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -1191,9 +1179,6 @@ describe('Ontology Utils Manager service', function() {
             scope.$apply();
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
-            // TODO: Remove when the full RDF list is removed
-            expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, this.key, this.index);
-
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -1209,9 +1194,6 @@ describe('Ontology Utils Manager service', function() {
             scope.$apply();
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
-            // TODO: Remove when the full RDF list is removed
-            expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, this.key, this.index);
-
             expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
             expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -1240,9 +1222,6 @@ describe('Ontology Utils Manager service', function() {
                 expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([]);
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
-                // TODO: Remove when the full RDF list is removed
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, this.key, this.index);
-
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -1263,9 +1242,6 @@ describe('Ontology Utils Manager service', function() {
                 expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([]);
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
-                // TODO: Remove when the full RDF list is removed
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, this.key, this.index);
-
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();

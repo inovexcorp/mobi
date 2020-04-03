@@ -24,14 +24,14 @@
     <a ng-if="!dvm.hasChildren" ng-click="dvm.onClick()" ng-class="{'active': dvm.isActive}">
         <!-- TODO: update with new icon stuff -->
         <i class="fa fa-fw {{dvm.entityInfo.mobi.icon || 'fa-square-o'}}"></i>
-        <span ng-class="{'bold': dvm.isBold, 'underlined': dvm.underline}">{{dvm.entityInfo.label}}</span>
+        <span ng-class="{'underlined': dvm.underline}">{{dvm.entityInfo.label}}</span>
         <i class="fa fa-fw fa-caret-left"></i>
     </a>
     <a ng-if="dvm.hasChildren" ng-click="dvm.onClick()" ng-dblclick="dvm.toggleOpen()" ng-class="{'active': dvm.isActive}">
         <i class="fa fa-fw"
            ng-class="{'fa-minus-square-o': dvm.isOpened, 'fa-plus-square-o': !dvm.isOpened}"
            ng-click="dvm.toggleOpen(); $event.stopPropagation()"></i>
-        <span ng-class="{'bold': dvm.isBold, 'underlined': dvm.underline}">{{dvm.entityInfo.label}}</span>
+        <span ng-class="{'underlined': dvm.underline}">{{dvm.entityInfo.label}}</span>
         <i class="fa fa-fw fa-caret-left"></i>
     </a>
 </div>

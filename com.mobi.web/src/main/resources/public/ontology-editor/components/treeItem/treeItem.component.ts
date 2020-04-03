@@ -31,33 +31,31 @@ const treeItemComponent = {
     bindings: {
         hasChildren: '<',
         isActive: '<',
-        isBold: '<',
         onClick: '&',
         entityInfo: '<',
         isOpened: '<',
         path: '<',
         underline: '<',
         toggleOpen: '&',
-        inProgressCommit: '<'
+        inProgressCommit: '<',
+        iri: '<'
     },
     controllerAs: 'dvm',
     controller: treeItemComponentCtrl
 };
 
-treeItemComponentCtrl.$inject = ['settingsManagerService', 'ontologyStateService'];
-
-function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
+function treeItemComponentCtrl() {
     var dvm = this;
-    var os = ontologyStateService;
 
     dvm.$onChanges = function() {
         dvm.saved = dvm.isSaved();
-        // TODO: add something to keep the label up to date
     }
     dvm.isSaved = function() {
-        var ids = unionWith(map(dvm.inProgressCommit.additions, '@id'), map(dvm.inProgressCommit.deletions, '@id'), isEqual);
-        return includes(ids, get(os.listItem.selected, '@id'));
+        var ids = unionWith(map(get(dvm.inProgressCommit, 'additions', []), '@id'), map(get(dvm.inProgressCommit, 'deletions', []), '@id'), isEqual);
+        return includes(ids, dvm.iri);
     }
+
+    dvm.saved = dvm.isSaved();
 }
 
 export default treeItemComponent;

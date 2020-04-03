@@ -884,16 +884,20 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
             listItem.iriList.push(listItem.ontologyId);
+
             // TODO: make sure this gets populated with new stuff
             // listItem.entityInfo = get(response[0], 'entityInfo', {});
+
             // TODO: make sure this actually sets the label correctly
             // forOwn(listItem.entityInfo, (value, key) => {
             //     if (!has(value, 'label')) {
             //         value.label = utilService.getBeautifulIRI(key);
             //     }
             // });
+
             // TODO: remove temporary part
             listItem.entityInfo[listItem.ontologyId].imported = false;
+
             var responseIriList = get(response[0], 'iriList', {});
             listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
             get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem, 'annotations.iris', iri, ontologyId));
@@ -958,7 +962,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }, $q.reject)
         .then(decision => {
             listItem.userCanModifyMaster = decision == pe.permit;
-            console.log(listItem);
             return listItem;
         }, $q.reject);
     }
@@ -1092,9 +1095,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var orderedClasses = sortBy(classes, item => lowerCase(item.label));
 
         var allProps = concat(
-            map(listItem.dataProperties.iris, (val, entityIRI) => listItem.entityInfo[entityIRI]), // getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-            map(listItem.objectProperties.iris, (val, entityIRI) => listItem.entityInfo[entityIRI]), // getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-            map(listItem.annotations.iris, (val, entityIRI) => listItem.entityInfo[entityIRI]) // getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
+            map(listItem.dataProperties.iris, (val, entityIRI) => listItem.entityInfo[entityIRI]),
+            map(listItem.objectProperties.iris, (val, entityIRI) => listItem.entityInfo[entityIRI]),
+            map(listItem.annotations.iris, (val, entityIRI) => listItem.entityInfo[entityIRI])
         );
         var orderedProperties = [];
         var path = [];
@@ -1114,8 +1117,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 result.push(merge({}, property, {
                     indent: 1,
                     hasChildren: false,
-                    path: concat(path, property['@id']),
-                    joinedPath: self.joinPath(concat(path, property['@id']))
+                    path: concat(path, property.entityIRI),
+                    joinedPath: self.joinPath(concat(path, property.entityIRI))
                 }));
             });
         });
@@ -1132,8 +1135,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     indent: 1,
                     hasChildren: false,
                     get: self.getNoDomainsOpened,
-                    path: [listItem.ontologyRecord.recordId, property['@id']],
-                    joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property['@id']])
+                    path: [listItem.ontologyRecord.recordId, property.entityIRI],
+                    joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property.entityIRI])
                 }));
             });
         }
@@ -1734,19 +1737,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.joinPath = function(path) {
         return join(path, '.');
     }
+    function isInIris(property, iri) {
+        return has(get(self.listItem, property + '.iris'), iri);
+    }
     self.goTo = function(iri) {
-        var entity = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, iri);
-        if (om.isOntology(entity)) {
+        if (get(self.listItem, 'ontologyId') === iri) {
             commonGoTo('project', iri);
-        } else if (om.isClass(entity)) {
+        } else if (isInIris('classes', iri)) {
             commonGoTo('classes', iri, self.listItem.classes.flat);
             self.listItem.editorTabStates.classes.index = getScrollIndex(iri, self.listItem.classes.flat);
-        } else if (om.isDataTypeProperty(entity)) {
+        } else if (isInIris('dataProperties', iri)) {
             commonGoTo('properties', iri, self.listItem.dataProperties.flat);
             self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
             // Index is incremented by 1 to account for Data Property folder
             self.listItem.editorTabStates.properties.index = getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
-        } else if (om.isObjectProperty(entity)) {
+        } else if (isInIris('objectProperties', iri)) {
             commonGoTo('properties', iri, self.listItem.objectProperties.flat);
             self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
 
@@ -1757,7 +1762,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             // Index is incremented by 1 to account for Object Property folder
             self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
-        } else if (om.isAnnotation(entity)) {
+        } else if (isInIris('annotations', iri)) {
             commonGoTo('properties', iri, self.listItem.annotations.flat);
             self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
 
@@ -1772,13 +1777,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             // Index is incremented by 1 to account for Annotation Property folder
             self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.annotations.flat, true, self.getAnnotationPropertiesOpened) + 1;
-        } else if (om.isConcept(entity, self.listItem.derivedConcepts)) {
+        } else if (isInIris('concepts', iri)) {
             commonGoTo('concepts', iri, self.listItem.concepts.flat);
             self.listItem.editorTabStates.concepts.index = getScrollIndex(iri, self.listItem.concepts.flat);
-        } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
+        } else if (isInIris('conceptSchemes', iri)) {
             commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
             self.listItem.editorTabStates.schemes.index = getScrollIndex(iri, self.listItem.conceptSchemes.flat);
-        } else if (filter(self.listItem.individuals.flat, {entityIRI: iri}).length != 0) {
+        } else if (isInIris('individuals', iri)) {
             commonGoTo('individuals', iri, self.listItem.individuals.flat);
             self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
         }

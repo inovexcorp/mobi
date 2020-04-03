@@ -51,7 +51,8 @@ describe('Tree Item component', function() {
         scope.isBold = false;
         scope.path = '';
         scope.inProgressCommit = {};
-        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold" in-progress-commit="inProgressCommit"></tree-item>'))(scope);
+        scope.iri = 'iri';
+        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold" in-progress-commit="inProgressCommit" iri="iri"></tree-item>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('treeItem');
     });
@@ -114,6 +115,12 @@ describe('Tree Item component', function() {
             scope.$digest();
             expect(scope.inProgressCommit).toEqual(original);
         });
+        it('iri should be one way bound', function() {
+            var original = angular.copy(scope.iri);
+            this.controller.iri = 'new';
+            scope.$digest();
+            expect(scope.iri).toEqual(original);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -123,7 +130,7 @@ describe('Tree Item component', function() {
         it('depending on whether or not the currentEntity is saved', function() {
             expect(this.element.querySelectorAll('.tree-item.saved').length).toEqual(0);
 
-            scope.currentEntity = {'@id': 'id'};
+            scope.iri = 'id';
             scope.inProgressCommit = {
                 additions: [{'@id': 'id'}]
             };
@@ -151,19 +158,11 @@ describe('Tree Item component', function() {
             scope.$digest();
             expect(anchor.hasClass('active')).toEqual(true);
         });
-        it('depending on whether it is bold', function() {
-            var span = this.element.find('span');
-            expect(span.hasClass('bold')).toEqual(false);
-
-            scope.isBold = true;
-            scope.$digest();
-            expect(span.hasClass('bold')).toEqual(true);
-        });
     });
     describe('controller methods', function() {
         describe('isSaved', function() {
             it('check correct value for inProgress.additions is returned', function() {
-                this.controller.currentEntity = {'@id': 'id'};
+                this.controller.iri = 'id';
                 this.controller.inProgressCommit = {
                     additions: [{'@id': '12345'}]
                 }
@@ -174,7 +173,7 @@ describe('Tree Item component', function() {
                 expect(this.controller.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.deletions is returned', function() {
-                this.controller.currentEntity = {'@id': 'id'};
+                this.controller.iri = 'id';
                 this.controller.inProgressCommit = {
                     deletions: [{'@id': '12345'}]
                 }
@@ -185,7 +184,7 @@ describe('Tree Item component', function() {
                 expect(this.controller.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.additions and inProgress deletions is returned', function() {
-                this.controller.currentEntity = {'@id': 'id'};
+                this.controller.iri = 'id';
                 this.controller.inProgressCommit = {
                     additions: [{'@id': '12345'}],
                     deletions: [{'@id': '23456'}]

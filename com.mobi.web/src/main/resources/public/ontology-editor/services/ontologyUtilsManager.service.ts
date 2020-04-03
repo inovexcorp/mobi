@@ -497,9 +497,6 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @return {Promise} A Promise that resolves with the JSON-LD value object that was removed
      */
     self.removeProperty = function(key, index) {
-        // TODO: Remove when full RDF list is removed
-        var entityFromFullList = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, os.listItem.selected['@id']);
-
         var axiomObject = os.listItem.selected[key][index];
         var json = {
             '@id': os.listItem.selected['@id'],
@@ -514,17 +511,11 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
             });
         }
         pm.remove(os.listItem.selected, key, index);
-        
-        // TODO: Remove when full RDF list is removed
-        pm.remove(entityFromFullList, key, index);
 
         if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
         } else if (prefixes.rdfs + 'range' === key) {
             os.updatePropertyIcon(os.listItem.selected);
-            // TODO: Remove when full RDF list is removed
-            os.updatePropertyIcon(entityFromFullList);
-
         }
         return self.saveCurrentChanges()
             .then(() => {

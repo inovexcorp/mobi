@@ -2354,7 +2354,7 @@ describe('Ontology State Service', function() {
             get: ontologyStateSvc.getNoDomainsOpened,
             set: ontologyStateSvc.setNoDomainsOpened
         }, {
-            '@id': 'property2',
+            entityIRI: 'property2',
             hasChildren: false,
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened,
@@ -2530,7 +2530,7 @@ describe('Ontology State Service', function() {
                     concepts: [this.conceptId2],
                     conceptSchemes: [this.conceptSchemeId2],
                 }],
-                importedOntologies: [{ontology: [], ontologyId: 'importId', id: 'id'}],
+                importedOntologies: [{ontologyId: 'importId', id: 'id'}],
                 classHierarchy: {parentMap: {}, childMap: {}},
                 individuals: {ClassA: ['IndivA1', 'IndivA2']},
                 dataPropertyHierarchy: {parentMap: {}, childMap: {}},
@@ -2629,7 +2629,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2722,7 +2722,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2816,7 +2816,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -3649,24 +3649,6 @@ describe('Ontology State Service', function() {
     describe('goTo calls the proper manager functions with correct parameters when it is', function() {
         beforeEach(function() {
             this.entity = {'@id': 'entityId'};
-            this.node1 = {
-                indent: 0,
-                entityIRI: 'otherIri',
-                hasChildren: true,
-                path: ['recordId', 'otherIri']
-            };
-            this.node2 = {
-                indent: 1,
-                entityIRI: 'iri',
-                hasChildren: false,
-                path: ['recordId', 'otherIri', 'iri']
-            };
-            this.node3 = {
-                indent: 0,
-                entityIRI: 'anotherIri',
-                hasChildren: false,
-                path: ['recordId', 'antherIri']
-            };
             spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue(this.entity);
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: '', vocabularySpinnerId: 'spinner'});
             spyOn(ontologyStateSvc, 'setActivePage');
@@ -3678,11 +3660,76 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'getAnnotationPropertiesOpened').and.returnValue(true);
 
             ontologyStateSvc.listItem = {
+                ontologyId: 'ontologyId',
                 ontologyRecord: {},
-                concepts: { flat: [this.node1, this.node2, this.node3] },
-                conceptSchemes: { flat: [this.node1, this.node2, this.node3] },
-                classes: {flat: [this.node1, this.node2, this.node3]},
+                concepts: {
+                    iris: {
+                        concept1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'concept1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'concept1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'concept2',
+                        hasChildren: false,
+                        path: ['recordId', 'concept2']
+                    }]
+                },
+                conceptSchemes: {
+                    iris: {
+                        scheme1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'scheme1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'scheme1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'scheme2',
+                        hasChildren: false,
+                        path: ['recordId', 'scheme2']
+                    }]
+                },
+                classes: {
+                    iris: {
+                        class1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'class1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'class1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'anotherIri',
+                        hasChildren: false,
+                        path: ['recordId', 'antherIri']
+                    }]
+                },
                 dataProperties: {
+                    iris: {
+                        dataProp1: '',
+                        dataProp2: ''
+                    },
                     flat: [{
                         entityIRI: 'dataProp1',
                         hasChildren: true,
@@ -3696,6 +3743,9 @@ describe('Ontology State Service', function() {
                     }]
                 },
                 objectProperties: {
+                    iris: {
+                        objectProp1: ''
+                    },
                     flat: [{
                         entityIRI: 'objectProp1',
                         hasChildren: false,
@@ -3704,6 +3754,9 @@ describe('Ontology State Service', function() {
                     }]
                 },
                 annotations: {
+                    iris: {
+                        annotationProp1: ''
+                    },
                     flat: [{
                         entityIRI: 'annotationProp1',
                         hasChildren: false,
@@ -3711,9 +3764,29 @@ describe('Ontology State Service', function() {
                         get: ontologyStateSvc.getAnnotationPropertiesOpened
                     }]
                 },
-                derivedConcepts: ['concept'],
-                derivedConceptSchemes: ['scheme'],
-                individuals: { flat: [this.node1, this.node2, this.node3] },
+                derivedConcepts: ['concept2'],
+                derivedConceptSchemes: ['scheme2'],
+                individuals: {
+                    iris: {
+                        individual1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'scheme1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'individual1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'anotherIri',
+                        hasChildren: false,
+                        path: ['recordId', 'antherIri']
+                    }]
+                },
                 editorTabStates: {
                     classes: {
                         index: 0
@@ -3734,47 +3807,20 @@ describe('Ontology State Service', function() {
             };
         });
         it('an ontology', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('ontologyId');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('project');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('ontologyId', undefined, 'spinner');
         });
         it('a class', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('class1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.flat, 'iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('class1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.flat, 'class1');
             expect(ontologyStateSvc.listItem.editorTabStates.classes.index).toEqual(1);
         });
         it('a datatype property', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             spyOn(ontologyStateSvc, 'setDataPropertiesOpened');
             ontologyStateSvc.goTo('dataProp2');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('dataProp2', undefined, 'spinner');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.flat, 'dataProp2');
@@ -3783,19 +3829,8 @@ describe('Ontology State Service', function() {
         });
         describe('an object property', function() {
             it('with datatype properties in the ontology', function() {
-                ontologyManagerSvc.isOntology.and.returnValue(false);
-                ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
                 ontologyStateSvc.goTo('objectProp1');
-                expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('objectProp1', undefined, 'spinner');
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.flat, 'objectProp1');
@@ -3804,19 +3839,8 @@ describe('Ontology State Service', function() {
             });
             it('with no datatype properties in the ontology', function() {
                 ontologyStateSvc.listItem.dataProperties.flat = [];
-                ontologyManagerSvc.isOntology.and.returnValue(false);
-                ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
                 ontologyStateSvc.goTo('objectProp1');
-                expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('objectProp1', undefined, 'spinner');
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.flat, 'objectProp1');
@@ -3827,20 +3851,8 @@ describe('Ontology State Service', function() {
         describe('an annotation property', function() {
             describe('with datatype properties in the ontology', function() {
                 it('with object properties in the ontology', function() {
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -3849,20 +3861,8 @@ describe('Ontology State Service', function() {
                 });
                 it('with no object properties in the ontology', function() {
                     ontologyStateSvc.listItem.objectProperties.flat = [];
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -3875,20 +3875,8 @@ describe('Ontology State Service', function() {
                     ontologyStateSvc.listItem.dataProperties.flat = [];
                 });
                 it('with object properties in the ontology', function() {
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -3897,20 +3885,8 @@ describe('Ontology State Service', function() {
                 });
                 it('with no object properties in the ontology', function() {
                     ontologyStateSvc.listItem.objectProperties.flat = [];
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -3920,83 +3896,25 @@ describe('Ontology State Service', function() {
             });
         });
         it('a concept', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('concept1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.flat, 'iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('concept1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.flat, 'concept1');
             expect(ontologyStateSvc.listItem.editorTabStates.concepts.index).toEqual(1);
         });
-        it('an conceptScheme', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+        it('a conceptScheme', function() {
+            ontologyStateSvc.goTo('scheme1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('schemes');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.flat, 'iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('scheme1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.flat, 'scheme1');
             expect(ontologyStateSvc.listItem.editorTabStates.schemes.index).toEqual(1);
         });
         it('an individual', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('individual1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.individuals.flat, 'iri');
-            expect(ontologyStateSvc.listItem.editorTabStates.individuals.index).toEqual(1);
-        });
-        it('an individual without the namedIndividualType', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.individuals.flat, 'iri');
-            expect(ontologyStateSvc.listItem.editorTabStates.individuals.index).toEqual(1);
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('individual1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.individuals.flat, 'individual1');
+            expect(ontologyStateSvc.listItem.editorTabStates.individuals.index).toEqual(3);
         });
     });
     it('openAt sets all parents open', function() {
