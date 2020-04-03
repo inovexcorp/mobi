@@ -233,7 +233,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteClass = function() {
         var entityIRI = os.getActiveEntityIRI();
         os.removeFromClassIRIs(os.listItem, entityIRI);
-        os.checkClassPropertiesForDomain(entityIRI);
+        os.handleDeletedClass(entityIRI);
         pull(os.listItem.classesWithIndividuals, entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.classes, entityIRI);
         os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);

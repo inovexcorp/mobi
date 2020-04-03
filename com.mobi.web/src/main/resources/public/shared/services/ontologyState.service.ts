@@ -878,7 +878,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
             forEach(response[0].propertyToRanges, (properties, key) => {
-                set(listItem.propertyIcons, [key], getIcon(properties))
+                listItem.propertyIcons[key] = getIcon(properties);
             });
             listItem.noDomainProperties = response[0].noDomainProperties;
             listItem.classToChildProperties = response[0].classToAssociatedProperties;
@@ -1085,7 +1085,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     hasChildren: false,
                     path: concat(path, property['@id']),
                     joinedPath: self.joinPath(concat(path, property['@id']))
-                 }));
+                }));
             });
         });
         var noDomainProps = listItem.noDomainProperties;
@@ -1932,17 +1932,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name checkForClassPropertiesDomain
+     * @name handleDeletedClass
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Determines whether a deleted classes set of properties still has a domain or not
+     * Updates property maps on the current listItem based on the provided deleted class IRI
      *
      * @param {string} The iri of the entity to be deleted
      */
-    self.checkClassPropertiesForDomain = function(classEntity) {
-        var classProperties = get(self.listItem.classToChildProperties, classEntity, {});
-        delete self.listItem.classToChildProperties[classEntity];
+    self.handleDeletedClass = function(classIRI) {
+        var classProperties = get(self.listItem.classToChildProperties, classIRI, []);
+        delete self.listItem.classToChildProperties[classIRI];
         classProperties.forEach(property => {
             checkForPropertyDomains(property);
         });
@@ -2092,9 +2092,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else {
                 set(entity, 'mobi.anonymous', ontologyId + ' (Anonymous Ontology)');
             }
-            if (om.isBlankNode(entity)) {
-                blankNodes[get(entity, '@id')] = undefined;
-            } else if (om.isIndividual(entity)) {
+            if (om.isIndividual(entity)) {
                 findValuesMissingDatatypes(entity);
             }
         });
