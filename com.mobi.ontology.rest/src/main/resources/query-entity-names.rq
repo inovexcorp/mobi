@@ -8,7 +8,7 @@ PREFIX skos-xl: <http://www.w3.org/2008/05/skos-xl#>
 
 SELECT
     ?entity
-    (SAMPLE(?prefNames) as ?prefName)
+    (SAMPLE(?finalPrefNames) as ?prefName)
     (GROUP_CONCAT(DISTINCT ?label;separator="�") as ?rdfs_label)
     (GROUP_CONCAT(DISTINCT ?dctTitle;separator="�") as ?dcterms_title)
     (GROUP_CONCAT(DISTINCT ?dceTitle;separator="�") as ?dc_title)
@@ -20,93 +20,61 @@ WHERE {
     {
         SELECT
             ?entity
-            (SAMPLE(?label) as ?enLabel)
-            (SAMPLE(?dctTitle) as ?enDctTitle)
-            (SAMPLE(?dceTitle) as ?enDceTitle)
-            (SAMPLE(?prefLabel) as ?enPrefLabel)
-            (SAMPLE(?altLabel) as ?enAltLabel)
-            (SAMPLE(?skosXLPrefLiteralForm) as ?enSkosXLPrefLiteralForm)
-            (SAMPLE(?skosXLAltLiteralForm) as ?enSkosXLAltLiteralForm)
+            ?prefNames
+            ?label
+            ?dctTitle
+            ?dceTitle
+            ?prefLabel
+            ?altLabel
+            ?skosXLPrefLiteralForm
+            ?skosXLAltLiteralForm
         WHERE {
             ?entity a ?type .
             FILTER(isIRI(?entity))
 
             OPTIONAL {
                 ?entity rdfs:label ?label .
-                FILTER(LANGMATCHES(LANG(?label), "EN"))
             }
             OPTIONAL {
                 ?entity dcterms:title ?dctTitle .
-                FILTER(LANGMATCHES(LANG(?dctTitle), "EN"))
             }
             OPTIONAL {
                 ?entity dc:title ?dceTitle .
-                FILTER(LANGMATCHES(LANG(?dceTitle), "EN"))
             }
             OPTIONAL {
                 ?entity skos:prefLabel ?prefLabel .
-                FILTER(LANGMATCHES(LANG(?prefLabel), "EN"))
             }
             OPTIONAL {
                 ?entity skos:altLabel ?altLabel .
-                FILTER(LANGMATCHES(LANG(?altLabel), "EN"))
             }
             OPTIONAL {
                 ?entity skos-xl:prefLabel ?skosPrefLabel .
                 ?skosPrefLabel a skos-xl:Label ;
                     skos-xl:literalForm ?skosXLPrefLiteralForm .
-                FILTER(LANGMATCHES(LANG(?skosXLPrefLiteralForm), "EN"))
             }
             OPTIONAL {
                 ?entity skos-xl:altLabel ?skosAltLabel .
                 ?skosAltLabel a skos-xl:Label ;
                     skos-xl:literalForm ?skosXLAltLiteralForm .
-                FILTER(LANGMATCHES(LANG(?skosXLAltLiteralForm), "EN"))
             }
-        } GROUP BY ?entity
+
+            BIND(COALESCE(
+                ?label,
+                ?dctTitle,
+                ?dceTitle,
+                ?prefLabel,
+                ?altLabel,
+                ?skosXLPrefLiteralForm,
+                ?skosXLAltLiteralForm) as ?prefNames)
+
+            FILTER(BOUND(?prefNames))
+        }
     }
 
     OPTIONAL {
-        ?entity rdfs:label ?label .
-    }
-    OPTIONAL {
-        ?entity dcterms:title ?dctTitle .
-    }
-    OPTIONAL {
-        ?entity dc:title ?dceTitle .
-    }
-    OPTIONAL {
-        ?entity skos:prefLabel ?prefLabel .
-    }
-    OPTIONAL {
-        ?entity skos:altLabel ?altLabel .
-    }
-    OPTIONAL {
-        ?entity skos-xl:prefLabel ?skosPrefLabel .
-        ?skosPrefLabel a skos-xl:Label ;
-            skos-xl:literalForm ?skosXLPrefLiteralForm .
-    }
-    OPTIONAL {
-        ?entity skos-xl:altLabel ?skosAltLabel .
-        ?skosAltLabel a skos-xl:Label ;
-            skos-xl:literalForm ?skosXLAltLiteralForm .
+        FILTER(LANGMATCHES(LANG(?prefNames), "EN"))
+        BIND(?prefNames as ?enPrefNames)
     }
 
-    BIND(COALESCE(?enLabel, ?label) as ?prefNameLabel)
-    BIND(COALESCE(?enDctTitle, ?dctTitle) as ?prefNameDctTitle)
-    BIND(COALESCE(?enDceTitle, ?dceTitle) as ?prefNameDceTitle)
-    BIND(COALESCE(?enPrefLabel, ?prefLabel) as ?prefNamePrefLabel)
-    BIND(COALESCE(?enAltLabel, ?altLabel) as ?prefNameAltLabel)
-    BIND(COALESCE(?enSkosXLPrefLiteralForm, ?skosXLPrefLiteralForm) as ?prefNameSkosXLPrefLabel)
-    BIND(COALESCE(?enSkosXLAltLiteralForm, ?skosXLAltLiteralForm) as ?prefNameSkosXLAltLabel)
-    BIND(COALESCE(
-        ?prefNameLabel,
-        ?prefNameDctTitle,
-        ?prefNameDceTitle,
-        ?prefNamePrefLabel,
-        ?prefNameAltLabel,
-        ?prefNameSkosXLPrefLabel,
-        ?prefNameSkosXLAltLabel) as ?prefNames)
-
-    FILTER(BOUND(?prefNames))
-} GROUP BY ?entity ?prefNames
+    BIND(COALESCE(?enPrefNames, ?prefNames) as ?finalPrefNames)
+} GROUP BY ?entity
