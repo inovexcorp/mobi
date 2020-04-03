@@ -1943,8 +1943,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.handleDeletedClass = function(classIRI) {
         var classProperties = get(self.listItem.classToChildProperties, classIRI, []);
         delete self.listItem.classToChildProperties[classIRI];
-        classProperties.forEach(property => {
-            checkForPropertyDomains(property);
+        classProperties.forEach(propertyIRI => {
+            let hasDomain = false;
+           forEach(self.listItem.classToChildProperties, classArrayItem => {
+               if (classArrayItem.includes(propertyIRI)) {
+                   hasDomain = true;
+                   return false;
+               }
+           })
+            if (!hasDomain){
+                self.listItem.noDomainProperties.push(propertyIRI);
+            }
         });
     }
     /**
@@ -1955,15 +1964,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * Deletes traces of a removed property from the noDomainProperty and classToChild maps
      *
-     * @param {string} The iri of the property to be deleted
+     * @param {string} The entire entity of the property to be deleted
      */
     self.handleDeletedProperty = function(property) {
-        forEach(self.listItem.classToChildProperties, (value,key) => {
-            let hasProperty = self.listItem.classToChildProperties[key].includes(property);
-            let classIRI = key;
-            if (hasProperty) {
-                pull(self.listItem.classToChildProperties[classIRI], property);
-            }
+        property[prefixes.rdfs + 'domain'].forEach(domainObj => {
+            self.removePropertyFromClass(property['@id'], domainObj['@id']);
         });
     }
     /**
@@ -1974,7 +1979,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * adds property iri to the correct map; either noDomainProperties or classToChildProperties
      *
-     * @param {string} The iri of the property to be added to either map
+     * @param {string} The entire entity of the property to be added to either map
      */
     self.handleNewProperty = function(property) {
         var domainPath = prefixes.rdfs + 'domain';
@@ -2002,15 +2007,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} The iri of the property being altered in the hierarchy
      * @param {Array} An array of values that are being added to the property.
      */
-    self.addPropertyToClasses = function(property, classIris){
+    self.addPropertyToClasses = function(propertyIRI, classIris){
         classIris.forEach(parentclass => {
             if (!self.listItem.classToChildProperties[parentclass]){
                 self.listItem.classToChildProperties[parentclass] = [];
             }
-            self.listItem.classToChildProperties[parentclass].push(property);
+            self.listItem.classToChildProperties[parentclass].push(propertyIRI);
         });
-        if (self.listItem.noDomainProperties.includes(property)) {
-            pull(self.listItem.noDomainProperties, property);
+        if (self.listItem.noDomainProperties.includes(propertyIRI)) {
+            pull(self.listItem.noDomainProperties, propertyIRI);
         }
     }
     /**
@@ -2021,27 +2026,26 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * Determines whether a deleted classes set of properties still has a domain or not
      *
-     * @param {string} The iri of the property to be removed
-     * @param {string} The iri of the entity the property is being removed from
+     * @param {string} The entire entity of the property to be removed
+     * @param {string} The iri of the class the property is being removed from
      */
     self.removePropertyFromClass = function(property, classIri){
-        if (self.listItem.classToChildProperties[classIri].includes(property)){
-            pull(self.listItem.classToChildProperties[classIri], property);
-        }
+        removePropertyClassRelationships(property['@id'], classIri)
         checkForPropertyDomains(property);
     }
 
     /* Private helper functions */
-    function checkForPropertyDomains(property) {
-        let hasDomain = false;
-        forEach(self.listItem.classToChildProperties, (propertyIRIs) =>{
-            if (propertyIRIs.includes(property)){
-                hasDomain = true;
-                return false;
+    function removePropertyClassRelationships(propertyIRI, classIRI){
+        if (self.listItem.classToChildProperties[classIRI] && self.listItem.classToChildProperties[classIRI].includes(propertyIRI)){
+            pull(self.listItem.classToChildProperties[classIRI], propertyIRI);
+            if (!self.listItem.classToChildProperties[classIRI].length) {
+                delete self.listItem.classToChildProperties[classIRI];
             }
-        })
-        if (!hasDomain){
-            self.listItem.noDomainProperties.push(property);
+        }
+    }
+    function checkForPropertyDomains(property) {
+        if (!property[prefixes.rdfs + 'domain']){
+            self.listItem.noDomainProperties.push(property['@id']);
         }
     }
     function existenceCheck(iriObj, iri) {
@@ -2119,19 +2123,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        self.listItem.propertyIcons[entity["@id"]] = getIcon(entity);
+        var ranges = map((entity[prefixes.rdfs + 'range'] || []), '@id');
+        self.listItem.propertyIcons[entity["@id"]] = getIcon(ranges);
     }
-    function getIcon(property) {
-        var range = get(property, prefixes.rdfs + 'range');
-        var value;
-        if (!range) {
-            range = property;
-            value = property[0];
-        }
-        else { value = range[0]['@id']; }
-        var icon = 'fa-square-o';
-        if (range) {
-            if (range.length === 1) {
+    function getIcon(ranges) {
+        let icon = 'fa-square-o';
+        let value = ranges[0];
+        if (ranges) {
+            if (ranges.length === 1) {
                 switch(value) {
                     case prefixes.xsd + 'string':
                     case prefixes.rdf + 'langString':
