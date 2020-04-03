@@ -1968,7 +1968,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.handleDeletedProperty = function(property) {
         property[prefixes.rdfs + 'domain'].forEach(domainObj => {
-            self.removePropertyFromClass(property['@id'], domainObj['@id']);
+            self.removePropertyFromClass(property, domainObj['@id']);
         });
     }
     /**

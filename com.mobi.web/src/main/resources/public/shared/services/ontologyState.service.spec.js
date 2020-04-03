@@ -4694,12 +4694,16 @@ describe('Ontology State Service', function() {
         });
     });
     it('handleDeletedProperties should add the entity to the proper maps', function() {
+        this.property = {
+            '@id': 'iri1',
+            "rdfs:domain": [{'@id': "class1"}]
+        }
         ontologyStateSvc.listItem.classToChildProperties = {
             'class1': ['iri1', 'iri2'],
             'class2': ['iri2', 'iri5'],
             'class3': ['iri3', 'iri4']
         };
-        ontologyStateSvc.handleDeletedProperty('iri1');
+        ontologyStateSvc.handleDeletedProperty(this.property);
         expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
     });
     describe('handleNewProperty should add the entity to the proper maps', function() {
@@ -4737,8 +4741,11 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.addPropertyToClasses('iri1', ['class2']);
         expect(ontologyStateSvc.listItem.classToChildProperties['class2']).toEqual(['iri2','iri5','iri1']);
     });
-    describe('removePropertyFromEntity should add the entity to the proper maps', function() {
+    describe('removePropertyFromClass should add the entity to the proper maps', function() {
         beforeEach(function() {
+            this.property = {
+                '@id': 'iri1',
+            }
             ontologyStateSvc.listItem.noDomainProperties = [];
             ontologyStateSvc.listItem.classToChildProperties = {
                 'class1': ['iri1', 'iri2'],
@@ -4747,12 +4754,16 @@ describe('Ontology State Service', function() {
             };
         });
         it('when the property has no domains', function() {
-            ontologyStateSvc.removePropertyFromClass('iri1', 'class1');
+            ontologyStateSvc.removePropertyFromClass(this.property, 'class1');
             expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri1']);
         });
         it('when the property has a domain', function() {
-            ontologyStateSvc.removePropertyFromClass('iri2', 'class2');
+            this.property = {
+                '@id': 'iri1',
+                "rdfs:domain": [{'@id': "class1"}, {'@id': "class2"}]
+            }
+            ontologyStateSvc.removePropertyFromClass(this.property, 'class2');
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual([]);
         });
     });
