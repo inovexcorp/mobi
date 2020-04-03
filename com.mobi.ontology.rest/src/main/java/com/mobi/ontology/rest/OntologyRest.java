@@ -66,6 +66,7 @@ import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.record.config.OntologyRecordCreateSettings;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
@@ -94,6 +95,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -125,6 +127,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -174,6 +177,9 @@ public class OntologyRest {
     private static final String GET_ENTITY_QUERY;
     private static final String GET_PROPERTY_RANGES;
     private static final String GET_CLASS_PROPERTIES;
+    private static final String GET_NO_DOMAIN_PROPERTIES;
+    private static final String GET_ENTITY_NAMES;
+    private static final String NAME_SPLITTER = "�";
 
     static {
         try {
@@ -185,6 +191,12 @@ public class OntologyRest {
             );
             GET_CLASS_PROPERTIES = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/query-class-properties.rq"), StandardCharsets.UTF_8
+            );
+            GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"), StandardCharsets.UTF_8
+            );
+            GET_ENTITY_NAMES = IOUtils.toString(
+                    OntologyRest.class.getResourceAsStream("/query-entity-names.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -871,6 +883,22 @@ public class OntologyRest {
             writeClassPropertiesToStream(ontology.getTupleQueryResults(GET_CLASS_PROPERTIES, true), outputStream);
             watch.stop();
             log.trace("End classToAssociatedProperties: " + watch.getTime() + "ms");
+
+            watch.reset();
+            log.trace("Start noDomainProperties");
+            watch.start();
+            outputStream.write(", \"noDomainProperties\": ".getBytes());
+            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true), outputStream);
+            watch.stop();
+            log.trace("End noDomainProperties: " + watch.getTime() + "ms");
+
+            watch.reset();
+            log.trace("Start entityNames");
+            watch.start();
+            outputStream.write(", \"entityNames\": ".getBytes());
+            writeEntityNamesToStream(ontology.getTupleQueryResults(GET_ENTITY_NAMES, true), outputStream);
+            watch.stop();
+            log.trace("End entityNames: " + watch.getTime() + "ms");
 
             outputStream.write("}".getBytes());
         };
@@ -2463,6 +2491,47 @@ public class OntologyRest {
             }
         });
         outputStream.write(mapper.valueToTree(classMap).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated no domain properties from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "prop" bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeNoDomainPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        List<String> props = new ArrayList<>();
+        tupleQueryResults.forEach(bindings -> {
+            String prop = Bindings.requiredResource(bindings, "prop").stringValue();
+            props.add(prop);
+        });
+        outputStream.write(mapper.valueToTree(props).toString().getBytes());
+    }
+
+    /**
+     * Writes the associated entity names from the query results to the provided output stream.
+     *
+     * @param tupleQueryResults the query results that contain "entity", "prefName", and optional label bindings
+     * @param outputStream the output stream to write the results to
+     */
+    private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+        Map<String, EntityNames> entityNamesMap = new HashMap<>();
+        String entityBinding = "entity";
+        String prefNameBinding = "prefName";
+        String namesBinding = "names_array";
+        tupleQueryResults.forEach(bindings -> {
+            String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
+            String label = Bindings.requiredLiteral(bindings, prefNameBinding).stringValue();
+            String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
+            EntityNames entityNames = new EntityNames();
+            entityNames.label = label;
+            Set<String> set = new HashSet<>();
+            CollectionUtils.addAll(set, StringUtils.split(namesString, NAME_SPLITTER));
+            entityNames.setNames(set);
+            entityNamesMap.putIfAbsent(entity, entityNames);
+        });
+
+        outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
     }
 
     /**

@@ -3,32 +3,47 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix skos-xl: <http://www.w3.org/2008/05/skos-xl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ont1: <http://test.com/Ontology1#> .
 @prefix ont2: <http://test.com/Ontology2#> .
 
 <http://test.com/Ontology1> a owl:Ontology ;
     dcterms:title "Ontology 1" ;
+    rdfs:label "Ontology 1" ;
     owl:imports <http://test.com/Ontology2> .
 
 ont1:prop1 a owl:ObjectProperty ;
-    dcterms:title "property 1" ;
+    dc:title "property 1" ;
     rdfs:domain ont1:classA ;
     rdfs:range ont2:class1 .
 
 ont1:prop2 a owl:DatatypeProperty ;
-    dcterms:title "property 2" ;
+    dcterms:title "property 2", "another alt property 2"@de, "alt property 2"@en ;
     rdfs:domain ont2:class1 ;
     rdfs:range xsd:string .
 
 ont1:prop3 a owl:AnnotationProperty ;
-    dcterms:title "property 3" .
+    skos:prefLabel "property 3", "property 3"@en .
 
 ont1:prop4 a owl:AnnotationProperty ;
     dcterms:title "property 4" ;
+    skos:altLabel "alt property 4" ;
+    rdfs:domain ont1:classB ;
     rdfs:range xsd:string .
 
+ont1:prop5 a owl:DatatypeProperty ;
+    dcterms:title "property 5" ;
+    skos-xl:prefLabel ont1:prop5Label .
+
+ont1:prop5Label a skos-xl:Label ;
+    skos-xl:literalForm "property 5 literal form" .
+
 ont1:classA a owl:Class ;
+    rdfs:label "class A" ;
+    skos:prefLabel "class A pref" ;
     rdfs:domain ont1:classB .
 
 ont1:classB a owl:Class .
@@ -44,9 +59,12 @@ ont2:prop1 a owl:DatatypeProperty ;
     rdfs:range xsd:string .
 
 ont2:prop2 a owl:DatatypeProperty ;
-    dcterms:title "property 2" ;
+    dcterms:title "prop,erty 2" ;
     rdfs:domain ont2:class1 , ont2:class2 ;
     rdfs:range xsd:string, xsd:double .
+
+ont2:prop3 a owl:ObjectProperty ;
+    dc:title "property 3" .
 
 ont2:class1 a owl:Class .
 
