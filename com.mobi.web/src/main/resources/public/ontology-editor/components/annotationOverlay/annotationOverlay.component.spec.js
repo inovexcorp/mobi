@@ -206,6 +206,11 @@ describe('Annotation Overlay component', function() {
             });
         });
         describe('addAnnotation should call the appropriate manager functions if', function() {
+            beforeEach(function() {
+                // TODO: Remove when the full RDF list is removed
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
+
+            });
             describe('the value was added successfully', function() {
                 beforeEach(function() {
                     propertyManagerSvc.addValue.and.returnValue(true);
@@ -215,6 +220,10 @@ describe('Annotation Overlay component', function() {
                     ontologyStateSvc.annotationSelect = prefixes.dcterms + 'title';
                     this.controller.addAnnotation();
                     expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                    expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontoUtils.updateLabel).toHaveBeenCalled();
@@ -225,6 +234,10 @@ describe('Annotation Overlay component', function() {
                     ontologyStateSvc.annotationSelect = prefixes.dcterms + 'description';
                     this.controller.addAnnotation();
                     expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                    expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
@@ -235,6 +248,10 @@ describe('Annotation Overlay component', function() {
             it('the value was not added successfully', function() {
                 this.controller.addAnnotation();
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                // TODO: Remove when the full RDF list is removed
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
@@ -244,6 +261,11 @@ describe('Annotation Overlay component', function() {
             });
         });
         describe('editAnnotation should call the appropriate manager functions', function() {
+            beforeEach(function() {
+                // TODO: Remove when the full RDF list is removed
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
+
+            });
             describe('if the value was edited successfully', function() {
                 beforeEach(function() {
                     propertyManagerSvc.editValue.and.returnValue(true);
@@ -253,6 +275,10 @@ describe('Annotation Overlay component', function() {
                     ontologyStateSvc.annotationSelect = prefixes.dcterms + 'title';
                     this.controller.editAnnotation();
                     expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                    expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -264,6 +290,10 @@ describe('Annotation Overlay component', function() {
                     ontologyStateSvc.annotationSelect = prefixes.dcterms + 'description';
                     this.controller.editAnnotation();
                     expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                    expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -275,6 +305,10 @@ describe('Annotation Overlay component', function() {
             it('if the value was not edited successfully', function() {
                 this.controller.editAnnotation();
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                // TODO: Remove when the full RDF list is removed
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();

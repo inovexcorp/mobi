@@ -236,7 +236,7 @@ describe('Imports Overlay component', function() {
             expect(this.controller.getOntologyIRI({})).toEqual('ontology');
             expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyEditor + 'ontologyIRI');
         });
-        describe('should update the appropriate varibles if clicking the', function() {
+        describe('should update the appropriate variables if clicking the', function() {
             beforeEach(function() {
                 this.controller.ontologies = [];
                 this.controller.getOntologyConfig.searchText = 'test';
@@ -303,12 +303,21 @@ describe('Imports Overlay component', function() {
             beforeEach(function() {
                 this.urls = ['url'];
                 ontologyStateSvc.listItem.isSaved = false;
+                // TODO: Remove when the full RDF list is removed
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
+
             });
-            it('if there are duplciate values', function() {
+            it('if there are duplicate values', function() {
                 propertyManagerSvc.addId.and.returnValue(false);
                 this.controller.confirmed(this.urls, 'url');
+                // TODO: Remove when the full RDF list is removed
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+
                 _.forEach(this.urls, url => {
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                    // TODO: Remove when the full RDF list is removed
+                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, prefixes.owl + 'imports', url);
+
                 });
                 expect(utilSvc.createWarningToast).toHaveBeenCalledWith('Duplicate property values not allowed');
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
@@ -341,8 +350,14 @@ describe('Imports Overlay component', function() {
                             ontologyStateSvc.updateOntology.and.returnValue($q.when());
                             this.controller.confirmed(this.urls, 'url');
                             scope.$apply();
+                            // TODO: Remove when the full RDF list is removed
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+
                             _.forEach(this.urls, url => {
                                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                                // TODO: Remove when the full RDF list is removed
+                                expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, prefixes.owl + 'imports', url);
+
                             });
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
                             expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
@@ -357,8 +372,14 @@ describe('Imports Overlay component', function() {
                             ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
                             this.controller.confirmed(this.urls, 'url');
                             scope.$apply();
+                            // TODO: Remove when the full RDF list is removed
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+                            
                             _.forEach(this.urls, url => {
                                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                                // TODO: Remove when the full RDF list is removed
+                                expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, prefixes.owl + 'imports', url);
+
                             });
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
                             expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
@@ -373,8 +394,14 @@ describe('Imports Overlay component', function() {
                         ontologyStateSvc.afterSave.and.returnValue($q.reject('error'));
                         this.controller.confirmed(this.urls, 'url');
                         scope.$apply();
+                        // TODO: Remove when the full RDF list is removed
+                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+
                         _.forEach(this.urls, url => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                            // TODO: Remove when the full RDF list is removed
+                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, prefixes.owl + 'imports', url);
+
                         });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
@@ -389,8 +416,14 @@ describe('Imports Overlay component', function() {
                     ontologyStateSvc.saveChanges.and.returnValue($q.reject('error'));
                     this.controller.confirmed(this.urls, 'url');
                     scope.$apply();
+                    // TODO: Remove when the full RDF list is removed
+                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
+
                     _.forEach(this.urls, url => {
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                        // TODO: Remove when the full RDF list is removed
+                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, prefixes.owl + 'imports', url);
+
                     });
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.additionsObj);
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});

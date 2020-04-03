@@ -45,7 +45,8 @@ ont1:prop5Label a skos-xl:Label ;
 
 ont1:classA a owl:Class ;
     rdfs:label "class A" ;
-    skos:prefLabel "class A pref" .
+    skos:prefLabel "class A pref" ;
+    rdfs:domain ont1:classB .
 
 ont1:classB a owl:Class .
 
