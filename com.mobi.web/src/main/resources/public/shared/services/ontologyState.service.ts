@@ -877,8 +877,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordBranches(recordId, catalogId),
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
-            forEach(response[0].propertyToRanges, (properties, key) => {
-                listItem.propertyIcons[key] = getIcon(properties);
+            forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
+                listItem.propertyIcons[propertyIRI] = getIcon(ranges);
             });
             listItem.noDomainProperties = response[0].noDomainProperties;
             listItem.classToChildProperties = response[0].classToAssociatedProperties;
@@ -1938,19 +1938,19 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * Updates property maps on the current listItem based on the provided deleted class IRI
      *
-     * @param {string} The iri of the entity to be deleted
+     * @param {string} ClassIRI The iri of the entity to be deleted
      */
     self.handleDeletedClass = function(classIRI) {
         var classProperties = get(self.listItem.classToChildProperties, classIRI, []);
         delete self.listItem.classToChildProperties[classIRI];
         classProperties.forEach(propertyIRI => {
             let hasDomain = false;
-           forEach(self.listItem.classToChildProperties, classArrayItem => {
+            forEach(self.listItem.classToChildProperties, classArrayItem => {
                if (classArrayItem.includes(propertyIRI)) {
                    hasDomain = true;
                    return false;
                }
-           })
+            });
             if (!hasDomain){
                 self.listItem.noDomainProperties.push(propertyIRI);
             }
@@ -1964,11 +1964,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * Deletes traces of a removed property from the noDomainProperty and classToChild maps
      *
-     * @param {string} The entire entity of the property to be deleted
+     * @param {Object} property The full JSON-LD of a Property entity
      */
     self.handleDeletedProperty = function(property) {
         property[prefixes.rdfs + 'domain'].forEach(domainObj => {
-            self.removePropertyFromClass(property, domainObj['@id']);
+            self.removePropertyClassRelationships(property['@id'], domainObj['@id']);
         });
     }
     /**
@@ -1979,12 +1979,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * adds property iri to the correct map; either noDomainProperties or classToChildProperties
      *
-     * @param {string} The entire entity of the property to be added to either map
+     * @param {Object} property The full JSON-LD of a Property entity
      */
     self.handleNewProperty = function(property) {
         var domainPath = prefixes.rdfs + 'domain';
-        if (property[domainPath] == [] || property[domainPath] == undefined ){
-            self.listItem.noDomainProperties.push(property['@id'])
+        if (property[domainPath] == [] || property[domainPath] == undefined) {
+            self.listItem.noDomainProperties.push(property['@id']);
         } else {
             property[domainPath].forEach(domain => {
                 var classIRI = domain['@id'];
@@ -2004,19 +2004,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      *Updates map appropriately if domains are added to a property
      *
-     * @param {string} The iri of the property being altered in the hierarchy
-     * @param {Array} An array of values that are being added to the property.
+     * @param {string} propertyIRI The iri of the property being altered in the hierarchy
+     * @param {string[]} classIris An array of classes that are being added to the property as domains
      */
-    self.addPropertyToClasses = function(propertyIRI, classIris){
+    self.addPropertyToClasses = function(propertyIRI, classIris) {
         classIris.forEach(parentclass => {
-            if (!self.listItem.classToChildProperties[parentclass]){
+            if (!self.listItem.classToChildProperties[parentclass]) {
                 self.listItem.classToChildProperties[parentclass] = [];
             }
             self.listItem.classToChildProperties[parentclass].push(propertyIRI);
         });
-        if (self.listItem.noDomainProperties.includes(propertyIRI)) {
-            pull(self.listItem.noDomainProperties, propertyIRI);
-        }
+        pull(self.listItem.noDomainProperties, propertyIRI);
     }
     /**
      * @ngdoc method
@@ -2024,19 +2022,19 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Determines whether a deleted classes set of properties still has a domain or not
+     * Handles the removal of the provided class IRI as a domain of the provided property JSON-LD by updating `classToChildProperties` and `noDomainProperties`
      *
-     * @param {string} The entire entity of the property to be removed
-     * @param {string} The iri of the class the property is being removed from
+     * @param {Object} property The full JSON-LD of a Property entity
+     * @param {string} classIri The iri of the class the property is being removed from
      */
-    self.removePropertyFromClass = function(property, classIri){
+    self.removePropertyFromClass = function(property, classIri) {
         removePropertyClassRelationships(property['@id'], classIri)
         checkForPropertyDomains(property);
     }
 
     /* Private helper functions */
-    function removePropertyClassRelationships(propertyIRI, classIRI){
-        if (self.listItem.classToChildProperties[classIRI] && self.listItem.classToChildProperties[classIRI].includes(propertyIRI)){
+    function removePropertyClassRelationships(propertyIRI, classIRI) {
+        if (self.listItem.classToChildProperties[classIRI] && self.listItem.classToChildProperties[classIRI].includes(propertyIRI)) {
             pull(self.listItem.classToChildProperties[classIRI], propertyIRI);
             if (!self.listItem.classToChildProperties[classIRI].length) {
                 delete self.listItem.classToChildProperties[classIRI];
@@ -2044,7 +2042,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function checkForPropertyDomains(property) {
-        if (!property[prefixes.rdfs + 'domain']){
+        if (!property[prefixes.rdfs + 'domain']) {
             self.listItem.noDomainProperties.push(property['@id']);
         }
     }
@@ -2128,9 +2126,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function getIcon(ranges) {
         let icon = 'fa-square-o';
-        let value = ranges[0];
         if (ranges) {
             if (ranges.length === 1) {
+                let value = ranges[0];
                 switch(value) {
                     case prefixes.xsd + 'string':
                     case prefixes.rdf + 'langString':
