@@ -2028,7 +2028,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} classIri The iri of the class the property is being removed from
      */
     self.removePropertyFromClass = function(property, classIri) {
-        removePropertyClassRelationships(property['@id'], classIri)
+        removePropertyClassRelationships(property['@id'], classIri);
         checkForPropertyDomains(property);
     }
 
