@@ -199,18 +199,11 @@ describe('Datatype Property Overlay component', function() {
                 ontologyStateSvc.listItem.selected = {};
                 propertyManagerSvc.addValue.and.returnValue(true);
                 spyOn(this.controller, 'isLangString').and.returnValue(true);
-                // TODO: Remove when the full RDF list is removed
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerSvc.addValue.and.returnValue(false);
                 this.controller.addProperty(this.prop, this.value);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, prefixes.xsd + 'string', '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, this.prop, this.value, prefixes.xsd + 'string', '');
-                
                 expect(util.createJson).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
@@ -220,10 +213,6 @@ describe('Datatype Property Overlay component', function() {
             it('without a type and no language', function() {
                 this.controller.addProperty(this.prop, this.value);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, prefixes.xsd + 'string', '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, this.prop, this.value, prefixes.xsd + 'string', '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(util.createWarningToast).not.toHaveBeenCalled();
@@ -232,10 +221,6 @@ describe('Datatype Property Overlay component', function() {
             it('with a language and isLangString is true', function() {
                 this.controller.addProperty(this.prop, this.value, this.type, this.language);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, '', this.language);
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, this.prop, this.value, '', this.language);
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(util.createWarningToast).not.toHaveBeenCalled();
@@ -246,10 +231,6 @@ describe('Datatype Property Overlay component', function() {
                 this.controller.isLangString.and.returnValue(false);
                 this.controller.addProperty(this.prop, this.value, this.type, this.language);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, this.type, '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, this.prop, this.value, this.type, '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(util.createWarningToast).not.toHaveBeenCalled();
@@ -259,10 +240,6 @@ describe('Datatype Property Overlay component', function() {
             it('without a language', function() {
                 this.controller.addProperty(this.prop, this.value, this.type);
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value, this.type, '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith({}, this.prop, this.value, this.type, '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -281,18 +258,11 @@ describe('Datatype Property Overlay component', function() {
                 propertyManagerSvc.editValue.and.returnValue(true);
                 spyOn(this.controller, 'isLangString').and.returnValue(true);
                 propertyManagerSvc.createValueObj.and.returnValue({id: 'newValue'});
-                // TODO: Remove when the full RDF list is removed
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerSvc.editValue.and.returnValue(false);
                 this.controller.editProperty(this.prop, this.value);
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, prefixes.xsd + 'string', '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, this.prop, ontologyStateSvc.propertyIndex, this.value, prefixes.xsd + 'string', '');
-
                 expect(util.createJson).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
@@ -303,10 +273,6 @@ describe('Datatype Property Overlay component', function() {
             it('if the type is provided and no language', function() {
                 this.controller.editProperty(this.prop, this.value, this.type);
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
@@ -318,10 +284,6 @@ describe('Datatype Property Overlay component', function() {
             it('if the type is not provided and no language', function() {
                 this.controller.editProperty(this.prop, this.value);
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, prefixes.xsd + 'string', '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, this.prop, ontologyStateSvc.propertyIndex, this.value, prefixes.xsd + 'string', '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
@@ -333,10 +295,6 @@ describe('Datatype Property Overlay component', function() {
             it('if the language is provided and isLangString is true', function() {
                 this.controller.editProperty(this.prop, this.value, this.type, this.language);
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, '', this.language);
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, this.prop, ontologyStateSvc.propertyIndex, this.value, '', this.language);
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
@@ -349,10 +307,6 @@ describe('Datatype Property Overlay component', function() {
                 this.controller.isLangString.and.returnValue(false);
                 this.controller.editProperty(this.prop, this.value, this.type, this.language);
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
@@ -364,10 +318,6 @@ describe('Datatype Property Overlay component', function() {
             it('if the language is not provided', function() {
                 this.controller.editProperty(this.prop, this.value, this.type);
                 expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith({}, this.prop, ontologyStateSvc.propertyIndex, this.value, this.type, '');
-
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {});
                 expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], this.prop, {id: 'newValue'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));

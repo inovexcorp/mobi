@@ -83,10 +83,6 @@ function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes,
         var importsIRI = dvm.prefixes.owl + 'imports';
         dvm.os.addToDeletions(dvm.listItem.ontologyRecord.recordId, util.createJson(dvm.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
         pm.remove(dvm.listItem.selected, importsIRI, findIndex(dvm.listItem.selected[importsIRI], {'@id': dvm.url}));
-        // TODO: Remove when the full RDF list is removed
-        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']);
-        pm.remove(entityFromFullList, importsIRI, findIndex(entityFromFullList[importsIRI], {'@id': dvm.url}));
-        
         dvm.os.saveChanges(dvm.listItem.ontologyRecord.recordId, {additions: dvm.listItem.additions, deletions: dvm.listItem.deletions})
             .then(() => dvm.os.afterSave(), $q.reject)
             .then(() => dvm.os.updateOntology(dvm.listItem.ontologyRecord.recordId, dvm.listItem.ontologyRecord.branchId, dvm.listItem.ontologyRecord.commitId, dvm.listItem.upToDate, dvm.listItem.inProgressCommit), $q.reject)

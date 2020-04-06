@@ -169,7 +169,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             commitId: ''
         },
         ontologyId: '',
-        // TODO: this should be removed
         ontology: [],
         importedOntologies: [],
         importedOntologyIds: [],
@@ -1195,8 +1194,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * from the index.
      *
      * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
-     * // TODO: make sure we don't actually need to return the removed entity
-     * @returns {Object[]} The list of JSON-LD entities that were removed.
      */
     self.removeEntity = function(listItem, entityIRI) {
         pull(listItem.iriList, entityIRI);
@@ -1248,7 +1245,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Object} An Object which represents the requested entity.
      */
     self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
-        // TODO: this should be done by a backend call
         if (!isEmpty(listItem)) {
             return getEntityFromListItem(listItem, entityIRI);
         }
@@ -1922,7 +1918,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
      * @returns {boolean} True if the IRI is imported; false otherwise
      */
-    self.isImported = function(iri = self.listItem.selected['@id'], listItem = self.listItem) {
+    self.isImported = function(iri = get(self.listItem.selected, '@id', ''), listItem = self.listItem) {
         return get(listItem, "entityInfo['" + iri + "'].imported", true);
     }
 

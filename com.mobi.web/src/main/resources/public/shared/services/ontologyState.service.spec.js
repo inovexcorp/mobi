@@ -2026,16 +2026,6 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getListItemByRecordId('other')).toEqual(undefined);
         });
     });
-    // TODO: we shouldn't need this method anymore
-    // describe('getOntologyByRecordId should return the correct object', function() {
-    //     it('when the ontologyId is in the list', function() {
-    //         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
-    //         expect(ontologyStateSvc.getOntologyByRecordId(this.recordId)).toEqual(listItem.ontology);
-    //     });
-    //     it('when the ontologyId is not in the list', function() {
-    //         expect(ontologyStateSvc.getOntologyByRecordId('other')).toEqual([]);
-    //     });
-    // });
     describe('createOntology calls the correct methods', function() {
         describe('when uploadJson succeeds', function() {
             beforeEach(function() {
@@ -3373,9 +3363,6 @@ describe('Ontology State Service', function() {
             this.object = {'@id': this.id};
             this.bnode = {'@id': '_:node0'};
             spyOn(ontologyStateSvc, 'setEntityUsages');
-            // TODO: Remove this once these properties are in their own maps
-            spyOn(ontologyStateSvc, 'updatePropertyIcon');
-
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({});
             ontologyManagerSvc.getEntityAndBlankNodes.and.returnValue($q.when([this.object, this.bnode]));
     });
@@ -3398,9 +3385,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalledWith();
         });
@@ -3412,9 +3396,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(this.id);
         });
@@ -3426,9 +3407,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
@@ -3443,9 +3421,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-            
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
