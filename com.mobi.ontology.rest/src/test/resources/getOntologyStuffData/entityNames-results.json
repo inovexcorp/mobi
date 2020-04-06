@@ -1,0 +1,72 @@
+{
+  "http://test.com/Ontology1": {
+    "label": "Ontology 1",
+    "names": [ "Ontology 1"]
+  },
+  "http://test.com/Ontology1#prop1": {
+    "label": "property 1",
+    "names": [
+        "property 1"
+      ]
+  },
+  "http://test.com/Ontology1#prop2": {
+    "label": "alt property 2",
+    "names": [
+        "property 2",
+        "another alt property 2",
+        "alt property 2"
+      ]
+  },
+  "http://test.com/Ontology1#prop3": {
+    "label": "Right to education",
+    "names": [
+      "ÐŸÑ€Ð°Ð²Ð¾ Ð½Ð° Ð¾Ð±Ñ€Ð°Ð·Ð¾Ð²Ð°Ð½Ð¸Ðµ",
+      "Right to education",
+      "Derecho a la educaciÃ³n",
+      "Droit Ã  l'Ã©ducation"
+    ]
+  },
+  "http://test.com/Ontology1#prop4": {
+    "label": "property 4",
+    "names": [
+        "property 4",
+        "alt property 4"
+      ]
+  },
+  "http://test.com/Ontology1#prop5": {
+    "label": "property 5",
+    "names": [
+        "property 5","property 5 literal form"
+      ]
+  },
+  "http://test.com/Ontology1#classA": {
+    "label": "class A",
+    "names": [
+        "class A","class A pref"
+      ]
+  },
+  "http://test.com/Ontology2": {
+    "label": "Ontology 2",
+    "names": [
+        "Ontology 2"
+      ]
+  },
+  "http://test.com/Ontology2#prop1": {
+    "label": "property 1",
+    "names": [
+        "property 1"
+      ]
+  },
+  "http://test.com/Ontology2#prop2": {
+    "label": "property 2",
+    "names": [
+        "prop,erty 2"
+      ]
+  },
+  "http://test.com/Ontology2#prop3": {
+    "label": "property 3",
+    "names": [
+        "property 3"
+      ]
+  }
+}

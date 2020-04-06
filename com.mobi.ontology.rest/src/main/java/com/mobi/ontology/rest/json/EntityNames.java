@@ -1,6 +1,4 @@
-@Version("7.2.4.${build}")
-
-package com.mobi.ontology.rest;
+package com.mobi.ontology.rest.json;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package com.mobi.ontology.rest;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,29 @@ package com.mobi.ontology.rest;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
+import java.util.Set;
+
+public class EntityNames {
+    public String label;
+    private Set<String> names;
+
+    public EntityNames() {
+    }
+
+    public EntityNames(String label) {
+        this.label = label;
+    }
+
+    @JsonGetter("names")
+    public Set<String> getNames() {
+        return names;
+    }
+
+    @JsonSetter("names")
+    public void setNames(Set<String> names) {
+        this.names = names;
+    }
+}
