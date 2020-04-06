@@ -215,10 +215,9 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.commonDelete = function(entityIRI, updateEverythingTree = false) {
         return om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
             .then(statements => {
-                var removedEntities = os.removeEntity(os.listItem, entityIRI);
-                forEach(removedEntities, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
+                os.removeEntity(os.listItem, entityIRI);
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, os.listItem.selected);
                 forEach(statements, statement => os.addToDeletions(os.listItem.ontologyRecord.recordId, statement));
-                ur.remove(os.listItem.ontology, entityIRI);
                 os.unSelectItem();
                 if (updateEverythingTree) {
                     os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);

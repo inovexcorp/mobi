@@ -2178,6 +2178,7 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.listItem.concepts = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
                 ontologyStateSvc.listItem.conceptSchemes = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
                 ontologyStateSvc.listItem.editorTabStates.concepts = {entityIRI: 'iri', usages: []};
+                ontologyStateSvc.listItem.entityInfo = {};
             });
             it('resolves', function() {
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.when(this.response));
@@ -2188,11 +2189,11 @@ describe('Ontology State Service', function() {
                 expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
                 expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual(['derivedSemanticRelation']);
-                expect(ontologyStateSvc.listItem.concepts.iris).toEqual({'derivedConcept1': this.ontologyId, 'derivedConcept2': this.ontologyId2});
+                expect(ontologyStateSvc.listItem.concepts.iris).toEqual({'derivedConcept1': this.ontologyId, 'derivedConcept2': this.ontologyId});
                 expect(ontologyStateSvc.listItem.concepts.childMap).toEqual(this.response.conceptHierarchy.childMap);
                 expect(ontologyStateSvc.listItem.concepts.parentMap).toEqual(this.response.conceptHierarchy.parentMap);
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.flatHierarchy);
-                expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({'derivedConceptScheme1': this.ontologyId, 'derivedConceptScheme2': this.ontologyId2});
+                expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({'derivedConceptScheme1': this.ontologyId, 'derivedConceptScheme2': this.ontologyId});
                 expect(ontologyStateSvc.listItem.conceptSchemes.childMap).toEqual(this.response.conceptSchemeHierarchy.childMap);
                 expect(ontologyStateSvc.listItem.conceptSchemes.parentMap).toEqual(this.response.conceptSchemeHierarchy.parentMap);
                 expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual(this.flatHierarchy);
@@ -2827,6 +2828,104 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
                         expect(_.get(response, 'userCanModify')).toEqual(true);
                         expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
+                        expect(_.get(response, 'entityInfo')).toEqual({
+                            [this.annotationId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.classId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.datatypeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.objectPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.dataPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.individualId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptSchemeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.annotationId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.classId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.dataPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.objectPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.individualId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.datatypeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptSchemeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                        });
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -2921,6 +3020,104 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
                         expect(_.get(response, 'userCanModify')).toEqual(true);
                         expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
+                        expect(_.get(response, 'entityInfo')).toEqual({
+                            [this.annotationId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.classId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.datatypeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.objectPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.dataPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.individualId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptSchemeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.annotationId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.classId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.dataPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.objectPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.individualId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.datatypeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptSchemeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                        });
                     }, () => {
                         fail('Promise should have resolved');
                     });

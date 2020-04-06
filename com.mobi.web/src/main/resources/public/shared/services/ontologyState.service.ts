@@ -1170,13 +1170,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
      */
     self.addEntity = function(listItem, entityJSON) {
-        // listItem.ontology.push(entityJSON);
         listItem.iriList.push(entityJSON['@id']);
-        // get(listItem, 'index', {})[entityJSON['@id']] = {
-        //     position: listItem.ontology.length - 1,
-        //     label: om.getEntityName(entityJSON),
-        //     ontologyIri: listItem.ontologyId
-        // }
         get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
             label: om.getEntityName(entityJSON),
             names: om.getEntityNames(entityJSON),
