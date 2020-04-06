@@ -2132,7 +2132,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function getIcon(ranges) {
         let icon = 'fa-square-o';
-        if (ranges) {
+        if (ranges.length) {
             if (ranges.length === 1) {
                 let value = ranges[0];
                 switch(value) {
