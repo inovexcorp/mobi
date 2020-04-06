@@ -196,7 +196,9 @@ describe('Individual Tree component', function() {
                     entityIRI: 'iri',
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri'],
-                    names: ['Title']
+                    entityInfo: {
+                        names: ['Title']
+                    }
                 };
                 this.filterNodeParent = {
                     indent: 0,
@@ -233,7 +235,7 @@ describe('Individual Tree component', function() {
                     });
                     describe('do not have a matching text value', function () {
                         beforeEach(function () {
-                            this.filterNode.names = [];
+                            this.filterNode.entityInfo.names = [];
                         });
                         it('and does not have a matching entity local name', function () {
                             utilSvc.getBeautifulIRI.and.returnValue('id');

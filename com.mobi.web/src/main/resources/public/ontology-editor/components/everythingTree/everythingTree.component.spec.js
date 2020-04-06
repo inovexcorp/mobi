@@ -194,7 +194,9 @@ describe('Everything Tree component', function() {
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri'],
                     entityIRI: 'iri',
-                    names: ['Title']
+                    entityInfo: {
+                        names: ['Title']
+                    }
                 };
                 this.filterNodeFolder = {
                     title: 'Properties',
@@ -216,7 +218,7 @@ describe('Everything Tree component', function() {
                     });
                     describe('that do not have a matching text value', function () {
                         beforeEach(function () {
-                            this.filterNode.names = [];
+                            this.filterNode.entityInfo.names = [];
                             utilSvc.getBeautifulIRI.and.returnValue('id');
                         });
                         describe('and does not have a matching entity local name', function () {

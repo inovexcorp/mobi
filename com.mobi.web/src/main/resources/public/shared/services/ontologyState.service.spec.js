@@ -2198,11 +2198,11 @@ describe('Ontology State Service', function() {
                 expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
                 expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual(['derivedSemanticRelation']);
-                expect(ontologyStateSvc.listItem.concepts.iris).toEqual({'derivedConcept1': this.ontologyId, 'derivedConcept2': this.ontologyId});
+                expect(ontologyStateSvc.listItem.concepts.iris).toEqual({'derivedConcept1': this.ontologyId, 'derivedConcept2': this.ontologyId2});
                 expect(ontologyStateSvc.listItem.concepts.childMap).toEqual(this.response.conceptHierarchy.childMap);
                 expect(ontologyStateSvc.listItem.concepts.parentMap).toEqual(this.response.conceptHierarchy.parentMap);
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.flatHierarchy);
-                expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({'derivedConceptScheme1': this.ontologyId, 'derivedConceptScheme2': this.ontologyId});
+                expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({'derivedConceptScheme1': this.ontologyId, 'derivedConceptScheme2': this.ontologyId2});
                 expect(ontologyStateSvc.listItem.conceptSchemes.childMap).toEqual(this.response.conceptSchemeHierarchy.childMap);
                 expect(ontologyStateSvc.listItem.conceptSchemes.parentMap).toEqual(this.response.conceptSchemeHierarchy.parentMap);
                 expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual(this.flatHierarchy);
@@ -2501,10 +2501,10 @@ describe('Ontology State Service', function() {
             this.conceptId2 = 'conceptId2';
             this.conceptSchemeId2 = 'conceptSchemeId2';
             this.userBranchId = 'userBranchId';
+            this.ontologyId2 = 'ontologyId2';
             this.userBranch = {
                 '@id': this.userBranchId
             }
-            // TODO: should update this to include the new entityNames map
             ontologyManagerSvc.getOntologyStuff.and.returnValue($q.when({
                 iriList: {
                     annotationProperties: [this.annotationId],
@@ -2520,7 +2520,7 @@ describe('Ontology State Service', function() {
                     derivedSemanticRelations: [this.semanticRelationId]
                 },
                 importedIRIs: [{
-                    id: this.ontologyId,
+                    id: this.ontologyId2,
                     annotationProperties: [this.annotationId2],
                     classes: [this.classId2],
                     dataProperties: [this.dataPropertyId2],
@@ -2530,7 +2530,7 @@ describe('Ontology State Service', function() {
                     concepts: [this.conceptId2],
                     conceptSchemes: [this.conceptSchemeId2],
                 }],
-                importedOntologies: [{ontologyId: 'importId', id: 'id'}],
+                importedOntologies: [{ontologyId: this.ontologyId2, id: 'id'}],
                 classHierarchy: {parentMap: {}, childMap: {}},
                 individuals: {ClassA: ['IndivA1', 'IndivA2']},
                 dataPropertyHierarchy: {parentMap: {}, childMap: {}},
@@ -2553,6 +2553,7 @@ describe('Ontology State Service', function() {
             catalogManagerSvc.getRecordVersions.and.returnValue($q.when({data: this.versions}));
             policyEnforcementSvc.evaluateRequest.and.returnValue($q.when('Permit'));
             util.getPropertyId.and.returnValue(this.branchId);
+            util.getBeautifulIRI.and.returnValue('iri');
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
             spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
@@ -2564,36 +2565,36 @@ describe('Ontology State Service', function() {
                     .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
-                        expectedIriObj[this.annotationId2] = this.ontologyId;
+                        expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.classId] = this.ontologyId;
-                        expectedIriObj[this.classId2] = this.ontologyId;
+                        expectedIriObj[this.classId2] = this.ontologyId2;
                         expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                         expect(response.isVocabulary).toEqual(true);
                         expectedIriObj = {};
                         expectedIriObj[this.dataPropertyId] = this.ontologyId;
-                        expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.dataPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.objectPropertyId] = this.ontologyId;
-                        expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.objectPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.individualId] = this.ontologyId;
-                        expectedIriObj[this.individualId2] = this.ontologyId;
+                        expectedIriObj[this.individualId2] = this.ontologyId2;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptId] = this.ontologyId;
-                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId2;
                         expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptSchemeId] = this.ontologyId;
-                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId2;
                         expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
-                        expectedIriObj[this.datatypeId2] = this.ontologyId;
+                        expectedIriObj[this.datatypeId2] = this.ontologyId2;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                         expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
@@ -2629,7 +2630,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.ontologyId2, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2638,13 +2639,111 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId'
+                            ontologyId: this.ontologyId2
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(false);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
                         expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
                         expect(_.get(response, 'userCanModify')).toEqual(true);
                         expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
+                        expect(_.get(response, 'entityInfo')).toEqual({
+                            [this.annotationId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.classId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.datatypeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.objectPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.dataPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.individualId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptSchemeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.annotationId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.classId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.dataPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.objectPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.individualId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.datatypeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptSchemeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                        });
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -2657,36 +2756,36 @@ describe('Ontology State Service', function() {
                     .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
-                        expectedIriObj[this.annotationId2] = this.ontologyId;
+                        expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.classId] = this.ontologyId;
-                        expectedIriObj[this.classId2] = this.ontologyId;
+                        expectedIriObj[this.classId2] = this.ontologyId2;
                         expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                         expect(response.isVocabulary).toEqual(true);
                         expectedIriObj = {};
                         expectedIriObj[this.dataPropertyId] = this.ontologyId;
-                        expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.dataPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.objectPropertyId] = this.ontologyId;
-                        expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.objectPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.individualId] = this.ontologyId;
-                        expectedIriObj[this.individualId2] = this.ontologyId;
+                        expectedIriObj[this.individualId2] = this.ontologyId2;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptId] = this.ontologyId;
-                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId2;
                         expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptSchemeId] = this.ontologyId;
-                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId2;
                         expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
-                        expectedIriObj[this.datatypeId2] = this.ontologyId;
+                        expectedIriObj[this.datatypeId2] = this.ontologyId2;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                         expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
@@ -2722,7 +2821,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.ontologyId2, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2731,7 +2830,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId'
+                            ontologyId: this.ontologyId2
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
@@ -2751,36 +2850,36 @@ describe('Ontology State Service', function() {
                     .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
-                        expectedIriObj[this.annotationId2] = this.ontologyId;
+                        expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.classId] = this.ontologyId;
-                        expectedIriObj[this.classId2] = this.ontologyId;
+                        expectedIriObj[this.classId2] = this.ontologyId2;
                         expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                         expect(response.isVocabulary).toEqual(true);
                         expectedIriObj = {};
                         expectedIriObj[this.dataPropertyId] = this.ontologyId;
-                        expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.dataPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.objectPropertyId] = this.ontologyId;
-                        expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.objectPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.individualId] = this.ontologyId;
-                        expectedIriObj[this.individualId2] = this.ontologyId;
+                        expectedIriObj[this.individualId2] = this.ontologyId2;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptId] = this.ontologyId;
-                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId2;
                         expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptSchemeId] = this.ontologyId;
-                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId2;
                         expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
-                        expectedIriObj[this.datatypeId2] = this.ontologyId;
+                        expectedIriObj[this.datatypeId2] = this.ontologyId2;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                         expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
@@ -2816,7 +2915,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.ontologyId2, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2825,7 +2924,7 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId'
+                            ontologyId: this.ontologyId2
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(false);
@@ -3648,8 +3747,6 @@ describe('Ontology State Service', function() {
     });
     describe('goTo calls the proper manager functions with correct parameters when it is', function() {
         beforeEach(function() {
-            this.entity = {'@id': 'entityId'};
-            spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue(this.entity);
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: '', vocabularySpinnerId: 'spinner'});
             spyOn(ontologyStateSvc, 'setActivePage');
             spyOn(ontologyStateSvc, 'selectItem');
@@ -4102,7 +4199,7 @@ describe('Ontology State Service', function() {
     describe('should add an IRI to classes.iris and update isVocabulary', function() {
         beforeEach(function () {
             this.iri = 'iri';
-            this.listItem = {ontologyId: 'ontology', isVocabulary: false, classes: {iris: {}}};
+            this.listItem = {ontologyId: 'ontology', isVocabulary: false, classes: {iris: {}}, entityInfo: {}};
             this.expectedIriObj = {};
         });
         it('unless the IRI is already in the list', function() {

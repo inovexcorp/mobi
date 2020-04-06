@@ -234,7 +234,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             flat: []
         },
         blankNodes: {},
-        // TODO: populate with Stephen's new call
         entityInfo: {},
         additions: [],
         deletions: [],
@@ -740,7 +739,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var listItem;
         return om.uploadJson(ontologyJson, title, description, keywords)
             .then(data => {
-                // TODO: need to figure out exactly how to get the new listItem.entityInfo object when given the whole ontology JSON
                 listItem = setupListItem(data.ontologyId, data.recordId, data.branchId, data.commitId, [ontologyJson], emptyInProgressCommit, true, title);
                 return cm.getRecordBranch(data.branchId, data.recordId, catalogId);
             }, $q.reject)
@@ -871,7 +869,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 return listItem;
             }, $q.reject);
     }
-    // TODO: remove the dependency from the ontology object
     self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true, title) {
         var modifyRequest: any = {
             resourceId: recordId,
@@ -884,20 +881,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
             listItem.iriList.push(listItem.ontologyId);
-
-            // TODO: make sure this gets populated with new stuff
-            // listItem.entityInfo = get(response[0], 'entityInfo', {});
-
-            // TODO: make sure this actually sets the label correctly
-            // forOwn(listItem.entityInfo, (value, key) => {
-            //     if (!has(value, 'label')) {
-            //         value.label = utilService.getBeautifulIRI(key);
-            //     }
-            // });
-
-            // TODO: remove temporary part
-            listItem.entityInfo[listItem.ontologyId].imported = false;
-
+            listItem.entityInfo = get(response[0], 'entityNames', {});
             var responseIriList = get(response[0], 'iriList', {});
             listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
             get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem, 'annotations.iris', iri, ontologyId));
@@ -967,12 +951,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
 
     function addInfo(listItem, iri, ontologyId) {
-        if (has(get(listItem, 'entityInfo', {}), iri)) {
-            merge(listItem.entityInfo[iri], {
-                imported: listItem.ontologyId !== ontologyId,
-                ontologyId
-            });
+        var info = merge({
+            imported: listItem.ontologyId !== ontologyId,
+            ontologyId,
+            names: []
+        }, get(listItem, "entityInfo['" + iri + "']", {}));
+        if (!has(info, 'label')) {
+            info.label = utilService.getBeautifulIRI(iri);
         }
+        listItem.entityInfo[iri] = info;
     }
 
     function addIri(listItem, path, iri, ontologyId = undefined) {
@@ -1979,9 +1966,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         listItem.ontologyRecord.commitId = commitId;
         listItem.inProgressCommit = inProgressCommit;
         listItem.upToDate = upToDate;
-        // TODO: remove this temporary part
-        listItem.entityInfo = {};
-        forEach(ontology, entity => self.addEntity(listItem, entity));
         return listItem;
     }
     function findValuesMissingDatatypes(object) {
@@ -2066,14 +2050,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         };
         listItem.importedOntologyIds.push(importedOntObj.id);
         listItem.importedOntologies.push(importedOntologyListItem);
-
-        // TODO: remove temporary part
-        forEach(importedOntObj.ontology, entityJSON => {
-            get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
-                label: om.getEntityName(entityJSON),
-                names: om.getEntityNames(entityJSON)
-            }
-        });
     }
     function setHierarchyInfo(obj, response, key) {
         var hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}});
