@@ -1292,7 +1292,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {string} The beautified IRI string.
      */
     self.getEntityNameByIndex = function(entityIRI, listItem = self.listItem) {
-        return get(listItem.entityInfo, '[' + entityIRI + '].label', utilService.getBeautifulIRI(entityIRI));
+        return get(listItem.entityInfo, "['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
     }
     // function getEntityNameByIndex(entityIRI, indices) {
     //     var entity = result(findLast(indices, index => {
