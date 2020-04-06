@@ -2008,13 +2008,19 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string[]} classIris An array of classes that are being added to the property as domains
      */
     self.addPropertyToClasses = function(propertyIRI, classIris) {
+        let hasBlankNodeParents = true;
         classIris.forEach(parentclass => {
-            if (!self.listItem.classToChildProperties[parentclass]) {
-                self.listItem.classToChildProperties[parentclass] = [];
+            if (!om.isBlankNodeId(parentclass)) {
+                if (!self.listItem.classToChildProperties[parentclass]) {
+                    self.listItem.classToChildProperties[parentclass] = [];
+                }
+                self.listItem.classToChildProperties[parentclass].push(propertyIRI);
+                hasBlankNodeParents = false;
             }
-            self.listItem.classToChildProperties[parentclass].push(propertyIRI);
         });
-        pull(self.listItem.noDomainProperties, propertyIRI);
+        if (!hasBlankNodeParents) {
+            pull(self.listItem.noDomainProperties, propertyIRI);
+        }
     }
     /**
      * @ngdoc method
