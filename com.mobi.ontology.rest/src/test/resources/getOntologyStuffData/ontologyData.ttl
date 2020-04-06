@@ -26,7 +26,7 @@ ont1:prop2 a owl:DatatypeProperty ;
     rdfs:range xsd:string .
 
 ont1:prop3 a owl:AnnotationProperty ;
-    skos:prefLabel "property 3", "property 3"@en .
+    skos:prefLabel "Droit Ã  l'Ã©ducation"@fr , "Right to education"@en , "Derecho a la educaciÃ³n"@es , "ÐŸÑ€Ð°Ð²Ð¾ Ð½Ð° Ð¾Ð±Ñ€Ð°Ð·Ð¾Ð²Ð°Ð½Ð¸Ðµ"@ru .
 
 ont1:prop4 a owl:AnnotationProperty ;
     dcterms:title "property 4" ;

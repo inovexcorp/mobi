@@ -18,10 +18,13 @@
       ]
   },
   "http://test.com/Ontology1#prop3": {
-    "label": "property 3",
+    "label": "Right to education",
     "names": [
-        "property 3"
-      ]
+      "ÐŸÑ€Ð°Ð²Ð¾ Ð½Ð° Ð¾Ð±Ñ€Ð°Ð·Ð¾Ð²Ð°Ð½Ð¸Ðµ",
+      "Right to education",
+      "Derecho a la educaciÃ³n",
+      "Droit Ã  l'Ã©ducation"
+    ]
   },
   "http://test.com/Ontology1#prop4": {
     "label": "property 4",

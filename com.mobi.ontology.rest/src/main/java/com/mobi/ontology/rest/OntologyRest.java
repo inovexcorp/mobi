@@ -2509,25 +2509,35 @@ public class OntologyRest {
     }
 
     /**
-     * Writes the associated entity names from the query results to the provided output stream.
+     * Writes the associated entity names from the query results to the provided output stream. Note, entities without
+     * labels are not included in the results.
      *
-     * @param tupleQueryResults the query results that contain "entity", "prefName", and optional label bindings
+     * @param tupleQueryResults the query results that contain "entity", "prefName", and ?names_array bindings
      * @param outputStream the output stream to write the results to
      */
     private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
         String entityBinding = "entity";
-        String prefNameBinding = "prefName";
+        String enPrefNamesBinding = "en_pref_names_array";
+        String prefNamesBinding = "pref_names_array";
         String namesBinding = "names_array";
         tupleQueryResults.forEach(bindings -> {
             String entity = Bindings.requiredResource(bindings, entityBinding).stringValue();
-            String label = Bindings.requiredLiteral(bindings, prefNameBinding).stringValue();
+            String enlabelsString = Bindings.requiredLiteral(bindings, enPrefNamesBinding).stringValue();
+            String labelsString = Bindings.requiredLiteral(bindings, prefNamesBinding).stringValue();
             String namesString = Bindings.requiredLiteral(bindings, namesBinding).stringValue();
             EntityNames entityNames = new EntityNames();
-            entityNames.label = label;
-            Set<String> set = new HashSet<>();
-            CollectionUtils.addAll(set, StringUtils.split(namesString, NAME_SPLITTER));
-            entityNames.setNames(set);
+
+            String[] enLabels = StringUtils.split(enlabelsString, NAME_SPLITTER);
+            if (enLabels.length > 0) {
+                entityNames.label = enLabels[0];
+            } else {
+                entityNames.label = StringUtils.split(labelsString, NAME_SPLITTER)[0];
+            }
+
+            Set<String> namesSet = new HashSet<>();
+            CollectionUtils.addAll(namesSet, StringUtils.split(namesString, NAME_SPLITTER));
+            entityNames.setNames(namesSet);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
 
