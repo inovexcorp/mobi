@@ -954,7 +954,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             imported: listItem.ontologyId !== ontologyId,
             ontologyId,
             names: []
-        }, get(listItem, "entityInfo['" + iri + "']", {}));
+        }, (listItem.entityInfo[iri] || {}));
         if (!has(info, 'label')) {
             info.label = utilService.getBeautifulIRI(iri);
         }
@@ -1294,13 +1294,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getEntityNameByIndex = function(entityIRI, listItem = self.listItem) {
         return get(listItem.entityInfo, "['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
     }
-    // function getEntityNameByIndex(entityIRI, indices) {
-    //     var entity = result(findLast(indices, index => {
-    //         var entity = get(index, entityIRI);
-    //             return (entity !== null && has(entity, 'label'));
-    //     }), entityIRI);
-    //     return !entity ? utilService.getBeautifulIRI(entityIRI) : entity.label;
-    // }
     /**
      * @ngdoc method
      * @name saveChanges

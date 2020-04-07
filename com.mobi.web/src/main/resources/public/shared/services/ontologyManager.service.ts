@@ -21,7 +21,6 @@
  * #L%
  */
 import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
-import { uniqR } from 'angular-ui-router';
 
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 

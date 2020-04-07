@@ -26,6 +26,24 @@ import './treeItem.component.scss';
 
 const template = require('./treeItem.component.html');
 
+/**
+ * @ngdoc component
+ * @name ontology-editor.component:treeItem
+ * 
+ * @description
+ * `treeItem` is a component that creates the content for an individual entry in a tree hierarchy.
+ * 
+ * @param {boolean} hasChildren Whether the item has child elements
+ * @param {boolean} isActive Whether the item is active
+ * @param {Function} onClick A function to be called when the item is clicked
+ * @param {Object} entityInfo The object containing the information to display the label
+ * @param {boolean} isOpened Whether the item is opened
+ * @param {string} path The path to where this item is located in the hierarchy
+ * @param {boolean} underline Whether the label should be underlined
+ * @param {Function} toggleOpen A function to be called when the icon is clicked or the item is double clicked
+ * @param {Object} inProgressCommit The object containing the saved entities
+ * @param {string} iri The IRI of the item to determine if it is saved
+ */
 const treeItemComponent = {
     template,
     bindings: {
@@ -54,8 +72,6 @@ function treeItemComponentCtrl() {
         var ids = unionWith(map(get(dvm.inProgressCommit, 'additions', []), '@id'), map(get(dvm.inProgressCommit, 'deletions', []), '@id'), isEqual);
         return includes(ids, dvm.iri);
     }
-
-    dvm.saved = dvm.isSaved();
 }
 
 export default treeItemComponent;
