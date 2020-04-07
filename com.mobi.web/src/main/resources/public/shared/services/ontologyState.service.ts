@@ -244,6 +244,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         classesAndIndividuals: {},
         classesWithIndividuals: [],
         individualsParentPath: [],
+        propertyIcons: {},
+        noDomainProperties: [],
+        classToChildProperties: {},
         iriList: [],
         selected: {},
         selectedBlankNodes: [],
@@ -874,6 +877,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             cm.getRecordBranches(recordId, catalogId),
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
+            forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
+                listItem.propertyIcons[propertyIRI] = getIcon(ranges);
+            });
+            listItem.noDomainProperties = response[0].noDomainProperties;
+            listItem.classToChildProperties = response[0].classToAssociatedProperties;
             listItem.iriList.push(listItem.ontologyId);
             var responseIriList = get(response[0], 'iriList', {});
             listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
@@ -1057,16 +1065,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var classes = map(listItem.classes.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds));
         var orderedClasses = sortBy(classes, entity => lowerCase(getEntityNameByIndex(entity['@id'], indices)));
 
-        var allProps = concat(
-            map(listItem.dataProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-            map(listItem.objectProperties.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-            map(listItem.annotations.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds)),
-        );
         var orderedProperties = [];
         var path = [];
 
         forEach(orderedClasses, clazz => {
-            var classProps = om.getClassProperties([allProps], clazz['@id']);
+            var classProps = get(listItem.classToChildProperties, clazz['@id'], []);
+
             orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
             path = [listItem.ontologyRecord.recordId, clazz['@id']];
             result.push(merge({}, clazz, {
@@ -1076,7 +1080,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 joinedPath: self.joinPath(path)
             }));
             forEach(orderedProperties, property => {
-                result.push(merge({}, property, {
+                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
                     indent: 1,
                     hasChildren: false,
                     path: concat(path, property['@id']),
@@ -1084,7 +1088,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 }));
             });
         });
-        var noDomainProps = om.getNoDomainProperties([allProps]);
+        var noDomainProps = listItem.noDomainProperties;
+
         var orderedNoDomainProperties = noDomainProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
         if (orderedNoDomainProperties.length) {
             result.push({
@@ -1093,7 +1098,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 set: self.setNoDomainsOpened
             });
             forEach(orderedNoDomainProperties, property => {
-                result.push(merge({}, property, {
+                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
                     indent: 1,
                     hasChildren: false,
                     get: self.getNoDomainsOpened,
@@ -1925,8 +1930,128 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var indices = getIndices(listItem);
         return some(indices, index => iri in index);
     }
+    /**
+     * @ngdoc method
+     * @name handleDeletedClass
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Updates property maps on the current listItem based on the provided deleted class IRI
+     *
+     * @param {string} ClassIRI The iri of the entity to be deleted
+     */
+    self.handleDeletedClass = function(classIRI) {
+        var classProperties = get(self.listItem.classToChildProperties, classIRI, []);
+        delete self.listItem.classToChildProperties[classIRI];
+        classProperties.forEach(propertyIRI => {
+            let hasDomain = false;
+            forEach(self.listItem.classToChildProperties, classArrayItem => {
+               if (classArrayItem.includes(propertyIRI)) {
+                   hasDomain = true;
+                   return false;
+               }
+            });
+            if (!hasDomain){
+                self.listItem.noDomainProperties.push(propertyIRI);
+            }
+        });
+    }
+    /**
+     * @ngdoc method
+     * @name handleDeletedProperty
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Deletes traces of a removed property from the noDomainProperty and classToChild maps
+     *
+     * @param {Object} property The full JSON-LD of a Property entity
+     */
+    self.handleDeletedProperty = function(property) {
+        property[prefixes.rdfs + 'domain'].forEach(domainObj => {
+            removePropertyClassRelationships(property['@id'], domainObj['@id']);
+        });
+    }
+    /**
+     * @ngdoc method
+     * @name handleNewProperty
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * adds property iri to the correct map; either noDomainProperties or classToChildProperties
+     *
+     * @param {Object} property The full JSON-LD of a Property entity
+     */
+    self.handleNewProperty = function(property) {
+        var domainPath = prefixes.rdfs + 'domain';
+        if (property[domainPath] == [] || property[domainPath] == undefined) {
+            self.listItem.noDomainProperties.push(property['@id']);
+        } else {
+            property[domainPath].forEach(domain => {
+                var classIRI = domain['@id'];
+                var path =  self.listItem.classToChildProperties[classIRI];
+                if (!path){
+                    self.listItem.classToChildProperties[classIRI] = [];
+                }
+                self.listItem.classToChildProperties[classIRI].push(property['@id']);
+            });
+        }
+    }
+    /**
+     * @ngdoc method
+     * @name addPropertyToClasses
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     *Updates map appropriately if domains are added to a property
+     *
+     * @param {string} propertyIRI The iri of the property being altered in the hierarchy
+     * @param {string[]} classIris An array of classes that are being added to the property as domains
+     */
+    self.addPropertyToClasses = function(propertyIRI, classIris) {
+        let hasBlankNodeParents = true;
+        classIris.forEach(parentclass => {
+            if (!om.isBlankNodeId(parentclass)) {
+                if (!self.listItem.classToChildProperties[parentclass]) {
+                    self.listItem.classToChildProperties[parentclass] = [];
+                }
+                self.listItem.classToChildProperties[parentclass].push(propertyIRI);
+                hasBlankNodeParents = false;
+            }
+        });
+        if (!hasBlankNodeParents) {
+            pull(self.listItem.noDomainProperties, propertyIRI);
+        }
+    }
+    /**
+     * @ngdoc method
+     * @name removePropertyFromClass
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Handles the removal of the provided class IRI as a domain of the provided property JSON-LD by updating `classToChildProperties` and `noDomainProperties`
+     *
+     * @param {Object} property The full JSON-LD of a Property entity
+     * @param {string} classIri The iri of the class the property is being removed from
+     */
+    self.removePropertyFromClass = function(property, classIri) {
+        removePropertyClassRelationships(property['@id'], classIri);
+        checkForPropertyDomains(property);
+    }
 
     /* Private helper functions */
+    function removePropertyClassRelationships(propertyIRI, classIRI) {
+        if (self.listItem.classToChildProperties[classIRI] && self.listItem.classToChildProperties[classIRI].includes(propertyIRI)) {
+            pull(self.listItem.classToChildProperties[classIRI], propertyIRI);
+            if (!self.listItem.classToChildProperties[classIRI].length) {
+                delete self.listItem.classToChildProperties[classIRI];
+            }
+        }
+    }
+    function checkForPropertyDomains(property) {
+        if (!property[prefixes.rdfs + 'domain']) {
+            self.listItem.noDomainProperties.push(property['@id']);
+        }
+    }
     function existenceCheck(iriObj, iri) {
         return has(iriObj, "['" + iri + "']");
     }
@@ -1973,9 +2098,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             } else {
                 set(entity, 'mobi.anonymous', ontologyId + ' (Anonymous Ontology)');
             }
-            if (om.isProperty(entity)) {
-                setPropertyIcon(entity);
-            } else if (om.isIndividual(entity)) {
+            if (om.isIndividual(entity)) {
                 findValuesMissingDatatypes(entity);
             }
         });
@@ -2004,14 +2127,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function setPropertyIcon(entity) {
-        set(entity, 'mobi.icon', getIcon(entity));
+        var ranges = map((entity[prefixes.rdfs + 'range'] || []), '@id');
+        self.listItem.propertyIcons[entity["@id"]] = getIcon(ranges);
     }
-    function getIcon(property) {
-        var range = get(property, prefixes.rdfs + 'range');
-        var icon = 'fa-square-o';
-        if (range) {
-            if (range.length === 1) {
-                switch(range[0]['@id']) {
+    function getIcon(ranges) {
+        let icon = 'fa-square-o';
+        if (ranges.length) {
+            if (ranges.length === 1) {
+                let value = ranges[0];
+                switch(value) {
                     case prefixes.xsd + 'string':
                     case prefixes.rdf + 'langString':
                         icon = 'fa-font';
@@ -2101,7 +2225,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     ontologyIri: importedOntObj.id
                 }
             }
-            self.updatePropertyIcon(entity);
             set(entity, 'mobi.imported', true);
             set(entity, 'mobi.importedIRI', importedOntObj.ontologyId);
         });

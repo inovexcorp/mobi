@@ -233,6 +233,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteClass = function() {
         var entityIRI = os.getActiveEntityIRI();
         os.removeFromClassIRIs(os.listItem, entityIRI);
+        os.handleDeletedClass(entityIRI);
         pull(os.listItem.classesWithIndividuals, entityIRI);
         os.deleteEntityFromHierarchy(os.listItem.classes, entityIRI);
         os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);
@@ -249,6 +250,9 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteObjectProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
         delete os.listItem.objectProperties.iris[entityIRI];
+        pull(os.listItem.noDomainProperties, entityIRI);
+        delete os.listItem.propertyIcons[entityIRI];
+        os.handleDeletedProperty(os.listItem.selected);
         os.deleteEntityFromHierarchy(os.listItem.objectProperties, entityIRI);
         os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties);
         self.commonDelete(entityIRI, true)
@@ -260,6 +264,9 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.deleteDataTypeProperty = function() {
         var entityIRI = os.getActiveEntityIRI();
         delete os.listItem.dataProperties.iris[entityIRI];
+        pull(os.listItem.noDomainProperties, entityIRI);
+        delete os.listItem.propertyIcons[entityIRI];
+        os.handleDeletedProperty(os.listItem.selected);
         os.deleteEntityFromHierarchy(os.listItem.dataProperties, entityIRI);
         os.listItem.dataProperties.flat = os.flattenHierarchy(os.listItem.dataProperties);
         self.commonDelete(entityIRI, true);
@@ -517,6 +524,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         pm.remove(entityFromFullList, key, index);
 
         if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
+            os.removePropertyFromClass(entityFromFullList, axiomObject['@id']);
             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
         } else if (prefixes.rdfs + 'range' === key) {
             os.updatePropertyIcon(os.listItem.selected);

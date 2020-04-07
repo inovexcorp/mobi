@@ -38,7 +38,8 @@
                     path="entity.path" is-opened="entity.isOpened"
                     underline="entity.underline"
                     toggle-open="dvm.toggleOpen(entity)"
-                    in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
+                    in-progress-commit="dvm.os.listItem.inProgressCommit"
+                    current-iri="entity['@id']"></tree-item>
             </div>
         </div>
         <info-message ng-if="!dvm.filteredHierarchy.length && (dvm.filterText || dvm.dropdownFilterActive)" class="no-match">No entities match your filter.</info-message>
