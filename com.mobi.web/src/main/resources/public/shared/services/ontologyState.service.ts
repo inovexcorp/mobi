@@ -955,7 +955,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             ontologyId,
             names: []
         }, (listItem.entityInfo[iri] || {}));
-        if (!has(info, 'label')) {
+        if (!info.label) {
             info.label = utilService.getBeautifulIRI(iri);
         }
         listItem.entityInfo[iri] = info;
