@@ -46,13 +46,18 @@ describe('Tree Item component', function() {
         scope.isActive = false;
         scope.onClick = jasmine.createSpy('onClick');
         scope.toggleOpen = jasmine.createSpy('toggleOpen');
-        scope.currentEntity = {'@id': 'id'};
+        scope.entityInfo = {
+            label: 'label',
+            names: ['name'],
+            imported: false,
+            ontologyId: 'ontologyId'
+        };
         scope.isOpened = true;
         scope.isBold = false;
         scope.path = '';
         scope.inProgressCommit = {};
         scope.iri = 'iri';
-        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold" in-progress-commit="inProgressCommit" iri="iri"></tree-item>'))(scope);
+        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" entity-info="entityInfo" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold" in-progress-commit="inProgressCommit" current-iri="iri"></tree-item>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('treeItem');
     });
@@ -94,10 +99,10 @@ describe('Tree Item component', function() {
             this.controller.toggleOpen();
             expect(scope.toggleOpen).toHaveBeenCalled();
         });
-        it('currentEntity should be two way bound', function() {
-            this.controller.currentEntity = {id: 'new'};
+        it('entityInfo should be two way bound', function() {
+            this.controller.entityInfo = {label: 'new'};
             scope.$digest();
-            expect(this.controller.currentEntity).toEqual({id: 'new'});
+            expect(this.controller.entityInfo).toEqual({label: 'new'});
         });
         it('isOpened should be two way bound', function() {
             this.controller.isOpened = false;
@@ -127,7 +132,7 @@ describe('Tree Item component', function() {
             expect(this.element.prop('tagName')).toEqual('TREE-ITEM');
             expect(this.element.querySelectorAll('.tree-item').length).toEqual(1);
         });
-        it('depending on whether or not the currentEntity is saved', function() {
+        it('depending on whether or not the currentIri is saved', function() {
             expect(this.element.querySelectorAll('.tree-item.saved').length).toEqual(0);
 
             scope.iri = 'id';
@@ -162,7 +167,7 @@ describe('Tree Item component', function() {
     describe('controller methods', function() {
         describe('isSaved', function() {
             it('check correct value for inProgress.additions is returned', function() {
-                this.controller.iri = 'id';
+                this.controller.currentIri = 'id';
                 this.controller.inProgressCommit = {
                     additions: [{'@id': '12345'}]
                 }
@@ -173,7 +178,7 @@ describe('Tree Item component', function() {
                 expect(this.controller.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.deletions is returned', function() {
-                this.controller.iri = 'id';
+                this.controller.currentIri = 'id';
                 this.controller.inProgressCommit = {
                     deletions: [{'@id': '12345'}]
                 }
@@ -184,7 +189,7 @@ describe('Tree Item component', function() {
                 expect(this.controller.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.additions and inProgress deletions is returned', function() {
-                this.controller.iri = 'id';
+                this.controller.currentIri = 'id';
                 this.controller.inProgressCommit = {
                     additions: [{'@id': '12345'}],
                     deletions: [{'@id': '23456'}]

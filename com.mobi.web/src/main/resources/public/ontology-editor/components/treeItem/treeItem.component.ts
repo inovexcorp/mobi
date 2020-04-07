@@ -29,6 +29,7 @@ const template = require('./treeItem.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:treeItem
+ * @requires shared.service:ontologyStateService
  * 
  * @description
  * `treeItem` is a component that creates the content for an individual entry in a tree hierarchy.
@@ -42,7 +43,7 @@ const template = require('./treeItem.component.html');
  * @param {boolean} underline Whether the label should be underlined
  * @param {Function} toggleOpen A function to be called when the icon is clicked or the item is double clicked
  * @param {Object} inProgressCommit The object containing the saved entities
- * @param {string} iri The IRI of the item to determine if it is saved
+ * @param {string} currentIri The IRI of the item to determine if it is saved
  */
 const treeItemComponent = {
     template,
@@ -56,21 +57,25 @@ const treeItemComponent = {
         underline: '<',
         toggleOpen: '&',
         inProgressCommit: '<',
-        iri: '<'
+        currentIri: '<'
     },
     controllerAs: 'dvm',
     controller: treeItemComponentCtrl
 };
 
-function treeItemComponentCtrl() {
+treeItemComponentCtrl.$inject = ['ontologyStateService'];
+
+function treeItemComponentCtrl(ontologyStateService) {
     var dvm = this;
+    dvm.os = ontologyStateService;
 
     dvm.$onChanges = function() {
         dvm.saved = dvm.isSaved();
     }
+
     dvm.isSaved = function() {
         var ids = unionWith(map(get(dvm.inProgressCommit, 'additions', []), '@id'), map(get(dvm.inProgressCommit, 'deletions', []), '@id'), isEqual);
-        return includes(ids, dvm.iri);
+        return includes(ids, dvm.currentIri);
     }
 }
 

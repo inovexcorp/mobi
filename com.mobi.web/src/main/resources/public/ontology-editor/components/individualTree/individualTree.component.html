@@ -39,7 +39,7 @@
                            path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="node.isOpened"
                            underline="node.underline"
                            in-progress-commit="dvm.os.listItem.inProgressCommit"
-                           iri="node.entityIRI"></tree-item>
+                           current-iri="node.entityIRI"></tree-item>
             </div>
         </div>
         <info-message ng-if="!dvm.filteredHierarchy.length && (dvm.filterText || dvm.dropdownFilterActive)" class="no-match">No entities match your filter.</info-message>

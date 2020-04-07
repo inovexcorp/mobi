@@ -33,13 +33,14 @@
                 </a>
             </div>
             <div ng-if="item.entityIRI" ng-style="{'padding-left': (dvm.indent * item.indent) + 'em'}">
-                <tree-item is-active="dvm.os.getActiveEntityIRI() === item.entityIRI" entity-info="item"
+                <tree-item is-active="dvm.os.getActiveEntityIRI() === item.entityIRI"
+                    entity-info="item.entityInfo"
                     on-click="dvm.clickItem(item.entityIRI)" has-children="item.hasChildren"
                     path="item.path" is-opened="item.isOpened"
                     underline="item.underline"
                     toggle-open="dvm.toggleOpen(item)"
                     in-progress-commit="dvm.os.listItem.inProgressCommit"
-                    iri="item.entityIRI"></tree-item>
+                    current-iri="item.entityIRI"></tree-item>
             </div>
         </div>
         <info-message ng-if="!dvm.filteredHierarchy.length && (dvm.filterText || dvm.dropdownFilterActive)" class="no-match">No entities match your filter.</info-message>

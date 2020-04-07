@@ -56,13 +56,13 @@ describe('Everything Tree component', function() {
         });
 
         scope.hierarchy = [{
-            '@id': 'class1',
+            entityIRI: 'class1',
             hasChildren: true,
             indent: 0,
             path: ['recordId'],
             joinedPath: 'recordId'
         }, {
-            '@id': 'property1',
+            entityIRI: 'property1',
             hasChildren: false,
             indent: 1,
             path: ['recordId', 'class1'],
@@ -72,7 +72,7 @@ describe('Everything Tree component', function() {
             get: jasmine.createSpy('get').and.returnValue(true),
             set: jasmine.createSpy('set')
         }, {
-            '@id': 'property1',
+            entityIRI: 'property1',
             hasChildren: false,
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened,
@@ -154,7 +154,7 @@ describe('Everything Tree component', function() {
             beforeEach(function() {
                 this.filterNode = {
                     indent: 1,
-                    '@id': 'iri',
+                    entityIRI: 'iri',
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri']
                 };
@@ -272,7 +272,7 @@ describe('Everything Tree component', function() {
             beforeEach(function() {
                 ontologyStateSvc.areParentsOpen.and.returnValue(false);
             });
-            describe('when node does not have an @id', function () {
+            describe('when node does not have an entityIRI', function () {
                 beforeEach(function() {
                     this.node = {};
                 });
@@ -293,10 +293,10 @@ describe('Everything Tree component', function() {
                     expect(this.controller.isShown(this.node)).toEqual(true);
                 });
             });
-            describe('when node does have an @id and get returns true', function () {
+            describe('when node does have an entityIRI and get returns true', function () {
                 beforeEach(function() {
                     this.node = {
-                        '@id': 'id',
+                        entityIRI: 'id',
                         get: jasmine.createSpy('get').and.returnValue(true)
                     };
                 });
@@ -320,10 +320,10 @@ describe('Everything Tree component', function() {
                     expect(this.node.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
-            describe('when node does have an @id, does not have a get, indent is greater than 0, and areParentsOpen is true', function () {
+            describe('when node does have an entityIRI, does not have a get, indent is greater than 0, and areParentsOpen is true', function () {
                 beforeEach(function() {
                     this.node = {
-                        '@id': 'id',
+                        entityIRI: 'id',
                         indent: 1,
                         path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri'],
                         joinedPath: 'recordId.otherIRI.andAnotherIRI.iri'
@@ -350,10 +350,10 @@ describe('Everything Tree component', function() {
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(this.node, this.controller.activeTab);
                 });
             });
-            describe('when node does have an @id, does not have a get, indent is 0, and the parent path has a length of 2', function () {
+            describe('when node does have an entityIRI, does not have a get, indent is 0, and the parent path has a length of 2', function () {
                 beforeEach(function() {
                     this.node = {
-                        '@id': 'id',
+                        entityIRI: 'id',
                         indent: 0,
                         path: ['recordId', 'iri']
                     };
@@ -375,9 +375,9 @@ describe('Everything Tree component', function() {
                     expect(this.controller.isShown(this.node)).toEqual(true);
                 });
             });
-            describe('when node has an @id', function () {
+            describe('when node has an entityIRI', function () {
                 beforeEach(function() {
-                    this.node = {'@id': 'id'};
+                    this.node = {entityIRI: 'id'};
                 });
                 describe('and filterText is set and node is parent node without a text match', function() {
                     beforeEach(function() {
@@ -399,7 +399,7 @@ describe('Everything Tree component', function() {
             describe('when node has a get that returns false', function () {
                 beforeEach(function() {
                     this.node = {
-                        '@id': 'id',
+                        entityIRI: 'id',
                         get: jasmine.createSpy('get').and.returnValue(false)
                     }
                 });
@@ -426,7 +426,7 @@ describe('Everything Tree component', function() {
             describe('when node indent is greater than 0 and areParentsOpen is false', function () {
                 beforeEach(function() {
                     this.node = {
-                        '@id': 'id',
+                        entityIRI: 'id',
                         indent: 1,
                         path: ['recordId', 'otherIRI', 'iri'],
                         joinedPath: 'recordId.otherIRI.iri'
@@ -456,7 +456,7 @@ describe('Everything Tree component', function() {
             describe('when node indent is 0 and the parent path does not have a length of 2', function () {
                 beforeEach(function() {
                     this.node = {
-                        '@id': 'id',
+                        entityIRI: 'id',
                         indent: 0,
                         path: ['recordId', 'otherIRI', 'iri']
                     };
