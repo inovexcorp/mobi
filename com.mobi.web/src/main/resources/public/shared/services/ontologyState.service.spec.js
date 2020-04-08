@@ -4768,6 +4768,49 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.canModify()).toEqual(true);
         });
     });
+    describe('isImported should return', function() {
+        describe('false when', function() {
+            it('iri matches listItem.ontologyId', function() {
+                ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+                expect(ontologyStateSvc.isImported('ontologyId')).toBe(false);
+            });
+            it('entityInfo has imported equal to false', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    iri: {
+                        imported: false
+                    }
+                };
+                expect(ontologyStateSvc.isImported('iri')).toBe(false);
+            });
+        });
+        describe('true when', function() {
+            it('entityInfo has imported equal to true', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    iri: {
+                        imported: true
+                    }
+                };
+                expect(ontologyStateSvc.isImported('iri')).toBe(true);
+            });
+            it('entityInfo does not have the iri', function() {
+                expect(ontologyStateSvc.isImported('missing')).toBe(true);
+            });
+        });
+    });
+    describe('isSelectedImported calls the correct method when', function() {
+        it('listItem.selected is defined', function() {
+            ontologyStateSvc.listItem.selected = {'@id': 'selected'};
+            spyOn(ontologyStateSvc, 'isImported').and.returnValue(true);
+            expect(ontologyStateSvc.isSelectedImported()).toBe(true);
+            expect(ontologyStateSvc.isImported).toHaveBeenCalledWith('selected', ontologyStateSvc.listItem);
+        });
+        it('listItem.selected is undefined', function() {
+            delete ontologyStateSvc.listItem.selected;
+            spyOn(ontologyStateSvc, 'isImported').and.returnValue(true);
+            expect(ontologyStateSvc.isSelectedImported()).toBe(true);
+            expect(ontologyStateSvc.isImported).toHaveBeenCalledWith('', ontologyStateSvc.listItem);
+        });
+    });
     describe('handleDeletedClass should add the entity to the proper maps', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.noDomainProperties = [];

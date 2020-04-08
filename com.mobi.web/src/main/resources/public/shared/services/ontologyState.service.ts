@@ -1902,6 +1902,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {boolean} True if the IRI is imported; false otherwise
      */
     self.isImported = function(iri, listItem = self.listItem) {
+        if (iri === listItem.ontologyId) {
+            return false;
+        }
         return get(listItem, "entityInfo['" + iri + "'].imported", true);
     }
     /**
