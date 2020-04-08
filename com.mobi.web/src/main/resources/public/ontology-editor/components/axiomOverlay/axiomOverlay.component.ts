@@ -112,7 +112,7 @@ function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUt
                 values = [bnodeId];
                 forEach(result.jsonld, obj => {
                     dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj);
-                    dvm.os.addEntity(dvm.os.listItem, obj);
+                    dvm.os.addEntity(obj);
                     dvm.os.listItem.selectedBlankNodes.push(obj); 
                 });
                 dvm.os.listItem.blankNodes[bnodeId] = dvm.expression;

@@ -22,7 +22,7 @@
   -->
 <div class="property-values mt-3">
     <div class="prop-header d-flex align-items-baseline clearfix">
-        <p class="text text-truncate m-0" title="{{dvm.property}}">{{dvm.os.getEntityNameByIndex(dvm.property, dvm.os.listItem)}}</p>
+        <p class="text text-truncate m-0" title="{{dvm.property}}">{{dvm.os.getEntityNameByListItem(dvm.property, dvm.os.listItem)}}</p>
         <small class="ml-1 text-muted text-truncate flex-1">&lt;{{dvm.property}}&gt;</small>
     </div>
     <div class="prop-value-container d-flex p-1 ml-3 mt-1" ng-repeat="value in dvm.entity[dvm.property]" disable-animate>

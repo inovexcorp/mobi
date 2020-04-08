@@ -169,7 +169,7 @@ describe('Create Annotation Overlay component', function() {
                 this.controller.create();
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.property, this.controller.language);
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(this.controller.property);
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.property);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.property);
                 expect(ontologyStateSvc.listItem.annotations.iris).toEqual({[this.controller.property['@id']]: ontologyStateSvc.listItem.ontologyId});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.property);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations);

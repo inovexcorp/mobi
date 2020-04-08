@@ -2156,7 +2156,7 @@ describe('Ontology State Service', function() {
         });
     });
     it('removeEntity removes the entity from the iriList and index', function() {
-        ontologyStateSvc.removeEntity(listItem, this.classId);
+        ontologyStateSvc.removeEntity(this.classId, listItem);
         expect(_.has(listItem.entityInfo, this.classId)).toBe(false);
         expect(listItem.iriList).not.toContain(this.classId);
     });
@@ -2281,7 +2281,7 @@ describe('Ontology State Service', function() {
         });
     });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
-        spyOn(ontologyStateSvc, 'getEntityNameByIndex').and.callFake(_.identity);
+        spyOn(ontologyStateSvc, 'getEntityNameByListItem').and.callFake(_.identity);
         var hierarchyInfo = {
             iris: {
                 'Class B': 'ontology',
@@ -2470,7 +2470,7 @@ describe('Ontology State Service', function() {
     it('addEntity adds the entity to the provided ontology and index', function() {
         ontologyManagerSvc.getEntityName.and.returnValue('name');
         ontologyManagerSvc.getEntityNames.and.returnValue(['name']);
-        ontologyStateSvc.addEntity(listItem, this.individualObj);
+        ontologyStateSvc.addEntity(this.individualObj, listItem);
         expect(_.has(listItem.entityInfo, this.individualId)).toBe(true);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(this.individualObj);
         expect(listItem.entityInfo[this.individualId].label).toBe('name');
@@ -2478,9 +2478,9 @@ describe('Ontology State Service', function() {
         expect(listItem.entityInfo[this.individualId].names).toEqual(['name']);
         expect(listItem.entityInfo[this.individualId].ontologyId).toBe(this.ontologyId);
     });
-    describe('getEntityNameByIndex should return the proper value', function() {
+    describe('getEntityNameByListItem should return the proper value', function() {
         it('when the entityIRI is in the entityInfo', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
+            expect(ontologyStateSvc.getEntityNameByListItem('iri', {
                 entityInfo: {
                     iri: {
                         label: 'name'
@@ -2490,7 +2490,7 @@ describe('Ontology State Service', function() {
         });
         it('when the entityIRI has no labels', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
+            expect(ontologyStateSvc.getEntityNameByListItem('iri', {
                 entityInfo: {
                     iri: {
                     }
@@ -2500,12 +2500,12 @@ describe('Ontology State Service', function() {
         });
         it('when the entityIRI is not in the entityInfo', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyStateSvc.getEntityNameByIndex('iri')).toBe('entity name');
+            expect(ontologyStateSvc.getEntityNameByListItem('iri')).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
         it('when the listItem is undefined', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', undefined)).toBe('entity name');
+            expect(ontologyStateSvc.getEntityNameByListItem('iri', undefined)).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
     });

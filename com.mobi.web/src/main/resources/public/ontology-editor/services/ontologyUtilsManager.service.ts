@@ -39,7 +39,9 @@ import {
     truncate,
     some,
     without,
-    unset
+    unset,
+    forOwn,
+    omit
 } from 'lodash';
 
 ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'propertyManagerService', 'prefixes', 'utilService'];
@@ -215,7 +217,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.commonDelete = function(entityIRI, updateEverythingTree = false) {
         return om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
             .then(statements => {
-                os.removeEntity(os.listItem, entityIRI);
+                os.removeEntity(entityIRI);
                 os.addToDeletions(os.listItem.ontologyRecord.recordId, os.listItem.selected);
                 forEach(statements, statement => os.addToDeletions(os.listItem.ontologyRecord.recordId, statement));
                 os.unSelectItem();
@@ -337,7 +339,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
      */
     self.isLinkable = function(id) {
-        return !!os.existsInIndices(id, os.listItem) && !om.isBlankNodeId(id);
+        return !!os.existsInListItem(id, os.listItem) && !om.isBlankNodeId(id);
     }
 
     self.getNameByNode = function(node) {
@@ -398,11 +400,11 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     }
 
     self.getLabelForIRI = function(iri) {
-        return os.getEntityNameByIndex(iri, os.listItem);
+        return os.getEntityNameByListItem(iri, os.listItem);
     }
 
     self.getDropDownText = function(iri) {
-        return os.getEntityNameByIndex(iri, os.listItem);
+        return os.getEntityNameByListItem(iri, os.listItem);
     }
 
     self.checkIri = function(iri) {
@@ -510,11 +512,22 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         };
         os.addToDeletions(os.listItem.ontologyRecord.recordId, json);
         if (om.isBlankNodeId(axiomObject['@id'])) {
-            var removed = os.removeEntity(os.listItem, axiomObject['@id']);
-            forEach(removed, entity => {
-                os.listItem.selectedBlankNodes.splice(os.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === entity['@id']), 1);
-                os.addToDeletions(os.listItem.ontologyRecord.recordId, entity)
-            });
+            function remove(bnodeId) {
+                var entity = os.listItem.selectedBlankNodes.splice(os.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === bnodeId), 1)[0];
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, entity);
+                forOwn(omit(entity, ['@id', '@type']), (value, key) => {
+                    if (om.isBlankNodeId(key)) {
+                        remove(key);
+                    }
+                    forEach(value, valueObj => {
+                        var id = get(valueObj, '@id');
+                        if (om.isBlankNodeId(id)) {
+                            remove(id);
+                        }
+                    });
+                });
+            }
+            remove(axiomObject['@id']);
         }
         pm.remove(os.listItem.selected, key, index);
 

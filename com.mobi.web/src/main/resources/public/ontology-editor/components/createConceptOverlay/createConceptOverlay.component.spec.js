@@ -195,7 +195,7 @@ describe('Create Concept Overlay component', function() {
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
-            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.listItem.concepts.iris).toEqual({[this.controller.concept['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);

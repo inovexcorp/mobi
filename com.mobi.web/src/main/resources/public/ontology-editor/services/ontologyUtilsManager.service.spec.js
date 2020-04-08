@@ -446,7 +446,7 @@ describe('Ontology Utils Manager service', function() {
                     });
                 scope.$apply();
                 expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
-                expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
+                expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith('iri');
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
@@ -461,7 +461,7 @@ describe('Ontology Utils Manager service', function() {
                     });
                 scope.$apply();
                 expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
-                expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
+                expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith('iri');
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
@@ -697,32 +697,32 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     describe('isLinkable returns proper value', function() {
-        it('when existsInIndices exists and isBlankNodeId is false', function() {
-            ontologyStateSvc.existsInIndices.and.returnValue(true);
+        it('when existsInListItem exists and isBlankNodeId is false', function() {
+            ontologyStateSvc.existsInListItem.and.returnValue(true);
             ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(true);
-            expect(ontologyStateSvc.existsInIndices).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.existsInListItem).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
             expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
-        it('when existsInIndices is undefined and isBlankNodeId is false', function() {
-            ontologyStateSvc.existsInIndices.and.returnValue(false);
+        it('when existsInListItem is undefined and isBlankNodeId is false', function() {
+            ontologyStateSvc.existsInListItem.and.returnValue(false);
             ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
-            expect(ontologyStateSvc.existsInIndices).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.existsInListItem).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
             expect(ontologyManagerSvc.isBlankNodeId).not.toHaveBeenCalled();
         });
-        it('when existsInIndices exists and isBlankNodeId is true', function() {
-            ontologyStateSvc.existsInIndices.and.returnValue(true);
+        it('when existsInListItem exists and isBlankNodeId is true', function() {
+            ontologyStateSvc.existsInListItem.and.returnValue(true);
             ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
-            expect(ontologyStateSvc.existsInIndices).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.existsInListItem).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
             expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
-        it('when existsInIndices is undefined and isBlankNodeId is true', function() {
-            ontologyStateSvc.existsInIndices.and.returnValue(false);
+        it('when existsInListItem is undefined and isBlankNodeId is true', function() {
+            ontologyStateSvc.existsInListItem.and.returnValue(false);
             ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
-            expect(ontologyStateSvc.existsInIndices).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.existsInListItem).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
             expect(ontologyManagerSvc.isBlankNodeId).not.toHaveBeenCalled();
         });
     });
@@ -1019,14 +1019,14 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     it('getLabelForIRI should call the proper methods', function() {
-        ontologyStateSvc.getEntityNameByIndex.and.returnValue('result');
+        ontologyStateSvc.getEntityNameByListItem.and.returnValue('result');
         expect(ontologyUtilsManagerSvc.getLabelForIRI('iri')).toEqual('result');
-        expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.getEntityNameByListItem).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
     it('getDropDownText should call the correct methods', function() {
-        ontologyStateSvc.getEntityNameByIndex.and.returnValue('name');
+        ontologyStateSvc.getEntityNameByListItem.and.returnValue('name');
         expect(ontologyUtilsManagerSvc.getDropDownText('iri')).toEqual('name');
-        expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.getEntityNameByListItem).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
     it('setSuperClasses should call the correct methods', function() {
         var classIRIs = ['classId1', 'classId2'];
@@ -1203,8 +1203,7 @@ describe('Ontology Utils Manager service', function() {
         });
         describe('if the selected value is a blank node', function() {
             beforeEach(function() {
-                ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-                ontologyStateSvc.removeEntity.and.returnValue([{'@id': 'id'}]);
+                ontologyManagerSvc.isBlankNodeId.and.callFake(id => id === 'id');
                 this.expected = {'@id': ontologyStateSvc.listItem.selected['@id']};
                 ontologyStateSvc.listItem.selectedBlankNodes = [{'@id': 'id'}];
             });
@@ -1219,9 +1218,7 @@ describe('Ontology Utils Manager service', function() {
                 scope.$apply();
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
                 expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('id');
-                expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'id');
                 expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([]);
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
@@ -1239,16 +1236,48 @@ describe('Ontology Utils Manager service', function() {
                 scope.$apply();
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
                 expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('id');
-                expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'id');
                 expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([]);
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
-            })
+            });
+            it('and the blank node has some transitive blank nodes', function() {
+                ontologyManagerSvc.isBlankNodeId.and.callFake(id => id === 'bnode0' || id === 'bnode1');
+                _.set(ontologyStateSvc.listItem.selected, this.key + '[' + this.index + ']', {'@id': 'bnode0'});
+                ontologyStateSvc.listItem.selectedBlankNodes = [{
+                    '@id': 'bnode0',
+                    propA: [{'@id': 'bnode1'}]
+                }, {
+                    '@id': 'bnode1'
+                }, {
+                    '@id': 'bnode2'
+                }];
+                this.expected[this.key] = [{'@id': 'bnode0'}];
+                ontologyUtilsManagerSvc.removeProperty(this.key, this.index)
+                    .then(response => {
+                        expect(response).toEqual({'@id': 'bnode0'});
+                    });
+                scope.$apply();
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {
+                    '@id': 'bnode0',
+                    propA: [{'@id': 'bnode1'}]
+                });
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'bnode1'});
+                expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'bnode2'});
+                expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('bnode0');
+                expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('bnode1');
+                expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([{'@id': 'bnode2'}]);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.key, this.index);
+                expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
+                expect(ontologyUtilsManagerSvc.updateLabel).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
+            });
         });
     });
 });

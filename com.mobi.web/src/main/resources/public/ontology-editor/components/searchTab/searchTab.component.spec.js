@@ -170,7 +170,7 @@ describe('Search Tab component', function() {
                                 'class2'
                             ]
                         };
-                        ontologyStateSvc.getEntityNameByIndex.and.returnValue('');
+                        ontologyStateSvc.getEntityNameByListItem.and.returnValue('');
                         ontologyManagerSvc.getSearchResults.and.returnValue($q.when(results));
                         this.controller.onKeyup({keyCode: 13});
                         scope.$apply();

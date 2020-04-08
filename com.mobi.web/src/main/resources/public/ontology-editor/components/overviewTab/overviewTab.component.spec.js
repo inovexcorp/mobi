@@ -110,7 +110,7 @@ describe('Overview Tab component', function() {
             expect(historyButton.attr('disabled')).toBeFalsy();
             expect(deleteButton.attr('disabled')).toBeFalsy();
 
-            ontologyStateSvc.isImported.and.returnValue(true);
+            ontologyStateSvc.isSelectedImported.and.returnValue(true);
             scope.$digest();
             expect(historyButton.attr('disabled')).toBeTruthy();
             expect(deleteButton.attr('disabled')).toBeTruthy();

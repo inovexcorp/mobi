@@ -101,7 +101,7 @@ describe('Static IRI component', function() {
             scope.$digest();
             expect(this.element.find('a').length).toEqual(1);
 
-            ontologyStateSvc.isImported.and.returnValue(true);
+            ontologyStateSvc.isSelectedImported.and.returnValue(true);
             scope.$digest();
             expect(this.element.find('a').length).toEqual(0);
         });

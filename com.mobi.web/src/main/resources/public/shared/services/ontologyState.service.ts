@@ -65,7 +65,6 @@ import {
     indexOf,
     identity
 } from 'lodash';
-import ontologyUtilsManagerService from '../../ontology-editor/services/ontologyUtilsManager.service';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
 
@@ -650,7 +649,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * and JSON-LD serialization of the ontology.
      */
     self.getOntology = function(recordId, rdfFormat = 'jsonld') {
-        // TODO: change this so that you don't have to rely on getting the entire ontology RDF back
         var state = self.getOntologyStateByRecordId(recordId);
         if (!isEmpty(state)) {
             var inProgressCommit = emptyInProgressCommit;
@@ -709,7 +707,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *                    inProgressCommit, and JSON-LD serialization of the ontology.
      */
     self.getLatestOntology = function(recordId, rdfFormat = 'jsonld') {
-        // TODO: don't rely on the entire serialized ontology
         var branchId, commitId;
         return cm.getRecordMasterBranch(recordId, catalogId)
             .then(masterBranch => {
@@ -800,7 +797,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Promise} A promise indicating the success or failure of the update.
      */
     self.updateOntology = function(recordId, branchId, commitId, upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
-        // TODO: shouldn't have to rely on the entire ontology's JSON
         var listItem;
         var oldListItem = self.getListItemByRecordId(recordId);
 
@@ -840,7 +836,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Promise} A promise indicating the success or failure of the update.
      */
     self.updateOntologyWithCommit = function(recordId, commitId, tagId = '') {
-        // TODO: update to not need the entire JSON
         var listItem;
         var oldListItem = self.getListItemByRecordId(recordId);
 
@@ -1044,7 +1039,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return result;
     }
     function compareEntityName(s1, s2, listItem) {
-        return lowerCase(self.getEntityNameByIndex(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByIndex(s2, listItem)));
+        return lowerCase(self.getEntityNameByListItem(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByListItem(s2, listItem)));
     }
     function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem, joinedPath) {
         var newPath = path.concat(iri);
@@ -1054,7 +1049,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             hasChildren: parentMap.hasOwnProperty(iri),
             indent,
             path: newPath,
-            entityInfo: getEntityFromListItem(listItem, iri),
+            entityInfo: getEntityInfoFromListItem(listItem, iri),
             joinedPath: newJoinedPath
         };
         result.push(item);
@@ -1103,7 +1098,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     hasChildren: false,
                     path: concat(path, property),
                     joinedPath: self.joinPath(concat(path, property)),
-                    entityInfo: getEntityFromListItem(listItem, property)
+                    entityInfo: getEntityInfoFromListItem(listItem, property)
                 });
             });
         });
@@ -1124,7 +1119,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                     get: self.getNoDomainsOpened,
                     path: [listItem.ontologyRecord.recordId, property],
                     joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property]),
-                    entityInfo: getEntityFromListItem(listItem, property)
+                    entityInfo: getEntityInfoFromListItem(listItem, property)
                 });
             });
         }
@@ -1150,7 +1145,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             forEach(get(listItem, 'classes.flat', []), node => {
                 if (includes(neededClasses, node.entityIRI)) {
                     result.push(merge({}, node, {isClass: true}));
-                    var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
+                    var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByListItem(entityIRI, listItem)));
                     forEach(sortedIndividuals, entityIRI => {
                         addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem, self.joinPath(node.path));
                     });
@@ -1168,10 +1163,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
      * Mobi repository. Adds the new entity to the index.
      *
-     * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
      * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
+     * @param {Object} [listItem=self.listItem] The listItem linked to the ontology you want to add the entity to.
      */
-    self.addEntity = function(listItem, entityJSON) {
+    self.addEntity = function(entityJSON, listItem = self.listItem) {
         listItem.iriList.push(entityJSON['@id']);
         get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
             label: om.getEntityName(entityJSON),
@@ -1189,9 +1184,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * repository along with any referenced blank nodes. Removes the entityIRI and any reference blank nodes
      * from the index.
      *
-     * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
+     * @param {string} entityIRI The IRI of the entity to remove.
+     * @param {Object} [listItem=self.listItem] The listItem linked to the ontology you want to remove the entity from.
      */
-    self.removeEntity = function(listItem, entityIRI) {
+    self.removeEntity = function(entityIRI, listItem = self.listItem) {
         pull(listItem.iriList, entityIRI);
         unset(listItem.entityInfo, entityIRI);
     }
@@ -1224,7 +1220,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Object[]} The JSON-LD of the requested ontology.
      */
     self.getOntologyByRecordId = function(recordId) {
-        // TODO: try to remove the usage of this method
         return get(self.getListItemByRecordId(recordId), 'ontology', []);
     }
     /**
@@ -1242,9 +1237,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
         if (!isEmpty(listItem)) {
-            return getEntityFromListItem(listItem, entityIRI);
+            return getEntityInfoFromListItem(listItem, entityIRI);
         }
-        return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
+        return getEntityInfoFromListItem(self.getListItemByRecordId(recordId), entityIRI);
     }
     /**
      * @ngdoc method
@@ -1262,7 +1257,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * rejects otherwise.
      */
     self.getEntity = function(entityIRI, listItem = self.listItem) {
-        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI);
+        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI)
+            .then(arr => {
+                var entity = find(arr, {'@id': entityIRI});
+                if (om.isIndividual(entity)) {
+                    findValuesMissingDatatypes(entity);
+                }
+                return arr;
+            });
     }
     /**
      * @ngdoc method
@@ -1283,7 +1285,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getEntityNameByIndex
+     * @name getEntityNameByListItem
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1293,7 +1295,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {Object} entity The entity you want the name of.
      * @returns {string} The beautified IRI string.
      */
-    self.getEntityNameByIndex = function(entityIRI, listItem = self.listItem) {
+    self.getEntityNameByListItem = function(entityIRI, listItem = self.listItem) {
         return get(listItem.entityInfo, "['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
     }
     /**
@@ -1334,7 +1336,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @returns {Promise} A promise with the ontology ID or error message.
      */
     self.openOntology = function(recordId, recordTitle) {
-        // TODO: change this to not need the whole ontology object
         var ontologyId;
         return self.getOntology(recordId)
             .then(response => {
@@ -1506,7 +1507,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 if (om.isIndividual(listItem.selected)) {
                     findValuesMissingDatatypes(listItem.selected);
                 }
-
                 if (getUsages && !has(self.getActivePage(), 'usages') && listItem.selected) {
                     self.setEntityUsages(entityIRI);
                 }
@@ -1706,9 +1706,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.joinPath = function(path) {
         return join(path, '.');
     }
-    function isInIris(property, iri) {
-        return has(get(self.listItem, property + '.iris'), iri);
-    }
     self.goTo = function(iri) {
         if (get(self.listItem, 'ontologyId') === iri) {
             commonGoTo('project', iri);
@@ -1770,7 +1767,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getDefaultPrefix = function() {
         var prefixIri = replace(get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + get(self.listItem, 'iriThen', '#');
         if (om.isBlankNodeId(prefixIri)) {
-            var nonBlankNodeId = find(keys(self.listItem.entityInfo), iri => !om.isBlankNodeId(iri));
+            var nonBlankNodeId = head(keys(self.listItem.entityInfo));
             if (nonBlankNodeId) {
                 var split = $filter('splitIRI')(nonBlankNodeId);
                 prefixIri = split.begin + split.then;
@@ -1865,7 +1862,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getFromIndices
+     * @name getFromListItem
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1875,12 +1872,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
      * @returns {Object} The merged index value for the provided IRI from all indices
      */
-    self.getFromIndices = function(iri, listItem = self.listItem) {
+    self.getFromListItem = function(iri, listItem = self.listItem) {
         return get(listItem, 'entityInfo[' + iri + ']', {});
     }
     /**
      * @ngdoc method
-     * @name existsInIndices
+     * @name existsInListItem
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1889,7 +1886,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
      * @returns {boolean} True if the IRI exists in one of the indices; false otherwise
      */
-    self.existsInIndices = function(iri, listItem = self.listItem) {
+    self.existsInListItem = function(iri, listItem = self.listItem) {
         return iri in get(listItem, 'entityInfo', {});
     }
     /**
@@ -1900,12 +1897,26 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @description
      * Determines whether the provided IRI is imported or not. Defaults to true.
      *
-     * @param {string} [iri=self.listItem.selected['@id']] The IRI to search for
+     * @param {string} iri The IRI to search for
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
      * @returns {boolean} True if the IRI is imported; false otherwise
      */
-    self.isImported = function(iri = get(self.listItem.selected, '@id', ''), listItem = self.listItem) {
+    self.isImported = function(iri, listItem = self.listItem) {
         return get(listItem, "entityInfo['" + iri + "'].imported", true);
+    }
+    /**
+     * @ngdoc method
+     * @name isSelectedImported
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether the selected IRI is imported or not. Defaults to true.
+     *
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the selected IRI is imported; false otherwise
+     */
+    self.isSelectedImported = function(listItem = self.listItem) {
+        return self.isImported(get(self.listItem.selected, '@id', ''), listItem);
     }
     /**
      * @ngdoc method
@@ -2060,10 +2071,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title) {
         var listItem = angular.copy(ontologyListItemTemplate);
-        // TODO: figure out how to do this
-        // if (om.isIndividual(entity)) {
-        //     findValuesMissingDatatypes(entity);
-        // }
         listItem.ontologyId = ontologyId;
         listItem.editorTabStates.project.entityIRI = ontologyId;
         listItem.ontologyRecord.title = title;
@@ -2077,7 +2084,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function findValuesMissingDatatypes(object) {
         if (has(object, '@value')) {
             if (!has(object, '@type') && !has(object, '@language')) {
-                object['@type'] = prefixes.xsd + "string";
+                object['@type'] = prefixes.xsd + 'string';
             }
         } else if (isObject(object)) {
             forEach(keys(object), key => {
@@ -2134,7 +2141,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return icon;
     }
-    function getEntityFromListItem(listItem, entityIRI) {
+    function getEntityInfoFromListItem(listItem, entityIRI) {
         if  (!entityIRI || !listItem) {
             return;
         }
@@ -2151,7 +2158,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function addImportedOntologyToListItem(listItem, importedOntObj) {
-        // TODO: figure out where mobi.importedIRI is used
         var importedOntologyListItem = {
             id: importedOntObj.id,
             ontologyId: importedOntObj.ontologyId
@@ -2170,6 +2176,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
         return arr;
+    }
+    function isInIris(property, iri) {
+        return has(get(self.listItem, property + '.iris'), iri);
     }
 }
 

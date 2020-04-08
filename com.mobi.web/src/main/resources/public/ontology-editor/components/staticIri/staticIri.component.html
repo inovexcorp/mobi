@@ -26,6 +26,6 @@
         <strong class="text-muted" ng-class="{'duplicate-iri': dvm.duplicateCheck && dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)}" click-to-copy="dvm.iri">
             <span>{{dvm.iriBegin + dvm.iriThen}}</span><span ng-bind-html="dvm.iriEnd | highlight:dvm.highlightText | trusted"></span>
         </strong>
-        <a ng-if="!dvm.os.isImported() && dvm.os.canModify() && !dvm.readOnly" ng-click="dvm.showIriOverlay()"><i class="fa fa-pencil"></i></a>
+        <a ng-if="!dvm.os.isSelectedImported() && dvm.os.canModify() && !dvm.readOnly" ng-click="dvm.showIriOverlay()"><i class="fa fa-pencil"></i></a>
     </span>
 </div>
