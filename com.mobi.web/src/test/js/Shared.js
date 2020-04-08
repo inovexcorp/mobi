@@ -795,6 +795,7 @@ export function mockOntologyState() {
             this.addPropertyToClasses = jasmine.createSpy('addPropertyToClasses');
             this.handleDeletedClass = jasmine.createSpy('handleDeletedClass');
             this.removePropertyFromClass = jasmine.createSpy('removePropertyFromClass');
+            this.getBnodeIndex = jasmine.createSpy('getBnodeIndex');
         });
     });
 }

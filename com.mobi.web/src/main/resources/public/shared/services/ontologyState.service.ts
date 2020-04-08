@@ -1497,10 +1497,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             .then(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
                 listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
-                var bnodeIndex = {};
-                listItem.selectedBlankNodes.forEach((bnode, idx) => {
-                    bnodeIndex[bnode['@id']] = {position: idx};
-                });
+                var bnodeIndex = self.getBnodeIndex(listItem.selectedBlankNodes);
                 listItem.selectedBlankNodes.forEach(bnode => {
                     listItem.blankNodes[bnode['@id']] = mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
                 });
@@ -1519,6 +1516,23 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, entityIRI, 'select', id)
             .then(bindings => set(page, 'usages', bindings),
                 response => set(page, 'usages', []));
+    }
+    /**
+     * @ngdoc method
+     * @name getBnodeIndex
+     * 
+     * @description
+     * Creates a index for the blank nodes so that the manchester syntax logic will work correctly.
+     * 
+     * @param {Object[]} [selectedBlankNodes=self.listItem.selectedBlankNodes] The JSON-LD array of blank nodes to index
+     * @returns {Object} The index of blank nodes
+     */
+    self.getBnodeIndex = function(selectedBlankNodes = self.listItem.selectedBlankNodes) {
+        var bnodeIndex = {};
+        selectedBlankNodes.forEach((bnode, idx) => {
+            bnodeIndex[bnode['@id']] = {position: idx};
+        });
+        return bnodeIndex;
     }
     /**
      * @ngdoc method
