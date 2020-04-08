@@ -1522,6 +1522,29 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(responseObject.getJSONObject("entityNames"), expectedResults);
     }
 
+    @Test
+    public void testGetOntologyStuffEntityNamesBlankResult() throws Exception {
+        setupTupleQueryMock();
+        JSONObject expectedResults = new JSONObject();
+
+        Model data = getModel("/getOntologyStuffData/ontologyEmptyEntity.ttl");
+
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+            conn.add(data);
+        }
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertTrue(responseObject.containsKey("entityNames"));
+        assertEquals(responseObject.getJSONObject("entityNames"), expectedResults);
+    }
+
     // Test get IRIs in ontology
 
     @Test

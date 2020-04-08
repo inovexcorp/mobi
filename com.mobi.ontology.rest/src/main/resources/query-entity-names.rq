@@ -67,4 +67,4 @@ WHERE {
         FILTER(LANGMATCHES(LANG(?prefNames), "EN"))
         BIND(?prefNames as ?enPrefNames)
     }
-} GROUP BY ?entity
+} GROUP BY ?entity HAVING BOUND(?entity)
