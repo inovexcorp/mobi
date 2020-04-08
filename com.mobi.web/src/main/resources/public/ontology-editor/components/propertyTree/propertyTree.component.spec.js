@@ -225,12 +225,22 @@ describe('Property Tree component', function() {
                     path: ['recordId', 'otherIri'],
                     joinedPath: 'recordId.otherIri'
                 };
-                this.filterNodeFolder = {
+                this.dataFolder = {
                     title: 'Data Properties',
                     get: jasmine.createSpy('get').and.returnValue(true),
                     set: jasmine.createSpy('set')
                 };
-                this.controller.flatPropertyTree = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
+                this.objectFolder = {
+                    title: 'Object Properties',
+                    get: jasmine.createSpy('get').and.returnValue(true),
+                    set: jasmine.createSpy('set')
+                };
+                this.annotationFolder = {
+                    title: 'Annotation Properties',
+                    get: jasmine.createSpy('get').and.returnValue(true),
+                    set: jasmine.createSpy('set')
+                };
+                this.controller.flatPropertyTree = [this.filterNodeParent, this.filterNode, this.dataFolder, this.objectFolder, this.annotationFolder];
                 this.controller.filterText = 'ti';
                 ontologyStateSvc.joinPath.and.callFake((path) => {
                     if (path === this.filterNode.path) {
@@ -239,17 +249,53 @@ describe('Property Tree component', function() {
                         return 'recordId.otherIri';
                     }
                 });
-                
                 ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
                 ontologyStateSvc.joinPath.and.callFake((path) => {
                     return join(path, '.');
                 });
+                ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Data Properties'] = false;
+                ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Object Properties'] = false;
+                ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Annotation Properties'] = false;
             });
             describe('has filter text', function() {
                 describe('and the entity names', function() {
-                    it('have at least one matching text value', function() {
-                        expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
-                        expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
+                    describe('have at least one matching text value', function() {
+                        it('and it is a data property', function() {
+                            ontologyStateSvc.listItem.dataProperties = {
+                                iris: {
+                                    iri: ''
+                                }
+                            };
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Data Properties']).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Object Properties']).toEqual(false);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Annotation Properties']).toEqual(false);
+                        });
+                        it('and it is an object property', function() {
+                            ontologyStateSvc.listItem.objectProperties = {
+                                iris: {
+                                    iri: ''
+                                }
+                            };
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Data Properties']).toEqual(false);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Object Properties']).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Annotation Properties']).toEqual(false);
+                        });
+                        it('and it is an annotation', function() {
+                            ontologyStateSvc.listItem.annotations = {
+                                iris: {
+                                    iri: ''
+                                }
+                            };
+                            expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Data Properties']).toEqual(false);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Object Properties']).toEqual(false);
+                            expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open['Annotation Properties']).toEqual(true);
+                        });
                     });
                     describe('do not have a matching text value', function () {
                         beforeEach(function () {
