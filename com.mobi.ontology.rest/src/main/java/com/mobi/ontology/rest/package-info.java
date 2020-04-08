@@ -1,4 +1,4 @@
-@Version("7.2.4.${build}")
+@Version("7.2.5.${build}")
 
 package com.mobi.ontology.rest;
 

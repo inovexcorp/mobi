@@ -1614,6 +1614,7 @@ public class OntologyRest {
                         .map(Value::stringValue)
                         .forEach(importedOntologyIris::add);
                 OntologyUtils.getImportedOntologies(ontology).stream()
+                        .filter(importedOntology ->  importedOntology.getOntologyId().getOntologyIRI().isPresent())
                         .map(importedOntology -> importedOntology.getOntologyId().getOntologyIRI().get().stringValue())
                         .forEach(importedOntologyIris::add);
                 for (String importedOntologyIri : importedOntologyIris) {

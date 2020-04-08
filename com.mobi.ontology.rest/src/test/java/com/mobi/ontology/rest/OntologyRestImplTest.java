@@ -34,6 +34,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -1508,6 +1509,29 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testGetOntologyStuffEntityNamesNoResults() {
         JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertTrue(responseObject.containsKey("entityNames"));
+        assertEquals(responseObject.getJSONObject("entityNames"), expectedResults);
+    }
+
+    @Test
+    public void testGetOntologyStuffEntityNamesBlankResult() throws Exception {
+        setupTupleQueryMock();
+        JSONObject expectedResults = new JSONObject();
+
+        Model data = getModel("/getOntologyStuffData/ontologyEmptyEntity.ttl");
+
+        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
+            conn.add(data);
+        }
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
@@ -3150,6 +3174,25 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
 
         assertEquals(responseArray.size(), 0);
+    }
+
+    @Test
+    public void testGetIRIsInImportedOntologiesWhenNoOntologyIRI() {
+        OntologyId mockOntologyId = mock(OntologyId.class);
+        when(mockOntologyId.getOntologyIRI()).thenReturn(Optional.empty());
+
+        Ontology mock = mock(Ontology.class);
+        when(mock.getOntologyId()).thenReturn(mockOntologyId);
+
+        Set<Ontology> set = new HashSet<>();
+        set.add(mock);
+        when(ontology.getImportsClosure()).thenReturn(set);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontology-iris")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
     }
 
     // Test get imports closure
