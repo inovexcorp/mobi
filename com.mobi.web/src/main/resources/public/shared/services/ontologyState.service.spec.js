@@ -3680,12 +3680,10 @@ describe('Ontology State Service', function() {
     });
     describe('resetStateTabs should set the correct variables', function() {
         beforeEach(function() {
-            this.newOntologyIRI = 'newId';
             ontologyStateSvc.listItem.editorTabStates = {
                 classes: {entityIRI: 'id', usages: []},
                 project: {entityIRI: 'id', preview: 'test'}
             };
-            ontologyManagerSvc.getOntologyIRI.and.returnValue(this.newOntologyIRI);
             spyOn(ontologyStateSvc, 'setSelected').and.callFake(() => {
                 ontologyStateSvc.listItem.selected = {'@id': 'id'};
                 ontologyStateSvc.listItem.selectedBlankNodes = [{}];
@@ -3693,6 +3691,7 @@ describe('Ontology State Service', function() {
             });
             spyOn(ontologyStateSvc, 'resetSearchTab');
             ontologyStateSvc.listItem.selected = {};
+            ontologyStateSvc.listItem.ontologyId = 'newId';
         });
         it('when getActiveKey is not project or search', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('classes');
@@ -3709,11 +3708,11 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.resetStateTabs();
             scope.$apply();
             expect(ontologyStateSvc.resetSearchTab).toHaveBeenCalled();
-            expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: this.newOntologyIRI, preview: ''});
+            expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: 'newId', preview: ''});
             expect(ontologyStateSvc.listItem.selected).toEqual({'@id': 'id'});
             expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([{}]);
             expect(ontologyStateSvc.listItem.blankNodes).toEqual({bnode: 'bnode'});
-            expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith(this.newOntologyIRI, false, ontologyStateSvc.listItem, 'project');
+            expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('newId', false, ontologyStateSvc.listItem, 'project');
         });
     });
     it('resetSearchTab should reset variables', function() {

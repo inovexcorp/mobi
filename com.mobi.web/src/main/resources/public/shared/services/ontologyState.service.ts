@@ -1546,7 +1546,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 value.searchText = '';
             }
             else {
-                value.entityIRI = om.getOntologyIRI(listItem.ontology);
+                value.entityIRI = listItem.ontologyId;
                 value.preview = '';
             }
             unset(value, 'usages');
