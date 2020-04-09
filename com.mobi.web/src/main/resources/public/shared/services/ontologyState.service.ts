@@ -953,11 +953,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
 
     function addInfo(listItem, iri, ontologyId) {
-        var info = merge({
+        var info = merge((listItem.entityInfo[iri] || {}), {
             imported: listItem.ontologyId !== ontologyId,
-            ontologyId,
-            names: []
-        }, (listItem.entityInfo[iri] || {}));
+            ontologyId
+        });
+        if (!info.names) {
+            info.names = [];
+        }
         if (!info.label) {
             info.label = utilService.getBeautifulIRI(iri);
         }
@@ -1171,7 +1173,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
             label: om.getEntityName(entityJSON),
             names: om.getEntityNames(entityJSON),
-            ontologyId: listItem.ontologyId
+            ontologyId: listItem.ontologyId,
+            imported: false
         }
     }
     /**
