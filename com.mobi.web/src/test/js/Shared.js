@@ -702,7 +702,7 @@ export function mockOntologyState() {
             this.uploadList = [];
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
-            this.getOntology = jasmine.createSpy('getOntology').and.returnValue({});
+            this.getOntologyCatalogDetails = jasmine.createSpy('getOntology').and.returnValue({});
             this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
             this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));

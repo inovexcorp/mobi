@@ -321,8 +321,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} id The identifier for this request
      * @return {Promise} A Promise with an object containing listItem keys.
      */
-    self.getOntologyStuff = function(recordId, branchId, commitId, id = '') {
-        var config = { params: { branchId, commitId } };
+    self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
+        var config = { params: { branchId, commitId, clearCache } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
