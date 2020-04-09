@@ -1,0 +1,14 @@
+PREFIX : <urn:ex:>
+
+CONSTRUCT {
+    %ENTITY% ?p ?o .
+    ?attachedObj ?p2 ?o2 .
+} WHERE {
+    %ENTITY% (:|!:)* ?attachedObj ;
+        ?p ?o .
+
+    OPTIONAL {
+        ?attachedObj ?p2 ?o2 .
+        FILTER(isBlank(?attachedObj))
+    }
+}

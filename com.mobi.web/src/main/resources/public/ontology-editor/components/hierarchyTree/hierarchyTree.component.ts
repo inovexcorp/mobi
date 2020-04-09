@@ -52,7 +52,6 @@ const hierarchyTreeComponent = {
         index: '<',
         updateSearch: '&',
         resetIndex: '&',
-        clickItem: '&?',
         branchId: '<'
     },
     controllerAs: 'dvm',
@@ -114,11 +113,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
             dvm.resetIndex();
         }
     }
-    dvm.click = function(entityIRI) {
-        dvm.os.selectItem(entityIRI);
-        if (dvm.clickItem) {
-            dvm.clickItem({iri: entityIRI});
-        }
+    dvm.clickItem = function(entityIRI) {
+        dvm.os.selectItem(entityIRI, undefined, dvm.os.getActivePage().targetedSpinnerId);
     }
     dvm.onKeyup = function() {
         dvm.filterText = dvm.searchText;

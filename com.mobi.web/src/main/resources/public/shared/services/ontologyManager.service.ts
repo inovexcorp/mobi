@@ -732,6 +732,32 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     /**
      * @ngdoc method
+     * @name getEntityAndBlankNodes
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/ontologies/{recordId}/entities/{entityIRI} endpoint which gets the RDF of the entity with
+     * the specified IRI along with all its linked blank nodes. Accepts the RDF format to return the RDF in, whether to
+     * include imports, and whether to apply the in progress commit.
+     *
+     * @param {string} recordId The record ID of the ontology you want to get from the repository
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository
+     * @param {string} entityIRI The entity IRI of the entity you want to retrieve
+     * @param {string} [format='jsonld'] The RDF format to return the results in
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
+     * @param {string} [id=''] The id to link this REST call to
+     * @return {Promise} A promise containing the RDF of the specified entity and its blank nodes
+     */
+    self.getEntityAndBlankNodes = function(recordId, branchId, commitId, entityId, format = 'jsonld', includeImports = true, applyInProgressCommit = true, id = '')  {
+        var config = { params: { branchId, commitId, format, includeImports, applyInProgressCommit } };
+        var url = prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
+        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => response.data, util.rejectError);
+    }
+    /**
+     * @ngdoc method
      * @name isDeprecated
      * @methodOf shared.service:ontologyManagerService
      *

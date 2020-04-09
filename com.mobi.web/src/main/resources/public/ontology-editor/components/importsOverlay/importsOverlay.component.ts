@@ -127,6 +127,10 @@ function importsOverlayComponentCtrl($http, httpService, $q, REGEX, ontologyStat
     dvm.confirmed = function(urls, tabKey) {
         var importsIRI = prefixes.owl + 'imports';
         var addedUrls = filter(urls, url => pm.addId(os.listItem.selected, importsIRI, url));
+        // TODO: Remove when the full RDF list is removed
+        var entityFromFullList = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, os.listItem.selected['@id']);
+        filter(urls, url => pm.addId(entityFromFullList, importsIRI, url));
+        
         if (addedUrls.length !== urls.length) {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
