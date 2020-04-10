@@ -169,9 +169,6 @@ describe('Imports Block component', function() {
             beforeEach(function() {
                 this.controller.url = 'url';
                 this.controller.listItem.selected[prefixes.owl + 'imports'] = [{'@id': 'url'}];
-                // TODO: Remove when the full RDF list is removed
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-
             });
             describe('when save changes resolves', function() {
                 beforeEach(function() {
@@ -190,10 +187,6 @@ describe('Imports Block component', function() {
                         expect(util.createJson).toHaveBeenCalledWith(this.ontologyId, prefixes.owl + 'imports', {'@id': this.controller.url});
                         expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(this.recordId, jasmine.any(Object));
                         expect(propertyManagerSvc.remove).toHaveBeenCalledWith(this.controller.listItem.selected, prefixes.owl + 'imports', 0);
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, prefixes.owl + 'imports', -1);
-                        
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(this.recordId, {additions: this.controller.listItem.additions, deletions: this.controller.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, this.controller.listItem.upToDate, this.controller.listItem.inProgressCommit);
@@ -207,10 +200,6 @@ describe('Imports Block component', function() {
                         expect(util.createJson).toHaveBeenCalledWith(this.ontologyId, prefixes.owl + 'imports', {'@id': this.controller.url});
                         expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(this.recordId, jasmine.any(Object));
                         expect(propertyManagerSvc.remove).toHaveBeenCalledWith(this.controller.listItem.selected, prefixes.owl + 'imports', 0);
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                        expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, prefixes.owl + 'imports', -1);
-
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(this.recordId, {additions: this.controller.listItem.additions, deletions: this.controller.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, this.controller.listItem.upToDate, this.controller.listItem.inProgressCommit);
@@ -225,10 +214,6 @@ describe('Imports Block component', function() {
                     expect(util.createJson).toHaveBeenCalledWith(this.ontologyId, prefixes.owl + 'imports', {'@id': this.controller.url});
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(this.recordId, jasmine.any(Object));
                     expect(propertyManagerSvc.remove).toHaveBeenCalledWith(this.controller.listItem.selected, prefixes.owl + 'imports', 0);
-                    // TODO: Remove when the full RDF list is removed
-                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, prefixes.owl + 'imports', -1);
-                    
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(this.recordId, {additions: this.controller.listItem.additions, deletions: this.controller.listItem.deletions});
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
@@ -241,10 +226,6 @@ describe('Imports Block component', function() {
                 expect(util.createJson).toHaveBeenCalledWith(this.ontologyId, prefixes.owl + 'imports', {'@id': this.controller.url});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(this.recordId, jasmine.any(Object));
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(this.controller.listItem.selected, prefixes.owl + 'imports', 0);
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith({}, prefixes.owl + 'imports', -1);
-
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(this.recordId, {additions: this.controller.listItem.additions, deletions: this.controller.listItem.deletions});
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');
             });

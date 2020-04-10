@@ -232,7 +232,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             flat: []
         },
         blankNodes: {},
-        index: {},
+        entityInfo: {},
         additions: [],
         deletions: [],
         inProgressCommit: {
@@ -256,7 +256,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             active: false
         }
     };
-    forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate.dataPropertyRange, iri));
+    forEach(pm.defaultDatatypes, iri => addIri(ontologyListItemTemplate, 'dataPropertyRange', iri));
 
     var emptyInProgressCommit = {
         additions: [],
@@ -883,33 +883,34 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             listItem.noDomainProperties = response[0].noDomainProperties;
             listItem.classToChildProperties = response[0].classToAssociatedProperties;
             listItem.iriList.push(listItem.ontologyId);
+            listItem.entityInfo = get(response[0], 'entityNames', {});
             var responseIriList = get(response[0], 'iriList', {});
             listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
-            get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem.annotations.iris, iri, ontologyId));
+            get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem, 'annotations.iris', iri, ontologyId));
             forEach(get(responseIriList, 'classes', []), iri => self.addToClassIRIs(listItem, iri));
-            get(responseIriList, 'dataProperties', []).forEach(iri => addIri(listItem.dataProperties.iris, iri, ontologyId));
-            get(responseIriList, 'objectProperties', []).forEach(iri => addIri(listItem.objectProperties.iris, iri, ontologyId));
-            get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem.individuals.iris, iri, ontologyId));
-            get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem.concepts.iris, iri, ontologyId));
-            get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem.conceptSchemes.iris, iri, ontologyId));
+            get(responseIriList, 'dataProperties', []).forEach(iri => addIri(listItem, 'dataProperties.iris', iri, ontologyId));
+            get(responseIriList, 'objectProperties', []).forEach(iri => addIri(listItem, 'objectProperties.iris', iri, ontologyId));
+            get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, ontologyId));
+            get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, ontologyId));
+            get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, ontologyId));
             listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
-            get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem.dataPropertyRange, iri, ontologyId));
-            forEach(get(response[0], 'importedIRIs'), iriList => {
-                iriList.annotationProperties.forEach(iri => addIri(listItem.annotations.iris, iri, iriList.id));
-                iriList.classes.forEach(iri => self.addToClassIRIs(listItem, iri, iriList.id));
-                iriList.dataProperties.forEach(iri => addIri(listItem.dataProperties.iris, iri, iriList.id));
-                iriList.objectProperties.forEach(iri => addIri(listItem.objectProperties.iris, iri, iriList.id));
-                iriList.namedIndividuals.forEach(iri => addIri(listItem.individuals.iris, iri, iriList.id));
-                iriList.concepts.forEach(iri => addIri(listItem.concepts.iris, iri, iriList.id));
-                iriList.conceptSchemes.forEach(iri => addIri(listItem.conceptSchemes.iris, iri, iriList.id));
-                iriList.datatypes.forEach(iri => addIri(listItem.dataPropertyRange, iri, iriList.id));
-                listItem.iriList.push(iriList['id'])
-                listItem.iriList = union(listItem.iriList, flatten(values(iriList)))
-            });
+            get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem, 'dataPropertyRange', iri, ontologyId));
             forEach(get(response[0], 'importedOntologies'), importedOntObj => {
                 addImportedOntologyToListItem(listItem, importedOntObj);
+            });
+            forEach(get(response[0], 'importedIRIs'), iriList => {
+                iriList.annotationProperties.forEach(iri => addIri(listItem, 'annotations.iris', iri, iriList.id));
+                iriList.classes.forEach(iri => self.addToClassIRIs(listItem, iri, iriList.id));
+                iriList.dataProperties.forEach(iri => addIri(listItem, 'dataProperties.iris', iri, iriList.id));
+                iriList.objectProperties.forEach(iri => addIri(listItem, 'objectProperties.iris', iri, iriList.id));
+                iriList.namedIndividuals.forEach(iri => addIri(listItem, 'individuals.iris', iri, iriList.id));
+                iriList.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, iriList.id));
+                iriList.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
+                iriList.datatypes.forEach(iri => addIri(listItem, 'dataPropertyRange', iri, iriList.id));
+                listItem.iriList.push(iriList['id']);
+                listItem.iriList = union(listItem.iriList, flatten(values(iriList)));
             });
             setHierarchyInfo(listItem.classes, response[0], 'classHierarchy');
             listItem.classes.flat = self.flattenHierarchy(listItem.classes, listItem);
@@ -951,10 +952,26 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }, $q.reject);
     }
 
-    function addIri(iriObj, iri, ontologyId = undefined) {
+    function addInfo(listItem, iri, ontologyId) {
+        var info = merge((listItem.entityInfo[iri] || {}), {
+            imported: listItem.ontologyId !== ontologyId,
+            ontologyId
+        });
+        if (!info.names) {
+            info.names = [];
+        }
+        if (!info.label) {
+            info.label = utilService.getBeautifulIRI(iri);
+        }
+        listItem.entityInfo[iri] = info;
+    }
+
+    function addIri(listItem, path, iri, ontologyId = undefined) {
+        var iriObj = get(listItem, path, {});
         if (!has(iriObj, "['" + iri + "']")) {
             iriObj[iri] = ontologyId || $filter('splitIRI')(iri).begin;
         }
+        addInfo(listItem, iri, ontologyId);
     }
 
     self.getIndividualsParentPath = function(listItem) {
@@ -988,11 +1005,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem.derivedConceptSchemes = get(response, 'derivedConceptSchemes', []);
                 listItem.derivedSemanticRelations = get(response, 'derivedSemanticRelations', []);
                 listItem.concepts.iris = {};
-                response.concepts.forEach(iri => addIri(listItem.concepts.iris, iri, listItem.ontologyId));
+                response.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
                 setHierarchyInfo(listItem.concepts, response, 'conceptHierarchy');
                 listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
                 listItem.conceptSchemes.iris = {};
-                response.conceptSchemes.forEach(iri => addIri(listItem.conceptSchemes.iris, iri, listItem.ontologyId));
+                response.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
                 setHierarchyInfo(listItem.conceptSchemes, response, 'conceptSchemeHierarchy');
                 listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
                 unset(listItem.editorTabStates.concepts, 'entityIRI');
@@ -1024,7 +1041,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return result;
     }
     function compareEntityName(s1, s2, listItem) {
-        return lowerCase(self.getEntityNameByIndex(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByIndex(s2, listItem)));
+        return lowerCase(self.getEntityNameByListItem(s1, listItem)).localeCompare(lowerCase(self.getEntityNameByListItem(s2, listItem)));
     }
     function addNodeToFlatHierarchy(iri, result, indent, path, parentMap, listItem, joinedPath) {
         var newPath = path.concat(iri);
@@ -1034,7 +1051,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             hasChildren: parentMap.hasOwnProperty(iri),
             indent,
             path: newPath,
-            entity: getEntityFromListItem(listItem, iri),
+            entityInfo: getEntityInfoFromListItem(listItem, iri),
             joinedPath: newJoinedPath
         };
         result.push(item);
@@ -1057,35 +1074,34 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.createFlatEverythingTree = function(listItem = self.listItem) {
         var result = [];
-        var ontology = get(listItem, 'ontology');
-        var ontologyId = get(listItem, 'ontologyId');
-        var importedOntologyListItems = get(listItem, 'importedOntologies', []);
-        var importedOntologyIds = get(listItem, 'importedOntologyIds');
-        var indices = getIndices(listItem);
-        var classes = map(listItem.classes.iris, (val, entityIRI) => getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds));
-        var orderedClasses = sortBy(classes, entity => lowerCase(getEntityNameByIndex(entity['@id'], indices)));
-
+        var classes = map(listItem.classes.iris, (val, entityIRI) => ({
+            entityIRI,
+            entityInfo: listItem.entityInfo[entityIRI]
+        }));
+        var orderedClasses = sortBy(classes, item => lowerCase(item.entityInfo.label));
         var orderedProperties = [];
         var path = [];
 
-        forEach(orderedClasses, clazz => {
-            var classProps = get(listItem.classToChildProperties, clazz['@id'], []);
+        forEach(orderedClasses, item => {
+            var classProps = get(listItem.classToChildProperties, item.entityIRI, []);
 
             orderedProperties = classProps.sort((s1, s2) => compareEntityName(s1, s2, listItem));
-            path = [listItem.ontologyRecord.recordId, clazz['@id']];
-            result.push(merge({}, clazz, {
+            path = [listItem.ontologyRecord.recordId, item.entityIRI];
+            result.push(merge({}, item, {
                 indent: 0,
                 hasChildren: !!orderedProperties.length,
                 path,
                 joinedPath: self.joinPath(path)
             }));
             forEach(orderedProperties, property => {
-                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
+                result.push({
+                    entityIRI: property,
                     indent: 1,
                     hasChildren: false,
-                    path: concat(path, property['@id']),
-                    joinedPath: self.joinPath(concat(path, property['@id']))
-                }));
+                    path: concat(path, property),
+                    joinedPath: self.joinPath(concat(path, property)),
+                    entityInfo: getEntityInfoFromListItem(listItem, property)
+                });
             });
         });
         var noDomainProps = listItem.noDomainProperties;
@@ -1098,13 +1114,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 set: self.setNoDomainsOpened
             });
             forEach(orderedNoDomainProperties, property => {
-                result.push(merge({}, getEntityFromIndices(property, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds), {
+                result.push({
+                    entityIRI: property,
                     indent: 1,
                     hasChildren: false,
                     get: self.getNoDomainsOpened,
-                    path: [listItem.ontologyRecord.recordId, property['@id']],
-                    joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property['@id']])
-                }));
+                    path: [listItem.ontologyRecord.recordId, property],
+                    joinedPath: self.joinPath([listItem.ontologyRecord.recordId, property]),
+                    entityInfo: getEntityInfoFromListItem(listItem, property)
+                });
             });
         }
         return result;
@@ -1129,7 +1147,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             forEach(get(listItem, 'classes.flat', []), node => {
                 if (includes(neededClasses, node.entityIRI)) {
                     result.push(merge({}, node, {isClass: true}));
-                    var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
+                    var sortedIndividuals = sortBy(get(classesWithIndividuals, node.entityIRI), entityIRI => lowerCase(self.getEntityNameByListItem(entityIRI, listItem)));
                     forEach(sortedIndividuals, entityIRI => {
                         addNodeToFlatHierarchy(entityIRI, result, node.indent + 1, node.path, {}, listItem, self.joinPath(node.path));
                     });
@@ -1147,17 +1165,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
      * Mobi repository. Adds the new entity to the index.
      *
-     * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
      * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
+     * @param {Object} [listItem=self.listItem] The listItem linked to the ontology you want to add the entity to.
      */
-    self.addEntity = function(listItem, entityJSON) {
-        listItem.ontology.push(entityJSON);
+    self.addEntity = function(entityJSON, listItem = self.listItem) {
         listItem.iriList.push(entityJSON['@id']);
-        get(listItem, 'index', {})[entityJSON['@id']] = {
-            position: listItem.ontology.length - 1,
+        get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
             label: om.getEntityName(entityJSON),
-            ontologyIri: listItem.ontologyId
-        }         
+            names: om.getEntityNames(entityJSON),
+            ontologyId: listItem.ontologyId,
+            imported: false
+        }
     }
     /**
      * @ngdoc method
@@ -1169,50 +1187,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * repository along with any referenced blank nodes. Removes the entityIRI and any reference blank nodes
      * from the index.
      *
-     * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
-     * @returns {Object[]} The list of JSON-LD entities that were removed.
+     * @param {string} entityIRI The IRI of the entity to remove.
+     * @param {Object} [listItem=self.listItem] The listItem linked to the ontology you want to remove the entity from.
      */
-    self.removeEntity = function(listItem, entityIRI) {
-        var toRemove = [];
-        var toTest = [];
-
-        // Helper method
-        function addToLists(iri) {
-            var newObj = {entityIRI: iri, position: get(listItem.index, "['" + iri + "'].position")};
-            toRemove.push(newObj);
-            toTest.push(newObj);
-        }
-        addToLists(entityIRI);
-        while (toTest.length) {
-            var obj = toTest.pop();
-            var entity = listItem.ontology[obj.position];
-            forOwn(omit(entity, ['@id', '@type']), (value, key) => {
-                if (om.isBlankNodeId(key)) {
-                    addToLists(key);
-                }
-                forEach(value, valueObj => {
-                    var id = get(valueObj, '@id');
-                    if (om.isBlankNodeId(id)) {
-                        addToLists(id);
-                    }
-                });
-            });
-        }
-        var removed = pullAt(listItem.ontology, map(toRemove, 'position'));
-        forEach(toRemove, obj => {
-            var newPosition = get(listItem.index, "['" + obj.entityIRI + "'].position");
-            pull(listItem.iriList, obj.entityIRI);
-            unset(listItem.index, obj.entityIRI);
-            if (om.isBlankNodeId(obj.entityIRI)) {
-                delete listItem.blankNodes[obj.entityIRI];
-            }
-            forOwn(listItem.index, (value, key) => {
-                if (value.position > newPosition) {
-                    listItem.index[key].position = value.position - 1;
-                }
-            });
-        });
-        return removed;
+    self.removeEntity = function(entityIRI, listItem = self.listItem) {
+        pull(listItem.iriList, entityIRI);
+        unset(listItem.entityInfo, entityIRI);
     }
     /**
      * @ngdoc method
@@ -1260,9 +1240,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
         if (!isEmpty(listItem)) {
-            return getEntityFromListItem(listItem, entityIRI);
+            return getEntityInfoFromListItem(listItem, entityIRI);
         }
-        return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
+        return getEntityInfoFromListItem(self.getListItemByRecordId(recordId), entityIRI);
     }
     /**
      * @ngdoc method
@@ -1280,7 +1260,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * rejects otherwise.
      */
     self.getEntity = function(entityIRI, listItem = self.listItem) {
-        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI);
+        return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI)
+            .then(arr => {
+                var entity = find(arr, {'@id': entityIRI});
+                if (om.isIndividual(entity)) {
+                    findValuesMissingDatatypes(entity);
+                }
+                return arr;
+            });
     }
     /**
      * @ngdoc method
@@ -1301,7 +1288,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getEntityNameByIndex
+     * @name getEntityNameByListItem
      * @methodOf shared.service:ontologyStateService
      *
      * @description
@@ -1311,15 +1298,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @param {Object} entity The entity you want the name of.
      * @returns {string} The beautified IRI string.
      */
-    self.getEntityNameByIndex = function(entityIRI, listItem = self.listItem) {
-        return getEntityNameByIndex(entityIRI, getIndices(listItem));
-    }
-    function getEntityNameByIndex(entityIRI, indices) {
-        var entity = result(findLast(indices, index => {
-            var entity = get(index, entityIRI);
-                return (entity !== null && has(entity, 'label'));
-        }), entityIRI);
-        return !entity ? utilService.getBeautifulIRI(entityIRI) : entity.label;
+    self.getEntityNameByListItem = function(entityIRI, listItem = self.listItem) {
+        return get(listItem.entityInfo, "['" + entityIRI + "'].label", utilService.getBeautifulIRI(entityIRI));
     }
     /**
      * @ngdoc method
@@ -1515,30 +1495,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         if (spinnerId) {
             httpService.cancel(spinnerId);
         }
-        // TODO: Add targeted spinner for
         return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI, undefined, undefined, undefined, spinnerId)
             .then(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
                 listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
-                var bnodeIndex = {};
-                listItem.selectedBlankNodes.forEach((bnode, idx) => {
-                    bnodeIndex[bnode['@id']] = {position: idx};
-                });
+                var bnodeIndex = self.getBnodeIndex(listItem.selectedBlankNodes);
                 listItem.selectedBlankNodes.forEach(bnode => {
                     listItem.blankNodes[bnode['@id']] = mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex);
                 });
                 if (om.isIndividual(listItem.selected)) {
                     findValuesMissingDatatypes(listItem.selected);
                 }
-                
-                // TODO: Remove these once these properties are in their own maps
-                self.updatePropertyIcon(listItem.selected);
-                var importedOntObj = find(listItem.importedOntologies, ont => entityIRI in ont.index);
-                if (importedOntObj) {
-                    set(listItem.selected, 'mobi.imported', true);
-                    set(listItem.selected, 'mobi.importedIRI', importedOntObj.ontologyId);
-                }
-
                 if (getUsages && !has(self.getActivePage(), 'usages') && listItem.selected) {
                     self.setEntityUsages(entityIRI);
                 }
@@ -1551,6 +1518,23 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, entityIRI, 'select', id)
             .then(bindings => set(page, 'usages', bindings),
                 response => set(page, 'usages', []));
+    }
+    /**
+     * @ngdoc method
+     * @name getBnodeIndex
+     * 
+     * @description
+     * Creates a index for the blank nodes so that the manchester syntax logic will work correctly.
+     * 
+     * @param {Object[]} [selectedBlankNodes=self.listItem.selectedBlankNodes] The JSON-LD array of blank nodes to index
+     * @returns {Object} The index of blank nodes
+     */
+    self.getBnodeIndex = function(selectedBlankNodes = self.listItem.selectedBlankNodes) {
+        var bnodeIndex = {};
+        selectedBlankNodes.forEach((bnode, idx) => {
+            bnodeIndex[bnode['@id']] = {position: idx};
+        });
+        return bnodeIndex;
     }
     /**
      * @ngdoc method
@@ -1578,7 +1562,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 value.searchText = '';
             }
             else {
-                value.entityIRI = om.getOntologyIRI(listItem.ontology);
+                value.entityIRI = listItem.ontologyId;
                 value.preview = '';
             }
             unset(value, 'usages');
@@ -1739,18 +1723,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return join(path, '.');
     }
     self.goTo = function(iri) {
-        var entity = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, iri);
-        if (om.isOntology(entity)) {
+        if (get(self.listItem, 'ontologyId') === iri) {
             commonGoTo('project', iri);
-        } else if (om.isClass(entity)) {
+        } else if (isInIris('classes', iri)) {
             commonGoTo('classes', iri, self.listItem.classes.flat);
             self.listItem.editorTabStates.classes.index = getScrollIndex(iri, self.listItem.classes.flat);
-        } else if (om.isDataTypeProperty(entity)) {
+        } else if (isInIris('dataProperties', iri)) {
             commonGoTo('properties', iri, self.listItem.dataProperties.flat);
             self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
             // Index is incremented by 1 to account for Data Property folder
             self.listItem.editorTabStates.properties.index = getScrollIndex(iri, self.listItem.dataProperties.flat, true, self.getDataPropertiesOpened) + 1;
-        } else if (om.isObjectProperty(entity)) {
+        } else if (isInIris('objectProperties', iri)) {
             commonGoTo('properties', iri, self.listItem.objectProperties.flat);
             self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
 
@@ -1761,7 +1744,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             // Index is incremented by 1 to account for Object Property folder
             self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.objectProperties.flat, true, self.getObjectPropertiesOpened) + 1;
-        } else if (om.isAnnotation(entity)) {
+        } else if (isInIris('annotations', iri)) {
             commonGoTo('properties', iri, self.listItem.annotations.flat);
             self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
 
@@ -1776,13 +1759,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             // Index is incremented by 1 to account for Annotation Property folder
             self.listItem.editorTabStates.properties.index = index + getScrollIndex(iri, self.listItem.annotations.flat, true, self.getAnnotationPropertiesOpened) + 1;
-        } else if (om.isConcept(entity, self.listItem.derivedConcepts)) {
+        } else if (isInIris('concepts', iri)) {
             commonGoTo('concepts', iri, self.listItem.concepts.flat);
             self.listItem.editorTabStates.concepts.index = getScrollIndex(iri, self.listItem.concepts.flat);
-        } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
+        } else if (isInIris('conceptSchemes', iri)) {
             commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
             self.listItem.editorTabStates.schemes.index = getScrollIndex(iri, self.listItem.conceptSchemes.flat);
-        } else if (filter(self.listItem.individuals.flat, {entityIRI: iri}).length != 0) {
+        } else if (isInIris('individuals', iri)) {
             commonGoTo('individuals', iri, self.listItem.individuals.flat);
             self.listItem.editorTabStates.individuals.index = getScrollIndex(iri, self.listItem.individuals.flat);
         }
@@ -1800,7 +1783,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getDefaultPrefix = function() {
         var prefixIri = replace(get(self.listItem, 'iriBegin', self.listItem.ontologyId), '#', '/') + get(self.listItem, 'iriThen', '#');
         if (om.isBlankNodeId(prefixIri)) {
-            var nonBlankNodeId = find(keys(self.listItem.index), iri => !om.isBlankNodeId(iri));
+            var nonBlankNodeId = head(keys(self.listItem.entityInfo));
             if (nonBlankNodeId) {
                 var split = $filter('splitIRI')(nonBlankNodeId);
                 prefixIri = split.begin + split.then;
@@ -1826,6 +1809,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem.isVocabulary = true;
             }
             listItem.classes.iris[iri] = ontologyId || listItem.ontologyId;
+            addInfo(listItem, iri, ontologyId || listItem.ontologyId);
         }
     }
     self.removeFromClassIRIs = function(listItem, iri) {
@@ -1894,41 +1878,63 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getFromIndices
+     * @name getFromListItem
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Retrieves the combined index value for the provided IRI from the defined ontology index and all the imported
-     * ontology indices inside the provided `listItem`.
+     * Retrieves the entityInfo for the provided IRI from the provided `listItem`.
      *
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
-     * @returns {Object} The merged index value for the provided IRI from all indices
+     * @returns {Object} The entityInfo for the provided IRI
      */
-    self.getFromIndices = function(iri, listItem = self.listItem) {
-        var indices = getIndices(listItem);
-        var found = [];
-        forEach(indices, index => {
-            var entity = index[iri];
-            if (entity) {
-                found.push(entity);
-            }
-        });
-        return merge.apply({}, found);
+    self.getFromListItem = function(iri, listItem = self.listItem) {
+        return get(listItem, 'entityInfo[' + iri + ']', {});
     }
     /**
      * @ngdoc method
-     * @name existsInIndices
+     * @name existsInListItem
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Determines whether the provided IRI exists in any index within the provided `listItem`. Returns a boolean.
+     * Determines whether the provided IRI exists in the entityInfo for the provided `listItem`. Returns a boolean.
      *
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
-     * @returns {boolean} True if the IRI exists in one of the indices; false otherwise
+     * @returns {boolean} True if the IRI exists in the entityInfo object; false otherwise
      */
-    self.existsInIndices = function(iri, listItem = self.listItem) {
-        var indices = getIndices(listItem);
-        return some(indices, index => iri in index);
+    self.existsInListItem = function(iri, listItem = self.listItem) {
+        return iri in get(listItem, 'entityInfo', {});
+    }
+    /**
+     * @ngdoc method
+     * @name isImported
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether the provided IRI is imported or not. Defaults to true.
+     *
+     * @param {string} iri The IRI to search for
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the IRI is imported; false otherwise
+     */
+    self.isImported = function(iri, listItem = self.listItem) {
+        if (iri === listItem.ontologyId) {
+            return false;
+        }
+        return get(listItem, "entityInfo['" + iri + "'].imported", true);
+    }
+    /**
+     * @ngdoc method
+     * @name isSelectedImported
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Determines whether the selected IRI is imported or not. Defaults to true.
+     *
+     * @param {string} [listItem=self.listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the selected IRI is imported; false otherwise
+     */
+    self.isSelectedImported = function(listItem = self.listItem) {
+        return self.isImported(get(self.listItem.selected, '@id', ''), listItem);
     }
     /**
      * @ngdoc method
@@ -2055,9 +2061,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function existenceCheck(iriObj, iri) {
         return has(iriObj, "['" + iri + "']");
     }
-    function getIndices(listItem) {
-        return concat([get(listItem, 'index')], map(get(listItem, 'importedOntologies'), 'index'));
-    }
     function commonGoTo(key, iri, flatHierarchy = undefined) {
         self.setActivePage(key);
         self.selectItem(iri, undefined, self.getActivePage().vocabularySpinnerId);
@@ -2086,31 +2089,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title) {
         var listItem = angular.copy(ontologyListItemTemplate);
-        var blankNodes = {};
-        var index = {};
-        forEach(ontology, (entity, i) => {
-            if (has(entity, '@id')) {
-                index[entity['@id']] = {
-                    position: i,
-                    label: om.getEntityName(entity),
-                    ontologyIri: ontologyId
-                }
-            } else {
-                set(entity, 'mobi.anonymous', ontologyId + ' (Anonymous Ontology)');
-            }
-            if (om.isIndividual(entity)) {
-                findValuesMissingDatatypes(entity);
-            }
-        });
         listItem.ontologyId = ontologyId;
         listItem.editorTabStates.project.entityIRI = ontologyId;
         listItem.ontologyRecord.title = title;
         listItem.ontologyRecord.recordId = recordId;
         listItem.ontologyRecord.branchId = branchId;
         listItem.ontologyRecord.commitId = commitId;
-        listItem.ontology = ontology;
-        listItem.blankNodes = blankNodes;
-        listItem.index = index;
         listItem.inProgressCommit = inProgressCommit;
         listItem.upToDate = upToDate;
         return listItem;
@@ -2118,7 +2102,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function findValuesMissingDatatypes(object) {
         if (has(object, '@value')) {
             if (!has(object, '@type') && !has(object, '@language')) {
-                object['@type'] = prefixes.xsd + "string";
+                object['@type'] = prefixes.xsd + 'string';
             }
         } else if (isObject(object)) {
             forEach(keys(object), key => {
@@ -2175,35 +2159,11 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         return icon;
     }
-    function getEntityFromListItem(listItem, entityIRI) {
+    function getEntityInfoFromListItem(listItem, entityIRI) {
         if  (!entityIRI || !listItem) {
             return;
         }
-        var ontology = listItem.ontology;
-        var ontologyId = listItem.ontologyId;
-        var importedOntologyListItems = listItem.importedOntologies || [];
-        var importedOntologyIds = listItem.importedOntologyIds;
-        var indices = getIndices(listItem);
-        return getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds);
-    }
-    function getEntityFromIndices(entityIRI, indices, ontology, ontologyId, importedOntologyListItems, importedOntologyIds) {
-        var entities = [];
-        forEach(indices, index => {
-            var entity = get(index, entityIRI);
-            if (entity && has(entity, 'position') && has(entity, 'ontologyIri')) {
-                if (entity.ontologyIri === ontologyId) {
-                    entities.push(ontology[entity.position]);
-                } else {
-                    entities.push(importedOntologyListItems[indexOf(importedOntologyIds, entity.ontologyIri)].ontology[entity.position]);
-                }
-            }
-        });
-        var combinedEntity = merge.apply({}, entities);
-        if (isEmpty(combinedEntity)) {
-            return;
-        } else {
-            return combinedEntity;
-        }
+        return get(listItem.entityInfo, entityIRI, undefined);
     }
     function addToInProgress(recordId, json, prop) {
         var listItem = self.getListItemByRecordId(recordId);
@@ -2216,23 +2176,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
     }
     function addImportedOntologyToListItem(listItem, importedOntObj) {
-        var index = {};
-        forEach(importedOntObj.ontology, (entity, i) => {
-            if (has(entity, '@id')) {
-                index[entity['@id']] = {
-                    position: i,
-                    label: om.getEntityName(entity),
-                    ontologyIri: importedOntObj.id
-                }
-            }
-            set(entity, 'mobi.imported', true);
-            set(entity, 'mobi.importedIRI', importedOntObj.ontologyId);
-        });
         var importedOntologyListItem = {
             id: importedOntObj.id,
-            ontologyId: importedOntObj.ontologyId,
-            ontology: importedOntObj.ontology,
-            index,
+            ontologyId: importedOntObj.ontologyId
         };
         listItem.importedOntologyIds.push(importedOntObj.id);
         listItem.importedOntologies.push(importedOntologyListItem);
@@ -2248,6 +2194,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         }
         arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
         return arr;
+    }
+    function isInIris(property, iri) {
+        return has(get(self.listItem, property + '.iris'), iri);
     }
 }
 

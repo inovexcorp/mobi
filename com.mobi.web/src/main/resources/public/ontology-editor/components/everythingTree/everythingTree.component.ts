@@ -74,10 +74,8 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         flag: false, 
         filter: node => {
             var match = true;
-            if (node.hasOwnProperty('mobi')) {
-                if (node.mobi.imported) {
-                    match = false;
-                }
+            if (dvm.os.isImported(node.entityIRI)) {
+                match = false;
             }
             return match;
         }
@@ -121,17 +119,17 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = false;
         // Check all possible name fields and entity fields to see if the value matches the search text
-        some(dvm.om.entityNameProps, key => some(node[key], value => {
-            if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+        some(node.entityInfo.names, name => {
+            if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
-        }));
+        });
 
         if (searchMatch) {
             return true;
         }
 
         // Check if beautified entity id matches search text
-        if (util.getBeautifulIRI(node['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        if (util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(dvm.filterText.toLowerCase())) {
             searchMatch = true;
         }
         
@@ -191,7 +189,7 @@ function everythingTreeComponentCtrl(ontologyManagerService, ontologyStateServic
         return true;
     }
     dvm.isShown = function(node) {
-        var displayNode = !has(node, '@id') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node, dvm.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
+        var displayNode = !has(node, 'entityIRI') || (has(node, 'get') && node.get(dvm.os.listItem.ontologyRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && dvm.os.areParentsOpen(node, dvm.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
         if ((dvm.dropdownFilterActive || dvm.filterText) && node['title']) {
             var position = findIndex(dvm.preFilteredHierarchy, 'title');
             if (position === dvm.preFilteredHierarchy.length - 1) {

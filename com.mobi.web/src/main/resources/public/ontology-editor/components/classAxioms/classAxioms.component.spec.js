@@ -92,10 +92,7 @@ describe('Class Axioms component', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.selected = {
-                '@id': 'classId',
-                mobi: {
-                    originalIRI: ''
-                }
+                '@id': 'classId'
             };
         });
         it('should get the list of object property axioms', function() {

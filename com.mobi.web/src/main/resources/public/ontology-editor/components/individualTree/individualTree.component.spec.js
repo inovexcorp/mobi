@@ -149,11 +149,6 @@ describe('Individual Tree component', function() {
             this.controller.clickItem('iri');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, ontologyStateSvc.listItem.editorTabStates.individuals.targetedSpinnerId);
         });
-        it('isImported returns the correct value', function() {
-            ontologyStateSvc.listItem.index = {iri: {}};
-            expect(this.controller.isImported('iri')).toEqual(false);
-            expect(this.controller.isImported('other')).toEqual(true);
-        });
         it('toggleOpen should set the correct values', function() {
             spyOn(this.controller, 'isShown').and.returnValue(false);
             var node = {isOpened: false, path: ['a', 'b'], joinedPath: 'a.b'};
@@ -196,16 +191,14 @@ describe('Individual Tree component', function() {
         });
         describe('searchFilter', function() {
             beforeEach(function() {
-                this.filterEntity = {
-                    '@id': 'urn:id',
-                    [prefixes.dcterms + 'title']: [{'@value': 'Title'}]
-                };
                 this.filterNode = {
                     indent: 1,
                     entityIRI: 'iri',
                     hasChildren: false,
                     path: ['recordId', 'otherIri', 'iri'],
-                    entity: this.filterEntity
+                    entityInfo: {
+                        names: ['Title']
+                    }
                 };
                 this.filterNodeParent = {
                     indent: 0,
@@ -235,19 +228,17 @@ describe('Individual Tree component', function() {
                 ontologyStateSvc.joinPath.and.callFake((path) => join(path, '.'));
             });
             describe('has filter text', function() {
-                describe('and the entity has matching search properties', function() {
-                    it('that have at least one matching text value', function() {
+                describe('and the entity names', function() {
+                    it('have at least one matching text value', function() {
                         expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
-                        expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);                    
+                        expect(ontologyStateSvc.listItem.editorTabStates[this.controller.activeTab].open[this.filterNode.path[0] + '.' + this.filterNode.path[1]]).toEqual(true);
                     });
-                    describe('that do not have a matching text value', function () {
+                    describe('do not have a matching text value', function () {
                         beforeEach(function () {
-                            this.filterNode.entity = {
-                                '@id': 'urn:title',
-                            };
-                            utilSvc.getBeautifulIRI.and.returnValue('id');
+                            this.filterNode.entityInfo.names = [];
                         });
-                        it('and does not have a matching entity local name and the node has no children', function () {
+                        it('and does not have a matching entity local name', function () {
+                            utilSvc.getBeautifulIRI.and.returnValue('id');
                             expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
                         });
                         it('and does have a matching entity local name', function() {
@@ -255,13 +246,6 @@ describe('Individual Tree component', function() {
                             expect(this.controller.searchFilter(this.filterNode)).toEqual(true);
                         });
                     });
-                });
-                it('and the entity does not have matching search properties', function() {
-                    ontologyManagerSvc.entityNameProps = [];
-                    expect(this.controller.searchFilter(this.filterNode)).toEqual(false);
-                });
-                it('and the node is a class', function() {
-                    expect(this.controller.searchFilter(this.filterNodeClass)).toEqual(true);
                 });
             });
             it('does not have filter text', function() {

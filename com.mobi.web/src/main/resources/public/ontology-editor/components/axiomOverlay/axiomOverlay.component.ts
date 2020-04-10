@@ -112,7 +112,7 @@ function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUt
                 values = [bnodeId];
                 forEach(result.jsonld, obj => {
                     dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj);
-                    dvm.os.addEntity(dvm.os.listItem, obj);
+                    dvm.os.addEntity(obj);
                     dvm.os.listItem.selectedBlankNodes.push(obj); 
                 });
                 dvm.os.listItem.blankNodes[bnodeId] = dvm.expression;
@@ -121,19 +121,12 @@ function axiomOverlayComponentCtrl(ontologyStateService, utilService, ontologyUt
             values = dvm.values;
         }
         var addedValues = filter(values, value => pm.addId(dvm.os.listItem.selected, axiom, value));
-        // TODO: Remove when the full RDF list is removed
-        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']); 
-        filter(values, value => pm.addId(entityFromFullList, axiom, value)); 
-
         if (addedValues.length !== values.length) {
             dvm.util.createWarningToast('Duplicate property values not allowed');
         }
         if (addedValues.length) {
             if (axiom === prefixes.rdfs + 'range') {
                 dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
-                // TODO: Remove when the full RDF list is removed
-                dvm.os.updatePropertyIcon(entityFromFullList); 
-
             }
             var valueObjs = map(addedValues, value => ({'@id': value}));
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: valueObjs});

@@ -99,21 +99,13 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
     }
     dvm.addProperty = function() {
         var value, added = false;
-        // TODO: Remove when the full RDF list is removed
-        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']); 
-
+        
         if (dvm.isOntologyProperty()) {
             value = dvm.os.ontologyPropertyIRI;
             added = pm.addId(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIRI);
-            // TODO: Remove when the full RDF list is removed
-            pm.addId(entityFromFullList, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIRI); 
-
         } else if (dvm.isAnnotationProperty()) {
             value = dvm.os.ontologyPropertyValue;
             added = pm.addValue(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyValue, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage);
-            // TODO: Remove when the full RDF list is removed
-            pm.addValue(entityFromFullList, dvm.os.ontologyProperty, dvm.os.ontologyPropertyValue, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage); 
-
         }
         if (added) {
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage));
@@ -126,21 +118,13 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
     dvm.editProperty = function() {
         var oldObj = angular.copy(get(dvm.os.listItem.selected, "['" + dvm.os.ontologyProperty + "']['" + dvm.os.ontologyPropertyIndex + "']"));
         var value, edited = false;
-        // TODO: Remove when the full RDF list is removed
-        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']); 
-
+        
         if (dvm.isOntologyProperty()) {
             value = dvm.os.ontologyPropertyIRI;
             edited = pm.editId(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value);
-            // TODO: Remove when the full RDF list is removed
-            pm.editId(entityFromFullList, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value); 
-
         } else if (dvm.isAnnotationProperty()) {
             value = dvm.os.ontologyPropertyValue;
             edited = pm.editValue(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage);
-            // TODO: Remove when the full RDF list is removed
-            pm.editValue(entityFromFullList, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value, dvm.os.ontologyPropertyType, dvm.os.ontologyPropertyLanguage); 
-
         }
         if (edited) {
             dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));

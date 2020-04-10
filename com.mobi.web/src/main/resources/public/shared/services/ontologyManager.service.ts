@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString } from 'lodash';
+import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
 
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
@@ -827,7 +827,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getOntologyIRI = function(ontology) {
         var entity = self.getOntologyEntity(ontology);
-        return get(entity, '@id', get(entity, 'mobi.anonymous', ''));
+        return get(entity, '@id', '');
     }
     /**
      * @ngdoc method
@@ -1412,6 +1412,26 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     function getPrioritizedValue(entity, prop) {
         return get(find(get(entity, "['" + prop + "']"), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNames
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Gets the provided entity's names. These names are an array of the '@value' values for the self.entityNameProps.
+     *
+     * @param {Object} entity The entity you want the names of.
+     * @returns {string[]} The names for the self.entityNameProps.
+     */
+    self.getEntityNames = function(entity) {
+        var names = [];
+        forEach(self.entityNameProps, prop => {
+            if (has(entity, prop)) {
+                names = concat(names, map(get(entity, prop), '@value'));
+            } 
+        });
+        return uniq(names);
     }
     /**
      * @ngdoc method

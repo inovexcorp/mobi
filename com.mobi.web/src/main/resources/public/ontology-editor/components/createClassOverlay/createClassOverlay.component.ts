@@ -90,7 +90,7 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
+        dvm.os.addEntity(dvm.clazz);
         // update relevant lists
         dvm.os.addToClassIRIs(dvm.os.listItem, dvm.clazz['@id']);
         if (dvm.values.length) {

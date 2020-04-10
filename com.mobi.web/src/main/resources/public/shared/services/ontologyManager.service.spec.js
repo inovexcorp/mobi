@@ -103,10 +103,7 @@ describe('Ontology Manager service', function() {
         ontologyManagerSvc.initialize();
         this.ontologyObj = {
             '@id': this.ontologyId,
-            '@type': [prefixes.owl + 'Ontology'],
-            mobi: {
-                anonymous: this.anonymous
-            }
+            '@type': [prefixes.owl + 'Ontology']
         };
         this.classObj = {
             '@id': this.classId,
@@ -152,25 +149,15 @@ describe('Ontology Manager service', function() {
         this.ontology = [this.ontologyObj, this.classObj, this.dataPropertyObj];
         this.importedOntObj = {
             '@id': this.importedOntologyId,
-            '@type': [prefixes.owl + 'Ontology'],
-            mobi: {
-              anonymous: this.anonymous,
-              imported: true
-            }
+            '@type': [prefixes.owl + 'Ontology']
         };
         this.importedClassObj = {
             '@id': this.importedClassId,
-            '@type': [prefixes.owl + 'Class'],
-            mobi: {
-              imported: true
-            }
+            '@type': [prefixes.owl + 'Class']
         };
         this.importedDataPropertyObj = {
             '@id': this.importedDataPropertyId,
-            '@type': [prefixes.owl + 'DatatypeProperty'],
-            mobi: {
-                imported: true
-            }
+            '@type': [prefixes.owl + 'DatatypeProperty']
         };
         this.importedObjectPropertyObj = {
             '@id': this.importedDataPropertyId,
@@ -1294,15 +1281,6 @@ describe('Ontology Manager service', function() {
     describe('getOntologyIRI should return', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
             expect(ontologyManagerSvc.getOntologyIRI([this.ontologyObj])).toBe(this.ontologyId);
-        });
-        it('mobi.anonymous if there is an ontology entity without @id', function() {
-            var obj = {
-                '@type': prefixes.owl + 'Ontology',
-                mobi: {
-                    anonymous: this.anonymous
-                }
-            }
-            expect(ontologyManagerSvc.getOntologyIRI([obj])).toBe(this.anonymous);
         });
         it('"" if none are present or no ontology entity', function() {
             expect(ontologyManagerSvc.getOntologyIRI([])).toBe('');

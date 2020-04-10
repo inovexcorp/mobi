@@ -236,10 +236,7 @@ describe('Ontology State Service', function() {
         );
         this.ontologyObj = {
             '@id': this.ontologyId,
-            '@type': [prefixes.owl + 'Ontology'],
-            mobi: {
-                anonymous: 'anonymous'
-            }
+            '@type': [prefixes.owl + 'Ontology']
         };
         this.classObj = {
             '@id': this.classId,
@@ -264,7 +261,6 @@ describe('Ontology State Service', function() {
             ontology: this.ontology
         };
         listItem = {
-            ontology: this.ontology,
             ontologyId: this.ontologyId,
             importedOntologies: [],
             importedOntologyIds: [],
@@ -284,21 +280,21 @@ describe('Ontology State Service', function() {
             },
             branches: [this.branch],
             tags: [this.tag],
-            index: {
+            entityInfo: {
                 ontologyId: {
-                    position: 0,
                     label: 'ontology',
-                    ontologyIri: this.ontologyId
+                    names: ['ontology'],
+                    ontologyId: this.ontologyId
                 },
                 'https://classId.com': {
-                    position: 1,
                     label: 'class',
-                    ontologyIri: this.ontologyId
+                    names: ['class'],
+                    ontologyId: this.ontologyId
                 },
                 dataPropertyId: {
-                    position: 2,
                     label: 'data property',
-                    ontologyIri: this.ontologyId
+                    names: ['data property'],
+                    ontologyId: this.ontologyId
                 },
             },
             upToDate: true,
@@ -2041,15 +2037,6 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getListItemByRecordId('other')).toEqual(undefined);
         });
     });
-    describe('getOntologyByRecordId should return the correct object', function() {
-        it('when the ontologyId is in the list', function() {
-            spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            expect(ontologyStateSvc.getOntologyByRecordId(this.recordId)).toEqual(listItem.ontology);
-        });
-        it('when the ontologyId is not in the list', function() {
-            expect(ontologyStateSvc.getOntologyByRecordId('other')).toEqual([]);
-        });
-    });
     describe('createOntology calls the correct methods', function() {
         describe('when uploadJson succeeds', function() {
             beforeEach(function() {
@@ -2095,14 +2082,13 @@ describe('Ontology State Service', function() {
     describe('getEntityByRecordId returns', function() {
         it('object when present using index', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
-            expect(ontologyStateSvc.getEntityByRecordId(this.recordId, this.classId)).toEqual(this.classObj);
+            expect(ontologyStateSvc.getEntityByRecordId(this.recordId, this.classId)).toEqual(listItem.entityInfo[this.classId]);
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(this.recordId);
         });
         //the operation to retrieve the object if it isn't in the index is too expensive
         //so we are no longer doing that.
         it('undefined when present not using index', function() {
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue({
-                ontology: this.ontology,
                 ontologyId: this.ontologyId,
                 recordId: this.recordId,
                 commitId: this.commitId,
@@ -2169,49 +2155,10 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getEntity).toHaveBeenCalledWith(this.classId, listItem);
         });
     });
-    describe('removeEntity removes the entity from the provided ontology and index', function() {
-        it('if it points to blank nodes', function() {
-            listItem.index = {
-                classA: {position: 0},
-                bnode0: {position: 1},
-                classB: {position: 2},
-                bnode1: {position: 3},
-                bnode2: {position: 4},
-                classC: {position: 5}
-            };
-            listItem.ontology = [
-                {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
-                {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
-                {'@id': 'classB'},
-                {'@id': 'bnode1', propA: [{'@id': 'classB'}]},
-                {'@id': 'bnode2'},
-                {'@id': 'classC'}
-            ];
-            listItem.iriList = ['classA'];
-            ontologyManagerSvc.isBlankNodeId.and.callFake(iri => _.startsWith(iri, 'bnode'));
-            listItem.blankNodes = {
-                bnode0: 'bnode0',
-                bnode1: 'bnode1',
-                bnode2: 'bnode2',
-                bnode3: 'bnode3'
-            };
-            expect(ontologyStateSvc.removeEntity(listItem, 'classA')).toEqual([
-                {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
-                {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
-                {'@id': 'bnode2'},
-                {'@id': 'bnode1', propA: [{'@id': 'classB'}]}
-            ]);
-            expect(listItem.index).toEqual({classB: {position: 0}, classC: {position: 1}});
-            expect(listItem.iriList).toEqual([]);
-            expect(listItem.blankNodes).toEqual({bnode3: 'bnode3'});
-        });
-        it('if it does not point to blank nodes', function() {
-            expect(ontologyStateSvc.removeEntity(listItem, this.classId)).toEqual([this.classObj]);
-            expect(_.has(listItem.index, this.classId)).toBe(false);
-            expect(listItem.index.dataPropertyId.position).toEqual(1);
-            expect(listItem.iriList).not.toContain(this.classId);
-            expect(listItem.blankNodes).toEqual({});
-        });
+    it('removeEntity removes the entity from the iriList and index', function() {
+        ontologyStateSvc.removeEntity(this.classId, listItem);
+        expect(_.has(listItem.entityInfo, this.classId)).toBe(false);
+        expect(listItem.iriList).not.toContain(this.classId);
     });
     describe('setVocabularyStuff sets the appropriate state variables on', function() {
         beforeEach(function() {
@@ -2242,6 +2189,7 @@ describe('Ontology State Service', function() {
                 ontologyStateSvc.listItem.concepts = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
                 ontologyStateSvc.listItem.conceptSchemes = {iris: {'0': 'ont'}, parentMap: {'0': []}, childMap: {'0': []}, flat: [{}]};
                 ontologyStateSvc.listItem.editorTabStates.concepts = {entityIRI: 'iri', usages: []};
+                ontologyStateSvc.listItem.entityInfo = {};
             });
             it('resolves', function() {
                 ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.when(this.response));
@@ -2333,7 +2281,7 @@ describe('Ontology State Service', function() {
         });
     });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
-        spyOn(ontologyStateSvc, 'getEntityNameByIndex').and.callFake(_.identity);
+        spyOn(ontologyStateSvc, 'getEntityNameByListItem').and.callFake(_.identity);
         var hierarchyInfo = {
             iris: {
                 'Class B': 'ontology',
@@ -2355,57 +2303,84 @@ describe('Ontology State Service', function() {
             path: [this.recordId, 'Class A'],
             joinedPath: this.recordId + '.Class A',
             indent: 0,
-            entity: undefined
+            entityInfo: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [this.recordId, 'Class B'],
             joinedPath: this.recordId + '.Class B',
             indent: 0,
-            entity: undefined
+            entityInfo: undefined
         }, {
             entityIRI: 'Class B1',
             hasChildren: false,
             path: [this.recordId, 'Class B', 'Class B1'],
             joinedPath: this.recordId + '.Class B.Class B1',
             indent: 1,
-            entity: undefined
+            entityInfo: undefined
         }, {
             entityIRI: 'Class B2',
             hasChildren: false,
             path: [this.recordId, 'Class B', 'Class B2'],
             joinedPath: this.recordId + '.Class B.Class B2',
             indent: 1,
-            entity: undefined
+            entityInfo: undefined
         }]);
     });
     it('createFlatEverythingTree creates the correct array', function() {
         ontologyStateSvc.listItem = angular.copy(listItem);
         ontologyStateSvc.listItem.classes = {iris: {[this.classId]: this.ontologyId}};
-        ontologyStateSvc.listItem.classToChildProperties = {'https://classId.com': [{'@id': 'property1'}]};
-        ontologyStateSvc.listItem.noDomainProperties = [{'@id': 'property2'}],
+        ontologyStateSvc.listItem.classToChildProperties = {'https://classId.com': ['property1']};
+        ontologyStateSvc.listItem.noDomainProperties = ['property2'],
+        ontologyStateSvc.listItem.entityInfo = {
+            'https://classId.com': {
+                label: 'class',
+                names: ['class']
+            },
+            property1: {
+                label: 'data property 1',
+                names: ['data property 1']
+            },
+            property2: {
+                label: 'data property 2',
+                names: ['data property 2']
+            }
+        }
         expect(ontologyStateSvc.createFlatEverythingTree(ontologyStateSvc.listItem)).toEqual([{
-            '@id': this.classId,
-            '@type': [prefixes.owl + 'Class'],
+            entityIRI: this.classId,
             hasChildren: true,
             indent: 0,
             path: [this.recordId, this.classId],
-            joinedPath: this.recordId + '.' + this.classId
+            joinedPath: this.recordId + '.' + this.classId,
+            entityInfo: {
+                label: 'class',
+                names: ['class']
+            }
         }, {
+            entityIRI: 'property1',
             hasChildren: false,
             indent: 1,
             path: [this.recordId, this.classId, 'property1'],
-            joinedPath: this.recordId + '.' + this.classId + '.property1'
+            joinedPath: this.recordId + '.' + this.classId + '.property1',
+            entityInfo: {
+                label: 'data property 1',
+                names: ['data property 1']
+            }
         }, {
             title: 'Properties',
             get: ontologyStateSvc.getNoDomainsOpened,
             set: ontologyStateSvc.setNoDomainsOpened
         }, {
+            entityIRI: 'property2',
             hasChildren: false,
             indent: 1,
             get: ontologyStateSvc.getNoDomainsOpened,
             path: [this.recordId, 'property2'],
-            joinedPath: this.recordId + '.property2'
+            joinedPath: this.recordId + '.property2',
+            entityInfo: {
+                label: 'data property 2',
+                names: ['data property 2']
+            }
         }]);
     });
     it('createFlatIndividualTree creates the correct array', function() {
@@ -2421,28 +2396,28 @@ describe('Ontology State Service', function() {
                 path: [this.recordId, 'Class A'],
                 joinedPath: this.recordId + '.Class A',
                 indent: 0,
-                entity: undefined
+                entityInfo: undefined
             }, {
                 entityIRI: 'Class B',
                 hasChildren: true,
                 path: [this.recordId, 'Class B'],
                 joinedPath: this.recordId + '.Class B',
                 indent: 0,
-                entity: undefined
+                entityInfo: undefined
             }, {
                 entityIRI: 'Class B1',
                 hasChildren: false,
                 path: [this.recordId, 'Class B', 'Class B1'],
                 joinedPath: this.recordId + '.Class B.Class B1',
                 indent: 1,
-                entity: undefined
+                entityInfo: undefined
             }, {
                 entityIRI: 'Class B2',
                 hasChildren: false,
                 path: [this.recordId, 'Class B', 'Class B2'],
                 joinedPath: this.recordId + '.Class B.Class B2',
                 indent: 1,
-                entity: undefined
+                entityInfo: undefined
             }] }
         })).toEqual([{
             entityIRI: 'Class A',
@@ -2450,7 +2425,7 @@ describe('Ontology State Service', function() {
             path: [this.recordId, 'Class A'],
             joinedPath: this.recordId + '.Class A',
             indent: 0,
-            entity: undefined,
+            entityInfo: undefined,
             isClass: true
         }, {
             entityIRI: 'Individual A1',
@@ -2458,21 +2433,21 @@ describe('Ontology State Service', function() {
             path: [this.recordId, 'Class A', 'Individual A1'],
             joinedPath: this.recordId + '.Class A.Individual A1',
             indent: 1,
-            entity: undefined
+            entityInfo: undefined
         }, {
             entityIRI: 'Individual A2',
             hasChildren: false,
             path: [this.recordId, 'Class A', 'Individual A2'],
             joinedPath: this.recordId + '.Class A.Individual A2',
             indent: 1,
-            entity: undefined
+            entityInfo: undefined
         }, {
             entityIRI: 'Class B',
             hasChildren: true,
             path: [this.recordId, 'Class B'],
             joinedPath: this.recordId + '.Class B',
             indent: 0,
-            entity: undefined,
+            entityInfo: undefined,
             isClass: true
         }, {
             entityIRI: 'Class B1',
@@ -2480,7 +2455,7 @@ describe('Ontology State Service', function() {
             path: [this.recordId, 'Class B', 'Class B1'],
             joinedPath: this.recordId + '.Class B.Class B1',
             indent: 1,
-            entity: undefined,
+            entityInfo: undefined,
             isClass: true
         }, {
             entityIRI: 'Individual B1',
@@ -2488,102 +2463,49 @@ describe('Ontology State Service', function() {
             path: [this.recordId, 'Class B', 'Class B1', 'Individual B1'],
             joinedPath: this.recordId + '.Class B.Class B1.Individual B1',
             indent: 2,
-            entity: undefined
+            entityInfo: undefined
         }]);
         expect(ontologyStateSvc.createFlatIndividualTree({})).toEqual([]);
     });
     it('addEntity adds the entity to the provided ontology and index', function() {
         ontologyManagerSvc.getEntityName.and.returnValue('name');
-        ontologyStateSvc.addEntity(listItem, this.individualObj);
-        expect(this.ontology.length).toBe(4);
-        expect(this.ontology[3]).toEqual(this.individualObj);
-        expect(_.has(listItem.index, this.individualId)).toBe(true);
-        expect(listItem.index[this.individualId].position).toEqual(3);
+        ontologyManagerSvc.getEntityNames.and.returnValue(['name']);
+        ontologyStateSvc.addEntity(this.individualObj, listItem);
+        expect(_.has(listItem.entityInfo, this.individualId)).toBe(true);
         expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(this.individualObj);
-        expect(listItem.index[this.individualId].label).toBe('name');
-        expect(listItem.index[this.individualId].ontologyIri).toBe(this.ontologyId);
+        expect(listItem.entityInfo[this.individualId].label).toBe('name');
+        expect(ontologyManagerSvc.getEntityNames).toHaveBeenCalledWith(this.individualObj);
+        expect(listItem.entityInfo[this.individualId].names).toEqual(['name']);
+        expect(listItem.entityInfo[this.individualId].ontologyId).toBe(this.ontologyId);
     });
-    describe('getEntityNameByIndex should return the proper value', function() {
-        it('when the entityIRI is in the index', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
+    describe('getEntityNameByListItem should return the proper value', function() {
+        it('when the entityIRI is in the entityInfo', function() {
+            expect(ontologyStateSvc.getEntityNameByListItem('iri', {
+                entityInfo: {
                     iri: {
                         label: 'name'
                     }
                 }
             })).toBe('name');
         });
-        it('when the entityIRI is in the imported index', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
-                    nomatchiri: {
-                        label: 'name'
-                    }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                            label: 'importedname'
-                        }
-                    }
-                }]
-            })).toBe('importedname');
-        });
-        it('when the entityIRI is in multiple indices', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
-                    iri: {
-                        label: 'name'
-                    }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                            label: 'importedname'
-                        }
-                    }
-                }]
-            })).toBe('importedname');
-        });
-        it('when the entityIRI is in multiple indices with only one label', function() {
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
-                    iri: {
-                    }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                            label: 'importedname'
-                        }
-                    }
-                }]
-            })).toBe('importedname');
-        });
-        it('when the entityIRI is in multiple indices and no labels exist', function() {
+        it('when the entityIRI has no labels', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', {
-                index: {
+            expect(ontologyStateSvc.getEntityNameByListItem('iri', {
+                entityInfo: {
                     iri: {
                     }
-                },
-                importedOntologies: [{
-                    index: {
-                        iri: {
-                        }
-                    }
-                }]
+                }
             })).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
-        it('when the entityIRI is not in the index', function() {
+        it('when the entityIRI is not in the entityInfo', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyStateSvc.getEntityNameByIndex('iri')).toBe('entity name');
+            expect(ontologyStateSvc.getEntityNameByListItem('iri')).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
         it('when the listItem is undefined', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
-            expect(ontologyStateSvc.getEntityNameByIndex('iri', undefined)).toBe('entity name');
+            expect(ontologyStateSvc.getEntityNameByListItem('iri', undefined)).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
     });
@@ -2598,6 +2520,7 @@ describe('Ontology State Service', function() {
             this.conceptId2 = 'conceptId2';
             this.conceptSchemeId2 = 'conceptSchemeId2';
             this.userBranchId = 'userBranchId';
+            this.ontologyId2 = 'ontologyId2';
             this.userBranch = {
                 '@id': this.userBranchId
             }
@@ -2617,7 +2540,7 @@ describe('Ontology State Service', function() {
                     derivedSemanticRelations: [this.semanticRelationId]
                 },
                 importedIRIs: [{
-                    id: this.ontologyId,
+                    id: this.ontologyId2,
                     annotationProperties: [this.annotationId2],
                     classes: [this.classId2],
                     dataProperties: [this.dataPropertyId2],
@@ -2627,7 +2550,7 @@ describe('Ontology State Service', function() {
                     concepts: [this.conceptId2],
                     conceptSchemes: [this.conceptSchemeId2],
                 }],
-                importedOntologies: [{ontology: [], ontologyId: 'importId', id: 'id'}],
+                importedOntologies: [{ontologyId: this.ontologyId2, id: 'id'}],
                 classHierarchy: {parentMap: {}, childMap: {}},
                 individuals: {ClassA: ['IndivA1', 'IndivA2']},
                 dataPropertyHierarchy: {parentMap: {}, childMap: {}},
@@ -2650,6 +2573,7 @@ describe('Ontology State Service', function() {
             catalogManagerSvc.getRecordVersions.and.returnValue($q.when({data: this.versions}));
             policyEnforcementSvc.evaluateRequest.and.returnValue($q.when('Permit'));
             util.getPropertyId.and.returnValue(this.branchId);
+            util.getBeautifulIRI.and.returnValue('iri');
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
             spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
@@ -2661,36 +2585,36 @@ describe('Ontology State Service', function() {
                     .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
-                        expectedIriObj[this.annotationId2] = this.ontologyId;
+                        expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.classId] = this.ontologyId;
-                        expectedIriObj[this.classId2] = this.ontologyId;
+                        expectedIriObj[this.classId2] = this.ontologyId2;
                         expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                         expect(response.isVocabulary).toEqual(true);
                         expectedIriObj = {};
                         expectedIriObj[this.dataPropertyId] = this.ontologyId;
-                        expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.dataPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.objectPropertyId] = this.ontologyId;
-                        expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.objectPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.individualId] = this.ontologyId;
-                        expectedIriObj[this.individualId2] = this.ontologyId;
+                        expectedIriObj[this.individualId2] = this.ontologyId2;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptId] = this.ontologyId;
-                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId2;
                         expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptSchemeId] = this.ontologyId;
-                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId2;
                         expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
-                        expectedIriObj[this.datatypeId2] = this.ontologyId;
+                        expectedIriObj[this.datatypeId2] = this.ontologyId2;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                         expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
@@ -2726,7 +2650,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.ontologyId2, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2735,15 +2659,111 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId',
-                            ontology: [],
-                            index: {}
+                            ontologyId: this.ontologyId2
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(false);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
                         expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
                         expect(_.get(response, 'userCanModify')).toEqual(true);
                         expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
+                        expect(_.get(response, 'entityInfo')).toEqual({
+                            [this.annotationId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.classId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.datatypeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.objectPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.dataPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.individualId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptSchemeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.annotationId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.classId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.dataPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.objectPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.individualId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.datatypeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptSchemeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                        });
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -2756,36 +2776,36 @@ describe('Ontology State Service', function() {
                     .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
-                        expectedIriObj[this.annotationId2] = this.ontologyId;
+                        expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.classId] = this.ontologyId;
-                        expectedIriObj[this.classId2] = this.ontologyId;
+                        expectedIriObj[this.classId2] = this.ontologyId2;
                         expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                         expect(response.isVocabulary).toEqual(true);
                         expectedIriObj = {};
                         expectedIriObj[this.dataPropertyId] = this.ontologyId;
-                        expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.dataPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.objectPropertyId] = this.ontologyId;
-                        expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.objectPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.individualId] = this.ontologyId;
-                        expectedIriObj[this.individualId2] = this.ontologyId;
+                        expectedIriObj[this.individualId2] = this.ontologyId2;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptId] = this.ontologyId;
-                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId2;
                         expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptSchemeId] = this.ontologyId;
-                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId2;
                         expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
-                        expectedIriObj[this.datatypeId2] = this.ontologyId;
+                        expectedIriObj[this.datatypeId2] = this.ontologyId2;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                         expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
@@ -2821,7 +2841,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.ontologyId2, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2830,15 +2850,111 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId',
-                            ontology: [],
-                            index: {}
+                            ontologyId: this.ontologyId2
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(true);
                         expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
                         expect(_.get(response, 'userCanModify')).toEqual(true);
                         expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
+                        expect(_.get(response, 'entityInfo')).toEqual({
+                            [this.annotationId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.classId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.datatypeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.objectPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.dataPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.individualId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptSchemeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.annotationId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.classId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.dataPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.objectPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.individualId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.datatypeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptSchemeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                        });
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -2852,36 +2968,36 @@ describe('Ontology State Service', function() {
                     .then(response => {
                         var expectedIriObj = {};
                         expectedIriObj[this.annotationId] = this.ontologyId;
-                        expectedIriObj[this.annotationId2] = this.ontologyId;
+                        expectedIriObj[this.annotationId2] = this.ontologyId2;
                         expect(_.get(response, 'annotations.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.classId] = this.ontologyId;
-                        expectedIriObj[this.classId2] = this.ontologyId;
+                        expectedIriObj[this.classId2] = this.ontologyId2;
                         expect(_.get(response, 'classes.iris')).toEqual(expectedIriObj);
                         expect(response.isVocabulary).toEqual(true);
                         expectedIriObj = {};
                         expectedIriObj[this.dataPropertyId] = this.ontologyId;
-                        expectedIriObj[this.dataPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.dataPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'dataProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.objectPropertyId] = this.ontologyId;
-                        expectedIriObj[this.objectPropertyId2] = this.ontologyId;
+                        expectedIriObj[this.objectPropertyId2] = this.ontologyId2;
                         expect(_.get(response, 'objectProperties.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.individualId] = this.ontologyId;
-                        expectedIriObj[this.individualId2] = this.ontologyId;
+                        expectedIriObj[this.individualId2] = this.ontologyId2;
                         expect(_.get(response, 'individuals.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptId] = this.ontologyId;
-                        expectedIriObj[this.conceptId2] = this.ontologyId;
+                        expectedIriObj[this.conceptId2] = this.ontologyId2;
                         expect(_.get(response, 'concepts.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.conceptSchemeId] = this.ontologyId;
-                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId;
+                        expectedIriObj[this.conceptSchemeId2] = this.ontologyId2;
                         expect(_.get(response, 'conceptSchemes.iris')).toEqual(expectedIriObj);
                         expectedIriObj = {};
                         expectedIriObj[this.datatypeId] = this.ontologyId;
-                        expectedIriObj[this.datatypeId2] = this.ontologyId;
+                        expectedIriObj[this.datatypeId2] = this.ontologyId2;
                         expect(_.get(response, 'dataPropertyRange')).toEqual(expectedIriObj);
                         expect(_.get(response, 'derivedConcepts')).toEqual([this.classId]);
                         expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.classId]);
@@ -2917,7 +3033,7 @@ describe('Ontology State Service', function() {
                         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes, jasmine.objectContaining({ontologyId: this.ontologyId}));
                         expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                         expect(_.get(response, 'upToDate')).toBe(false);
-                        expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2]);
+                        expect(_.get(response, 'iriList').sort()).toEqual([this.ontologyId, this.ontologyId2, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2, this.conceptId2, this.conceptSchemeId2].sort());
                         expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(response);
                         expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                         expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
@@ -2926,15 +3042,111 @@ describe('Ontology State Service', function() {
                         expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
                         expect(_.get(response, 'importedOntologies')).toEqual([{
                             id: 'id',
-                            ontologyId: 'importId',
-                            ontology: [],
-                            index: {}
+                            ontologyId: this.ontologyId2
                         }]);
                         expect(_.get(response, 'userBranch')).toEqual(true);
                         expect(_.get(response, 'createdFromExists')).toEqual(false);
                         expect(_.get(response, 'masterBranchIRI')).toEqual(this.branchId);
                         expect(_.get(response, 'userCanModify')).toEqual(true);
                         expect(_.get(response, 'userCanModifyMaster')).toEqual(true);
+                        expect(_.get(response, 'entityInfo')).toEqual({
+                            [this.annotationId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.classId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.datatypeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.objectPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.dataPropertyId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.individualId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.conceptSchemeId]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId,
+                                imported: false
+                            },
+                            [this.annotationId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.classId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.dataPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.objectPropertyId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.individualId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.datatypeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                            [this.conceptSchemeId2]: {
+                                label: 'iri',
+                                names: [],
+                                ontologyId: this.ontologyId2,
+                                imported: true
+                            },
+                        });
                     }, () => {
                         fail('Promise should have resolved');
                     });
@@ -3377,9 +3589,6 @@ describe('Ontology State Service', function() {
             this.object = {'@id': this.id};
             this.bnode = {'@id': '_:node0'};
             spyOn(ontologyStateSvc, 'setEntityUsages');
-            // TODO: Remove this once these properties are in their own maps
-            spyOn(ontologyStateSvc, 'updatePropertyIcon');
-
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({});
             ontologyManagerSvc.getEntityAndBlankNodes.and.returnValue($q.when([this.object, this.bnode]));
     });
@@ -3402,9 +3611,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalledWith();
         });
@@ -3416,9 +3622,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(this.id);
         });
@@ -3430,9 +3633,6 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
@@ -3447,27 +3647,9 @@ describe('Ontology State Service', function() {
             expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
             expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
             expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            // TODO: Remove this once these properties are in their own maps
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-            
             expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
-        // TODO: Remove this once these properties are in their own maps
-        it('when the entity is imported', function() {
-            listItem.importedOntologies = [{index: {[this.id]: {}}, ontologyId: 'imported'}];
-            ontologyStateSvc.setSelected(this.id, false, listItem);
-            scope.$apply();
-            expect(ontologyManagerSvc.getEntityAndBlankNodes).toHaveBeenCalledWith(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, this.id, undefined, undefined, undefined, '');
-            expect(listItem.selected).toEqual(Object.assign({}, this.object, {mobi: {imported: true, importedIRI: 'imported'}}));
-            expect(listItem.selectedBlankNodes).toEqual([this.bnode]);
-            expect(listItem.blankNodes).toEqual({[this.bnode['@id']]: ''});
-            expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(this.bnode['@id'], listItem.selectedBlankNodes, {[this.bnode['@id']]: {position: 0}});
-            expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(listItem.selected);
-            expect(ontologyStateSvc.getActivePage).not.toHaveBeenCalled();
-            expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
-        });
-
     });
     describe('setEntityUsages should call the correct function', function() {
         beforeEach(function() {
@@ -3498,12 +3680,10 @@ describe('Ontology State Service', function() {
     });
     describe('resetStateTabs should set the correct variables', function() {
         beforeEach(function() {
-            this.newOntologyIRI = 'newId';
             ontologyStateSvc.listItem.editorTabStates = {
                 classes: {entityIRI: 'id', usages: []},
                 project: {entityIRI: 'id', preview: 'test'}
             };
-            ontologyManagerSvc.getOntologyIRI.and.returnValue(this.newOntologyIRI);
             spyOn(ontologyStateSvc, 'setSelected').and.callFake(() => {
                 ontologyStateSvc.listItem.selected = {'@id': 'id'};
                 ontologyStateSvc.listItem.selectedBlankNodes = [{}];
@@ -3511,6 +3691,7 @@ describe('Ontology State Service', function() {
             });
             spyOn(ontologyStateSvc, 'resetSearchTab');
             ontologyStateSvc.listItem.selected = {};
+            ontologyStateSvc.listItem.ontologyId = 'newId';
         });
         it('when getActiveKey is not project or search', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('classes');
@@ -3527,11 +3708,11 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.resetStateTabs();
             scope.$apply();
             expect(ontologyStateSvc.resetSearchTab).toHaveBeenCalled();
-            expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: this.newOntologyIRI, preview: ''});
+            expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: 'newId', preview: ''});
             expect(ontologyStateSvc.listItem.selected).toEqual({'@id': 'id'});
             expect(ontologyStateSvc.listItem.selectedBlankNodes).toEqual([{}]);
             expect(ontologyStateSvc.listItem.blankNodes).toEqual({bnode: 'bnode'});
-            expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith(this.newOntologyIRI, false, ontologyStateSvc.listItem, 'project');
+            expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('newId', false, ontologyStateSvc.listItem, 'project');
         });
     });
     it('resetSearchTab should reset variables', function() {
@@ -3766,26 +3947,6 @@ describe('Ontology State Service', function() {
     });
     describe('goTo calls the proper manager functions with correct parameters when it is', function() {
         beforeEach(function() {
-            this.entity = {'@id': 'entityId'};
-            this.node1 = {
-                indent: 0,
-                entityIRI: 'otherIri',
-                hasChildren: true,
-                path: ['recordId', 'otherIri']
-            };
-            this.node2 = {
-                indent: 1,
-                entityIRI: 'iri',
-                hasChildren: false,
-                path: ['recordId', 'otherIri', 'iri']
-            };
-            this.node3 = {
-                indent: 0,
-                entityIRI: 'anotherIri',
-                hasChildren: false,
-                path: ['recordId', 'antherIri']
-            };
-            spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue(this.entity);
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: '', vocabularySpinnerId: 'spinner'});
             spyOn(ontologyStateSvc, 'setActivePage');
             spyOn(ontologyStateSvc, 'selectItem');
@@ -3796,11 +3957,76 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'getAnnotationPropertiesOpened').and.returnValue(true);
 
             ontologyStateSvc.listItem = {
+                ontologyId: 'ontologyId',
                 ontologyRecord: {},
-                concepts: { flat: [this.node1, this.node2, this.node3] },
-                conceptSchemes: { flat: [this.node1, this.node2, this.node3] },
-                classes: {flat: [this.node1, this.node2, this.node3]},
+                concepts: {
+                    iris: {
+                        concept1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'concept1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'concept1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'concept2',
+                        hasChildren: false,
+                        path: ['recordId', 'concept2']
+                    }]
+                },
+                conceptSchemes: {
+                    iris: {
+                        scheme1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'scheme1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'scheme1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'scheme2',
+                        hasChildren: false,
+                        path: ['recordId', 'scheme2']
+                    }]
+                },
+                classes: {
+                    iris: {
+                        class1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'class1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'class1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'anotherIri',
+                        hasChildren: false,
+                        path: ['recordId', 'antherIri']
+                    }]
+                },
                 dataProperties: {
+                    iris: {
+                        dataProp1: '',
+                        dataProp2: ''
+                    },
                     flat: [{
                         entityIRI: 'dataProp1',
                         hasChildren: true,
@@ -3814,6 +4040,9 @@ describe('Ontology State Service', function() {
                     }]
                 },
                 objectProperties: {
+                    iris: {
+                        objectProp1: ''
+                    },
                     flat: [{
                         entityIRI: 'objectProp1',
                         hasChildren: false,
@@ -3822,6 +4051,9 @@ describe('Ontology State Service', function() {
                     }]
                 },
                 annotations: {
+                    iris: {
+                        annotationProp1: ''
+                    },
                     flat: [{
                         entityIRI: 'annotationProp1',
                         hasChildren: false,
@@ -3829,9 +4061,29 @@ describe('Ontology State Service', function() {
                         get: ontologyStateSvc.getAnnotationPropertiesOpened
                     }]
                 },
-                derivedConcepts: ['concept'],
-                derivedConceptSchemes: ['scheme'],
-                individuals: { flat: [this.node1, this.node2, this.node3] },
+                derivedConcepts: ['concept2'],
+                derivedConceptSchemes: ['scheme2'],
+                individuals: {
+                    iris: {
+                        individual1: ''
+                    },
+                    flat: [{
+                        indent: 0,
+                        entityIRI: 'otherIri',
+                        hasChildren: true,
+                        path: ['recordId', 'otherIri']
+                    }, {
+                        indent: 1,
+                        entityIRI: 'scheme1',
+                        hasChildren: false,
+                        path: ['recordId', 'otherIri', 'individual1']
+                    }, {
+                        indent: 0,
+                        entityIRI: 'anotherIri',
+                        hasChildren: false,
+                        path: ['recordId', 'antherIri']
+                    }]
+                },
                 editorTabStates: {
                     classes: {
                         index: 0
@@ -3852,47 +4104,20 @@ describe('Ontology State Service', function() {
             };
         });
         it('an ontology', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('ontologyId');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('project');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('ontologyId', undefined, 'spinner');
         });
         it('a class', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('class1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.flat, 'iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('class1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.flat, 'class1');
             expect(ontologyStateSvc.listItem.editorTabStates.classes.index).toEqual(1);
         });
         it('a datatype property', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             spyOn(ontologyStateSvc, 'setDataPropertiesOpened');
             ontologyStateSvc.goTo('dataProp2');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('dataProp2', undefined, 'spinner');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataProperties.flat, 'dataProp2');
@@ -3901,19 +4126,8 @@ describe('Ontology State Service', function() {
         });
         describe('an object property', function() {
             it('with datatype properties in the ontology', function() {
-                ontologyManagerSvc.isOntology.and.returnValue(false);
-                ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
                 ontologyStateSvc.goTo('objectProp1');
-                expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('objectProp1', undefined, 'spinner');
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.flat, 'objectProp1');
@@ -3922,19 +4136,8 @@ describe('Ontology State Service', function() {
             });
             it('with no datatype properties in the ontology', function() {
                 ontologyStateSvc.listItem.dataProperties.flat = [];
-                ontologyManagerSvc.isOntology.and.returnValue(false);
-                ontologyManagerSvc.isClass.and.returnValue(false);
-                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
                 ontologyStateSvc.goTo('objectProp1');
-                expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isAnnotation).not.toHaveBeenCalledWith(this.entity);
-                expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                 expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('objectProp1', undefined, 'spinner');
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.flat, 'objectProp1');
@@ -3945,20 +4148,8 @@ describe('Ontology State Service', function() {
         describe('an annotation property', function() {
             describe('with datatype properties in the ontology', function() {
                 it('with object properties in the ontology', function() {
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -3967,20 +4158,8 @@ describe('Ontology State Service', function() {
                 });
                 it('with no object properties in the ontology', function() {
                     ontologyStateSvc.listItem.objectProperties.flat = [];
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -3993,20 +4172,8 @@ describe('Ontology State Service', function() {
                     ontologyStateSvc.listItem.dataProperties.flat = [];
                 });
                 it('with object properties in the ontology', function() {
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -4015,20 +4182,8 @@ describe('Ontology State Service', function() {
                 });
                 it('with no object properties in the ontology', function() {
                     ontologyStateSvc.listItem.objectProperties.flat = [];
-                    ontologyManagerSvc.isOntology.and.returnValue(false);
-                    ontologyManagerSvc.isClass.and.returnValue(false);
-                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-                    ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                    ontologyManagerSvc.isAnnotation.and.returnValue(true);
                     spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
                     ontologyStateSvc.goTo('annotationProp1');
-                    expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-                    expect(ontologyManagerSvc.isConcept).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-                    expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
                     expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
                     expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('annotationProp1', undefined, 'spinner');
                     expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'annotationProp1');
@@ -4038,83 +4193,25 @@ describe('Ontology State Service', function() {
             });
         });
         it('a concept', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).not.toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('concept1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.flat, 'iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('concept1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.flat, 'concept1');
             expect(ontologyStateSvc.listItem.editorTabStates.concepts.index).toEqual(1);
         });
-        it('an conceptScheme', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+        it('a conceptScheme', function() {
+            ontologyStateSvc.goTo('scheme1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('schemes');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.flat, 'iri');
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('scheme1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.flat, 'scheme1');
             expect(ontologyStateSvc.listItem.editorTabStates.schemes.index).toEqual(1);
         });
         it('an individual', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+            ontologyStateSvc.goTo('individual1');
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.individuals.flat, 'iri');
-            expect(ontologyStateSvc.listItem.editorTabStates.individuals.index).toEqual(1);
-        });
-        it('an individual without the namedIndividualType', function() {
-            ontologyManagerSvc.isOntology.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(this.entity);
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConceptSchemes);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri', undefined, 'spinner');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.individuals.flat, 'iri');
-            expect(ontologyStateSvc.listItem.editorTabStates.individuals.index).toEqual(1);
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('individual1', undefined, 'spinner');
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.individuals.flat, 'individual1');
+            expect(ontologyStateSvc.listItem.editorTabStates.individuals.index).toEqual(3);
         });
     });
     it('openAt sets all parents open', function() {
@@ -4156,14 +4253,14 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('https://mobi.com/blank-node-namespace/test#');
         });
-        it('when the iri is a blank node and there is something in the index', function() {
+        it('when the iri is a blank node and there is something in the entityInfo', function() {
             splitIRI.and.returnValue({begin: 'http://matonto.org/ontologies/uhtc', then: '#'});
             ontologyStateSvc.listItem.ontologyId = 'https://mobi.com/.well-known/genid/genid1#';
-            ontologyStateSvc.listItem.index = {
+            ontologyStateSvc.listItem.entityInfo = {
                 'http://matonto.org/ontologies/uhtc#Element': {
-                    position: 0,
                     label: 'test',
-                    ontologyIri: 'https://mobi.com/.well-known/genid/genid1#'
+                    names: ['test'],
+                    ontologyId: 'https://mobi.com/.well-known/genid/genid1#'
                 }
             };
             expect(ontologyStateSvc.getDefaultPrefix()).toEqual('http://matonto.org/ontologies/uhtc#');
@@ -4303,7 +4400,7 @@ describe('Ontology State Service', function() {
     describe('should add an IRI to classes.iris and update isVocabulary', function() {
         beforeEach(function () {
             this.iri = 'iri';
-            this.listItem = {ontologyId: 'ontology', isVocabulary: false, classes: {iris: {}}};
+            this.listItem = {ontologyId: 'ontology', isVocabulary: false, classes: {iris: {}}, entityInfo: {}};
             this.expectedIriObj = {};
         });
         it('unless the IRI is already in the list', function() {
@@ -4668,6 +4765,49 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.listItem.ontologyRecord.branchId = 'branch';
             ontologyStateSvc.listItem.masterBranchIRI = 'master';
             expect(ontologyStateSvc.canModify()).toEqual(true);
+        });
+    });
+    describe('isImported should return', function() {
+        describe('false when', function() {
+            it('iri matches listItem.ontologyId', function() {
+                ontologyStateSvc.listItem.ontologyId = 'ontologyId';
+                expect(ontologyStateSvc.isImported('ontologyId')).toBe(false);
+            });
+            it('entityInfo has imported equal to false', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    iri: {
+                        imported: false
+                    }
+                };
+                expect(ontologyStateSvc.isImported('iri')).toBe(false);
+            });
+        });
+        describe('true when', function() {
+            it('entityInfo has imported equal to true', function() {
+                ontologyStateSvc.listItem.entityInfo = {
+                    iri: {
+                        imported: true
+                    }
+                };
+                expect(ontologyStateSvc.isImported('iri')).toBe(true);
+            });
+            it('entityInfo does not have the iri', function() {
+                expect(ontologyStateSvc.isImported('missing')).toBe(true);
+            });
+        });
+    });
+    describe('isSelectedImported calls the correct method when', function() {
+        it('listItem.selected is defined', function() {
+            ontologyStateSvc.listItem.selected = {'@id': 'selected'};
+            spyOn(ontologyStateSvc, 'isImported').and.returnValue(true);
+            expect(ontologyStateSvc.isSelectedImported()).toBe(true);
+            expect(ontologyStateSvc.isImported).toHaveBeenCalledWith('selected', ontologyStateSvc.listItem);
+        });
+        it('listItem.selected is undefined', function() {
+            delete ontologyStateSvc.listItem.selected;
+            spyOn(ontologyStateSvc, 'isImported').and.returnValue(true);
+            expect(ontologyStateSvc.isSelectedImported()).toBe(true);
+            expect(ontologyStateSvc.isImported).toHaveBeenCalledWith('', ontologyStateSvc.listItem);
         });
     });
     describe('handleDeletedClass should add the entity to the proper maps', function() {
