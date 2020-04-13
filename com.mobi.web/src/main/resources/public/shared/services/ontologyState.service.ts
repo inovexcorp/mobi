@@ -953,11 +953,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
 
     function addInfo(listItem, iri, ontologyId) {
-        var info = merge({
+        var info = merge((listItem.entityInfo[iri] || {}), {
             imported: listItem.ontologyId !== ontologyId,
-            ontologyId,
-            names: []
-        }, (listItem.entityInfo[iri] || {}));
+            ontologyId
+        });
+        if (!info.names) {
+            info.names = [];
+        }
         if (!info.label) {
             info.label = utilService.getBeautifulIRI(iri);
         }
@@ -1171,7 +1173,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
             label: om.getEntityName(entityJSON),
             names: om.getEntityNames(entityJSON),
-            ontologyId: listItem.ontologyId
+            ontologyId: listItem.ontologyId,
+            imported: false
         }
     }
     /**
@@ -1477,7 +1480,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         if (spinnerId) {
             httpService.cancel(spinnerId);
         }
-        // TODO: Add targeted spinner for
         return om.getEntityAndBlankNodes(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, entityIRI, undefined, undefined, undefined, spinnerId)
             .then(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
@@ -1865,11 +1867,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Retrieves the combined index value for the provided IRI from the defined ontology index and all the imported
-     * ontology indices inside the provided `listItem`.
+     * Retrieves the entityInfo for the provided IRI from the provided `listItem`.
      *
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
-     * @returns {Object} The merged index value for the provided IRI from all indices
+     * @returns {Object} The entityInfo for the provided IRI
      */
     self.getFromListItem = function(iri, listItem = self.listItem) {
         return get(listItem, 'entityInfo[' + iri + ']', {});
@@ -1880,10 +1881,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Determines whether the provided IRI exists in any index within the provided `listItem`. Returns a boolean.
+     * Determines whether the provided IRI exists in the entityInfo for the provided `listItem`. Returns a boolean.
      *
      * @param {string} [listItem=self.listItem] The listItem to execute these actions against
-     * @returns {boolean} True if the IRI exists in one of the indices; false otherwise
+     * @returns {boolean} True if the IRI exists in the entityInfo object; false otherwise
      */
     self.existsInListItem = function(iri, listItem = self.listItem) {
         return iri in get(listItem, 'entityInfo', {});

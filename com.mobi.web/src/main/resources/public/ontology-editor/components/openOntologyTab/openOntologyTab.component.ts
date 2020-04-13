@@ -79,7 +79,10 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         dvm.getPageOntologyRecords(1);
     }
     dvm.clickUpload = function(id) {
-        document.getElementById(id).click();
+        var upload = <HTMLInputElement> document.getElementById(id);
+
+        upload.value = null;
+        upload.click();
     }
     dvm.updateFiles = function(event, files) {
         dvm.os.uploadFiles = files;

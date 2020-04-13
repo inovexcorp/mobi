@@ -207,19 +207,18 @@ function propertyTreeComponentCtrl(ontologyManagerService, ontologyStateService,
                     match = true;
                     dvm.openAllParents(node);
                     node.underline = true;
-                    // TODO: fix this part with Khalil's work
-                    // if (includes(node.entity['@type'], prefixes.owl + 'DatatypeProperty')) {
-                    //     dvm.os.listItem.editorTabStates[dvm.activeTab].open['Data Properties'] = true;
-                    //     delete node.parentNoMatch;
-                    // }
-                    // if (includes(node.entity['@type'], prefixes.owl + 'ObjectProperty')) {
-                    //     dvm.os.listItem.editorTabStates[dvm.activeTab].open['Object Properties'] = true;
-                    //     delete node.parentNoMatch;
-                    // }
-                    // if (includes(node.entity['@type'], prefixes.owl + 'AnnotationProperty')) {
-                    //     dvm.os.listItem.editorTabStates[dvm.activeTab].open['Annotation Properties'] = true;
-                    //     delete node.parentNoMatch;
-                    // }
+                    if (has(dvm.os.listItem.dataProperties.iris, node.entityIRI)) {
+                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Data Properties'] = true;
+                        delete node.parentNoMatch;
+                    }
+                    if (has(dvm.os.listItem.objectProperties.iris, node.entityIRI)) {
+                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Object Properties'] = true;
+                        delete node.parentNoMatch;
+                    }
+                    if (has(dvm.os.listItem.annotations.iris, node.entityIRI)) {
+                        dvm.os.listItem.editorTabStates[dvm.activeTab].open['Annotation Properties'] = true;
+                        delete node.parentNoMatch;
+                    }
                 }
                 if (!match && node.hasChildren) {
                     node.parentNoMatch = true;
