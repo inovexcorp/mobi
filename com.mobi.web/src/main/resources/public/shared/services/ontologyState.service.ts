@@ -676,8 +676,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             return promise
                 .then(response => {
                     return {recordId, branchId, commitId, upToDate, inProgressCommit: response};
-                }, response => {
-                    if (get(response, 'status') === 404) {
+                }, (response) => {
+                    if (get(response, 'status') !== 404) {
                         return self.deleteOntologyState(recordId)
                         .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
                     }
