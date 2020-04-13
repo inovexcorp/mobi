@@ -104,9 +104,7 @@ public class CatalogRestUtils {
      */
     public static Response createCommitResponse(Commit commit, SesameTransformer transformer,
                                                 BNodeService bNodeService) {
-        String response = "{ \"commit\": " +
-                thingToSkolemizedObjectNode(commit, Commit.TYPE, transformer, bNodeService).toString() +
-                "}";
+        String response = thingToSkolemizedObjectNode(commit, Commit.TYPE, transformer, bNodeService).toString();
         return Response.ok(response, MediaType.APPLICATION_JSON).build();
     }
 

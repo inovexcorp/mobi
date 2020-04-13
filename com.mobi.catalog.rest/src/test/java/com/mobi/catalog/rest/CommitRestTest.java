@@ -219,35 +219,29 @@ public class CommitRestTest extends MobiRestTestNg {
         verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("commit"));
+            assertFalse(result.containsKey("commit"));
             assertFalse(result.containsKey("additions"));
             assertFalse(result.containsKey("deletions"));
-            JSONObject commit = result.getJSONObject("commit");
-            assertTrue(commit.containsKey("@id"));
-            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
+            assertTrue(result.containsKey("@id"));
+            assertEquals(result.getString("@id"), COMMIT_IRIS[1]);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
-//    @Test
-//    public void getCommitWithNoResults() {
-//        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
-//                .request().get();
-//        assertEquals(response.getStatus(), 200);
-//        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
-//        try {
-//            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-//            assertTrue(result.containsKey("commit"));
-//            assertFalse(result.containsKey("additions"));
-//            assertFalse(result.containsKey("deletions"));
-//            JSONObject commit = result.getJSONObject("commit");
-//            assertTrue(commit.containsKey("@id"));
-//            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
-//        } catch (Exception e) {
-//            fail("Expected no exception, but got: " + e.getMessage());
-//        }
-//    }
+    @Test
+    public void getCommitWithNoResults() {
+        // Setup:
+        when(catalogManager.getCommit(any())).thenReturn(Optional.empty());
+
+        // When:
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
+                .request().get();
+
+        // Then:
+        assertEquals(response.getStatus(), 404);
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+    }
 
     @Test
     public void getCommitWithErrorTest() {
