@@ -254,15 +254,16 @@ public class CommitRest {
     }
 
     /**
-     * Gets the {@link Difference} between the two specified {@link Commit}s.
+     * Gets the {@link Difference} for the specified commit or between the two specified {@link Commit}s.
      *
      * @param sourceId  {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
-     * @param targetId  {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
-     *                  {@link String} starts with "{@code _:}".
+     * @param targetId  Optional {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI}
+     *                  unless {@link String} starts with "{@code _:}".
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
-     * @return A {@link Response} containing the {@link Difference} between the {@code sourceId} and {@code targetId}
+     * @return A {@link Response} containing the {@link Difference} for the specified commit or between the
+     * {@code sourceId} and {@code targetId}
      * {@link Commit}s.
      */
     @GET
@@ -276,16 +277,26 @@ public class CommitRest {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(sourceId, "Source commit is required");
-            checkStringParam(targetId, "Target commit is required");
 
-            try {
-                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
-                return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
-                        MediaType.APPLICATION_JSON).build();
-            } catch (IllegalArgumentException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-            } catch (IllegalStateException | MobiException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            if (StringUtils.isBlank(targetId)) {
+                Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
+                if (optCommit.isPresent()) {
+                    return createCommitResponse(optCommit.get(),
+                            catalogManager.getCommitDifference(optCommit.get().getResource()),
+                            rdfFormat, transformer, bNodeService);
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND).build();
+                }
+            } else {
+                try {
+                    Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
+                    return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                            MediaType.APPLICATION_JSON).build();
+                } catch (IllegalArgumentException ex) {
+                    throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+                } catch (IllegalStateException | MobiException ex) {
+                    throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+                }
             }
         } finally {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);

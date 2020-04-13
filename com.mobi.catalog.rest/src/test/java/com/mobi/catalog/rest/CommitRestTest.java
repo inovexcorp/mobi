@@ -431,8 +431,37 @@ public class CommitRestTest extends MobiRestTestNg {
 
     @Test
     public void getDifferenceWithoutTargetTest() {
+        // When
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference").request().get();
-        assertEquals(response.getStatus(), 400);
+
+        // Then
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("commit"));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+            JSONObject commit = result.getJSONObject("commit");
+            assertTrue(commit.containsKey("@id"));
+            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDifferenceWithMissingSourceNoTarget() {
+        // Setup:
+        when(catalogManager.getCommit(any())).thenReturn(Optional.empty());
+
+        // When:
+        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
+                .request().get();
+
+        // Then:
+        assertEquals(response.getStatus(), 404);
+        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
     }
 
     @Test
@@ -454,6 +483,7 @@ public class CommitRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
+    // GET commits/{commitId}/history?entityId
     @Test
     public void getCommitHistoryWithEntityNoTargetTest() {
         when(catalogManager.getCommitEntityChain(any(Resource.class), any(Resource.class))).thenReturn(entityCommits);
