@@ -771,7 +771,7 @@ describe('Ontology State Service', function() {
                         });
                     });
                     describe('and getInProgressCommit is rejected', function() {
-                        fdescribe('with a 404', function() {
+                        describe('with a 404', function() {
                             beforeEach(function() {
                                 catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject({status: 404}));
                             });
