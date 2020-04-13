@@ -95,12 +95,12 @@ public class CatalogRestUtils {
 
     /**
      * Creates a Response for a Commit without its addition and deletion statements. The JSONObject in the Response has
-     * key "commit" with value of the Commit's JSON-LD.
+     * the value of the Commit's JSON-LD.
      *
      * @param commit       The Commit to create a response for
      * @param transformer  The {@link SesameTransformer} to use.
      * @param bNodeService The {@link BNodeService} to use.
-     * @return A Response containing a JSONObject with the Commit JSON-LD and its addition and deletion statements
+     * @return A Response containing a JSONObject with the Commit JSON-LD
      */
     public static Response createCommitResponse(Commit commit, SesameTransformer transformer,
                                                 BNodeService bNodeService) {

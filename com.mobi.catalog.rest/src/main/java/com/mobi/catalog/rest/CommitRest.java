@@ -272,8 +272,8 @@ public class CommitRest {
     @RolesAllowed("user")
     @ApiOperation("Retrieves the Difference of the two specified Commits.")
     public Response getDifference(@PathParam("sourceId") String sourceId,
-                           @QueryParam("targetId") String targetId,
-                           @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
+                                  @QueryParam("targetId") String targetId,
+                                  @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try {
             checkStringParam(sourceId, "Source commit is required");
@@ -288,16 +288,14 @@ public class CommitRest {
                     return Response.status(Response.Status.NOT_FOUND).build();
                 }
             } else {
-                try {
-                    Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
-                    return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
-                            MediaType.APPLICATION_JSON).build();
-                } catch (IllegalArgumentException ex) {
-                    throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-                } catch (IllegalStateException | MobiException ex) {
-                    throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-                }
+                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
+                return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                        MediaType.APPLICATION_JSON).build();
             }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             logger.trace("getDifference took {}ms", System.currentTimeMillis() - start);
         }
