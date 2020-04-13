@@ -35,6 +35,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -104,8 +105,7 @@ public class CommitRestTest extends MobiRestTestNg {
     private List<Commit> entityCommits;
     private List<Commit> testCommits;
     private User user;
-
-    private final IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
+    private IRI typeIRI;
 
     @Mock
     private CatalogManager catalogManager;
@@ -132,6 +132,8 @@ public class CommitRestTest extends MobiRestTestNg {
     protected Application configureApp() throws Exception {
         vf = getValueFactory();
         mf = getModelFactory();
+
+        typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
 
         recordFactory = getRequiredOrmFactory(Record.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -218,8 +220,8 @@ public class CommitRestTest extends MobiRestTestNg {
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
             assertTrue(result.containsKey("commit"));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            assertFalse(result.containsKey("additions"));
+            assertFalse(result.containsKey("deletions"));
             JSONObject commit = result.getJSONObject("commit");
             assertTrue(commit.containsKey("@id"));
             assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
@@ -227,6 +229,25 @@ public class CommitRestTest extends MobiRestTestNg {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
+
+//    @Test
+//    public void getCommitWithNoResults() {
+//        Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
+//                .request().get();
+//        assertEquals(response.getStatus(), 200);
+//        verify(catalogManager).getCommit(vf.createIRI(COMMIT_IRIS[1]));
+//        try {
+//            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+//            assertTrue(result.containsKey("commit"));
+//            assertFalse(result.containsKey("additions"));
+//            assertFalse(result.containsKey("deletions"));
+//            JSONObject commit = result.getJSONObject("commit");
+//            assertTrue(commit.containsKey("@id"));
+//            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
+//        } catch (Exception e) {
+//            fail("Expected no exception, but got: " + e.getMessage());
+//        }
+//    }
 
     @Test
     public void getCommitWithErrorTest() {
