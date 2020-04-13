@@ -651,6 +651,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.getOntologyCatalogDetails = function(recordId, rdfFormat = 'jsonld') {
         var state = self.getOntologyStateByRecordId(recordId);
         if (!isEmpty(state)) {
+            var inProgressCommit = emptyInProgressCommit;
             var currentState = self.getCurrentState(state);
             var commitId = util.getPropertyId(currentState, prefixes.ontologyState + 'commit');
             var tagId = util.getPropertyId(currentState, prefixes.ontologyState + 'tag');
@@ -675,14 +676,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }
             return promise
                 .then(response => {
-                    return {recordId, branchId, commitId, upToDate, inProgressCommit: response};
-                }, (response) => {
-                    if (get(response, 'status') !== 404) {
-                        return self.deleteOntologyState(recordId)
-                        .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
+                    inProgressCommit = response;
+                    return cm.getCommit(commitId);
+                }, response => {
+                    if (get(response, 'status') === 404) {
+                        return cm.getCommit(commitId);
                     }
                     return $q.reject();
-                });
+                })
+                .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
+                    self.deleteOntologyState(recordId)
+                        .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
+                );
         }
         return self.getLatestOntology(recordId, rdfFormat);
     }
@@ -736,6 +741,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 return cm.getRecordBranch(data.branchId, data.recordId, catalogId);
             }, $q.reject)
             .then(branch => {
+                listItem.ontologyId = ontologyJson['@id'];
                 listItem.branches = [branch];
                 listItem.masterBranchIRI = listItem.ontologyRecord.branchId;
                 listItem.userCanModify = true;
