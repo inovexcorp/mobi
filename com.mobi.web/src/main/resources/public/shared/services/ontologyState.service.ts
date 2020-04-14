@@ -639,16 +639,14 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Retrieves the last visible state of the ontology for the current user in the provided RDF format. If
+     * Retrieves the last visible state of the ontology for the current user. If
      * the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
      * retrieves the latest state of the ontology.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
-     * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-     * @returns {Promise} A promise containing the record id, branch id, commit id, inProgressCommit,
-     * and JSON-LD serialization of the ontology.
+     * @returns {Promise} A promise containing the record id, branch id, commit id, and inProgressCommit.
      */
-    self.getOntologyCatalogDetails = function(recordId, rdfFormat = 'jsonld') {
+    self.getOntologyCatalogDetails = function(recordId) {
         var state = self.getOntologyStateByRecordId(recordId);
         if (!isEmpty(state)) {
             var inProgressCommit = emptyInProgressCommit;
@@ -686,10 +684,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 })
                 .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
                     self.deleteOntologyState(recordId)
-                        .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
+                        .then(() => self.getLatestOntology(recordId), $q.reject)
                 );
         }
-        return self.getLatestOntology(recordId, rdfFormat);
+        return self.getLatestOntology(recordId);
     }
     /**
      * @ngdoc method
@@ -698,15 +696,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @description
      * Retrieves the latest state of an ontology, being the head commit of the master branch, and returns
-     * a promise containing the ontology id, record id, branch id, commit id, inProgressCommit, and
-     * serialized ontology.
+     * a promise containing the ontology id, record id, branch id, commit id, and inProgressCommit
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
-     * @param {string} rdfFormat The format string to identify the serialization requested.
-     * @return {Promise} A promise containing the ontology id, record id, branch id, commit id,
-     *                    inProgressCommit, and JSON-LD serialization of the ontology.
+     * @return {Promise} A promise containing the ontology id, record id, branch id, commit id, and
+     *                    inProgressCommit.
      */
-    self.getLatestOntology = function(recordId, rdfFormat = 'jsonld') {
+    self.getLatestOntology = function(recordId) {
         var branchId, commitId;
         return cm.getRecordMasterBranch(recordId, catalogId)
             .then(masterBranch => {
@@ -714,7 +710,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 commitId = get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                 return self.createOntologyState({recordId, commitId, branchId});
             }, $q.reject)
-            .then(ontology => {return {ontology, recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
+            .then(() => {return {recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
     }
     /**
      * @ngdoc method
@@ -726,7 +722,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Returns a promise with the entityIRI, recordId, branchId, and commitId for the state of the newly
      * created ontology.
      *
-     * @param {string} ontologyJson The JSON-LD representing the ontology.
+     * @param {string} ontologyJson The JSON-LD object representing the ontology definition.
      * @param {string} title The title for the OntologyRecord.
      * @param {string} description The description for the OntologyRecord.
      * @param {string} keywords The array of keywords for the OntologyRecord.
