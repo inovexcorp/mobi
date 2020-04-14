@@ -639,7 +639,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Retrieves the last visible state of the ontology for the current user. If
+     * Retrieves the catalog information for the specific commit of the ontology that should be opened for the current user. If
      * the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
      * retrieves the latest state of the ontology.
      *
