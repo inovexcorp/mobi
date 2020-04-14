@@ -1822,24 +1822,23 @@ describe('Ontology State Service', function() {
     });
     describe('openOntology should call the proper methods', function() {
         beforeEach(function() {
-            spyOn(ontologyStateSvc, 'setSelected');
+            this.setSelectedResponse = {'status':'succeeded'};
+            spyOn(ontologyStateSvc, 'setSelected').and.returnValue($q.when(this.setSelectedResponse));
             spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('entityId');
         });
         describe('when getOntologyCatalogDetails resolves', function() {
             beforeEach(function() {
-                ontologyManagerSvc.getOntologyIRI.and.returnValue(this.ontologyId);
                 spyOn(ontologyStateSvc, 'getOntologyCatalogDetails').and.returnValue($q.when(this.getResponse));
             });
             it('and addOntologyToList resolves', function() {
                 spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue($q.when(listItem));
                 ontologyStateSvc.openOntology(this.recordId, this.title)
                     .then(response => {
-                        expect(response).toEqual(this.ontologyId);
+                        expect(response).toEqual(this.setSelectedResponse);
                     }, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(this.ontology);
                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, this.inProgressCommit, this.title, true);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                 expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
@@ -1853,7 +1852,6 @@ describe('Ontology State Service', function() {
                         expect(response).toEqual(this.error);
                     });
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(this.ontology);
                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, this.inProgressCommit, this.title, true);
             });
         });

@@ -1318,19 +1318,16 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @param {string} recordId The record ID of the requested ontology.
      * @param {string} recordTitle The title of the requested ontology.
-     * @returns {Promise} A promise with the ontology ID or error message.
+     * @returns {Promise} A promise resolves if the action was successful and rejects if not.
      */
     self.openOntology = function(recordId, recordTitle) {
-        var ontologyId;
         return self.getOntologyCatalogDetails(recordId)
             .then(response => {
-                ontologyId = om.getOntologyIRI(response.ontology);
                 return self.addOntologyToList(recordId, response.branchId, response.commitId, response.inProgressCommit, recordTitle, response.upToDate);
             }, $q.reject)
             .then(response => {
                 self.listItem = response;
-                self.setSelected(self.getActiveEntityIRI(), false);
-                return ontologyId;
+                return self.setSelected(self.getActiveEntityIRI(), false);
             }, $q.reject);
     }
     /**
