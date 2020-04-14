@@ -635,7 +635,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getOntology
+     * @name getOntologyCatalogDetails
      * @methodOf shared.service:ontologyStateService
      *
      * @description
