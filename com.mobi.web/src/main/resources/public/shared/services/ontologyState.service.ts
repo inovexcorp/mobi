@@ -742,6 +742,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             }, $q.reject)
             .then(branch => {
                 listItem.ontologyId = ontologyJson['@id'];
+                listItem.editorTabStates.project.entityIRI = ontologyJson['@id'];
                 listItem.branches = [branch];
                 listItem.masterBranchIRI = listItem.ontologyRecord.branchId;
                 listItem.userCanModify = true;
