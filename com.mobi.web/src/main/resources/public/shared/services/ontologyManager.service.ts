@@ -313,7 +313,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      *
      * @description
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
-     * corresponding to the listItem strcuture.
+     * corresponding to the listItem structure.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit

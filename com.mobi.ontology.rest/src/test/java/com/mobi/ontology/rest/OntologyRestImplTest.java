@@ -246,6 +246,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private JSONObject individualsOfResult;
     private JSONObject basicHierarchyResults;
     private JSONArray importedOntologyResults;
+    private JSONArray importsClosureResults;
     private OutputStream ontologyJsonLd;
     private OutputStream importedOntologyJsonLd;
     private Repository repo;
@@ -335,6 +336,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         searchResults = getResource("/search-results.json");
         entityUsagesResult = getResource("/entity-usages-results.json");
         importedOntologyResults = getResourceArray("/imported-ontology-results.json");
+        importsClosureResults = getResourceArray("/imports-closure-results.json");
         individualsOfResult = getResource("/individuals-of-results.json");
         basicHierarchyResults = getResource("/basic-hierarchy.json");
 
@@ -3206,7 +3208,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }
 
     @Test
@@ -3220,7 +3222,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }
 
     @Test
@@ -3231,7 +3233,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
-        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }
 
     @Test
@@ -3242,7 +3244,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }
 
     @Test
@@ -3253,7 +3255,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importedOntologyResults);
+        assertEquals(JSONArray.fromObject(response.readEntity(String.class)), importsClosureResults);
     }
 
     @Test
