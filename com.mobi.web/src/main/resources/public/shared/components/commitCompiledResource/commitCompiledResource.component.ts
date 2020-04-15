@@ -80,7 +80,7 @@ function commitCompiledResourceComponentCtrl($q, httpService, catalogManagerServ
                     var resource = head(resources) || {};
                     dvm.types = map(get(resource, '@type', []), type => ({type}));
                     dvm.resource = omit(resource, ['@id', '@type']);
-                    return cm.getCommit(dvm.commitId);
+                    return cm.getDifference(dvm.commitId);
                 }, $q.reject)
                 .then(response => {
                     var additionsObj = find(response.additions, {'@id': dvm.entityId});

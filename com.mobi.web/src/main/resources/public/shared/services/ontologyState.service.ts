@@ -635,20 +635,18 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getOntology
+     * @name getOntologyCatalogDetails
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Retrieves the last visible state of the ontology for the current user in the provided RDF format. If
+     * Retrieves the catalog information for the specific commit of the ontology that should be opened for the current user. If
      * the user has not opened the ontology yet or the branch/commit they were viewing no longer exists,
      * retrieves the latest state of the ontology.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
-     * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-     * @returns {Promise} A promise containing the record id, branch id, commit id, inProgressCommit,
-     * and JSON-LD serialization of the ontology.
+     * @returns {Promise} A promise containing the record id, branch id, commit id, and inProgressCommit.
      */
-    self.getOntology = function(recordId, rdfFormat = 'jsonld') {
+    self.getOntologyCatalogDetails = function(recordId) {
         var state = self.getOntologyStateByRecordId(recordId);
         if (!isEmpty(state)) {
             var inProgressCommit = emptyInProgressCommit;
@@ -677,19 +675,19 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             return promise
                 .then(response => {
                     inProgressCommit = response;
-                    return om.getOntology(recordId, branchId, commitId, rdfFormat);
+                    return cm.getCommit(commitId);
                 }, response => {
                     if (get(response, 'status') === 404) {
-                        return om.getOntology(recordId, branchId, commitId, rdfFormat);
+                        return cm.getCommit(commitId);
                     }
                     return $q.reject();
                 })
-                .then(ontology => ({ontology, recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
+                .then(() => ({recordId, branchId, commitId, upToDate, inProgressCommit}), () =>
                     self.deleteOntologyState(recordId)
-                        .then(() => self.getLatestOntology(recordId, rdfFormat), $q.reject)
+                        .then(() => self.getLatestOntology(recordId), $q.reject)
                 );
         }
-        return self.getLatestOntology(recordId, rdfFormat);
+        return self.getLatestOntology(recordId);
     }
     /**
      * @ngdoc method
@@ -698,15 +696,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @description
      * Retrieves the latest state of an ontology, being the head commit of the master branch, and returns
-     * a promise containing the ontology id, record id, branch id, commit id, inProgressCommit, and
-     * serialized ontology.
+     * a promise containing the ontology id, record id, branch id, commit id, and inProgressCommit
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
-     * @param {string} rdfFormat The format string to identify the serialization requested.
-     * @return {Promise} A promise containing the ontology id, record id, branch id, commit id,
-     *                    inProgressCommit, and JSON-LD serialization of the ontology.
+     * @return {Promise} A promise containing the ontology id, record id, branch id, commit id, and
+     *                    inProgressCommit.
      */
-    self.getLatestOntology = function(recordId, rdfFormat = 'jsonld') {
+    self.getLatestOntology = function(recordId) {
         var branchId, commitId;
         return cm.getRecordMasterBranch(recordId, catalogId)
             .then(masterBranch => {
@@ -714,8 +710,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 commitId = get(masterBranch, "['" + prefixes.catalog + "head'][0]['@id']", '');
                 return self.createOntologyState({recordId, commitId, branchId});
             }, $q.reject)
-            .then(() => om.getOntology(recordId, branchId, commitId, rdfFormat), $q.reject)
-            .then(ontology => {return {ontology, recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
+            .then(() => {return {recordId, branchId, commitId, upToDate: true, inProgressCommit: emptyInProgressCommit}}, $q.reject);
     }
     /**
      * @ngdoc method
@@ -727,7 +722,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Returns a promise with the entityIRI, recordId, branchId, and commitId for the state of the newly
      * created ontology.
      *
-     * @param {string} ontologyJson The JSON-LD representing the ontology.
+     * @param {string} ontologyJson The JSON-LD object representing the ontology definition.
      * @param {string} title The title for the OntologyRecord.
      * @param {string} description The description for the OntologyRecord.
      * @param {string} keywords The array of keywords for the OntologyRecord.
@@ -738,10 +733,12 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var listItem;
         return om.uploadJson(ontologyJson, title, description, keywords)
             .then(data => {
-                listItem = setupListItem(data.ontologyId, data.recordId, data.branchId, data.commitId, [ontologyJson], emptyInProgressCommit, true, title);
+                listItem = setupListItem(data.recordId, data.branchId, data.commitId, emptyInProgressCommit, true, title);
                 return cm.getRecordBranch(data.branchId, data.recordId, catalogId);
             }, $q.reject)
             .then(branch => {
+                listItem.ontologyId = ontologyJson['@id'];
+                listItem.editorTabStates.project.entityIRI = ontologyJson['@id'];
                 listItem.branches = [branch];
                 listItem.masterBranchIRI = listItem.ontologyRecord.branchId;
                 listItem.userCanModify = true;
@@ -800,8 +797,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var listItem;
         var oldListItem = self.getListItemByRecordId(recordId);
 
-        return om.getOntology(recordId, branchId, commitId, 'jsonld', clearCache)
-            .then(ontology => self.createOntologyListItem(om.getOntologyIRI(ontology), recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title), $q.reject)
+        return self.createOntologyListItem(recordId, branchId, commitId, inProgressCommit, upToDate, oldListItem.ontologyRecord.title, clearCache)
             .then(response => {
                 listItem = response;
                 listItem.editorTabStates = oldListItem.editorTabStates;
@@ -839,8 +835,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         var listItem;
         var oldListItem = self.getListItemByRecordId(recordId);
 
-        return om.getOntology(recordId, '', commitId, 'jsonld')
-            .then(ontology => self.createOntologyListItem(om.getOntologyIRI(ontology), recordId, '', commitId, ontology, emptyInProgressCommit, true, oldListItem.ontologyRecord.title), $q.reject)
+        return self.createOntologyListItem(recordId, '', commitId, emptyInProgressCommit, true, oldListItem.ontologyRecord.title, false)
             .then(response => {
                 listItem = response;
                 listItem.editorTabStates = oldListItem.editorTabStates;
@@ -859,24 +854,26 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 self.setActivePage(activeKey, oldListItem);
             }, $q.reject);
     }
-    self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
-        return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
+    self.addOntologyToList = function(recordId, branchId, commitId, inProgressCommit, title, upToDate = true) {
+        return self.createOntologyListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title, false)
             .then(listItem => {
                 self.list.push(listItem);
                 return listItem;
             }, $q.reject);
     }
-    self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true, title) {
+    self.createOntologyListItem = function(recordId, branchId, commitId, inProgressCommit, upToDate = true, title, clearCache) {
         var modifyRequest: any = {
             resourceId: recordId,
             actionId: polm.actionModify
         };
-        var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
+        var listItem = setupListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title);
         return $q.all([
-            om.getOntologyStuff(recordId, branchId, commitId),
+            om.getOntologyStuff(recordId, branchId, commitId, clearCache),
             cm.getRecordBranches(recordId, catalogId),
             cm.getRecordVersions(recordId, catalogId)
         ]).then(response => {
+            listItem.ontologyId = response[0].ontologyIRI;
+            listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;    
             forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
                 listItem.propertyIcons[propertyIRI] = getIcon(ranges);
             });
@@ -886,17 +883,17 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             listItem.entityInfo = get(response[0], 'entityNames', {});
             var responseIriList = get(response[0], 'iriList', {});
             listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
-            get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem, 'annotations.iris', iri, ontologyId));
+            get(responseIriList, 'annotationProperties', []).forEach(iri => addIri(listItem, 'annotations.iris', iri, listItem.ontologyId));
             forEach(get(responseIriList, 'classes', []), iri => self.addToClassIRIs(listItem, iri));
-            get(responseIriList, 'dataProperties', []).forEach(iri => addIri(listItem, 'dataProperties.iris', iri, ontologyId));
-            get(responseIriList, 'objectProperties', []).forEach(iri => addIri(listItem, 'objectProperties.iris', iri, ontologyId));
-            get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, ontologyId));
-            get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, ontologyId));
-            get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, ontologyId));
+            get(responseIriList, 'dataProperties', []).forEach(iri => addIri(listItem, 'dataProperties.iris', iri, listItem.ontologyId));
+            get(responseIriList, 'objectProperties', []).forEach(iri => addIri(listItem, 'objectProperties.iris', iri, listItem.ontologyId));
+            get(responseIriList, 'namedIndividuals', []).forEach(iri => addIri(listItem, 'individuals.iris', iri, listItem.ontologyId));
+            get(responseIriList, 'concepts', []).forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
+            get(responseIriList, 'conceptSchemes', []).forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
             listItem.derivedConcepts = get(responseIriList, 'derivedConcepts', []);
             listItem.derivedConceptSchemes = get(responseIriList, 'derivedConceptSchemes', []);
             listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
-            get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem, 'dataPropertyRange', iri, ontologyId));
+            get(responseIriList, 'datatypes', []).forEach(iri => addIri(listItem, 'dataPropertyRange', iri, listItem.ontologyId));
             forEach(get(response[0], 'importedOntologies'), importedOntObj => {
                 addImportedOntologyToListItem(listItem, importedOntObj);
             });
@@ -1212,21 +1209,6 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     }
     /**
      * @ngdoc method
-     * @name getOntologyByRecordId
-     * @methodOf shared.service:ontologyStateService
-     *
-     * @description
-     * Gets the ontology from the {@link shared.service:ontologyStateService#list list} using the
-     * requested recordId ID. Returns the JSON-LD of the ontology.
-     *
-     * @param {string} recordId The record ID of the requested ontology.
-     * @returns {Object[]} The JSON-LD of the requested ontology.
-     */
-    self.getOntologyByRecordId = function(recordId) {
-        return get(self.getListItemByRecordId(recordId), 'ontology', []);
-    }
-    /**
-     * @ngdoc method
      * @name getEntityByRecordId
      * @methodOf shared.service:ontologyStateService
      *
@@ -1336,19 +1318,16 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @param {string} recordId The record ID of the requested ontology.
      * @param {string} recordTitle The title of the requested ontology.
-     * @returns {Promise} A promise with the ontology ID or error message.
+     * @returns {Promise} A promise resolves if the action was successful and rejects if not.
      */
     self.openOntology = function(recordId, recordTitle) {
-        var ontologyId;
-        return self.getOntology(recordId)
+        return self.getOntologyCatalogDetails(recordId)
             .then(response => {
-                ontologyId = om.getOntologyIRI(response.ontology);
-                return self.addOntologyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, recordTitle, response.upToDate);
+                return self.addOntologyToList(recordId, response.branchId, response.commitId, response.inProgressCommit, recordTitle, response.upToDate);
             }, $q.reject)
             .then(response => {
                 self.listItem = response;
-                self.setSelected(self.getActiveEntityIRI(), false);
-                return ontologyId;
+                return self.setSelected(self.getActiveEntityIRI(), false);
             }, $q.reject);
     }
     /**
@@ -2087,10 +2066,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     function getOpenPath(...args) {
         return self.getActiveKey() + '.' + join(map(args, encodeURIComponent), '.');
     }
-    function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title) {
+    function setupListItem(recordId, branchId, commitId, inProgressCommit, upToDate, title) {
         var listItem = angular.copy(ontologyListItemTemplate);
-        listItem.ontologyId = ontologyId;
-        listItem.editorTabStates.project.entityIRI = ontologyId;
         listItem.ontologyRecord.title = title;
         listItem.ontologyRecord.recordId = recordId;
         listItem.ontologyRecord.branchId = branchId;

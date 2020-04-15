@@ -548,6 +548,17 @@ describe('Ontology Manager service', function() {
                 flushAndVerify($httpBackend);
                 expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: 'error'}));
             });
+            it('successfully clearing the cache', function() {
+                this.params = paramSerializer({ branchId: this.branchId, commitId: this.commitId, clearCache: true });
+                $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/ontology-stuff?' + this.params).respond(200, {});
+                ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId, true)
+                    .then(response => {
+                        expect(response).toEqual({});
+                    }, () => {
+                        fail('Promise should have resolved');
+                    });
+                flushAndVerify($httpBackend);
+            });
             it('successfully', function() {
                 $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/ontology-stuff?' + this.params).respond(200, {});
                 ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId)
@@ -561,11 +572,11 @@ describe('Ontology Manager service', function() {
         });
         describe('with an id', function() {
             beforeEach(function() {
-                this.config = { params: { branchId: this.branchId, commitId: this.commitId } };
+                this.config = { params: { branchId: this.branchId, commitId: this.commitId, clearCache: undefined } };
             });
             it('unless an error occurs', function() {
                 httpSvc.get.and.returnValue($q.reject({status: 400, statusText: this.error}));
-                ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId, 'id')
+                ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId, undefined, 'id')
                     .then(() => {
                         fail('Promise should have rejected');
                     }, response => {
@@ -575,9 +586,21 @@ describe('Ontology Manager service', function() {
                 expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/ontology-stuff', this.config, 'id');
                 expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
             });
+            it('successfully clearing the cache', function() {
+                this.config.params.clearCache = true;
+                httpSvc.get.and.returnValue($q.when({data: {}}));
+                ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId, true, 'id')
+                    .then(response => {
+                        expect(response).toEqual({});
+                    }, () => {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(this.recordId) + '/ontology-stuff', this.config, 'id');
+            });
             it('successfully', function() {
                 httpSvc.get.and.returnValue($q.when({data: {}}));
-                ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId, 'id')
+                ontologyManagerSvc.getOntologyStuff(this.recordId, this.branchId, this.commitId, undefined, 'id')
                     .then(response => {
                         expect(response).toEqual({});
                     }, () => {

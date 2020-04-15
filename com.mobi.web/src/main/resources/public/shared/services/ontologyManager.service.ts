@@ -313,16 +313,17 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      *
      * @description
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
-     * corresponding to the listItem strcuture.
+     * corresponding to the listItem structure.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} clearCache Whether or not to clear the cache
      * @param {string} id The identifier for this request
      * @return {Promise} A Promise with an object containing listItem keys.
      */
-    self.getOntologyStuff = function(recordId, branchId, commitId, id = '') {
-        var config = { params: { branchId, commitId } };
+    self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
+        var config = { params: { branchId, commitId, clearCache } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
