@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Modal service', function() {
-    var modalSvc, $uibModal, scope, $uibModalStack, $rootScope;
+    var modalSvc, $uibModal, scope, $uibModalStack;
 
     beforeEach(function() {
         angular.mock.module('shared');
@@ -44,7 +44,6 @@ describe('Modal service', function() {
             modalSvc = modalService;
             $uibModal = _$uibModal_;
             $uibModalStack = _$uibModalStack_;
-            $rootScope = _$rootScope_;
             scope = _$rootScope_;
         });
     });
@@ -53,7 +52,6 @@ describe('Modal service', function() {
         modalSvc = null;
         $uibModal = null;
         $uibModalStack = null;
-        $rootScope = null;
         scope = null;
     });
 

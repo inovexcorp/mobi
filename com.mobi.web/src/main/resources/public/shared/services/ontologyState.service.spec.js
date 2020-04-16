@@ -1833,15 +1833,13 @@ describe('Ontology State Service', function() {
             it('and addOntologyToList resolves', function() {
                 spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue($q.when(listItem));
                 ontologyStateSvc.openOntology(this.recordId, this.title)
-                    .then(response => {
-                        expect(response).toEqual(this.setSelectedResponse);
-                    }, () => {
+                    .then(_.noop, () => {
                         fail('Promise should have resolved');
                     });
                 scope.$apply();
                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId, this.inProgressCommit, this.title, true);
                 expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-                expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
+                expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false, listItem);
             });
             it('and addOntologyToList rejects', function() {
                 spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue($q.reject(this.error));

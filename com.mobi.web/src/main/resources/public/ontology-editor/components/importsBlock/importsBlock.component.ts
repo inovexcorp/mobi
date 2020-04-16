@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, get, concat, reject, includes, findIndex, sortBy, pick } from 'lodash';
+import { map, get, concat, reject, includes, findIndex, some, sortBy, pick } from 'lodash';
 
 import './importsBlock.component.scss';
 
@@ -111,7 +111,8 @@ function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes,
         var failedImports = map(dvm.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
         var allImports = concat(goodImports, failedImports);
         var filtered = reject(allImports, item => includes(directImports, item.id) || includes(directImports, item.ontologyId));
-        dvm.indirectImports = sortBy(map(filtered, 'ontologyId'));
+        // TODO: currently a new filter was added in order to support situations where the back-end cannot set an ontologyIRI to ontologyID. Long term, changes will be made on the backend to properly support these scenarios.
+        dvm.indirectImports = sortBy(map(filtered, item => item.ontologyId || item.id));
     }
     dvm.showNewOverlay = function() {
         modalService.openModal('importsOverlay', {}, dvm.setIndirectImports);
