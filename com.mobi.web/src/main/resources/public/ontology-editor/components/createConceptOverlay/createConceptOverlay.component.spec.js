@@ -64,7 +64,7 @@ describe('Create Concept Overlay component', function() {
 
         this.iri = 'iri#';
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
-        ontologyManagerSvc.getConceptSchemeIRIs.and.returnValue(['scheme1']);
+        ontologyStateSvc.listItem.conceptSchemes.iris = {'scheme1':'test'};
 
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
@@ -100,7 +100,6 @@ describe('Create Concept Overlay component', function() {
         expect(this.controller.concept['@id']).toEqual(this.controller.prefix);
         expect(this.controller.concept['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept']);
         expect(this.controller.schemeIRIs).toEqual(['scheme1']);
-        expect(ontologyManagerSvc.getConceptSchemeIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConceptSchemes);
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -184,7 +183,7 @@ describe('Create Concept Overlay component', function() {
         });
         it('should create a concept', function() {
             ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-            this.scheme = {'@id': 'scheme', mobi: {}};
+            this.scheme = {'@id': 'scheme'};
             this.controller.selectedSchemes = [this.scheme];
             ontologyStateSvc.getEntityByRecordId.and.returnValue(this.scheme);
             this.controller.concept = {'@id': 'concept'};
@@ -196,7 +195,7 @@ describe('Create Concept Overlay component', function() {
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
-            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.listItem.concepts.iris).toEqual({[this.controller.concept['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);

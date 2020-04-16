@@ -1,0 +1,33 @@
+@prefix : <http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl2> a owl:Ontology ;
+  rdfs:comment "An Ontology that is intended to be used in the process of aircraft design." ;
+  <http://purl.org/dc/elements/1.1/title> "Aircraft Design Ontology" .
+
+### Clases
+
+:AircraftSubComponent a <http://www.w3.org/2002/07/owl#Class>;
+    rdfs:comment "components which build up an aircraft" ;
+    rdfs:subClassOf owl:Thing .
+
+:Fin a owl:Class ;
+  rdfs:comment "the vertical stabilizing structure of a plane, constisting of the fixed vertical stabilizer and the rudder (control structure for \"yaw\")";
+  rdfs:subClassOf :AircraftSubComponent .
+
+:TankSystem a owl:Class ;
+  rdfs:comment "a TankSystem can be a part of other aircraft components" .
+
+### Object Properties
+
+:hasDirectPart a owl:AsymmetricProperty, owl:InverseFunctionalProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+   rdfs:comment "inverse of \"isDirectPartOf\"" .
+
+:hasTankSystem a owl:ObjectProperty ;
+  rdfs:comment "intentionally less restrictive regarding the domain, since several different components can have a TankGroup";
+  rdfs:domain :AircraftSubComponent ;
+  rdfs:range :TankSystem ;
+  rdfs:subPropertyOf :hasDirectPart ;
+  owl:inverseOf :isTankSystemOf .

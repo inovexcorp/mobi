@@ -232,6 +232,7 @@ export function mockOntologyManager() {
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
+            this.getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue($q.when([]));
             this.isDeprecated = jasmine.createSpy('isDeprecated');
             this.isOntology = jasmine.createSpy('isOntology');
             this.hasOntologyEntity = jasmine.createSpy('hasOntologyEntity');
@@ -278,6 +279,7 @@ export function mockOntologyManager() {
             this.getBlankNodes = jasmine.createSpy('getBlankNodes').and.returnValue([]);
             this.getEntity = jasmine.createSpy('getEntity').and.returnValue({});
             this.getEntityName = jasmine.createSpy('getEntityName').and.callFake((ontology, entity) => _.has(entity, '@id') ? entity['@id'] : '');
+            this.getEntityNames = jasmine.createSpy('getEntityNames').and.callFake((ontology, entity) => _.has(entity, '@id') ? [entity['@id']] : ['']);
             this.getEntityDescription = jasmine.createSpy('getEntityDescription').and.returnValue('');
             this.isConcept = jasmine.createSpy('isConcept').and.returnValue(true);
             this.hasConcepts = jasmine.createSpy('hasConcepts').and.returnValue(true);
@@ -542,48 +544,56 @@ export function mockOntologyState() {
                 selected: {
                     '@id': 'id'
                 },
+                selectedBlankNodes: [],
                 active: true,
                 upToDate: true,
                 isVocabulary: false,
                 editorTabStates: {
                    project: {
                        active: true,
-                       entityIRI: ''
+                       entityIRI: '',
+                       targetedSpinnerId: 'project'
                    },
                    overview: {
                        active: false,
                        searchText: '',
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'overview'
                    },
                    classes: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'classes'
                    },
                    properties: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'properties'
                    },
                    individuals: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'individuals'
                    },
                    concepts: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'concepts'
                    },
                    schemes: {
                        active: false,
                        searchText: '',
                        index: 0,
-                       open: {}
+                       open: {},
+                       targetedSpinnerId: 'schemes'
                    },
                    search: {
                        active: false
@@ -673,11 +683,7 @@ export function mockOntologyState() {
                 branches: [],
                 tags: [],
                 ontology: [{
-                    '@id': 'id',
-                    mobi: {
-                        id: 'id',
-                        jsAnnotations: [{}]
-                    }
+                    '@id': 'id'
                 }],
                 individualsParentPath: [],
                 classesAndIndividuals: {},
@@ -696,7 +702,7 @@ export function mockOntologyState() {
             this.uploadList = [];
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
-            this.getOntology = jasmine.createSpy('getOntology').and.returnValue({});
+            this.getOntologyCatalogDetails = jasmine.createSpy('getOntologyCatalogDetails').and.returnValue({});
             this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
             this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));
@@ -708,8 +714,12 @@ export function mockOntologyState() {
             this.removeEntity = jasmine.createSpy('removeEntity');
             this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId').and.returnValue({});
             this.getEntityByRecordId = jasmine.createSpy('getEntityByRecordId');
+            this.getEntity = jasmine.createSpy('getEntity').and.returnValue($q.when([]));
+            this.getEntityNoBlankNodes = jasmine.createSpy('getEntityNoBlankNodes').and.returnValue($q.when({}));
+            this.existsInListItem = jasmine.createSpy('existsInListItem').and.returnValue(true);
+            this.getFromListItem = jasmine.createSpy('getFromListItem').and.returnValue({});
             this.getOntologyByRecordId = jasmine.createSpy('getOntologyByRecordId');
-            this.getEntityNameByIndex = jasmine.createSpy('getEntityNameByIndex');
+            this.getEntityNameByListItem = jasmine.createSpy('getEntityNameByListItem');
             this.saveChanges = jasmine.createSpy('saveChanges').and.returnValue($q.resolve({}));
             this.addToAdditions = jasmine.createSpy('addToAdditions');
             this.addToDeletions = jasmine.createSpy('addToDeletions');
@@ -735,7 +745,7 @@ export function mockOntologyState() {
             this.getActiveKey = jasmine.createSpy('getActiveKey').and.returnValue('');
             this.getActivePage = jasmine.createSpy('getActivePage').and.returnValue({});
             this.getActiveEntityIRI = jasmine.createSpy('getActiveEntityIRI');
-            this.selectItem = jasmine.createSpy('selectItem');
+            this.selectItem = jasmine.createSpy('selectItem').and.returnValue($q.when());
             this.unSelectItem = jasmine.createSpy('unSelectItem');
             this.hasChanges = jasmine.createSpy('hasChanges').and.returnValue(true);
             this.isCommittable = jasmine.createSpy('isCommittable');
@@ -754,7 +764,6 @@ export function mockOntologyState() {
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
-            this.getOntologiesArray = jasmine.createSpy('getOntologiesArray').and.returnValue(this.listItem.ontology);
             this.createFlatIndividualTree = jasmine.createSpy('createFlatIndividualTree');
             this.updatePropertyIcon = jasmine.createSpy('updatePropertyIcon');
             this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
@@ -779,6 +788,14 @@ export function mockOntologyState() {
             this.getCurrentState = jasmine.createSpy('getCurrentState').and.returnValue({});
             this.isStateTag = jasmine.createSpy('isStateTag').and.returnValue(false);
             this.isStateBranch = jasmine.createSpy('isStateBranch').and.returnValue(false);
+            this.isImported = jasmine.createSpy('isImported').and.returnValue(false);
+            this.isSelectedImported = jasmine.createSpy('isSelectedImported').and.returnValue(false);
+            this.handleNewProperty = jasmine.createSpy('handleNewProperty');
+            this.handleDeletedProperty = jasmine.createSpy('handleDeletedProperty');
+            this.addPropertyToClasses = jasmine.createSpy('addPropertyToClasses');
+            this.handleDeletedClass = jasmine.createSpy('handleDeletedClass');
+            this.removePropertyFromClass = jasmine.createSpy('removePropertyFromClass');
+            this.getBnodeIndex = jasmine.createSpy('getBnodeIndex');
         });
     });
 }

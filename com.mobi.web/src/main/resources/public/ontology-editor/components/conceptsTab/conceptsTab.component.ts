@@ -39,8 +39,7 @@ const template = require('./conceptsTab.component.html');
  * {@link shared.service:ontologyStateService selected ontology/vocabulary} and information about a
  * selected concept from that list. The selected concept display includes a
  * {@link ontology-editor.component:selectedDetails}, a button to delete the concept, an
- * {@link ontology-editor.component:annotationBlock}, a
- * {@link ontology-editor.component:relationshipsBlock}, and a {@link ontology-editor.component:usagesBlock}.
+ * {@link ontology-editor.component:annotationBlock}, and a {@link ontology-editor.component:usagesBlock}.
  * The component houses the method for opening a modal for deleting concepts.
  */
 const conceptsTabComponent = {

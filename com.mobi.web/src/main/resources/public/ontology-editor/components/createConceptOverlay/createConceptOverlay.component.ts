@@ -64,7 +64,7 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
     dvm.om = ontologyManagerService;
     dvm.os = ontologyStateService;
     dvm.util = utilService;
-    dvm.schemeIRIs = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
+    dvm.schemeIRIs = Object.keys(dvm.os.listItem.conceptSchemes.iris);
     dvm.schemes = [];
     dvm.selectedSchemes = [];
     dvm.prefix = dvm.os.getDefaultPrefix();
@@ -90,7 +90,7 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
     dvm.create = function() {
         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.concept);
+        dvm.os.addEntity(dvm.concept);
         // update relevant lists
         dvm.os.listItem.concepts.iris[dvm.concept['@id']] = dvm.os.listItem.ontologyId;
         dvm.ontoUtils.addConcept(dvm.concept);

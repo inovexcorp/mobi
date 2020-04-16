@@ -181,7 +181,7 @@ describe('Create Individual Overlay component', function() {
                 this.controller.create();
                 expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.individual);
                 expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
                 expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe('Create Individual Overlay component', function() {
                 this.controller.create();
                 expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.individual);
                 expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
                 expect(ontoUtils.addConcept).not.toHaveBeenCalled();
                 expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(this.controller.individual);
@@ -208,7 +208,7 @@ describe('Create Individual Overlay component', function() {
                 this.controller.create();
                 expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.individual);
                 expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.individual);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
                 expect(ontoUtils.addConcept).not.toHaveBeenCalled();
                 expect(ontoUtils.addConceptScheme).not.toHaveBeenCalled();

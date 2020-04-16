@@ -76,7 +76,7 @@ function createIndividualOverlayComponentCtrl($filter, ontologyStateService, pre
     dvm.create = function() {
         // add the entity to the ontology
         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-        dvm.os.addEntity(dvm.os.listItem, dvm.individual);
+        dvm.os.addEntity(dvm.individual);
         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.individual);
         // update relevant lists
         dvm.ontoUtils.addIndividual(dvm.individual);

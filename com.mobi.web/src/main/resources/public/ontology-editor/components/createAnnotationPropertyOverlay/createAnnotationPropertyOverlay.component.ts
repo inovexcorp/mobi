@@ -88,7 +88,7 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.property);
+        dvm.os.addEntity(dvm.property);
         // update lists
         dvm.os.listItem.annotations.iris[dvm.property['@id']] = dvm.os.listItem.ontologyId;
         dvm.os.listItem.annotations.flat = dvm.os.flattenHierarchy(dvm.os.listItem.annotations);
