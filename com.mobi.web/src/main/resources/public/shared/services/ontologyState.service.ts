@@ -1313,21 +1313,25 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      *
      * @description
      * Used to open an ontology from the Mobi repository. It calls
-     * {@link shared.service:ontologyStateService#getOntology getOntology} to get the specified
-     * ontology from the Mobi repository. Returns a promise.
+     * {@link shared.service:ontologyStateService#getOntologyCatalogDetails getOntologyCatalogDetails} to get the specified
+     * ontology catalog information from the Mobi repository. Returns a promise.
      *
      * @param {string} recordId The record ID of the requested ontology.
      * @param {string} recordTitle The title of the requested ontology.
      * @returns {Promise} A promise resolves if the action was successful and rejects if not.
      */
     self.openOntology = function(recordId, recordTitle) {
+        let listItem;
         return self.getOntologyCatalogDetails(recordId)
             .then(response => {
                 return self.addOntologyToList(recordId, response.branchId, response.commitId, response.inProgressCommit, recordTitle, response.upToDate);
             }, $q.reject)
             .then(response => {
-                self.listItem = response;
-                return self.setSelected(self.getActiveEntityIRI(), false);
+                listItem = response;
+                return self.setSelected(self.getActiveEntityIRI(listItem), false, listItem);
+            }, $q.reject)
+            .then(() => {
+                self.listItem = listItem;
             }, $q.reject);
     }
     /**
@@ -1577,8 +1581,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             listItem.editorTabStates[key].active = true;
         }
     }
-    self.getActiveEntityIRI = function() {
-        return get(self.getActivePage(), 'entityIRI');
+    self.getActiveEntityIRI = function(listItem = self.listItem) {
+        return get(self.getActivePage(listItem), 'entityIRI');
     }
     /**
      * @ngdoc method
