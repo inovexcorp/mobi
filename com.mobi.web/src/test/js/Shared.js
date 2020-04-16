@@ -232,6 +232,7 @@ export function mockOntologyManager() {
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
+            this.getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue($q.when({}));
             this.getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue($q.when([]));
             this.isDeprecated = jasmine.createSpy('isDeprecated');
             this.isOntology = jasmine.createSpy('isOntology');
