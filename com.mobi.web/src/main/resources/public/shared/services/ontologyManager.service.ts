@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString } from 'lodash';
+import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
 
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
@@ -313,16 +313,17 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      *
      * @description
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
-     * corresponding to the listItem strcuture.
+     * corresponding to the listItem structure.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} clearCache Whether or not to clear the cache
      * @param {string} id The identifier for this request
      * @return {Promise} A Promise with an object containing listItem keys.
      */
-    self.getOntologyStuff = function(recordId, branchId, commitId, id = '') {
-        var config = { params: { branchId, commitId } };
+    self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
+        var config = { params: { branchId, commitId, clearCache } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
@@ -827,7 +828,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getOntologyIRI = function(ontology) {
         var entity = self.getOntologyEntity(ontology);
-        return get(entity, '@id', get(entity, 'mobi.anonymous', ''));
+        return get(entity, '@id', '');
     }
     /**
      * @ngdoc method
@@ -1412,6 +1413,26 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     function getPrioritizedValue(entity, prop) {
         return get(find(get(entity, "['" + prop + "']"), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNames
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Gets the provided entity's names. These names are an array of the '@value' values for the self.entityNameProps.
+     *
+     * @param {Object} entity The entity you want the names of.
+     * @returns {string[]} The names for the self.entityNameProps.
+     */
+    self.getEntityNames = function(entity) {
+        var names = [];
+        forEach(self.entityNameProps, prop => {
+            if (has(entity, prop)) {
+                names = concat(names, map(get(entity, prop), '@value'));
+            } 
+        });
+        return uniq(names);
     }
     /**
      * @ngdoc method

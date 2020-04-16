@@ -68,7 +68,7 @@ function selectedDetailsComponentCtrl($filter, ontologyManagerService, ontologyS
         return join(orderBy(
                 map(get(dvm.os.listItem.selected, '@type', []), t => { 
                     if (dvm.om.isBlankNodeId(t)) {
-                        return mc.jsonldToManchester(t, dvm.os.listItem.ontology);
+                        return mc.jsonldToManchester(t, dvm.os.listItem.selectedBlankNodes, dvm.os.getBnodeIndex());
                     } else {
                         return $filter('prefixation')(t);
                     }

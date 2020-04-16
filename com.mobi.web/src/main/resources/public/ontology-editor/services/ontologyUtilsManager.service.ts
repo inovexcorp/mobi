@@ -39,7 +39,9 @@ import {
     truncate,
     some,
     without,
-    unset
+    unset,
+    forOwn,
+    omit
 } from 'lodash';
 
 ontologyUtilsManagerService.$inject = ['$q', 'ontologyManagerService', 'ontologyStateService', 'updateRefsService', 'propertyManagerService', 'prefixes', 'utilService'];
@@ -215,10 +217,9 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     self.commonDelete = function(entityIRI, updateEverythingTree = false) {
         return om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
             .then(statements => {
-                var removedEntities = os.removeEntity(os.listItem, entityIRI);
-                forEach(removedEntities, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
+                os.removeEntity(entityIRI);
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, os.listItem.selected);
                 forEach(statements, statement => os.addToDeletions(os.listItem.ontologyRecord.recordId, statement));
-                ur.remove(os.listItem.ontology, entityIRI);
                 os.unSelectItem();
                 if (updateEverythingTree) {
                     os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
@@ -338,7 +339,7 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
      */
     self.isLinkable = function(id) {
-        return !!os.existsInIndices(id, os.listItem) && !om.isBlankNodeId(id);
+        return !!os.existsInListItem(id, os.listItem) && !om.isBlankNodeId(id);
     }
 
     self.getNameByNode = function(node) {
@@ -375,8 +376,10 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
 
     self.updateLabel = function() {
         var newLabel = om.getEntityName(os.listItem.selected);
-        if (has(os.listItem.index, "['" + os.listItem.selected['@id'] + "'].label") && os.listItem.index[os.listItem.selected['@id']].label !== newLabel) {
-            os.listItem.index[os.listItem.selected['@id']].label = newLabel;
+        var iri = os.listItem.selected['@id'];
+        if (has(os.listItem.entityInfo, "['" + iri + "'].label") && os.listItem.entityInfo[iri].label !== newLabel) {
+            os.listItem.entityInfo[iri].label = newLabel;
+            os.listItem.entityInfo[iri].names = om.getEntityNames(os.listItem.selected);
         }
         if (om.isClass(os.listItem.selected)) {
             os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes);
@@ -397,11 +400,11 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
     }
 
     self.getLabelForIRI = function(iri) {
-        return os.getEntityNameByIndex(iri, os.listItem);
+        return os.getEntityNameByListItem(iri, os.listItem);
     }
 
     self.getDropDownText = function(iri) {
-        return os.getEntityNameByIndex(iri, os.listItem);
+        return os.getEntityNameByListItem(iri, os.listItem);
     }
 
     self.checkIri = function(iri) {
@@ -502,9 +505,6 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
      * @return {Promise} A Promise that resolves with the JSON-LD value object that was removed
      */
     self.removeProperty = function(key, index) {
-        // TODO: Remove when full RDF list is removed
-        var entityFromFullList = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, os.listItem.selected['@id']);
-
         var axiomObject = os.listItem.selected[key][index];
         var json = {
             '@id': os.listItem.selected['@id'],
@@ -512,25 +512,30 @@ function ontologyUtilsManagerService($q, ontologyManagerService, ontologyStateSe
         };
         os.addToDeletions(os.listItem.ontologyRecord.recordId, json);
         if (om.isBlankNodeId(axiomObject['@id'])) {
-            var removed = os.removeEntity(os.listItem, axiomObject['@id']);
-            forEach(removed, entity => {
-                os.listItem.selectedBlankNodes.splice(os.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === entity['@id']), 1);
-                os.addToDeletions(os.listItem.ontologyRecord.recordId, entity)
-            });
+            function remove(bnodeId) {
+                var entity = os.listItem.selectedBlankNodes.splice(os.listItem.selectedBlankNodes.findIndex(obj => obj['@id'] === bnodeId), 1)[0];
+                os.addToDeletions(os.listItem.ontologyRecord.recordId, entity);
+                forOwn(omit(entity, ['@id', '@type']), (value, key) => {
+                    if (om.isBlankNodeId(key)) {
+                        remove(key);
+                    }
+                    forEach(value, valueObj => {
+                        var id = get(valueObj, '@id');
+                        if (om.isBlankNodeId(id)) {
+                            remove(id);
+                        }
+                    });
+                });
+            }
+            remove(axiomObject['@id']);
         }
         pm.remove(os.listItem.selected, key, index);
-        
-        // TODO: Remove when full RDF list is removed
-        pm.remove(entityFromFullList, key, index);
 
         if (prefixes.rdfs + 'domain' === key && !om.isBlankNodeId(axiomObject['@id'])) {
-            os.removePropertyFromClass(entityFromFullList, axiomObject['@id']);
+            os.removePropertyFromClass(os.listItem.selected, axiomObject['@id']);
             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.listItem);
         } else if (prefixes.rdfs + 'range' === key) {
             os.updatePropertyIcon(os.listItem.selected);
-            // TODO: Remove when full RDF list is removed
-            os.updatePropertyIcon(entityFromFullList);
-
         }
         return self.saveCurrentChanges()
             .then(() => {

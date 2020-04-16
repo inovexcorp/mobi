@@ -220,9 +220,6 @@ describe('Axiom Overlay component', function() {
                 ontologyStateSvc.showAxiomOverlay = true;
                 ontoUtils.saveCurrentChanges.and.returnValue($q.when());
                 propertyManagerSvc.addId.and.returnValue(true);
-                // TODO: Remove when the full RDF list is removed
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-
             });
             describe('if adding a list', function() {
                 beforeEach(function() {
@@ -237,14 +234,8 @@ describe('Axiom Overlay component', function() {
                         propertyManagerSvc.addId.and.returnValue(false);
                         this.controller.addAxiom();
                         scope.$apply();
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-
                         this.controller.values.forEach(value => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
-                            // TODO: Remove when the full RDF list is removed
-                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.controller.axiom.iri, value);
-
                         });
                         expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -255,20 +246,11 @@ describe('Axiom Overlay component', function() {
                     it('and at least one value was added', function() {
                         this.controller.addAxiom();
                         scope.$apply();
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-
                         this.controller.values.forEach(value => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
-                            // TODO: Remove when the full RDF list is removed
-                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.controller.axiom.iri, value);
-
                         });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith({});
-
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                         expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: this.controller.values});
                         expect(util.createWarningToast).not.toHaveBeenCalled();
@@ -279,14 +261,8 @@ describe('Axiom Overlay component', function() {
                         propertyManagerSvc.addId.and.returnValue(false);
                         this.controller.addAxiom();
                         scope.$apply();
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-
                         this.controller.values.forEach(value => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
-                            // TODO: Remove when the full RDF list is removed
-                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.controller.axiom.iri, value);
-
                         });
                         expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -297,14 +273,8 @@ describe('Axiom Overlay component', function() {
                     it('and at least one value was added', function() {
                         this.controller.addAxiom();
                         scope.$apply();
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-
                         this.controller.values.forEach(value => {
                             expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
-                            // TODO: Remove when the full RDF list is removed
-                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.controller.axiom.iri, value);
-
                         });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -329,9 +299,6 @@ describe('Axiom Overlay component', function() {
                     this.manchesterResult.errorMessage = 'This is an error';
                     this.controller.addAxiom();
                     expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
-                    // TODO: Remove when the full RDF list is removed
-                    expect(ontologyStateSvc.getEntityByRecordId).not.toHaveBeenCalled();
-
                     expect(propertyManagerSvc.addId).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -342,9 +309,6 @@ describe('Axiom Overlay component', function() {
                 it('unless no blank nodes could be created', function() {
                     this.controller.addAxiom();
                     expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
-                    // TODO: Remove when the full RDF list is removed
-                    expect(ontologyStateSvc.getEntityByRecordId).not.toHaveBeenCalled();
-
                     expect(propertyManagerSvc.addId).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -363,17 +327,10 @@ describe('Axiom Overlay component', function() {
                         scope.$apply();
                         expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, this.blankNodes[0]['@id']);
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.controller.axiom.iri, this.blankNodes[0]['@id']);
-
                         _.forEach(this.blankNodes, node => {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith({});
-
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                         expect(scope.close).toHaveBeenCalledWith({axiom: this.controller.axiom.iri, values: []});
                     });
@@ -382,10 +339,6 @@ describe('Axiom Overlay component', function() {
                         scope.$apply();
                         expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                         expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, this.blankNodes[0]['@id']);
-                        // TODO: Remove when the full RDF list is removed
-                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.controller.axiom.iri, this.blankNodes[0]['@id']);
-
                         _.forEach(this.blankNodes, function(node) {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });

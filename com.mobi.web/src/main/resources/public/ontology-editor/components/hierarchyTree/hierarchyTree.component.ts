@@ -79,10 +79,8 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
         flag: false, 
         filter: function(node) {
             var match = true;
-            if (node.entity.hasOwnProperty('mobi')) {
-                if (node.entity.mobi.imported) {
-                    match = false;
-                }
+            if (dvm.os.isImported(node.entityIRI)) {
+                match = false;
             }
             return match;
         }
@@ -128,18 +126,18 @@ function hierarchyTreeComponentCtrl(ontologyManagerService, ontologyStateService
     }
     dvm.matchesSearchFilter = function(node) {
         var searchMatch = false;
-        // Check all possible name fields and entity fields to see if the value matches the search text
-        some(om.entityNameProps, key => some(node.entity[key], value => {
-            if (value['@value'].toLowerCase().includes(dvm.filterText.toLowerCase()))
+        // Check all possible names to see if the value matches the search text
+        some(node.entityInfo.names, name => {
+            if (name.toLowerCase().includes(dvm.filterText.toLowerCase()))
                 searchMatch = true;
-        }));
+        });
 
         if (searchMatch) {
             return true;
         }
 
         // Check if beautified entity id matches search text
-        if (util.getBeautifulIRI(node.entity['@id']).toLowerCase().includes(dvm.filterText.toLowerCase())) {
+        if (util.getBeautifulIRI(node.entityIRI).toLowerCase().includes(dvm.filterText.toLowerCase())) {
             searchMatch = true;
         }
         

@@ -754,8 +754,12 @@ public class OntologyRest {
     public Response getOntologyStuff(@Context ContainerRequestContext context,
                                      @PathParam("recordId") String recordIdStr,
                                      @QueryParam("branchId") String branchIdStr,
-                                     @QueryParam("commitId") String commitIdStr) {
+                                     @QueryParam("commitId") String commitIdStr,
+                                     @DefaultValue("false") @QueryParam("clearCache") boolean clearCache) {
         try {
+            if (clearCache) {
+                ontologyCache.removeFromCache(recordIdStr, commitIdStr);
+            }
             Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, true);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
@@ -774,9 +778,13 @@ public class OntologyRest {
         return outputStream -> {
             StopWatch watch = new StopWatch();
 
+            outputStream.write("{ \"ontologyIRI\": ".getBytes());
+            outputStream.write(ontology.getOntologyId().getOntologyIRI().isPresent() ?
+                    ("\"" + ontology.getOntologyId().getOntologyIRI().get().toString() + "\"").getBytes() : "".getBytes());
+
             log.trace("Start iriList");
             watch.start();
-            outputStream.write("{ \"iriList\": ".getBytes());
+            outputStream.write(", \"iriList\": ".getBytes());
             outputStream.write(getAllIRIs(ontology).toString().getBytes());
             watch.stop();
             log.trace("End iriList: " + watch.getTime() + "ms");
@@ -796,7 +804,7 @@ public class OntologyRest {
             outputStream.write(", \"importedOntologies\": ".getBytes());
             ArrayNode arr = mapper.createArrayNode();
             onlyImports.stream()
-                    .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))
+                    .map(ont -> getOntologyIdentifiersAsJsonObject(ont))
                     .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
             watch.stop();
@@ -3053,6 +3061,18 @@ public class OntologyRest {
             throw new MobiException(e);
         }
         log.trace("getOntologyAsJsonObject took {}ms", System.currentTimeMillis() - start);
+
+        return objectNode;
+    }
+
+    private ObjectNode getOntologyIdentifiersAsJsonObject(Ontology ontology) {
+        log.trace("Start getOntologIdentifiersyAsJsonObject");
+        OntologyId ontologyId = ontology.getOntologyId();
+        Optional<IRI> optIri = ontologyId.getOntologyIRI();
+
+        ObjectNode objectNode = mapper.createObjectNode();
+        objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
+        objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
 
         return objectNode;
     }

@@ -171,18 +171,18 @@ describe('Commit History Table component', function() {
             beforeEach(function() {
                 this.controller.commits = this.commits;
             });
-            it('if getCommit resolves', function() {
-                catalogManagerSvc.getCommit.and.returnValue($q.when({additions: [], deletions: []}));
+            it('if getDifference resolves', function() {
+                catalogManagerSvc.getDifference.and.returnValue($q.when({additions: [], deletions: []}));
                 this.controller.openCommitOverlay(this.commitId);
                 scope.$apply();
-                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(this.commitId);
                 expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, additions: [], deletions: [], entityNameFunc: this.controller.entityNameFunc}, undefined, 'lg');
             });
-            it('unless getCommit rejects', function() {
-                catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'));
+            it('unless getDifference rejects', function() {
+                catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
                 this.controller.openCommitOverlay(this.commitId);
                 scope.$apply();
-                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(this.commitId);
                 expect(modalSvc.openModal).not.toHaveBeenCalled();
                 expect(this.controller.error).toEqual('Error Message');
             });
@@ -193,11 +193,11 @@ describe('Commit History Table component', function() {
                 spyOn(this.controller, 'reset');
             });
             it('unless a commit has not been passed', function() {
-                catalogManagerSvc.getCommit.calls.reset();
+                catalogManagerSvc.getDifference.calls.reset();
                 scope.commitId = undefined;
                 scope.$digest();
                 this.controller.getCommits();
-                expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(this.controller.commits).toEqual([]);
                 expect(scope.receiveCommits).toHaveBeenCalledWith([]);
             });
@@ -349,6 +349,6 @@ describe('Commit History Table component', function() {
         scope.$digest();
         var id = angular.element(this.element.querySelectorAll('table tr td.commit-id a')[0]);
         id.triggerHandler('click');
-        expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commits[0].id);
+        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(this.commits[0].id);
     });
 });

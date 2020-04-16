@@ -107,7 +107,7 @@ describe('Commit Compiled Resource component', function() {
                 scope.$apply();
                 expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
                 expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, 'commit-compiled-resource');
-                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(this.commitId);
                 expect(this.controller.resource[0]).toEqual(this.resource[0]);
             });
             it('unless a commitId is not set', function() {
@@ -116,7 +116,7 @@ describe('Commit Compiled Resource component', function() {
                 scope.$apply();
                 expect(httpSvc.cancel).not.toHaveBeenCalled();
                 expect(catalogManagerSvc.getCompiledResource).not.toHaveBeenCalled();
-                expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(this.controller.resource).toBeUndefined();
             });
             it('unless getCompiledResource rejects', function() {
@@ -125,16 +125,16 @@ describe('Commit Compiled Resource component', function() {
                 scope.$apply();
                 expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
                 expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, this.controller.id);
-                expect(catalogManagerSvc.getCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(this.controller.error).toEqual('Error Message');
             });
-            it('unless getCommit rejects', function() {
-                catalogManagerSvc.getCommit.and.returnValue($q.reject('Error Message'))
+            it('unless getDifference rejects', function() {
+                catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'))
                 this.controller.setResource();
                 scope.$apply();
                 expect(httpSvc.cancel).toHaveBeenCalledWith(this.controller.id);
                 expect(catalogManagerSvc.getCompiledResource).toHaveBeenCalledWith(this.commitId, this.entityId, this.controller.id);
-                expect(catalogManagerSvc.getCommit).toHaveBeenCalledWith(this.commitId);
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(this.commitId);
                 expect(this.controller.error).toEqual('Error Message');
             });
         });

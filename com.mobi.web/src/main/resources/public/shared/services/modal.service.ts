@@ -31,7 +31,7 @@ modalService.$inject = ['$uibModal', '$uibModalStack', '$rootScope'];
  *
  * @description
  * `modalService` is a service that provides functionality to open modals based on the name of the directive.
- * It uses the $mobiModal service to create modals.
+ * It uses the $uibModal service to create modals.
  */
 function modalService($uibModal, $uibModalStack, $rootScope) {
     var self = this;

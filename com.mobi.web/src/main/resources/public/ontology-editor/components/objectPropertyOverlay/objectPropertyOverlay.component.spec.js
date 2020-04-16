@@ -112,18 +112,11 @@ describe('Object Property Overlay component', function() {
                 this.value = 'value';
                 this.prop = 'prop';
                 propertyManagerSvc.addId.and.returnValue(true);
-                // TODO: Remove when the full RDF list is removed
-                ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerSvc.addId.and.returnValue(false);
                 this.controller.addProperty(this.prop, this.value);
                 expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                // TODO: Remove when the full RDF list is removed
-                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.prop, this.value);
-
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
@@ -134,10 +127,6 @@ describe('Object Property Overlay component', function() {
                     ontoUtils.containsDerivedConcept.and.returnValue(true);
                     this.controller.addProperty(this.prop, this.value);
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                    // TODO: Remove when the full RDF list is removed
-                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.prop, this.value);
-
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
@@ -149,10 +138,6 @@ describe('Object Property Overlay component', function() {
                     ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
                     this.controller.addProperty(this.prop, this.value);
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                    // TODO: Remove when the full RDF list is removed
-                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.prop, this.value);
-
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();
@@ -163,10 +148,6 @@ describe('Object Property Overlay component', function() {
                 it('not a derived Concept or ConceptScheme', function() {
                     this.controller.addProperty(this.prop, this.value);
                     expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.prop, this.value);
-                    // TODO: Remove when the full RDF list is removed
-                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected['@id']);
-                    expect(propertyManagerSvc.addId).toHaveBeenCalledWith({}, this.prop, this.value);
-
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(util.createWarningToast).not.toHaveBeenCalled();

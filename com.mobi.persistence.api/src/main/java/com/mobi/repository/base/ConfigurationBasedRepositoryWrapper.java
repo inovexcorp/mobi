@@ -6,7 +6,7 @@ package com.mobi.repository.base;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,42 +23,33 @@ package com.mobi.repository.base;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.exception.RepositoryException;
 
-import java.util.Map;
-
-/**
- * @deprecated New implementations should prefer the ConfigurationBasedRepositoryWrapper for a cleaner implementation
- * API.
- */
-@Deprecated
-public abstract class RepositoryWrapper extends AbstractRepositoryWrapper {
+public abstract class ConfigurationBasedRepositoryWrapper<T extends RepositoryConfig> extends AbstractRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "default";
 
     /**
      * Creates a new <tt>RepositoryWrapper</tt>.
      */
-    public RepositoryWrapper() {
+    public ConfigurationBasedRepositoryWrapper() {
     }
 
     /**
      * Creates a new <tt>RepositoryWrapper</tt> and calls
      * {@link #setDelegate(Repository)} with the supplied delegate repository.
      */
-    public RepositoryWrapper(Repository delegate) {
+    public ConfigurationBasedRepositoryWrapper(Repository delegate) {
         setDelegate(delegate);
     }
 
-    protected void start(Map<String, Object> props) {
-        validateConfig(props);
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);
+    protected void start(T config) {
+        validateConfig(config);
 
-        Repository repo = getRepo(props);
+        Repository repo = getRepo(config);
         try {
             repo.initialize();
         } catch (RepositoryException e) {
@@ -77,16 +68,12 @@ public abstract class RepositoryWrapper extends AbstractRepositoryWrapper {
         }
     }
 
-    protected void modified(Map<String, Object> props) {
+    protected void modified(T config) {
         stop();
-        start(props);
+        start(config);
     }
 
-    protected abstract Repository getRepo(Map<String, Object> props);
-
-    public void validateConfig(Map<String, Object> props) {
-        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);
-
+    public void validateConfig(T config) {
         if (config.id().equals(""))
             throw new RepositoryConfigException(
                     new IllegalArgumentException("Repository property 'id' cannot be empty.")
@@ -96,4 +83,6 @@ public abstract class RepositoryWrapper extends AbstractRepositoryWrapper {
                     new IllegalArgumentException("Repository property 'title' cannot be empty.")
             );
     }
+
+    protected abstract Repository getRepo(T config);
 }

@@ -191,7 +191,7 @@ describe('Create Concept Scheme Overlay component', function() {
             _.forEach(this.controller.selectedConcepts, concept => {
                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, concept['@id'], 'scheme');
             });
-            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.scheme);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.scheme, this.controller.language);
             expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({[this.controller.scheme['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);

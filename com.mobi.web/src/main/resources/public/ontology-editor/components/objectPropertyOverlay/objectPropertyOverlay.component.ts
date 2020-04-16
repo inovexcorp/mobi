@@ -69,9 +69,6 @@ function objectPropertyOverlayComponentCtrl(ontologyStateService, utilService, o
     dvm.addProperty = function(select, value) {
         var valueObj = {'@id': value};
         var added = pm.addId(dvm.os.listItem.selected, select, value);
-        // TODO: Remove when the full RDF list is removed
-        var entityFromFullList = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.selected['@id']); 
-        pm.addId(entityFromFullList, select, value); 
         
         if (added) {
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
