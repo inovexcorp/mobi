@@ -1242,11 +1242,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Difference.Builder rightDifference = new Difference.Builder();
 
         leftDifference
-                .additions(mf.createModel(left).filter(subject, predicate, null))
-                .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
+                .additions(mf.createModel(left.filter(subject, predicate, null)))
+                .deletions(mf.createModel(leftDeletions.filter(subject, predicate, null)));
         rightDifference
-                .additions(mf.createModel(right).filter(subject, predicate, null))
-                .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
+                .additions(mf.createModel(right.filter(subject, predicate, null)))
+                .deletions(mf.createModel(rightDeletions.filter(subject, predicate, null)));
 
         return new Conflict.Builder(vf.createIRI(subject.stringValue()))
                 .leftDifference(leftDifference.build())
