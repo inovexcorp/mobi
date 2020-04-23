@@ -1,7 +1,6 @@
  PREFIX : <urn:ex:>
  CONSTRUCT {
      %ENTITY% ?directpred ?directobj .
-     ?blank_node ?x ?y .
      ?attachedObj ?p2 ?o2 .
  }
  WHERE {
@@ -17,8 +16,7 @@
              }
          }
 
-         ?blank_node (:|!:)* ?attachedObj ;
-             ?x ?y .
+         ?blank_node (:|!:)* ?attachedObj .
 
          OPTIONAL {
              ?attachedObj ?p2 ?o2 .
