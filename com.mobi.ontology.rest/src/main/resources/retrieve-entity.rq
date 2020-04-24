@@ -1,14 +1,26 @@
-PREFIX : <urn:ex:>
+ PREFIX : <urn:ex:>
+ CONSTRUCT {
+     %ENTITY% ?directpred ?directobj .
+     ?attachedObj ?p2 ?o2 .
+ }
+ WHERE {
+     {
+         %ENTITY% ?directpred ?directobj .
+     }
+     UNION {
+         {
+             SELECT (?o as ?blank_node)
+             WHERE {
+                 %ENTITY% ?p ?o .
+                 FILTER(isBlank(?o))
+             }
+         }
 
-CONSTRUCT {
-    %ENTITY% ?p ?o .
-    ?attachedObj ?p2 ?o2 .
-} WHERE {
-    %ENTITY% (:|!:)* ?attachedObj ;
-        ?p ?o .
+         ?blank_node (:|!:)* ?attachedObj .
 
-    OPTIONAL {
-        ?attachedObj ?p2 ?o2 .
-        FILTER(isBlank(?attachedObj))
-    }
+         OPTIONAL {
+             ?attachedObj ?p2 ?o2 .
+             FILTER(isBlank(?attachedObj))
+         }
+     }
 }
