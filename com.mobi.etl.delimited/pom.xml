@@ -110,6 +110,11 @@
             <artifactId>spock-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>${project.version}</version>
