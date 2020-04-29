@@ -24,6 +24,7 @@ import { chunk, isEmpty } from 'lodash';
 import './quickActionGrid.component.scss';
 import {Component, Inject, OnInit} from "@angular/core";
 import {WindowRef} from "../../../shared/services/windowRef.service";
+import {StateService} from "@uirouter/core";
 
 /**
  * @ngdoc component
@@ -43,7 +44,7 @@ import {WindowRef} from "../../../shared/services/windowRef.service";
 export class QuickActionGridComponent implements OnInit {
     public actions = [];
 
-    constructor(private windowRef: WindowRef, @Inject('$state') private $state, @Inject('ontologyStateService') private os,
+    constructor(private windowRef: WindowRef, private $state: StateService, @Inject('ontologyStateService') private os,
                 @Inject('discoverStateService') private ds) {
     }
     

@@ -23,19 +23,21 @@
 import {ErrorHandler, NgModule} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
-import { HttpModule } from '@angular/http';
 
 import { MODULE_NAME } from './app.module.ajs';
 
 import { SharedModule } from './shared/shared.module';
 import { LoginModule } from './login/login.module';
 import {HomeModule} from "./home/home.module";
+import {UIRouterUpgradeModule} from "@uirouter/angular-hybrid";
+import {HttpClientModule} from "@angular/common/http";
 
 @NgModule({
     imports: [
         BrowserModule,
         UpgradeModule,
-        HttpModule,
+        HttpClientModule,
+        UIRouterUpgradeModule.forRoot(),
         SharedModule,
         LoginModule,
         HomeModule
@@ -59,6 +61,6 @@ export class AppModule /*implements ErrorHandler*/ {
     // }
 
     ngDoBootstrap() {
-        this.upgrade.bootstrap(document.documentElement, [MODULE_NAME], { strictDi: true });
+        this.upgrade.bootstrap(document.body, [MODULE_NAME], { strictDi: true });
     }
 }

@@ -21,6 +21,8 @@
  * #L%
  */
 
+import uiRouter, { UrlService } from '@uirouter/angularjs';
+// import { vizualizer } from '@uirouter/visualizer';
 import * as angular from 'angular';
 import * as Snap from 'snapsvg';
 import * as chroma from 'chroma-js';
@@ -42,7 +44,6 @@ import 'angular-touch';
 import 'ui-bootstrap4';
 import 'daemonite-material';
 import 'angular-ui-codemirror';
-import 'angular-ui-router';
 import 'angular-toastr';
 import 'angular-uuid';
 import 'angular-cookies';
@@ -108,7 +109,8 @@ angular
         'toastr',
         'ui.bootstrap',
         'ui.codemirror',
-        'ui.router',
+        'ui.router.upgrade',
+        uiRouter,
         'ui.select',
 
         /* Custom Modules */
@@ -124,6 +126,9 @@ angular
         'shared',
         'user-management'
     ])
+    .config(['$urlServiceProvider', ($urlService: UrlService) => {
+        return $urlService.deferIntercept()
+    }])
     .config(ariaConfig)
     .config(httpInterceptorConfig)
     .config(ignoreUnhandledRejectionsConfig)

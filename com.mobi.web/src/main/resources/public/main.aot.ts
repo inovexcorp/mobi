@@ -20,17 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import 'zone.js';
-import 'reflect-metadata';
-
-import { enableProdMode } from '@angular/core';
-import { setAngularLib } from '@angular/upgrade/static';
-import { platformBrowser } from '@angular/platform-browser';
-
 import * as angular from 'angular';
-
+import 'reflect-metadata';
+import { enableProdMode } from '@angular/core';
+import { setAngularJSGlobal } from '@angular/upgrade/static';
+import { platformBrowser } from '@angular/platform-browser';
+import 'zone.js';
 import { AppModuleNgFactory } from '../../../../aot/src/main/resources/public/app.module.ngfactory';
 
-setAngularLib(angular);
+setAngularJSGlobal(angular);
 enableProdMode();
 platformBrowser().bootstrapModuleFactory(AppModuleNgFactory);
