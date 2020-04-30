@@ -4763,19 +4763,35 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual([]);
         });
     });
-    it('handleDeletedProperties should add the entity to the proper maps', function() {
-        this.property = {
-            '@id': 'iri1',
-            "rdfs:domain": [{'@id': "class1"}]
-        }
-        ontologyStateSvc.listItem.classToChildProperties = {
-            'class1': ['iri1', 'iri2'],
-            'class2': ['iri2', 'iri5'],
-            'class3': ['iri3', 'iri4']
-        };
-        ontologyStateSvc.handleDeletedProperty(this.property);
-        expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
+    describe('handleDeletedProperties should delete the entity from the proper maps', function() {
+        it('when the property has a domain', function() {
+            this.property = {
+                '@id': 'iri1',
+                "rdfs:domain": [{'@id': "class1"}]
+            }
+            ontologyStateSvc.listItem.noDomainProperties = [];
+            ontologyStateSvc.listItem.classToChildProperties = {
+                'class1': ['iri1', 'iri2'],
+                'class2': ['iri2', 'iri5'],
+                'class3': ['iri3', 'iri4']
+            };
+            ontologyStateSvc.handleDeletedProperty(this.property);
+            expect(ontologyStateSvc.listItem.classToChildProperties['class1']).toEqual(['iri2']);
+        });
+        it('when the property does not have a domain', function() {
+            this.property = {
+                '@id': 'iri1'
+            }
+            ontologyStateSvc.listItem.noDomainProperties = ['iri1', 'iri2'];
+            ontologyStateSvc.listItem.classToChildProperties = {
+                'class2': ['iri3', 'iri4']
+            };
+            ontologyStateSvc.handleDeletedProperty(this.property);
+            expect(ontologyStateSvc.listItem.classToChildProperties['class2']).toEqual(['iri3', 'iri4']);
+            expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri2']);
+        });
     });
+
     describe('handleNewProperty should add the entity to the proper maps', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.noDomainProperties = [];
