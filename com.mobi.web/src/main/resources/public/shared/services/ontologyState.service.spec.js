@@ -4791,7 +4791,6 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.listItem.noDomainProperties).toEqual(['iri2']);
         });
     });
-
     describe('handleNewProperty should add the entity to the proper maps', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.noDomainProperties = [];
