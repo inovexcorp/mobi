@@ -26,6 +26,7 @@ package com.mobi.sparql.rest.impl;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,16 +67,21 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Assert;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.osgi.service.component.annotations.Reference;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
@@ -96,6 +102,9 @@ public class SparqlRestTest extends MobiRestTestNg {
     private Model testModel;
     private RepositoryConnection conn;
     private BNodeService bNodeService;
+    private Map<String, String[]> fileTypesMimes;
+    private List<String> datasets;
+    private List<String> filenames;
 
     @Mock
     public ModelFactory modelFactory;
@@ -125,7 +134,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
-        testModel= mf.createModel();
+        testModel = mf.createModel();
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyA"), vf.createLiteral("true"));
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyB"), vf.createLiteral("true"));
         testModel.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/propertyC"), vf.createLiteral("true"));
@@ -144,11 +153,31 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest.setSesameTransformer(sesameTransformer);
         rest.setValueFactory(vf);
 
+        rest = Mockito.spy(rest);
+
+
         DATASET_ID = "http://example.com/datasets/0";
 
-        ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader().getResourceAsStream("all_query.rq")));
-        CONSTRUCT_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader().getResourceAsStream("construct_query.rq"))); ;
+        ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
+                .getResourceAsStream("all_query.rq")));
+        CONSTRUCT_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
+                .getResourceAsStream("construct_query.rq"))); ;
 
+        fileTypesMimes = new LinkedHashMap<>();
+        fileTypesMimes.put("json", new String[]{"application/json", ALL_QUERY});
+        fileTypesMimes.put("sWrongType", new String[]{"application/json", ALL_QUERY});
+        fileTypesMimes.put("csv", new String[]{"text/csv", ALL_QUERY});
+        fileTypesMimes.put("tsv", new String[]{"text/tab-separated-values", ALL_QUERY});
+        fileTypesMimes.put("xls", new String[]{"application/vnd.ms-excel", ALL_QUERY});
+        fileTypesMimes.put("xlsx", new String[]{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ALL_QUERY});
+        fileTypesMimes.put("ttl", new String[]{"text/turtle", CONSTRUCT_QUERY});
+        fileTypesMimes.put("cWrongType", new String[]{"text/turtle", CONSTRUCT_QUERY});
+        fileTypesMimes.put("jsonld", new String[]{"application/ld+json", CONSTRUCT_QUERY});
+        fileTypesMimes.put("rdf", new String[]{"application/rdf+xml", CONSTRUCT_QUERY});
+
+        datasets = Arrays.asList(null, DATASET_ID);
+        filenames = Arrays.asList(null, "test");
         return new ResourceConfig()
                 .register(rest)
                 .register(MultiPartFeature.class);
@@ -198,120 +227,197 @@ public class SparqlRestTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
     }
 
+
     @Test
-    public void selectQueryJsonTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+    public void queryRdfTest() {
+        int minNumberOfInvocations = 0;
 
-        assertEquals(response.getStatus(), 200);
-        verify(repositoryManager).getRepository("system");
+        for (String dataset : datasets) {
+            for(Map.Entry mapEntry: fileTypesMimes.entrySet()){
+                minNumberOfInvocations +=1;
+                String type = (String) mapEntry.getKey();
+                String[] dataArray = (String[]) mapEntry.getValue();
+                String mimeType = dataArray[0];
 
-        Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+                WebTarget webTarget = target().path("sparql").queryParam("query", dataArray[1]);
 
-        String responseString = response.readEntity(String.class);
-        JSONObject result = JSONObject.fromObject(responseString);
-        assertTrue(result.containsKey("head"));
-        assertTrue(result.containsKey("results"));
+                if (dataset != null) {
+                    webTarget = webTarget.queryParam("dataset", DATASET_ID);
+                }
+                Response response = webTarget.request().accept(mimeType).get();
+
+                assertEquals(response.getStatus(), 200);
+
+                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(anyString(), anyString(), anyString());
+
+                if (dataset != null) {
+                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                    verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                } else {
+                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                }
+
+                MultivaluedMap<String, Object> headers = response.getHeaders();
+                assertEquals(headers.get("Content-Type").get(0), mimeType);
+
+                if (type.equals("sWrongType")) {
+                    type = "json";
+                } else if (type.equals("cWrongType")) {
+                    type = "ttl";
+                }
+
+                Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
+
+                if(type.equals("json")) {
+                    JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                }else{
+                    String responseString = response.readEntity(String.class);
+                    Assert.assertNotEquals(responseString, "");
+                }
+            }
+        }
     }
 
     @Test
-    public void selectQueryWithDatasetJSONTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+    public void downloadQueryTest() {
+        int minNumberOfInvocations = 0;
+        for (String filename : filenames) {
+            for (String dataset : datasets) {
+                for(Map.Entry mapEntry: fileTypesMimes.entrySet()){
+                    minNumberOfInvocations += 1;
 
-        assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
-        verify(datasetConnection).prepareTupleQuery(anyString());
+                    String type = (String) mapEntry.getKey();
+                    String[] dataArray = (String[]) mapEntry.getValue();
+                    WebTarget webTarget = target().path("sparql")
+                            .queryParam("query", dataArray[1])
+                            .queryParam("fileType", type);
 
-        Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+                    if (filename != null) {
+                        webTarget = webTarget.queryParam("fileName", filename);
+                    }
 
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("head"));
-        assertTrue(result.containsKey("results"));
+                    if (dataset != null) {
+                        webTarget = webTarget.queryParam("dataset", DATASET_ID);
+                    }
+                    Response response = webTarget.request().get();
+
+                    assertEquals(response.getStatus(), 200);
+                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString());
+
+                    if (dataset != null) {
+                        verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                    } else {
+                        verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    }
+
+                    MultivaluedMap<String, Object> headers = response.getHeaders();
+                    assertEquals(headers.get("Content-Type").get(0), dataArray[0]);
+
+                    if (type.equals("sWrongType")) {
+                        type = "json";
+                    } else if (type.equals("cWrongType")) {
+                        type = "ttl";
+                    }
+
+                    if(filename != null){
+                        assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename="+filename+"." + type);
+                    }else{
+                        assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=results." + type);
+                    }
+
+                    if(type.equals("json")) {
+                        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                        assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                        assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                    }else{
+                        String responseString = response.readEntity(String.class);
+                        Assert.assertNotEquals(responseString, "");
+                    }
+                }
+            }
+        }
     }
 
     @Test
     public void selectQueryDefaultTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .request().accept("").get();
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path("sparql")
+                    .queryParam("query", ALL_QUERY);
 
-        assertEquals(response.getStatus(), 200);
-        verify(repositoryManager).getRepository("system");
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
 
-        Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals("application/json", response.getHeaderString("Content-Type"));
+            Response response = webTarget.request().get();
 
-        String responseString = response.readEntity(String.class);
-        JSONObject result = JSONObject.fromObject(responseString);
-        assertTrue(result.containsKey("head"));
-        assertTrue(result.containsKey("results"));
+            assertEquals(response.getStatus(), 200);
+
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareTupleQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+
+            // assertEquals(response.getHeaderString("Content-Disposition"), null);
+            // TODO should this be null? when request does not have accept header it goes to download instead of query endpoint
+            assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+
+            String responseString = response.readEntity(String.class);
+            JSONObject result = JSONObject.fromObject(responseString);
+            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
     }
 
     @Test
-    public void selectQueryWithDatasetDefaultTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().accept("").get();
+    public void constructQueryDefaultTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path("sparql")
+                    .queryParam("query", CONSTRUCT_QUERY);
 
-        assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
-        verify(datasetConnection).prepareTupleQuery(anyString());
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
 
-        Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+            Response response = webTarget.request().get();
 
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("head"));
-        assertTrue(result.containsKey("results"));
+            assertEquals(response.getStatus(), 200);
+
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareGraphQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+
+            assertEquals(response.getHeaderString("Content-Disposition"), "attachment;filename=results.ttl");
+            assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
+
+            String responseString = response.readEntity(String.class);
+            Assert.assertNotEquals(responseString, "");;
+        }
     }
 
-    @Test
-    public void constructQueryTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", CONSTRUCT_QUERY)
-                .request().accept(RDFFormat.TURTLE.getDefaultMIMEType()).get();
-
-        assertEquals(response.getStatus(), 200);
-        verify(repositoryManager).getRepository("system");
-
-        Assert.assertEquals("attachment;filename=results.ttl", response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals(RDFFormat.TURTLE.getDefaultMIMEType(), response.getHeaderString("Content-Type"));
-
-        String responseString = response.readEntity(String.class);
-        Assert.assertNotEquals(responseString, "");
-    }
-
-    @Test
-    public void constructQueryWithDatasetTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", CONSTRUCT_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().accept(RDFFormat.TURTLE.getDefaultMIMEType()).get();
-
-        assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
-        verify(datasetConnection).prepareGraphQuery(anyString());
-
-        Assert.assertEquals("attachment;filename=results.ttl", response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals(RDFFormat.TURTLE.getDefaultMIMEType(), response.getHeaderString("Content-Type"));
-
-        String responseString = response.readEntity(String.class);
-        Assert.assertNotEquals(responseString, "");
-    }
 
     @Test
     public void selectQueryRepositoryUnavailableTest() {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path("sparql").queryParam("query", ALL_QUERY)
+        Response response = target().path("sparql")
+                .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 500);
     }
@@ -354,7 +460,7 @@ public class SparqlRestTest extends MobiRestTestNg {
     @Test
     public void selectQueryWithInvalidQueryTest() {
         Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY + "- " + ResourceUtils.encode("+"))
+                .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 400);
 
@@ -373,7 +479,8 @@ public class SparqlRestTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 400);
 
         response = target().path("sparql")
-                .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
+                .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
+                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(response.getStatus(), 400);
     }
@@ -403,155 +510,41 @@ public class SparqlRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void downloadSelectQueryTest() {
-        Map<String, String> tests = new HashMap<>();
-        tests.put("csv", "text/csv");
-        tests.put("tsv", "text/tab-separated-values");
-        tests.put("xls", "application/vnd.ms-excel");
-        tests.put("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    public void downloadQueryRepositoryUnavailableTest() {
+        // Setup:
+        when(repositoryManager.getRepository(anyString()))
+                .thenReturn(Optional.empty());
 
-        tests.forEach((type, mimeType) -> {
+        fileTypesMimes.forEach((type, dataArray) -> {
             Response response = target().path("sparql")
-                    .queryParam("query", ALL_QUERY)
-                    .queryParam("fileName", "test")
-                    .request().accept(mimeType).get();
-
-            assertEquals(response.getStatus(), 200);
-            verify(repositoryManager, atLeastOnce()).getRepository("system");
-            MultivaluedMap<String, Object> headers = response.getHeaders();
-            assertEquals(headers.get("Content-Type").get(0), mimeType);
-            assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=test." + type);
+                    .queryParam("query", dataArray[1])
+                    .queryParam("fileType", type)
+                    .request().get();
+            assertEquals(response.getStatus(), 500);
         });
     }
 
     @Test
-    public void downloadConstructQueryTest() {
-        Map<String, String> tests = new HashMap<>();
-        tests.put("ttl", "text/turtle");
-        tests.put("jsonld", "application/ld+json");
-        tests.put("rdf", "application/rdf+xml");
+    public void downloadQueryWithDatasetThatDoesNotExistTest() {
+        // Setup:
+        when(datasetManager.getConnection(any(Resource.class)))
+                .thenThrow(new IllegalArgumentException());
 
-        tests.forEach((type, mimeType) -> {
+        fileTypesMimes.forEach((type, dataArray) -> {
             Response response = target().path("sparql")
-                    .queryParam("query", CONSTRUCT_QUERY)
-                    .queryParam("fileName", "test")
-                    .request().accept(mimeType).get();
-
-            assertEquals(response.getStatus(), 200);
-            verify(repositoryManager, atLeastOnce()).getRepository("system");
-            MultivaluedMap<String, Object> headers = response.getHeaders();
-            assertEquals(headers.get("Content-Type").get(0), mimeType);
-            assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=test." + type);
-        });
-    }
-
-    @Test
-    public void downloadSelectQueryWithDatasetTest() {
-        Map<String, String> tests = new HashMap<>();
-        tests.put("csv", "text/csv");
-        tests.put("tsv", "text/tab-separated-values");
-        tests.put("xls", "application/vnd.ms-excel");
-        tests.put("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-
-        tests.forEach((type, mimeType) -> {
-            Response response = target().path("sparql")
-                    .queryParam("query", ALL_QUERY)
+                    .queryParam("query", dataArray[1])
                     .queryParam("dataset", DATASET_ID)
-                    .queryParam("fileName", "test")
-                    .request().accept(mimeType).get();
-
-            assertEquals(response.getStatus(), 200);
-            verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-            verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
-            MultivaluedMap<String, Object> headers = response.getHeaders();
-            assertEquals(headers.get("Content-Type").get(0), mimeType);
-            assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=test." + type);
+                    .queryParam("fileType", type)
+                    .request().get();
+            assertEquals(response.getStatus(), 400);
         });
-    }
-
-    @Test
-    public void downloadConstructQueryWithDatasetTest() {
-        Map<String, String> tests = new HashMap<>();
-        tests.put("ttl", "text/turtle");
-        tests.put("jsonld", "application/ld+json");
-        tests.put("rdf", "application/rdf+xml");
-
-        tests.forEach((type, mimeType) -> {
-            Response response = target().path("sparql")
-                    .queryParam("query", CONSTRUCT_QUERY)
-                    .queryParam("dataset", DATASET_ID)
-                    .queryParam("fileName", "test")
-                    .request().accept(mimeType).get();
-            assertEquals(response.getStatus(), 200);
-            verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-            verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
-            MultivaluedMap<String, Object> headers = response.getHeaders();
-            assertEquals(headers.get("Content-Type").get(0), mimeType);
-            assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=test." + type);
-        });
-    }
-
-    @Test
-    public void downloadQueryWithNoFileNameTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .request().accept("text/csv").get();
-        assertEquals(response.getStatus(), 200);
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=results.csv");
-    }
-
-    @Test
-    public void downloadSelectQueryRepositoryUnavailableTest() {
-        // Setup:
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
-
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .request().accept("text/csv").get();
-        assertEquals(response.getStatus(), 500);
-    }
-
-    @Test
-    public void downloadConstructQueryRepositoryUnavailableTest() {
-        // Setup:
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
-
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .request().accept("text/csv").get();
-        assertEquals(response.getStatus(), 500);
-    }
-
-    @Test
-    public void downloadSelectQueryWithDatasetThatDoesNotExistTest() {
-        // Setup:
-        when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
-
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().accept("text/csv").get();
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
-    public void downloadConstructQueryWithDatasetThatDoesNotExistTest() {
-        // Setup:
-        when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
-
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().accept("text/csv").get();
-        assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void downloadQueryWithInvalidQueryTest() {
         Response response = target().path("sparql")
                 .queryParam("query", ResourceUtils.encode("+"))
-                .request().accept("text/csv").get();
+                .request().get();
 
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
@@ -563,33 +556,11 @@ public class SparqlRestTest extends MobiRestTestNg {
         Response response = target().path("sparql")
                 .queryParam("query", ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
-                .request().accept("text/csv").get();
+                .request().get();
+
         assertEquals(response.getStatus(), 400);
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
-    }
-
-    @Test
-    public void downloadQueryWithInvalidFileTypeTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", ALL_QUERY)
-                .request().accept("").get();
-
-        assertEquals(response.getStatus(), 200);
-        verify(repositoryManager).getRepository("system");
-
-        Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
-        Assert.assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
-    }
-
-    @Test
-    public void downloadContructQueryWithInvalidFileTypeTest() {
-        Response response = target().path("sparql")
-                .queryParam("query", CONSTRUCT_QUERY)
-                .request().accept("text/bad").get(); // why does "txt/bad" produce a 406 error
-
-        assertEquals(response.getStatus(), 200);
-        Assert.assertEquals(RDFFormat.TURTLE.getDefaultMIMEType(), response.getHeaderString("Content-Type"));
     }
 
     @Test
@@ -693,7 +664,9 @@ public class SparqlRestTest extends MobiRestTestNg {
         when(datasetManager.getConnection(any(Resource.class)))
                 .thenThrow(new IllegalArgumentException());
 
-        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY).queryParam("dataset", DATASET_ID)
+        Response response = target().path("sparql/page")
+                .queryParam("query", ALL_QUERY)
+                .queryParam("dataset", DATASET_ID)
                 .request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -706,7 +679,9 @@ public class SparqlRestTest extends MobiRestTestNg {
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
 
-        response = target().path("sparql/page").queryParam("query", ResourceUtils.encode("+")).queryParam("dataset", DATASET_ID)
+        response = target().path("sparql/page")
+                .queryParam("query", ResourceUtils.encode("+"))
+                .queryParam("dataset", DATASET_ID)
                 .request().get();
         assertEquals(response.getStatus(), 400);
         result = JSONObject.fromObject(response.readEntity(String.class));

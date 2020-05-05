@@ -23,8 +23,8 @@ package com.mobi.sparql.rest;
  * #L%
  */
 
-
-import static com.mobi.rest.util.RestUtils.*;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+import static com.mobi.rest.util.RestUtils.modelToString;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -82,6 +82,7 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -152,6 +153,43 @@ public class SparqlRest {
     }
 
     /**
+    * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+    *
+    * @param queryString a string representing a SPARQL query.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @return The SPARQL 1.1 results in JSON format.
+    */
+    @GET
+    @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
+            JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the results of the provided SPARQL query.")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response queryRdf(@QueryParam("query") String queryString,
+                             @QueryParam("dataset") String datasetRecordId,
+                             @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
+        }
+
+        ParsedOperation parsedOperation = getParsedOperation(queryString);
+
+        String fileType = convertAcceptType(acceptString);
+
+        if (parsedOperation instanceof ParsedQuery) {
+            if (parsedOperation instanceof ParsedTupleQuery) { // select queries
+                return handleSelectQuery(queryString, datasetRecordId, fileType, null);
+            } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
+                return handleConstructQuery(queryString, datasetRecordId, fileType, null);
+            } else {
+                throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+            }
+        } else {
+            throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    /**
      * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
      *
      * <p>Downloads a delimited file with the results of the provided SPARQL query.</p>
@@ -160,7 +198,7 @@ public class SparqlRest {
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @param fileType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
      * @return The SPARQL 1.1 results from ACCEPT Header
      */
@@ -169,10 +207,10 @@ public class SparqlRest {
     @RolesAllowed("user")
     @ApiOperation("Query and Download the results of the provided SPARQL query.")
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response RdfDownloadQuery(@QueryParam("query") String queryString,
-                           @QueryParam("dataset") String datasetRecordId,
-                           @HeaderParam("accept") String acceptString,
-                           @DefaultValue("results") @QueryParam("fileName") String fileName) {
+    public Response downloadRdfQuery(@QueryParam("query") String queryString,
+                                     @QueryParam("dataset") String datasetRecordId,
+                                     @Nullable @QueryParam("fileType") String fileType,
+                                     @DefaultValue("results") @QueryParam("fileName") String fileName) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -192,9 +230,9 @@ public class SparqlRest {
 
         if (parsedOperation instanceof ParsedQuery) {
             if (parsedOperation instanceof ParsedTupleQuery) { // select queries
-                return handleSelectQuery(queryString, datasetRecordId, acceptString, fileName);
+                return handleSelectQuery(queryString, datasetRecordId, fileType, fileName);
             } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
-                return handleConstructQuery(queryString, datasetRecordId, acceptString, fileName);
+                return handleConstructQuery(queryString, datasetRecordId, fileType, fileName);
             } else {
                 throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
             }
@@ -207,23 +245,23 @@ public class SparqlRest {
      * Handel Select Query.
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @param fileType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
      * @return
      */
     private Response handleSelectQuery(String queryString, String datasetRecordId,
-                                       String acceptString, String fileName) {
+                                       String fileType, String fileName) {
         TupleQueryResult queryResults = getTupleQueryResults(queryString, datasetRecordId);
         StreamingOutput stream;
         String mimeType;
         String fileExtension;
 
-        if (acceptString == null) { // any switch statement can't be null to prevent a NullPointerException
-            acceptString = "";
+        if (fileType == null) { // any switch statement can't be null to prevent a NullPointerException
+            fileType = "";
         }
 
-        switch (acceptString) {
-            case JSON_MIME_TYPE:
+        switch (fileType) {
+            case "json":
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
 
@@ -233,22 +271,22 @@ public class SparqlRest {
 
                 stream = getJsonResults(queryResults);
                 break;
-            case XLS_MIME_TYPE:
+            case "xls":
                 fileExtension = "xls";
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLS_MIME_TYPE;
                 break;
-            case XLSX_MIME_TYPE:
+            case "xlsx":
                 fileExtension = "xlsx";
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLSX_MIME_TYPE;
                 break;
-            case CSV_MIME_TYPE:
+            case "csv":
                 fileExtension = "csv";
                 stream = createDelimitedResults(queryResults, ",");
                 mimeType = CSV_MIME_TYPE;
                 break;
-            case TSV_MIME_TYPE:
+            case "tsv":
                 fileExtension = "tsv";
                 stream = createDelimitedResults(queryResults, "\t");
                 mimeType = TSV_MIME_TYPE;
@@ -256,7 +294,7 @@ public class SparqlRest {
             default:
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
-                log.debug("Invalid accept type %s : defaulted to {}".format(acceptString, mimeType));
+                log.debug(String.format("Invalid file type [%s] : defaulted to [%s]", fileType, mimeType));
 
                 if (!queryResults.hasNext()) {
                     return Response.noContent().build();
@@ -266,15 +304,14 @@ public class SparqlRest {
                 break;
         }
 
-        if (mimeType.equalsIgnoreCase(JSON_MIME_TYPE)) {
-            return Response.ok(stream)
-                    .header("Content-Type", mimeType)
-                    .build();
-        } else {
-            return Response.ok(stream)
-                    .header("Content-Disposition", "attachment;filename=" + fileName +  "." + fileExtension)
-                    .header("Content-Type", mimeType).build();
+        Response.ResponseBuilder builder = Response.ok(stream)
+                .header("Content-Type", mimeType);
+
+        if (fileName != null) {
+            builder.header("Content-Disposition", "attachment;filename=" + fileName +  "." + fileExtension);
         }
+
+        return builder.build();
     }
 
     /**
@@ -282,32 +319,32 @@ public class SparqlRest {
      * Output: Turtle, JSON-LD, and RDF/XML
      *
      * @param queryString The SPARQL query to execute.
-     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @param fileType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
      * @return
      */
     private Response handleConstructQuery(String queryString, String datasetRecordId,
-                                          String acceptString, String fileName) {
+                                          String fileType, String fileName) {
         String mimeType;
         String format;
         String fileExtension;
 
-        if (acceptString == null) { // any switch statement can't be null to prevent a NullPointerException
-            acceptString = ""; // default value is turtle
+        if (fileType == null) { // any switch statement can't be null to prevent a NullPointerException
+            fileType = ""; // default value is turtle
         }
 
-        switch (acceptString) {
-            case TURTLE_MIME_TYPE:
+        switch (fileType) {
+            case "ttl":
                 fileExtension = "ttl";
                 mimeType = TURTLE_MIME_TYPE;
                 format = "turtle";
                 break;
-            case LDJSON_MIME_TYPE:
+            case "jsonld":
                 fileExtension = "jsonld";
                 mimeType = LDJSON_MIME_TYPE;
                 format = "jsonld";
                 break;
-            case RDFXML_MIME_TYPE:
+            case "rdf":
                 fileExtension = "rdf";
                 mimeType = RDFXML_MIME_TYPE;
                 format = "rdf/xml";
@@ -316,7 +353,7 @@ public class SparqlRest {
                 fileExtension = "ttl";
                 mimeType = TURTLE_MIME_TYPE;
                 format = "turtle";
-                log.debug("Invalid accept type %s : defaulted to {}".format(acceptString, mimeType));
+                log.debug(String.format("Invalid accept type [%s] : defaulted to [%s]", fileType, mimeType));
         }
 
         Model entityData = getGraphResults(queryString, datasetRecordId);
@@ -330,14 +367,18 @@ public class SparqlRest {
                 modelStr = modelToString(entityData, format, sesameTransformer);
             }
 
-            return Response.ok(modelStr)
-                    .header("Content-Disposition","attachment;filename=" + fileName +  "." + fileExtension)
-                    .header("Content-Type", mimeType).build();
+            Response.ResponseBuilder builder = Response.ok(modelStr)
+                    .header("Content-Type", mimeType);
+
+            if (fileName != null) {
+                builder.header("Content-Disposition", "attachment;filename=" + fileName +  "." + fileExtension);
+            }
+
+            return builder.build();
         } else {
             return Response.noContent().build();
         }
     }
-
 
     /**
      * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
@@ -376,6 +417,32 @@ public class SparqlRest {
             }
         } else {
             throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
+        }
+    }
+
+    private static String convertAcceptType(String acceptString){
+        if (acceptString == null) { // any switch statement can't be null to prevent a NullPointerException
+            acceptString = "";
+        }
+
+        switch (acceptString) {
+            case XLSX_MIME_TYPE:
+                return "xlsx";
+            case XLS_MIME_TYPE:
+                return "xls";
+            case CSV_MIME_TYPE:
+                return "csv";
+            case TSV_MIME_TYPE:
+                return "tsv";
+            case TURTLE_MIME_TYPE:
+                return "ttl";
+            case LDJSON_MIME_TYPE:
+                return "jsonld";
+            case RDFXML_MIME_TYPE:
+                return "rdf";
+            case JSON_MIME_TYPE:
+            default:
+                return "json";
         }
     }
 
