@@ -1468,10 +1468,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem, spinnerId = '') {
         listItem.selected = undefined;
-        self.listItem.selected = undefined;
         if  (!entityIRI || !listItem) {
             if (listItem) {
-                listItem.selected = undefined;
                 listItem.selectedBlankNodes = [];
                 listItem.blankNodes = {};
             }
