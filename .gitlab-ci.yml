@@ -1,18 +1,25 @@
+include:
+  - project: 'matonto/gitlab-ci'
+    ref: master
+    file: 'shared-template.yml'
+
+# Can steps 2-5 and steps 6-9 be the same 4 stages just with a variable passed in for the version?
 stages:
   - test
+  - set_version_root_pom
+  - set_version_parent_pom
+  - commit_version
+  - update_master_with_new_version
+  - increment_snapshot_version_root_pom
+  - increment_snapshot_version_parent_pom
+  - commit_version
+  - update_master_with_new_snapshot
   - update_master
   - new_master_version
   - new_release_build
   - new_release_deploy
 
 variables:
-  # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
-  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
-  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=/root/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
-  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
-  # when running from the command line.
-  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
-  MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
   ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
   MAVEN_SETTINGS_DOCKER: <server>
       <id>docker-hub</id>
@@ -22,62 +29,6 @@ variables:
         <email>PLACEHOLDER_EMAIL</email>
       </configuration>
     </server>
-  MAVEN_SETTINGS_NEXUS: <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
-         http://maven.apache.org/xsd/settings-1.0.0.xsd">
-         <localRepository>/root/.m2/repository</localRepository>
-         <mirrors>
-                 <mirror>
-                         <id>inovex</id>
-                         <name>iNovex Sonatype Nexus</name>
-                         <url>http://nexus.inovexcorp.com/nexus/content/groups/public/</url>
-                         <mirrorOf>central</mirrorOf>
-                 </mirror>
-         </mirrors> 
-         <servers>
-                 <server>
-                         <id>inovex</id>
-                         <username>PLACEHOLDER_USERNAME</username>
-                         <password>PLACEHOLDER_PW</password>
-                 </server>
-                 <server>
-                         <id>inovex.hanover</id>
-                         <username>PLACEHOLDER_USERNAME</username>
-                         <password>PLACEHOLDER_PW</password>
-                 </server>
-         </servers> 
-         <profiles>
-                 <profile>
-                         <id>inovex</id>
-                         <activation>
-                                 <activeByDefault>true</activeByDefault>
-                         </activation>
-                         <repositories>
-                                 <repository>
-                                         <id>central</id>
-                                         <url>http://central</url>
-                                         <releases>
-                                                 <enabled>true</enabled>
-                                         </releases>
-                                         <snapshots>
-                                                 <enabled>true</enabled>
-                                         </snapshots>
-                                 </repository>
-                         </repositories>
-                 </profile>
-         </profiles> 
-    </settings>
-  NEEDS_GIT_SETTINGS: 1
-
-# This template uses jdk8 for verifying and deploying images
-image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
-
-# Cache downloaded dependencies and plugins between builds.
-# To keep cache across branches add 'key: "$CI_JOB_NAME"'
-# cache:
-#   paths:
-#     - /root/.m2/repository
-  #   - com.mobi.web/node_modules/
-  # key: one-key-to-rule-them-all
 
 before_script:
   - rm -r /root/.m2/repository && ln -s /opt/m2/repository /root/.m2/repository
@@ -104,6 +55,27 @@ test:
     - master
   only:
     - merge_requests
+
+set_version_parent_pom:
+  stage: set_version_parent_pom
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
+    refs:
+      - master
+  script:
+    - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
+    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
+
+increment_snapshot_version_parent_pom:
+  stage: increment_snapshot_version_parent_pom
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
+    refs:
+      - master
+  script:
+    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
 
 # Once a merge request is committed to master, need to update both the root level pom.xml and the parent pom.xml
 update_master:
