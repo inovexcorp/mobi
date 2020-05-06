@@ -99,6 +99,10 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
         }
         return isDisabled;
     }
+    dvm.changeLanguage = function(value) {
+        dvm.os.annotationLanguage = value;
+        dvm.os.annotationType = undefined; // Unset type to create valid JSON-LD when language is set
+    }
     dvm.addAnnotation = function() {
         var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
         
