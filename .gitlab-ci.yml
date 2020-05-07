@@ -105,7 +105,7 @@ update_release:
     - git push -f origin $CI_COMMIT_TAG
     - NEW_MASTER_VERSION="$MAJOR.$((MINOR+1)).0-SNAPSHOT"
     - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION
-    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION-SNAPSHOT && cd ..
+    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION && cd ..
     - mvn versions:commit
     - git add ./\*pom.xml
     - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
