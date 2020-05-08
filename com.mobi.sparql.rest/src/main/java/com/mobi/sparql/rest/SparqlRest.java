@@ -168,6 +168,8 @@ public class SparqlRest {
     public Response queryRdf(@QueryParam("query") String queryString,
                              @QueryParam("dataset") String datasetRecordId,
                              @HeaderParam("accept") String acceptString) {
+        log.trace(String.format("queryRdf(%s, %s, %s)",queryString, datasetRecordId, acceptString));
+
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -178,9 +180,9 @@ public class SparqlRest {
 
         if (parsedOperation instanceof ParsedQuery) {
             if (parsedOperation instanceof ParsedTupleQuery) { // select queries
-                return handleSelectQuery(queryString, datasetRecordId, fileType, null);
+                return handleSelectQuery(queryString, datasetRecordId, fileType, null, acceptString);
             } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
-                return handleConstructQuery(queryString, datasetRecordId, fileType, null);
+                return handleConstructQuery(queryString, datasetRecordId, fileType, null, acceptString);
             } else {
                 throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
             }
@@ -209,8 +211,11 @@ public class SparqlRest {
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response downloadRdfQuery(@QueryParam("query") String queryString,
                                      @QueryParam("dataset") String datasetRecordId,
-                                     @Nullable @QueryParam("fileType") String fileType,
+                                     @QueryParam("fileType") String fileType,
+                                     @HeaderParam("accept") String acceptString,
                                      @DefaultValue("results") @QueryParam("fileName") String fileName) {
+        log.trace(String.format("downloadRdfQuery(%s, %s, %s, %s)",queryString, datasetRecordId, fileType, fileName));
+
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -230,9 +235,9 @@ public class SparqlRest {
 
         if (parsedOperation instanceof ParsedQuery) {
             if (parsedOperation instanceof ParsedTupleQuery) { // select queries
-                return handleSelectQuery(queryString, datasetRecordId, fileType, fileName);
+                return handleSelectQuery(queryString, datasetRecordId, fileType, fileName, acceptString);
             } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
-                return handleConstructQuery(queryString, datasetRecordId, fileType, fileName);
+                return handleConstructQuery(queryString, datasetRecordId, fileType, fileName, acceptString);
             } else {
                 throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
             }
@@ -250,7 +255,7 @@ public class SparqlRest {
      * @return
      */
     private Response handleSelectQuery(String queryString, String datasetRecordId,
-                                       String fileType, String fileName) {
+                                       String fileType, String fileName, String acceptString) {
         TupleQueryResult queryResults = getTupleQueryResults(queryString, datasetRecordId);
         StreamingOutput stream;
         String mimeType;
@@ -294,7 +299,7 @@ public class SparqlRest {
             default:
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
-                log.debug(String.format("Invalid file type [%s] : defaulted to [%s]", fileType, mimeType));
+                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]", fileType, acceptString, mimeType));
 
                 if (!queryResults.hasNext()) {
                     return Response.noContent().build();
@@ -324,7 +329,7 @@ public class SparqlRest {
      * @return
      */
     private Response handleConstructQuery(String queryString, String datasetRecordId,
-                                          String fileType, String fileName) {
+                                          String fileType, String fileName, String acceptString) {
         String mimeType;
         String format;
         String fileExtension;
@@ -353,7 +358,7 @@ public class SparqlRest {
                 fileExtension = "ttl";
                 mimeType = TURTLE_MIME_TYPE;
                 format = "turtle";
-                log.debug(String.format("Invalid accept type [%s] : defaulted to [%s]", fileType, mimeType));
+                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]", fileType, acceptString, mimeType));
         }
 
         Model entityData = getGraphResults(queryString, datasetRecordId);
@@ -420,6 +425,11 @@ public class SparqlRest {
         }
     }
 
+    /**
+     * Convert AcceptType to FileType
+     * @param acceptString MimeType
+     * @return String
+     */
     private static String convertAcceptType(String acceptString){
         if (acceptString == null) { // any switch statement can't be null to prevent a NullPointerException
             acceptString = "";
@@ -654,8 +664,11 @@ public class SparqlRest {
             bindingSet = result.next();
             bindingIt = bindings.iterator();
             while (bindingIt.hasNext()) {
-                bindingSet.getBinding(bindingIt.next()).ifPresent(binding ->
-                        file.append(binding.getValue().stringValue()));
+                bindingSet.getBinding(bindingIt.next()).ifPresent(binding -> {
+                    String currentValue = binding.getValue().stringValue();
+                    file.append(String.format("%s", binding.getValue().stringValue()));
+                });
+
                 if (bindingIt.hasNext()) {
                     file.append(delimiter);
                 }

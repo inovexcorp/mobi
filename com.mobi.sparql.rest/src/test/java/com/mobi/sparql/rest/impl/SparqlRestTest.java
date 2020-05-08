@@ -304,7 +304,7 @@ public class SparqlRestTest extends MobiRestTestNg {
                     Response response = webTarget.request().get();
 
                     assertEquals(response.getStatus(), 200);
-                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -357,7 +357,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             assertEquals(response.getStatus(), 200);
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -393,7 +393,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             assertEquals(response.getStatus(), 200);
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
