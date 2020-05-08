@@ -29,7 +29,7 @@
             <div class="btn-container">
                 <button type="button" class="btn btn-primary ml-1" ng-click="dvm.newOntology()">New Ontology</button>
                 <button type="button" class="btn btn-primary ml-1" ng-click="dvm.clickUpload('open_ontology_file_input_' + $id)">Upload Ontology</button>
-                <input id="open_ontology_file_input_{{$id}}" class="hide" type="file" file-change="dvm.updateFiles($event, files)" multiple accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt,.owl"></input>
+                <input id="open_ontology_file_input_{{$id}}" class="hide" type="file" file-change="dvm.updateFiles($event, files)" multiple accept=".ttl,.xml,.jsonld,.rdf,.trig,.json,.n3,.nq,.nt,.owl,.obo"></input>
             </div>
         </div>
         <div class="ontologies flex-1 vertical-scroll" targeted-spinner="dvm.id">
@@ -38,7 +38,7 @@
                     <div class="ontology-info d-flex">
                         <div class="details flex-1 remove-min-width" ng-click="dvm.open(record)">
                             <div class="header align-items-center d-flex">
-                                <h3 class="text-truncate"><span ng-if="dvm.isOpened(record)" class="text-muted">(Open)</span> <span ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></span></h3>
+                                <h3><span ng-if="dvm.isOpened(record)" class="text-muted">(Open)</span> <div class="header-title text-truncate" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></div></h3>
                                 <small class="pl-2 ontology-iri text-muted flex-1 text-truncate">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
                             </div>
                             <p class="description break-word m-0" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>

@@ -61,7 +61,7 @@ describe('Create Concept Scheme Overlay component', function() {
 
         this.iri = 'iri#';
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
-        ontologyManagerSvc.getConceptIRIs.and.returnValue(['concept1']);
+        ontologyStateSvc.listItem.concepts.iris = {'concept1':'test'};
 
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
@@ -86,7 +86,6 @@ describe('Create Concept Scheme Overlay component', function() {
         expect(this.controller.scheme['@id']).toEqual(this.controller.prefix);
         expect(this.controller.scheme['@type']).toEqual([prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme']);
         expect(this.controller.conceptIRIs).toEqual(['concept1']);
-        expect(ontologyManagerSvc.getConceptIRIs).toHaveBeenCalledWith(jasmine.any(Array), ontologyStateSvc.listItem.derivedConcepts);
     });
     describe('controller bound variable', function() {
         it('close should be called in the parent scope', function() {
@@ -192,7 +191,7 @@ describe('Create Concept Scheme Overlay component', function() {
             _.forEach(this.controller.selectedConcepts, concept => {
                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes, concept['@id'], 'scheme');
             });
-            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.scheme);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.scheme, this.controller.language);
             expect(ontologyStateSvc.listItem.conceptSchemes.iris).toEqual({[this.controller.scheme['@id']]: ontologyStateSvc.listItem.ontologyId});
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);

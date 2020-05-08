@@ -113,8 +113,9 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
         }
         dvm.ontoUtils.addLanguageToNewEntity(dvm.property, dvm.language);
         dvm.os.updatePropertyIcon(dvm.property);
+        dvm.os.handleNewProperty(dvm.property);
         // add the entity to the ontology
-        dvm.os.addEntity(dvm.os.listItem, dvm.property);
+        dvm.os.addEntity(dvm.property);
         // update lists
         updateLists();
         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.listItem);

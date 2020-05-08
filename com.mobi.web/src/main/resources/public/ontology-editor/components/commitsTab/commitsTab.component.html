@@ -21,12 +21,12 @@
   #L%
   -->
 <div class="commits-tab h-100 row m-0">
-    <div class="col-8 offset-2 d-flex flex-column p-2 h-100">
+    <div class="col-10 offset-1 d-flex flex-column p-2 h-100">
         <div class="section-header">
             <h5>Commits</h5>
         </div>
         <div class="flex-1 vertical-scroll d-flex">
-            <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" head-title="dvm.getHeadTitle()" receive-commits="dvm.commits = commits" entity-name-func="dvm.os.getEntityNameByIndex" graph></commit-history-table>
+            <commit-history-table class="flex-1" commit-id="dvm.os.listItem.ontologyRecord.commitId" head-title="dvm.getHeadTitle()" receive-commits="dvm.commits = commits" entity-name-func="dvm.os.getEntityNameByListItem" graph></commit-history-table>
             <div class="view-table" ng-if="dvm.commits.length">
                 <table class="table">
                     <thead>

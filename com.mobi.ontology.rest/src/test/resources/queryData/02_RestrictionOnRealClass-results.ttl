@@ -1,0 +1,18 @@
+@prefix : <http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:Fin a owl:Class ;
+  rdfs:comment "the vertical stabilizing structure of a plane, constisting of the fixed vertical stabilizer and the rudder (control structure for \"yaw\")";
+  rdfs:subClassOf :AircraftSubComponent, _:genid118, _:genid123 .
+
+_:genid118 a owl:Restriction ;
+  owl:onProperty :hasTankSystem ;
+  owl:someValuesFrom :TankSystem .
+
+_:genid123 a owl:Restriction ;
+  owl:onClass :Rudder ;
+  owl:onProperty :hasRudder ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .

@@ -139,10 +139,13 @@ describe('Selected Details component', function() {
                 expect(this.controller.getTypes()).toEqual(expected);
             });
             it('when @type has blank node items', function() {
+                ontologyStateSvc.listItem.selectedBlankNodes = [];
+                ontologyStateSvc.getBnodeIndex.and.returnValue({});
                 ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
                 ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
                 this.controller.getTypes();
-                expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.ontology);
+                expect(manchesterConverterSvc.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.selectedBlankNodes, {});
+                expect(ontologyStateSvc.getBnodeIndex).toHaveBeenCalled();
             });
         });
         describe('onEdit calls the proper functions', function() {

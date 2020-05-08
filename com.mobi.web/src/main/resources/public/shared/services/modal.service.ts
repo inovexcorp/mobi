@@ -22,7 +22,7 @@
  */
 import { noop, mapValues } from 'lodash';
 
-modalService.$inject = ['$uibModal'];
+modalService.$inject = ['$uibModal', '$uibModalStack', '$rootScope'];
 
 /**
  * @ngdoc service
@@ -33,8 +33,33 @@ modalService.$inject = ['$uibModal'];
  * `modalService` is a service that provides functionality to open modals based on the name of the directive.
  * It uses the $uibModal service to create modals.
  */
-function modalService($uibModal) {
+function modalService($uibModal, $uibModalStack, $rootScope) {
     var self = this;
+
+    // Prevents modal from closing when selecting text and moving mouse outside of dialog
+    $rootScope.$watch(
+        () => document.querySelectorAll(".modal").length,
+        val => {
+            [].forEach.call(document.querySelectorAll(".modal"), modal => {
+                // Close the modal when you click ANYWHERE
+                modal.addEventListener("mousedown", event => {
+                    if (event.which === 1 && $uibModalStack.getTop()) {
+                        $uibModalStack.getTop().key.dismiss();
+                    }
+                });
+
+                // And then when you click the CONTENT, don't propagate (i.e. preventing the click action defined above)
+                [].forEach.call(modal.querySelectorAll(".modal-content"), content =>
+                    content.addEventListener("mousedown", e => e.stopPropagation())
+                );
+            });
+            
+            // Force the backdrop setting to static so as to not hook into the modal's default behavior
+            if (val && $uibModalStack.getTop()) {
+                $uibModalStack.getTop().value.backdrop = "static";
+            }
+        }
+    );
 
     /**
      * @ngdoc method

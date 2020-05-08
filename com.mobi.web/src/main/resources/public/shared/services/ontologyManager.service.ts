@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString } from 'lodash';
+import { identity, get, noop, indexOf, forEach, some, includes, find, map, isMatch, has, filter, reduce, intersection, isString, concat, uniq } from 'lodash';
 
 ontologyManagerService.$inject = ['$http', '$q', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
@@ -313,16 +313,17 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      *
      * @description
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an object with keys
-     * corresponding to the listItem strcuture.
+     * corresponding to the listItem structure.
      *
      * @param {string} recordId The id of the Record the Branch should be part of
      * @param {string} branchId The id of the Branch with the specified Commit
      * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} clearCache Whether or not to clear the cache
      * @param {string} id The identifier for this request
      * @return {Promise} A Promise with an object containing listItem keys.
      */
-    self.getOntologyStuff = function(recordId, branchId, commitId, id = '') {
-        var config = { params: { branchId, commitId } };
+    self.getOntologyStuff = function(recordId, branchId, commitId, clearCache, id = '') {
+        var config = { params: { branchId, commitId, clearCache } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/ontology-stuff';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
@@ -706,8 +707,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param id The id to link this REST call to.
      * @return {Promise} A promise containing the SPARQL query results
      */
-    self.getQueryResults = function(recordId, branchId, commitId, query, format, id) {
-        var config = { params: { query, branchId, commitId, format } };
+    self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
+        var config = { params: { query, branchId, commitId, format, includeImports, applyInProgressCommit } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/query';
         var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
         return promise.then(response => response.data, util.rejectError);
@@ -729,6 +730,32 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         var config = { params: { branchId, commitId } };
         return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
             .then(response => response.data, util.rejectError);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityAndBlankNodes
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/ontologies/{recordId}/entities/{entityIRI} endpoint which gets the RDF of the entity with
+     * the specified IRI along with all its linked blank nodes. Accepts the RDF format to return the RDF in, whether to
+     * include imports, and whether to apply the in progress commit.
+     *
+     * @param {string} recordId The record ID of the ontology you want to get from the repository
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository
+     * @param {string} entityIRI The entity IRI of the entity you want to retrieve
+     * @param {string} [format='jsonld'] The RDF format to return the results in
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
+     * @param {string} [id=''] The id to link this REST call to
+     * @return {Promise} A promise containing the RDF of the specified entity and its blank nodes
+     */
+    self.getEntityAndBlankNodes = function(recordId, branchId, commitId, entityId, format = 'jsonld', includeImports = true, applyInProgressCommit = true, id = '')  {
+        var config = { params: { branchId, commitId, format, includeImports, applyInProgressCommit } };
+        var url = prefix + '/' + encodeURIComponent(recordId) + '/entities/' + encodeURIComponent(entityId);
+        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => response.data, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -801,7 +828,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      */
     self.getOntologyIRI = function(ontology) {
         var entity = self.getOntologyEntity(ontology);
-        return get(entity, '@id', get(entity, 'mobi.anonymous', ''));
+        return get(entity, '@id', '');
     }
     /**
      * @ngdoc method
@@ -1386,6 +1413,26 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     function getPrioritizedValue(entity, prop) {
         return get(find(get(entity, "['" + prop + "']"), {'@language': 'en'}), '@value') || utilService.getPropertyValue(entity, prop);
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNames
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Gets the provided entity's names. These names are an array of the '@value' values for the self.entityNameProps.
+     *
+     * @param {Object} entity The entity you want the names of.
+     * @returns {string[]} The names for the self.entityNameProps.
+     */
+    self.getEntityNames = function(entity) {
+        var names = [];
+        forEach(self.entityNameProps, prop => {
+            if (has(entity, prop)) {
+                names = concat(names, map(get(entity, prop), '@value'));
+            } 
+        });
+        return uniq(names);
     }
     /**
      * @ngdoc method

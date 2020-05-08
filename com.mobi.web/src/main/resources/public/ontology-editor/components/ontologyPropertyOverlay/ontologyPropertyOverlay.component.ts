@@ -99,6 +99,7 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
     }
     dvm.addProperty = function() {
         var value, added = false;
+        
         if (dvm.isOntologyProperty()) {
             value = dvm.os.ontologyPropertyIRI;
             added = pm.addId(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIRI);
@@ -117,6 +118,7 @@ function ontologyPropertyOverlayComponentCtrl(ontologyStateService, REGEX, prope
     dvm.editProperty = function() {
         var oldObj = angular.copy(get(dvm.os.listItem.selected, "['" + dvm.os.ontologyProperty + "']['" + dvm.os.ontologyPropertyIndex + "']"));
         var value, edited = false;
+        
         if (dvm.isOntologyProperty()) {
             value = dvm.os.ontologyPropertyIRI;
             edited = pm.editId(dvm.os.listItem.selected, dvm.os.ontologyProperty, dvm.os.ontologyPropertyIndex, value);

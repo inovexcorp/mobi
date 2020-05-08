@@ -61,48 +61,4 @@
             height: 26px;
         }
     }
-
-    #dropdown-filter {
-        color: var(--primary) !important;
-        padding: 0;
-
-        &:hover {
-            background-color: inherit !important;
-            color: inherit !important;
-        }
-
-        .badge[data-count] {
-            height: 100%;
-
-            &:after {
-                position:absolute;
-                right:0%;
-                top:8%;
-                content: attr(data-count);
-                font-size:40%;
-                padding:.2em;
-                border-radius:50%;
-                line-height:1em;
-                color: white;
-                background:var(--primary);
-                text-align:center;
-                min-width: 1.2em;
-                font-family:"Roboto", "Helvetica Neue", "sans-serif" !important;
-            }
-        }
-
-        .disappear:after{
-            visibility: hidden !important;
-        }
-
-        .fa-filter {
-            font-size: 16px;
-        }
-  
-        &:after { content: none }
-    }
-
-    .dropdown-item:hover {
-        background-color: inherit !important;
-    }
 }

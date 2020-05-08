@@ -50,6 +50,7 @@ import entityDatesComponent from './components/entityDates/entityDates.component
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
 import infoMessageComponent from './components/infoMessage/infoMessage.component';
+import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
 import keywordSelectComponent from './components/keywordSelect/keywordSelect.component';
@@ -194,6 +195,7 @@ angular.module('shared', [])
     .component('entityDescription', entityDescriptionComponent)
     .component('fileInput', fileInputComponent)
     .component('infoMessage', infoMessageComponent)
+    .component('warningMessage', warningMessageComponent)
     .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
     .component('keywordSelect', keywordSelectComponent)

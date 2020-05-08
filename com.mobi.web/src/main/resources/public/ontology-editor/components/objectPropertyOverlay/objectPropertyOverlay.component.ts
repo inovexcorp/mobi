@@ -69,6 +69,7 @@ function objectPropertyOverlayComponentCtrl(ontologyStateService, utilService, o
     dvm.addProperty = function(select, value) {
         var valueObj = {'@id': value};
         var added = pm.addId(dvm.os.listItem.selected, select, value);
+        
         if (added) {
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], select, valueObj));
             dvm.ontoUtils.saveCurrentChanges();
