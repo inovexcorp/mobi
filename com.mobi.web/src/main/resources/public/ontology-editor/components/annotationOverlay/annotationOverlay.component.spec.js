@@ -192,6 +192,7 @@ describe('Annotation Overlay component', function() {
             beforeEach(function() {
                 spyOn(this.controller, 'addAnnotation');
                 spyOn(this.controller, 'editAnnotation');
+                spyOn(this.controller, 'changeLanguage');
             });
             it('added', function() {
                 this.controller.submit();
@@ -202,6 +203,7 @@ describe('Annotation Overlay component', function() {
                 ontologyStateSvc.editingAnnotation = true;
                 this.controller.submit();
                 expect(this.controller.addAnnotation).not.toHaveBeenCalled();
+                expect(this.controller.changeLanguage).toHaveBeenCalled();
                 expect(this.controller.editAnnotation).toHaveBeenCalled();
             });
         });
