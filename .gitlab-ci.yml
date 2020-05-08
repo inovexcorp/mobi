@@ -9,16 +9,10 @@ stages:
   - set_version_root_pom
   - set_version_parent_pom
   - commit_version
-#  - update_master_with_new_version
   - increment_snapshot_version_root_pom
   - increment_snapshot_version_parent_pom
   - commit_version
-#  - update_master_with_new_snapshot
   - unit_integration_test
-#  - deploy_rdf_orm
-#  - deploy_artifacts
-#  - new_release_build
-#  - new_release_deploy
 
 variables:
   ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
