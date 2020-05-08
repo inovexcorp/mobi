@@ -20,10 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, filter, map, forEach, some, chain, find, difference, sortBy, isNull } from 'lodash';
+import { get, map, filter, forEach, some, chain, find, difference, sortBy, isNull } from 'lodash';
 
 import './permissionsPage.component.scss';
- 
 const template = require('./permissionsPage.component.html');
 
 /**
@@ -120,18 +119,24 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
                 }, util.createErrorToast);
     }
     function getRecordType(policy) {
-        return chain(policy)
-            .get('Target.AnyOf', [])
+        const target = chain(policy)
+            .get('Target.AnyOf', []).value();
+        const allOfMatch = chain(target)
             .map('AllOf').flatten()
             .map('Match').flatten()
-            .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type'])
-            .get('AttributeValue.content', [])
+            .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type']).value();
+        const attributeValue = chain(allOfMatch)
+            .get('AttributeValue.content', []).value();
+        const value =  chain(attributeValue)
             .head()
             .value();
+        return value;
+     
     }
     function setInfo(item) {
-        var matches = chain(item.policy)
-            .get('Rule[0].Target.AnyOf[0].AllOf', [])
+        var rules = chain(item.policy)
+            .get('Rule[0].Target.AnyOf[0].AllOf', []).value();
+        const matches = chain(rules) 
             .map('Match[0]')
             .map(match => ({
                 id: get(match, 'AttributeDesignator.AttributeId'),

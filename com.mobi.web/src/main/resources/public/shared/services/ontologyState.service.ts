@@ -1756,7 +1756,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.openAt = function(flatHierarchy, entityIRI) {
         var path = get(find(flatHierarchy, {entityIRI}), 'path', []);
         if (path.length) {
-            var pathString = head(path);
+            var pathString : any = head(path);
             forEach(tail(initial(path)), pathPart => {
                 pathString += '.' + pathPart;
                 self.listItem.editorTabStates[self.getActiveKey()].open[pathString] = true;

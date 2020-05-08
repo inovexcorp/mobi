@@ -122,7 +122,7 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
         };
         if (get(queryConfig, 'keywords', []).length) {
             if (get(queryConfig, 'isOrKeywords', false)) {
-                var obj = {type: 'union', patterns: map(queryConfig.keywords, keyword => createKeywordQuery(keyword))};
+                let obj = {type: 'union', patterns: map(queryConfig.keywords, keyword => createKeywordQuery(keyword))};
                 query.where.push(obj);
             } else {
                 query.where = map(queryConfig.keywords, keyword => createKeywordQuery(keyword));
@@ -130,7 +130,7 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
         }
         if (get(queryConfig, 'types', []).length) {
             if (get(queryConfig, 'isOrTypes', false)) {
-                var obj = {type: 'union', patterns: map(queryConfig.types, type => createTypeQuery(type))};
+                let obj = {type: 'union', patterns: map(queryConfig.types, type => createTypeQuery(type))};
                 query.where.push(obj);
             } else {
                 query.where = concat(query.where, map(queryConfig.types, type => createTypeQuery(type)));
@@ -139,7 +139,10 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
         if (get(queryConfig, 'filters', []).length) {
             query.where = concat(query.where, map(queryConfig.filters, getQueryPart));
         }
-        query.variables = concat(['?Entity'], map(Object.keys(variables), createVariableExpression));
+        //@todo test this.
+        let mapper: any  = map(Object.keys(variables), createVariableExpression);
+       // query.variables = concat(['?Entity'], ma );
+       query.variables = concat(['?Entity'], mapper);
         queryConfig.variables = assign({Entity: 'Entity'}, variables);
         var generator = new sparqljs.Generator();
         return generator.stringify(query);
@@ -417,7 +420,7 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
     }
 
     function getQueryPart(filter) {
-        var lastEl = last(filter.path);
+        var lastEl: any = last(filter.path);
         var predicate = lastEl.predicate;
         var range = lastEl.range;
         var pathDetails = createPathDetails(filter.path);
@@ -453,7 +456,7 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
         var start = initial(path);
         var variable = '?Entity';
         var patterns = [];
-        forEach(start, part => {
+        forEach(start, (part:any) => {
             let oldVariable = variable;
             variable = getNextVariable();
             patterns.push(createPattern(oldVariable, part.predicate, variable));

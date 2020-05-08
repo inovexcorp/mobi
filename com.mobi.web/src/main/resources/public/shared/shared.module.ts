@@ -131,6 +131,8 @@ import userManagerService from './services/userManager.service';
 import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 
+import yasGuiCompoment from './components/yasgui/yasgui.component';
+
 /**
  * @ngdoc overview
  * @name shared
@@ -140,6 +142,7 @@ import utilService from './services/util.service';
  */
 angular.module('shared', [])
     .component('actionMenu', actionMenuComponent)
+    .component('yasguiEditor',yasGuiCompoment)
     .component('block', blockComponent)
     .component('blockContent', blockContentComponent)
     .component('blockFooter', blockFooterComponent)

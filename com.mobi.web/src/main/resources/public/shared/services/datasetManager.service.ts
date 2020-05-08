@@ -333,7 +333,7 @@ function datasetManagerService($http, $q, utilService, prefixes, discoverStateSe
     }
 
     function removeDataset(datasetRecordIRI) {
-        remove(self.datasetRecords, array => find(array, {'@id': datasetRecordIRI}));
+        remove(self.datasetRecords, (array: any) => find(array, {'@id': datasetRecordIRI}));
     }
 }
 

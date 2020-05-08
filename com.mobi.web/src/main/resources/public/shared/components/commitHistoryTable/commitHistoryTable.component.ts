@@ -158,7 +158,9 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         if (dvm.commits.length > 0) {
             wrapper = dvm.snap.group();
             // First draw circles in a straight line
-            forEach(dvm.commits, (commit, i) => {
+            //@TODO rename variable to something more meaningful
+            // rename i to index?
+            forEach(dvm.commits, (commit, i : number) => {
                 var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (i * dvm.circleSpacing), dvm.circleRadius);
                 var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
                 circle.append(title);
