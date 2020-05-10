@@ -274,4 +274,16 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         assertEquals(Optional.of(ontologyIRI), ontologyId.getOntologyIRI());
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
+
+    @Test
+    public void testConstructorWithModelBlankNode() {
+        Model model = mf.createModel();
+        model.add(vf.createBNode("_:node123"), typeIRI, ontologyType);
+        model.add(vf.createBNode("_:node123"), vf.createIRI("urn:testPred"), vf.createLiteral("test value"));
+
+        OntologyId ontologyId = new SimpleOntologyId.Builder(vf).model(model).build();
+        assertTrue(ontologyId.getOntologyIdentifier().stringValue().startsWith(ONTOLOGY_PREFIX));
+        assertEquals(Optional.empty(), ontologyId.getOntologyIRI());
+        assertEquals(Optional.empty(), ontologyId.getVersionIRI());
+    }
 }

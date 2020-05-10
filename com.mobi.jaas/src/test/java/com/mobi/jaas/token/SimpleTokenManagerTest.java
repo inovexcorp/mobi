@@ -2,11 +2,11 @@ package com.mobi.jaas.token;
 
 /*-
  * #%L
- * com.mobi.jaas
+ * com.mobi.jaas.token
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -78,9 +78,6 @@ public class SimpleTokenManagerTest {
     private HttpServletRequest servletRequest;
 
     @Mock
-    private NewCookie newCookie;
-
-    @Mock
     private Cookie servletCookie;
 
     @Mock
@@ -105,10 +102,14 @@ public class SimpleTokenManagerTest {
         when(requestContext.getCookies()).thenReturn(cookies);
         when(servletRequest.getCookies()).thenReturn(new Cookie[]{servletCookie});
 
+        Map<String, Object> config = new HashMap<>();
+        config.put("tokenDurationMins", 1440);
+
         manager = new SimpleTokenManager();
         manager.setMobiTokenVerifier(mobiTokenVerifier);
         manager.addVerifier(mobiTokenVerifier);
         manager.addVerifier(otherVerifier);
+        manager.start(config);
     }
 
     @Test
@@ -142,36 +143,65 @@ public class SimpleTokenManagerTest {
     public void generateUnauthTokenTest() throws Exception {
         SignedJWT result = manager.generateUnauthToken();
         assertEquals(jwt, result);
-        verify(mobiTokenVerifier).generateToken("anon", SimpleTokenManager.ISSUER, SimpleTokenManager.ANON_SCOPE, SimpleTokenManager.TOKEN_DURATION, null);
+        verify(mobiTokenVerifier).generateToken("anon", SimpleTokenManager.ISSUER, SimpleTokenManager.ANON_SCOPE, 86400000, null);
     }
 
     @Test
     public void generateUnauthTokenExceptionTest() throws Exception {
-        // Setup
+        // Setup:
         when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenThrow(new JOSEException(""));
         thrown.expect(MobiException.class);
 
         SignedJWT result = manager.generateUnauthToken();
         assertEquals(jwt, result);
-        verify(mobiTokenVerifier).generateToken("anon", SimpleTokenManager.ISSUER, SimpleTokenManager.ANON_SCOPE, SimpleTokenManager.TOKEN_DURATION, null);
+        verify(mobiTokenVerifier).generateToken("anon", SimpleTokenManager.ISSUER, SimpleTokenManager.ANON_SCOPE, 86400000, null);
     }
 
     @Test
     public void generateAuthTokenTest() throws Exception {
+        // Setup:
+        Map<String, Object> config = new HashMap<>();
+        config.put("tokenDurationMins", 1);
+        manager.start(config);
+
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
-        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, SimpleTokenManager.TOKEN_DURATION, null);
+        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 60000, null);
+    }
+
+    @Test
+    public void generateZeroTokenTest() throws Exception {
+        // Setup:
+        Map<String, Object> config = new HashMap<>();
+        config.put("tokenDurationMins", 0);
+        manager.start(config);
+
+        SignedJWT result = manager.generateAuthToken("username");
+        assertEquals(jwt, result);
+        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 86400000, null);
+    }
+
+    @Test
+    public void generateNegativeTokenTest() throws Exception {
+        // Setup:
+        Map<String, Object> config = new HashMap<>();
+        config.put("tokenDurationMins", -500000);
+        manager.start(config);
+
+        SignedJWT result = manager.generateAuthToken("username");
+        assertEquals(jwt, result);
+        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 86400000, null);
     }
 
     @Test
     public void generateAuthTokenExceptionTest() throws Exception {
-        // Setup
+        // Setup:
         when(mobiTokenVerifier.generateToken(anyString(), anyString(), anyString(), anyLong(), any(Map.class))).thenThrow(new JOSEException(""));
         thrown.expect(MobiException.class);
 
         SignedJWT result = manager.generateAuthToken("username");
         assertEquals(jwt, result);
-        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, SimpleTokenManager.TOKEN_DURATION, null);
+        verify(mobiTokenVerifier).generateToken("username", SimpleTokenManager.ISSUER, SimpleTokenManager.AUTH_SCOPE, 86400000, null);
     }
 
     @Test

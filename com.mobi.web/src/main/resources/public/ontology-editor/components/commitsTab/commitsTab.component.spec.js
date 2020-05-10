@@ -61,8 +61,8 @@ describe('Commits Tab component', function() {
             expect(this.element.prop('tagName')).toEqual('COMMITS-TAB');
             expect(this.element.querySelectorAll('.commits-tab').length).toEqual(1);
         });
-        it('with a .col-8', function() {
-            expect(this.element.querySelectorAll('.col-8').length).toEqual(1);
+        it('with a .col-10', function() {
+            expect(this.element.querySelectorAll('.col-10').length).toEqual(1);
         });
         it('with a .section-header', function() {
             expect(this.element.querySelectorAll('.section-header').length).toEqual(1);

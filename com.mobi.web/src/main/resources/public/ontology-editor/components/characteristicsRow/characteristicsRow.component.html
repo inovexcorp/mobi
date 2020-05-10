@@ -22,6 +22,6 @@
   -->
 <div class="characteristics-row">
     <div ng-if="dvm.om.isObjectProperty(dvm.os.listItem.selected) || dvm.om.isDataTypeProperty(dvm.os.listItem.selected)" class="row py-2">
-        <characteristics-block class="col" iri="dvm.os.listItem.selected['@id']" types="dvm.os.listItem.selected['@type']" update-types="dvm.os.listItem.selected['@types'] = value"></characteristics-block>
+        <characteristics-block class="col" iri="dvm.os.listItem.selected['@id']" types="dvm.os.listItem.selected['@type']" update-types="dvm.updateTypes(value)"></characteristics-block>
     </div>
 </div>

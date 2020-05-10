@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { downgradeComponent } from '@angular/upgrade/static';
 
@@ -50,6 +50,7 @@ import entityDatesComponent from './components/entityDates/entityDates.component
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
 import infoMessageComponent from './components/infoMessage/infoMessage.component';
+import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
 import keywordSelectComponent from './components/keywordSelect/keywordSelect.component';
@@ -154,7 +155,8 @@ import {WindowRef} from "./services/windowRef.service";
  * @name shared
  *
  * @description
- * The `shared` module provides common components, directives, filters, and services that make up the Shared module in the Mobi application.
+ * The `shared` module provides common components, directives, filters, and services that make up the Shared module in
+ * the Mobi application.
  */
 @NgModule({
     imports: [
@@ -212,6 +214,7 @@ angular.module('shared', [])
     .component('entityDescription', entityDescriptionComponent)
     .component('fileInput', fileInputComponent)
     .component('infoMessage', infoMessageComponent)
+    .component('warningMessage', warningMessageComponent)
     .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
     .component('keywordSelect', keywordSelectComponent)

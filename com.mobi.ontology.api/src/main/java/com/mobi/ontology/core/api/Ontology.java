@@ -39,11 +39,57 @@ public interface Ontology {
 
     Model asModel(ModelFactory factory) throws MobiOntologyException;
 
+    /**
+     * Returns the Ontology as TURTLE in an OutputStream.
+     *
+     * @return an OutputStream of TURTLE
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
     OutputStream asTurtle() throws MobiOntologyException;
 
+    /**
+     * Returns the Ontology as RDF-XML in an OutputStream.
+     *
+     * @return an OutputStream of RDF-XML
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
     OutputStream asRdfXml() throws MobiOntologyException;
 
+    /**
+     * Returns the Ontology as OWL-XML in an OutputStream.
+     *
+     * @return an OutputStream of OWL-XML
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
     OutputStream asOwlXml() throws MobiOntologyException;
+
+    /**
+     * Returns the Ontology as TURTLE written to the given OutputStream.
+     *
+     * @param outputStream The outputStream to write the TURTLE to
+     * @return the OutputStream that was written to
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
+    OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException;
+
+    /**
+     * Returns the Ontology as RDF-XML written to the given OutputStream.
+     *
+     * @param outputStream The outputStream to write the RDF-XML to
+     * @return the OutputStream that was written to
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
+
+    OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException;
+
+    /**
+     * Returns the Ontology as OWL-XML written to the given OutputStream.
+     *
+     * @param outputStream The outputStream to write the OWL-XML to
+     * @return the OutputStream that was written to
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
+    OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException;
 
     /**
      * Returns the Ontology as JSON-LD in an OutputStream.
@@ -53,6 +99,16 @@ public interface Ontology {
      * @throws MobiOntologyException If an error occurs while parsing
      */
     OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException;
+
+    /**
+     * Returns the Ontology as JSON-LD written to the given OutputStream.
+     *
+     * @param skolemize Whether or not blank node ids should be skolemized before rendering
+     * @param outputStream The outputStream to write the JSON-LD to
+     * @return the OutputStream that was written to
+     * @throws MobiOntologyException If an error occurs while parsing
+     */
+    OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException;
 
     /**
      * Returns the OntologyID that describes the Ontology IRI, Version IRI,

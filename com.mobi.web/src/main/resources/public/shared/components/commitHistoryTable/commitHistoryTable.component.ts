@@ -110,7 +110,7 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         httpService.cancel(dvm.id);
     }
     dvm.openCommitOverlay = function(commitId) {
-        cm.getCommit(commitId)
+        cm.getDifference(commitId)
             .then(response => {
                 modalService.openModal('commitInfoOverlay', {
                     commit: find(dvm.commits, {id: commitId}),

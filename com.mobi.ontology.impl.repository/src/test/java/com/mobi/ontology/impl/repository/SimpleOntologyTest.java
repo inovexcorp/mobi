@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -186,10 +187,13 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         repo.initialize();
         when(repo.getConfig()).thenReturn(repositoryConfig);
         when(repositoryConfig.id()).thenReturn("ontologyCache");
+
         when(transformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
         when(transformer.sesameResource(any(Resource.class))).thenAnswer(i -> Values.sesameResource(i.getArgumentAt(0, Resource.class)));
         when(transformer.mobiStatement(any(Statement.class))).thenAnswer(i -> Values.mobiStatement(i.getArgumentAt(0, Statement.class)));
+        when(transformer.sesameStatement(any(com.mobi.rdf.api.Statement.class))).thenAnswer(i ->
+                Values.sesameStatement(i.getArgumentAt(0, com.mobi.rdf.api.Statement.class)));
 
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
@@ -689,7 +693,7 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         String jsonld = listOntology.asJsonLD(true).toString();
         assertEquals(removeWhitespace(replaceBlankNodeSuffix(IOUtils.toString(expected, Charset.defaultCharset()))), removeWhitespace(replaceBlankNodeSuffix(jsonld)));
 
-        verify(blankNodeService).skolemize(any(com.mobi.rdf.api.Model.class));
+        verify(blankNodeService, atLeast(1)).skolemize(any(com.mobi.rdf.api.Statement.class));
     }
 
     @Test

@@ -25,27 +25,20 @@ package com.mobi.repository.base;
 
 import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.config.RepositoryConfig;
-import com.mobi.repository.exception.RepositoryConfigException;
-import com.mobi.repository.exception.RepositoryException;
-import com.mobi.repository.api.DelegatingRepository;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.config.RepositoryConfig;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.exception.RepositoryException;
 
-import java.io.File;
 import java.util.Map;
-import java.util.Optional;
 
-public abstract class RepositoryWrapper implements DelegatingRepository {
+/**
+ * @deprecated New implementations should prefer the ConfigurationBasedRepositoryWrapper for a cleaner implementation
+ * API.
+ */
+@Deprecated
+public abstract class RepositoryWrapper extends AbstractRepositoryWrapper {
 
     protected static final String REPOSITORY_TYPE = "default";
-
-    private volatile Repository delegate;
-    protected String repositoryID;
 
     /**
      * Creates a new <tt>RepositoryWrapper</tt>.
@@ -59,28 +52,6 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
      */
     public RepositoryWrapper(Repository delegate) {
         setDelegate(delegate);
-    }
-
-    @Override
-    public Repository getDelegate() {
-        return delegate;
-    }
-
-    @Override
-    public void setDelegate(Repository delegate) {
-        this.delegate = delegate;
-    }
-
-    public String getRepositoryID() {
-        return this.repositoryID;
-    }
-
-    public void setRepositoryID(String repositoryID) {
-        this.repositoryID = repositoryID;
-    }
-
-    public RepositoryConfig getConfig() {
-        return delegate.getConfig();
     }
 
     protected void start(Map<String, Object> props) {
@@ -112,31 +83,6 @@ public abstract class RepositoryWrapper implements DelegatingRepository {
     }
 
     protected abstract Repository getRepo(Map<String, Object> props);
-
-    @Override
-    public RepositoryConnection getConnection() throws RepositoryException {
-        return delegate.getConnection();
-    }
-
-    @Override
-    public Optional<File> getDataDir() {
-        return delegate.getDataDir();
-    }
-
-    @Override
-    public void initialize() {
-        throw new UnsupportedOperationException("A shared service cannot be initialized by a third party");
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return delegate.isInitialized();
-    }
-
-    @Override
-    public void shutDown() {
-        throw new UnsupportedOperationException("A shared service cannot be destroyed by a third party");
-    }
 
     public void validateConfig(Map<String, Object> props) {
         RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, props);

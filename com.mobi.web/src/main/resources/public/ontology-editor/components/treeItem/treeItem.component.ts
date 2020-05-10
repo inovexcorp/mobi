@@ -26,48 +26,56 @@ import './treeItem.component.scss';
 
 const template = require('./treeItem.component.html');
 
+/**
+ * @ngdoc component
+ * @name ontology-editor.component:treeItem
+ * @requires shared.service:ontologyStateService
+ * 
+ * @description
+ * `treeItem` is a component that creates the content for an individual entry in a tree hierarchy.
+ * 
+ * @param {boolean} hasChildren Whether the item has child elements
+ * @param {boolean} isActive Whether the item is active
+ * @param {Function} onClick A function to be called when the item is clicked
+ * @param {Object} entityInfo The object containing the information to display the label
+ * @param {boolean} isOpened Whether the item is opened
+ * @param {string} path The path to where this item is located in the hierarchy
+ * @param {boolean} underline Whether the label should be underlined
+ * @param {Function} toggleOpen A function to be called when the icon is clicked or the item is double clicked
+ * @param {Object} inProgressCommit The object containing the saved entities
+ * @param {string} currentIri The IRI of the item to determine if it is saved
+ */
 const treeItemComponent = {
     template,
     bindings: {
         hasChildren: '<',
         isActive: '<',
-        isBold: '<',
         onClick: '&',
-        currentEntity: '<',
+        entityInfo: '<',
         isOpened: '<',
         path: '<',
         underline: '<',
         toggleOpen: '&',
-        inProgressCommit: '<'
+        inProgressCommit: '<',
+        currentIri: '<'
     },
     controllerAs: 'dvm',
     controller: treeItemComponentCtrl
 };
 
-treeItemComponentCtrl.$inject = ['settingsManagerService', 'ontologyStateService'];
+treeItemComponentCtrl.$inject = ['ontologyStateService'];
 
-function treeItemComponentCtrl(settingsManagerService, ontologyStateService) {
+function treeItemComponentCtrl(ontologyStateService) {
     var dvm = this;
-    var os = ontologyStateService;
-    dvm.treeDisplaySetting = '';
-    dvm.treeDisplay = '';
+    dvm.os = ontologyStateService;
 
-    dvm.$onChanges = function(changesObj) {
-        if (get(changesObj, 'currentEntity.isFirstChange')) {
-            dvm.treeDisplaySetting = settingsManagerService.getTreeDisplay();
-        }
+    dvm.$onChanges = function() {
         dvm.saved = dvm.isSaved();
-        dvm.treeDisplay = dvm.getTreeDisplay();
     }
-    dvm.getTreeDisplay = function() {
-        if (dvm.treeDisplaySetting === 'pretty') {
-            return os.getEntityNameByIndex(get(dvm.currentEntity, '@id'), os.listItem);
-        }
-        return get(dvm.currentEntity, 'mobi.anonymous', '');
-    }
+
     dvm.isSaved = function() {
-        var ids = unionWith(map(dvm.inProgressCommit.additions, '@id'), map(dvm.inProgressCommit.deletions, '@id'), isEqual);
-        return includes(ids, get(dvm.currentEntity, '@id'));
+        var ids = unionWith(map(get(dvm.inProgressCommit, 'additions', []), '@id'), map(get(dvm.inProgressCommit, 'deletions', []), '@id'), isEqual);
+        return includes(ids, dvm.currentIri);
     }
 }
 

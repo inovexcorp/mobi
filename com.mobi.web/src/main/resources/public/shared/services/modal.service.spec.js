@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Modal service', function() {
-    var modalSvc, $uibModal, scope;
+    var modalSvc, $uibModal, scope, $uibModalStack;
 
     beforeEach(function() {
         angular.mock.module('shared');
@@ -30,11 +30,20 @@ describe('Modal service', function() {
             $provide.service('$uibModal', function($q) {
                 this.open = jasmine.createSpy('open').and.returnValue({result: $q.when()});
             });
+            $provide.service('$uibModalStack', function($q) {
+                this.getTop = jasmine.createSpy('getTop').and.returnValue({
+                    key: {
+                        dismiss: $q.when()
+                    },
+                    value: {}
+                })
+            });
         });
 
-        inject(function(modalService, _$uibModal_, _$rootScope_) {
+        inject(function(modalService, _$uibModal_, _$uibModalStack_, _$rootScope_) {
             modalSvc = modalService;
             $uibModal = _$uibModal_;
+            $uibModalStack = _$uibModalStack_;
             scope = _$rootScope_;
         });
     });
@@ -42,6 +51,7 @@ describe('Modal service', function() {
     afterEach(function() {
         modalSvc = null;
         $uibModal = null;
+        $uibModalStack = null;
         scope = null;
     });
 

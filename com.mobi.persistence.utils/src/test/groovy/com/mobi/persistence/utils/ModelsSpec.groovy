@@ -22,11 +22,8 @@
  */
 package com.mobi.persistence.utils
 
-import com.mobi.rdf.api.BNode
-import com.mobi.rdf.api.IRI
-import com.mobi.rdf.api.Literal
-import com.mobi.rdf.api.Model
-import com.mobi.rdf.api.Statement
+import com.mobi.persistence.utils.api.SesameTransformer
+import com.mobi.rdf.api.*
 import spock.lang.Specification
 
 import java.util.stream.Stream
@@ -234,5 +231,45 @@ class ModelsSpec extends Specification{
 
         then:
         !result
+    }
+
+    def "createModel for OBO format returns correct data"() {
+        setup:
+        def input = getClass().getResourceAsStream("/bfo.obo")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel(input, transformer)
+
+        then:
+        1 * transformer.mobiModel(_) >> { args ->
+            assert args[0].size() > 1
+        }
+    }
+
+    def "createModel for OWL format returns correct data"() {
+        setup:
+        def input = getClass().getResourceAsStream("/bfo.owl")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel(input, transformer)
+
+        then:
+        1 * transformer.mobiModel(_) >> { args ->
+            assert args[0].size() > 1
+        }
+    }
+
+    def "createModel for invalid format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/invalid.owl")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel(input, transformer)
+
+        then:
+        thrown(IllegalArgumentException.class)
     }
 }

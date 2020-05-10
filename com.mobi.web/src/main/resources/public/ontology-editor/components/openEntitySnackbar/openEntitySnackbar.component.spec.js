@@ -40,7 +40,7 @@ describe('Open Entity Snackbar component', function() {
 
         ontologyStateSvc.listItem.goTo.entityIRI = 'iri';
         ontologyStateSvc.listItem.goTo.active = true;
-        ontologyStateSvc.getEntityNameByIndex.and.callFake(function(entityIRI) {
+        ontologyStateSvc.getEntityNameByListItem.and.callFake(function(entityIRI) {
             if (entityIRI === 'iri') {
                 return 'Entity Name';
             } else if (entityIRI === 'newIRI') {
