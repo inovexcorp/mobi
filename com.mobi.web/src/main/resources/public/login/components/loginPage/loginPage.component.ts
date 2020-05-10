@@ -21,7 +21,7 @@
  * #L%
  */
 import { Component, Inject } from '@angular/core';
-import {FormBuilder, Validators} from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 
 import './loginPage.component.scss';
 

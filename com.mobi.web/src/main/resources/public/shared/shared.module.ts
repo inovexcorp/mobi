@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { downgradeComponent } from '@angular/upgrade/static';
 
@@ -145,7 +145,8 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
  * @name shared
  *
  * @description
- * The `shared` module provides common components, directives, filters, and services that make up the Shared module in the Mobi application.
+ * The `shared` module provides common components, directives, filters, and services that make up the Shared module in
+ * the Mobi application.
  */
 @NgModule({
     imports: [
