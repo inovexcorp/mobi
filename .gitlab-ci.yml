@@ -59,7 +59,7 @@ set_version_parent_pom:
   stage: set_version_parent_pom
   dependencies:
     - set_version_root_pom
-  <<: apply_root_version_to_parent_pom
+  <<: *apply_root_version_to_parent_pom
 
 update_master_with_new_version:
   dependencies:
@@ -69,7 +69,7 @@ increment_snapshot_version_parent_pom:
   stage: increment_snapshot_version_parent_pom
   dependencies:
     - increment_snapshot_version_root_pom
-  <<: apply_root_version_to_parent_pom
+  <<: *apply_root_version_to_parent_pom
 
 update_master_with_new_snapshot:
   dependencies:
