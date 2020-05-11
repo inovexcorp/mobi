@@ -5,6 +5,7 @@ include:
 
 # Can steps 2-5 and steps 6-9 be the same 4 stages just with a variable passed in for the version?
 stages:
+  - test
   - set_version_root_pom
   - set_version_parent_pom
   - commit_version
@@ -39,16 +40,16 @@ before_script:
   - fi
 
 # For merge requests, just do an initial test
-#test:
-#  variables:
-#    NEEDS_GIT_SETTINGS: 0
-#  stage: test
-#  script:
-#    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
-#  except:
-#    - test-ci
-#  only:
-#    - merge_requests
+test:
+  variables:
+    NEEDS_GIT_SETTINGS: 0
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+  except:
+    - test-ci
+  only:
+    - merge_requests
 
 set_version_parent_pom:
   stage: set_version_parent_pom
