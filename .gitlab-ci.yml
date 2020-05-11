@@ -62,7 +62,7 @@ set_version_parent_pom:
     - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
     - mvn $MAVEN_CLI_OPTS versions:commit
   artifacts:
-    paths: ['*/pom.xml', 'pom.xml', 'com.mobi.ontology.rest/pom.xml']
+    paths: ['*/pom.xml', 'pom.xml', '*/*/pom.xml']
 
 increment_snapshot_version_parent_pom:
   stage: increment_snapshot_version_parent_pom
