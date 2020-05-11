@@ -25,8 +25,8 @@ package com.mobi.sparql.rest.impl;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,7 +60,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -69,13 +68,11 @@ import org.junit.Assert;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.osgi.service.component.annotations.Reference;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +84,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+
 
 public class SparqlRestTest extends MobiRestTestNg {
     private SparqlRest rest;
@@ -101,7 +99,6 @@ public class SparqlRestTest extends MobiRestTestNg {
     private String DATASET_ID;
     private Model testModel;
     private RepositoryConnection conn;
-    private BNodeService bNodeService;
     private Map<String, String[]> fileTypesMimes;
     private List<String> datasets;
     private List<String> filenames;
@@ -149,7 +146,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest.setRepository(repositoryManager);
         rest.setDatasetManager(datasetManager);
         rest.setModelFactory(modelFactory);
-        rest.setbNodeService(bns);
         rest.setSesameTransformer(sesameTransformer);
         rest.setValueFactory(vf);
 
@@ -161,7 +157,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
                 .getResourceAsStream("all_query.rq")));
         CONSTRUCT_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
-                .getResourceAsStream("construct_query.rq"))); ;
+                .getResourceAsStream("construct_query.rq")));
 
         fileTypesMimes = new LinkedHashMap<>();
         fileTypesMimes.put("json", new String[]{"application/json", ALL_QUERY});
@@ -233,8 +229,8 @@ public class SparqlRestTest extends MobiRestTestNg {
         int minNumberOfInvocations = 0;
 
         for (String dataset : datasets) {
-            for(Map.Entry mapEntry: fileTypesMimes.entrySet()){
-                minNumberOfInvocations +=1;
+            for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                minNumberOfInvocations += 1;
                 String type = (String) mapEntry.getKey();
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
@@ -268,11 +264,11 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 Assert.assertEquals(null, response.getHeaderString("Content-Disposition"));
 
-                if(type.equals("json")) {
+                if (type.equals("json")) {
                     JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
                     assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
                     assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
-                }else{
+                } else {
                     String responseString = response.readEntity(String.class);
                     Assert.assertNotEquals(responseString, "");
                 }
@@ -285,7 +281,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (String dataset : datasets) {
-                for(Map.Entry mapEntry: fileTypesMimes.entrySet()){
+                for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
                     String type = (String) mapEntry.getKey();
@@ -322,17 +318,19 @@ public class SparqlRestTest extends MobiRestTestNg {
                         type = "ttl";
                     }
 
-                    if(filename != null){
-                        assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename="+filename+"." + type);
-                    }else{
-                        assertEquals(headers.get("Content-Disposition").get(0), "attachment;filename=results." + type);
+                    if (filename != null) {
+                        assertEquals(headers.get("Content-Disposition").get(0),
+                                "attachment;filename=" + filename + "." + type);
+                    } else {
+                        assertEquals(headers.get("Content-Disposition").get(0),
+                                "attachment;filename=results." + type);
                     }
 
-                    if(type.equals("json")) {
+                    if (type.equals("json")) {
                         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
                         assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
                         assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
-                    }else{
+                    } else {
                         String responseString = response.readEntity(String.class);
                         Assert.assertNotEquals(responseString, "");
                     }
@@ -357,7 +355,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             assertEquals(response.getStatus(), 200);
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
+                    anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -367,7 +366,8 @@ public class SparqlRestTest extends MobiRestTestNg {
             }
 
             // assertEquals(response.getHeaderString("Content-Disposition"), null);
-            // TODO should this be null? when request does not have accept header it goes to download instead of query endpoint
+            // TODO should this be null? when request does not have accept header it goes to download
+            //  instead of query endpoint
             assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
 
             String responseString = response.readEntity(String.class);
@@ -406,10 +406,9 @@ public class SparqlRestTest extends MobiRestTestNg {
             assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
 
             String responseString = response.readEntity(String.class);
-            Assert.assertNotEquals(responseString, "");;
+            Assert.assertNotEquals(responseString, "");
         }
     }
-
 
     @Test
     public void selectQueryRepositoryUnavailableTest() {
@@ -578,12 +577,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         assertEquals(result.getJSONArray("data").size(), testModel.size());
     }
 
-    @Test
-    public void getConstructPagedResultsTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", CONSTRUCT_QUERY).request().get();
-        assertEquals(response.getStatus(), 400);
-    }
 
     @Test
     public void getPagedResultsWithDatasetTest() {

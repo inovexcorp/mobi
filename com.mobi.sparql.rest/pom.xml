@@ -117,11 +117,9 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.17.74-SNAPSHOT</version>
-            <scope>compile</scope>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

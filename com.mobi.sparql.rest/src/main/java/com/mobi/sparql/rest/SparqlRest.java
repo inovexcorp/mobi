@@ -23,7 +23,6 @@ package com.mobi.sparql.rest;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 import static com.mobi.rest.util.RestUtils.modelToString;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +33,6 @@ import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.QueryResults;
-import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
@@ -50,6 +48,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.security.annotations.DefaultResourceId;
+import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
@@ -57,7 +56,6 @@ import com.mobi.rest.util.MobiWebException;
 import com.mobi.rest.util.jaxb.Links;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import com.mobi.rest.security.annotations.ResourceId;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -82,7 +80,6 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -110,11 +107,8 @@ public class SparqlRest {
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
 
-    // private static final int QUERY_TIME_OUT_SECONDS = 120;
     private ModelFactory modelFactory;
-    private BNodeService bNodeService;
     private SesameTransformer sesameTransformer;
-
     private RepositoryManager repositoryManager;
     private DatasetManager datasetManager;
     private ValueFactory valueFactory;
@@ -125,11 +119,6 @@ public class SparqlRest {
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
-    }
-
-    @Reference
-    public void setbNodeService(BNodeService bNodeService) {
-        this.bNodeService = bNodeService;
     }
 
     @Reference
@@ -153,12 +142,15 @@ public class SparqlRest {
     }
 
     /**
-    * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
-    *
-    * @param queryString a string representing a SPARQL query.
+     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     * @param queryString a string representing a SPARQL query.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @return The SPARQL 1.1 results in JSON format.
-    */
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 results in mime type specified by accept header
+     */
     @GET
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
@@ -168,7 +160,6 @@ public class SparqlRest {
     public Response queryRdf(@QueryParam("query") String queryString,
                              @QueryParam("dataset") String datasetRecordId,
                              @HeaderParam("accept") String acceptString) {
-        log.trace(String.format("queryRdf(%s, %s, %s)",queryString, datasetRecordId, acceptString));
 
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
@@ -179,30 +170,32 @@ public class SparqlRest {
         String fileType = convertAcceptType(acceptString);
 
         if (parsedOperation instanceof ParsedQuery) {
-            if (parsedOperation instanceof ParsedTupleQuery) { // select queries
+            if (parsedOperation instanceof ParsedTupleQuery) {
                 return handleSelectQuery(queryString, datasetRecordId, fileType, null, acceptString);
-            } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
+            } else if (parsedOperation instanceof ParsedGraphQuery) {
                 return handleConstructQuery(queryString, datasetRecordId, fileType, null, acceptString);
             } else {
-                throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
             }
         } else {
-            throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
         }
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
-     *
-     * <p>Downloads a delimited file with the results of the provided SPARQL query.</p>
-     * <p>Supports CSV, TSV, Excel 97-2003, and Excel 2013 files extensions.</p>
-     * <p>https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java</p>
+     * Retrieves the results of the provided SPARQL.query Can optionally limit the query to a Dataset.
+     * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
+     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
+     * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param fileType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
-     * @return The SPARQL 1.1 results in the specified file format
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of fileType query parameter
      */
     @GET
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
@@ -214,22 +207,9 @@ public class SparqlRest {
                                      @QueryParam("fileType") String fileType,
                                      @HeaderParam("accept") String acceptString,
                                      @DefaultValue("results") @QueryParam("fileName") String fileName) {
-        log.trace(String.format("downloadRdfQuery(%s, %s, %s, %s)",queryString, datasetRecordId, fileType, fileName));
-
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
-        //  TODO: Handle timeout
-        //  final Thread queryThread = Thread.currentThread();
-        //
-        //  Timer timer = new Timer();
-        //  timer.schedule(new TimerTask() {
-        //      @Override
-        //      public void run() {
-        //          log.info(String.format("Interrupting query on thread %d", queryThread.getId()));
-        //          queryThread.interrupt();
-        //      }
-        //  }, QUERY_TIME_OUT_SECONDS * 1000);
 
         ParsedOperation parsedOperation = getParsedOperation(queryString);
 
@@ -247,12 +227,15 @@ public class SparqlRest {
     }
 
     /**
-     * Handel Select Query.
+     * Handle Select Query.
+     * Output: JSON, XLS, XLSX, CSV, TSV
+     *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param fileType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
-     * @return
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private Response handleSelectQuery(String queryString, String datasetRecordId,
                                        String fileType, String fileName, String acceptString) {
@@ -299,7 +282,8 @@ public class SparqlRest {
             default:
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
-                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]", fileType, acceptString, mimeType));
+                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]", fileType,
+                        acceptString, mimeType));
 
                 if (!queryResults.hasNext()) {
                     return Response.noContent().build();
@@ -324,9 +308,11 @@ public class SparqlRest {
      * Output: Turtle, JSON-LD, and RDF/XML
      *
      * @param queryString The SPARQL query to execute.
-     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
+     * @param fileType used to specify certain media types which are acceptable for the response.
      * @param fileName The optional file name for the download file.
-     * @return
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response from ACCEPT Header
      */
     private Response handleConstructQuery(String queryString, String datasetRecordId,
                                           String fileType, String fileName, String acceptString) {
@@ -358,22 +344,19 @@ public class SparqlRest {
                 fileExtension = "ttl";
                 mimeType = TURTLE_MIME_TYPE;
                 format = "turtle";
-                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]", fileType, acceptString, mimeType));
+                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]",
+                        fileType, acceptString, mimeType));
         }
 
+        // TODO Stream output
         Model entityData = getGraphResults(queryString, datasetRecordId);
-        boolean skolemize = format.equalsIgnoreCase("jsonld");
 
         if (entityData.size() >= 1) {
             String modelStr;
-            if (skolemize) {
-                modelStr = modelToSkolemizedString(entityData, format, sesameTransformer, bNodeService);
-            } else {
-                modelStr = modelToString(entityData, format, sesameTransformer);
-            }
 
-            Response.ResponseBuilder builder = Response.ok(modelStr)
-                    .header("Content-Type", mimeType);
+            modelStr = modelToString(entityData, format, sesameTransformer);
+
+            Response.ResponseBuilder builder = Response.ok(modelStr).header("Content-Type", mimeType);
 
             if (fileName != null) {
                 builder.header("Content-Disposition", "attachment;filename=" + fileName +  "." + fileExtension);
@@ -385,52 +368,18 @@ public class SparqlRest {
         }
     }
 
+
+
     /**
-     * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
-     * Links to next and previous pages are within the Links header and the total size is within the
-     * X-Total-Count header. Can optionally limit the query to a Dataset.
+     * Convert AcceptType to FileType.
      *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param limit The number of resources to return in one page.
-     * @param offset The offset for the page.
-     * @return The paginated List of JSONObjects that match the SPARQL query bindings.
-     */
-    @GET
-    @Path("/page")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getPagedResults(@Context UriInfo uriInfo,
-                             @QueryParam("query") String queryString,
-                             @QueryParam("dataset") String datasetRecordId,
-                             @DefaultValue("100") @QueryParam("limit") int limit,
-                             @DefaultValue("0") @QueryParam("offset") int offset) {
-
-        LinksUtils.validateParams(limit, offset);
-
-        ParsedOperation parsedOperation = getParsedOperation(queryString);
-
-        if (parsedOperation instanceof ParsedQuery) {
-            if (parsedOperation instanceof ParsedTupleQuery) { // select queries
-                return handleSelectPagedResults(uriInfo, queryString, datasetRecordId, limit, offset);
-            } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
-                throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
-            } else {
-                throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
-            }
-        } else {
-            throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
-        }
-    }
-
-    /**
-     * Convert AcceptType to FileType
      * @param acceptString MimeType
      * @return String
      */
-    private static String convertAcceptType(String acceptString){
+    private static String convertAcceptType(String acceptString) {
+        // TODO: ow about a method to convert the fileType param from the download to a mime type since down in t
+        //  he handleSelectQuery and handleConstructQuery we convert back to the MIME type anyway.
+
         if (acceptString == null) { // any switch statement can't be null to prevent a NullPointerException
             acceptString = "";
         }
@@ -457,67 +406,28 @@ public class SparqlRest {
     }
 
     /**
-     * Handles SelectPagedResults.
-     *
-     * @param uriInfo URIInfo Context
+     * Get TupleQueryResults.
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param limit The number of resources to return in one page.
-     * @param offset The offset for the page.
-     * @return The paginated List of JSONObjects that match the SPARQL query bindings.
-     */
-    private Response handleSelectPagedResults(UriInfo uriInfo, String queryString, String datasetRecordId,
-                                              int limit, int offset) {
-        TupleQueryResult queryResults = getTupleQueryResults(queryString, datasetRecordId);
-
-        if (queryResults.hasNext()) {
-            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
-            if (offset > bindings.size()) {
-                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-            }
-            ArrayNode results;
-            int size;
-            if ((offset + limit) > bindings.size()) {
-                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
-                size = bindings.size() - offset;
-            } else {
-                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
-                size = limit;
-            }
-
-            ObjectNode response = mapper.createObjectNode();
-            response.set("data", results);
-            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
-            Response.ResponseBuilder builder = Response.ok(response.toString())
-                    .header("X-Total-Count", bindings.size());
-
-            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
-            if (links.getNext() != null) {
-                builder = builder.link(links.getBase() + links.getNext(), "next");
-            }
-            if (links.getPrev() != null) {
-                builder = builder.link(links.getBase() + links.getPrev(), "prev");
-            }
-            return builder.build();
-        } else {
-            return Response.ok().header("X-Total-Count", 0).build();
-        }
-    }
-
-    /**
-     * getTupleQueryResults.
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @return TupleQueryResult
+     * @return TupleQueryResult results of SPARQL Query
      */
     private TupleQueryResult getTupleQueryResults(String queryString, String datasetRecordId) {
         TupleQueryResult queryResults;
         try {
             if (!StringUtils.isBlank(datasetRecordId)) {
                 Resource recordId = valueFactory.createIRI(datasetRecordId);
-                queryResults = getDatasetQueryResults(queryString, recordId);
+
+                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                    TupleQuery query = conn.prepareTupleQuery(queryString);
+                    queryResults = query.evaluateAndReturn();
+                }
             } else {
-                queryResults = getRepoQueryResults(queryString);
+                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                        ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+                try (RepositoryConnection conn = repository.getConnection()) {
+                    TupleQuery query = conn.prepareTupleQuery(queryString);
+                    queryResults = query.evaluateAndReturn();
+                }
             }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -537,38 +447,9 @@ public class SparqlRest {
     }
 
     /**
-     * Get DatasetQueryResults.
-     *
-     * @param queryString The SPARQL query to execute.
-     * @param recordId DatasetRecord IRI representing the Dataset to query
-     * @return
-     */
-    private TupleQueryResult getDatasetQueryResults(String queryString, Resource recordId) {
-        try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluateAndReturn();
-        }
-    }
-
-    /**
-     * GetRepoQueryResults.
-     * @param queryString The SPARQL query to execute.
-     * @return
-     */
-    private TupleQueryResult getRepoQueryResults(String queryString) {
-        Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluateAndReturn();
-        }
-    }
-
-    /**
      * Execute Construct Queries.
      * @param queryString The SPARQL query to execute.
-     * @return
+     * @return Model Graph Results Model
      */
     private Model getGraphResults(String queryString, String datasetRecordId) {
         try {
@@ -604,33 +485,17 @@ public class SparqlRest {
      * Execute Graph Query.
      *
      * @param graphQuery The SPARQL query to execute.
-     * @return
+     * @return Model return the query results as a model
      */
     private Model executeGraphQuery(GraphQuery graphQuery) {
-        GraphQuery query = graphQuery;
-        // TODO important to have below
-        // @param addBinding     the binding to add to the query, if needed
-        // @param methodName     the name of the method to provide more accurate logging messages
-        // @param includeImports whether to include imported ontologies in the query
-        //
-        // if (includeImports) {
-        //    query = conn.prepareGraphQuery(queryString);
-        // } else {
-        //    query = conn.prepareGraphQuery(queryString, conn.getSystemDefaultNamedGraph());
-        // }
-        // if (addBinding != null) {
-        //    query = addBinding.apply(query);
-        // }
-        Model model = QueryResults.asModel(query.evaluate(), modelFactory);
-
-        return model;
+        return QueryResults.asModel(graphQuery.evaluate(), modelFactory);
     }
 
     /**
      * Get ParsedOperation from query.
      *
      * @param queryString The SPARQL query to execute.
-     * @return
+     * @return ParsedOperation
      */
     private ParsedOperation getParsedOperation(String queryString) {
         try {
@@ -648,11 +513,12 @@ public class SparqlRest {
     }
 
     /**
-     * Create delimited formatted StreamingOutput for Tuple query results using the provided results and delimiter string.
+     * Create delimited formatted StreamingOutput for Tuple query results using the provided results and
+     * delimiter string.
      *
      * @param result TupleQueryResult
      * @param delimiter accepts the delimiter for file
-     * @return StreamingOutput
+     * @return StreamingOutput creates a binary stream of strings
      */
     private static StreamingOutput createDelimitedResults(TupleQueryResult result, String delimiter) {
         List<String> bindings = result.getBindingNames();
@@ -666,7 +532,7 @@ public class SparqlRest {
             while (bindingIt.hasNext()) {
                 bindingSet.getBinding(bindingIt.next()).ifPresent(binding -> {
                     String currentValue = binding.getValue().stringValue();
-                    file.append(String.format("%s", binding.getValue().stringValue()));
+                    file.append(String.format("%s", currentValue));
                 });
 
                 if (bindingIt.hasNext()) {
@@ -686,7 +552,7 @@ public class SparqlRest {
      * Create JSON Streaming Output Results.
      *
      * @param queryResults TupleQueryResult
-     * @return StreamingOutput
+     * @return StreamingOutput creates a binary stream of json string
      */
     private static StreamingOutput getJsonResults(TupleQueryResult queryResults) {
         return out -> {
@@ -700,13 +566,12 @@ public class SparqlRest {
 
     /**
      * Create Excel Format Streaming Output Results.
-     *
-     * <p>HSSF is the POI Project's pure Java implementation of the Excel '97(-2007) file format.</p>
-     * <p>XSSF is the POI Project's pure Java implementation of the Excel 2007 OOXML (.xlsx) file format.</p>
+     * HSSF is the POI Project's pure Java implementation of the Excel '97(-2007) file format.
+     * XSSF is the POI Project's pure Java implementation of the Excel 2007 OOXML (.xlsx) file format.
      *
      * @param result TupleQueryResult
      * @param type the excel spreadsheet format, accepts xls, xlsx
-     * @return StreamingOutput
+     * @return StreamingOutput creates a binary stream for Workbook data
      */
     private static StreamingOutput createExcelResults(TupleQueryResult result, String type) {
         List<String> bindings = result.getBindingNames();
@@ -750,6 +615,109 @@ public class SparqlRest {
             os.flush();
             os.close();
         };
+    }
+
+    /**
+     * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
+     * Links to next and previous pages are within the Links header and the total size is within the
+     * X-Total-Count header. Can optionally limit the query to a Dataset.
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param limit The number of resources to return in one page.
+     * @param offset The offset for the page.
+     * @return The paginated List of JSONObjects that match the SPARQL query bindings.
+     */
+    @GET
+    @Path("/page")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
+    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
+    public Response getPagedResults(@Context UriInfo uriInfo,
+                                    @QueryParam("query") String queryString,
+                                    @QueryParam("dataset") String datasetRecordId,
+                                    @DefaultValue("100") @QueryParam("limit") int limit,
+                                    @DefaultValue("0") @QueryParam("offset") int offset) {
+        LinksUtils.validateParams(limit, offset);
+        TupleQueryResult queryResults;
+        if (!StringUtils.isBlank(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+            queryResults = getDatasetQueryResults(queryString, recordId);
+        } else {
+            queryResults = getQueryResults(queryString);
+        }
+        if (queryResults.hasNext()) {
+            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
+            if (offset > bindings.size()) {
+                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+            }
+            ArrayNode results;
+            int size;
+            if ((offset + limit) > bindings.size()) {
+                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
+                size = bindings.size() - offset;
+            } else {
+                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
+                size = limit;
+            }
+            ObjectNode response = mapper.createObjectNode();
+            response.set("data", results);
+            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
+            Response.ResponseBuilder builder = Response.ok(response.toString())
+                    .header("X-Total-Count", bindings.size());
+            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
+            if (links.getNext() != null) {
+                builder = builder.link(links.getBase() + links.getNext(), "next");
+            }
+            if (links.getPrev() != null) {
+                builder = builder.link(links.getBase() + links.getPrev(), "prev");
+            }
+            return builder.build();
+        } else {
+            return Response.ok().header("X-Total-Count", 0).build();
+        }
+    }
+    
+    private TupleQueryResult getQueryResults(String queryString) {
+        Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+
+        try (RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            return query.evaluateAndReturn();
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private TupleQueryResult getDatasetQueryResults(String queryString, Resource recordId) {
+        try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            return query.evaluateAndReturn();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
