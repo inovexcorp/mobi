@@ -51,7 +51,7 @@ test:
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
-    - master
+    - test-ci
   only:
     - merge_requests
 
@@ -59,9 +59,9 @@ set_version_parent_pom:
   stage: set_version_parent_pom
   only:
     variables:
-      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
     refs:
-      - master
+      - test-ci
   script:
     - CURR_VERSION="$MAJOR.$MINOR.$MICRO"
     - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
@@ -78,9 +78,9 @@ increment_snapshot_version_parent_pom:
   stage: increment_snapshot_version_parent_pom
   only:
     variables:
-      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
     refs:
-      - master
+      - test-ci
   script:
     - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
     - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
