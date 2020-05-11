@@ -72,6 +72,9 @@ increment_snapshot_version_parent_pom:
   script:
     - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
     - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
+  artifacts:
+    paths:
+      - ./*/pom.xml
 
 # Happens after NON snapshot commit to master
 #deploy_rdf_orm:
