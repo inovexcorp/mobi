@@ -5,7 +5,7 @@ include:
 
 # Can steps 2-5 and steps 6-9 be the same 4 stages just with a variable passed in for the version?
 stages:
-  - test
+#  - test
   - set_version_root_pom
   - set_version_parent_pom
   - update_master_with_new_version
@@ -44,32 +44,22 @@ before_script:
   - fi
 
 # For merge requests, just do an initial test
-test:
-  variables: 
-    NEEDS_GIT_SETTINGS: 0
-  stage: test
-  script:
-    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
-  except:
-    - test-ci
-  only:
-    - merge_requests
+#test:
+#  variables:
+#    NEEDS_GIT_SETTINGS: 0
+#  stage: test
+#  script:
+#    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+#  except:
+#    - test-ci
+#  only:
+#    - merge_requests
 
 set_version_parent_pom:
   stage: set_version_parent_pom
   dependencies:
     - set_version_root_pom
-  only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
-    refs:
-      - test-ci
-  script:
-    - CURR_VERSION="$MAJOR.$MINOR.$MICRO"
-    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
-    - mvn $MAVEN_CLI_OPTS versions:commit
-  artifacts:
-    paths: ['*/pom.xml', 'pom.xml', '*/*/pom.xml']
+  <<: apply_root_version_to_parent_pom
 
 update_master_with_new_version:
   dependencies:
@@ -79,17 +69,7 @@ increment_snapshot_version_parent_pom:
   stage: increment_snapshot_version_parent_pom
   dependencies:
     - increment_snapshot_version_root_pom
-  only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
-    refs:
-      - test-ci
-  script:
-    - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
-    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
-    - mvn $MAVEN_CLI_OPTS versions:commit
-  artifacts:
-    paths: ['*/pom.xml', 'pom.xml', '*/*/pom.xml']
+  <<: apply_root_version_to_parent_pom
 
 update_master_with_new_snapshot:
   dependencies:
@@ -158,4 +138,3 @@ docker_release:
     - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > /root/.m2/ci_settings.xml
     - cd mobi-distribution
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s /root/.m2/ci_settings.xml
-
