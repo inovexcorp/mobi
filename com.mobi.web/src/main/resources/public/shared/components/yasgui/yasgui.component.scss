@@ -20,4 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-//@import '../../../vendor/Yasgui/dist/yasgui.min.css';
+.yasgui{
+  .tabPanel {
+      .autocompleteWrapper, .controlbar, .tabsList {
+           display: none;
+       }
+   }
+
+  .tabsList {
+    display: none;
+  }
+}
+.codemirror-wrapper {
+  display: none;
+}
+
+.sparql-result-block {
+  display: none;
+}

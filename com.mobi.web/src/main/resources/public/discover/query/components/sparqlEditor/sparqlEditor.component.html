@@ -21,7 +21,6 @@
   #L%
   -->
 <form name="dvm.form" class="sparql-editor">
-    <yasgui-editor></yasgui-editor>
     <div class="top-section">
         <div class="form-group">
             <custom-label>Prefixes:</custom-label>
@@ -37,8 +36,9 @@
             <button class="btn btn-primary" ng-click="dvm.sparql.initialQueryRdf()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
         </div>
     </div>
+    <yasgui-editor></yasgui-editor>
+
     <div class="codemirror-wrapper">
         <ui-codemirror ng-model="dvm.sparql.queryString" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
     </div>
-    
 </form>

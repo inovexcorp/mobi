@@ -20,38 +20,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import "@triply/yasgui/build/yasgui.min.css";
 import './yasgui.component.scss';
-//import '../../../vendor/Yasgui/build/yasgui.min.css';
-//import * as YASGUI from 'yasgui'
-//import * as YASQE from 'yasgui-yasqe';
-// import from vendor
-//import  * as YASQE from '../../../vendor/Yasgui/build/yasqe.min.js'
-//import  * as YASGUI from '../../../vendor/Yasgui/build/yasgui.min.js'
-//import Yasgui from "@triply/yasgui";
-//import "@triply/yasgui/build/yasgui.min.css";
+import  * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
+import { merge } from 'lodash';
 /**
  * @ngdoc component
  * @name shared.component:yasgui
  *
  */
+const template = require('./yasgui.component.html');
 const yasguiComponent = {
-    template: '<div id="yasgui-editor">yasgui</div>',
+    template,
     controllerAs: 'dvm',
     controller: yasguiComponentCtrl
 };
 
 
-yasguiComponentCtrl.$inject = ['$element'];
+yasguiComponentCtrl.$inject = ['$element','REST_PREFIX'];
 
-function yasguiComponentCtrl($element) {
-    var dvm = this;
+function yasguiComponentCtrl($element,REST_PREFIX) {
+    let dvm = this;
+    dvm.initYasgui = (element, config = {}) => {
+        const path = REST_PREFIX + 'sparql/page';
+        const { href } = new URL(path,document.location.origin);
+        let localConfig = {
+            requestConfig : {
+            method: 'GET',
+                endpoint: href
+        },
+        persistencyExpire: 0,
+            populateFromUrl: false,
+            copyEndpointOnNewTab: false
+        };
+        const configuration = merge(localConfig, config );
+        let yasgui = new Yasgui(element, configuration);
+        return yasgui;
+    }
 
     dvm.$onInit = function() {
-        let div = $element.find('div')[0];
-        // let yas  = new YASGUI(div,{
-        //     populateFromUrl: false
-        // });
+        let wrapper_element = $element.find('div')[0];
+        let YASGUI = dvm.initYasgui(wrapper_element);
+        console.log( 'Yasqe defaults', YASGUI);
+        
     }
+
+
 }
 
 export default yasguiComponent;
