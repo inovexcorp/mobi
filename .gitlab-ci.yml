@@ -57,6 +57,8 @@ test:
 
 set_version_parent_pom:
   stage: set_version_parent_pom
+  dependencies:
+    - set_version_root_pom
   only:
     variables:
       - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
@@ -71,11 +73,12 @@ set_version_parent_pom:
 
 update_master_with_new_version:
   dependencies:
-    - set_version_root_pom
     - set_version_parent_pom
 
 increment_snapshot_version_parent_pom:
   stage: increment_snapshot_version_parent_pom
+  dependencies:
+    - increment_snapshot_version_root_pom
   only:
     variables:
       - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
@@ -85,10 +88,11 @@ increment_snapshot_version_parent_pom:
     - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
     - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
     - mvn $MAVEN_CLI_OPTS versions:commit
+  artifacts:
+    paths: ['*/pom.xml', 'pom.xml', '*/*/pom.xml']
 
 update_master_with_new_snapshot:
   dependencies:
-    - increment_snapshot_version_root_pom
     - increment_snapshot_version_parent_pom
 
 # Happens after NON snapshot commit to master
