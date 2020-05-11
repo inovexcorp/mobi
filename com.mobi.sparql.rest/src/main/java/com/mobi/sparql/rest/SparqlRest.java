@@ -200,7 +200,7 @@ public class SparqlRest {
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param fileType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
-     * @return The SPARQL 1.1 results from ACCEPT Header
+     * @return The SPARQL 1.1 results in the specified file format
      */
     @GET
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
@@ -638,8 +638,7 @@ public class SparqlRest {
     }
 
     /**
-     * Create Delimited Formatted Steaming Output Results.
-     * Currently method is used to csv, tsv files
+     * Create delimited formatted StreamingOutput for Tuple query results using the provided results and delimiter string.
      *
      * @param result TupleQueryResult
      * @param delimiter accepts the delimiter for file
