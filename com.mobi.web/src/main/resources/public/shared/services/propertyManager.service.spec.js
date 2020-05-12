@@ -60,7 +60,7 @@ describe('Property Manager service', function() {
             });
         });
         it('owlAnnotations', function() {
-            expect(propertyManagerSvc.owlAnnotations).toEqual([prefixes.owl + 'deprecated']);
+            expect(propertyManagerSvc.owlAnnotations).toEqual([prefixes.owl + 'deprecated', prefixes.owl + 'versionInfo']);
         });
         it('skosAnnotations', function() {
             expect(propertyManagerSvc.skosAnnotations).toEqual([
@@ -97,7 +97,8 @@ describe('Property Manager service', function() {
             expect(propertyManagerSvc.ontologyProperties).toEqual([
                 prefixes.owl + 'priorVersion',
                 prefixes.owl + 'backwardCompatibleWith',
-                prefixes.owl + 'incompatibleWith'
+                prefixes.owl + 'incompatibleWith',
+                prefixes.owl + 'versionIRI'
             ]);
         });
         it('conceptSchemeRelationshipList', function() {
