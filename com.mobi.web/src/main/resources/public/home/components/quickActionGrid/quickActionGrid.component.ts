@@ -21,19 +21,16 @@
  * #L%
  */
 import { chunk, isEmpty } from 'lodash';
+import { Component, Inject, OnInit } from "@angular/core";
+import { StateService } from "@uirouter/core";
+import { WindowRef } from "../../../shared/services/windowRef.service";
+
 import './quickActionGrid.component.scss';
-import {Component, Inject, OnInit} from "@angular/core";
-import {WindowRef} from "../../../shared/services/windowRef.service";
-import {StateService} from "@uirouter/core";
 
 /**
- * @ngdoc component
- * @name home.component:quickActionGrid
- * @requires shared.service:ontologyStateService
- * @requires shared.service:discoverStateService
+ * @class home.QuickActionGridComponent
  *
- * @description
- * `quickActionGrid` is a component which creates a Bootstrap `.card` containing a grid of links to perform
+ * `quick-action-grid` is a component which creates a Bootstrap `.card` containing a grid of links to perform
  * common actions in the application. These actions are searching the catalog, opening an ontology, reading the
  * documentation, exploring data, querying data, and ingesting data.
  */
@@ -42,73 +39,72 @@ import {StateService} from "@uirouter/core";
     templateUrl: './quickActionGrid.component.html'
 })
 export class QuickActionGridComponent implements OnInit {
-    public actions = [];
+    actions = [];
 
     constructor(private windowRef: WindowRef, private $state: StateService, @Inject('ontologyStateService') private os,
-                @Inject('discoverStateService') private ds) {
-    }
+                @Inject('discoverStateService') private ds) {}
     
     ngOnInit(): void {
         let actions = [
             {
                 title: 'Search the Catalog',
                 icon: 'fa-book',
-                action: this.searchTheCatalog
+                action: () => this.searchTheCatalog()
             },
             {
                 title: 'Open an Ontology',
                 icon: 'fa-folder-open',
-                action: this.openAnOntology
+                action: () => this.openAnOntology()
             },
             {
                 title: 'Read the Documentation',
                 icon: 'fa-book',
-                action: this.readTheDocumentation
+                action: () => this.readTheDocumentation()
             },
             {
                 title: 'Explore Data',
                 icon: 'fa-database',
-                action: this.exploreData
+                action: () => this.exploreData()
             },
             {
                 title: 'Query Data',
                 icon: 'fa-search',
-                action: this.queryData
+                action: () => this.queryData()
             },
             {
                 title: 'Ingest Data',
                 icon: 'fa-map',
-                action: this.ingestData
+                action: () => this.ingestData()
             },
         ];
         this.actions = chunk(actions, 3);
     }
     searchTheCatalog() {
-        this.$state.go('root.catalog');
+        this.$state.go('root.catalog', null, { reload: true });
     }
     openAnOntology() {
-        this.$state.go('root.ontology-editor');
         if (!isEmpty(this.os.listItem)) {
             this.os.listItem.active = false;
         }
         this.os.listItem = {};
+        this.$state.go('root.ontology-editor', null, { reload: true });
     }
     readTheDocumentation() {
         this.windowRef.getNativeWindow().open('https://mobi.inovexcorp.com/docs/', '_blank');
     }
     exploreData() {
-        this.$state.go('root.discover');
         this.ds.explore.active = true;
         this.ds.search.active = false;
         this.ds.query.active = false;
+        this.$state.go('root.discover', null, { reload: true });
     }
     queryData() {
-        this.$state.go('root.discover');
         this.ds.explore.active = false;
         this.ds.search.active = false;
         this.ds.query.active = true;
+        this.$state.go('root.discover', null, { reload: true });
     }
     ingestData() {
-        this.$state.go('root.mapper');
+        this.$state.go('root.mapper', null, { reload: true });
     }
 }

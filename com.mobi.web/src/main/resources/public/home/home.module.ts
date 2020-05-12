@@ -22,19 +22,17 @@
  */
 import * as angular from 'angular';
 
-import {ActivityCardComponent} from './components/activityCard/activityCard.component';
-import {ActivityTitleComponent} from './components/activityTitle/activityTitle.component';
-import {HomePageComponent} from './components/homePage/homePage.component';
-import {QuickActionGridComponent} from './components/quickActionGrid/quickActionGrid.component';
-import {NgModule} from "@angular/core";
-import {SharedModule} from "../shared/shared.module";
-import {downgradeComponent} from "@angular/upgrade/static";
+import { ActivityCardComponent } from './components/activityCard/activityCard.component';
+import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
+import { HomePageComponent } from './components/homePage/homePage.component';
+import { QuickActionGridComponent } from './components/quickActionGrid/quickActionGrid.component';
+import { NgModule } from "@angular/core";
+import { SharedModule } from "../shared/shared.module";
+import { downgradeComponent } from "@angular/upgrade/static";
 
 /**
- * @ngdoc overview
- * @name home
+ * @namspace home
  *
- * @description
  * The `home` module provides components that make up the Home module in the Mobi application.
  */
 @NgModule({

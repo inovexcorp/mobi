@@ -20,23 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {ErrorHandler, NgModule} from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
+import { HttpModule } from '@angular/http';
 
 import { MODULE_NAME } from './app.module.ajs';
 
 import { SharedModule } from './shared/shared.module';
 import { LoginModule } from './login/login.module';
-import {HomeModule} from "./home/home.module";
-import {UIRouterUpgradeModule} from "@uirouter/angular-hybrid";
-import {HttpClientModule} from "@angular/common/http";
+import { HomeModule } from "./home/home.module";
+import { UIRouterUpgradeModule } from "@uirouter/angular-hybrid";
 
 @NgModule({
     imports: [
         BrowserModule,
         UpgradeModule,
-        HttpClientModule,
+        HttpModule,
         UIRouterUpgradeModule.forRoot(),
         SharedModule,
         LoginModule,
@@ -46,21 +46,12 @@ import {HttpClientModule} from "@angular/common/http";
     entryComponents: [],
     providers: []
 })
-export class AppModule /*implements ErrorHandler*/ {
+export class AppModule {
     constructor(private upgrade: UpgradeModule) {
 
     }
-    // handleError(error) {
-    //     // exception occured in some service class method.
-    //     console.log('Error in MyErrorhandler - %s', error);
-    //     if(error == 'Something went wrong'){
-    //         //do this.
-    //     }else{
-    //         //do this thing.
-    //     }
-    // }
 
     ngDoBootstrap() {
-        this.upgrade.bootstrap(document.body, [MODULE_NAME], { strictDi: true });
+        this.upgrade.bootstrap(document.documentElement, [MODULE_NAME], { strictDi: true });
     }
 }

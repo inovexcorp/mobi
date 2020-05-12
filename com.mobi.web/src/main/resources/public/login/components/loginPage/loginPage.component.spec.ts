@@ -20,20 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement } from '@angular/core';
+import { DebugElement, Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-import { ErrorDisplayComponentMock } from '../../../shared/components/errorDisplay/errorDisplay.component.mock';
+
+import { mockLoginManager } from '../../../../../../test/ts/Shared';
+import { SharedModule } from "../../../shared/shared.module";
 import { LoginPageComponent } from './loginPage.component';
-import loginManagerService from "../../../shared/services/loginManager.service";
-import {SharedModule} from "../../../shared/shared.module";
+
+// Mocks
+@Component({
+    selector: 'error-display',
+    template: ''
+})
+export class ErrorDisplayComponentMock {}
 
 describe('Login Page component', () => {
     let component: LoginPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<LoginPageComponent>;
-    let loginManagerStub = jasmine.createSpyObj('loginManagerService', ['login']);
+    let loginManagerStub;
 
     configureTestSuite(() => {
         TestBed.configureTestingModule({
@@ -42,7 +49,7 @@ describe('Login Page component', () => {
                 LoginPageComponent
             ],
             providers: [
-                { provide: 'loginManagerService', useValue: loginManagerStub },
+                { provide: 'loginManagerService', useClass: mockLoginManager },
                 { provide: 'ErrorDisplayComponent', useValue: ErrorDisplayComponentMock },
             ]
         });
@@ -52,6 +59,7 @@ describe('Login Page component', () => {
         fixture = TestBed.createComponent(LoginPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        loginManagerStub = TestBed.get('loginManagerService');
     });
 
     describe('component methods', () => {

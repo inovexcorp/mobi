@@ -21,22 +21,17 @@
  * #L%
  */
 import { get } from 'lodash';
+import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
+
 import './activityTitle.component.scss';
-import {Component, Inject, Input, OnChanges, OnInit, SimpleChanges} from "@angular/core";
 
 /**
- * @ngdoc component
- * @name home.component:activityTitle
- * @requires shared.service:provManagerService
- * @requires shared.service:utilService
- * @requires shared.service:userManagerService
- * @requires shared.service:prefixes
+ * @class home.ActivityTitleComponent
  *
- * @description
- * `activityTitle` is a component which creates a `div` containing a title for the provided `Activity` using
+ * `activity-title` is a component which creates a `div` containing a title for the provided `Activity` using
  * the username of the associated user, the word associated with the type of Activity, and the titles of the
  * main associated `Entities`. The word and the predicate to retrieve `Entities` with are collected from the
- * {@link shared.service:provManagerService provManagerService}.
+ * {@link shared.provManagerService provManagerService}.
  *
  * @param {Object} activity A JSON-LD object of an `Activity`
  * @param {Object[]} entities An array of JSON-LD objects of `Entities`
@@ -53,8 +48,8 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     public word = 'affected';
     public entitiesStr = '(None)';
 
-    constructor(@Inject('provManagerService') public pm, @Inject('utilService') public util, @Inject('userManagerService') public um,
-                @Inject('prefixes') private prefixes) {
+    constructor(@Inject('provManagerService') private pm, @Inject('utilService') private util,
+                @Inject('userManagerService') private um, @Inject('prefixes') private prefixes) {
     }
     
     ngOnInit(): void {

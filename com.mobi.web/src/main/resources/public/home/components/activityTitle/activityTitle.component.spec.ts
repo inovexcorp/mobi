@@ -20,59 +20,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import { DebugElement } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { configureTestSuite } from "ng-bullet";
+import { By } from "@angular/platform-browser";
+
 import {
     mockProvManager,
     mockUtil,
     mockUserManager,
-    mockPrefixes
+    mockPrefixes,
+    cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
-import {DebugElement} from "@angular/core";
-import {ComponentFixture, TestBed} from "@angular/core/testing";
-import {ActivityTitleComponent} from "./activityTitle.component";
-import {configureTestSuite} from "ng-bullet";
-import {SharedModule} from "../../../shared/shared.module";
-import {HomeModule} from "../../home.module";
-import provManagerService from "../../../shared/services/provManager.service";
-import utilService from "../../../shared/services/util.service";
-import prefixes from "../../../shared/services/prefixes.service";
-import userManagerService from "../../../shared/services/userManager.service";
-import {By} from "@angular/platform-browser";
+import { SharedModule } from "../../../shared/shared.module";
+import { ActivityTitleComponent } from "./activityTitle.component";
 
 describe('Activity Title component', () => {
     let component: ActivityTitleComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityTitleComponent>;
-    let provManagerSvc;
-    let utilSvc;
-    let prefixesSvc;
-    let userManagerSvc;
+    let provManagerStub;
+    let utilStub;
+    let prefixesStub;
+    let userManagerStub;
 
     configureTestSuite(() => {
         TestBed.configureTestingModule({
-            imports: [SharedModule, HomeModule],
-            declarations: [],
+            imports: [ SharedModule ],
+            declarations: [
+                ActivityTitleComponent
+            ],
             providers: [
-                {provide: 'provManagerService', useClass: mockProvManager},
-                {provide: 'utilService', useClass: mockUtil},
-                {provide: 'prefixes', useClass: mockPrefixes},
-                {provide: 'userManagerService', useClass: mockUserManager}
+                { provide: 'provManagerService', useClass: mockProvManager },
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: 'prefixes', useClass: mockPrefixes },
+                { provide: 'userManagerService', useClass: mockUserManager }
             ]
         });
-        provManagerSvc = TestBed.get('provManagerService');
-        utilSvc = TestBed.get('utilService');
-        prefixesSvc = TestBed.get('prefixes');
-        userManagerSvc = TestBed.get('userManagerService');
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ActivityTitleComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        component.pm.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];
+        provManagerStub = TestBed.get('provManagerService');
+        utilStub = TestBed.get('utilService');
+        prefixesStub = TestBed.get('prefixes');
+        userManagerStub = TestBed.get('userManagerService');
+
+        provManagerStub.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];
         component.activity = { '@type': [], pred: [{'@id': 'entity'}, {'@id': 'entity1'}] };
         component.entities = [{'@id': 'entity'}, {'@id': 'entity1'}];
-        // component.ngOnInit();
-        // fixture.detectChanges();
+    });
+
+    afterAll(() => {
+        cleanStylesFromDOM();
     });
 
     describe('should initialize with the correct value for', () => {
@@ -84,20 +87,13 @@ describe('Activity Title component', () => {
                 let iri: string;
                 beforeEach(() => {
                     iri = 'iri';
-                    // utilSvc.getPropertyId.and.returnValue(iri);
-                    // component.util.getPropertyId.and.returnValue(iri);
-                    // fixture.detectChanges();
                 });
                 it('and the user was not found', () => {
                     expect(component.username).toEqual('(None)');
                 });
                 it('and the user was found', () => {
-                    component.um.users = [{iri: 'iri', username: 'username'}];
-                    // userManagerSvc.users = [{iri: 'iri', username: 'username'}];
-                    // mockUserManager.users = [{iri: 'iri', username: 'username'}];
+                    userManagerStub.users = [{iri: 'iri', username: 'username'}];
                     component.setUsername(iri);
-                    // component.ngOnInit();
-                    // fixture.detectChanges();
                     expect(component.username).toEqual('username');
                 });
             });
@@ -119,8 +115,7 @@ describe('Activity Title component', () => {
         });
         describe('entities if the activity is', () => {
             beforeEach(() => {
-                // utilSvc.getDctermsValue.and.callFake(obj => obj['@id']);
-                component.util.getDctermsValue.and.callFake(obj => obj['@id']);
+                utilStub.getDctermsValue.and.callFake(obj => obj['@id']);
             });
             it('a supported type', () => {
                 component.activity['@type'] = ['type'];
@@ -138,7 +133,6 @@ describe('Activity Title component', () => {
         });
     });
     describe('contains the correct html', () => {
-        // let nativeElement = element.nativeElement;
         it('for wrapping containers', () => {
             expect(element.queryAll(By.css('.activity-title')).length).toEqual(1);
         });

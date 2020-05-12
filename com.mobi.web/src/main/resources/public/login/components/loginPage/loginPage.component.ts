@@ -26,12 +26,9 @@ import { FormBuilder, Validators } from '@angular/forms';
 import './loginPage.component.scss';
 
 /**
- * @ngdoc component
- * @name login.component:loginPage
- * @requires shared.service:loginManagerService
+ * @class login.loginPageComponent
  *
- * @description
- * `loginPage` is a component which creates the main login page of the application. The component contains a simple
+ * `login-page` is a component which creates the main login page of the application. The component contains a simple
  * login form for username and password and displays an error message if an error occurs.
  */
 @Component({

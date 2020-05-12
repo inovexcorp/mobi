@@ -20,38 +20,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+import { By } from '@angular/platform-browser';
+import { Component, DebugElement, Input } from "@angular/core";
+import { ComponentFixture, fakeAsync, TestBed, tick } from "@angular/core/testing";
+import { configureTestSuite } from "ng-bullet";
+
 import {
     mockProvManager,
     mockUtil,
     mockPrefixes,
-    mockHttpService
+    mockHttpService,
+    cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
+import { SharedModule } from "../../../shared/shared.module";
+import { ActivityCardComponent } from "./activityCard.component";
 
-import { By } from '@angular/platform-browser';
-import {Component, DebugElement, Input, NO_ERRORS_SCHEMA} from "@angular/core";
-import {ComponentFixture, fakeAsync, flushMicrotasks, TestBed, tick} from "@angular/core/testing";
-import {ActivityCardComponent} from "./activityCard.component";
-import {configureTestSuite} from "ng-bullet";
-import {SharedModule} from "../../../shared/shared.module";
-import {HomeModule} from "../../home.module";
-import provManagerService from "../../../shared/services/provManager.service";
-import utilService from "../../../shared/services/util.service";
-import prefixes from "../../../shared/services/prefixes.service";
-import httpService from "../../../shared/services/http.service";
-
+// Mocks
 @Component({
     selector: 'activity-title',
     template: ''
 })
-class ActivityTitleComponentStub {
+class ActivityTitleComponentMock {
     @Input() activity;
     @Input() entities;
 }
 
-fdescribe('Activity Card component', () => {
+// Test
+describe('Activity Card component', () => {
     let component: ActivityCardComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityCardComponent>;
+    let provManagerStub;
+    let utilStub;
+    let prefixesStub;
+    let httpStub;
+
 
     let headers = {
         'x-total-count': 2,
@@ -64,26 +68,19 @@ fdescribe('Activity Card component', () => {
         headers: jasmine.createSpy('headers').and.returnValue(headers)
     };
 
-    let provManagerService;
-    let utilService;
-    let prefixes;
-    let httpService;
-    // let mockProvManagerStub = jasmine.createSpyObj('provManagerService', ['getActivities']);
-    // let httpServiceStub = jasmine.createSpyObj('httpService', ['cancel']);
-    // let utilStub = jasmine.createSpyObj('utilService', ['createErrorToast']);
-    // let prefixesStub = jasmine.createSpyObj('prefixes', ['prov']);
-
     configureTestSuite(() => {
         TestBed.configureTestingModule({
-            imports: [SharedModule],
-            declarations: [ ActivityCardComponent, ActivityTitleComponentStub ],
-            providers: [
-                {provide: 'provManagerService', useClass: mockProvManager},
-                {provide: 'utilService', useClass: mockUtil},
-                {provide: 'prefixes', useClass: mockPrefixes},
-                {provide: 'httpService', useClass: mockHttpService}
+            imports: [ SharedModule ],
+            declarations: [
+                ActivityCardComponent,
+                ActivityTitleComponentMock
             ],
-            // schemas: [ NO_ERRORS_SCHEMA ]
+            providers: [
+                { provide: 'provManagerService', useClass: mockProvManager },
+                { provide: 'utilService', useClass: mockUtil },
+                { provide: 'prefixes', useClass: mockPrefixes },
+                { provide: 'httpService', useClass: mockHttpService }
+            ],
         });
     });
 
@@ -91,78 +88,59 @@ fdescribe('Activity Card component', () => {
         fixture = TestBed.createComponent(ActivityCardComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        provManagerService = TestBed.get('provManagerService');
-        utilService = TestBed.get('utilService');
-        prefixes = TestBed.get('prefixes');
-        httpService = TestBed.get('httpService');
-        // provManagerService.getActivities.and.returnValue(Promise.resolve(response));
-        // provManagerService.getActivities.and.callFake(() => Promise.reject('Error message'));
-        // fixture.detectChanges();
-        // component.ngOnInit();
-        // httpService.cancel.and.returnValue(null);
+        provManagerStub = TestBed.get('provManagerService');
+        utilStub = TestBed.get('utilService');
+        prefixesStub = TestBed.get('prefixes');
+        httpStub = TestBed.get('httpService');
     }));
+
+    afterAll(() => {
+        cleanStylesFromDOM();
+    });
     
     describe('should initialize with the correct data', () => {
-        fit('unless an error occurs', /*fakeAsync(*/() => {
-            provManagerService.getActivities.and.returnValue(Promise.reject('Error message'));
-            // provManagerService.getActivities.and.callFake(() => Promise.reject('Error message'));
-            // utilService.createErrorToast.and.returnValue(null);
-            component.setPage();
-            // tick();
-            fixture.detectChanges();
-            // tick();
-
-            // component.setPage();
-            // tick();
-            // flushMicrotasks();
-
-            expect(httpService.cancel).toHaveBeenCalledWith(component.id);
-            expect(provManagerService.getActivities).toHaveBeenCalled();
-            expect(provManagerService.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
+        it('unless an error occurs', fakeAsync(() => {
+            provManagerStub.getActivities.and.returnValue(Promise.reject('Error message'));
+            component.ngOnInit();
+            tick();
+            expect(httpStub.cancel).toHaveBeenCalledWith(component.id);
+            expect(provManagerStub.getActivities).toHaveBeenCalled();
+            expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
             expect(component.activities).toEqual([]);
             expect(component.entities).toEqual([]);
             expect(component.totalSize).toEqual(0);
             expect(component.limit).toEqual(10);
-            expect(utilService.createErrorToast).toHaveBeenCalledWith('Error message');
-        })/*)*/;
-        it('successfully', /*fakeAsync(*/() => {
-            // tick();
-            // provManagerService.getActivities.and.returnValue(Promise.resolve(response));
-            component.setActivities(response);
-            // component.pm.getActivities.and.callFake(() => Promise.resolve(response));
-            // component.pm.getActivities.and.returnValue(Promise.resolve(response));
-            fixture.detectChanges();
-            // tick();
-            // flushMicrotasks();
-            expect(provManagerService.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
+            expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
+        }));
+        it('successfully', fakeAsync(() => {
+            provManagerStub.getActivities.and.returnValue(Promise.resolve(response));
+            component.ngOnInit();
+            tick();
+            expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
             expect(component.activities).toEqual(response.data.activities);
             expect(component.entities).toEqual(response.data.entities);
             expect(component.totalSize).toEqual(headers['x-total-count']);
             expect(component.limit).toEqual(10);
-            expect(utilService.createErrorToast).not.toHaveBeenCalled();
-        })/*)*/;
+            expect(utilStub.createErrorToast).not.toHaveBeenCalled();
+        }));
     });
     describe('controller methods', () => {
-        beforeEach(() => {
-            // fixture.detectChanges();
-        });
         describe('should set the page of Activities', () => {
             it('successfully', fakeAsync(() => {
-                provManagerService.getActivities.and.returnValue(Promise.resolve(response));
+                provManagerStub.getActivities.and.returnValue(Promise.resolve(response));
                 component.setPage();
                 tick();
-                // fixture.detectChanges();
-                expect(provManagerService.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
+                expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
                 expect(component.activities).toEqual(response.data.activities);
                 expect(component.entities).toEqual(response.data.entities);
                 expect(component.totalSize).toEqual(headers['x-total-count']);
             }));
-            it('unless an error occurs', () => {
-                provManagerService.getActivities.and.returnValue(Promise.reject('Error message'));
+            it('unless an error occurs', fakeAsync(() => {
+                provManagerStub.getActivities.and.returnValue(Promise.reject('Error message'));
                 component.setPage();
-                fixture.detectChanges();
-                expect(provManagerService.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
-            });
+                tick();
+                expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
+            }));
         });
         it('should load more activities', () => {
             let limit = component.limit;
@@ -172,11 +150,11 @@ fdescribe('Activity Card component', () => {
             expect(component.setPage).toHaveBeenCalled();
         });
         it('should get the time stamp of an Activity', () => {
-            utilService.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
-            utilService.getDate.and.returnValue('date');
+            utilStub.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
+            utilStub.getDate.and.returnValue('date');
             expect(component.getTimeStamp({})).toEqual('date');
-            expect(utilService.getPropertyValue).toHaveBeenCalledWith({}, prefixes.prov + 'endedAtTime');
-            expect(utilService.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
+            expect(utilStub.getPropertyValue).toHaveBeenCalledWith({}, prefixesStub.prov + 'endedAtTime');
+            expect(utilStub.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
         });
     });
     describe('contains the correct html', () => {

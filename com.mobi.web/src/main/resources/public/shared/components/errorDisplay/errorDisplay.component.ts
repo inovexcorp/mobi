@@ -23,11 +23,10 @@
 import { Component } from '@angular/core';
 
 /**
- * @ngdoc component
- * @name shared.component:errorDisplay
+ * @class shared.ErrorDisplayComponent
  *
  * @description
- * `errorDisplay` is a component that creates a styled message for displaying errors from the transcluded content.
+ * `error-display` is a component that creates a styled message for displaying errors from the transcluded content.
  * The content will have red colored text and will be next to an error icon.
  */
 @Component({

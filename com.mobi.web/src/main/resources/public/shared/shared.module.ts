@@ -148,13 +148,11 @@ import {
 } from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
-import {WindowRef} from "./services/windowRef.service";
+import { WindowRef } from "./services/windowRef.service";
 
 /**
- * @ngdoc overview
- * @name shared
+ * @namespace shared
  *
- * @description
  * The `shared` module provides common components, directives, filters, and services that make up the Shared module in
  * the Mobi application.
  */

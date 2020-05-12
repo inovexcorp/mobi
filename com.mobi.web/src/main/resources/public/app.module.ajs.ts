@@ -21,8 +21,6 @@
  * #L%
  */
 
-import uiRouter, { UrlService } from '@uirouter/angularjs';
-// import { vizualizer } from '@uirouter/visualizer';
 import * as angular from 'angular';
 import * as Snap from 'snapsvg';
 import * as chroma from 'chroma-js';
@@ -44,6 +42,7 @@ import 'angular-touch';
 import 'ui-bootstrap4';
 import 'daemonite-material';
 import 'angular-ui-codemirror';
+import '@uirouter/angular-hybrid';
 import 'angular-toastr';
 import 'angular-uuid';
 import 'angular-cookies';
@@ -75,7 +74,7 @@ import ariaConfig from './aria.config';
 import httpInterceptorConfig from './httpInterceptor.config';
 import ignoreUnhandledRejectionsConfig from './ignoreUnhandledRejections.config';
 import hashPrefixConfig from './hashPrefix.config';
-import routeConfig from './route.config';
+import { routeConfig, urlDeferIntercept } from './route.config';
 import themingConfig from './theming.config';
 
 import requestInterceptor from './requestInterceptor.service';
@@ -109,8 +108,8 @@ angular
         'toastr',
         'ui.bootstrap',
         'ui.codemirror',
+        'ui.router',
         'ui.router.upgrade',
-        uiRouter,
         'ui.select',
 
         /* Custom Modules */
@@ -126,13 +125,11 @@ angular
         'shared',
         'user-management'
     ])
-    .config(['$urlServiceProvider', ($urlService: UrlService) => {
-        return $urlService.deferIntercept()
-    }])
     .config(ariaConfig)
     .config(httpInterceptorConfig)
     .config(ignoreUnhandledRejectionsConfig)
     .config(routeConfig)
+    .config(urlDeferIntercept)
     .config(hashPrefixConfig)
     .config(themingConfig)
     .constant('chroma', chroma)

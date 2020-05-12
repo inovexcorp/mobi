@@ -20,15 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {configureTestSuite} from "ng-bullet";
-import {ComponentFixture, TestBed} from "@angular/core/testing";
-import {SharedModule} from "../../../shared/shared.module";
-import {HomeModule} from "../../home.module";
-import {DebugElement} from "@angular/core";
-import {HomePageComponent} from "./homePage.component";
-import {ActivityTitleComponent} from "../activityTitle/activityTitle.component";
-import {By} from "@angular/platform-browser";
+import { configureTestSuite } from "ng-bullet";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { DebugElement, Component } from "@angular/core";
+import { By } from "@angular/platform-browser";
 
+import { SharedModule } from "../../../shared/shared.module";
+import { cleanStylesFromDOM } from "../../../../../../test/ts/Shared";
+import { HomePageComponent } from "./homePage.component";
+
+// Mocks
+@Component({
+    selector: 'activity-card',
+    template: ''
+})
+class ActivityCardComponentMock {}
+
+@Component({
+    selector: 'quick-action-grid',
+    template: ''
+})
+class QuickActionGridComponentMock {}
+
+// Test
 describe('Home Page component', () => {
     let component: HomePageComponent;
     let element: DebugElement;
@@ -36,14 +50,23 @@ describe('Home Page component', () => {
 
     configureTestSuite(() => {
         TestBed.configureTestingModule({
-            imports: [SharedModule, HomeModule],
+            imports: [ SharedModule ],
+            declarations: [
+                HomePageComponent,
+                ActivityCardComponentMock,
+                QuickActionGridComponentMock
+            ]
         });
     });
 
     beforeEach(() => {
-        fixture = TestBed.createComponent(ActivityTitleComponent);
+        fixture = TestBed.createComponent(HomePageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+    });
+
+    afterAll(() => {
+        cleanStylesFromDOM();
     });
 
     describe('contains the correct html', () => {

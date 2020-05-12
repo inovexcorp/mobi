@@ -20,9 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {Injectable} from "@angular/core";
+import { Injectable } from "@angular/core";
 
-
+/**
+ * @class shared.WindowRef
+ * 
+ * 'WindowRef' is a service that provides a reference to the JS window object.
+ */
 @Injectable()
 export class WindowRef {
     constructor() {}

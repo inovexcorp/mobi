@@ -21,20 +21,14 @@
  * #L%
  */
 import { get } from 'lodash';
-import {Component, Inject, OnDestroy, OnInit} from "@angular/core";
+import { Component, Inject, OnDestroy, OnInit } from "@angular/core";
 
 /**
- * @ngdoc component
- * @name home.component:activityCard
- * @requires shared.service:provManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:httpService
+ * @class home.ActivityCardComponent
  *
- * @description
- * `activityCard` is a component which creates a Bootstrap `.card` containing a infinite scrolled list of the
+ * `activity-card` is a component which creates a Bootstrap `.card` containing a infinite scrolled list of the
  * most recent activities in the application. The activities are loaded 10 at a time and are displayed using
- * {@link home.component:activityTitle activityTitles}.
+ * {@link home.ActivityTitleComponent activityTitles}.
  */
 @Component({
     selector: 'activity-card',
@@ -43,18 +37,17 @@ import {Component, Inject, OnDestroy, OnInit} from "@angular/core";
 export class ActivityCardComponent implements OnInit, OnDestroy {
     private increment = 10;
 
-    public limit = this.increment;
-    public id = 'activity-log';
-    public activities = [];
-    public entities = [];
-    public totalSize = 0;
+    limit = this.increment;
+    id = 'activity-log';
+    activities = [];
+    entities = [];
+    totalSize = 0;
     
-    constructor(@Inject('provManagerService') public pm, @Inject('utilService') public util, @Inject('prefixes') private prefixes,
-                @Inject('httpService') private httpService) {}
+    constructor(@Inject('provManagerService') public pm, @Inject('utilService') public util,
+                @Inject('prefixes') private prefixes, @Inject('httpService') private httpService) {}
     
     ngOnInit(): void {
         this.setPage();
-        console.log('ON INIT CALLED!');
     }
     ngOnDestroy(): void {
         this.httpService.cancel(this.id);
@@ -65,23 +58,21 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
     }
     setPage() {
         this.httpService.cancel(this.id);
-        this.pm.getActivities(this.getConfig(), this.id).then(this.setActivities, this.createToast);
+        this.pm.getActivities(this.getConfig(), this.id)
+            .then(response => {
+                this.activities = response.data.activities;
+                this.entities = response.data.entities;
+                let headers = response.headers();
+                this.totalSize = get(headers, 'x-total-count', 0);
+            }, errorMessage => {
+                if (errorMessage) {
+                    this.util.createErrorToast(errorMessage);
+                }
+            });
     }
     getTimeStamp(activity) {
         let dateStr = this.util.getPropertyValue(activity, this.prefixes.prov + 'endedAtTime');
         return this.util.getDate(dateStr, 'short')
-    }
-    setActivities(response) {
-        console.log('Activities Set: ', response.data.activities);
-        this.activities = response.data.activities;
-        this.entities = response.data.entities;
-        let headers = response.headers();
-        this.totalSize = get(headers, 'x-total-count', 0);
-    }
-    createToast(errorMessage) {
-        if (errorMessage) {
-            this.util.createErrorToast(errorMessage);
-        }
     }
     getConfig() {
         return {pageIndex: 0, limit: this.limit};
