@@ -497,6 +497,7 @@ function propertyManagerService(prefixes) {
         }
         if (language) {
             annotation['@language'] = language;
+            unset(annotation, '@type'); // Unset type to create valid JSON-LD when language is set
         } else {
             unset(annotation, '@language');
         }
