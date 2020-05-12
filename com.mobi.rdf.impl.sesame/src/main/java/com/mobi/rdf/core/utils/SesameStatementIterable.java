@@ -1,5 +1,3 @@
-@Version("2.1.0.${build}")
-
 package com.mobi.rdf.core.utils;
 
 /*-
@@ -8,7 +6,7 @@ package com.mobi.rdf.core.utils;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,29 @@ package com.mobi.rdf.core.utils;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.eclipse.rdf4j.model.Statement;
+
+import java.util.Iterator;
+
+public class SesameStatementIterable implements Iterable<Statement>, Iterator<Statement> {
+    private Iterator<? extends com.mobi.rdf.api.Statement> it;
+
+    public SesameStatementIterable(Iterable<? extends com.mobi.rdf.api.Statement> it) {
+        this.it = it.iterator();
+    }
+
+    @Override
+    public Iterator<Statement> iterator() {
+        return this;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return it.hasNext();
+    }
+
+    @Override
+    public Statement next() {
+        return Values.sesameStatement(it.next());
+    }
+}
