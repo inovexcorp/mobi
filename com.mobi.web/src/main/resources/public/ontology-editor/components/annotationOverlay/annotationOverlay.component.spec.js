@@ -192,7 +192,6 @@ describe('Annotation Overlay component', function() {
             beforeEach(function() {
                 spyOn(this.controller, 'addAnnotation');
                 spyOn(this.controller, 'editAnnotation');
-                spyOn(this.controller, 'changeLanguage');
             });
             it('added', function() {
                 this.controller.submit();
@@ -203,7 +202,6 @@ describe('Annotation Overlay component', function() {
                 ontologyStateSvc.editingAnnotation = true;
                 this.controller.submit();
                 expect(this.controller.addAnnotation).not.toHaveBeenCalled();
-                expect(this.controller.changeLanguage).toHaveBeenCalled();
                 expect(this.controller.editAnnotation).toHaveBeenCalled();
             });
         });
@@ -248,6 +246,7 @@ describe('Annotation Overlay component', function() {
         describe('editAnnotation should call the appropriate manager functions', function() {
             describe('if the value was edited successfully', function() {
                 beforeEach(function() {
+                    spyOn(this.controller, 'changeLanguage');
                     propertyManagerSvc.editValue.and.returnValue(true);
                     ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
                 });
@@ -273,6 +272,18 @@ describe('Annotation Overlay component', function() {
                     expect(util.createWarningToast).not.toHaveBeenCalled();
                     expect(scope.close).toHaveBeenCalled();
                 });
+                it('and it has a language', function() {
+                    ontologyStateSvc.annotationLanguage = {'@language': 'lang'};
+                    this.controller.editAnnotation();
+                    expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    expect(this.controller.changeLanguage).toHaveBeenCalledWith(ontologyStateSvc.annotationLanguage);
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
+                });
             });
             it('if the value was not edited successfully', function() {
                 this.controller.editAnnotation();
@@ -284,6 +295,12 @@ describe('Annotation Overlay component', function() {
                 expect(util.createWarningToast).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });
+        });
+        it('changeLanguage should clear out the annotation type', function() {
+            ontologyStateSvc.annotationLanguage = {'@language': 'lang'};
+            ontologyStateSvc.annotationType = {'@type': 'type'};
+            this.controller.changeLanguage(ontologyStateSvc.annotationLanguage);
+            expect(ontologyStateSvc.annotationType).toEqual(undefined);
         });
         it('cancel calls dismiss', function() {
             this.controller.cancel();
@@ -297,7 +314,7 @@ describe('Annotation Overlay component', function() {
         expect(this.controller.submit).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        spyOn(this.controller, 'cancel');
+        spyOn(this.controller, 'cancel')
         var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
