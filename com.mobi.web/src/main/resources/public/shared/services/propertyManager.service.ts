@@ -58,7 +58,7 @@ function propertyManagerService(prefixes) {
      * @description
      * `owlAnnotations` holds an array of OWL annotations.
      */
-    self.owlAnnotations = [prefixes.owl + 'deprecated'];
+    self.owlAnnotations = [prefixes.owl + 'deprecated', prefixes.owl + 'versionInfo'];
     /**
      * @ngdoc property
      * @name skosAnnotations
@@ -92,7 +92,7 @@ function propertyManagerService(prefixes) {
      * `ontologyProperties` holds an array of the property types available to be added to the ontology entity
      * within an ontology.
      */
-    self.ontologyProperties = map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith'], item => prefixes.owl + item);
+    self.ontologyProperties = map(['priorVersion', 'backwardCompatibleWith', 'incompatibleWith', 'versionIRI'], item => prefixes.owl + item);
     /**
      * @ngdoc property
      * @name ontologyProperties
@@ -497,6 +497,7 @@ function propertyManagerService(prefixes) {
         }
         if (language) {
             annotation['@language'] = language;
+            unset(annotation, '@type'); // Unset type to create valid JSON-LD when language is set
         } else {
             unset(annotation, '@language');
         }

@@ -1467,9 +1467,9 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @return {Promise} A promise indicating the success of the action
      */
     self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem, spinnerId = '') {
+        listItem.selected = undefined;
         if  (!entityIRI || !listItem) {
             if (listItem) {
-                listItem.selected = undefined;
                 listItem.selectedBlankNodes = [];
                 listItem.blankNodes = {};
             }
@@ -1951,14 +1951,19 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * @methodOf shared.service:ontologyStateService
      *
      * @description
-     * Deletes traces of a removed property from the noDomainProperty and classToChild maps
+     * Deletes traces of a removed property from the classToChild map and noDomainProperties array
      *
      * @param {Object} property The full JSON-LD of a Property entity
      */
     self.handleDeletedProperty = function(property) {
-        property[prefixes.rdfs + 'domain'].forEach(domainObj => {
-            removePropertyClassRelationships(property['@id'], domainObj['@id']);
-        });
+        var propDomains = property[prefixes.rdfs + 'domain'];
+        if (propDomains) {
+            propDomains.forEach(domainObj => {
+                removePropertyClassRelationships(property['@id'], domainObj['@id']);
+            });
+        } else {
+            pull(self.listItem.noDomainProperties, property['@id']);
+        }
     }
     /**
      * @ngdoc method
