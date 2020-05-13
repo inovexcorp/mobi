@@ -23,7 +23,7 @@ package com.mobi.sparql.rest;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.modelToString;
+import static com.mobi.rest.util.RestUtils.getRDFFormat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -33,7 +33,10 @@ import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.QueryResults;
+import com.mobi.persistence.utils.rio.RemoveContextHandler;
 import com.mobi.persistence.utils.api.SesameTransformer;
+import com.mobi.persistence.utils.rio.Rio;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
@@ -69,6 +72,8 @@ import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -166,19 +171,31 @@ public class SparqlRest {
         }
 
         ParsedOperation parsedOperation = getParsedOperation(queryString);
-
-        String fileType = convertAcceptType(acceptString);
-
-        if (parsedOperation instanceof ParsedQuery) {
-            if (parsedOperation instanceof ParsedTupleQuery) {
-                return handleSelectQuery(queryString, datasetRecordId, fileType, null, acceptString);
-            } else if (parsedOperation instanceof ParsedGraphQuery) {
-                return handleConstructQuery(queryString, datasetRecordId, fileType, null, acceptString);
+        try{
+            if (parsedOperation instanceof ParsedQuery) {
+                if (parsedOperation instanceof ParsedTupleQuery) {
+                    return handleSelectQuery(queryString, datasetRecordId, acceptString, null, null);
+                } else if (parsedOperation instanceof ParsedGraphQuery) {
+                    return handleConstructQuery(queryString, datasetRecordId, acceptString, null, null);
+                } else {
+                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+                }
             } else {
                 throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
             }
-        } else {
-            throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -213,16 +230,33 @@ public class SparqlRest {
 
         ParsedOperation parsedOperation = getParsedOperation(queryString);
 
-        if (parsedOperation instanceof ParsedQuery) {
-            if (parsedOperation instanceof ParsedTupleQuery) { // select queries
-                return handleSelectQuery(queryString, datasetRecordId, fileType, fileName, acceptString);
-            } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
-                return handleConstructQuery(queryString, datasetRecordId, fileType, fileName, acceptString);
+        String mimeType = convertFileExtensionToMimeType(fileType);
+
+        try{
+            if (parsedOperation instanceof ParsedQuery) {
+                if (parsedOperation instanceof ParsedTupleQuery) { // select queries
+                    return handleSelectQuery(queryString, datasetRecordId, mimeType, fileName, acceptString);
+                } else if (parsedOperation instanceof ParsedGraphQuery) { // construct queries
+                    return handleConstructQuery(queryString, datasetRecordId, mimeType, fileName, acceptString);
+                } else {
+                    throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+                }
             } else {
-                throw ErrorUtils.sendError("Unsupported query type used", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
             }
-        } else {
-            throw ErrorUtils.sendError("Unsupported query type use.", Response.Status.BAD_REQUEST);
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -232,24 +266,23 @@ public class SparqlRest {
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param fileType used to specify certain media types which are acceptable for the response
+     * @param mimeType used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file.
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private Response handleSelectQuery(String queryString, String datasetRecordId,
-                                       String fileType, String fileName, String acceptString) {
+                                       String mimeType, String fileName, String acceptString) {
         TupleQueryResult queryResults = getTupleQueryResults(queryString, datasetRecordId);
         StreamingOutput stream;
-        String mimeType;
         String fileExtension;
 
-        if (fileType == null) { // any switch statement can't be null to prevent a NullPointerException
-            fileType = "";
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = "";
         }
 
-        switch (fileType) {
-            case "json":
+        switch (mimeType) {
+            case JSON_MIME_TYPE:
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
 
@@ -259,30 +292,31 @@ public class SparqlRest {
 
                 stream = getJsonResults(queryResults);
                 break;
-            case "xls":
+            case XLS_MIME_TYPE:
                 fileExtension = "xls";
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLS_MIME_TYPE;
                 break;
-            case "xlsx":
+            case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLSX_MIME_TYPE;
                 break;
-            case "csv":
+            case CSV_MIME_TYPE:
                 fileExtension = "csv";
                 stream = createDelimitedResults(queryResults, ",");
                 mimeType = CSV_MIME_TYPE;
                 break;
-            case "tsv":
+            case TSV_MIME_TYPE:
                 fileExtension = "tsv";
                 stream = createDelimitedResults(queryResults, "\t");
                 mimeType = TSV_MIME_TYPE;
                 break;
             default:
                 fileExtension = "json";
+                String oldMimeType = mimeType;
                 mimeType = JSON_MIME_TYPE;
-                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]", fileType,
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
                         acceptString, mimeType));
 
                 if (!queryResults.hasNext()) {
@@ -309,99 +343,126 @@ public class SparqlRest {
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
-     * @param fileType used to specify certain media types which are acceptable for the response.
+     * @param mimeType used to specify certain media types which are acceptable for the response.
      * @param fileName The optional file name for the download file.
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
     private Response handleConstructQuery(String queryString, String datasetRecordId,
-                                          String fileType, String fileName, String acceptString) {
-        String mimeType;
-        String format;
+                                          String mimeType, String fileName, String acceptString) {
+        RDFFormat format;
         String fileExtension;
 
-        if (fileType == null) { // any switch statement can't be null to prevent a NullPointerException
-            fileType = ""; // default value is turtle
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = ""; // default value is turtle
         }
 
-        switch (fileType) {
-            case "ttl":
+        switch (mimeType) {
+            case TURTLE_MIME_TYPE:
                 fileExtension = "ttl";
                 mimeType = TURTLE_MIME_TYPE;
-                format = "turtle";
+                format = RDFFormat.TURTLE;
                 break;
-            case "jsonld":
+            case LDJSON_MIME_TYPE:
                 fileExtension = "jsonld";
                 mimeType = LDJSON_MIME_TYPE;
-                format = "jsonld";
+                format = RDFFormat.JSONLD;
                 break;
-            case "rdf":
+            case RDFXML_MIME_TYPE:
                 fileExtension = "rdf";
                 mimeType = RDFXML_MIME_TYPE;
-                format = "rdf/xml";
+                format = RDFFormat.RDFXML;
                 break;
             default:
                 fileExtension = "ttl";
+                String oldMimeType = mimeType;
                 mimeType = TURTLE_MIME_TYPE;
-                format = "turtle";
-                log.debug(String.format("Invalid file type [%s] Header Accept: [%s]: defaulted to [%s]",
-                        fileType, acceptString, mimeType));
+                format = RDFFormat.TURTLE;
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
+                        oldMimeType, acceptString, mimeType));
         }
 
-        // TODO Stream output
-        Model entityData = getGraphResults(queryString, datasetRecordId);
-
-        if (entityData.size() >= 1) {
-            String modelStr;
-
-            modelStr = modelToString(entityData, format, sesameTransformer);
-
-            Response.ResponseBuilder builder = Response.ok(modelStr).header("Content-Type", mimeType);
-
-            if (fileName != null) {
-                builder.header("Content-Disposition", "attachment;filename=" + fileName +  "." + fileExtension);
-            }
-
-            return builder.build();
+        // Get getGraphResult
+        if (!StringUtils.isBlank(datasetRecordId)) {
+            return getDatasetResponse(queryString, datasetRecordId, mimeType, fileName, format, fileExtension);
         } else {
-            return Response.noContent().build();
+            return getRepositoryResponse(queryString, mimeType, fileName, format, fileExtension);
         }
     }
 
+    private Response getRepositoryResponse(String queryString, String mimeType, String fileName, RDFFormat format, String fileExtension) {
+        StreamingOutput stream = os -> {
+            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                    ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+            try (RepositoryConnection conn = repository.getConnection()) {
+                GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
+                GraphQueryResult graphQueryResult = graphQuery.evaluate();
+                RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
+                Rio.write(graphQueryResult, writer, sesameTransformer);
+                os.flush();
+                os.close();
+            } catch (IllegalArgumentException ex){
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            }
+        };
+        Response.ResponseBuilder builder = Response.ok(stream).header("Content-Type", mimeType);
+        if (fileName != null) {
+            builder.header("Content-Disposition", "attachment;filename=" + fileName + "." + fileExtension);
+        }
+        return builder.build();
+    }
+
+    private Response getDatasetResponse(String queryString, String datasetRecordId, String mimeType, String fileName, RDFFormat format, String fileExtension) {
+        StreamingOutput stream = os -> {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+            try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
+                GraphQueryResult graphQueryResult = graphQuery.evaluate();
+                RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
+                Rio.write(graphQueryResult, writer, sesameTransformer);
+                os.flush();
+                os.close();
+            } catch (IllegalArgumentException ex){
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            }
+        };
+        Response.ResponseBuilder builder = Response.ok(stream).header("Content-Type", mimeType);
+        if (fileName != null) {
+            builder.header("Content-Disposition", "attachment;filename=" + fileName + "." + fileExtension);
+        }
+        return builder.build();
+    }
 
 
     /**
-     * Convert AcceptType to FileType.
+     * Convert the mime type to file type.
      *
-     * @param acceptString MimeType
+     * @param fileExtension fileExtension
      * @return String
      */
-    private static String convertAcceptType(String acceptString) {
-        // TODO: ow about a method to convert the fileType param from the download to a mime type since down in t
-        //  he handleSelectQuery and handleConstructQuery we convert back to the MIME type anyway.
-
-        if (acceptString == null) { // any switch statement can't be null to prevent a NullPointerException
-            acceptString = "";
+    private static String convertFileExtensionToMimeType(String fileExtension) {
+        if (fileExtension == null) { // any switch statement can't be null to prevent a NullPointerException
+            fileExtension = "";
         }
 
-        switch (acceptString) {
-            case XLSX_MIME_TYPE:
-                return "xlsx";
-            case XLS_MIME_TYPE:
-                return "xls";
-            case CSV_MIME_TYPE:
-                return "csv";
-            case TSV_MIME_TYPE:
-                return "tsv";
-            case TURTLE_MIME_TYPE:
-                return "ttl";
-            case LDJSON_MIME_TYPE:
-                return "jsonld";
-            case RDFXML_MIME_TYPE:
-                return "rdf";
-            case JSON_MIME_TYPE:
+        switch (fileExtension) {
+            case "xlsx":
+                return XLSX_MIME_TYPE;
+            case "xls":
+                return XLS_MIME_TYPE;
+            case "csv":
+                return CSV_MIME_TYPE;
+            case "tsv":
+                return TSV_MIME_TYPE;
+            case "ttl":
+                return TURTLE_MIME_TYPE;
+            case "jsonld":
+                return LDJSON_MIME_TYPE;
+            case "rdf":
+                return RDFXML_MIME_TYPE;
+            case "json":
             default:
-                return "json";
+                return JSON_MIME_TYPE;
         }
     }
 
@@ -451,18 +512,23 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @return Model Graph Results Model
      */
-    private Model getGraphResults(String queryString, String datasetRecordId) {
+    private GraphQueryResult getGraphResults(String queryString, String datasetRecordId) {
         try {
             if (!StringUtils.isBlank(datasetRecordId)) {
                 Resource recordId = valueFactory.createIRI(datasetRecordId);
                 try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    return executeGraphQuery(conn.prepareGraphQuery(queryString));
+                    GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
+                    GraphQueryResult graphQueryResult = graphQuery.evaluate();
+                    return graphQueryResult;
                 }
             } else {
                 Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                         ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
                 try (RepositoryConnection conn = repository.getConnection()) {
-                    return executeGraphQuery(conn.prepareGraphQuery(queryString));
+                    GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
+                    GraphQueryResult graphQueryResult = graphQuery.evaluate();
+                    // Model model = QueryResults.asModel(graphQueryResult, modelFactory);
+                    return graphQueryResult;
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -479,16 +545,6 @@ public class SparqlRest {
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Execute Graph Query.
-     *
-     * @param graphQuery The SPARQL query to execute.
-     * @return Model return the query results as a model
-     */
-    private Model executeGraphQuery(GraphQuery graphQuery) {
-        return QueryResults.asModel(graphQuery.evaluate(), modelFactory);
     }
 
     /**
