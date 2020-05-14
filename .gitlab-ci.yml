@@ -5,7 +5,7 @@ include:
 
 # Can steps 2-5 and steps 6-9 be the same 4 stages just with a variable passed in for the version?
 stages:
-###  - test
+####  - test
   - set_version_root_pom
   - set_version_parent_pom
   - update_master_with_new_version
