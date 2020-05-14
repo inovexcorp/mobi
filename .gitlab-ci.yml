@@ -42,6 +42,8 @@ before_script:
   -   git config --global user.email 'gitlab.runner@inovexcorp.com'
   -   git config --global user.name 'Gitlab Runner'
   - fi
+  - git status
+  - git log
 
 # For merge requests, just do an initial test
 #test:
