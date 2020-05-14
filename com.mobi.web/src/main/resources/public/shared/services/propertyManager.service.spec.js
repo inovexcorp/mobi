@@ -60,7 +60,7 @@ describe('Property Manager service', function() {
             });
         });
         it('owlAnnotations', function() {
-            expect(propertyManagerSvc.owlAnnotations).toEqual([prefixes.owl + 'deprecated']);
+            expect(propertyManagerSvc.owlAnnotations).toEqual([prefixes.owl + 'deprecated', prefixes.owl + 'versionInfo']);
         });
         it('skosAnnotations', function() {
             expect(propertyManagerSvc.skosAnnotations).toEqual([
@@ -97,7 +97,8 @@ describe('Property Manager service', function() {
             expect(propertyManagerSvc.ontologyProperties).toEqual([
                 prefixes.owl + 'priorVersion',
                 prefixes.owl + 'backwardCompatibleWith',
-                prefixes.owl + 'incompatibleWith'
+                prefixes.owl + 'incompatibleWith',
+                prefixes.owl + 'versionIRI'
             ]);
         });
         it('conceptSchemeRelationshipList', function() {
@@ -250,7 +251,7 @@ describe('Property Manager service', function() {
             this.newValue['@type'] = 'type';
             this.newValue['@language'] = 'lang';
             expect(propertyManagerSvc.editValue(this.entity, this.prop, 0, this.newValue['@value'], this.newValue['@type'], this.newValue['@language'])).toEqual(true);
-            expect(this.entity[this.prop]).toEqual([this.newValue]);
+            expect(this.entity[this.prop]).toEqual([{'@value': 'value', '@language': 'lang'}]);
         });
         it('without a language and type', function() {
             expect(propertyManagerSvc.editValue(this.entity, this.prop, 0, this.newValue['@value'])).toEqual(true);
