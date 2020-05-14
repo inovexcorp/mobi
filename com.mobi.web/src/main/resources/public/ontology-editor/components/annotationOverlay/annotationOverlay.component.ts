@@ -99,6 +99,10 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
         }
         return isDisabled;
     }
+    dvm.changeLanguage = function(value) {
+        dvm.os.annotationLanguage = value;
+        dvm.os.annotationType = undefined; // Unset type to create valid JSON-LD when language is set
+    }
     dvm.addAnnotation = function() {
         var added = dvm.pm.addValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
         
@@ -118,6 +122,9 @@ function annotationOverlayComponentCtrl(ontologyManagerService, propertyManagerS
         var edited = dvm.pm.editValue(dvm.os.listItem.selected, dvm.os.annotationSelect, dvm.os.annotationIndex, dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage);
         
         if (edited) {
+            if (dvm.os.annotationLanguage) {
+                dvm.changeLanguage(dvm.os.annotationLanguage);
+            }
             dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(get(oldObj, '@value'), get(oldObj, '@type'), get(oldObj, '@language')));
             dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, dvm.os.annotationType, dvm.os.annotationLanguage));
             dvm.ontoUtils.saveCurrentChanges();

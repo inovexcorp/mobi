@@ -36,6 +36,7 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.core.impl.sesame.factory.ResourceValueFactory;
 import com.mobi.rdf.core.impl.sesame.factory.StatementValueFactory;
+import com.mobi.rdf.core.utils.SesameStatementIterable;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
@@ -47,9 +48,6 @@ import com.mobi.repository.impl.sesame.query.SesameTupleQuery;
 import com.mobi.repository.impl.sesame.query.SesameUpdate;
 import org.eclipse.rdf4j.OpenRDFException;
 import org.eclipse.rdf4j.query.QueryLanguage;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
 
@@ -79,13 +77,12 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         try {
-            Set<org.eclipse.rdf4j.model.Statement> sesameStatements = new HashSet<>();
-            statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
+            SesameStatementIterable iterable = new SesameStatementIterable(statements);
 
             if (contexts.length > 0) {
-                sesameConn.add(sesameStatements, Values.sesameResources(contexts));
+                sesameConn.add(iterable, Values.sesameResources(contexts));
             } else {
-                sesameConn.add(sesameStatements);
+                sesameConn.add(iterable);
             }
         } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);
@@ -122,13 +119,12 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
         try {
-            Set<org.eclipse.rdf4j.model.Statement> sesameStatements = new HashSet<>();
-            statements.forEach(stmt -> sesameStatements.add(Values.sesameStatement(stmt)));
+            SesameStatementIterable iterable = new SesameStatementIterable(statements);
 
             if (contexts.length > 0) {
-                sesameConn.remove(sesameStatements, Values.sesameResources(contexts));
+                sesameConn.remove(iterable, Values.sesameResources(contexts));
             } else {
-                sesameConn.remove(sesameStatements);
+                sesameConn.remove(iterable);
             }
         } catch (org.eclipse.rdf4j.repository.RepositoryException e) {
             throw new RepositoryException(e);

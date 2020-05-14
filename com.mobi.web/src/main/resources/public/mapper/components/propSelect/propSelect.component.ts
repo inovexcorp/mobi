@@ -66,6 +66,9 @@ function propSelectComponentCtrl($filter, ontologyManagerService) {
         return prop.ontologyId || $filter('splitIRI')(prop.propObj['@id']).begin;
     }
     dvm.setProps = function(searchText) {
+        if (dvm.selectedProp) {
+            dvm.selectedProp.name = om.getEntityName(dvm.selectedProp.propObj);
+        }
         var tempProps = angular.copy(dvm.props);
         forEach(tempProps, prop => {
             prop.name = om.getEntityName(prop.propObj);
