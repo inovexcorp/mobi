@@ -22,13 +22,26 @@
  */
 import * as angular from 'angular';
 import 'reflect-metadata';
-import { enableProdMode } from '@angular/core';
+import { enableProdMode, NgZone } from '@angular/core';
 import { setAngularJSGlobal } from '@angular/upgrade/static';
 import { platformBrowser } from '@angular/platform-browser';
+import { UIRouter, UrlService } from '@uirouter/core';
 import 'zone.js';
 
 import { AppModuleNgFactory } from './app.module.ngfactory';
 
 setAngularJSGlobal(angular);
 enableProdMode();
-platformBrowser().bootstrapModuleFactory(AppModuleNgFactory);
+platformBrowser().bootstrapModuleFactory(AppModuleNgFactory)
+    .then(platformRef => {
+        // get() the UIRouter instance from DI to initialize the router
+        const urlService: UrlService = platformRef.injector.get(UIRouter).urlService;
+
+        // Instruct UIRouter to listen to URL changes
+        const startUIRouter = () => {
+            urlService.listen();
+            urlService.sync();
+        };
+        
+        platformRef.injector.get<NgZone>(NgZone).run(startUIRouter);
+    });

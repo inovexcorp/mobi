@@ -22,9 +22,10 @@
  */
 
 import { By } from '@angular/platform-browser';
-import { Component, DebugElement, Input } from "@angular/core";
+import { DebugElement } from "@angular/core";
 import { ComponentFixture, fakeAsync, TestBed, tick } from "@angular/core/testing";
 import { configureTestSuite } from "ng-bullet";
+import { MockComponent } from 'ng-mocks';
 
 import {
     mockProvManager,
@@ -34,17 +35,8 @@ import {
     cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
+import { ActivityTitleComponent } from '../activityTitle/activityTitle.component';
 import { ActivityCardComponent } from "./activityCard.component";
-
-// Mocks
-@Component({
-    selector: 'activity-title',
-    template: ''
-})
-class ActivityTitleComponentMock {
-    @Input() activity;
-    @Input() entities;
-}
 
 // Test
 describe('Activity Card component', () => {
@@ -73,7 +65,7 @@ describe('Activity Card component', () => {
             imports: [ SharedModule ],
             declarations: [
                 ActivityCardComponent,
-                ActivityTitleComponentMock
+                MockComponent(ActivityTitleComponent)
             ],
             providers: [
                 { provide: 'provManagerService', useClass: mockProvManager },

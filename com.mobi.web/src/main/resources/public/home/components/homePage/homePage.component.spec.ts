@@ -22,25 +22,15 @@
  */
 import { configureTestSuite } from "ng-bullet";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { DebugElement, Component } from "@angular/core";
+import { DebugElement } from "@angular/core";
 import { By } from "@angular/platform-browser";
+import { MockComponent } from "ng-mocks";
 
 import { SharedModule } from "../../../shared/shared.module";
 import { cleanStylesFromDOM } from "../../../../../../test/ts/Shared";
+import { ActivityCardComponent } from "../activityCard/activityCard.component";
+import { QuickActionGridComponent } from "../quickActionGrid/quickActionGrid.component";
 import { HomePageComponent } from "./homePage.component";
-
-// Mocks
-@Component({
-    selector: 'activity-card',
-    template: ''
-})
-class ActivityCardComponentMock {}
-
-@Component({
-    selector: 'quick-action-grid',
-    template: ''
-})
-class QuickActionGridComponentMock {}
 
 // Test
 describe('Home Page component', () => {
@@ -53,8 +43,8 @@ describe('Home Page component', () => {
             imports: [ SharedModule ],
             declarations: [
                 HomePageComponent,
-                ActivityCardComponentMock,
-                QuickActionGridComponentMock
+                MockComponent(ActivityCardComponent),
+                MockComponent(QuickActionGridComponent)
             ]
         });
     });
