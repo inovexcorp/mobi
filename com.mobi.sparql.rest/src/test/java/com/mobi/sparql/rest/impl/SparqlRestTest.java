@@ -309,11 +309,7 @@ public class SparqlRestTest extends MobiRestTestNg {
                     }
 
                     MultivaluedMap<String, Object> headers = response.getHeaders();
-                    try {
-                        assertEquals(headers.get("Content-Type").get(0), dataArray[0]);
-                    }catch(Exception e){
-                        System.out.println("1");
-                    }
+                    assertEquals(headers.get("Content-Type").get(0), dataArray[0]);
 
                     if (type.equals("sWrongType")) {
                         type = "json";
