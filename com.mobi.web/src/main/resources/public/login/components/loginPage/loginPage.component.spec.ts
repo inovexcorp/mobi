@@ -24,10 +24,11 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
-import { ErrorDisplayComponentMock } from '../../../shared/components/errorDisplay/errorDisplay.component.mock';
+import { MockComponent } from 'ng-mocks';
+
+import { SharedModule } from "../../../shared/shared.module";
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { LoginPageComponent } from './loginPage.component';
-import loginManagerService from "../../../shared/services/loginManager.service";
-import {SharedModule} from "../../../shared/shared.module";
 
 describe('Login Page component', () => {
     let component: LoginPageComponent;
@@ -43,7 +44,7 @@ describe('Login Page component', () => {
             ],
             providers: [
                 { provide: 'loginManagerService', useValue: loginManagerStub },
-                { provide: 'ErrorDisplayComponent', useValue: ErrorDisplayComponentMock },
+                { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
     });

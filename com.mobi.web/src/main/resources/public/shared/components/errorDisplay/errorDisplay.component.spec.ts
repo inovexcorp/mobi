@@ -23,7 +23,7 @@
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { TestBed, ComponentFixture, async } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 
 import { ErrorDisplayComponent } from './errorDisplay.component';
 
