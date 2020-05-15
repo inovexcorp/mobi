@@ -527,7 +527,6 @@ public class SparqlRest {
                 try (RepositoryConnection conn = repository.getConnection()) {
                     GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
                     GraphQueryResult graphQueryResult = graphQuery.evaluate();
-                    // Model model = QueryResults.asModel(graphQueryResult, modelFactory);
                     return graphQueryResult;
                 }
             }
