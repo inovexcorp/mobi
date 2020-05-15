@@ -32,6 +32,7 @@
     .top-section {
         display: flex;
         flex-direction: row;
+        justify-content: end;
 
         .form-group {
             flex: 1;

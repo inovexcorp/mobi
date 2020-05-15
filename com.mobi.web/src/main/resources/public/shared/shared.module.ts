@@ -70,6 +70,7 @@ import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
 import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
+import yasGuiCompoment from './components/yasgui/yasgui.component';
 
 import emailIri from './directives/emailIri/emailIri.directive';
 import aDisabled from './directives/aDisabled/aDisabled.directive';
@@ -130,8 +131,7 @@ import updateRefsService from './services/updateRefs.service';
 import userManagerService from './services/userManager.service';
 import userStateService from './services/userState.service';
 import utilService from './services/util.service';
-
-import yasGuiCompoment from './components/yasgui/yasgui.component';
+import yasguiService from './services/yasgui.service';
 
 /**
  * @ngdoc overview
@@ -246,4 +246,5 @@ angular.module('shared', [])
     .service('userManagerService', userManagerService)
     .service('userStateService', userStateService)
     .service('utilService', utilService)
+    .service('yasguiService',yasguiService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService);

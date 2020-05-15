@@ -20,21 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.yasgui{
-  .tabPanel {
-      .autocompleteWrapper, .controlbar, .tabsList, .yasqe_buttons{
-           display: none;
-       }
-   }
+.yasr {
 
-  .tabsList {
-    display: none;
-  }
-}
-.codemirror-wrapper {
-  display: none;
-}
-
-.sparql-result-block {
-  display: none;
 }

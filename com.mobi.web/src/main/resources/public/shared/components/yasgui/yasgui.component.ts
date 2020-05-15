@@ -23,7 +23,7 @@
 
 import "@triply/yasgui/build/yasgui.min.css";
 import './yasgui.component.scss';
-import  * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
+
 import { merge } from 'lodash';
 /**
  * @ngdoc component
@@ -38,34 +38,18 @@ const yasguiComponent = {
 };
 
 
-yasguiComponentCtrl.$inject = ['$element','REST_PREFIX'];
+yasguiComponentCtrl.$inject = ['$element','yasguiService'];
 
-function yasguiComponentCtrl($element,REST_PREFIX) {
+function yasguiComponentCtrl($element, yasguiService) {
     let dvm = this;
-    dvm.initYasgui = (element, config = {}) => {
-        const path = REST_PREFIX + 'sparql/page';
-        const { href } = new URL(path,document.location.origin);
-        let localConfig = {
-            requestConfig : {
-            method: 'GET',
-                endpoint: href
-        },
-        persistencyExpire: 0,
-            populateFromUrl: false,
-            copyEndpointOnNewTab: false
-        };
-        const configuration = merge(localConfig, config );
-        let yasgui = new Yasgui(element, configuration);
-        return yasgui;
-    }
+   
 
     dvm.$onInit = function() {
         let wrapper_element = $element.find('div')[0];
-        let YASGUI = dvm.initYasgui(wrapper_element);
-        console.log( 'Yasqe defaults', YASGUI);
+        dvm.yasgui = yasguiService.initYasgui(wrapper_element);
+        console.log( 'Yasqe defaults', dvm.yasgui);
         
     }
-
 
 }
 

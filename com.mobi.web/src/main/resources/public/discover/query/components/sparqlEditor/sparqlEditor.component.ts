@@ -21,7 +21,6 @@
  * #L%
  */
 import { sortBy, map } from 'lodash';
-
 import './sparqlEditor.component.scss';
 
 const template = require('./sparqlEditor.component.html');
@@ -45,11 +44,12 @@ const sparqlEditorComponent = {
     controller: sparqlEditorComponentCtrl
 };
 
-sparqlEditorComponentCtrl.$inject = ['sparqlManagerService', 'prefixes'];
+sparqlEditorComponentCtrl.$inject = ['sparqlManagerService', 'prefixes', 'yasguiService'];
 
-function sparqlEditorComponentCtrl(sparqlManagerService, prefixes) {
+function sparqlEditorComponentCtrl(sparqlManagerService, prefixes, yasguiService) {
     var dvm = this;
     dvm.sparql = sparqlManagerService;
+    dvm.yasgui = yasguiService;
     dvm.prefixList = [];
     dvm.editorOptions = {
         mode: 'application/sparql-query',
