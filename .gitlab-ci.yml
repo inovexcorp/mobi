@@ -59,6 +59,11 @@ before_script:
 
 set_version_parent_pom:
   extends: .apply_root_version_to_parent_pom
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'test-ci'/
+    refs:
+      - test-ci
   stage: set_version_parent_pom
   dependencies:
     - set_version_root_pom
@@ -69,6 +74,11 @@ update_master_with_new_version:
 
 increment_snapshot_version_parent_pom:
   extends: .apply_root_version_to_parent_pom
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
+    refs:
+      - test-ci
   stage: increment_snapshot_version_parent_pom
   dependencies:
     - increment_snapshot_version_root_pom
