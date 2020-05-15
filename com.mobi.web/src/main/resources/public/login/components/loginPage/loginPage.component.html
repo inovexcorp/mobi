@@ -27,7 +27,7 @@
         </div>
         <div class="bg-light form-container">
             <h1 class="text-center">Sign In Here</h1>
-            <form [formGroup]="loginForm" (ngSubmit)="login(loginForm.valid)" class="clearfix" novalidate>
+            <form [formGroup]="loginForm" (ngSubmit)="login()" class="clearfix" novalidate>
                 <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
                 <div class="form-group">
                     <label for="username" class="sr-only">Username</label>

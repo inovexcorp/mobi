@@ -26,7 +26,8 @@ import { enableProdMode } from '@angular/core';
 import { setAngularJSGlobal } from '@angular/upgrade/static';
 import { platformBrowser } from '@angular/platform-browser';
 import 'zone.js';
-import { AppModuleNgFactory } from '../../../../aot/src/main/resources/public/app.module.ngfactory';
+
+import { AppModuleNgFactory } from './app.module.ngfactory';
 
 setAngularJSGlobal(angular);
 enableProdMode();

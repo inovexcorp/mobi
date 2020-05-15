@@ -20,21 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement, Component } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
+import { MockComponent } from 'ng-mocks';
 
 import { mockLoginManager } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { LoginPageComponent } from './loginPage.component';
-
-// Mocks
-@Component({
-    selector: 'error-display',
-    template: ''
-})
-export class ErrorDisplayComponentMock {}
 
 describe('Login Page component', () => {
     let component: LoginPageComponent;
@@ -50,7 +45,7 @@ describe('Login Page component', () => {
             ],
             providers: [
                 { provide: 'loginManagerService', useClass: mockLoginManager },
-                { provide: 'ErrorDisplayComponent', useValue: ErrorDisplayComponentMock },
+                { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
     });
