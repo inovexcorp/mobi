@@ -74,12 +74,12 @@ function createIndividualOverlayComponentCtrl($filter, ontologyStateService, pre
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
-        // update relevant lists
-        dvm.ontoUtils.addIndividual(dvm.individual);
         // add the entity to the ontology
         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
-        dvm.os.addEntity(dvm.os.listItem, dvm.individual);
+        dvm.os.addEntity(dvm.individual);
         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.individual);
+        // update relevant lists
+        dvm.ontoUtils.addIndividual(dvm.individual);
         // add to concept hierarchy if an instance of a derived concept
         if (dvm.ontoUtils.containsDerivedConcept(dvm.individual['@type'])) {
             dvm.ontoUtils.addConcept(dvm.individual);

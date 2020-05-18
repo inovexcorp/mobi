@@ -20,36 +20,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Inject, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 
 import './loginPage.component.scss';
 
 /**
- * @ngdoc component
- * @name login.component:loginPage
- * @requires shared.service:loginManagerService
+ * @class login.loginPageComponent
  *
- * @description
- * `loginPage` is a component which creates the main login page of the application. The component contains a simple
+ * `login-page` is a component which creates the main login page of the application. The component contains a simple
  * login form for username and password and displays an error message if an error occurs.
  */
 @Component({
     selector: 'login-page',
-    templateUrl: './loginPage.component.html'
+    templateUrl: './loginPage.component.html',
 })
 export class LoginPageComponent {
-    @ViewChild('loginForm') loginForm: NgForm;
-    errorMessage: string;
-    username: string;
-    password: string;
+    public loginForm = this.fb.group({
+        username: ['', [Validators.required]],
+        password: ['', [Validators.required]]
+    });
+    public errorMessage: string;
 
-    constructor(@Inject('loginManagerService') private loginManagerService) {
+    constructor(@Inject('loginManagerService') private loginManagerService, private fb: FormBuilder) {
         this.errorMessage = '';
     }
 
     login() {
-        this.loginManagerService.login(this.username, this.password)
+        this.loginManagerService.login(this.loginForm.controls['username'].value, this.loginForm.controls['password'].value)
             .then(() => this.errorMessage = '', errorMessage => this.errorMessage = errorMessage);
     }
 }

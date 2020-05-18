@@ -39,8 +39,7 @@ describe('Concept Scheme Hierarchy Block component', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        scope.clickItem = jasmine.createSpy('clickItem');
-        this.element = $compile(angular.element('<concept-scheme-hierarchy-block click-item="clickItem(iri)"></concept-scheme-hierarchy-block>'))(scope);
+        this.element = $compile(angular.element('<concept-scheme-hierarchy-block></concept-scheme-hierarchy-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('conceptSchemeHierarchyBlock');
     });
@@ -52,12 +51,6 @@ describe('Concept Scheme Hierarchy Block component', function() {
         this.element.remove();
     });
 
-    describe('controller bound variable', function() {
-        it('clickItem should be called in the parent scope', function() {
-            this.controller.clickItem({iri: 'iri'});
-            expect(scope.clickItem).toHaveBeenCalledWith('iri');
-        });
-    });
     describe('controller methods', function() {
         it('updateSearch changes schemes search text', function() {
             expect(ontologyStateSvc.listItem.editorTabStates.schemes.searchText).toEqual('');
@@ -68,10 +61,6 @@ describe('Concept Scheme Hierarchy Block component', function() {
             ontologyStateSvc.listItem.editorTabStates.schemes.index = 4;
             this.controller.resetIndex();
             expect(ontologyStateSvc.listItem.editorTabStates.schemes.index).toEqual(0);
-        });
-        it('click should call the correct method', function() {
-            this.controller.click('iri');
-            expect(scope.clickItem).toHaveBeenCalledWith('iri');
         });
     });
     describe('contains the correct html', function() {

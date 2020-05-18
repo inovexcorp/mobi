@@ -66,7 +66,7 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
                 .then(results => {
                     state.search.errorMessage = '';
                     forEach(results, arr => {
-                        arr.sort((iri1, iri2) => dvm.os.getEntityNameByIndex(iri1, dvm.os.listItem).localeCompare(dvm.os.getEntityNameByIndex(iri2, dvm.os.listItem)));
+                        arr.sort((iri1, iri2) => dvm.os.getEntityNameByListItem(iri1, dvm.os.listItem).localeCompare(dvm.os.getEntityNameByListItem(iri2, dvm.os.listItem)));
                     });
                     state.search.results = results;
                     state.search.infoMessage = !isEmpty(results) ? '' : 'There were no results for your search text.';
@@ -88,8 +88,10 @@ function searchTabComponentCtrl(ontologyStateService, ontologyUtilsManagerServic
         }
     }
     dvm.selectItem = function(item) {
-        dvm.os.selectItem(item, false);
-        dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+        dvm.os.selectItem(item, false)
+            .then(() => {
+                dvm.os.listItem.editorTabStates.search.selected = omit(angular.copy(dvm.os.listItem.selected), '@id', '@type', 'mobi');
+            });
     }
     dvm.unselectItem = function() {
         dvm.os.unSelectItem();

@@ -20,7 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { 
+import {
+    mockOntologyManager,
     mockOntologyState,
     mockPropertyManager,
     mockUtil,
@@ -31,10 +32,11 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Annotation Overlay component', function() {
-    var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, util;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, util;
 
     beforeEach(function() {
         angular.mock.module('ontology-editor');
+        mockOntologyManager();
         mockOntologyState();
         mockPropertyManager();
         mockUtil();
@@ -43,9 +45,10 @@ describe('Annotation Overlay component', function() {
         injectHighlightFilter();
         injectTrustedFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             ontoUtils = _ontologyUtilsManagerService_;
@@ -63,6 +66,7 @@ describe('Annotation Overlay component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyManagerSvc = null;
         ontologyStateSvc = null;
         propertyManagerSvc = null;
         ontoUtils = null;
@@ -202,35 +206,84 @@ describe('Annotation Overlay component', function() {
             });
         });
         describe('addAnnotation should call the appropriate manager functions if', function() {
-            it('the value was added successfully', function() {
-                propertyManagerSvc.addValue.and.returnValue(true);
-                this.controller.addAnnotation();
-                expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                expect(util.createWarningToast).not.toHaveBeenCalled();
-                expect(scope.close).toHaveBeenCalled();
+            describe('the value was added successfully', function() {
+                beforeEach(function() {
+                    propertyManagerSvc.addValue.and.returnValue(true);
+                    ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
+                });
+                it('and it is a name prop', function() {
+                    ontologyStateSvc.annotationSelect = prefixes.dcterms + 'title';
+                    this.controller.addAnnotation();
+                    expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
+                });
+                it('and it is not a name prop', function() {
+                    ontologyStateSvc.annotationSelect = prefixes.dcterms + 'description';
+                    this.controller.addAnnotation();
+                    expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
+                });
             });
             it('the value was not added successfully', function() {
                 this.controller.addAnnotation();
                 expect(propertyManagerSvc.addValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });
         });
         describe('editAnnotation should call the appropriate manager functions', function() {
-            it('if the value was edited successfully', function() {
-                propertyManagerSvc.editValue.and.returnValue(true);
-                this.controller.editAnnotation();
-                expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                expect(util.createWarningToast).not.toHaveBeenCalled();
-                expect(scope.close).toHaveBeenCalled();
+            describe('if the value was edited successfully', function() {
+                beforeEach(function() {
+                    spyOn(this.controller, 'changeLanguage');
+                    propertyManagerSvc.editValue.and.returnValue(true);
+                    ontologyManagerSvc.entityNameProps = [prefixes.dcterms + 'title'];
+                });
+                it('and it is a name prop', function() {
+                    ontologyStateSvc.annotationSelect = prefixes.dcterms + 'title';
+                    this.controller.editAnnotation();
+                    expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
+                });
+                it('and it is not a name prop', function() {
+                    ontologyStateSvc.annotationSelect = prefixes.dcterms + 'description';
+                    this.controller.editAnnotation();
+                    expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
+                });
+                it('and it has a language', function() {
+                    ontologyStateSvc.annotationLanguage = {'@language': 'lang'};
+                    this.controller.editAnnotation();
+                    expect(propertyManagerSvc.editValue).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, ontologyStateSvc.annotationSelect, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType, ontologyStateSvc.annotationLanguage);
+                    expect(this.controller.changeLanguage).toHaveBeenCalledWith(ontologyStateSvc.annotationLanguage);
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
+                    expect(util.createWarningToast).not.toHaveBeenCalled();
+                    expect(scope.close).toHaveBeenCalled();
+                });
             });
             it('if the value was not edited successfully', function() {
                 this.controller.editAnnotation();
@@ -238,9 +291,16 @@ describe('Annotation Overlay component', function() {
                 expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                 expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(ontoUtils.updateLabel).not.toHaveBeenCalled();
                 expect(util.createWarningToast).toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
             });
+        });
+        it('changeLanguage should clear out the annotation type', function() {
+            ontologyStateSvc.annotationLanguage = {'@language': 'lang'};
+            ontologyStateSvc.annotationType = {'@type': 'type'};
+            this.controller.changeLanguage(ontologyStateSvc.annotationLanguage);
+            expect(ontologyStateSvc.annotationType).toEqual(undefined);
         });
         it('cancel calls dismiss', function() {
             this.controller.cancel();
@@ -254,7 +314,7 @@ describe('Annotation Overlay component', function() {
         expect(this.controller.submit).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        spyOn(this.controller, 'cancel');
+        spyOn(this.controller, 'cancel')
         var button = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         button.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();

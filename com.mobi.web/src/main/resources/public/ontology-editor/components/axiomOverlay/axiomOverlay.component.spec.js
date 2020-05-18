@@ -234,8 +234,9 @@ describe('Axiom Overlay component', function() {
                         propertyManagerSvc.addId.and.returnValue(false);
                         this.controller.addAxiom();
                         scope.$apply();
-                        expect(propertyManagerSvc.addId.calls.count()).toEqual(this.controller.values.length);
-                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, 'value');
+                        this.controller.values.forEach(value => {
+                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
+                        });
                         expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
@@ -245,8 +246,9 @@ describe('Axiom Overlay component', function() {
                     it('and at least one value was added', function() {
                         this.controller.addAxiom();
                         scope.$apply();
-                        expect(propertyManagerSvc.addId.calls.count()).toEqual(this.controller.values.length);
-                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, 'value');
+                        this.controller.values.forEach(value => {
+                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
+                        });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -259,8 +261,9 @@ describe('Axiom Overlay component', function() {
                         propertyManagerSvc.addId.and.returnValue(false);
                         this.controller.addAxiom();
                         scope.$apply();
-                        expect(propertyManagerSvc.addId.calls.count()).toEqual(this.controller.values.length);
-                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, 'value');
+                        this.controller.values.forEach(value => {
+                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
+                        });
                         expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
@@ -270,8 +273,9 @@ describe('Axiom Overlay component', function() {
                     it('and at least one value was added', function() {
                         this.controller.addAxiom();
                         scope.$apply();
-                        expect(propertyManagerSvc.addId.calls.count()).toEqual(this.controller.values.length);
-                        expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, 'value');
+                        this.controller.values.forEach(value => {
+                            expect(propertyManagerSvc.addId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.axiom.iri, value);
+                        });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

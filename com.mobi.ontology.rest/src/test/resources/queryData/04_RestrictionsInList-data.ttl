@@ -1,0 +1,114 @@
+@prefix : <http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.bauhaus-luftfahrt.net/ontologies/2012/AircraftDesign.owl2> a owl:Ontology ;
+  rdfs:comment "An Ontology that is intended to be used in the process of aircraft design." ;
+  <http://purl.org/dc/elements/1.1/title> "Aircraft Design Ontology" .
+
+### Clases
+
+:AircraftSubComponent a <http://www.w3.org/2002/07/owl#Class>;
+    rdfs:comment "components which build up an aircraft" ;
+    rdfs:subClassOf owl:Thing .
+
+:Fin a owl:Class ;
+  rdfs:comment "the vertical stabilizing structure of a plane, constisting of the fixed vertical stabilizer and the rudder (control structure for \"yaw\")";
+  rdfs:subClassOf :AircraftSubComponent , _:genid119, _:genid200 .
+
+_:genid119 a owl:Restriction ;
+owl:onProperty :hasPart ;
+owl:allValuesFrom _:genid120 .
+
+_:genid120 a owl:Class ;
+owl:unionOf _:genid122 .
+
+_:genid122 a rdf:List ;
+rdf:first :FinSubComponent ;
+rdf:rest _:genid300 .
+
+_:genid300 a rdf:List ;
+rdf:first :AircraftSubComponent ;
+rdf:rest _:genid121 .
+
+_:genid121 a rdf:List ;
+rdf:first :TankSystem ;
+rdf:rest rdf:nil .
+
+_:genid200 a owl:Restriction ;
+owl:onProperty :hasPart ;
+owl:allValuesFrom _:genid201 .
+
+_:genid201 a owl:Class ;
+owl:unionOf _:genid202 .
+
+_:genid202 a rdf:List ;
+rdf:first :TankSystem ;
+rdf:rest rdf:nil .
+
+:DualMountedMainLandingGear a owl:Class ;
+  rdfs:comment "a MainLandingGear that is mounted to the wing and to the fuselage (e.g. A340, A380)";
+  owl:equivalentClass _:genid88 .
+
+_:genid88 a owl:Class ;
+  owl:intersectionOf _:genid93 .
+
+_:genid93 a rdf:List ;
+  rdf:first :MainLandingGear ;
+  rdf:rest _:genid91 .
+
+_:genid91 a rdf:List ;
+  rdf:first _:genid92 ;
+  rdf:rest _:genid89 .
+
+_:genid92 a owl:Restriction ;
+  owl:onClass :Fuselage;
+  owl:onProperty :isConnectedTo;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
+_:genid89 a rdf:List;
+  rdf:first _:genid90 ;
+  rdf:rest rdf:nil .
+
+_:genid90 a owl:Restriction;
+  owl:onClass :Wing;
+  owl:onProperty :isConnectedTo;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
+:TankSystem a owl:Class ;
+  rdfs:comment "a TankSystem can be a part of other aircraft components" .
+
+:MainLandingGear a owl:Class ;
+  rdfs:comment "Main Landing Gear" ;
+  rdfs:subClassOf _:genid400 .
+
+_:genid400 a owl:Restriction ;
+  owl:onClass :Rudder ;
+  owl:onProperty :hasRudder ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
+:Fuselage a owl:Class ;
+  rdfs:subClassOf :AircraftSubComponent .
+
+:Wing a owl:Class ;
+  rdfs:subClassOf :AircraftSubComponent .
+
+:Rudder a owl:Class .
+
+### Object Properties
+
+:hasDirectPart a owl:AsymmetricProperty, owl:InverseFunctionalProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+   rdfs:comment "inverse of \"isDirectPartOf\"" .
+
+:hasTankSystem a owl:ObjectProperty ;
+  rdfs:comment "intentionally less restrictive regarding the domain, since several different components can have a TankGroup";
+  rdfs:domain :AircraftSubComponent ;
+  rdfs:range :TankSystem ;
+  rdfs:subPropertyOf :hasDirectPart ;
+  owl:inverseOf :isTankSystemOf .
+
+:isConnectedTo a owl:ObjectProperty, owl:SymmetricProperty ;
+   rdfs:comment "defines a direct connection of one thing to another";
+   rdfs:subPropertyOf owl:topObjectProperty .

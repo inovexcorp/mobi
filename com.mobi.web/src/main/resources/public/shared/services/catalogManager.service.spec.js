@@ -1237,6 +1237,13 @@ describe('Catalog Manager service', function() {
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
+        it('without a targetId', function() {
+            var params = $httpParamSerializer({format: 'jsonld'});
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getDifference(this.commitId)
+                .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
     });
     describe('should get the difference between two Branches', function() {
         beforeEach(function() {

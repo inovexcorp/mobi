@@ -23,29 +23,29 @@
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
-import { TestBed, ComponentFixture, async, fakeAsync, tick } from '@angular/core/testing';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
+import { MockComponent } from 'ng-mocks';
 
-import { ErrorDisplayComponentMock } from '../../../shared/components/errorDisplay/errorDisplay.component.mock';
-
+import { mockLoginManager } from '../../../../../../test/ts/Shared';
+import { SharedModule } from "../../../shared/shared.module";
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { LoginPageComponent } from './loginPage.component';
 
 describe('Login Page component', () => {
     let component: LoginPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<LoginPageComponent>;
-    let loginManagerStub = jasmine.createSpyObj('loginManagerService', ['login']);
+    let loginManagerStub;
 
     configureTestSuite(() => {
         TestBed.configureTestingModule({
-            imports: [ CommonModule, FormsModule ],
+            imports: [ SharedModule ],
             declarations: [
-                LoginPageComponent,
-                ErrorDisplayComponentMock
+                LoginPageComponent
             ],
             providers: [
-                { provide: 'loginManagerService', useValue: loginManagerStub }
+                { provide: 'loginManagerService', useClass: mockLoginManager },
+                { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
     });
@@ -54,26 +54,27 @@ describe('Login Page component', () => {
         fixture = TestBed.createComponent(LoginPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        loginManagerStub = TestBed.get('loginManagerService');
     });
 
     describe('component methods', () => {
         describe('correctly validates a login combination', () => {
             beforeEach(() => {
-                component.username = 'user';
-                component.password = 'pw';
+                component.loginForm.controls['username'].setValue('user');
+                component.loginForm.controls['password'].setValue('password');
             });
             it('unless an error occurs', fakeAsync(() => {
                 loginManagerStub.login.and.returnValue(Promise.reject('Error message'));
                 component.login();
                 tick();
-                expect(loginManagerStub.login).toHaveBeenCalledWith(component.username, component.password);
+                expect(loginManagerStub.login).toHaveBeenCalledWith(component.loginForm.controls['username'].value, component.loginForm.controls['password'].value);
                 expect(component.errorMessage).toEqual('Error message');
             }));
             it('successfully', fakeAsync(() => {
                 loginManagerStub.login.and.returnValue(Promise.resolve());
                 component.login();
                 tick();
-                expect(loginManagerStub.login).toHaveBeenCalledWith(component.username, component.password);
+                expect(loginManagerStub.login).toHaveBeenCalledWith(component.loginForm.controls['username'].value, component.loginForm.controls['password'].value);
                 expect(component.errorMessage).toEqual('');
             }));
         });
@@ -89,28 +90,28 @@ describe('Login Page component', () => {
             expect(element.queryAll(By.css('label')).length).toEqual(2);
         });
         it('depending on whether an error occurred', () =>{
-            expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-
+            expect(element.query(By.css('error-display'))).toBeFalsy();
+            fixture.detectChanges();
             component.errorMessage = 'test';
             fixture.detectChanges();
-            expect(element.queryAll(By.css('error-display')).length).toEqual(1);
+            expect(element.query(By.css('error-display'))).toBeTruthy();
         });
         it('if the form is invalid', fakeAsync(() => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
-            expect(component.loginForm.form.invalid).toBe(true);
-            var button = element.query(By.css('button'));
+            expect(component.loginForm.invalid).toBe(true);
+            let button = element.query(By.css('button'));
             expect(button.properties['disabled']).toBeTruthy();
         }));
         it('if the form is valid', fakeAsync(() => {
-            component.username = 'test';
-            component.password = 'test';
+            component.loginForm.controls['username'].setValue('user');
+            component.loginForm.controls['password'].setValue('password');
             fixture.detectChanges();
-            tick()
+            tick();
             fixture.detectChanges();
-            expect(component.loginForm.form.invalid).toBe(false);
-            var button = element.query(By.css('button'));
+            expect(component.loginForm.invalid).toBe(false);
+            let button = element.query(By.css('button'));
             expect(button.properties['disabled']).toBeFalsy();
         }));
     });

@@ -36,9 +36,7 @@ const template = require('./conceptSchemeHierarchyBlock.component.html');
  */
 const conceptSchemeHierarchyBlockComponent = {
     template,
-    bindings: {
-        clickItem: '&'
-    },
+    bindings: {},
     controllerAs: 'dvm',
     controller: conceptSchemeHierarchyBlockComponentCtrl
 };
@@ -54,9 +52,6 @@ function conceptSchemeHierarchyBlockComponentCtrl(ontologyStateService) {
     }
     dvm.resetIndex = function() {
         dvm.os.listItem.editorTabStates.schemes.index = 0;
-    }
-    dvm.click = function(iri) {
-        dvm.clickItem({iri});
     }
 }
 

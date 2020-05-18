@@ -27,23 +27,23 @@
         </div>
         <div class="bg-light form-container">
             <h1 class="text-center">Sign In Here</h1>
-            <form #loginForm="ngForm" (ngSubmit)="login(loginForm.form.valid)" class="clearfix" novalidate>
+            <form [formGroup]="loginForm" (ngSubmit)="login()" class="clearfix" novalidate>
                 <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
                 <div class="form-group">
                     <label for="username" class="sr-only">Username</label>
                     <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
-                        <input type="text" name="username" class="form-control" id="username" placeholder="Username" #usernameModel="ngModel" [(ngModel)]="username" (change)="errorMessage = ''" required autofocus>
+                        <input type="text" name="username" class="form-control" id="username" placeholder="Username" (change)="errorMessage = ''" formControlName="username" required autofocus>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="password" class="sr-only">Password</label>
                     <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-                        <input type="password" name="password" class="form-control" id="password" placeholder="Password" [(ngModel)]="password" #passwordModel="ngModel" (change)="errorMessage = ''" required>
+                        <input type="password" name="password" class="form-control" id="password" placeholder="Password" (change)="errorMessage = ''" formControlName="password" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.form.invalid">Login</button>
+                <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.invalid">Login</button>
             </form>
         </div>
     </div>

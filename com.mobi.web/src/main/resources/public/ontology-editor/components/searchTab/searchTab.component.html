@@ -29,14 +29,16 @@
             <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
+                <warning-message ng-if="value.length === 500">Search results truncated because they exceeded 500 items.</warning-message>
                 <div class="result-header text-muted d-flex" ng-click="isClosed = !isClosed"><strong class="d-inline-block text-truncate flex-1" title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw float-right" ng-class="{'fa-chevron-up': isClosed, 'fa-chevron-down': !isClosed}"></i></div>
                 <ul class="tree" ng-if="!isClosed">
-                    <tree-item ng-repeat="item in value track by item"
-                            current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
+                    <tree-item ng-repeat="item in value track by $index"
+                            entity-info="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"
                             is-active="dvm.os.getActiveEntityIRI() === item"
                             on-click="dvm.selectItem(item)"
                             ng-dblclick="dvm.goToIfYouCan(item)"
-                            in-progress-commit="dvm.os.listItem.inProgressCommit"></tree-item>
+                            in-progress-commit="dvm.os.listItem.inProgressCommit"
+                            current-IRI="item"></tree-item>
                 </ul>
             </div>
         </div>
@@ -51,7 +53,7 @@
             </div>
             <div class="property-values mt-3" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.selected track by key" disable-animate>
                 <div class="prop-header d-flex align-items-center clearfix">
-                    <p class="text text-truncate m-0" title="{{key}}"><span ng-bind-html="dvm.os.getEntityNameByIndex(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
+                    <p class="text text-truncate m-0" title="{{key}}"><span ng-bind-html="dvm.os.getEntityNameByListItem(key, dvm.os.listItem) | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span></p>
                     <small class="ml-1 text-muted text-truncate flex-1">&lt;<span ng-bind-html="key | highlight:dvm.os.listItem.editorTabStates.search.highlightText | trusted"></span>&gt;</small>
                 </div>
                 <div class="prop-value-container p-1 ml-3 mt-1" ng-repeat="item in value">

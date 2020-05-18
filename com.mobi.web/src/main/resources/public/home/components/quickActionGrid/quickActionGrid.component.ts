@@ -21,100 +21,90 @@
  * #L%
  */
 import { chunk, isEmpty } from 'lodash';
+import { Component, Inject, OnInit } from "@angular/core";
+import { StateService } from "@uirouter/core";
+import { WindowRef } from "../../../shared/services/windowRef.service";
 
 import './quickActionGrid.component.scss';
 
-const template = require('./quickActionGrid.component.html');
-
 /**
- * @ngdoc component
- * @name home.component:quickActionGrid
- * @requires shared.service:ontologyStateService
- * @requires shared.service:discoverStateService
+ * @class home.QuickActionGridComponent
  *
- * @description
- * `quickActionGrid` is a component which creates a Bootstrap `.card` containing a grid of links to perform
+ * `quick-action-grid` is a component which creates a Bootstrap `.card` containing a grid of links to perform
  * common actions in the application. These actions are searching the catalog, opening an ontology, reading the
  * documentation, exploring data, querying data, and ingesting data.
  */
-const quickActionGridComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: quickActionGridComponentCtrl
-};
+@Component({
+    selector: 'quick-action-grid',
+    templateUrl: './quickActionGrid.component.html'
+})
+export class QuickActionGridComponent implements OnInit {
+    actions = [];
 
-quickActionGridComponentCtrl.$inject = ['$window', '$state', 'ontologyStateService', 'discoverStateService'];
-
-function quickActionGridComponentCtrl($window, $state, ontologyStateService, discoverStateService) {
-    var dvm = this;
-    var os = ontologyStateService;
-    var ds = discoverStateService;
-    dvm.actions = [];
-
-    dvm.$onInit = function() {
-        var actions = [
+    constructor(private windowRef: WindowRef, private $state: StateService, @Inject('ontologyStateService') private os,
+                @Inject('discoverStateService') private ds) {}
+    
+    ngOnInit(): void {
+        let actions = [
             {
                 title: 'Search the Catalog',
                 icon: 'fa-book',
-                action: dvm.searchTheCatalog
+                action: () => this.searchTheCatalog()
             },
             {
                 title: 'Open an Ontology',
                 icon: 'fa-folder-open',
-                action: dvm.openAnOntology
+                action: () => this.openAnOntology()
             },
             {
                 title: 'Read the Documentation',
                 icon: 'fa-book',
-                action: dvm.readTheDocumentation
+                action: () => this.readTheDocumentation()
             },
             {
                 title: 'Explore Data',
                 icon: 'fa-database',
-                action: dvm.exploreData
+                action: () => this.exploreData()
             },
             {
                 title: 'Query Data',
                 icon: 'fa-search',
-                action: dvm.queryData
+                action: () => this.queryData()
             },
             {
                 title: 'Ingest Data',
                 icon: 'fa-map',
-                action: dvm.ingestData
+                action: () => this.ingestData()
             },
         ];
-        dvm.actions = chunk(actions, 3);
+        this.actions = chunk(actions, 3);
     }
-    dvm.searchTheCatalog = function() {
-        $state.go('root.catalog');
+    searchTheCatalog() {
+        this.$state.go('root.catalog', null, { reload: true });
     }
-    dvm.openAnOntology = function() {
-        $state.go('root.ontology-editor');
-        if (!isEmpty(os.listItem)) {
-            os.listItem.active = false;
+    openAnOntology() {
+        if (!isEmpty(this.os.listItem)) {
+            this.os.listItem.active = false;
         }
-        os.listItem = {};
+        this.os.listItem = {};
+        this.$state.go('root.ontology-editor', null, { reload: true });
     }
-    dvm.readTheDocumentation = function() {
-        $window.open('https://mobi.inovexcorp.com/docs/', '_blank');
+    readTheDocumentation() {
+        this.windowRef.getNativeWindow().open('https://mobi.inovexcorp.com/docs/', '_blank');
     }
-    dvm.exploreData = function() {
-        $state.go('root.discover');
-        ds.explore.active = true;
-        ds.search.active = false;
-        ds.query.active = false;
+    exploreData() {
+        this.ds.explore.active = true;
+        this.ds.search.active = false;
+        this.ds.query.active = false;
+        this.$state.go('root.discover', null, { reload: true });
     }
-    dvm.queryData = function() {
-        $state.go('root.discover');
-        ds.explore.active = false;
-        ds.search.active = false;
-        ds.query.active = true;
+    queryData() {
+        this.ds.explore.active = false;
+        this.ds.search.active = false;
+        this.ds.query.active = true;
+        this.$state.go('root.discover', null, { reload: true });
     }
-    dvm.ingestData = function() {
-        $state.go('root.mapper');
+    ingestData() {
+        this.$state.go('root.mapper', null, { reload: true });
     }
 }
-
-export default quickActionGridComponent;

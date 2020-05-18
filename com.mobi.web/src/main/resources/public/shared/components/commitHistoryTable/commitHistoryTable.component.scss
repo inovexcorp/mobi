@@ -30,9 +30,17 @@
     .wrapper {
         position: relative;
 
-        svg {
+        .commit-graph-wrapper {
+            width: 100px;
             position: absolute;
+            overflow-x: auto;
+            direction: rtl;
+
+            svg {
+                position: absolute;
+            }
         }
+
         table {
             td.fit, th.fit {
                 width: 1%;

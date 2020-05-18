@@ -114,23 +114,23 @@ describe('Preview Block component', function() {
         describe('should get a preview', function() {
             it('unless an error occurs', function() {
                 this.controller.activePage = {serialization: 'test'};
-                ontologyManagerSvc.getOntology.and.returnValue($q.reject('Error'));
+                ontologyManagerSvc.getQueryResults.and.returnValue($q.reject('Error'));
                 this.controller.getPreview();
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'test', false, true);
+                expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'test', '', false, true);
                 expect(this.controller.activePage.preview).toEqual('Error');
                 expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.activePage);
             });
             describe('successfully', function() {
                 beforeEach(function() {
-                    ontologyManagerSvc.getOntology.and.returnValue($q.when('Test'));
+                    ontologyManagerSvc.getQueryResults.and.returnValue($q.when('Test'));
                 });
                 it('if the format is JSON-LD', function() {
                     this.controller.activePage = {serialization: 'jsonld'};
                     this.controller.getPreview();
                     scope.$apply();
                     expect(this.controller.activePage.mode).toEqual('application/ld+json');
-                    expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'jsonld', false, true);
+                    expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', '', false, true);
                     expect(this.controller.activePage.preview).toEqual('json');
                     expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.activePage);
                 });
@@ -149,7 +149,7 @@ describe('Preview Block component', function() {
                         this.controller.getPreview();
                         scope.$apply();
                         expect(this.controller.activePage.mode).toEqual(test.mode);
-                        expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, test.serialization, false, true);
+                        expect(ontologyManagerSvc.getQueryResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', test.serialization, '', false, true);
                         expect(this.controller.activePage.preview).toEqual('Test');
                         expect(scope.changeEvent).toHaveBeenCalledWith(this.controller.activePage);
                     });

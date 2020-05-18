@@ -169,7 +169,7 @@ describe('Create Class Overlay component', function() {
             it('is empty', function() {
                 this.controller.create();
                 expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.clazz);
                 expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
@@ -190,7 +190,7 @@ describe('Create Class Overlay component', function() {
                     ontoUtils.containsDerivedConcept.and.returnValue(true);
                     this.controller.create();
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
-                    expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
+                    expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.clazz);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);
@@ -207,7 +207,7 @@ describe('Create Class Overlay component', function() {
                 it('without a derived concept', function() {
                     this.controller.create();
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
-                    expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
+                    expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(this.controller.clazz);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
                     expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz['@id']);

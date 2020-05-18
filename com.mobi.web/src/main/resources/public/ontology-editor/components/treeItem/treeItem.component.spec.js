@@ -46,12 +46,18 @@ describe('Tree Item component', function() {
         scope.isActive = false;
         scope.onClick = jasmine.createSpy('onClick');
         scope.toggleOpen = jasmine.createSpy('toggleOpen');
-        scope.currentEntity = {'@id': 'id'};
+        scope.entityInfo = {
+            label: 'label',
+            names: ['name'],
+            imported: false,
+            ontologyId: 'ontologyId'
+        };
         scope.isOpened = true;
         scope.isBold = false;
         scope.path = '';
         scope.inProgressCommit = {};
-        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold" in-progress-commit="inProgressCommit"></tree-item>'))(scope);
+        scope.iri = 'iri';
+        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" entity-info="entityInfo" is-active="isActive" on-click="onClick()" toggle-open="toggleOpen()" has-children="hasChildren" is-bold="isBold" in-progress-commit="inProgressCommit" current-iri="iri"></tree-item>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('treeItem');
     });
@@ -64,28 +70,10 @@ describe('Tree Item component', function() {
         this.element.remove();
     });
 
-    describe('should update on changes', function() {
-        beforeEach(function() {
-            spyOn(this.controller, 'isSaved').and.returnValue(true);
-            spyOn(this.controller, 'getTreeDisplay').and.returnValue('test');
-            settingsManagerSvc.getTreeDisplay.calls.reset();
-        });
-        it('if it is the first change', function() {
-            settingsManagerSvc.getTreeDisplay.and.returnValue('test');
-            this.controller.$onChanges({currentEntity: {isFirstChange: true}});
-            expect(settingsManagerSvc.getTreeDisplay).toHaveBeenCalled();
-            expect(this.controller.treeDisplaySetting).toEqual('test');
-            expect(this.controller.saved).toEqual(true);
-            expect(this.controller.treeDisplay).toEqual('test');
-        });
-        it('if it is not the first change', function() {
-            settingsManagerSvc.getTreeDisplay.and.returnValue('test');
-            this.controller.$onChanges({});
-            expect(settingsManagerSvc.getTreeDisplay).not.toHaveBeenCalled();
-            expect(this.controller.treeDisplaySetting).toEqual('');
-            expect(this.controller.saved).toEqual(true);
-            expect(this.controller.treeDisplay).toEqual('test');
-        });
+    it('should update on changes', function() {
+        spyOn(this.controller, 'isSaved').and.returnValue(true);
+        this.controller.$onChanges();
+        expect(this.controller.saved).toEqual(true);
     });
     describe('controller bound variable', function() {
         it('hasChildren should be one way bound', function() {
@@ -111,10 +99,10 @@ describe('Tree Item component', function() {
             this.controller.toggleOpen();
             expect(scope.toggleOpen).toHaveBeenCalled();
         });
-        it('currentEntity should be two way bound', function() {
-            this.controller.currentEntity = {id: 'new'};
+        it('entityInfo should be two way bound', function() {
+            this.controller.entityInfo = {label: 'new'};
             scope.$digest();
-            expect(this.controller.currentEntity).toEqual({id: 'new'});
+            expect(this.controller.entityInfo).toEqual({label: 'new'});
         });
         it('isOpened should be two way bound', function() {
             this.controller.isOpened = false;
@@ -132,16 +120,22 @@ describe('Tree Item component', function() {
             scope.$digest();
             expect(scope.inProgressCommit).toEqual(original);
         });
+        it('iri should be one way bound', function() {
+            var original = angular.copy(scope.iri);
+            this.controller.iri = 'new';
+            scope.$digest();
+            expect(scope.iri).toEqual(original);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('TREE-ITEM');
             expect(this.element.querySelectorAll('.tree-item').length).toEqual(1);
         });
-        it('depending on whether or not the currentEntity is saved', function() {
+        it('depending on whether or not the currentIri is saved', function() {
             expect(this.element.querySelectorAll('.tree-item.saved').length).toEqual(0);
 
-            scope.currentEntity = {'@id': 'id'};
+            scope.iri = 'id';
             scope.inProgressCommit = {
                 additions: [{'@id': 'id'}]
             };
@@ -169,35 +163,11 @@ describe('Tree Item component', function() {
             scope.$digest();
             expect(anchor.hasClass('active')).toEqual(true);
         });
-        it('depending on whether it is bold', function() {
-            var span = this.element.find('span');
-            expect(span.hasClass('bold')).toEqual(false);
-
-            scope.isBold = true;
-            scope.$digest();
-            expect(span.hasClass('bold')).toEqual(true);
-        });
     });
     describe('controller methods', function() {
-        describe('getTreeDisplay', function() {
-            beforeEach(function() {
-                this.entityName = 'Entity Name';
-                ontologyStateSvc.getEntityNameByIndex.and.returnValue(this.entityName);
-            });
-            it('should return anonymous when not pretty', function() {
-                this.controller.currentEntity = {mobi: {anonymous: 'anon'}};
-                expect(this.controller.getTreeDisplay()).toEqual('anon');
-                expect(ontologyStateSvc.getEntityNameByIndex).not.toHaveBeenCalled();
-            });
-            it('should call getEntityNameByIndex if pretty', function() {
-                this.controller.treeDisplaySetting = 'pretty';
-                expect(this.controller.getTreeDisplay()).toEqual(this.entityName);
-                expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
-            });
-        });
         describe('isSaved', function() {
             it('check correct value for inProgress.additions is returned', function() {
-                this.controller.currentEntity = {'@id': 'id'};
+                this.controller.currentIri = 'id';
                 this.controller.inProgressCommit = {
                     additions: [{'@id': '12345'}]
                 }
@@ -208,7 +178,7 @@ describe('Tree Item component', function() {
                 expect(this.controller.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.deletions is returned', function() {
-                this.controller.currentEntity = {'@id': 'id'};
+                this.controller.currentIri = 'id';
                 this.controller.inProgressCommit = {
                     deletions: [{'@id': '12345'}]
                 }
@@ -219,7 +189,7 @@ describe('Tree Item component', function() {
                 expect(this.controller.isSaved()).toEqual(true);
             });
             it('check correct value for inProgress.additions and inProgress deletions is returned', function() {
-                this.controller.currentEntity = {'@id': 'id'};
+                this.controller.currentIri = 'id';
                 this.controller.inProgressCommit = {
                     additions: [{'@id': '12345'}],
                     deletions: [{'@id': '23456'}]

@@ -20,95 +20,79 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, find, map, forEach, join, includes } from 'lodash';
+import { get } from 'lodash';
+import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
 
 import './activityTitle.component.scss';
 
-const template = require('./activityTitle.component.html');
-
 /**
- * @ngdoc component
- * @name home.component:activityTitle
- * @requires shared.service:provManagerService
- * @requires shared.service:utilService
- * @requires shared.service:userManagerService
- * @requires shared.service:prefixes
+ * @class home.ActivityTitleComponent
  *
- * @description
- * `activityTitle` is a component which creates a `div` containing a title for the provided `Activity` using
+ * `activity-title` is a component which creates a `div` containing a title for the provided `Activity` using
  * the username of the associated user, the word associated with the type of Activity, and the titles of the
  * main associated `Entities`. The word and the predicate to retrieve `Entities` with are collected from the
- * {@link shared.service:provManagerService provManagerService}.
+ * {@link shared.provManagerService provManagerService}.
  *
  * @param {Object} activity A JSON-LD object of an `Activity`
  * @param {Object[]} entities An array of JSON-LD objects of `Entities`
  */
-const activityTitleComponent = {
-    template,
-    bindings: {
-        activity: '<',
-        entities: '<'
-    },
-    controllerAs: 'dvm',
-    controller: activityTitleComponentCtrl
-};
+@Component({
+    selector: 'activity-title',
+    templateUrl: './activityTitle.component.html'
+})
+export class ActivityTitleComponent implements OnInit, OnChanges {
+    @Input() activity;
+    @Input() entities;
 
-activityTitleComponentCtrl.$inject = ['provManagerService', 'utilService', 'userManagerService', 'prefixes'];
+    public username = '(None)';
+    public word = 'affected';
+    public entitiesStr = '(None)';
 
-function activityTitleComponentCtrl(provManagerService, utilService, userManagerService, prefixes) {
-    var dvm = this;
-    var um = userManagerService;
-    var util = utilService;
-    var pm = provManagerService;
-    dvm.username = '(None)';
-    dvm.word = 'affected';
-    dvm.entitiesStr = '(None)';
-
-    dvm.$onInit = function() {
-        setUsername(util.getPropertyId(dvm.activity, prefixes.prov + 'wasAssociatedWith'));
-        setWord(dvm.activity);
-        setEntities(dvm.activity);
+    constructor(@Inject('provManagerService') private pm, @Inject('utilService') private util,
+                @Inject('userManagerService') private um, @Inject('prefixes') private prefixes) {
     }
-
-    dvm.$onChanges = function(changesObj) {
-        if (changesObj.activity) {
-            setUsername(util.getPropertyId(changesObj.activity.currentValue, prefixes.prov + 'wasAssociatedWith'));
-            setWord(changesObj.activity.currentValue);
-            setEntities(changesObj.activity.currentValue);
+    
+    ngOnInit(): void {
+        this.setUsername(this.util.getPropertyId(this.activity, this.prefixes.prov + 'wasAssociatedWith'));
+        this.setWord(this.activity);
+        this.setEntities(this.activity);
+    }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.activity) {
+            this.setUsername(this.util.getPropertyId(changes.activity.currentValue, this.prefixes.prov + 'wasAssociatedWith'));
+            this.setWord(changes.activity.currentValue);
+            this.setEntities(changes.activity.currentValue);
         }
     }
-
-    function setEntities(activity) {
-        var types = get(activity, '@type', []);
-        var pred = '';
-        forEach(pm.activityTypes, obj => {
-            if (includes(types, obj.type)) {
+    setEntities(activity) {
+        let types = get(activity, '@type', []);
+        let pred = '';
+        this.pm.activityTypes.forEach(obj => {
+            if (types.includes(obj.type)) {
                 pred = obj.pred;
                 return false;
             }
         });
-        var entityTitles = map(get(activity, "['" + pred + "']", []), idObj => {
-            var entity = find(dvm.entities, {'@id': idObj['@id']});
-            return util.getDctermsValue(entity, 'title');
+        let entityTitles = get(activity, "['" + pred + "']", []).map(idObj => {
+            let entity = this.entities.find(obj => obj['@id'] === idObj['@id']);
+            return this.util.getDctermsValue(entity, 'title');
         });
-        dvm.entitiesStr = join(entityTitles, ', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
+        this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }
-    function setUsername(iri) {
+    setUsername(iri) {
         if (iri) {
-            dvm.username = get(find(um.users, {iri}), 'username', '(None)');
+            this.username = get(this.um.users.find(user => user.iri === iri), 'username', '(None)');
         } else {
-            dvm.username = '(None)';
+            this.username = '(None)';
         }
     }
-    function setWord(activity) {
-        var types = get(activity, '@type', []);
-        forEach(pm.activityTypes, obj => {
-            if (includes(types, obj.type)) {
-                dvm.word = obj.word;
+    setWord(activity) {
+        let types = get(activity, '@type', []);
+        this.pm.activityTypes.forEach(obj => {
+            if (types.includes(obj.type)) {
+                this.word = obj.word;
                 return false;
             }
         });
     }
 }
-
-export default activityTitleComponent;

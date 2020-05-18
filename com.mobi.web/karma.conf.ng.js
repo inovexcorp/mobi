@@ -66,6 +66,11 @@ module.exports = function(config) {
         }
     },
 
+    // karma-parallel configuration
+    parallelOptions: {
+        executors: (Math.ceil(require('os').cpus().length / 2))
+    },
+
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: true,

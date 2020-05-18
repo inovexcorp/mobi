@@ -23,7 +23,7 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { downgradeComponent } from '@angular/upgrade/static';
 
@@ -50,6 +50,7 @@ import entityDatesComponent from './components/entityDates/entityDates.component
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
 import infoMessageComponent from './components/infoMessage/infoMessage.component';
+import warningMessageComponent from './components/warningMessage/warningMessage.component';
 import inlineEditComponent from './components/inlineEdit/inlineEdit.component';
 import iriSelectComponent from './components/iriSelect/iriSelect.component';
 import keywordSelectComponent from './components/keywordSelect/keywordSelect.component';
@@ -135,21 +136,31 @@ import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 
 // NgUpgrade
-import { loginManagerServiceProvider } from '../ajs.upgradedProviders';
+import {
+    httpServiceProvider,
+    loginManagerServiceProvider,
+    prefixesProvider,
+    provManagerServiceProvider,
+    userManagerServiceProvider,
+    utilServiceProvider,
+    ontologyStateServiceProvider,
+    discoverStateServiceProvider,
+} from '../ajs.upgradedProviders';
 
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import { WindowRef } from "./services/windowRef.service";
 
 /**
- * @ngdoc overview
- * @name shared
+ * @namespace shared
  *
- * @description
- * The `shared` module provides common components, directives, filters, and services that make up the Shared module in the Mobi application.
+ * The `shared` module provides common components, directives, filters, and services that make up the Shared module in
+ * the Mobi application.
  */
 @NgModule({
     imports: [
         CommonModule,
-        FormsModule
+        FormsModule,
+        ReactiveFormsModule
     ],
     declarations: [
         ErrorDisplayComponent
@@ -160,10 +171,19 @@ import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.co
     exports: [
         CommonModule,
         FormsModule,
-        ErrorDisplayComponent
+        ReactiveFormsModule,
+        ErrorDisplayComponent,
     ],
     providers: [
-        loginManagerServiceProvider
+        loginManagerServiceProvider,
+        utilServiceProvider,
+        provManagerServiceProvider,
+        prefixesProvider,
+        httpServiceProvider,
+        userManagerServiceProvider,
+        ontologyStateServiceProvider,
+        discoverStateServiceProvider,
+        WindowRef
     ]
 })
 export class SharedModule {}
@@ -192,6 +212,7 @@ angular.module('shared', [])
     .component('entityDescription', entityDescriptionComponent)
     .component('fileInput', fileInputComponent)
     .component('infoMessage', infoMessageComponent)
+    .component('warningMessage', warningMessageComponent)
     .component('inlineEdit', inlineEditComponent)
     .component('iriSelect', iriSelectComponent)
     .component('keywordSelect', keywordSelectComponent)

@@ -79,15 +79,15 @@ module.exports = {
             .assert.elementNotPresent('div.modal-header')
             .waitForElementVisible('div.ontologies')
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"active-entity-filter-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"active-entity-filter-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//span[text()[contains(.,"active-entity-filter-3.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-2.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-3.ttl")]]')
             .useCss()
     },
 
     'Step 8: Click on Ontology called active-entity-filter-1.ttl' : function (browser) {
         browser
-            .click('xpath', '//div[contains(@class, "list-group")]//div//span[text()[contains(.,"active-entity-filter-1.ttl")]]')
+            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"active-entity-filter-1.ttl")]]')
     },
 
     'Step 9: Click classes tab' : function (browser) {
@@ -118,13 +118,13 @@ module.exports = {
 
     'Step 12: Apply the Active Entity Filter' : function (browser) {
         browser
-            .waitForElementVisible('#dropdown-filter')
-            .click('#dropdown-filter')
-            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox[display-text="\'Active Entities Only\'"')
-            .click('checkbox[display-text="\'Active Entities Only\'"] input')
+            .waitForElementVisible('.hierarchy-filter a')
+            .click('.hierarchy-filter a')
+            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
+            .click('class-hierarchy-block .dropdown-menu checkbox input')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
-            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox[display-text="\'Active Entities Only\'"')
+            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
     },
 
     'Step 13: Ensure that imported entities have been filtered out' : function(browser) {
@@ -151,12 +151,12 @@ module.exports = {
 
     'Step 17: Remove the Active Entity filter' : function(browser) {
         browser
-            .click('#dropdown-filter')
-            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox[display-text="\'Active Entities Only\'"')
-            .click('checkbox[display-text="\'Active Entities Only\'"] input')
+            .click('.hierarchy-filter a')
+            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
+            .click('class-hierarchy-block .dropdown-menu checkbox input')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
-            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox[display-text="\'Active Entities Only\'"')
+            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
 
     },
 
@@ -175,12 +175,12 @@ module.exports = {
             .useCss()
             .assert.visible('search-bar input')
             .setValue('search-bar input', '3')
-            .click('#dropdown-filter')
-            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox[display-text="\'Active Entities Only\'"')
-            .click('checkbox[display-text="\'Active Entities Only\'"] input')
+            .click('.hierarchy-filter a')
+            .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
+            .click('class-hierarchy-block .dropdown-menu checkbox input')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]'})
             .click('xpath', '//ul[contains(@class, "dropdown-menu")]//button[text()[contains(., "Apply")]]')
-            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox[display-text="\'Active Entities Only\'"')
+            .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
             .waitForElementVisible('info-message span')
             .assert.containsText('info-message span', 'No entities match your filter.')
     } 
