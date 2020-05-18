@@ -122,6 +122,7 @@
                 <version>${rdf4j.version}</version>
             </dependency>
 
+
             <!-- OWLAPI Dependencies -->
             <dependency>
                 <groupId>net.sourceforge.owlapi</groupId>

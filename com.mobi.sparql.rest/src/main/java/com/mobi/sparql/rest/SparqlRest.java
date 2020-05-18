@@ -37,6 +37,7 @@ import com.mobi.persistence.utils.rio.RemoveContextHandler;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.Rio;
 import com.mobi.query.GraphQueryResult;
+import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
@@ -72,6 +73,7 @@ import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.osgi.service.component.annotations.Component;
@@ -116,6 +118,7 @@ public class SparqlRest {
     private RepositoryManager repositoryManager;
     private DatasetManager datasetManager;
     private ValueFactory valueFactory;
+    private QueryResultsIO queryResultsIO;
 
     private final Logger log = LoggerFactory.getLogger(SparqlRest.class);
     private final ObjectMapper mapper = new ObjectMapper();
@@ -138,6 +141,11 @@ public class SparqlRest {
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
         this.valueFactory = valueFactory;
+    }
+
+    @Reference
+    public void setQueryResultsIO(QueryResultsIO queryResultsIO) {
+        this.queryResultsIO = queryResultsIO;
     }
 
     /**
@@ -267,7 +275,7 @@ public class SparqlRest {
      */
     private Response handleSelectQuery(String queryString, String datasetRecordId,
                                        String mimeType, String fileName, String acceptString) {
-        TupleQueryResult queryResults = getTupleQueryResults(queryString, datasetRecordId);
+        TupleQueryResult queryResults;
         StreamingOutput stream;
         String fileExtension;
 
@@ -279,32 +287,29 @@ public class SparqlRest {
             case JSON_MIME_TYPE:
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
-
-                if (!queryResults.hasNext()) {
-                    return Response.noContent().build();
-                }
-
-                stream = getJsonResults(queryResults);
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.JSON, fileExtension);
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLS_MIME_TYPE;
                 break;
             case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLSX_MIME_TYPE;
                 break;
             case CSV_MIME_TYPE:
                 fileExtension = "csv";
-                stream = createDelimitedResults(queryResults, ",");
                 mimeType = CSV_MIME_TYPE;
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.CSV, fileExtension);
                 break;
             case TSV_MIME_TYPE:
                 fileExtension = "tsv";
-                stream = createDelimitedResults(queryResults, "\t");
                 mimeType = TSV_MIME_TYPE;
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.TSV, fileExtension);
                 break;
             default:
                 fileExtension = "json";
@@ -313,11 +318,7 @@ public class SparqlRest {
                 log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
                         acceptString, mimeType));
 
-                if (!queryResults.hasNext()) {
-                    return Response.noContent().build();
-                }
-
-                stream = getJsonResults(queryResults);
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.JSON, fileExtension);
                 break;
         }
 
@@ -426,6 +427,35 @@ public class SparqlRest {
         }
         return builder.build();
     }
+
+    private StreamingOutput getSelectResponse(String queryString, String datasetRecordId, String mimeType, String fileName, TupleQueryResultFormat format, String fileExtension) {
+        return os -> {
+            try{
+                if (!StringUtils.isBlank(datasetRecordId)) {
+                    Resource recordId = valueFactory.createIRI(datasetRecordId);
+
+                    try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                        TupleQuery query = conn.prepareTupleQuery(queryString);
+                        TupleQueryResult queryResults = query.evaluate();
+                        queryResultsIO.writeTuple(queryResults, format, os);
+                    }
+                } else {
+                    Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                            ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+                    try (RepositoryConnection conn = repository.getConnection()) {
+                        TupleQuery query = conn.prepareTupleQuery(queryString);
+                        TupleQueryResult queryResults = query.evaluate();
+                        queryResultsIO.writeTuple(queryResults, format, os);
+                    }
+                }
+
+            } catch (IllegalArgumentException ex){
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            }
+        };
+    }
+
+
 
 
     /**
@@ -561,57 +591,6 @@ public class SparqlRest {
         }
     }
 
-    /**
-     * Create delimited formatted StreamingOutput for Tuple query results using the provided results and
-     * delimiter string.
-     *
-     * @param result TupleQueryResult
-     * @param delimiter accepts the delimiter for file
-     * @return StreamingOutput creates a binary stream of strings
-     */
-    private static StreamingOutput createDelimitedResults(TupleQueryResult result, String delimiter) {
-        List<String> bindings = result.getBindingNames();
-        StringBuilder file = new StringBuilder(String.join(delimiter, bindings));
-        BindingSet bindingSet;
-        Iterator<String> bindingIt;
-        while (result.hasNext()) {
-            file.append("\n");
-            bindingSet = result.next();
-            bindingIt = bindings.iterator();
-            while (bindingIt.hasNext()) {
-                bindingSet.getBinding(bindingIt.next()).ifPresent(binding -> {
-                    String currentValue = binding.getValue().stringValue();
-                    file.append(String.format("%s", currentValue));
-                });
-
-                if (bindingIt.hasNext()) {
-                    file.append(delimiter);
-                }
-            }
-        }
-        return os -> {
-            Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-            writer.write(file.toString());
-            writer.flush();
-            writer.close();
-        };
-    }
-
-    /**
-     * Create JSON Streaming Output Results.
-     *
-     * @param queryResults TupleQueryResult
-     * @return StreamingOutput creates a binary stream of json string
-     */
-    private static StreamingOutput getJsonResults(TupleQueryResult queryResults) {
-        return out -> {
-            Writer writer = new BufferedWriter(new OutputStreamWriter(out));
-
-            ObjectNode json = JSONQueryResults.getResponse(queryResults);
-            writer.write(json.toString());
-            writer.flush();
-        };
-    }
 
     /**
      * Create Excel Format Streaming Output Results.
