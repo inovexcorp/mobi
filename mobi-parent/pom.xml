@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.18.4-SNAPSHOT</version>
+    <version>1.18.7-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -54,7 +54,7 @@
         <maven-bundle-plugin.version>3.5.0</maven-bundle-plugin.version>
         <bndlib.version>3.1.0</bndlib.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
-        <rdf4j.version>2.4.3</rdf4j.version>
+        <rdf4j.version>2.5.5</rdf4j.version>
         <owlapi.version>5.1.9</owlapi.version>
         <karaf.version>4.2.0</karaf.version>
         <httpclient.version>4.5.2</httpclient.version>
@@ -67,7 +67,7 @@
         <jackson.version>2.9.8</jackson.version>
         <guice.version>4.1.0</guice.version>
         <poi.version>3.14_1</poi.version>
-        <opencsv.version>4.2</opencsv.version>
+        <opencsv.version>4.3.2</opencsv.version>
         <commons-io.version>2.5</commons-io.version>
         <commons-codec.version>1.10</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
@@ -369,6 +369,12 @@
                 <groupId>org.spockframework</groupId>
                 <artifactId>spock-core</artifactId>
                 <version>1.0-groovy-2.4</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib-nodep</artifactId>
+                <version>3.3.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
