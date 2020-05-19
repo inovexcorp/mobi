@@ -112,7 +112,6 @@ public class SparqlRest {
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
 
-    private ModelFactory modelFactory;
     private SesameTransformer sesameTransformer;
     private RepositoryManager repositoryManager;
     private DatasetManager datasetManager;
@@ -120,11 +119,6 @@ public class SparqlRest {
 
     private final Logger log = LoggerFactory.getLogger(SparqlRest.class);
     private final ObjectMapper mapper = new ObjectMapper();
-
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
-    }
 
     @Reference
     public void setSesameTransformer(SesameTransformer sesameTransformer) {
@@ -435,10 +429,10 @@ public class SparqlRest {
 
 
     /**
-     * Convert the mime type to file type.
+     * Convert the file Extension to mime type.
      *
      * @param fileExtension fileExtension
-     * @return String
+     * @return String returns the mimeType for file extension, if null default is json
      */
     private static String convertFileExtensionToMimeType(String fileExtension) {
         if (fileExtension == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -547,10 +541,10 @@ public class SparqlRest {
     }
 
     /**
-     * Get ParsedOperation from query.
+     * Get ParsedOperation from query string.
      *
      * @param queryString The SPARQL query to execute.
-     * @return ParsedOperation
+     * @return ParsedOperation: it will parse query string and return parsedOperation object
      */
     private ParsedOperation getParsedOperation(String queryString) {
         try {

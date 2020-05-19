@@ -104,9 +104,6 @@ public class SparqlRestTest extends MobiRestTestNg {
     private List<String> filenames;
 
     @Mock
-    public ModelFactory modelFactory;
-
-    @Mock
     private RepositoryManager repositoryManager;
 
     @Mock
@@ -145,7 +142,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest = new SparqlRest();
         rest.setRepository(repositoryManager);
         rest.setDatasetManager(datasetManager);
-        rest.setModelFactory(modelFactory);
         rest.setSesameTransformer(sesameTransformer);
         rest.setValueFactory(vf);
 
@@ -192,8 +188,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(repositoryManager, datasetConnection, datasetManager,
-                modelFactory, sesameTransformer);
+        reset(repositoryManager, datasetConnection, datasetManager, sesameTransformer);
 
         // mock getRepository
         when(repositoryManager.getRepository(anyString()))
@@ -208,10 +203,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         when(datasetConnection.prepareGraphQuery(anyString()))
                 .thenAnswer(i -> conn.prepareGraphQuery(i.getArgumentAt(0, String.class)));
 
-        // mock modelFactory.createModel method
-        when(modelFactory.createModel())
-                .thenReturn(LinkedHashModelFactory.getInstance().createModel());
-
         // mock sesameTransformer
         when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
@@ -222,7 +213,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         when(sesameTransformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
     }
-
 
     @Test
     public void queryRdfTest() {
