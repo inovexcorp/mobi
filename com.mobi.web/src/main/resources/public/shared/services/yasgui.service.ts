@@ -24,12 +24,13 @@ import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
 import * as YasrTurtlePlugin from '../../vendor/YASGUI/plugins/turtle/turtle';
 import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
 import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
-import { addClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
+import { hasClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
 
 
 
 
 import { merge } from 'lodash';
+import jsonLD from "../../vendor/YASGUI/plugins/jsonLD/jsonLD";
 
 /**
  * @ngdoc service
@@ -41,7 +42,9 @@ yasguiService.$inject = ['REST_PREFIX'];
 
 function yasguiService(REST_PREFIX) {
     const self = this;
+    const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/page', document.location.origin);
     let hasInitialized = false
+    let defaultType = 'jsonld'
     const initPlugins = () => {
         //
         if (Yasgui.Yasr) {
@@ -63,23 +66,55 @@ function yasguiService(REST_PREFIX) {
         });
     }
 
-    const refreshPluginData = () => {
-        if (self.yasgui.getTab().yasr.drawnPlugin && self.yasgui.getTab().yasr.selectedPlugin) {
-            let config = {
-                url: getUrl(),
-                reqMethod: "GET",
-                args: { returnFormat:  self.yasgui.getTab().yasr.drawnPlugin }
-
-            }
-            console.log('config', config);
-            self.submitQuery(config)
-        }
+    const getFormat = (type : string =  defaultType) => {
+       const formatType =  {
+           'turtle': 'turtle',
+           'rdfXml': 'rdf/xml',
+           'jsonLD': 'jsonld'
+       }
+       return formatType?.[type] || formatType.jsonLD;
     }
 
-    const getUrl = () => {
-        const path = REST_PREFIX + 'sparql/page';
-        const { href } = new URL(path, document.location.origin);
-        return href;
+    const isPluginEnabled = (plugin) => {
+        let pluginElement = document.querySelector(`.select_${plugin}`);
+        if(pluginElement) {
+            return !hasClass(pluginElement, 'disabled');
+        } else {
+            return false;
+        }
+    }
+    const getSelectedUrlFormat =  () => getFormat(self.yasgui.getTab().yasr.selectedPlugin);
+
+    const getEndpointURL= () => {
+        let format = getSelectedUrlFormat();
+        let url = getUrl(format);
+       return url;
+    }
+
+    const setRequestConfigURL = (url) => {
+        self.yasgui.getTab().setRequestConfig({
+            endpoint: url
+        });
+    }
+
+    const getUrl = (format: string = defaultType) => {
+        const searchValue = 'returnFormat';
+        if (!defaultUrl.searchParams.has(searchValue)) {
+            defaultUrl.searchParams.append(searchValue, format)
+        } else {
+            defaultUrl.searchParams.set(searchValue, format)
+        }
+
+        return defaultUrl.href;
+    }
+
+    const refreshPluginData = () => {
+        let selectedPlugin = self.yasgui.getTab().yasr.selectedPlugin;
+        if (self.yasgui.getTab().yasr.drawnPlugin && selectedPlugin) {
+            setRequestConfigURL(getEndpointURL());
+            //@todo dont query if plugin doesnt support result type.
+            self.submitQuery();
+        }
     }
 
     const getDefaultConfig =  () => {
@@ -107,6 +142,7 @@ function yasguiService(REST_PREFIX) {
         initEvents();
         return self.yasgui;
     }
+
     // fire a new query
     self.submitQuery  = (queryConfig = {}) => {
         if(hasInitialized) {

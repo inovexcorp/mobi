@@ -85,25 +85,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
-        //@todo remove this values from here;
-        value = `@base <http://example.org/> .
-                @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-                @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-                @prefix rel: <http://www.perceive.net/schemas/relationship/> .
-                
-                <#green-goblin>
-                    rel:enemyOf <#spiderman> ;
-                    a foaf:Person ;    # in the context of the Marvel universe
-                    foaf:name "Green Goblin" .
-                
-                <#spiderman>
-                    rel:enemyOf <#green-goblin> ;
-                    a foaf:Person ;
-                    foaf:name "Spiderman", "Человек-паук"@ru .`;
-
         const lines = value.split("\n");
-
         if (lines.length > this.config.maxLines) {
             value = lines.slice(0, this.config.maxLines).join("\n");
         }
@@ -124,8 +106,6 @@ export default class Turtle implements Plugin<PlugingConfig> {
         }
 
         // testing purpose.
-
-        codemirrorOpts['mode']  = this.mode;
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
         // Don't show less originally we've already set the value in the codemirrorOpts
         //if (lines.length > this.config.maxLines) this.showLess(false);
@@ -152,6 +132,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
     canHandleResults() {
         if (!this.yasr.results) return false;
         if (!this.yasr.results.getOriginalResponseAsString) return false;
+        if (this.yasr.results?.getType() === 'json') return false;
         const response = this.yasr.results.getOriginalResponseAsString();
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;

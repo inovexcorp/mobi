@@ -84,18 +84,6 @@ export default class RdfXml implements Plugin<PlugingConfig> {
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
-        //@todo remove this values from here;
-        value = `<rdf:Description rdf:about="http://www.w3.org/TR/rdf-syntax-grammar">
-                  <ex:editor>
-                    <rdf:Description>
-                      <ex:homePage>
-                        <rdf:Description rdf:about="http://purl.org/net/dajobe/">
-                        </rdf:Description>
-                      </ex:homePage>
-                    </rdf:Description>
-                  </ex:editor>
-                </rdf:Description>`;
-
         const lines = value.split("\n");
 
         if (lines.length > this.config.maxLines) {
@@ -118,8 +106,6 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         }
 
         // testing purpose.
-
-        codemirrorOpts['mode']  = this.mode;
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
         // Don't show less originally we've already set the value in the codemirrorOpts
         //if (lines.length > this.config.maxLines) this.showLess(false);
@@ -146,7 +132,9 @@ export default class RdfXml implements Plugin<PlugingConfig> {
     canHandleResults() {
         if (!this.yasr.results) return false;
         if (!this.yasr.results.getOriginalResponseAsString) return false;
+        if (this.yasr.results?.getType() === 'json') return false;
         const response = this.yasr.results.getOriginalResponseAsString();
+
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;
     }

@@ -83,15 +83,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
-        //@todo remove this values from here;
-        value = `{
-                  "@context": "https://json-ld.org/contexts/person.jsonld",
-                  "@id": "http://dbpedia.org/resource/John_Lennon",
-                  "name": "John Lennon",
-                  "born": "1940-10-09",
-                  "spouse": "http://dbpedia.org/resource/Cynthia_Lennon"
-                }`;
-
         const lines = value.split("\n");
 
         if (lines.length > this.config.maxLines) {
@@ -113,9 +104,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
             codemirrorOpts['mode']  = this.mode;
         }
 
-        // testing purpose.
-
-        codemirrorOpts['mode']  = this.mode;
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
         // Don't show less originally we've already set the value in the codemirrorOpts
         //if (lines.length > this.config.maxLines) this.showLess(false);
@@ -142,6 +130,7 @@ export default class JsonLD implements Plugin<PlugingConfig> {
     canHandleResults() {
         if (!this.yasr.results) return false;
         if (!this.yasr.results.getOriginalResponseAsString) return false;
+        if (this.yasr.results?.getType() === 'json') return false;
         const response = this.yasr.results.getOriginalResponseAsString();
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;
