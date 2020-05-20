@@ -26,12 +26,13 @@ import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 
 import { ErrorDisplayComponent } from './errorDisplay.component';
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 
-describe('Error Display component', () => {
+describe('Error Display component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<ErrorDisplayComponent>;
 
-    configureTestSuite(() => {
+    configureTestSuite(function() {
         TestBed.configureTestingModule({
             declarations: [
                 ErrorDisplayComponent
@@ -39,19 +40,25 @@ describe('Error Display component', () => {
         });
     });
 
-    beforeEach(() => {
+    beforeEach(function() {
         fixture = TestBed.createComponent(ErrorDisplayComponent);
         element = fixture.debugElement;
     });
 
-    describe('contains the correct html', () => {
-        it('for wrapping-containers', () => {
+    afterAll(function() {
+        cleanStylesFromDOM();
+        element = null;
+        fixture = null;
+    })
+
+    describe('contains the correct html', function() {
+        it('for wrapping-containers', function() {
             expect(element.query(By.css('.error-display'))).toBeDefined();
         });
-        it('with a i.fa-exclamation-triangle', () => {
+        it('with a i.fa-exclamation-triangle', function() {
             expect(element.query(By.css('i.fa-exclamation-triangle'))).toBeDefined();
         });
-        it('with a span', () => {
+        it('with a span', function() {
             expect(element.query(By.css('span'))).toBeDefined();
         });
     });

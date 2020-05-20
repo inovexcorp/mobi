@@ -79,32 +79,32 @@ export class QuickActionGridComponent implements OnInit {
         ];
         this.actions = chunk(actions, 3);
     }
-    searchTheCatalog() {
+    searchTheCatalog(): void {
         this.$state.go('root.catalog', null, { reload: true });
     }
-    openAnOntology() {
+    openAnOntology(): void {
         if (!isEmpty(this.os.listItem)) {
             this.os.listItem.active = false;
         }
         this.os.listItem = {};
         this.$state.go('root.ontology-editor', null, { reload: true });
     }
-    readTheDocumentation() {
+    readTheDocumentation(): void {
         this.windowRef.getNativeWindow().open('https://mobi.inovexcorp.com/docs/', '_blank');
     }
-    exploreData() {
+    exploreData(): void {
         this.ds.explore.active = true;
         this.ds.search.active = false;
         this.ds.query.active = false;
         this.$state.go('root.discover', null, { reload: true });
     }
-    queryData() {
+    queryData(): void {
         this.ds.explore.active = false;
         this.ds.search.active = false;
         this.ds.query.active = true;
         this.$state.go('root.discover', null, { reload: true });
     }
-    ingestData() {
+    ingestData(): void {
         this.$state.go('root.mapper', null, { reload: true });
     }
 }

@@ -49,8 +49,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     public entitiesStr = '(None)';
 
     constructor(@Inject('provManagerService') private pm, @Inject('utilService') private util,
-                @Inject('userManagerService') private um, @Inject('prefixes') private prefixes) {
-    }
+                @Inject('userManagerService') private um, @Inject('prefixes') private prefixes) {}
     
     ngOnInit(): void {
         this.setUsername(this.util.getPropertyId(this.activity, this.prefixes.prov + 'wasAssociatedWith'));
@@ -64,7 +63,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
             this.setEntities(changes.activity.currentValue);
         }
     }
-    setEntities(activity) {
+    setEntities(activity): void {
         let types = get(activity, '@type', []);
         let pred = '';
         this.pm.activityTypes.forEach(obj => {
@@ -79,14 +78,14 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
         });
         this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }
-    setUsername(iri) {
+    setUsername(iri): void {
         if (iri) {
             this.username = get(this.um.users.find(user => user.iri === iri), 'username', '(None)');
         } else {
             this.username = '(None)';
         }
     }
-    setWord(activity) {
+    setWord(activity): void {
         let types = get(activity, '@type', []);
         this.pm.activityTypes.forEach(obj => {
             if (types.includes(obj.type)) {

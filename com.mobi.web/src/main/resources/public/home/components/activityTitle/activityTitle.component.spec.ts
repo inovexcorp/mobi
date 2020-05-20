@@ -36,7 +36,7 @@ import {
 import { SharedModule } from "../../../shared/shared.module";
 import { ActivityTitleComponent } from "./activityTitle.component";
 
-describe('Activity Title component', () => {
+describe('Activity Title component', function() {
     let component: ActivityTitleComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityTitleComponent>;
@@ -45,7 +45,7 @@ describe('Activity Title component', () => {
     let prefixesStub;
     let userManagerStub;
 
-    configureTestSuite(() => {
+    configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ SharedModule ],
             declarations: [
@@ -60,7 +60,7 @@ describe('Activity Title component', () => {
         });
     });
 
-    beforeEach(() => {
+    beforeEach(function() {
         fixture = TestBed.createComponent(ActivityTitleComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -74,81 +74,88 @@ describe('Activity Title component', () => {
         component.entities = [{'@id': 'entity'}, {'@id': 'entity1'}];
     });
 
-    afterAll(() => {
+    afterAll(function() {
         cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        provManagerStub = null;
+        utilStub = null;
+        prefixesStub = null;
+        userManagerStub = null;
     });
 
-    describe('should initialize with the correct value for', () => {
-        describe('username', () => {
-            it('if the activity does not have the wasAssociatedWith property', () => {
+    describe('should initialize with the correct value for', function() {
+        describe('username', function() {
+            it('if the activity does not have the wasAssociatedWith property', function() {
                 expect(component.username).toEqual('(None)');
             });
-            describe('if the activity has the wasAssociatedWith property', () => {
+            describe('if the activity has the wasAssociatedWith property', function() {
                 let iri: string;
-                beforeEach(() => {
+                beforeEach(function() {
                     iri = 'iri';
                 });
-                it('and the user was not found', () => {
+                it('and the user was not found', function() {
                     expect(component.username).toEqual('(None)');
                 });
-                it('and the user was found', () => {
+                it('and the user was found', function() {
                     userManagerStub.users = [{iri: 'iri', username: 'username'}];
                     component.setUsername(iri);
                     expect(component.username).toEqual('username');
                 });
             });
         });
-        describe('word if the activity is', () => {
-            it('a supported type', () => {
+        describe('word if the activity is', function() {
+            it('a supported type', function() {
                 component.activity['@type'] = ['type'];
                 fixture.detectChanges();
                 expect(component.word).toEqual('word');
             });
-            it('more than one supported type', () => {
+            it('more than one supported type', function() {
                 component.activity['@type'] = ['type1'];
                 fixture.detectChanges();
                 expect(component.word).toEqual('word1');
             });
-            it('unsupported type', () => {
+            it('unsupported type', function() {
                 expect(component.word).toEqual('affected');
             });
         });
-        describe('entities if the activity is', () => {
-            beforeEach(() => {
+        describe('entities if the activity is', function() {
+            beforeEach(function() {
                 utilStub.getDctermsValue.and.callFake(obj => obj['@id']);
             });
-            it('a supported type', () => {
+            it('a supported type', function() {
                 component.activity['@type'] = ['type'];
                 fixture.detectChanges();
                 expect(component.entitiesStr).toEqual('entity and entity1');
             });
-            it('more than one supported type', () => {
+            it('more than one supported type', function() {
                 component.activity['@type'] = ['type', 'type1'];
                 fixture.detectChanges();
                 expect(component.entitiesStr).toEqual('entity and entity1');
             });
-            it('unsupported type', () => {
+            it('unsupported type', function() {
                 expect(component.entitiesStr).toEqual('(None)');
             });
         });
     });
-    describe('contains the correct html', () => {
-        it('for wrapping containers', () => {
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.activity-title')).length).toEqual(1);
         });
-        it('with the active word for the activity', () => {
+        it('with the active word for the activity', function() {
             component.word = 'word';
             fixture.detectChanges();
             const content = element.queryAll(By.css('.word'))[0];
             expect(content.nativeElement.innerHTML).toContain(component.word);
         });
-        it('with the user for the activity', () => {
+        it('with the user for the activity', function() {
             component.username = 'user';
             fixture.detectChanges();
             const content = element.queryAll(By.css('.username'))[0];
             expect(content.nativeElement.innerHTML).toContain(component.username);
         });
-        it('with the entities for the activity', () => {
+        it('with the entities for the activity', function() {
             component.entitiesStr = '';
             fixture.detectChanges();
             const content = element.queryAll(By.css('.entities'))[0];

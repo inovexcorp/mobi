@@ -38,8 +38,7 @@ import { SharedModule } from "../../../shared/shared.module";
 import { ActivityTitleComponent } from '../activityTitle/activityTitle.component';
 import { ActivityCardComponent } from "./activityCard.component";
 
-// Test
-describe('Activity Card component', () => {
+describe('Activity Card component', function() {
     let component: ActivityCardComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ActivityCardComponent>;
@@ -48,19 +47,7 @@ describe('Activity Card component', () => {
     let prefixesStub;
     let httpStub;
 
-
-    let headers = {
-        'x-total-count': 2,
-    };
-    let response = {
-        data: {
-            activities: [{'@id': 'activity1'}, {'@id': 'activity2'}],
-            entities: [{'@id': 'entity1'}]
-        },
-        headers: jasmine.createSpy('headers').and.returnValue(headers)
-    };
-
-    configureTestSuite(() => {
+    configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ SharedModule ],
             declarations: [
@@ -76,7 +63,7 @@ describe('Activity Card component', () => {
         });
     });
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(fakeAsync(function() {
         fixture = TestBed.createComponent(ActivityCardComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -84,14 +71,32 @@ describe('Activity Card component', () => {
         utilStub = TestBed.get('utilService');
         prefixesStub = TestBed.get('prefixes');
         httpStub = TestBed.get('httpService');
+
+        this.headers = {
+            'x-total-count': 2,
+        };
+        this.response = {
+            data: {
+                activities: [{'@id': 'activity1'}, {'@id': 'activity2'}],
+                entities: [{'@id': 'entity1'}]
+            },
+            headers: jasmine.createSpy('headers').and.returnValue(this.headers)
+        };
     }));
 
-    afterAll(() => {
+    afterAll(function() {
         cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        provManagerStub = null;
+        utilStub = null;
+        prefixesStub = null;
+        httpStub = null;
     });
     
-    describe('should initialize with the correct data', () => {
-        it('unless an error occurs', fakeAsync(() => {
+    describe('should initialize with the correct data', function() {
+        it('unless an error occurs', fakeAsync(function() {
             provManagerStub.getActivities.and.returnValue(Promise.reject('Error message'));
             component.ngOnInit();
             tick();
@@ -104,44 +109,44 @@ describe('Activity Card component', () => {
             expect(component.limit).toEqual(10);
             expect(utilStub.createErrorToast).toHaveBeenCalledWith('Error message');
         }));
-        it('successfully', fakeAsync(() => {
-            provManagerStub.getActivities.and.returnValue(Promise.resolve(response));
+        it('successfully', fakeAsync(function() {
+            provManagerStub.getActivities.and.returnValue(Promise.resolve(this.response));
             component.ngOnInit();
             tick();
             expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
-            expect(component.activities).toEqual(response.data.activities);
-            expect(component.entities).toEqual(response.data.entities);
-            expect(component.totalSize).toEqual(headers['x-total-count']);
+            expect(component.activities).toEqual(this.response.data.activities);
+            expect(component.entities).toEqual(this.response.data.entities);
+            expect(component.totalSize).toEqual(this.headers['x-total-count']);
             expect(component.limit).toEqual(10);
             expect(utilStub.createErrorToast).not.toHaveBeenCalled();
         }));
     });
-    describe('controller methods', () => {
-        describe('should set the page of Activities', () => {
-            it('successfully', fakeAsync(() => {
-                provManagerStub.getActivities.and.returnValue(Promise.resolve(response));
+    describe('controller methods', function() {
+        describe('should set the page of Activities', function() {
+            it('successfully', fakeAsync(function() {
+                provManagerStub.getActivities.and.returnValue(Promise.resolve(this.response));
                 component.setPage();
                 tick();
                 expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
-                expect(component.activities).toEqual(response.data.activities);
-                expect(component.entities).toEqual(response.data.entities);
-                expect(component.totalSize).toEqual(headers['x-total-count']);
+                expect(component.activities).toEqual(this.response.data.activities);
+                expect(component.entities).toEqual(this.response.data.entities);
+                expect(component.totalSize).toEqual(this.headers['x-total-count']);
             }));
-            it('unless an error occurs', fakeAsync(() => {
+            it('unless an error occurs', fakeAsync(function() {
                 provManagerStub.getActivities.and.returnValue(Promise.reject('Error message'));
                 component.setPage();
                 tick();
                 expect(provManagerStub.getActivities).toHaveBeenCalledWith({pageIndex: 0, limit: component.limit}, component.id);
             }));
         });
-        it('should load more activities', () => {
+        it('should load more activities', function() {
             let limit = component.limit;
             spyOn(component, 'setPage');
             component.loadMore();
             expect(component.limit).toEqual(limit + 10);
             expect(component.setPage).toHaveBeenCalled();
         });
-        it('should get the time stamp of an Activity', () => {
+        it('should get the time stamp of an Activity', function() {
             utilStub.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
             utilStub.getDate.and.returnValue('date');
             expect(component.getTimeStamp({})).toEqual('date');
@@ -149,20 +154,20 @@ describe('Activity Card component', () => {
             expect(utilStub.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
         });
     });
-    describe('contains the correct html', () => {
-        it('for wrapping containers', () => {
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.activity-card')).length).toEqual(1);
             expect(element.queryAll(By.css('.card')).length).toEqual(1);
             expect(element.queryAll(By.css('.card-header')).length).toEqual(1);
             expect(element.queryAll(By.css('.card-body')).length).toEqual(1);
         });
-        it('with a .card-header-tabs', () => {
+        it('with a .card-header-tabs', function() {
             expect(element.queryAll(By.css('.card-header-tabs')).length).toEqual(1);
         });
-        it('with a .nav-item', () => {
+        it('with a .nav-item', function() {
             expect(element.queryAll(By.css('.card-header-tabs .nav-item')).length).toEqual(1);
         });
-        it('depending on how many activities there are', () => {
+        it('depending on how many activities there are', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.activity')).length).toEqual(component.activities.length);
             expect(element.queryAll(By.css('.btn')).length).toEqual(0);

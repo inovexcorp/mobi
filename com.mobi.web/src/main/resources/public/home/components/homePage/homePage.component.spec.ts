@@ -32,13 +32,12 @@ import { ActivityCardComponent } from "../activityCard/activityCard.component";
 import { QuickActionGridComponent } from "../quickActionGrid/quickActionGrid.component";
 import { HomePageComponent } from "./homePage.component";
 
-// Test
-describe('Home Page component', () => {
+describe('Home Page component', function() {
     let component: HomePageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<HomePageComponent>;
 
-    configureTestSuite(() => {
+    configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ SharedModule ],
             declarations: [
@@ -49,23 +48,26 @@ describe('Home Page component', () => {
         });
     });
 
-    beforeEach(() => {
+    beforeEach(function() {
         fixture = TestBed.createComponent(HomePageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
     });
 
-    afterAll(() => {
+    afterAll(function() {
         cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
     });
 
-    describe('contains the correct html', () => {
-        it('for wrapping containers', () => {
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.home-page')).length).toEqual(1);
             expect(element.queryAll(By.css('.welcome-banner')).length).toEqual(1);
         });
         ['activity-card', 'quick-action-grid'].forEach(test => {
-            it('with a ' + test, () => {
+            it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
