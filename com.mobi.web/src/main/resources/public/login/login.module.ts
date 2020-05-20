@@ -27,7 +27,6 @@ import { downgradeComponent } from '@angular/upgrade/static';
 
 import { SharedModule } from '../shared/shared.module';
 
-// NgUpgrade
 import { LoginPageComponent } from './components/loginPage/loginPage.component';
 
 /**

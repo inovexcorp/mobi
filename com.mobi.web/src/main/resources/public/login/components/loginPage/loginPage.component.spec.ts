@@ -30,13 +30,13 @@ import { SharedModule } from "../../../shared/shared.module";
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { LoginPageComponent } from './loginPage.component';
 
-describe('Login Page component', () => {
+describe('Login Page component', function() {
     let component: LoginPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<LoginPageComponent>;
     let loginManagerStub = jasmine.createSpyObj('loginManagerService', ['login']);
 
-    configureTestSuite(() => {
+    configureTestSuite(function() {
         TestBed.configureTestingModule({
             imports: [ SharedModule ],
             declarations: [
@@ -49,26 +49,26 @@ describe('Login Page component', () => {
         });
     });
 
-    beforeEach(() => {
+    beforeEach(function() {
         fixture = TestBed.createComponent(LoginPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
     });
 
-    describe('component methods', () => {
-        describe('correctly validates a login combination', () => {
-            beforeEach(() => {
+    describe('component methods', function() {
+        describe('correctly validates a login combination', function() {
+            beforeEach(function() {
                 component.loginForm.controls['username'].setValue('user');
                 component.loginForm.controls['password'].setValue('password');
             });
-            it('unless an error occurs', fakeAsync(() => {
+            it('unless an error occurs', fakeAsync(function() {
                 loginManagerStub.login.and.returnValue(Promise.reject('Error message'));
                 component.login();
                 tick();
                 expect(loginManagerStub.login).toHaveBeenCalledWith(component.loginForm.controls['username'].value, component.loginForm.controls['password'].value);
                 expect(component.errorMessage).toEqual('Error message');
             }));
-            it('successfully', fakeAsync(() => {
+            it('successfully', fakeAsync(function() {
                 loginManagerStub.login.and.returnValue(Promise.resolve());
                 component.login();
                 tick();
@@ -77,24 +77,24 @@ describe('Login Page component', () => {
             }));
         });
     });
-    describe('contains the correct html', () => {
-        it('for wrapping containers', () => {
+    describe('contains the correct html', function() {
+        it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.form-container')).length).toEqual(1);
         });
-        it('with inputs', () => {
+        it('with inputs', function() {
             expect(element.queryAll(By.css('input')).length).toEqual(2);
         });
-        it('with labels', () => {
+        it('with labels', function() {
             expect(element.queryAll(By.css('label')).length).toEqual(2);
         });
-        it('depending on whether an error occurred', () =>{
+        it('depending on whether an error occurred', function(){
             expect(element.query(By.css('error-display'))).toBeFalsy();
             fixture.detectChanges();
             component.errorMessage = 'test';
             fixture.detectChanges();
             expect(element.query(By.css('error-display'))).toBeTruthy();
         });
-        it('if the form is invalid', fakeAsync(() => {
+        it('if the form is invalid', fakeAsync(function() {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
@@ -102,7 +102,7 @@ describe('Login Page component', () => {
             let button = element.query(By.css('button'));
             expect(button.properties['disabled']).toBeTruthy();
         }));
-        it('if the form is valid', fakeAsync(() => {
+        it('if the form is valid', fakeAsync(function() {
             component.loginForm.controls['username'].setValue('user');
             component.loginForm.controls['password'].setValue('password');
             fixture.detectChanges();
