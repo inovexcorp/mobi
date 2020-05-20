@@ -23,21 +23,18 @@
 import * as angular from 'angular';
 import { NgModule } from '@angular/core';
 import { downgradeComponent } from '@angular/upgrade/static';
-
 import { MatTabsModule } from '@angular/material/tabs';
+
 import { SharedModule } from '../shared/shared.module';
 
 import customPreferenceComponent from './components/customPreference/customPreference.component';
-import { groupTabComponent } from './components/groupTab/groupTab.component';
-import { passwordTabComponent } from './components/passwordTab/passwordTab.component';
 import preferencesContainerComponent from './components/preferencesContainer/preferencesContainer.component';
 import preferencesTabComponent from './components/preferencesTab/preferencesTab.component';
-import { profileTabComponent } from './components/profileTab/profileTab.component';
 
 // NgUpgrade
-import { GroupTabDirective } from './components/groupTab/groupTab.component';
-import { PasswordTabDirective } from './components/passwordTab/passwordTab.component';
-import { ProfileTabDirective } from './components/profileTab/profileTab.component';
+import { GroupTabComponent } from './components/groupTab/groupTab.component';
+import { PasswordTabComponent } from './components/passwordTab/passwordTab.component';
+import { ProfileTabComponent } from './components/profileTab/profileTab.component';
 import { SettingsPageComponent } from './components/settingsPage/settingsPage.component';
 
 @NgModule({
@@ -47,9 +44,9 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
     ],
     declarations: [
         SettingsPageComponent,
-        ProfileTabDirective,
-        GroupTabDirective,
-        PasswordTabDirective
+        ProfileTabComponent,
+        GroupTabComponent,
+        PasswordTabComponent
     ],
     entryComponents: [
         SettingsPageComponent
@@ -58,17 +55,15 @@ import { SettingsPageComponent } from './components/settingsPage/settingsPage.co
 export class SettingsModule {}
 
 /**
- * @ngdoc overview
- * @name settings
+ * @namespace settings
  *
- * @description
  * The `settings` module provides components that make up the Settings module in the Mobi application.
  */
 angular.module('settings', [])
     .component('customPreference', customPreferenceComponent)
-    .component('groupTab', groupTabComponent)
-    .component('passwordTab', passwordTabComponent)
     .component('preferencesContainer', preferencesContainerComponent)
     .component('preferencesTab', preferencesTabComponent)
-    .component('profileTab', profileTabComponent)
+    .directive('groupTab', downgradeComponent({component: GroupTabComponent}) as angular.IDirectiveFactory)
+    .component('passwordTab', downgradeComponent({component: PasswordTabComponent}) as angular.IDirectiveFactory)
+    .directive('profileTab', downgradeComponent({component: ProfileTabComponent}) as angular.IDirectiveFactory)
     .directive('settingsPage', downgradeComponent({component: SettingsPageComponent}) as angular.IDirectiveFactory);

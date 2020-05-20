@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,11 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
+import { AbstractControl, ValidationErrors, Validators } from "@angular/forms";
 
-.password-tab {
-    .block-content {
-        padding: 10px;
-    }
+/**
+ * Validator for emails that accepts empty or null values.
+ * 
+ * @param control The FormControl to apply this validator to
+ */
+export function emailOrEmpty(control: AbstractControl): ValidationErrors | null {
+    return control.value === '' ? null : Validators.email(control);
 }

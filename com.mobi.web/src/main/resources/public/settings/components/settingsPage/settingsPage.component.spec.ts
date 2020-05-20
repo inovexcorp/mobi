@@ -20,46 +20,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement, Component } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
 import { MatTabsModule } from '@angular/material/tabs';
+import { MockComponent } from 'ng-mocks';
 
+import { cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
+import { GroupTabComponent } from '../groupTab/groupTab.component';
+import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
+import { ProfileTabComponent } from '../profileTab/profileTab.component';
 import { SettingsPageComponent } from './settingsPage.component';
 
-@Component({
-    selector: 'group-tab',
-    template: ''
-})
-class GroupTabDirectiveMock {}
-
-@Component({
-    selector: 'password-tab',
-    template: ''
-})
-class PasswordTabDirectiveMock {}
-
-@Component({
-    selector: 'profile-tab',
-    template: ''
-})
-class ProfileTabDirectiveMock {}
-
-describe('Settings Page component', () => {
+fdescribe('Settings Page component', () => {
     let element: DebugElement;
     let fixture: ComponentFixture<SettingsPageComponent>;
 
     configureTestSuite(() => {
         TestBed.configureTestingModule({
-            imports: [ MatTabsModule, BrowserAnimationsModule ],
+            imports: [
+                MatTabsModule,
+                BrowserAnimationsModule
+            ],
             declarations: [
                 SettingsPageComponent,
-                GroupTabDirectiveMock,
-                PasswordTabDirectiveMock,
-                ProfileTabDirectiveMock
+                MockComponent(GroupTabComponent),
+                MockComponent(PasswordTabComponent),
+                MockComponent(ProfileTabComponent)
             ]
         });
     });
@@ -67,6 +56,12 @@ describe('Settings Page component', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(SettingsPageComponent);
         element = fixture.debugElement;
+    });
+
+    afterEach(() => {
+        cleanStylesFromDOM();
+        element = null;
+        fixture = null;
     });
 
     describe('contains the correct html', () => {

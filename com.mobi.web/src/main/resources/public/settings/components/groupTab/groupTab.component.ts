@@ -20,48 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Directive, ElementRef, Injector } from '@angular/core';
-import { UpgradeComponent } from '@angular/upgrade/static';
 import { filter, includes } from 'lodash';
-
-import './groupTab.component.scss';
-
-const template = require('./groupTab.component.html');
+import { Component, Inject, OnInit } from '@angular/core';
 
 /**
- * @ngdoc component
- * @name settings.component:groupTab
- * @requires shared.service:userManagerService
- * @requires shared.service:loginManagerService
+ * @name settings.GroupTabComponent
  *
- * @description
  * `groupTab` is a component which creates a Bootstrap list of groups a user is in.
  */
-export const groupTabComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: groupTabComponentCtrl
-};
-
-groupTabComponentCtrl.$inject = ['userManagerService', 'loginManagerService'];
-
-function groupTabComponentCtrl(userManagerService, loginManagerService) {
-    var dvm = this;
-    dvm.um = userManagerService;
-    dvm.lm = loginManagerService;
-    dvm.groups = [];
-
-    dvm.$onInit = function() {
-        dvm.groups = filter(dvm.um.groups, group => includes(group.members, dvm.lm.currentUser));
-    }
-}
-
-@Directive({
-    selector: 'group-tab'
+@Component({
+    selector: 'group-tab',
+    templateUrl: './groupTab.component.html'
 })
-export class GroupTabDirective extends UpgradeComponent {
-    constructor(elementRef: ElementRef, injector: Injector) {
-        super('groupTab', elementRef, injector);
+export class GroupTabComponent implements OnInit {
+    groups = [];
+
+    constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm) {}
+
+    ngOnInit(): void {
+        this.groups = filter(this.um.groups, group => includes(group.members, this.lm.currentUser));
+    }
+
+    trackByFn(group): string {
+        return group.title;
     }
 }
