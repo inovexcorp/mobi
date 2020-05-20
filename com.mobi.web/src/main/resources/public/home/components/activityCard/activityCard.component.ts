@@ -52,11 +52,11 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.httpService.cancel(this.id);
     }
-    loadMore() {
+    loadMore(): void {
         this.limit += this.increment;
         this.setPage();
     }
-    setPage() {
+    setPage(): void {
         this.httpService.cancel(this.id);
         this.pm.getActivities(this.getConfig(), this.id)
             .then(response => {
@@ -70,14 +70,14 @@ export class ActivityCardComponent implements OnInit, OnDestroy {
                 }
             });
     }
-    getTimeStamp(activity) {
+    getTimeStamp(activity): string {
         let dateStr = this.util.getPropertyValue(activity, this.prefixes.prov + 'endedAtTime');
         return this.util.getDate(dateStr, 'short')
     }
-    getConfig() {
+    getConfig(): any {
         return {pageIndex: 0, limit: this.limit};
     }
-    trackByFn(index, item) {
+    trackByFn(index, item): string {
         return item['@id'];
     }
 }

@@ -26,9 +26,9 @@ import { FormBuilder, Validators } from '@angular/forms';
 import './loginPage.component.scss';
 
 /**
- * @class login.loginPageComponent
+ * @class login.LoginPageComponent
  *
- * `login-page` is a component which creates the main login page of the application. The component contains a simple
+ * `loginPage` is a component which creates the main login page of the application. The component contains a simple
  * login form for username and password and displays an error message if an error occurs.
  */
 @Component({
@@ -36,18 +36,20 @@ import './loginPage.component.scss';
     templateUrl: './loginPage.component.html',
 })
 export class LoginPageComponent {
-    public loginForm = this.fb.group({
+    loginForm = this.fb.group({
         username: ['', [Validators.required]],
         password: ['', [Validators.required]]
     });
-    public errorMessage: string;
+    errorMessage = '';
 
-    constructor(@Inject('loginManagerService') private loginManagerService, private fb: FormBuilder) {
-        this.errorMessage = '';
-    }
+    constructor(@Inject('loginManagerService') private loginManagerService, private fb: FormBuilder) {}
 
-    login() {
-        this.loginManagerService.login(this.loginForm.controls['username'].value, this.loginForm.controls['password'].value)
-            .then(() => this.errorMessage = '', errorMessage => this.errorMessage = errorMessage);
+    login(): void {
+        this.loginManagerService.login(this.loginForm.controls.username.value, this.loginForm.controls.password.value)
+            .then(() => {
+                this.errorMessage = '';
+            }, errorMessage => {
+                this.errorMessage = errorMessage;
+            });
     }
 }
