@@ -23,9 +23,9 @@
 /**
  * Make sure not to include any deps from our main index file. That way, we can easily publish the publin as standalone build
  */
-import { Plugin } from '@triply/yasr/src/plugins/index';
+import { Plugin } from '@triply/yasr/src/plugins';
 import Yasr from '@triply/yasr/build/yasr.min.js';
-require("./index.scss");
+
 const CodeMirror = require("codemirror");
 require("codemirror/addon/fold/foldcode.js");
 require("codemirror/addon/fold/foldgutter.js");
@@ -33,23 +33,21 @@ require("codemirror/addon/fold/xml-fold.js");
 require("codemirror/addon/fold/brace-fold.js");
 
 require("codemirror/addon/edit/matchbrackets.js");
-require("codemirror/mode/xml/xml.js");
-require("codemirror/mode/turtle/turtle.js")
 require("codemirror/mode/javascript/javascript.js");
 require("codemirror/lib/codemirror.css");
 import {drawFontAwesomeIconAsSvg, drawSvgStringAsElement, removeClass, addClass} from "../utils/yasguiUtil";
-import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faAlignLeft";
+import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faBug";
 import * as imgs from "@triply/yasr/src/imgs";
 
 export interface PlugingConfig {
     maxLines: number
 }
 
-export default class Turtle implements Plugin<PlugingConfig> {
+export default class JsonLD implements Plugin<PlugingConfig> {
     private config: PlugingConfig;
     private yasr : Yasr;
-    private overLay: HTMLDivElement | undefined;
     private mode;
+    private overLay: HTMLDivElement | undefined;
     //@create interface for cm.
     private cm = {
         getWrapperElement() {
@@ -64,19 +62,19 @@ export default class Turtle implements Plugin<PlugingConfig> {
     };
     // public attributes
     public priority = 11;
-    public label = "Turtle";
+    public label = "JSON-LD";
     public getIcon() {
         return drawSvgStringAsElement(drawFontAwesomeIconAsSvg(faAlignLeft));
     }
 
     constructor(yasr: Yasr) {
         this.yasr = yasr;
-        this.mode = 'text/turtle';
-        this.config = Turtle.defaults;
-        if(yasr.config.plugins['turtle'] && yasr.config.plugins['turtle'].dynamicConfig) {
+        this.mode = 'application/ld+json';
+        this.config = JsonLD.defaults;
+        if(yasr.config.plugins['jsonLD'] && yasr.config.plugins['jsonLD'].dynamicConfig) {
             this.config = {
                 ...this.config,
-                ...yasr.config.plugins['turtle'].dynamicConfig
+                ...yasr.config.plugins['jsonLD'].dynamicConfig
             }
         }
     }
@@ -86,21 +84,13 @@ export default class Turtle implements Plugin<PlugingConfig> {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
         //@todo remove this values from here;
-        value = `@base <http://example.org/> .
-                @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-                @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-                @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-                @prefix rel: <http://www.perceive.net/schemas/relationship/> .
-                
-                <#green-goblin>
-                    rel:enemyOf <#spiderman> ;
-                    a foaf:Person ;    # in the context of the Marvel universe
-                    foaf:name "Green Goblin" .
-                
-                <#spiderman>
-                    rel:enemyOf <#green-goblin> ;
-                    a foaf:Person ;
-                    foaf:name "Spiderman", "Человек-паук"@ru .`;
+        value = `{
+                  "@context": "https://json-ld.org/contexts/person.jsonld",
+                  "@id": "http://dbpedia.org/resource/John_Lennon",
+                  "name": "John Lennon",
+                  "born": "1940-10-09",
+                  "spouse": "http://dbpedia.org/resource/Cynthia_Lennon"
+                }`;
 
         const lines = value.split("\n");
 
@@ -119,8 +109,8 @@ export default class Turtle implements Plugin<PlugingConfig> {
 
         const type = this.yasr.results?.getType();
 
-        if (type === "turtle") {
-            codemirrorOpts['mode'] = this.mode;
+        if (type === "application/json") {
+            codemirrorOpts['mode']  = this.mode;
         }
 
         // testing purpose.

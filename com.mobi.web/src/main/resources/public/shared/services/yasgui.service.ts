@@ -22,6 +22,9 @@
  */
 import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
 import * as YasrTurtlePlugin from '../../vendor/YASGUI/plugins/turtle/turtle';
+import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
+import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
+import { addClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
 
 
 
@@ -43,35 +46,71 @@ function yasguiService(REST_PREFIX) {
         //
         if (Yasgui.Yasr) {
             Yasgui.Yasr.registerPlugin("turtle", YasrTurtlePlugin.default as any);
+            Yasgui.Yasr.registerPlugin("rdfXml", YasrRdfXmlPlugin.default as any);
+            Yasgui.Yasr.registerPlugin("jsonLD", YasrJsonLDlPlugin.default as any);
         } else {
             if (window) {
                 (window as any).Yasr.registerPlugin("turtle", YasrTurtlePlugin.default as any);
+                (window as any).Yasr.registerPlugin("rdfXml", YasrRdfXmlPlugin.default as any);
+                (window as any).Yasr.registerPlugin("jsonLD", YasrJsonLDlPlugin.default as any);
             }
         }
     }
 
-    self.initYasgui = (element, config = {}) => {
+    const initEvents = () => {
+        self.yasgui.getTab().yasr.on('change',(e) => {
+            refreshPluginData();
+        });
+    }
+
+    const refreshPluginData = () => {
+        if (self.yasgui.getTab().yasr.drawnPlugin && self.yasgui.getTab().yasr.selectedPlugin) {
+            let config = {
+                url: getUrl(),
+                reqMethod: "GET",
+                args: { returnFormat:  self.yasgui.getTab().yasr.drawnPlugin }
+
+            }
+            console.log('config', config);
+            self.submitQuery(config)
+        }
+    }
+
+    const getUrl = () => {
         const path = REST_PREFIX + 'sparql/page';
         const { href } = new URL(path, document.location.origin);
-        let localConfig = {
+        return href;
+    }
+
+    const getDefaultConfig =  () => {
+        return {
             requestConfig : {
                 method: 'GET',
-                endpoint: href
+                endpoint: getUrl()
             },
             persistencyExpire: 0,
             populateFromUrl: false,
             copyEndpointOnNewTab: false
         };
+
+    }
+
+    self.initYasgui = (element, config = {}) => {
+        const localConfig = getDefaultConfig();
         const configuration = merge({}, localConfig, config );
+        // Init YASGUI
         initPlugins();
         self.yasgui = new Yasgui(element, configuration);
         hasInitialized = true;
+        document.querySelector(`.select_response`).classList.add('hide');
+        // Init UI events
+        initEvents();
         return self.yasgui;
     }
     // fire a new query
-    self.submitQuery  = () => {
-        if(hasInitialized){
-            self.yasgui.getTab().yasqe.query();
+    self.submitQuery  = (queryConfig = {}) => {
+        if(hasInitialized) {
+            self.yasgui.getTab().yasqe.query(queryConfig);
         } else {
             throw 'Yasgui has not ben inizialize!';
         }
