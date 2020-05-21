@@ -42,6 +42,7 @@ import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.persistence.utils.impl.SimpleSesameTransformer;
+import com.mobi.query.QueryResultsIO;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -54,6 +55,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.query.utils.QueryResultsIOService;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.sparql.rest.SparqlRest;
 import net.sf.json.JSONArray;
@@ -115,6 +117,9 @@ public class SparqlRestTest extends MobiRestTestNg {
     @Mock
     private SesameTransformer sesameTransformer;
 
+    @Mock
+    private QueryResultsIO queryResultsIO;
+
 
     @Override
     protected Application configureApp() throws Exception {
@@ -144,6 +149,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest.setDatasetManager(datasetManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setValueFactory(vf);
+        rest.setQueryResultsIO(new QueryResultsIOService());
 
         rest = Mockito.spy(rest);
 
@@ -344,8 +350,6 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            assertEquals(response.getStatus(), 200);
-
             verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
                     anyString(), anyString(), anyString());
 
@@ -355,6 +359,8 @@ public class SparqlRestTest extends MobiRestTestNg {
             } else {
                 verify(repositoryManager).getRepository("system");
             }
+
+            assertEquals(response.getStatus(), 200);
 
             // assertEquals(response.getHeaderString("Content-Disposition"), null);
             // TODO should this be null? when request does not have accept header it goes to download

@@ -448,15 +448,13 @@ public class SparqlRest {
                         queryResultsIO.writeTuple(queryResults, format, os);
                     }
                 }
-
             } catch (IllegalArgumentException ex){
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            } catch (Exception ex){
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
         };
     }
-
-
-
 
     /**
      * Convert the file Extension to mime type.
@@ -692,6 +690,7 @@ public class SparqlRest {
             ObjectNode response = mapper.createObjectNode();
             response.set("data", results);
             response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
+
             Response.ResponseBuilder builder = Response.ok(response.toString())
                     .header("X-Total-Count", bindings.size());
             Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
