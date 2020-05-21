@@ -173,7 +173,7 @@ public class SparqlRest {
         }
 
         ParsedOperation parsedOperation = getParsedOperation(queryString);
-        try{
+        try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
                     return handleSelectQuery(queryString, datasetRecordId, acceptString, null, null);
@@ -234,7 +234,7 @@ public class SparqlRest {
 
         String mimeType = convertFileExtensionToMimeType(fileType);
 
-        try{
+        try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) { // select queries
                     return handleSelectQuery(queryString, datasetRecordId, mimeType, fileName, acceptString);
@@ -287,7 +287,8 @@ public class SparqlRest {
             case JSON_MIME_TYPE:
                 fileExtension = "json";
                 mimeType = JSON_MIME_TYPE;
-                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.JSON, fileExtension);
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName,
+                            TupleQueryResultFormat.JSON, fileExtension);
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
@@ -304,12 +305,14 @@ public class SparqlRest {
             case CSV_MIME_TYPE:
                 fileExtension = "csv";
                 mimeType = CSV_MIME_TYPE;
-                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.CSV, fileExtension);
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName,
+                            TupleQueryResultFormat.CSV, fileExtension);
                 break;
             case TSV_MIME_TYPE:
                 fileExtension = "tsv";
                 mimeType = TSV_MIME_TYPE;
-                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.TSV, fileExtension);
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName,
+                            TupleQueryResultFormat.TSV, fileExtension);
                 break;
             default:
                 fileExtension = "json";
@@ -318,7 +321,8 @@ public class SparqlRest {
                 log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
                         acceptString, mimeType));
 
-                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName, TupleQueryResultFormat.JSON, fileExtension);
+                stream = getSelectResponse(queryString, datasetRecordId, mimeType, fileName,
+                            TupleQueryResultFormat.JSON, fileExtension);
                 break;
         }
 
@@ -385,7 +389,8 @@ public class SparqlRest {
         }
     }
 
-    private Response getRepositoryResponse(String queryString, String mimeType, String fileName, RDFFormat format, String fileExtension) {
+    private Response getRepositoryResponse(String queryString, String mimeType, String fileName,
+                                           RDFFormat format, String fileExtension) {
         StreamingOutput stream = os -> {
             Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
@@ -396,7 +401,7 @@ public class SparqlRest {
                 Rio.write(graphQueryResult, writer, sesameTransformer);
                 os.flush();
                 os.close();
-            } catch (IllegalArgumentException ex){
+            } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
         };
@@ -407,7 +412,8 @@ public class SparqlRest {
         return builder.build();
     }
 
-    private Response getDatasetResponse(String queryString, String datasetRecordId, String mimeType, String fileName, RDFFormat format, String fileExtension) {
+    private Response getDatasetResponse(String queryString, String datasetRecordId, String mimeType, String fileName,
+                                        RDFFormat format, String fileExtension) {
         StreamingOutput stream = os -> {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
             try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
@@ -417,7 +423,7 @@ public class SparqlRest {
                 Rio.write(graphQueryResult, writer, sesameTransformer);
                 os.flush();
                 os.close();
-            } catch (IllegalArgumentException ex){
+            } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
         };
@@ -428,9 +434,10 @@ public class SparqlRest {
         return builder.build();
     }
 
-    private StreamingOutput getSelectResponse(String queryString, String datasetRecordId, String mimeType, String fileName, TupleQueryResultFormat format, String fileExtension) {
+    private StreamingOutput getSelectResponse(String queryString, String datasetRecordId, String mimeType,
+                                              String fileName, TupleQueryResultFormat format, String fileExtension) {
         return os -> {
-            try{
+            try {
                 if (!StringUtils.isBlank(datasetRecordId)) {
                     Resource recordId = valueFactory.createIRI(datasetRecordId);
 
@@ -441,16 +448,17 @@ public class SparqlRest {
                     }
                 } else {
                     Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                            ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+                            ErrorUtils.sendError("Repository is not available.",
+                                    Response.Status.INTERNAL_SERVER_ERROR));
                     try (RepositoryConnection conn = repository.getConnection()) {
                         TupleQuery query = conn.prepareTupleQuery(queryString);
                         TupleQueryResult queryResults = query.evaluate();
                         queryResultsIO.writeTuple(queryResults, format, os);
                     }
                 }
-            } catch (IllegalArgumentException ex){
+            } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
             }
         };
