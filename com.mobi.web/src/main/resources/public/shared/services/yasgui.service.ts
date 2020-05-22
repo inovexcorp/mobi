@@ -44,7 +44,9 @@ function yasguiService(REST_PREFIX) {
     const self = this;
     const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/page', document.location.origin);
     let hasInitialized = false
-    let defaultType = 'jsonld'
+    let defaultType = 'jsonld';
+    let isInitialLoad = true;
+    let yasrRootElement : HTMLElement = <any>{};
     const initPlugins = () => {
         //
         if (Yasgui.Yasr) {
@@ -58,11 +60,17 @@ function yasguiService(REST_PREFIX) {
                 (window as any).Yasr.registerPlugin("jsonLD", YasrJsonLDlPlugin.default as any);
             }
         }
+        Yasgui.Yasr.defaults.pluginOrder = [ "table", "turtle" , , "rdfXml", "jsonLD", "response"]
+        // Ordered list of enabled output plugins
+        //Yasgui.Yasr.config.pluginOrder = ["table", "turtle",'rdfXml', 'jsonLD'];
+        //yasr.config.pluginOrder =
     }
 
     const initEvents = () => {
-        self.yasgui.getTab().yasr.on('change',(e) => {
-            refreshPluginData();
+        self.yasgui.getTab().yasr.on('change',(yasrResult) => {
+            if(isPluginEnabled(yasrResult?.selectedPlugin)) {
+                refreshPluginData();
+            }
         });
     }
 
@@ -130,6 +138,21 @@ function yasguiService(REST_PREFIX) {
 
     }
 
+    const handleYasrVisivility = () => {
+        let className = 'hide'
+        let isElementHidden = hasClass(yasrRootElement,className);
+        let method = isElementHidden ? 'remove' : 'add'
+        let hasResults = !!self.yasgui.getTab().yasr.results;
+
+        if(method === 'add' && !hasResults) {
+            yasrRootElement.classList.add(className);
+        } else {
+            if(isElementHidden) {
+                yasrRootElement.classList.remove(className);
+            }
+        }
+    }
+
     self.initYasgui = (element, config = {}) => {
         const localConfig = getDefaultConfig();
         const configuration = merge({}, localConfig, config );
@@ -137,15 +160,18 @@ function yasguiService(REST_PREFIX) {
         initPlugins();
         self.yasgui = new Yasgui(element, configuration);
         hasInitialized = true;
-        document.querySelector(`.select_response`).classList.add('hide');
         // Init UI events
         initEvents();
+        yasrRootElement =  self.yasgui.getTab().yasr.rootEl;
+        handleYasrVisivility();
+        document.querySelector(`.select_response`).classList.add('hide');
         return self.yasgui;
     }
 
     // fire a new query
     self.submitQuery  = (queryConfig = {}) => {
         if(hasInitialized) {
+            handleYasrVisivility();
             self.yasgui.getTab().yasqe.query(queryConfig);
         } else {
             throw 'Yasgui has not ben inizialize!';

@@ -30,7 +30,32 @@
   .tabsList {
     display: none;
   }
+  
+  .yasqe {
+    .CodeMirror {
+      max-height: 65vh;
+    }
+  }
+
+  .yasr { 
+    .CodeMirror-scroll {
+      max-height: 45vh;
+      overflow-y: scroll;
+    }
+
+    //reset overlay style
+    .overlay {
+      background-color: unset;
+      bottom: 0;
+      left: 0;
+      position: inherit;
+      right: unset;
+      top: unset;
+    }
+  }
+
 }
+
 .codemirror-wrapper {
   display: none;
 }
