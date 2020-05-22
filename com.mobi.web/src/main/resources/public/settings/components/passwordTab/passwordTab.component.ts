@@ -22,7 +22,7 @@
  */
 import { find, cloneDeep } from 'lodash';
 import { OnInit, Component, Inject } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 
 import { checkPasswords } from '../../../shared/validators/checkPasswords.validator';
 
@@ -54,18 +54,27 @@ export class PasswordTabComponent implements OnInit {
     ngOnInit(): void {
         this.currentUser = cloneDeep(find(this.um.users, { username: this.lm.currentUser }));
         if (this.currentUser.external) {
-            Object.keys(this.passwordForm.controls).forEach(controlName => {
-                this.passwordForm.controls[controlName].disable();
-            });
+            this.disableAllFields(this.passwordForm);
         }
     }
 
     save(): void {
-        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.controls.password.value)
+        this.um.changePassword(this.lm.currentUser, this.passwordForm.controls.currentPassword.value, this.passwordForm.get('newPassword.password').value)
             .then(() => {
                 this.errorMessage = '';
                 this.util.createSuccessToast('Password successfully saved');
                 this.passwordForm.reset();
             }, error => this.errorMessage = error);
+    }
+
+    disableAllFields(formGroup: FormGroup): void {
+        Object.keys(formGroup.controls).forEach(controlName => {
+            let temp = formGroup.get(controlName)
+            if (temp instanceof FormGroup) {
+                this.disableAllFields(temp);
+            } else {
+                temp.disable();
+            }
+        });
     }
 }

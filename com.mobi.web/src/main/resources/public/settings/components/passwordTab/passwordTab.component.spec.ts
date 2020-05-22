@@ -36,7 +36,7 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { PasswordTabComponent } from './passwordTab.component';
 import { By } from '@angular/platform-browser';
 
-fdescribe('Password Tab component', function() {
+describe('Password Tab component', function() {
     let component: PasswordTabComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PasswordTabComponent>;
@@ -87,41 +87,41 @@ fdescribe('Password Tab component', function() {
             expect(component.currentUser).not.toBe(userManagerStub.users[0]);
             expect(component.currentUser).toEqual(userManagerStub.users[0]);
             expect(component.passwordForm.controls.currentPassword).toBeTruthy();
-            expect(component.passwordForm.controls.password).toBeTruthy();
-            expect(component.passwordForm.controls.confirmPassword).toBeTruthy();
+            expect(component.passwordForm.get('newPassword.password')).toBeTruthy();
+            expect(component.passwordForm.get('newPassword.confirmPassword')).toBeTruthy();
         });
         it('if user is external', function() {
             userManagerStub.users[0].external = true;
             component.ngOnInit();
             expect(component.passwordForm.controls.currentPassword.disabled).toEqual(true);
-            expect(component.passwordForm.controls.password.disabled).toEqual(true);
-            expect(component.passwordForm.controls.confirmPassword.disabled).toEqual(true);
+            expect(component.passwordForm.get('newPassword.password').disabled).toEqual(true);
+            expect(component.passwordForm.get('newPassword.confirmPassword').disabled).toEqual(true);
         });
     });
     describe('controller methods', function() {
         describe('should save changes to the user password', function() {
             beforeEach(function() {
                 component.passwordForm.controls.currentPassword.setValue('test');
-                component.passwordForm.controls.password.setValue('new');
+                component.passwordForm.get('newPassword.password').setValue('new');
             });
             it('unless an error occurs', fakeAsync(function() {
                 userManagerStub.changePassword.and.returnValue(Promise.reject('Error message'));
                 component.save();
                 tick();
-                expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, component.passwordForm.controls.currentPassword.value, component.passwordForm.controls.password.value);
+                expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, component.passwordForm.controls.currentPassword.value, component.passwordForm.get('newPassword.password').value);
                 expect(component.errorMessage).toEqual('Error message');
             }));
             it('successfully', fakeAsync(function() {
                 let currentPassword = component.passwordForm.controls.currentPassword.value;
-                let password = component.passwordForm.controls.password.value;
+                let password = component.passwordForm.get('newPassword.password').value;
                 component.save();
                 tick();
                 expect(userManagerStub.changePassword).toHaveBeenCalledWith(loginManagerStub.currentUser, currentPassword, password);
                 expect(utilStub.createSuccessToast).toHaveBeenCalled();
                 expect(component.errorMessage).toEqual('');
-                Object.keys(component.passwordForm.controls).forEach(controlName => {
-                    expect(component.passwordForm.controls[controlName].value).toEqual('');
-                });
+                expect(component.passwordForm.controls.currentPassword.value).toBeFalsy();
+                expect(component.passwordForm.get('newPassword.password').value).toBeFalsy();
+                expect(component.passwordForm.get('newPassword.confirmPassword').value).toBeFalsy();
                 expect(component.passwordForm.pristine).toEqual(true);
             }));
         });
@@ -146,21 +146,17 @@ fdescribe('Password Tab component', function() {
 
             component.passwordForm.controls.currentPassword.markAsDirty();
             fixture.detectChanges();
-            expect(currentPassword.attributes.class.includes('is-invalid')).toEqual(true);
-        });
-        it('depending on the form validity and dirtiness', function() {
-            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
-
-            component.passwordForm.controls.email.markAsDirty();
-            fixture.detectChanges();
-            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeFalsy();
-            
-            component.passwordForm.controls.email.setValue('test');
-            fixture.detectChanges();
-            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
+            console.log(component.passwordForm.get('currentPassword').dirty && component.passwordForm.get('currentPassword').invalid);
+            expect(Object.keys(currentPassword.classes).includes('is-invalid')).toEqual(true);
         });
         it('depending on whether the current user is external', function() {
-            component.passwordForm.controls.firstName.markAsDirty();
+            component.passwordForm.setValue({
+                currentPassword: 'test',
+                newPassword: {
+                    password: 'new',
+                    confirmPassword: 'new'
+                }
+            });
             fixture.detectChanges();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeFalsy();
 
