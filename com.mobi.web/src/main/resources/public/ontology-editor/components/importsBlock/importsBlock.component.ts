@@ -48,7 +48,7 @@ const template = require('./importsBlock.component.html');
 const importsBlockComponent = {
     template,
     bindings: {
-        listItem: '<',
+        listItem: '<'
     },
     controllerAs: 'dvm',
     controller: importsBlockComponentCtrl
