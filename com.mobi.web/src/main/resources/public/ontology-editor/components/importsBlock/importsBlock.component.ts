@@ -48,7 +48,8 @@ const template = require('./importsBlock.component.html');
 const importsBlockComponent = {
     template,
     bindings: {
-        listItem: '<'
+        listItem: '<',
+        selected: '<'
     },
     controllerAs: 'dvm',
     controller: importsBlockComponentCtrl
@@ -106,7 +107,7 @@ function importsBlockComponentCtrl($q, $timeout, ontologyStateService, prefixes,
             }, util.createErrorToast);
     }
     dvm.setIndirectImports = function() {
-        var directImports = map(get(dvm.listItem.selected, prefixes.owl + 'imports'), '@id');
+        var directImports = map(get(dvm.selected, prefixes.owl + 'imports'), '@id');
         var goodImports = map(dvm.listItem.importedOntologies, item => pick(item, 'id', 'ontologyId'));
         var failedImports = map(dvm.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
         var allImports = concat(goodImports, failedImports);

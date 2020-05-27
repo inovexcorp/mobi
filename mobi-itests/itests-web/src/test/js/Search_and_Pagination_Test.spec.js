@@ -62,7 +62,7 @@ module.exports = {
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
     },
 
-    'Step 5: Upload and submit all Ontologies': function (browser) {
+    'Step 4: Upload and submit all Ontologies': function (browser) {
         for (var count = 0; count < ontologies.length; count++) {
             browser
                 .waitForElementNotPresent('div.spinner')
@@ -74,25 +74,17 @@ module.exports = {
         }
     },
 
-    'Step 7: Validate Ontology Appearance': function (browser) {
+    'Step 5: Validate Correct Number of Ontologies are Uploaded': function (browser) {
         browser
             .waitForElementVisible('div.ontologies')
             .assert.elementNotPresent('div.modal-header')
             .waitForElementVisible('div.ontologies')
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
+            .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
+            .assert.elementNotPresent('//paging//ul//li[3]//a[contains(@class, "disabled" )]')
     },
 
-    'Step 8: Validate Pagination With No text': function (browser) {
+    'Step 6: Validate Pagination With No text': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "upload-snackbar")]//div//button[text()[contains(.,"close")]]')
             .waitForElementNotVisible('//div[contains(@class, "upload-snackbar")]')
@@ -103,25 +95,16 @@ module.exports = {
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
     },
 
-    'Step 9: Go Back to Previous Page': function (browser) {
+    'Step 7: Go Back to Previous Page': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
             .useCss()
             .waitForElementNotPresent('div.spinner')
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"pagination-ontology-4.ttl")]]')
+            .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
     },
 
-    'Step 10: Validate Pagination With Unconfirmed Search Text': function (browser) {
+    'Step 8: Validate Pagination With Unconfirmed Search Text': function (browser) {
         browser
             .click('xpath', '//search-bar')
             .keys('test')
@@ -132,20 +115,17 @@ module.exports = {
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
     },
 
-    'Step 11: Validate Search Function': function (browser) {
+    'Step 9: Validate Search Function': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
             .click('xpath', '//search-bar')
             .keys(browser.Keys.ENTER)
+            .waitForElementVisible('//div[contains(@class, "ontologies")]')
             .useCss()
             .waitForElementNotPresent('div.spinner')
-            .pause(3000)
             .useXpath()
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-1")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-2")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-3")]')
     }
-
-
-
 }
