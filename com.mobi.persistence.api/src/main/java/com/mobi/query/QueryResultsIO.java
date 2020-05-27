@@ -30,6 +30,13 @@ import java.io.OutputStream;
 
 public interface QueryResultsIO {
 
+    /**
+     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
+     * @param tqr TupleQueryResult the tuple results
+     * @param format TupleQueryResultFormat the format to stream in
+     * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
+     * @throws IOException
+     */
     public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException;
 
 }

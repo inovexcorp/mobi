@@ -117,10 +117,6 @@ public class SparqlRestTest extends MobiRestTestNg {
     @Mock
     private SesameTransformer sesameTransformer;
 
-    @Mock
-    private QueryResultsIO queryResultsIO;
-
-
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
@@ -362,10 +358,6 @@ public class SparqlRestTest extends MobiRestTestNg {
             }
 
             assertEquals(response.getStatus(), 200);
-
-            // assertEquals(response.getHeaderString("Content-Disposition"), null);
-            // TODO should this be null? when request does not have accept header it goes to download
-            //  instead of query endpoint
             assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
 
             String responseString = response.readEntity(String.class);

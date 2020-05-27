@@ -56,8 +56,6 @@
             <artifactId>rdf4j-queryresultio-api</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
-
     </dependencies>
 
     <build>

@@ -23,6 +23,7 @@ package com.mobi.repository.impl.sesame.query.utils;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.repository.impl.sesame.query.SesameTupleQueryResult;
@@ -35,9 +36,20 @@ import java.io.OutputStream;
 @Component
 public class QueryResultsIOService implements QueryResultsIO {
 
+    /**
+     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
+     * @param tqr TupleQueryResult the tuple results
+     * @param format TupleQueryResultFormat the format to stream in
+     * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
+     * @throws IOException
+     */
     @Override
     public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException {
-        SesameTupleQueryResult sesameTupleQueryResult = (SesameTupleQueryResult) tqr;
-        org.eclipse.rdf4j.query.resultio.QueryResultIO.writeTuple(sesameTupleQueryResult.getTupleQueryResult(), format, out);
+        if(tqr instanceof SesameTupleQueryResult){
+            SesameTupleQueryResult sesameTupleQueryResult = (SesameTupleQueryResult) tqr;
+            org.eclipse.rdf4j.query.resultio.QueryResultIO.writeTuple(sesameTupleQueryResult.getTupleQueryResult(), format, out);
+        } else {
+            throw new MobiException("TupleQueryResult is not an instance of SesameTupleQueryResult");
+        }
     }
 }

@@ -75,6 +75,8 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.security.RolesAllowed;
@@ -444,12 +446,7 @@ public class SparqlRest {
             return os -> {
                 Resource recordId = valueFactory.createIRI(datasetRecordId);
                 try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
-                    GraphQueryResult graphQueryResult = graphQuery.evaluate();
-                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
-                    Rio.write(graphQueryResult, writer, sesameTransformer);
-                    os.flush();
-                    os.close();
+                    executeGraphQuery(queryString, format, os, conn);
                 } catch (IllegalArgumentException ex) {
                     throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
@@ -459,12 +456,7 @@ public class SparqlRest {
                 Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                         ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
                 try (RepositoryConnection conn = repository.getConnection()) {
-                    GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
-                    GraphQueryResult graphQueryResult = graphQuery.evaluate();
-                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
-                    Rio.write(graphQueryResult, writer, sesameTransformer);
-                    os.flush();
-                    os.close();
+                    executeGraphQuery(queryString, format, os, conn);
                 } catch (IllegalArgumentException ex) {
                     throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
@@ -472,33 +464,46 @@ public class SparqlRest {
         }
     }
 
-    private StreamingOutput getSelectStream(String queryString, String datasetRecordId, TupleQueryResultFormat format) {
-        return os -> {
-            try {
-                if (!StringUtils.isBlank(datasetRecordId)) {
-                    Resource recordId = valueFactory.createIRI(datasetRecordId);
+    private void executeGraphQuery(String queryString, RDFFormat format, OutputStream os, RepositoryConnection conn)
+            throws IOException {
+        GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
+        GraphQueryResult graphQueryResult = graphQuery.evaluate();
+        RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
+        Rio.write(graphQueryResult, writer, sesameTransformer);
+        os.flush();
+        os.close();
+    }
 
-                    try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                        TupleQuery query = conn.prepareTupleQuery(queryString);
-                        TupleQueryResult queryResults = query.evaluate();
-                        queryResultsIO.writeTuple(queryResults, format, os);
-                    }
-                } else {
-                    Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                            ErrorUtils.sendError("Repository is not available.",
-                                    Response.Status.INTERNAL_SERVER_ERROR));
-                    try (RepositoryConnection conn = repository.getConnection()) {
-                        TupleQuery query = conn.prepareTupleQuery(queryString);
-                        TupleQueryResult queryResults = query.evaluate();
-                        queryResultsIO.writeTuple(queryResults, format, os);
-                    }
+    private StreamingOutput getSelectStream(String queryString, String datasetRecordId, TupleQueryResultFormat format) {
+        if (!StringUtils.isBlank(datasetRecordId)) {
+            return os -> {
+                Resource recordId = valueFactory.createIRI(datasetRecordId);
+
+                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                    executeTupleQuery(queryString, format, os, conn);
+                } catch (IllegalArgumentException ex) {
+                    throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
-            } catch (IllegalArgumentException ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-            } catch (Exception ex) {
-                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-            }
-        };
+            };
+        } else {
+            return os -> {
+                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                        ErrorUtils.sendError("Repository is not available.",
+                                Response.Status.INTERNAL_SERVER_ERROR));
+                try (RepositoryConnection conn = repository.getConnection()) {
+                    executeTupleQuery(queryString, format, os, conn);
+                } catch (IllegalArgumentException ex) {
+                    throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+                }
+            };
+        }
+    }
+
+    private void executeTupleQuery(String queryString, TupleQueryResultFormat format, OutputStream os,
+                                   RepositoryConnection conn) throws IOException {
+        TupleQuery query = conn.prepareTupleQuery(queryString);
+        TupleQueryResult queryResults = query.evaluate();
+        queryResultsIO.writeTuple(queryResults, format, os);
     }
 
     /**
@@ -574,44 +579,6 @@ public class SparqlRest {
         return queryResults;
     }
 
-    /**
-     * Execute Construct Queries.
-     * @param queryString The SPARQL query to execute.
-     * @return Model Graph Results Model
-     */
-    private GraphQueryResult getGraphResults(String queryString, String datasetRecordId) {
-        try {
-            if (!StringUtils.isBlank(datasetRecordId)) {
-                Resource recordId = valueFactory.createIRI(datasetRecordId);
-                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
-                    GraphQueryResult graphQueryResult = graphQuery.evaluate();
-                    return graphQueryResult;
-                }
-            } else {
-                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                        ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
-                try (RepositoryConnection conn = repository.getConnection()) {
-                    GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
-                    GraphQueryResult graphQueryResult = graphQuery.evaluate();
-                    return graphQueryResult;
-                }
-            }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getCause().getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     /**
      * Get ParsedOperation from query string.
