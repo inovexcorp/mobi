@@ -108,22 +108,22 @@ module.exports = {
         browser
             .click('xpath', '//search-bar')
             .keys('test')
+            .pause(1000)
             .click('xpath', '//div[contains(@class, "paging")]//li[3]//a')
             .useCss()
             .waitForElementNotPresent('div.spinner')
             .useXpath()
+            .waitForElementVisible('//div[contains(@class, "ontologies")]')
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
     },
 
     'Step 9: Validate Search Function': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
+            .waitForElementNotPresent('css','div.spinner')
             .click('xpath', '//search-bar')
             .keys(browser.Keys.ENTER)
-            .waitForElementVisible('//div[contains(@class, "ontologies")]')
-            .useCss()
-            .waitForElementNotPresent('div.spinner')
-            .useXpath()
+            .waitForElementNotPresent('css','div.spinner')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-1")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-2")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-3")]')
