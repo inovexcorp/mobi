@@ -46,6 +46,7 @@ function yasguiService(REST_PREFIX) {
     let hasInitialized = false
     let defaultType = 'jsonld';
     let isInitialLoad = true;
+
     let yasrRootElement : HTMLElement = <any>{};
     const initPlugins = () => {
         //
@@ -67,11 +68,32 @@ function yasguiService(REST_PREFIX) {
     }
 
     const initEvents = () => {
-        self.yasgui.getTab().yasr.on('change',(yasrResult) => {
-            if(isPluginEnabled(yasrResult?.selectedPlugin)) {
+
+        self.yasgui.getTab().yasr.on('change',(instance: Yasgui.Yasr, plugin: Plugin) => {
+            if(isPluginEnabled(instance?.selectedPlugin)) {
                 refreshPluginData();
             }
         });
+
+        // Fires when a plugin finished drawing the results
+        self.yasgui.getTab().yasr.on("draw",(instance: Yasgui.Yasr, plugin: Plugin) => {
+            console.log(instance, plugin);
+        });
+
+        self.yasgui.getTab().yasqe.on("resize",(element) => {
+            let yasrCodeMirrorElement = <HTMLElement>document.querySelector('.yasr .CodeMirror-scroll');
+            yasrCodeMirrorElement.style.height = getYasContainerHeight(element);
+        });
+
+
+
+    }
+
+
+    const getYasContainerHeight = (element) =>  {
+        let root = <HTMLElement>document.querySelector('.yasqe')
+        let style  = `calc( ${window.innerHeight - 250}px - ${root.offsetHeight}px)`;
+        return style;
     }
 
     const getFormat = (type : string =  defaultType) => {
@@ -148,6 +170,9 @@ function yasguiService(REST_PREFIX) {
             yasrRootElement.classList.add(className);
         } else {
             if(isElementHidden) {
+                let yasrCodeMirrorElement = <HTMLElement>document.querySelector('.yasr .CodeMirror-scroll');
+                let element = document.querySelector('.CodeMirror.cm-s-default.CodeMirror-wrap');
+                yasrCodeMirrorElement.style.height = getYasContainerHeight(element);
                 yasrRootElement.classList.remove(className);
             }
         }

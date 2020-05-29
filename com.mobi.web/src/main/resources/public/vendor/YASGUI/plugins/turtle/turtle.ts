@@ -132,7 +132,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
     canHandleResults() {
         if (!this.yasr.results) return false;
         if (!this.yasr.results.getOriginalResponseAsString) return false;
-        if (this.yasr.results?.getType() === 'json') return false;
+        if (this.yasr.results?.getContentType() !== 'text/turtle') return false;
         const response = this.yasr.results.getOriginalResponseAsString();
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;
