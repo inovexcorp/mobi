@@ -108,7 +108,7 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         // testing purpose.
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
         // Don't show less originally we've already set the value in the codemirrorOpts
-        //if (lines.length > this.config.maxLines) this.showLess(false);
+        if (lines.length > this.config.maxLines) this.showLess(false);
     }
 
 
