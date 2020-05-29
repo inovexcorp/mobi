@@ -504,6 +504,8 @@ public class SparqlRest {
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult queryResults = query.evaluate();
         queryResultsIO.writeTuple(queryResults, format, os);
+        os.flush();
+        os.close();
     }
 
     /**
