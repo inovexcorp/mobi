@@ -76,7 +76,7 @@
             </div>
             <info-message ng-if="!dvm.filteredList.length">No ontologies to show</info-message>
         </div>
-        <paging total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" change-event="dvm.getPageOntologyRecords(page)"></paging>
+        <paging total="dvm.totalSize" limit="dvm.limit" current-page="dvm.currentPage" change-event="dvm.getPageOntologyRecords(page, '')"></paging>
     </div>
     <upload-snackbar show-snackbar="dvm.showSnackbar" change-event="dvm.showSnackbar = value"></upload-snackbar>
 </div>

@@ -232,6 +232,7 @@ describe('Open Ontology Tab component', function() {
         describe('should delete an ontology', function() {
             beforeEach(function() {
                 this.controller.showDeleteConfirmation = true;
+                this.controller.filterText = "filterText";
                 this.recordId = 'recordA';
                 this.controller.recordId = this.recordId;
                 ontologyStateSvc.getOntologyStateByRecordId.and.returnValue({id: 'state'});
@@ -257,7 +258,7 @@ describe('Open Ontology Tab component', function() {
                 expect(this.records).not.toContain(jasmine.objectContaining({'@id': this.recordId}));
                 expect(ontologyStateSvc.getOntologyStateByRecordId).toHaveBeenCalledWith(this.recordId);
                 expect(ontologyStateSvc.deleteOntologyState).toHaveBeenCalledWith(this.recordId);
-                expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1);
+                expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1, "filterText");
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
@@ -282,8 +283,9 @@ describe('Open Ontology Tab component', function() {
         });
         it('should perform a search', function() {
             spyOn(this.controller, 'getPageOntologyRecords');
+            this.controller.filterText = "searchText"
             this.controller.search();
-            expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1);
+            expect(this.controller.getPageOntologyRecords).toHaveBeenCalledWith(1 , "searchText");
         });
         it('should show a record access overlay', function() {
             this.controller.showAccessOverlay({'@id': 'recordId'}, 'rule');
