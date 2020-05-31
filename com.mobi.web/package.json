@@ -10,7 +10,9 @@
     "build:prod": "npm run build -- --env.env=prod",
     "build:dev": "npm run build -- --env.env=dev",
     "build": "npm run antlr && webpack --bail --progress",
-    "test": "karma start karma.conf.build.js && karma start karma.conf.ng.js --build",
+    "test": "npm run test:ajs && npm run test:ng",
+    "test:ajs": "karma start karma.conf.build.js",
+    "test:ng": "karma start karma.conf.ng.js --build",
     "tdd": "karma start karma.conf.tdd.js",
     "tdd-ng": "karma start karma.conf.ng.js --browsers Chrome --reporters progress --no-single-run"
   },
