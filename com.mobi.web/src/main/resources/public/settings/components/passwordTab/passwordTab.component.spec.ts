@@ -140,14 +140,49 @@ describe('Password Tab component', function() {
             fixture.detectChanges();
             expect(element.query(By.css('error-display'))).toBeTruthy();
         });
-        it('with the correct classes based on the confirm password field validity', function() {
+        it('with the correct classes based on the confirm password field dirty flag', function() {
             let currentPassword = element.query(By.css('.current-password input'));
-            expect(currentPassword.attributes.class.includes('is-invalid')).toEqual(false);
+            expect(currentPassword.classes['is-invalid']).toBeFalsy();
 
             component.passwordForm.controls.currentPassword.markAsDirty();
             fixture.detectChanges();
-            console.log(component.passwordForm.get('currentPassword').dirty && component.passwordForm.get('currentPassword').invalid);
-            expect(Object.keys(currentPassword.classes).includes('is-invalid')).toEqual(true);
+            expect(currentPassword.classes['is-invalid']).toBeTruthy();
+            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
+        });
+        it('depending on the new password field values', function() {
+            let password = element.query(By.css('.password input'));
+            let confirmPassword = element.query(By.css('.confirm-password input'));
+            let passwordControl = component.passwordForm.get('newPassword.password');
+            let confirmPasswordControl = component.passwordForm.get('newPassword.confirmPassword');
+            component.passwordForm.setValue({
+                currentPassword: 'test',
+                newPassword: {
+                    password: 'new',
+                    confirmPassword: 'what'
+                }
+            });
+            passwordControl.updateValueAndValidity();
+            passwordControl.markAsDirty();
+            confirmPasswordControl.updateValueAndValidity();
+            confirmPasswordControl.markAsDirty();
+            fixture.detectChanges();
+            expect(password.classes['is-invalid']).toBeTruthy();
+            expect(confirmPassword.classes['is-invalid']).toBeTruthy();
+            expect(element.query(By.css('.invalid-feedback'))).toBeTruthy();
+            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
+
+            component.passwordForm.patchValue({
+                newPassword: {
+                    confirmPassword: 'new'
+                }
+            });
+            passwordControl.updateValueAndValidity();
+            confirmPasswordControl.updateValueAndValidity();
+            fixture.detectChanges();
+            expect(password.classes['is-invalid']).toBeFalsy();
+            expect(confirmPassword.classes['is-invalid']).toBeFalsy();
+            expect(element.query(By.css('.invalid-feedback'))).toBeFalsy();
+            expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeFalsy();
         });
         it('depending on whether the current user is external', function() {
             component.passwordForm.setValue({

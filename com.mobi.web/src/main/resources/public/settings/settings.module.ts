@@ -27,11 +27,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 
 import { SharedModule } from '../shared/shared.module';
 
-import customPreferenceComponent from './components/customPreference/customPreference.component';
-import preferencesContainerComponent from './components/preferencesContainer/preferencesContainer.component';
-import preferencesTabComponent from './components/preferencesTab/preferencesTab.component';
-
-// NgUpgrade
 import { GroupTabComponent } from './components/groupTab/groupTab.component';
 import { PasswordTabComponent } from './components/passwordTab/passwordTab.component';
 import { ProfileTabComponent } from './components/profileTab/profileTab.component';
@@ -60,9 +55,6 @@ export class SettingsModule {}
  * The `settings` module provides components that make up the Settings module in the Mobi application.
  */
 angular.module('settings', [])
-    .component('customPreference', customPreferenceComponent)
-    .component('preferencesContainer', preferencesContainerComponent)
-    .component('preferencesTab', preferencesTabComponent)
     .directive('groupTab', downgradeComponent({component: GroupTabComponent}) as angular.IDirectiveFactory)
     .component('passwordTab', downgradeComponent({component: PasswordTabComponent}) as angular.IDirectiveFactory)
     .directive('profileTab', downgradeComponent({component: ProfileTabComponent}) as angular.IDirectiveFactory)

@@ -23,11 +23,11 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { configureTestSuite } from 'ng-bullet';
-import { MockComponent } from 'ng-mocks';
 
 import {
     mockUserManager,
-    mockLoginManager
+    mockLoginManager,
+    cleanStylesFromDOM
 } from '../../../../../../test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { GroupTabComponent } from './groupTab.component';
@@ -68,6 +68,7 @@ describe('Group Tab component', function() {
     });
 
     afterEach(function() {
+        cleanStylesFromDOM();
         component = null;
         element = null;
         fixture = null;

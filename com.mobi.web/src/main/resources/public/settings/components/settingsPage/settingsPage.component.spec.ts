@@ -34,7 +34,7 @@ import { PasswordTabComponent } from '../passwordTab/passwordTab.component';
 import { ProfileTabComponent } from '../profileTab/profileTab.component';
 import { SettingsPageComponent } from './settingsPage.component';
 
-fdescribe('Settings Page component', () => {
+describe('Settings Page component', () => {
     let element: DebugElement;
     let fixture: ComponentFixture<SettingsPageComponent>;
 

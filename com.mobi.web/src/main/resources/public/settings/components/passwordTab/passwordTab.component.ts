@@ -45,7 +45,7 @@ export class PasswordTabComponent implements OnInit {
         newPassword: this.fb.group({
             password: ['', [Validators.required]],
             confirmPassword: ['', {updateOn: 'blur', validators: [Validators.required]}]
-        }, [ checkPasswords ])
+        }, { validator: checkPasswords })
     });
    
     constructor(@Inject('userManagerService') private um, @Inject('loginManagerService') private lm,
