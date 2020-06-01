@@ -478,7 +478,6 @@ public class SparqlRest {
         if (!StringUtils.isBlank(datasetRecordId)) {
             return os -> {
                 Resource recordId = valueFactory.createIRI(datasetRecordId);
-
                 try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
                     executeTupleQuery(queryString, format, os, conn);
                 } catch (IllegalArgumentException ex) {

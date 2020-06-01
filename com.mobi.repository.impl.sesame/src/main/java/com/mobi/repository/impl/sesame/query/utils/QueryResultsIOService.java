@@ -36,16 +36,9 @@ import java.io.OutputStream;
 @Component
 public class QueryResultsIOService implements QueryResultsIO {
 
-    /**
-     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
-     * @param tqr TupleQueryResult the tuple results
-     * @param format TupleQueryResultFormat the format to stream in
-     * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
-     * @throws IOException
-     */
     @Override
     public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException {
-        if(tqr instanceof SesameTupleQueryResult){
+        if (tqr instanceof SesameTupleQueryResult) {
             SesameTupleQueryResult sesameTupleQueryResult = (SesameTupleQueryResult) tqr;
             org.eclipse.rdf4j.query.resultio.QueryResultIO.writeTuple(sesameTupleQueryResult.getTupleQueryResult(), format, out);
         } else {
