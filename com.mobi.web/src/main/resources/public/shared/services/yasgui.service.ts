@@ -26,11 +26,7 @@ import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
 import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
 import { hasClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
 
-
-
-
 import { merge } from 'lodash';
-import jsonLD from "../../vendor/YASGUI/plugins/jsonLD/jsonLD";
 
 /**
  * @ngdoc service
