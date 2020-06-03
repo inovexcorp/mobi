@@ -148,7 +148,6 @@ public class SparqlRestTest extends MobiRestTestNg {
 
         rest = Mockito.spy(rest);
 
-
         DATASET_ID = "http://example.com/datasets/0";
 
         ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
@@ -550,6 +549,73 @@ public class SparqlRestTest extends MobiRestTestNg {
         JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
         assertTrue(result.containsKey("details"));
     }
+
+    @Test
+    public void selectQueryDefaultUnpageTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path("sparql/unpage")
+                    .queryParam("query", ALL_QUERY);
+
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().get();
+
+            verify(rest, atLeast(minNumberOfInvocations)).getUnpagedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareTupleQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+
+            String responseString = response.readEntity(String.class);
+            JSONObject result = JSONObject.fromObject(responseString);
+            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
+    }
+
+    @Test
+    public void constructQueryDefaultUnpageTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path("sparql/unpage")
+                    .queryParam("query", CONSTRUCT_QUERY);
+
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().get();
+
+            verify(rest, atLeast(minNumberOfInvocations)).getUnpagedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareGraphQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
+
+//            String responseString = response.readEntity(String.class);
+//            JSONObject result = JSONObject.fromObject(responseString);
+//            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+//            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
+    }
+
+
+
 // TODO Remove below
 //    @Test
 //    public void getSelectPagedResultsTest() {

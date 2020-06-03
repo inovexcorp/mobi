@@ -114,6 +114,7 @@ public class SparqlRest {
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
 
     public static final int UNPAGED_LIMIT = 500;
+    public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
 
     private SesameTransformer sesameTransformer;
     private RepositoryManager repositoryManager;
@@ -279,11 +280,9 @@ public class SparqlRest {
     @RolesAllowed("user")
     @ApiOperation("Retrieves the unpaged results of the provided SPARQL query.")
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getUnpagedResults(@Context UriInfo uriInfo,
-                                    @QueryParam("query") String queryString,
-                                    @QueryParam("dataset") String datasetRecordId,
+    public Response getUnpagedResults(@QueryParam("query") String queryString, // @Context UriInfo uriInfo,
+                                      @QueryParam("dataset") String datasetRecordId,
                                     @HeaderParam("accept") String acceptString) {
-
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -292,7 +291,8 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
+                    Response response = handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
+                    return response;
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
                     return handleConstructQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
                 } else {
@@ -315,101 +315,9 @@ public class SparqlRest {
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-//        LinksUtils.validateParams(limit, offset);
-//        TupleQueryResult queryResults;
-//        if (!StringUtils.isBlank(datasetRecordId)) {
-//            Resource recordId = valueFactory.createIRI(datasetRecordId);
-//            queryResults = getDatasetQueryResults(queryString, recordId);
-//        } else {
-//            queryResults = getQueryResults(queryString);
-//        }
-//        if (queryResults.hasNext()) {
-//            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
-//            if (offset > bindings.size()) {
-//                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-//            }
-//            ArrayNode results;
-//            int size;
-//            if ((offset + limit) > bindings.size()) {
-//                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
-//                size = bindings.size() - offset;
-//            } else {
-//                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
-//                size = limit;
-//            }
-//            ObjectNode response = mapper.createObjectNode();
-//            response.set("data", results);
-//            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
-//
-//            Response.ResponseBuilder builder = Response.ok(response.toString())
-//                    .header("X-Total-Count", bindings.size());
-//            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
-//            if (links.getNext() != null) {
-//                builder = builder.link(links.getBase() + links.getNext(), "next");
-//            }
-//            if (links.getPrev() != null) {
-//                builder = builder.link(links.getBase() + links.getPrev(), "prev");
-//            }
-//            return builder.build();
-//        } else {
-//            return Response.ok().header("X-Total-Count", 0).build();
-//        }
     }
 
-    /**
-     * Handle Select Query.
-     * Output: JSON, XLS, XLSX, CSV, TSV
-     *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param mimeType used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file.
-     * @param acceptString used to specify certain media types which are acceptable for the response
-     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
-     */
-    private Response handleSelectQueryEager(String queryString, String datasetRecordId,
-                                       String mimeType, String fileName, String acceptString, int limit) {
-        TupleQueryResult queryResults;
-        TupleQueryResultFormat tupleQueryResultFormat;
 
-        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
-            mimeType = "";
-        }
-
-        switch (mimeType) {
-            case JSON_MIME_TYPE:
-                mimeType = JSON_MIME_TYPE;
-                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                queryResults = getTupleQueryResults(queryString, datasetRecordId);
-                break;
-            default:
-                String oldMimeType = mimeType;
-                mimeType = JSON_MIME_TYPE;
-                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
-                        acceptString, mimeType));
-
-                queryResults = getTupleQueryResults(queryString, datasetRecordId);
-                break;
-        }
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        boolean limitExceeded = false;
-        try {
-            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, UNPAGED_LIMIT, byteArrayOutputStream);
-        } catch (IOException e) {
-            e.printStackTrace(); // TODO FINISH
-        }
-
-        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream)
-                .header("Content-Type", mimeType);
-
-        if(limitExceeded){
-            builder.header("X-LIMIT-EXCEEDED", UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
-        }
-
-        return builder.build();
-    }
 
     /**
      * Handle Select Query.
@@ -482,6 +390,62 @@ public class SparqlRest {
     }
 
     /**
+     * Handle Select Query.
+     * Output: JSON, XLS, XLSX, CSV, TSV
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file.
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
+     */
+    private Response handleSelectQueryEager(String queryString, String datasetRecordId,
+                                            String mimeType, String fileName, String acceptString, int limit) {
+        TupleQueryResult queryResults;
+        TupleQueryResultFormat tupleQueryResultFormat;
+
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = "";
+        }
+
+        switch (mimeType) {
+            case JSON_MIME_TYPE:
+                mimeType = JSON_MIME_TYPE;
+                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                break;
+            default:
+                String oldMimeType = mimeType;
+                mimeType = JSON_MIME_TYPE;
+                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
+                        acceptString, mimeType));
+
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                break;
+        }
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        boolean limitExceeded = false;
+        try {
+            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, UNPAGED_LIMIT, byteArrayOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace(); // TODO FINISH
+        }
+
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
+                .header("Content-Type", mimeType);
+
+        if(limitExceeded){
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+        }
+
+        return builder.build();
+    }
+
+    /**
      * Handle Construct Query Eagerly
      * Output: Turtle, JSON-LD, and RDF/XML
      *
@@ -535,17 +499,18 @@ public class SparqlRest {
 //        os.close();
 
 
-        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream).header("Content-Type", mimeType);
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
 
         if(limitExceeded){
-            builder.header("X-LIMIT-EXCEEDED", UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
         }
 
         return builder.build();
     }
 
     /**
-     * // TODO should
+     * // TODO should put in RIO.java?
      * Copied from com.mobi.persistence.utils.rio.Rio
      * @param iterable
      * @param writer
