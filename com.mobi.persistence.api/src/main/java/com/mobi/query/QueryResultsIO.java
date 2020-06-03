@@ -39,4 +39,15 @@ public interface QueryResultsIO {
      */
     public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException;
 
+    /**
+     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
+     * @param tqr TupleQueryResult the tuple results
+     * @param format TupleQueryResultFormat the format to stream in
+     * @param limit the max number of records
+     * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
+     * @return boolean value, if true then limit was exceeded, if false then limit was not exceeded
+     * @throws IOException
+     *
+     */
+    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out) throws IOException;
 }

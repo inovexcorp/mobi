@@ -27,7 +27,14 @@ import com.mobi.exception.MobiException;
 import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.repository.impl.sesame.query.SesameTupleQueryResult;
+import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.query.QueryResultHandler;
+import org.eclipse.rdf4j.query.QueryResultHandlerException;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQueryResultHandlerException;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
+import org.eclipse.rdf4j.query.resultio.TupleQueryResultWriter;
 import org.osgi.service.component.annotations.Component;
 
 import java.io.IOException;
@@ -45,4 +52,56 @@ public class QueryResultsIOService implements QueryResultsIO {
             throw new MobiException("TupleQueryResult is not an instance of SesameTupleQueryResult");
         }
     }
+
+    @Override
+    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out) throws IOException {
+        boolean limitExceeded = false;
+
+        if (tqr instanceof SesameTupleQueryResult) {
+            SesameTupleQueryResult sesameTupleQueryResult = (SesameTupleQueryResult) tqr;
+            TupleQueryResultWriter writer = org.eclipse.rdf4j.query.resultio.QueryResultIO.createTupleWriter(format, out);
+
+            try {
+                writer.startDocument();
+                writer.startHeader();
+                limitExceeded = report(sesameTupleQueryResult.getTupleQueryResult(), writer, limit);
+            } catch (QueryResultHandlerException var5) {
+                if (var5.getCause() instanceof IOException) {
+                    throw (IOException) var5.getCause();
+                } else if (var5 instanceof TupleQueryResultHandlerException) {
+                    throw (TupleQueryResultHandlerException) var5;
+                } else {
+                    throw new TupleQueryResultHandlerException(var5);
+                }
+            }
+        } else {
+            throw new MobiException("TupleQueryResult is not an instance of SesameTupleQueryResult");
+        }
+        return limitExceeded;
+    }
+
+    private static boolean report(org.eclipse.rdf4j.query.TupleQueryResult tqr, QueryResultHandler handler, int limit) throws TupleQueryResultHandlerException, QueryEvaluationException {
+        boolean limitExceeded = false;
+        try {
+            int limitCounter = 0;
+            handler.startQueryResult(tqr.getBindingNames());
+
+            while(tqr.hasNext()) {
+                limitCounter += 1;
+
+                BindingSet bindingSet = (BindingSet)tqr.next();
+                handler.handleSolution(bindingSet);
+
+                if(limitCounter >= limit){
+                    limitExceeded = true;
+                    break;
+                }
+            }
+        } finally {
+            tqr.close();
+        }
+        handler.endQueryResult();
+        return limitExceeded;
+    }
+
 }

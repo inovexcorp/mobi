@@ -255,66 +255,96 @@ public class SparqlRest {
     }
 
     /**
+     * // TODO finish comment
      * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
      * Links to next and previous pages are within the Links header and the total size is within the
      * X-Total-Count header. Can optionally limit the query to a Dataset.
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param limit The number of resources to return in one page.
-     * @param offset The offset for the page.
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
      */
     @GET
-    @Path("/page")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/unpage")
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
+    @ApiOperation("Retrieves the unpaged results of the provided SPARQL query.")
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
     public Response getPagedResults(@Context UriInfo uriInfo,
                                     @QueryParam("query") String queryString,
                                     @QueryParam("dataset") String datasetRecordId,
-                                    @DefaultValue("100") @QueryParam("limit") int limit,
-                                    @DefaultValue("0") @QueryParam("offset") int offset) {
-        LinksUtils.validateParams(limit, offset);
-        TupleQueryResult queryResults;
-        if (!StringUtils.isBlank(datasetRecordId)) {
-            Resource recordId = valueFactory.createIRI(datasetRecordId);
-            queryResults = getDatasetQueryResults(queryString, recordId);
-        } else {
-            queryResults = getQueryResults(queryString);
-        }
-        if (queryResults.hasNext()) {
-            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
-            if (offset > bindings.size()) {
-                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-            }
-            ArrayNode results;
-            int size;
-            if ((offset + limit) > bindings.size()) {
-                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
-                size = bindings.size() - offset;
-            } else {
-                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
-                size = limit;
-            }
-            ObjectNode response = mapper.createObjectNode();
-            response.set("data", results);
-            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
+                                    @HeaderParam("accept") String acceptString) {
 
-            Response.ResponseBuilder builder = Response.ok(response.toString())
-                    .header("X-Total-Count", bindings.size());
-            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
-            if (links.getNext() != null) {
-                builder = builder.link(links.getBase() + links.getNext(), "next");
-            }
-            if (links.getPrev() != null) {
-                builder = builder.link(links.getBase() + links.getPrev(), "prev");
-            }
-            return builder.build();
-        } else {
-            return Response.ok().header("X-Total-Count", 0).build();
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
+
+        ParsedOperation parsedOperation = getParsedOperation(queryString);
+        try {
+            if (parsedOperation instanceof ParsedQuery) {
+                if (parsedOperation instanceof ParsedTupleQuery) {
+                    return handleSelectQuery(queryString, datasetRecordId, acceptString, null, null);
+                } else if (parsedOperation instanceof ParsedGraphQuery) {
+                    return handleConstructQuery(queryString, datasetRecordId, acceptString, null, null);
+                } else {
+                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+                }
+            } else {
+                throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+            }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+//        LinksUtils.validateParams(limit, offset);
+//        TupleQueryResult queryResults;
+//        if (!StringUtils.isBlank(datasetRecordId)) {
+//            Resource recordId = valueFactory.createIRI(datasetRecordId);
+//            queryResults = getDatasetQueryResults(queryString, recordId);
+//        } else {
+//            queryResults = getQueryResults(queryString);
+//        }
+//        if (queryResults.hasNext()) {
+//            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
+//            if (offset > bindings.size()) {
+//                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
+//            }
+//            ArrayNode results;
+//            int size;
+//            if ((offset + limit) > bindings.size()) {
+//                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
+//                size = bindings.size() - offset;
+//            } else {
+//                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
+//                size = limit;
+//            }
+//            ObjectNode response = mapper.createObjectNode();
+//            response.set("data", results);
+//            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
+//
+//            Response.ResponseBuilder builder = Response.ok(response.toString())
+//                    .header("X-Total-Count", bindings.size());
+//            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
+//            if (links.getNext() != null) {
+//                builder = builder.link(links.getBase() + links.getNext(), "next");
+//            }
+//            if (links.getPrev() != null) {
+//                builder = builder.link(links.getBase() + links.getPrev(), "prev");
+//            }
+//            return builder.build();
+//        } else {
+//            return Response.ok().header("X-Total-Count", 0).build();
+//        }
     }
 
     /**
@@ -580,6 +610,46 @@ public class SparqlRest {
         return queryResults;
     }
 
+    /**
+     * Get GraphQueryResult.
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @return GraphQueryResult results of SPARQL Query
+     */
+    private GraphQueryResult getGraphQueryResults(String queryString, String datasetRecordId) {
+        GraphQueryResult queryResults;
+        try {
+            if (!StringUtils.isBlank(datasetRecordId)) {
+                Resource recordId = valueFactory.createIRI(datasetRecordId);
+
+                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                    GraphQuery query = conn.prepareGraphQuery(queryString);
+                    queryResults = query.evaluate();
+                }
+            } else {
+                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                        ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+                try (RepositoryConnection conn = repository.getConnection()) {
+                    GraphQuery query = conn.prepareGraphQuery(queryString);
+                    queryResults = query.evaluate();
+                }
+            }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return queryResults;
+    }
 
     /**
      * Get ParsedOperation from query string.
@@ -653,58 +723,6 @@ public class SparqlRest {
             os.flush();
             os.close();
         };
-    }
-
-    /**
-     * Get TupleQueryResults.  Used for getPagedResults method.
-     * @param queryString The SPARQL query to execute.
-     * @return TupleQueryResult results of SPARQL Query
-     */
-    private TupleQueryResult getQueryResults(String queryString) {
-        Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluateAndReturn();
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getCause().getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Get TupleQueryResults.  Used for getPagedResults method.
-     * @param queryString The SPARQL query to execute.
-     * @param recordId an optional DatasetRecord IRI representing the Dataset to query
-     * @return TupleQueryResult results of SPARQL Query
-     */
-    private TupleQueryResult getDatasetQueryResults(String queryString, Resource recordId) {
-        try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluateAndReturn();
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
     }
 
 }
