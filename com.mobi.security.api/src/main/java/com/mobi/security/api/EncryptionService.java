@@ -33,5 +33,7 @@ public interface EncryptionService {
 
     boolean isEnabled();
 
-    // Add interface method for updating service config?
+    // TODO: For reviewer: Do you think this method be in the interface or not? I put it in because 2 of the interface methods accept configs, so I imagine this
+    //  method will always be necessary. However, I don't like that it's public.
+    void updateServiceConfig(Map<String, Object> newConfigurationData, Configuration config);
 }

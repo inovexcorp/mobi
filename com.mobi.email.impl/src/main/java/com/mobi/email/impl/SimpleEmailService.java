@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Component(
+        immediate = true,
         designateFactory = EmailServiceConfig.class,
         name = SimpleEmailService.COMPONENT_NAME
 )
@@ -92,7 +93,7 @@ public class SimpleEmailService implements EmailService {
 
     @Activate
     void activate(BundleContext bundleContext, Map<String, Object> configuration) {
-        config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
+         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
         try {
             emailPassword = encryptionService.isEnabled() ? encryptionService.decrypt(config.emailPassword(), "emailPassword",
                     this.configurationAdmin.getConfiguration(COMPONENT_NAME)) : config.emailPassword();

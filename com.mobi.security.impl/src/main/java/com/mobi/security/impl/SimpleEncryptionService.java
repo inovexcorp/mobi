@@ -40,21 +40,28 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component(service = SimpleEncryptionService.class, immediate = true, configurationPolicy = ConfigurationPolicy.REQUIRE)
+@Component(name = SimpleEncryptionService.COMPONENT_NAME, immediate = true, configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Designate(ocd = EncryptionServiceConfig.class)
 public class SimpleEncryptionService implements EncryptionService {
 
+    static final String COMPONENT_NAME = "com.mobi.security.api.EncryptionService";
+
     private static final String AES_128 = "PBEWithHmacSHA512AndAES_128";
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEncryptionService.class);
-    private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor(); // Make final?
+    private StandardPBEStringEncryptor encryptor;
     private boolean isEnabled;
 
     @Activate
+    @Modified
     protected void start(final EncryptionServiceConfig encryptionServiceConfig) {
+        encryptor =  new StandardPBEStringEncryptor(); // Must create new encryptor if password changes because jasypt does not allow encryptor to change password.
         isEnabled = encryptionServiceConfig.enabled();
         if (isEnabled) {
             String envVar = encryptionServiceConfig.variable();
@@ -82,10 +89,11 @@ public class SimpleEncryptionService implements EncryptionService {
 
     @Override
     public String encrypt(String strToEncrypt, String configFieldToUpdate, final Configuration config) {
-        LOGGER.info("Going to encrypt strToEncrypt");
+        LOGGER.debug("Attempting to encrypt " + configFieldToUpdate + " field in " + config.getPid() + " config.");
         if (strToEncrypt == null) {
             return null;
         } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToEncrypt)) {
+            LOGGER.debug("Value was found to already be encrypted.");
             return strToEncrypt;
         } else {
             String encrypted = PropertyValueEncryptionUtils.encrypt(strToEncrypt, encryptor);
@@ -94,6 +102,7 @@ public class SimpleEncryptionService implements EncryptionService {
                     .collect(Collectors.toMap(Function.identity(), config.getProperties()::get));
             configurationData.put(configFieldToUpdate, encrypted);
             updateServiceConfig(configurationData, config);
+            LOGGER.debug("Encryption successful.");
             return encrypted;
         }
     }
@@ -105,6 +114,7 @@ public class SimpleEncryptionService implements EncryptionService {
         } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToDecrypt)) {
             return PropertyValueEncryptionUtils.decrypt(strToDecrypt, encryptor); // TODO: Don't see a point in checking for length of zero like ticket prescribes. Discuss with reviewer.
         } else {
+            LOGGER.debug("Found unencrypted value. Encryption will now be performed.");
             encrypt(strToDecrypt, configFieldToDecrypt, config);
             return strToDecrypt;
         }
@@ -115,17 +125,14 @@ public class SimpleEncryptionService implements EncryptionService {
         return this.isEnabled;
     }
 
-    private void updateServiceConfig(final Map<String, Object> newConfigurationData, Configuration config) {
+    // TODO: For reviewer: Do you think this method be in the interface or not? I put it in because 2 of the interface methods accept configs, so I imagine this
+    //  method will always be necessary. However, I don't like that it's public.
+    @Override
+    public void updateServiceConfig(final Map<String, Object> newConfigurationData, Configuration config) {
         try {
-            LOGGER.info("Going to update service config with encrypted password");
             config.update(new Hashtable<>(newConfigurationData));
         } catch (IOException e) {
-            LOGGER.error("Issue saving encrypted password to service configuration.", e);
-            // TODO: Come up with a way to identify the service without passing in service name. Passing in service name just to put in log statement feels wrong.
-//            LOGGER.error("Issue saving server id to service configuration: " + SERVICE_NAME, e);
-            // Continue along, since we'll just re-generate the service configuration next time the server starts.
+            LOGGER.error("Issue saving server id to service configuration: " + config.getPid(), e);
         }
     }
-
-
 }
