@@ -60,6 +60,7 @@ import com.mobi.sparql.rest.SparqlRest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
@@ -73,6 +74,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -147,7 +153,6 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest.setQueryResultsIO(new QueryResultsIOService());
 
         rest = Mockito.spy(rest);
-
 
         DATASET_ID = "http://example.com/datasets/0";
 
@@ -552,121 +557,186 @@ public class SparqlRestTest extends MobiRestTestNg {
     }
 
     @Test
-    public void getSelectPagedResultsTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY).request().get();
-        assertEquals(response.getStatus(), 200);
-        verify(repositoryManager).getRepository("system");
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
-        assertEquals(response.getLinks().size(), 0);
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("bindings"));
-        assertTrue(result.containsKey("data"));
-        assertEquals(result.getJSONArray("data").size(), testModel.size());
-    }
+    public void selectQueryDefaultUnpageTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path("sparql/unpage")
+                    .queryParam("query", ALL_QUERY);
 
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
 
-    @Test
-    public void getPagedResultsWithDatasetTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().get();
-        assertEquals(response.getStatus(), 200);
-        verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
-        verify(datasetConnection).prepareTupleQuery(anyString());
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
-        assertEquals(response.getLinks().size(), 0);
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("bindings"));
-        assertTrue(result.containsKey("data"));
-        assertEquals(result.getJSONArray("data").size(), testModel.size());
-    }
+            Response response = webTarget.request().get();
 
-    @Test
-    public void getPagedResultsWithLinksTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("limit", 1).queryParam("offset", 1).request().get();
-        assertEquals(response.getStatus(), 200);
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
-        Set<Link> links = response.getLinks();
-        assertEquals(links.size(), 2);
-        links.forEach(link -> {
-            assertTrue(link.getUri().getRawPath().contains("sparql/page"));
-            assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
-        });
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("bindings"));
-        assertTrue(result.containsKey("data"));
-        JSONArray data = result.getJSONArray("data");
-        assertEquals(data.size(), 1);
+            verify(rest, atLeast(minNumberOfInvocations)).getUnpagedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareTupleQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+
+            String responseString = response.readEntity(String.class);
+            JSONObject result = JSONObject.fromObject(responseString);
+            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
     }
 
     @Test
-    public void getPagedResultsWithNegativeOffsetTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("offset", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+    public void constructQueryDefaultUnpageTest() {
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path("sparql/unpage")
+                    .queryParam("query", CONSTRUCT_QUERY);
+
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().get();
+
+            verify(rest, atLeast(minNumberOfInvocations)).getUnpagedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareGraphQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
+
+            String responseString = response.readEntity(String.class);
+            Assert.assertNotEquals(responseString, "");
+        }
     }
 
-    @Test
-    public void getPagedResultsWithNegativeLimitTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
-    }
 
-    @Test
-    public void getPagedResultsWithOffsetThatIsTooLargeTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("offset", 10).request().get();
-        assertEquals(response.getStatus(), 400);
-    }
 
-    @Test
-    public void getPagedResultsRepositoryUnavailableTest() {
-        // Setup:
-        when(repositoryManager.getRepository(anyString()))
-                .thenReturn(Optional.empty());
-
-        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY).request().get();
-        assertEquals(response.getStatus(), 500);
-    }
-
-    @Test
-    public void getPagedResultsWithDatasetThatDoesNotExistTest() {
-        // Setup:
-        when(datasetManager.getConnection(any(Resource.class)))
-                .thenThrow(new IllegalArgumentException());
-
-        Response response = target().path("sparql/page")
-                .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
-                .request().get();
-        assertEquals(response.getStatus(), 400);
-    }
-
-    @Test
-    public void getPagedResultsWithInvalidQueryTest() {
-        Response response = target().path("sparql/page")
-                .queryParam("query", ResourceUtils.encode("+")).request().get();
-        assertEquals(response.getStatus(), 400);
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("details"));
-
-        response = target().path("sparql/page")
-                .queryParam("query", ResourceUtils.encode("+"))
-                .queryParam("dataset", DATASET_ID)
-                .request().get();
-        assertEquals(response.getStatus(), 400);
-        result = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(result.containsKey("details"));
-    }
+// TODO Remove below
+//    @Test
+//    public void getSelectPagedResultsTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY).request().get();
+//        assertEquals(response.getStatus(), 200);
+//        verify(repositoryManager).getRepository("system");
+//        MultivaluedMap<String, Object> headers = response.getHeaders();
+//        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
+//        assertEquals(response.getLinks().size(), 0);
+//        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+//        assertTrue(result.containsKey("bindings"));
+//        assertTrue(result.containsKey("data"));
+//        assertEquals(result.getJSONArray("data").size(), testModel.size());
+//    }
+//
+//
+//    @Test
+//    public void getPagedResultsWithDatasetTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY)
+//                .queryParam("dataset", DATASET_ID)
+//                .request().get();
+//        assertEquals(response.getStatus(), 200);
+//        verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+//        verify(datasetConnection).prepareTupleQuery(anyString());
+//        MultivaluedMap<String, Object> headers = response.getHeaders();
+//        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
+//        assertEquals(response.getLinks().size(), 0);
+//        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+//        assertTrue(result.containsKey("bindings"));
+//        assertTrue(result.containsKey("data"));
+//        assertEquals(result.getJSONArray("data").size(), testModel.size());
+//    }
+//
+//    @Test
+//    public void getPagedResultsWithLinksTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY)
+//                .queryParam("limit", 1).queryParam("offset", 1).request().get();
+//        assertEquals(response.getStatus(), 200);
+//        MultivaluedMap<String, Object> headers = response.getHeaders();
+//        assertEquals(headers.get("X-Total-Count").get(0), "" + testModel.size());
+//        Set<Link> links = response.getLinks();
+//        assertEquals(links.size(), 2);
+//        links.forEach(link -> {
+//            assertTrue(link.getUri().getRawPath().contains("sparql/page"));
+//            assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
+//        });
+//        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+//        assertTrue(result.containsKey("bindings"));
+//        assertTrue(result.containsKey("data"));
+//        JSONArray data = result.getJSONArray("data");
+//        assertEquals(data.size(), 1);
+//    }
+//
+//    @Test
+//    public void getPagedResultsWithNegativeOffsetTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY)
+//                .queryParam("offset", -1).request().get();
+//        assertEquals(response.getStatus(), 400);
+//    }
+//
+//    @Test
+//    public void getPagedResultsWithNegativeLimitTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY)
+//                .queryParam("limit", -1).request().get();
+//        assertEquals(response.getStatus(), 400);
+//    }
+//
+//    @Test
+//    public void getPagedResultsWithOffsetThatIsTooLargeTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY)
+//                .queryParam("offset", 10).request().get();
+//        assertEquals(response.getStatus(), 400);
+//    }
+//
+//    @Test
+//    public void getPagedResultsRepositoryUnavailableTest() {
+//        // Setup:
+//        when(repositoryManager.getRepository(anyString()))
+//                .thenReturn(Optional.empty());
+//
+//        Response response = target().path("sparql/page").queryParam("query", ALL_QUERY).request().get();
+//        assertEquals(response.getStatus(), 500);
+//    }
+//
+//    @Test
+//    public void getPagedResultsWithDatasetThatDoesNotExistTest() {
+//        // Setup:
+//        when(datasetManager.getConnection(any(Resource.class)))
+//                .thenThrow(new IllegalArgumentException());
+//
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ALL_QUERY)
+//                .queryParam("dataset", DATASET_ID)
+//                .request().get();
+//        assertEquals(response.getStatus(), 400);
+//    }
+//
+//    @Test
+//    public void getPagedResultsWithInvalidQueryTest() {
+//        Response response = target().path("sparql/page")
+//                .queryParam("query", ResourceUtils.encode("+")).request().get();
+//        assertEquals(response.getStatus(), 400);
+//        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+//        assertTrue(result.containsKey("details"));
+//
+//        response = target().path("sparql/page")
+//                .queryParam("query", ResourceUtils.encode("+"))
+//                .queryParam("dataset", DATASET_ID)
+//                .request().get();
+//        assertEquals(response.getStatus(), 400);
+//        result = JSONObject.fromObject(response.readEntity(String.class));
+//        assertTrue(result.containsKey("details"));
+//    }
 }

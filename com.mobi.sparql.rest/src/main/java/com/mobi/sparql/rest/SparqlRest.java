@@ -30,8 +30,10 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.JSONQueryResults;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.Rio;
+import com.mobi.persistence.utils.rio.StatementHandler;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
@@ -40,7 +42,10 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.query.exception.MalformedQueryException;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Namespace;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -69,12 +74,14 @@ import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -105,6 +112,9 @@ public class SparqlRest {
     public static final  String TURTLE_MIME_TYPE = "text/turtle";
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
+
+    public static final int UNPAGED_LIMIT = 500;
+    public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
 
     private SesameTransformer sesameTransformer;
     private RepositoryManager repositoryManager;
@@ -255,67 +265,59 @@ public class SparqlRest {
     }
 
     /**
+     * // TODO finish comment
      * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
      * Links to next and previous pages are within the Links header and the total size is within the
      * X-Total-Count header. Can optionally limit the query to a Dataset.
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param limit The number of resources to return in one page.
-     * @param offset The offset for the page.
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
      */
     @GET
-    @Path("/page")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/unpage")
+    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the paged results of the provided SPARQL query.")
+    @ApiOperation("Retrieves the unpaged results of the provided SPARQL query.")
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getPagedResults(@Context UriInfo uriInfo,
-                                    @QueryParam("query") String queryString,
-                                    @QueryParam("dataset") String datasetRecordId,
-                                    @DefaultValue("100") @QueryParam("limit") int limit,
-                                    @DefaultValue("0") @QueryParam("offset") int offset) {
-        LinksUtils.validateParams(limit, offset);
-        TupleQueryResult queryResults;
-        if (!StringUtils.isBlank(datasetRecordId)) {
-            Resource recordId = valueFactory.createIRI(datasetRecordId);
-            queryResults = getDatasetQueryResults(queryString, recordId);
-        } else {
-            queryResults = getQueryResults(queryString);
+    public Response getUnpagedResults(@QueryParam("query") String queryString, // @Context UriInfo uriInfo,
+                                      @QueryParam("dataset") String datasetRecordId,
+                                    @HeaderParam("accept") String acceptString) {
+        if (queryString == null) {
+            throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
-        if (queryResults.hasNext()) {
-            List<ObjectNode> bindings = JSONQueryResults.getBindings(queryResults);
-            if (offset > bindings.size()) {
-                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-            }
-            ArrayNode results;
-            int size;
-            if ((offset + limit) > bindings.size()) {
-                results = mapper.valueToTree(bindings.subList(offset, bindings.size()));
-                size = bindings.size() - offset;
-            } else {
-                results = mapper.valueToTree(bindings.subList(offset, offset + limit));
-                size = limit;
-            }
-            ObjectNode response = mapper.createObjectNode();
-            response.set("data", results);
-            response.set("bindings",mapper.valueToTree(queryResults.getBindingNames()));
 
-            Response.ResponseBuilder builder = Response.ok(response.toString())
-                    .header("X-Total-Count", bindings.size());
-            Links links = LinksUtils.buildLinks(uriInfo, size, bindings.size(), limit, offset);
-            if (links.getNext() != null) {
-                builder = builder.link(links.getBase() + links.getNext(), "next");
+        ParsedOperation parsedOperation = getParsedOperation(queryString);
+        try {
+            if (parsedOperation instanceof ParsedQuery) {
+                if (parsedOperation instanceof ParsedTupleQuery) {
+                    Response response = handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
+                    return response;
+                } else if (parsedOperation instanceof ParsedGraphQuery) {
+                    return handleConstructQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
+                } else {
+                    throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
+                }
+            } else {
+                throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
             }
-            if (links.getPrev() != null) {
-                builder = builder.link(links.getBase() + links.getPrev(), "prev");
-            }
-            return builder.build();
-        } else {
-            return Response.ok().header("X-Total-Count", 0).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getCause().getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     /**
      * Handle Select Query.
@@ -386,6 +388,145 @@ public class SparqlRest {
 
         return builder.build();
     }
+
+    /**
+     * Handle Select Query.
+     * Output: JSON, XLS, XLSX, CSV, TSV
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file.
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
+     */
+    private Response handleSelectQueryEager(String queryString, String datasetRecordId,
+                                            String mimeType, String fileName, String acceptString, int limit) {
+        TupleQueryResult queryResults;
+        TupleQueryResultFormat tupleQueryResultFormat;
+
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = "";
+        }
+
+        switch (mimeType) {
+            case JSON_MIME_TYPE:
+                mimeType = JSON_MIME_TYPE;
+                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                break;
+            default:
+                String oldMimeType = mimeType;
+                mimeType = JSON_MIME_TYPE;
+                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
+                        acceptString, mimeType));
+
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                break;
+        }
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        boolean limitExceeded = false;
+        try {
+            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, UNPAGED_LIMIT, byteArrayOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace(); // TODO FINISH
+        }
+
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
+                .header("Content-Type", mimeType);
+
+        if(limitExceeded){
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Handle Construct Query Eagerly
+     * Output: Turtle, JSON-LD, and RDF/XML
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
+     * @param mimeType used to specify certain media types which are acceptable for the response.
+     * @param fileName The optional file name for the download file.
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response from ACCEPT Header
+     */
+    private Response handleConstructQueryEager(String queryString, String datasetRecordId,
+                                          String mimeType, String fileName, String acceptString, int limit) {
+        RDFFormat format;
+
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = ""; // default value is turtle
+        }
+
+        switch (mimeType) {
+            case TURTLE_MIME_TYPE:
+                mimeType = TURTLE_MIME_TYPE;
+                format = RDFFormat.TURTLE;
+
+                break;
+            case LDJSON_MIME_TYPE:
+                mimeType = LDJSON_MIME_TYPE;
+                format = RDFFormat.JSONLD;
+                break;
+            case RDFXML_MIME_TYPE:
+                mimeType = RDFXML_MIME_TYPE;
+                format = RDFFormat.RDFXML;
+                break;
+            default:
+                String oldMimeType = mimeType;
+                mimeType = TURTLE_MIME_TYPE;
+                format = RDFFormat.TURTLE;
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
+                        oldMimeType, acceptString, mimeType));
+        }
+        return getGraphQueryResults(queryString, datasetRecordId, format, mimeType);
+
+    }
+
+    /**
+     * // TODO should put in RIO.java?
+     * Copied from com.mobi.persistence.utils.rio.Rio
+     * @param iterable
+     * @param writer
+     * @param transformer
+     * @param statementHandlers
+     * @param limit
+     */
+    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer, int limit,
+                                StatementHandler... statementHandlers) {
+        boolean limitExceeded = false;
+        int limitExceededCounter = 0;
+        writer.startRDF();
+        if (iterable instanceof Model) {
+            for (Namespace nextNamespace : ((Model) iterable).getNamespaces()) {
+                writer.handleNamespace(nextNamespace.getPrefix(), nextNamespace.getName());
+            }
+        }
+        for (final Statement st : iterable) {
+            limitExceededCounter += 1;
+            Statement handledStatement = st;
+            for (StatementHandler statementHandler : statementHandlers) {
+                handledStatement = statementHandler.handleStatement(handledStatement);
+            }
+
+            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
+            writer.handleStatement(sesameStatement);
+
+            if(limitExceededCounter >= limit){
+                limitExceeded = true;
+                break;
+            }
+        }
+        writer.endRDF();
+        return limitExceeded;
+    }
+
 
     /**
      * Handle Construct Query.
@@ -580,6 +721,72 @@ public class SparqlRest {
         return queryResults;
     }
 
+    /**
+     * Get GraphQueryResult.
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @return GraphQueryResult results of SPARQL Query
+     */
+    private Response getGraphQueryResults(String queryString, String datasetRecordId, RDFFormat format, String mimeType) {
+        boolean limitExceeded = false;
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+
+        GraphQueryResult queryResults;
+        try {
+            if (!StringUtils.isBlank(datasetRecordId)) {
+                Resource recordId = valueFactory.createIRI(datasetRecordId);
+
+                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                    GraphQuery query = conn.prepareGraphQuery(queryString);
+                    queryResults = query.evaluate();
+
+                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
+                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
+//        os.flush();
+//        os.close();
+
+
+                }
+            } else {
+                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                        ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+                try (RepositoryConnection conn = repository.getConnection()) {
+                    GraphQuery query = conn.prepareGraphQuery(queryString);
+                    queryResults = query.evaluate();
+
+                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
+                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
+//        os.flush();
+//        os.close();
+
+
+                }
+            }
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MalformedQueryException ex) {
+            String statusText = "Query is invalid. Please change the query and re-execute.";
+            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
+            ObjectNode entity = mapper.createObjectNode();
+            entity.put("details", ex.getMessage());
+            Response response = Response.status(status)
+                    .entity(entity.toString())
+                    .build();
+            throw ErrorUtils.sendError(ex, statusText, response);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
+
+        if(limitExceeded){
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+        }
+
+        return builder.build();
+
+    }
 
     /**
      * Get ParsedOperation from query string.
@@ -653,58 +860,6 @@ public class SparqlRest {
             os.flush();
             os.close();
         };
-    }
-
-    /**
-     * Get TupleQueryResults.  Used for getPagedResults method.
-     * @param queryString The SPARQL query to execute.
-     * @return TupleQueryResult results of SPARQL Query
-     */
-    private TupleQueryResult getQueryResults(String queryString) {
-        Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluateAndReturn();
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getCause().getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Get TupleQueryResults.  Used for getPagedResults method.
-     * @param queryString The SPARQL query to execute.
-     * @param recordId an optional DatasetRecord IRI representing the Dataset to query
-     * @return TupleQueryResult results of SPARQL Query
-     */
-    private TupleQueryResult getDatasetQueryResults(String queryString, Resource recordId) {
-        try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-            TupleQuery query = conn.prepareTupleQuery(queryString);
-            return query.evaluateAndReturn();
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
     }
 
 }
