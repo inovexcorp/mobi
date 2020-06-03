@@ -485,28 +485,8 @@ public class SparqlRest {
                 log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
                         oldMimeType, acceptString, mimeType));
         }
+        return getGraphQueryResults(queryString, datasetRecordId, format, mimeType);
 
-        boolean limitExceeded = false;
-
-        GraphQueryResult graphQueryResult = getGraphQueryResults(queryString, datasetRecordId);
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-
-        RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
-        limitExceeded = write(graphQueryResult, writer, sesameTransformer, UNPAGED_LIMIT);
-//        os.flush();
-//        os.close();
-
-
-
-        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
-
-        if(limitExceeded){
-            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
-        }
-
-        return builder.build();
     }
 
     /**
@@ -747,7 +727,11 @@ public class SparqlRest {
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @return GraphQueryResult results of SPARQL Query
      */
-    private GraphQueryResult getGraphQueryResults(String queryString, String datasetRecordId) {
+    private Response getGraphQueryResults(String queryString, String datasetRecordId, RDFFormat format, String mimeType) {
+        boolean limitExceeded = false;
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+
         GraphQueryResult queryResults;
         try {
             if (!StringUtils.isBlank(datasetRecordId)) {
@@ -756,6 +740,13 @@ public class SparqlRest {
                 try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
                     GraphQuery query = conn.prepareGraphQuery(queryString);
                     queryResults = query.evaluate();
+
+                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
+                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
+//        os.flush();
+//        os.close();
+
+
                 }
             } else {
                 Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
@@ -763,6 +754,13 @@ public class SparqlRest {
                 try (RepositoryConnection conn = repository.getConnection()) {
                     GraphQuery query = conn.prepareGraphQuery(queryString);
                     queryResults = query.evaluate();
+
+                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
+                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
+//        os.flush();
+//        os.close();
+
+
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -779,7 +777,15 @@ public class SparqlRest {
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-        return queryResults;
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
+
+        if(limitExceeded){
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+        }
+
+        return builder.build();
+
     }
 
     /**

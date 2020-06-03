@@ -60,6 +60,7 @@ import com.mobi.sparql.rest.SparqlRest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.glassfish.jersey.client.ClientConfig;
@@ -73,6 +74,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -607,10 +613,8 @@ public class SparqlRestTest extends MobiRestTestNg {
             assertEquals(response.getStatus(), 200);
             assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
 
-//            String responseString = response.readEntity(String.class);
-//            JSONObject result = JSONObject.fromObject(responseString);
-//            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
-//            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+            String responseString = response.readEntity(String.class);
+            Assert.assertNotEquals(responseString, "");
         }
     }
 
