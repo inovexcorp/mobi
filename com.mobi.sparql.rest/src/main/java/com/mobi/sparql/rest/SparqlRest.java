@@ -30,8 +30,10 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.JSONQueryResults;
+import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.Rio;
+import com.mobi.persistence.utils.rio.StatementHandler;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
@@ -40,7 +42,10 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.query.exception.MalformedQueryException;
+import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.Namespace;
 import com.mobi.rdf.api.Resource;
+import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -69,12 +74,14 @@ import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -105,6 +112,8 @@ public class SparqlRest {
     public static final  String TURTLE_MIME_TYPE = "text/turtle";
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
+
+    public static final int UNPAGED_LIMIT = 500;
 
     private SesameTransformer sesameTransformer;
     private RepositoryManager repositoryManager;
@@ -270,7 +279,7 @@ public class SparqlRest {
     @RolesAllowed("user")
     @ApiOperation("Retrieves the unpaged results of the provided SPARQL query.")
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getPagedResults(@Context UriInfo uriInfo,
+    public Response getUnpagedResults(@Context UriInfo uriInfo,
                                     @QueryParam("query") String queryString,
                                     @QueryParam("dataset") String datasetRecordId,
                                     @HeaderParam("accept") String acceptString) {
@@ -283,9 +292,9 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQuery(queryString, datasetRecordId, acceptString, null, null);
+                    return handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQuery(queryString, datasetRecordId, acceptString, null, null);
+                    return handleConstructQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
@@ -358,6 +367,61 @@ public class SparqlRest {
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
+    private Response handleSelectQueryEager(String queryString, String datasetRecordId,
+                                       String mimeType, String fileName, String acceptString, int limit) {
+        TupleQueryResult queryResults;
+        TupleQueryResultFormat tupleQueryResultFormat;
+
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = "";
+        }
+
+        switch (mimeType) {
+            case JSON_MIME_TYPE:
+                mimeType = JSON_MIME_TYPE;
+                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                break;
+            default:
+                String oldMimeType = mimeType;
+                mimeType = JSON_MIME_TYPE;
+                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
+                        acceptString, mimeType));
+
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                break;
+        }
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        boolean limitExceeded = false;
+        try {
+            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, UNPAGED_LIMIT, byteArrayOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace(); // TODO FINISH
+        }
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream)
+                .header("Content-Type", mimeType);
+
+        if(limitExceeded){
+            builder.header("X-LIMIT-EXCEEDED", UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Handle Select Query.
+     * Output: JSON, XLS, XLSX, CSV, TSV
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param mimeType used to specify certain media types which are acceptable for the response
+     * @param fileName The optional file name for the download file.
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
+     */
     private Response handleSelectQuery(String queryString, String datasetRecordId,
                                        String mimeType, String fileName, String acceptString) {
         TupleQueryResult queryResults;
@@ -416,6 +480,108 @@ public class SparqlRest {
 
         return builder.build();
     }
+
+    /**
+     * Handle Construct Query Eagerly
+     * Output: Turtle, JSON-LD, and RDF/XML
+     *
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
+     * @param mimeType used to specify certain media types which are acceptable for the response.
+     * @param fileName The optional file name for the download file.
+     * @param acceptString used to specify certain media types which are acceptable for the response
+     * @return The SPARQL 1.1 Response from ACCEPT Header
+     */
+    private Response handleConstructQueryEager(String queryString, String datasetRecordId,
+                                          String mimeType, String fileName, String acceptString, int limit) {
+        RDFFormat format;
+
+        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
+            mimeType = ""; // default value is turtle
+        }
+
+        switch (mimeType) {
+            case TURTLE_MIME_TYPE:
+                mimeType = TURTLE_MIME_TYPE;
+                format = RDFFormat.TURTLE;
+
+                break;
+            case LDJSON_MIME_TYPE:
+                mimeType = LDJSON_MIME_TYPE;
+                format = RDFFormat.JSONLD;
+                break;
+            case RDFXML_MIME_TYPE:
+                mimeType = RDFXML_MIME_TYPE;
+                format = RDFFormat.RDFXML;
+                break;
+            default:
+                String oldMimeType = mimeType;
+                mimeType = TURTLE_MIME_TYPE;
+                format = RDFFormat.TURTLE;
+                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
+                        oldMimeType, acceptString, mimeType));
+        }
+
+        boolean limitExceeded = false;
+
+        GraphQueryResult graphQueryResult = getGraphQueryResults(queryString, datasetRecordId);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+
+        RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
+        limitExceeded = write(graphQueryResult, writer, sesameTransformer, UNPAGED_LIMIT);
+//        os.flush();
+//        os.close();
+
+
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream).header("Content-Type", mimeType);
+
+        if(limitExceeded){
+            builder.header("X-LIMIT-EXCEEDED", UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * // TODO should
+     * Copied from com.mobi.persistence.utils.rio.Rio
+     * @param iterable
+     * @param writer
+     * @param transformer
+     * @param statementHandlers
+     * @param limit
+     */
+    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer, int limit,
+                                StatementHandler... statementHandlers) {
+        boolean limitExceeded = false;
+        int limitExceededCounter = 0;
+        writer.startRDF();
+        if (iterable instanceof Model) {
+            for (Namespace nextNamespace : ((Model) iterable).getNamespaces()) {
+                writer.handleNamespace(nextNamespace.getPrefix(), nextNamespace.getName());
+            }
+        }
+        for (final Statement st : iterable) {
+            limitExceededCounter += 1;
+            Statement handledStatement = st;
+            for (StatementHandler statementHandler : statementHandlers) {
+                handledStatement = statementHandler.handleStatement(handledStatement);
+            }
+
+            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
+            writer.handleStatement(sesameStatement);
+
+            if(limitExceededCounter >= limit){
+                limitExceeded = true;
+                break;
+            }
+        }
+        writer.endRDF();
+        return limitExceeded;
+    }
+
 
     /**
      * Handle Construct Query.
