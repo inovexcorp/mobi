@@ -563,7 +563,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getUnpagedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -595,7 +595,7 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getUnpagedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -611,6 +611,8 @@ public class SparqlRestTest extends MobiRestTestNg {
         }
     }
 
+    // TODO Test for response header x-limit-exceeded
+    // TODO Test for other mime types
 
     @Test
     public void selectQueryRepositoryUnavailableLimitedTest() {

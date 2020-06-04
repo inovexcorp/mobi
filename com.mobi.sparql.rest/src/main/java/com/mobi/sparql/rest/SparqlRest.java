@@ -101,7 +101,7 @@ public class SparqlRest {
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
 
-    public static final int UNPAGED_LIMIT = 500;
+    public static final int RESULTS_LIMIT = 500;
     public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
 
     private SesameTransformer sesameTransformer;
@@ -253,24 +253,25 @@ public class SparqlRest {
     }
 
     /**
-     * // TODO finish comment
-     * Retrieves the paged results of the provided SPARQL query. Parameters can be passed to control paging.
-     * Links to next and previous pages are within the Links header and the total size is within the
-     * X-Total-Count header. Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query, number of records limited to RESULTS_LIMIT variable.
+     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * For select queries the default type is JSON and for construct queries default type is Turtle.
+     * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
      */
     @GET
     @Path("/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the unpaged results of the provided SPARQL query.")
+    @ApiOperation("Retrieves the limited results of the provided SPARQL query.")
     @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("http://mobi.com/system-repo"))
-    public Response getUnpagedResults(@QueryParam("query") String queryString, // @Context UriInfo uriInfo,
+    public Response getLimitedResults(@QueryParam("query") String queryString,
                                       @QueryParam("dataset") String datasetRecordId,
-                                    @HeaderParam("accept") String acceptString) {
+                                      @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'queryString' must be set.", Response.Status.BAD_REQUEST);
         }
@@ -279,9 +280,9 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, UNPAGED_LIMIT);
+                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, null, RESULTS_LIMIT);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEager(queryString, datasetRecordId, acceptString, null, UNPAGED_LIMIT);
+                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, null, RESULTS_LIMIT);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
@@ -335,13 +336,13 @@ public class SparqlRest {
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
-                queryResults = getTupleQueryResultsEager(queryString, datasetRecordId);
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLS_MIME_TYPE;
                 break;
             case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
-                queryResults = getTupleQueryResultsEager(queryString, datasetRecordId);
+                queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLSX_MIME_TYPE;
                 break;
@@ -386,8 +387,8 @@ public class SparqlRest {
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    private Response handleSelectQueryEager(String queryString, String datasetRecordId,
-                                            String mimeType, String acceptString, int limit) throws IOException {
+    private Response handleSelectQueryEagerly(String queryString, String datasetRecordId,
+                                              String mimeType, String acceptString, int limit) throws IOException {
         TupleQueryResultFormat tupleQueryResultFormat;
 
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -407,7 +408,7 @@ public class SparqlRest {
                         acceptString, mimeType));
                 break;
         }
-        return getSelectQueryResponseEager(queryString, datasetRecordId, tupleQueryResultFormat, mimeType, limit);
+        return getSelectQueryResponseEagerly(queryString, datasetRecordId, tupleQueryResultFormat, mimeType, limit);
     }
 
     /**
@@ -418,16 +419,29 @@ public class SparqlRest {
      * @param mimeType used to specify certain media types which are acceptable for the response
      * @return Response in TupleQueryResultFormat of SPARQL Query
      */
-    private Response getSelectQueryResponseEager(String queryString, String datasetRecordId,
-                                                 TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
-                                                 int limit) throws IOException {
+    private Response getSelectQueryResponseEagerly(String queryString, String datasetRecordId,
+                                                   TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
+                                                   int limit) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        boolean limitExceeded = false;
-        try {
-            TupleQueryResult queryResults = getTupleQueryResultsEager(queryString, datasetRecordId);
-            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, limit, byteArrayOutputStream);
-        } catch (IOException e) {
-            throw new MobiException(e);
+        boolean limitExceeded;
+
+        if (!StringUtils.isBlank(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+            try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn, limit);
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            }
+
+        } else {
+            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                    ErrorUtils.sendError("Repository is not available.",
+                            Response.Status.INTERNAL_SERVER_ERROR));
+            try (RepositoryConnection conn = repository.getConnection()) {
+                limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn, limit);
+            } catch (IllegalArgumentException ex) {
+                throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            }
         }
 
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
@@ -451,8 +465,8 @@ public class SparqlRest {
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
-    private Response handleConstructQueryEager(String queryString, String datasetRecordId, String mimeType,
-                                               String acceptString, int limit) throws IOException {
+    private Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType,
+                                                 String acceptString, int limit) throws IOException {
         RDFFormat format;
 
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -480,19 +494,19 @@ public class SparqlRest {
                 log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
                         oldMimeType, acceptString, mimeType));
         }
-        return getGraphQueryResponseEager(queryString, datasetRecordId, format, mimeType, limit);
+        return getGraphQueryResponseEagerly(queryString, datasetRecordId, format, mimeType, limit);
     }
 
     /**
-     * Get GraphQueryResponse Eagerly
+     * Get GraphQueryResponse Eagerly.
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param format RDFFormat used to convert GraphQueryResults for response
      * @param mimeType used to specify certain media types which are acceptable for the response
      * @return Response in RDFFormat of SPARQL Query
      */
-    private Response getGraphQueryResponseEager(String queryString, String datasetRecordId, RDFFormat format,
-                                                String mimeType, int limit) throws IOException {
+    private Response getGraphQueryResponseEagerly(String queryString, String datasetRecordId, RDFFormat format,
+                                                  String mimeType, int limit) throws IOException {
         boolean limitExceeded;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -620,7 +634,7 @@ public class SparqlRest {
             return os -> {
                 Resource recordId = valueFactory.createIRI(datasetRecordId);
                 try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    executeTupleQuery(queryString, format, os, conn);
+                    executeTupleQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
@@ -631,7 +645,7 @@ public class SparqlRest {
                         ErrorUtils.sendError("Repository is not available.",
                                 Response.Status.INTERNAL_SERVER_ERROR));
                 try (RepositoryConnection conn = repository.getConnection()) {
-                    executeTupleQuery(queryString, format, os, conn);
+                    executeTupleQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
@@ -639,13 +653,20 @@ public class SparqlRest {
         }
     }
 
-    private void executeTupleQuery(String queryString, TupleQueryResultFormat format, OutputStream os,
-                                   RepositoryConnection conn) throws IOException {
+    private boolean executeTupleQuery(String queryString, TupleQueryResultFormat format, OutputStream os,
+                                   RepositoryConnection conn, Integer limit) throws IOException {
+        boolean limitExceeded = false;
         TupleQuery query = conn.prepareTupleQuery(queryString);
         TupleQueryResult queryResults = query.evaluate();
-        queryResultsIO.writeTuple(queryResults, format, os);
+        if (limit != null) {
+            limitExceeded = queryResultsIO.writeTuple(queryResults, format, limit, os);
+        } else {
+            queryResultsIO.writeTuple(queryResults, format, os);
+        }
+
         os.flush();
         os.close();
+        return limitExceeded;
     }
 
     /**
@@ -686,7 +707,7 @@ public class SparqlRest {
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @return TupleQueryResult results of SPARQL Query
      */
-    private TupleQueryResult getTupleQueryResultsEager(String queryString, String datasetRecordId) {
+    private TupleQueryResult getTupleQueryResults(String queryString, String datasetRecordId) {
         TupleQueryResult queryResults;
 
         if (!StringUtils.isBlank(datasetRecordId)) {
