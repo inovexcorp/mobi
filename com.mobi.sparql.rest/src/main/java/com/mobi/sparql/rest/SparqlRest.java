@@ -24,16 +24,12 @@ package com.mobi.sparql.rest;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.JSONQueryResults;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.Rio;
-import com.mobi.persistence.utils.rio.StatementHandler;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.QueryResultsIO;
 import com.mobi.query.TupleQueryResult;
@@ -42,10 +38,7 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.query.exception.MalformedQueryException;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Namespace;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
@@ -54,9 +47,7 @@ import com.mobi.rest.security.annotations.DefaultResourceId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.MobiWebException;
-import com.mobi.rest.util.jaxb.Links;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -74,7 +65,6 @@ import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -93,11 +83,9 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Component(service = SparqlRest.class, immediate = true)
 @Path("/sparql")
@@ -291,10 +279,9 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    Response response = handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
-                    return response;
+                    return handleSelectQueryEager(queryString, datasetRecordId, acceptString, null, UNPAGED_LIMIT);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEager(queryString, datasetRecordId, acceptString, null, null, UNPAGED_LIMIT);
+                    return handleConstructQueryEager(queryString, datasetRecordId, acceptString, null, UNPAGED_LIMIT);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
@@ -314,10 +301,10 @@ public class SparqlRest {
             throw ErrorUtils.sendError(ex, statusText, response);
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IOException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
     /**
      * Handle Select Query.
@@ -348,13 +335,13 @@ public class SparqlRest {
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
-                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                queryResults = getTupleQueryResultsEager(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLS_MIME_TYPE;
                 break;
             case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
-                queryResults = getTupleQueryResults(queryString, datasetRecordId);
+                queryResults = getTupleQueryResultsEager(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
                 mimeType = XLSX_MIME_TYPE;
                 break;
@@ -390,19 +377,17 @@ public class SparqlRest {
     }
 
     /**
-     * Handle Select Query.
-     * Output: JSON, XLS, XLSX, CSV, TSV
+     * Handle Select Query Eagerly
+     * Output: JSON
      *
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param mimeType used to specify certain media types which are acceptable for the response
-     * @param fileName The optional file name for the download file.
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private Response handleSelectQueryEager(String queryString, String datasetRecordId,
-                                            String mimeType, String fileName, String acceptString, int limit) {
-        TupleQueryResult queryResults;
+                                            String mimeType, String acceptString, int limit) throws IOException {
         TupleQueryResultFormat tupleQueryResultFormat;
 
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -413,7 +398,6 @@ public class SparqlRest {
             case JSON_MIME_TYPE:
                 mimeType = JSON_MIME_TYPE;
                 tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 break;
             default:
                 String oldMimeType = mimeType;
@@ -421,29 +405,39 @@ public class SparqlRest {
                 tupleQueryResultFormat = TupleQueryResultFormat.JSON;
                 log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
                         acceptString, mimeType));
-
-                queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 break;
         }
+        return getSelectQueryResponseEager(queryString, datasetRecordId, tupleQueryResultFormat, mimeType, limit);
+    }
 
+    /**
+     * Get SelectQueryResponse Eagerly
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param tupleQueryResultFormat
+     * @param mimeType
+     * @return Response in TupleQueryResultFormat of SPARQL Query
+     */
+    private Response getSelectQueryResponseEager(String queryString, String datasetRecordId, TupleQueryResultFormat tupleQueryResultFormat, String mimeType, int limit) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         boolean limitExceeded = false;
         try {
-            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, UNPAGED_LIMIT, byteArrayOutputStream);
+            TupleQueryResult queryResults = getTupleQueryResultsEager(queryString, datasetRecordId);
+            limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, limit, byteArrayOutputStream);
         } catch (IOException e) {
-            e.printStackTrace(); // TODO FINISH
+            throw new MobiException(e);
         }
-
 
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
                 .header("Content-Type", mimeType);
 
         if(limitExceeded){
-            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+            builder.header(X_LIMIT_EXCEEDED, limit);
         }
 
         return builder.build();
     }
+
 
     /**
      * Handle Construct Query Eagerly
@@ -452,12 +446,11 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
      * @param mimeType used to specify certain media types which are acceptable for the response.
-     * @param fileName The optional file name for the download file.
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
-    private Response handleConstructQueryEager(String queryString, String datasetRecordId,
-                                          String mimeType, String fileName, String acceptString, int limit) {
+    private Response handleConstructQueryEager(String queryString, String datasetRecordId, String mimeType,
+                                               String acceptString, int limit) throws IOException {
         RDFFormat format;
 
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -485,49 +478,43 @@ public class SparqlRest {
                 log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
                         oldMimeType, acceptString, mimeType));
         }
-        return getGraphQueryResults(queryString, datasetRecordId, format, mimeType);
-
+        return getGraphQueryResponseEager(queryString, datasetRecordId, format, mimeType, limit);
     }
 
     /**
-     * // TODO should put in RIO.java?
-     * Copied from com.mobi.persistence.utils.rio.Rio
-     * @param iterable
-     * @param writer
-     * @param transformer
-     * @param statementHandlers
-     * @param limit
+     * Get GraphQueryResponse Eagerly
+     * @param queryString The SPARQL query to execute.
+     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param format
+     * @param mimeType
+     * @return Response in RDFFormat of SPARQL Query
      */
-    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer, int limit,
-                                StatementHandler... statementHandlers) {
-        boolean limitExceeded = false;
-        int limitExceededCounter = 0;
-        writer.startRDF();
-        if (iterable instanceof Model) {
-            for (Namespace nextNamespace : ((Model) iterable).getNamespaces()) {
-                writer.handleNamespace(nextNamespace.getPrefix(), nextNamespace.getName());
+    private Response getGraphQueryResponseEager(String queryString, String datasetRecordId, RDFFormat format, String mimeType, int limit) throws IOException {
+        boolean limitExceeded;
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        if (!StringUtils.isBlank(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+
+            try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
+            }
+        } else {
+            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                    ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+            try (RepositoryConnection conn = repository.getConnection()) {
+                limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
             }
         }
-        for (final Statement st : iterable) {
-            limitExceededCounter += 1;
-            Statement handledStatement = st;
-            for (StatementHandler statementHandler : statementHandlers) {
-                handledStatement = statementHandler.handleStatement(handledStatement);
-            }
 
-            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
-            writer.handleStatement(sesameStatement);
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
 
-            if(limitExceededCounter >= limit){
-                limitExceeded = true;
-                break;
-            }
+        if (limitExceeded) {
+            builder.header(X_LIMIT_EXCEEDED, limit);
         }
-        writer.endRDF();
-        return limitExceeded;
+
+        return builder.build();
     }
-
-
     /**
      * Handle Construct Query.
      * Output: Turtle, JSON-LD, and RDF/XML
@@ -587,7 +574,7 @@ public class SparqlRest {
             return os -> {
                 Resource recordId = valueFactory.createIRI(datasetRecordId);
                 try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    executeGraphQuery(queryString, format, os, conn);
+                    executeGraphQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
@@ -597,7 +584,7 @@ public class SparqlRest {
                 Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                         ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
                 try (RepositoryConnection conn = repository.getConnection()) {
-                    executeGraphQuery(queryString, format, os, conn);
+                    executeGraphQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
                 }
@@ -605,14 +592,21 @@ public class SparqlRest {
         }
     }
 
-    private void executeGraphQuery(String queryString, RDFFormat format, OutputStream os, RepositoryConnection conn)
+    private boolean executeGraphQuery(String queryString, RDFFormat format, OutputStream os, RepositoryConnection conn, Integer limit)
             throws IOException {
+        boolean limitExceeded = false;
         GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
         GraphQueryResult graphQueryResult = graphQuery.evaluate();
         RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
-        Rio.write(graphQueryResult, writer, sesameTransformer);
+        if(limit!=null){
+            limitExceeded = Rio.write(graphQueryResult, writer, sesameTransformer, limit);
+        }else{
+            Rio.write(graphQueryResult, writer, sesameTransformer);
+        }
+
         os.flush();
         os.close();
+        return limitExceeded;
     }
 
     private StreamingOutput getSelectStream(String queryString, String datasetRecordId, TupleQueryResultFormat format) {
@@ -686,107 +680,29 @@ public class SparqlRest {
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @return TupleQueryResult results of SPARQL Query
      */
-    private TupleQueryResult getTupleQueryResults(String queryString, String datasetRecordId) {
+    private TupleQueryResult getTupleQueryResultsEager(String queryString, String datasetRecordId) {
         TupleQueryResult queryResults;
-        try {
-            if (!StringUtils.isBlank(datasetRecordId)) {
-                Resource recordId = valueFactory.createIRI(datasetRecordId);
 
-                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    TupleQuery query = conn.prepareTupleQuery(queryString);
-                    queryResults = query.evaluateAndReturn();
-                }
-            } else {
-                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                        ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
-                try (RepositoryConnection conn = repository.getConnection()) {
-                    TupleQuery query = conn.prepareTupleQuery(queryString);
-                    queryResults = query.evaluateAndReturn();
-                }
+        if (!StringUtils.isBlank(datasetRecordId)) {
+            Resource recordId = valueFactory.createIRI(datasetRecordId);
+
+            try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                TupleQuery query = conn.prepareTupleQuery(queryString);
+                queryResults = query.evaluateAndReturn();
             }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } else {
+            Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                    ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
+            try (RepositoryConnection conn = repository.getConnection()) {
+                TupleQuery query = conn.prepareTupleQuery(queryString);
+                queryResults = query.evaluateAndReturn();
+            }
         }
+
         return queryResults;
     }
 
-    /**
-     * Get GraphQueryResult.
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @return GraphQueryResult results of SPARQL Query
-     */
-    private Response getGraphQueryResults(String queryString, String datasetRecordId, RDFFormat format, String mimeType) {
-        boolean limitExceeded = false;
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-
-        GraphQueryResult queryResults;
-        try {
-            if (!StringUtils.isBlank(datasetRecordId)) {
-                Resource recordId = valueFactory.createIRI(datasetRecordId);
-
-                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
-                    GraphQuery query = conn.prepareGraphQuery(queryString);
-                    queryResults = query.evaluate();
-
-                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
-                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
-//        os.flush();
-//        os.close();
-
-
-                }
-            } else {
-                Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
-                        ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
-                try (RepositoryConnection conn = repository.getConnection()) {
-                    GraphQuery query = conn.prepareGraphQuery(queryString);
-                    queryResults = query.evaluate();
-
-                    RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
-                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
-//        os.flush();
-//        os.close();
-
-
-                }
-            }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MalformedQueryException ex) {
-            String statusText = "Query is invalid. Please change the query and re-execute.";
-            MobiWebException.CustomStatus status = new MobiWebException.CustomStatus(400, statusText);
-            ObjectNode entity = mapper.createObjectNode();
-            entity.put("details", ex.getMessage());
-            Response response = Response.status(status)
-                    .entity(entity.toString())
-                    .build();
-            throw ErrorUtils.sendError(ex, statusText, response);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-
-        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
-
-        if(limitExceeded){
-            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
-        }
-
-        return builder.build();
-
-    }
 
     /**
      * Get ParsedOperation from query string.
