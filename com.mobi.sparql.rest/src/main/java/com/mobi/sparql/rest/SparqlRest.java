@@ -263,7 +263,7 @@ public class SparqlRest {
      * @return The paginated List of JSONObjects that match the SPARQL query bindings.
      */
     @GET
-    @Path("/unpage")
+    @Path("/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ApiOperation("Retrieves the unpaged results of the provided SPARQL query.")

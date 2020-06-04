@@ -561,7 +561,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path("sparql/unpage")
+            WebTarget webTarget = target().path("sparql/limited-results")
                     .queryParam("query", ALL_QUERY);
 
             if (dataset != null) {
@@ -593,7 +593,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path("sparql/unpage")
+            WebTarget webTarget = target().path("sparql/limited-results")
                     .queryParam("query", CONSTRUCT_QUERY);
 
             if (dataset != null) {
