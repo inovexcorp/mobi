@@ -24,12 +24,14 @@ package com.mobi.security.api;
  */
 
 import java.util.Map;
+
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.osgi.service.cm.Configuration;
 
 public interface EncryptionService {
-    String encrypt(String strToEncrypt, String configFieldToUpdate, Configuration config);
+    String encrypt(String strToEncrypt, String configFieldToUpdate, Configuration config) throws EncryptionOperationNotPossibleException;
 
-    String decrypt(String strToDecrypt, String configFieldToDecrypt, Configuration config);
+    String decrypt(String strToDecrypt, String configFieldToDecrypt, Configuration config) throws EncryptionOperationNotPossibleException;
 
     boolean isEnabled();
 

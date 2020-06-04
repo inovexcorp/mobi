@@ -37,6 +37,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -98,7 +99,10 @@ public class SimpleEmailService implements EmailService {
             emailPassword = encryptionService.isEnabled() ? encryptionService.decrypt(config.emailPassword(), "emailPassword",
                     this.configurationAdmin.getConfiguration(COMPONENT_NAME)) : config.emailPassword();
         } catch (IOException e) {
-            LOGGER.error("Encrypt/Decrypt failed for emailPassword", e);
+            LOGGER.error("Could not get configuration for " + COMPONENT_NAME, e);
+            throw new MobiException(e);
+        } catch (EncryptionOperationNotPossibleException e) {
+            LOGGER.error("Could not encrypt/decrypt the emailPassword. Make sure that you are not trying to decrypt a password that was encrypted with a different master password.");
             throw new MobiException(e);
         }
         try {

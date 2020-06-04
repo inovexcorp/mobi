@@ -27,6 +27,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.security.api.EncryptionService;
 import com.mobi.security.api.EncryptionServiceConfig;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.iv.RandomIvGenerator;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.osgi.service.component.annotations.Activate;
@@ -55,13 +56,17 @@ public class SimpleEncryptionService implements EncryptionService {
 
     private static final String AES_128 = "PBEWithHmacSHA512AndAES_128";
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEncryptionService.class);
-    private StandardPBEStringEncryptor encryptor;
+    private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();;
     private boolean isEnabled;
 
     @Activate
     @Modified
     protected void start(final EncryptionServiceConfig encryptionServiceConfig) {
-        encryptor =  new StandardPBEStringEncryptor(); // Must create new encryptor if password changes because jasypt does not allow encryptor to change password.
+        if (encryptor.isInitialized()) {
+            LOGGER.debug("Encryptor has already been initialized. Modifications to the encryption config will not take effect until karaf is restarted." +
+                    "If the master password is changed, you will need to re-store all passwords in plaintext before next run.");
+            return;
+        }
         isEnabled = encryptionServiceConfig.enabled();
         if (isEnabled) {
             String envVar = encryptionServiceConfig.variable();
@@ -88,7 +93,7 @@ public class SimpleEncryptionService implements EncryptionService {
     }
 
     @Override
-    public String encrypt(String strToEncrypt, String configFieldToUpdate, final Configuration config) {
+    public String encrypt(String strToEncrypt, String configFieldToUpdate, final Configuration config) throws EncryptionOperationNotPossibleException {
         LOGGER.debug("Attempting to encrypt " + configFieldToUpdate + " field in " + config.getPid() + " config.");
         if (strToEncrypt == null) {
             return null;
@@ -108,7 +113,8 @@ public class SimpleEncryptionService implements EncryptionService {
     }
 
     @Override
-    public String decrypt(String strToDecrypt, String configFieldToDecrypt, final Configuration config) {
+    public String decrypt(String strToDecrypt, String configFieldToDecrypt, final Configuration config) throws EncryptionOperationNotPossibleException{
+        LOGGER.debug("Decrypting " + configFieldToDecrypt + " field in " + config.getPid() + " config.");
         if (strToDecrypt == null) {
             return null;
         } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToDecrypt)) {
