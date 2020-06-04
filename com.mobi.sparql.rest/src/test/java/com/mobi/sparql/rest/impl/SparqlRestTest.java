@@ -95,8 +95,13 @@ public class SparqlRestTest extends MobiRestTestNg {
     private String CONSTRUCT_QUERY;
     private String DATASET_ID;
     private Model testModel;
+
     private RepositoryConnection conn;
+    private RepositoryConnection connLarge;
     private Map<String, String[]> fileTypesMimes;
+    private Map<String, String[]> selectFileTypesMimes;
+    private Map<String, String[]> constructFileTypesMimes;
+    private Map<String, String[]> limitedFileTypesMimes;
     private List<String> datasets;
     private List<String> filenames;
 
@@ -155,17 +160,27 @@ public class SparqlRestTest extends MobiRestTestNg {
                 .getResourceAsStream("construct_query.rq")));
 
         fileTypesMimes = new LinkedHashMap<>();
-        fileTypesMimes.put("json", new String[]{"application/json", ALL_QUERY});
-        fileTypesMimes.put("sWrongType", new String[]{"application/json", ALL_QUERY});
+        constructFileTypesMimes = new LinkedHashMap<>();
+        selectFileTypesMimes = new LinkedHashMap<>();
+        limitedFileTypesMimes = new LinkedHashMap<>();
+
+        selectFileTypesMimes.put("json", new String[]{"application/json", ALL_QUERY});
+        selectFileTypesMimes.put("sWrongType", new String[]{"application/json", ALL_QUERY});
         fileTypesMimes.put("csv", new String[]{"text/csv", ALL_QUERY});
         fileTypesMimes.put("tsv", new String[]{"text/tab-separated-values", ALL_QUERY});
         fileTypesMimes.put("xls", new String[]{"application/vnd.ms-excel", ALL_QUERY});
         fileTypesMimes.put("xlsx", new String[]{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 ALL_QUERY});
-        fileTypesMimes.put("ttl", new String[]{"text/turtle", CONSTRUCT_QUERY});
-        fileTypesMimes.put("cWrongType", new String[]{"text/turtle", CONSTRUCT_QUERY});
-        fileTypesMimes.put("jsonld", new String[]{"application/ld+json", CONSTRUCT_QUERY});
-        fileTypesMimes.put("rdf", new String[]{"application/rdf+xml", CONSTRUCT_QUERY});
+
+        constructFileTypesMimes.put("ttl", new String[]{"text/turtle", CONSTRUCT_QUERY});
+        constructFileTypesMimes.put("cWrongType", new String[]{"text/turtle", CONSTRUCT_QUERY});
+        constructFileTypesMimes.put("jsonld", new String[]{"application/ld+json", CONSTRUCT_QUERY});
+        constructFileTypesMimes.put("rdf", new String[]{"application/rdf+xml", CONSTRUCT_QUERY});
+
+        fileTypesMimes.putAll(constructFileTypesMimes);
+        fileTypesMimes.putAll(selectFileTypesMimes);
+        limitedFileTypesMimes.putAll(constructFileTypesMimes);
+        limitedFileTypesMimes.putAll(selectFileTypesMimes);
 
         datasets = Arrays.asList(null, DATASET_ID);
         filenames = Arrays.asList(null, "test");
@@ -213,8 +228,35 @@ public class SparqlRestTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
     }
 
+    private void setupLargeRepo() {
+        Repository repoLarge = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repoLarge.initialize();
+        Model testModelLarge = mf.createModel();
+
+        for (int i = 0; i <= 1000; i++) {
+            testModelLarge.add(vf.createIRI("http://example.com/Example"), vf.createIRI("http://example.com/property" + i), vf.createLiteral("true"));
+        }
+        connLarge = repoLarge.getConnection();
+        connLarge.add(testModelLarge);
+
+        reset(repositoryManager, datasetConnection, datasetManager);
+        // mock repositoryManager
+        when(repositoryManager.getRepository(anyString()))
+                .thenReturn(Optional.of(repoLarge));
+
+        // mock getConnection
+        when(datasetManager.getConnection(any(Resource.class)))
+                .thenReturn(datasetConnection);
+        // mock prepareTupleQuery
+        when(datasetConnection.prepareTupleQuery(anyString()))
+                .thenAnswer(i -> connLarge.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+        when(datasetConnection.prepareGraphQuery(anyString()))
+                .thenAnswer(i -> connLarge.prepareGraphQuery(i.getArgumentAt(0, String.class)));
+    }
+
     @Test
     public void queryRdfTest() {
+        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (String dataset : datasets) {
@@ -237,7 +279,11 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-                    verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                    } else {
+                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                    }
                 } else {
                     verify(repositoryManager, atLeastOnce()).getRepository("system");
                 }
@@ -263,10 +309,12 @@ public class SparqlRestTest extends MobiRestTestNg {
                 }
             }
         }
+        Assert.assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryTest() {
+        Assert.assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (String dataset : datasets) {
@@ -293,7 +341,11 @@ public class SparqlRestTest extends MobiRestTestNg {
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                        if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                            verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                        } else {
+                            verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                        }
                     } else {
                         verify(repositoryManager, atLeastOnce()).getRepository("system");
                     }
@@ -328,6 +380,7 @@ public class SparqlRestTest extends MobiRestTestNg {
                 }
             }
         }
+        Assert.assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
     }
 
     @Test
@@ -573,6 +626,42 @@ public class SparqlRestTest extends MobiRestTestNg {
             }
             assertEquals(response.getStatus(), 200);
             assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+            assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), null);
+
+            String responseString = response.readEntity(String.class);
+            JSONObject result = JSONObject.fromObject(responseString);
+            assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+            assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+        }
+    }
+
+    @Test
+    public void selectQueryDefaultLimitExceededTest() {
+        setupLargeRepo();
+
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL)
+                    .queryParam("query", ALL_QUERY);
+
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().get();
+
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareTupleQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
+            assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), "500");
 
             String responseString = response.readEntity(String.class);
             JSONObject result = JSONObject.fromObject(responseString);
@@ -605,14 +694,104 @@ public class SparqlRestTest extends MobiRestTestNg {
             }
             assertEquals(response.getStatus(), 200);
             assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
+            assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), null);
 
             String responseString = response.readEntity(String.class);
             Assert.assertNotEquals(responseString, "");
         }
     }
 
-    // TODO Test for response header x-limit-exceeded
-    // TODO Test for other mime types
+    @Test
+    public void constructQueryDefaultLimitExceededTest() {
+        setupLargeRepo();
+
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            minNumberOfInvocations += 1;
+            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL)
+                    .queryParam("query", CONSTRUCT_QUERY);
+
+            if (dataset != null) {
+                webTarget = webTarget.queryParam("dataset", DATASET_ID);
+            }
+
+            Response response = webTarget.request().get();
+
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+
+            if (dataset != null) {
+                verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
+                verify(datasetConnection).prepareGraphQuery(anyString());
+            } else {
+                verify(repositoryManager).getRepository("system");
+            }
+            assertEquals(response.getStatus(), 200);
+            assertEquals(response.getHeaderString("Content-Type"), "text/turtle");
+            assertEquals(response.getHeaderString("X-LIMIT-EXCEEDED"), "500");
+
+            String responseString = response.readEntity(String.class);
+            Assert.assertNotEquals(responseString, "");
+        }
+    }
+
+
+    @Test
+    public void limitedResultsTest() {
+        Assert.assertEquals("Verify Mimes Types", 6, limitedFileTypesMimes.size());
+
+        int minNumberOfInvocations = 0;
+        for (String dataset : datasets) {
+            for (Map.Entry mapEntry: limitedFileTypesMimes.entrySet()) {
+                minNumberOfInvocations += 1;
+                String type = (String) mapEntry.getKey();
+                String[] dataArray = (String[]) mapEntry.getValue();
+                String mimeType = dataArray[0];
+
+                WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL).queryParam("query", dataArray[1]);
+
+                if (dataset != null) {
+                    webTarget = webTarget.queryParam("dataset", DATASET_ID);
+                }
+                Response response = webTarget.request().accept(mimeType).get();
+
+                assertEquals(response.getStatus(), 200);
+
+                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+
+                if (dataset != null) {
+                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+                    } else {
+                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+                    }
+                } else {
+                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                }
+
+                MultivaluedMap<String, Object> headers = response.getHeaders();
+                assertEquals(headers.get("Content-Type").get(0), mimeType);
+
+                if (type.equals("sWrongType")) {
+                    type = "json";
+                } else if (type.equals("cWrongType")) {
+                    type = "ttl";
+                }
+
+                if (type.equals("json")) {
+                    JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+                    assertTrue(result.containsKey("head"), "Response JSON contains `head` key");
+                    assertTrue(result.containsKey("results"), "Response JSON contains `results` key");
+                } else {
+                    String responseString = response.readEntity(String.class);
+                    Assert.assertNotEquals(responseString, "");
+                }
+            }
+        }
+        Assert.assertEquals("Verify minNumberOfInvocations", 12, minNumberOfInvocations);
+    }
+
+
 
     @Test
     public void selectQueryRepositoryUnavailableLimitedTest() {
