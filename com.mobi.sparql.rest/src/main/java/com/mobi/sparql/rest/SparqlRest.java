@@ -24,13 +24,10 @@ package com.mobi.sparql.rest;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.JSONQueryResults;
-import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.rio.Rio;
 import com.mobi.persistence.utils.rio.StatementHandler;
@@ -54,9 +51,7 @@ import com.mobi.rest.security.annotations.DefaultResourceId;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.MobiWebException;
-import com.mobi.rest.util.jaxb.Links;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -93,11 +88,9 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
 
 @Component(service = SparqlRest.class, immediate = true)
 @Path("/sparql")
@@ -431,15 +424,14 @@ public class SparqlRest {
         try {
             limitExceeded = queryResultsIO.writeTuple(queryResults, tupleQueryResultFormat, UNPAGED_LIMIT, byteArrayOutputStream);
         } catch (IOException e) {
-            e.printStackTrace(); // TODO FINISH
+            throw new MobiException(e);
         }
-
 
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
                 .header("Content-Type", mimeType);
 
         if(limitExceeded){
-            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);
         }
 
         return builder.build();
@@ -731,7 +723,6 @@ public class SparqlRest {
         boolean limitExceeded = false;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-
         GraphQueryResult queryResults;
         try {
             if (!StringUtils.isBlank(datasetRecordId)) {
@@ -743,10 +734,6 @@ public class SparqlRest {
 
                     RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
                     limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
-//        os.flush();
-//        os.close();
-
-
                 }
             } else {
                 Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
@@ -757,10 +744,6 @@ public class SparqlRest {
 
                     RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
                     limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
-//        os.flush();
-//        os.close();
-
-
                 }
             }
         } catch (IllegalArgumentException ex) {
@@ -781,11 +764,10 @@ public class SparqlRest {
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
 
         if(limitExceeded){
-            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);  //  TODO CHECK WITH MEGAN
+            builder.header(X_LIMIT_EXCEEDED, UNPAGED_LIMIT);
         }
 
         return builder.build();
-
     }
 
     /**
