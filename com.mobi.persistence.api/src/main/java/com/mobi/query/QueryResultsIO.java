@@ -1,5 +1,3 @@
-@Version("1.1.0.${build}")
-
 package com.mobi.query;
 
 /*-
@@ -25,4 +23,20 @@ package com.mobi.query;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+public interface QueryResultsIO {
+
+    /**
+     * Method streams out Tuple Query Results into the given TupleQueryResultFormat
+     * @param tqr TupleQueryResult the tuple results
+     * @param format TupleQueryResultFormat the format to stream in
+     * @param out OutputStream Stream of TupleQueryResult in the TupleQueryResultFormat
+     * @throws IOException
+     */
+    public void writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, OutputStream out) throws IOException;
+
+}
