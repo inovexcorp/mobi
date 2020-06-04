@@ -481,43 +481,7 @@ public class SparqlRest {
 
     }
 
-    /**
-     * // TODO should put in RIO.java?
-     * Copied from com.mobi.persistence.utils.rio.Rio
-     * @param iterable
-     * @param writer
-     * @param transformer
-     * @param statementHandlers
-     * @param limit
-     */
-    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer, int limit,
-                                StatementHandler... statementHandlers) {
-        boolean limitExceeded = false;
-        int limitExceededCounter = 0;
-        writer.startRDF();
-        if (iterable instanceof Model) {
-            for (Namespace nextNamespace : ((Model) iterable).getNamespaces()) {
-                writer.handleNamespace(nextNamespace.getPrefix(), nextNamespace.getName());
-            }
-        }
-        for (final Statement st : iterable) {
-            limitExceededCounter += 1;
-            Statement handledStatement = st;
-            for (StatementHandler statementHandler : statementHandlers) {
-                handledStatement = statementHandler.handleStatement(handledStatement);
-            }
 
-            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
-            writer.handleStatement(sesameStatement);
-
-            if(limitExceededCounter >= limit){
-                limitExceeded = true;
-                break;
-            }
-        }
-        writer.endRDF();
-        return limitExceeded;
-    }
 
 
     /**
@@ -733,7 +697,7 @@ public class SparqlRest {
                     queryResults = query.evaluate();
 
                     RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
-                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
+                    limitExceeded = Rio.write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
                 }
             } else {
                 Repository repository = repositoryManager.getRepository("system").orElseThrow(() ->
@@ -743,7 +707,7 @@ public class SparqlRest {
                     queryResults = query.evaluate();
 
                     RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, byteArrayOutputStream);
-                    limitExceeded = write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
+                    limitExceeded = Rio.write(queryResults, writer, sesameTransformer, UNPAGED_LIMIT);
                 }
             }
         } catch (IllegalArgumentException ex) {
