@@ -54,6 +54,11 @@
       right: unset;
       top: unset;
     }
+
+    .dataTables_wrapper {
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
   }
 
 }
