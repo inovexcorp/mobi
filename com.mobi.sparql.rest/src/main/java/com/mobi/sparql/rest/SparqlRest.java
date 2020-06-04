@@ -377,7 +377,7 @@ public class SparqlRest {
     }
 
     /**
-     * Handle Select Query Eagerly
+     * Handle Select Query Eagerly.
      * Output: JSON
      *
      * @param queryString The SPARQL query to execute.
@@ -411,14 +411,16 @@ public class SparqlRest {
     }
 
     /**
-     * Get SelectQueryResponse Eagerly
+     * Get SelectQueryResponse Eagerly.
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param tupleQueryResultFormat
-     * @param mimeType
+     * @param tupleQueryResultFormat TupleQueryResultFormat used to convert TupleQueryResults for response
+     * @param mimeType used to specify certain media types which are acceptable for the response
      * @return Response in TupleQueryResultFormat of SPARQL Query
      */
-    private Response getSelectQueryResponseEager(String queryString, String datasetRecordId, TupleQueryResultFormat tupleQueryResultFormat, String mimeType, int limit) throws IOException {
+    private Response getSelectQueryResponseEager(String queryString, String datasetRecordId,
+                                                 TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
+                                                 int limit) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         boolean limitExceeded = false;
         try {
@@ -431,7 +433,7 @@ public class SparqlRest {
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
                 .header("Content-Type", mimeType);
 
-        if(limitExceeded){
+        if (limitExceeded) {
             builder.header(X_LIMIT_EXCEEDED, limit);
         }
 
@@ -440,7 +442,7 @@ public class SparqlRest {
 
 
     /**
-     * Handle Construct Query Eagerly
+     * Handle Construct Query Eagerly.
      * Output: Turtle, JSON-LD, and RDF/XML
      *
      * @param queryString The SPARQL query to execute.
@@ -485,11 +487,12 @@ public class SparqlRest {
      * Get GraphQueryResponse Eagerly
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param format
-     * @param mimeType
+     * @param format RDFFormat used to convert GraphQueryResults for response
+     * @param mimeType used to specify certain media types which are acceptable for the response
      * @return Response in RDFFormat of SPARQL Query
      */
-    private Response getGraphQueryResponseEager(String queryString, String datasetRecordId, RDFFormat format, String mimeType, int limit) throws IOException {
+    private Response getGraphQueryResponseEager(String queryString, String datasetRecordId, RDFFormat format,
+                                                String mimeType, int limit) throws IOException {
         boolean limitExceeded;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -507,7 +510,8 @@ public class SparqlRest {
             }
         }
 
-        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString()).header("Content-Type", mimeType);
+        Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
+                .header("Content-Type", mimeType);
 
         if (limitExceeded) {
             builder.header(X_LIMIT_EXCEEDED, limit);
@@ -515,6 +519,7 @@ public class SparqlRest {
 
         return builder.build();
     }
+
     /**
      * Handle Construct Query.
      * Output: Turtle, JSON-LD, and RDF/XML
@@ -592,15 +597,16 @@ public class SparqlRest {
         }
     }
 
-    private boolean executeGraphQuery(String queryString, RDFFormat format, OutputStream os, RepositoryConnection conn, Integer limit)
+    private boolean executeGraphQuery(String queryString, RDFFormat format, OutputStream os,
+                                      RepositoryConnection conn, Integer limit)
             throws IOException {
         boolean limitExceeded = false;
         GraphQuery graphQuery = conn.prepareGraphQuery(queryString);
         GraphQueryResult graphQueryResult = graphQuery.evaluate();
         RDFWriter writer = org.eclipse.rdf4j.rio.Rio.createWriter(format, os);
-        if(limit!=null){
+        if (limit != null) {
             limitExceeded = Rio.write(graphQueryResult, writer, sesameTransformer, limit);
-        }else{
+        } else {
             Rio.write(graphQueryResult, writer, sesameTransformer);
         }
 
@@ -701,8 +707,6 @@ public class SparqlRest {
 
         return queryResults;
     }
-
-
 
     /**
      * Get ParsedOperation from query string.
