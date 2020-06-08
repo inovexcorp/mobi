@@ -351,29 +351,24 @@ public class SparqlRest {
         switch (mimeType) {
             case JSON_MIME_TYPE:
                 fileExtension = "json";
-                mimeType = JSON_MIME_TYPE;
                 stream = getSelectStream(queryString, datasetRecordId, TupleQueryResultFormat.JSON);
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
                 queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
-                mimeType = XLS_MIME_TYPE;
                 break;
             case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
                 queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
-                mimeType = XLSX_MIME_TYPE;
                 break;
             case CSV_MIME_TYPE:
                 fileExtension = "csv";
-                mimeType = CSV_MIME_TYPE;
                 stream = getSelectStream(queryString, datasetRecordId, TupleQueryResultFormat.CSV);
                 break;
             case TSV_MIME_TYPE:
                 fileExtension = "tsv";
-                mimeType = TSV_MIME_TYPE;
                 stream = getSelectStream(queryString, datasetRecordId, TupleQueryResultFormat.TSV);
                 break;
             default:
@@ -480,16 +475,12 @@ public class SparqlRest {
 
         switch (mimeType) {
             case TURTLE_MIME_TYPE:
-                mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
-
                 break;
             case LDJSON_MIME_TYPE:
-                mimeType = LDJSON_MIME_TYPE;
                 format = RDFFormat.JSONLD;
                 break;
             case RDFXML_MIME_TYPE:
-                mimeType = RDFXML_MIME_TYPE;
                 format = RDFFormat.RDFXML;
                 break;
             default:
@@ -562,17 +553,14 @@ public class SparqlRest {
         switch (mimeType) {
             case TURTLE_MIME_TYPE:
                 fileExtension = "ttl";
-                mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
                 break;
             case LDJSON_MIME_TYPE:
                 fileExtension = "jsonld";
-                mimeType = LDJSON_MIME_TYPE;
                 format = RDFFormat.JSONLD;
                 break;
             case RDFXML_MIME_TYPE:
                 fileExtension = "rdf";
-                mimeType = RDFXML_MIME_TYPE;
                 format = RDFFormat.RDFXML;
                 break;
             default:
