@@ -66,8 +66,12 @@ import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +91,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = SparqlRest.class, immediate = true)
+@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
+@Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 @Api( value = "/sparql" )
 public class SparqlRest {
@@ -101,7 +106,8 @@ public class SparqlRest {
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
 
-    public static final int RESULTS_LIMIT = 500;
+    private int limitResults;
+
     public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
 
     private SesameTransformer sesameTransformer;
@@ -136,6 +142,12 @@ public class SparqlRest {
     @Reference
     public void setQueryResultsIO(QueryResultsIO queryResultsIO) {
         this.queryResultsIO = queryResultsIO;
+    }
+
+    @Activate
+    @Modified
+    protected void start(final SparqlRestConfig sparqlRestConfig) {
+        limitResults = sparqlRestConfig.limit();
     }
 
     /**
@@ -280,9 +292,9 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, null, RESULTS_LIMIT);
+                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, null, limitResults);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, null, RESULTS_LIMIT);
+                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, null, limitResults);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
