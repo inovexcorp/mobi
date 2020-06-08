@@ -91,7 +91,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
+@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.REQUIRE)
 @Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 @Api( value = "/sparql" )
@@ -147,7 +147,15 @@ public class SparqlRest {
     @Activate
     @Modified
     protected void start(final SparqlRestConfig sparqlRestConfig) {
-        limitResults = sparqlRestConfig.limit();
+        this.setLimitResults(sparqlRestConfig.limit());
+    }
+
+    /**
+     * Set Limit Results
+     * @param limitResults
+     */
+    public void setLimitResults(int limitResults){
+        this.limitResults = limitResults;
     }
 
     /**
@@ -273,7 +281,7 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param acceptString used to specify certain media types which are acceptable for the response
-     * @return The paginated List of JSONObjects that match the SPARQL query bindings.
+     * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
     @Path("/limited-results")

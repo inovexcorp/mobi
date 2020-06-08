@@ -149,6 +149,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest.setSesameTransformer(sesameTransformer);
         rest.setValueFactory(vf);
         rest.setQueryResultsIO(new QueryResultsIOService());
+        rest.setLimitResults(500);
 
         rest = Mockito.spy(rest);
 
