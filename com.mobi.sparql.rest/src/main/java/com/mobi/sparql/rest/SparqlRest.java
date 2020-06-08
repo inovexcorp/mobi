@@ -91,7 +91,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.REQUIRE)
+@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
 @Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 @Api( value = "/sparql" )
@@ -300,9 +300,9 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, null, limitResults);
+                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, limitResults);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, null, limitResults);
+                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, limitResults);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
@@ -399,14 +399,12 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param mimeType used to specify certain media types which are acceptable for the response
-     * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    private Response handleSelectQueryEagerly(String queryString, String datasetRecordId,
-                                              String mimeType, String acceptString, int limit) throws IOException {
-        if (mimeType != JSON_MIME_TYPE) {
-            log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", mimeType,
-                        acceptString, JSON_MIME_TYPE));
+    private Response handleSelectQueryEagerly(String queryString, String datasetRecordId, String mimeType, int limit)
+            throws IOException {
+        if (mimeType == null || mimeType != JSON_MIME_TYPE) {
+            log.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
         }
         return getSelectQueryResponseEagerly(queryString, datasetRecordId, TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit);
     }
@@ -462,11 +460,10 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
      * @param mimeType used to specify certain media types which are acceptable for the response.
-     * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
-    private Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                                 String acceptString, int limit) throws IOException {
+    private Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType, int limit)
+            throws IOException {
         RDFFormat format;
 
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -487,8 +484,7 @@ public class SparqlRest {
                 String oldMimeType = mimeType;
                 mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
-                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
-                        oldMimeType, acceptString, mimeType));
+                log.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
         }
         return getGraphQueryResponseEagerly(queryString, datasetRecordId, format, mimeType, limit);
     }
