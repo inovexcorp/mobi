@@ -28,7 +28,7 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 @ObjectClassDefinition(name = "SparqlRest Service Config", description = "Configure the SparqlRest Service details")
 public @interface SparqlRestConfig {
 
-    @AttributeDefinition(name = "limit", description = "Integer used for limit for limited-results endpoint", required=true)
+    @AttributeDefinition(name = "limit", description = "Integer used for limit for limited-results endpoint", required=true, defaultValue="500")
     int limit();
 
 }
