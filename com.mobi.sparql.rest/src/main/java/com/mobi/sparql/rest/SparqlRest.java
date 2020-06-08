@@ -273,7 +273,7 @@ public class SparqlRest {
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query, number of records limited to RESULTS_LIMIT variable.
+     * Retrieves the results of the provided SPARQL query, number of records limited to configurable limit field variable under SparqlRestConfig.
      * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
