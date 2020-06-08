@@ -409,26 +409,11 @@ public class SparqlRest {
      */
     private Response handleSelectQueryEagerly(String queryString, String datasetRecordId,
                                               String mimeType, String acceptString, int limit) throws IOException {
-        TupleQueryResultFormat tupleQueryResultFormat;
-
-        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
-            mimeType = "";
+        if (mimeType != JSON_MIME_TYPE) {
+            log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", mimeType,
+                        acceptString, JSON_MIME_TYPE));
         }
-
-        switch (mimeType) {
-            case JSON_MIME_TYPE:
-                mimeType = JSON_MIME_TYPE;
-                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                break;
-            default:
-                String oldMimeType = mimeType;
-                mimeType = JSON_MIME_TYPE;
-                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
-                        acceptString, mimeType));
-                break;
-        }
-        return getSelectQueryResponseEagerly(queryString, datasetRecordId, tupleQueryResultFormat, mimeType, limit);
+        return getSelectQueryResponseEagerly(queryString, datasetRecordId, TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit);
     }
 
     /**
