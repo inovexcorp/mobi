@@ -66,8 +66,12 @@ import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.eclipse.rdf4j.query.resultio.TupleQueryResultFormat;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +91,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-@Component(service = SparqlRest.class, immediate = true)
+@Component(service = SparqlRest.class, immediate = true, configurationPolicy = ConfigurationPolicy.OPTIONAL)
+@Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 @Api( value = "/sparql" )
 public class SparqlRest {
@@ -101,7 +106,8 @@ public class SparqlRest {
     public static final  String LDJSON_MIME_TYPE = "application/ld+json";
     public static final  String RDFXML_MIME_TYPE = "application/rdf+xml";
 
-    public static final int RESULTS_LIMIT = 500;
+    private int limitResults;
+
     public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
 
     private SesameTransformer sesameTransformer;
@@ -136,6 +142,20 @@ public class SparqlRest {
     @Reference
     public void setQueryResultsIO(QueryResultsIO queryResultsIO) {
         this.queryResultsIO = queryResultsIO;
+    }
+
+    @Activate
+    @Modified
+    protected void start(final SparqlRestConfig sparqlRestConfig) {
+        this.setLimitResults(sparqlRestConfig.limit());
+    }
+
+    /**
+     * Set Limit Results
+     * @param limitResults
+     */
+    public void setLimitResults(int limitResults){
+        this.limitResults = limitResults;
     }
 
     /**
@@ -253,7 +273,7 @@ public class SparqlRest {
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query, number of records limited to RESULTS_LIMIT variable.
+     * Retrieves the results of the provided SPARQL query, number of records limited to configurable limit field variable under SparqlRestConfig.
      * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
@@ -261,7 +281,7 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param acceptString used to specify certain media types which are acceptable for the response
-     * @return The paginated List of JSONObjects that match the SPARQL query bindings.
+     * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
     @Path("/limited-results")
@@ -280,9 +300,9 @@ public class SparqlRest {
         try {
             if (parsedOperation instanceof ParsedQuery) {
                 if (parsedOperation instanceof ParsedTupleQuery) {
-                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, null, RESULTS_LIMIT);
+                    return handleSelectQueryEagerly(queryString, datasetRecordId, acceptString, limitResults);
                 } else if (parsedOperation instanceof ParsedGraphQuery) {
-                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, null, RESULTS_LIMIT);
+                    return handleConstructQueryEagerly(queryString, datasetRecordId, acceptString, limitResults);
                 } else {
                     throw ErrorUtils.sendError("Unsupported query type used.", Response.Status.BAD_REQUEST);
                 }
@@ -331,29 +351,24 @@ public class SparqlRest {
         switch (mimeType) {
             case JSON_MIME_TYPE:
                 fileExtension = "json";
-                mimeType = JSON_MIME_TYPE;
                 stream = getSelectStream(queryString, datasetRecordId, TupleQueryResultFormat.JSON);
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
                 queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
-                mimeType = XLS_MIME_TYPE;
                 break;
             case XLSX_MIME_TYPE:
                 fileExtension = "xlsx";
                 queryResults = getTupleQueryResults(queryString, datasetRecordId);
                 stream = createExcelResults(queryResults, fileExtension);
-                mimeType = XLSX_MIME_TYPE;
                 break;
             case CSV_MIME_TYPE:
                 fileExtension = "csv";
-                mimeType = CSV_MIME_TYPE;
                 stream = getSelectStream(queryString, datasetRecordId, TupleQueryResultFormat.CSV);
                 break;
             case TSV_MIME_TYPE:
                 fileExtension = "tsv";
-                mimeType = TSV_MIME_TYPE;
                 stream = getSelectStream(queryString, datasetRecordId, TupleQueryResultFormat.TSV);
                 break;
             default:
@@ -384,31 +399,14 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
      * @param mimeType used to specify certain media types which are acceptable for the response
-     * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    private Response handleSelectQueryEagerly(String queryString, String datasetRecordId,
-                                              String mimeType, String acceptString, int limit) throws IOException {
-        TupleQueryResultFormat tupleQueryResultFormat;
-
-        if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
-            mimeType = "";
+    private Response handleSelectQueryEagerly(String queryString, String datasetRecordId, String mimeType, int limit)
+            throws IOException {
+        if (mimeType == null || mimeType != JSON_MIME_TYPE) {
+            log.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
         }
-
-        switch (mimeType) {
-            case JSON_MIME_TYPE:
-                mimeType = JSON_MIME_TYPE;
-                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                break;
-            default:
-                String oldMimeType = mimeType;
-                mimeType = JSON_MIME_TYPE;
-                tupleQueryResultFormat = TupleQueryResultFormat.JSON;
-                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]", oldMimeType,
-                        acceptString, mimeType));
-                break;
-        }
-        return getSelectQueryResponseEagerly(queryString, datasetRecordId, tupleQueryResultFormat, mimeType, limit);
+        return getSelectQueryResponseEagerly(queryString, datasetRecordId, TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit);
     }
 
     /**
@@ -462,11 +460,10 @@ public class SparqlRest {
      * @param queryString The SPARQL query to execute.
      * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
      * @param mimeType used to specify certain media types which are acceptable for the response.
-     * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
-    private Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                                 String acceptString, int limit) throws IOException {
+    private Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType, int limit)
+            throws IOException {
         RDFFormat format;
 
         if (mimeType == null) { // any switch statement can't be null to prevent a NullPointerException
@@ -475,24 +472,19 @@ public class SparqlRest {
 
         switch (mimeType) {
             case TURTLE_MIME_TYPE:
-                mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
-
                 break;
             case LDJSON_MIME_TYPE:
-                mimeType = LDJSON_MIME_TYPE;
                 format = RDFFormat.JSONLD;
                 break;
             case RDFXML_MIME_TYPE:
-                mimeType = RDFXML_MIME_TYPE;
                 format = RDFFormat.RDFXML;
                 break;
             default:
                 String oldMimeType = mimeType;
                 mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
-                log.debug(String.format("Invalid mimeType [%s] Header Accept: [%s]: defaulted to [%s]",
-                        oldMimeType, acceptString, mimeType));
+                log.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
         }
         return getGraphQueryResponseEagerly(queryString, datasetRecordId, format, mimeType, limit);
     }
@@ -557,17 +549,14 @@ public class SparqlRest {
         switch (mimeType) {
             case TURTLE_MIME_TYPE:
                 fileExtension = "ttl";
-                mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
                 break;
             case LDJSON_MIME_TYPE:
                 fileExtension = "jsonld";
-                mimeType = LDJSON_MIME_TYPE;
                 format = RDFFormat.JSONLD;
                 break;
             case RDFXML_MIME_TYPE:
                 fileExtension = "rdf";
-                mimeType = RDFXML_MIME_TYPE;
                 format = RDFFormat.RDFXML;
                 break;
             default:

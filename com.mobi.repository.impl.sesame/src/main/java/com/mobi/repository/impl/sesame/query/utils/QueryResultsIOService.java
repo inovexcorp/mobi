@@ -54,7 +54,8 @@ public class QueryResultsIOService implements QueryResultsIO {
     }
 
     @Override
-    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out) throws IOException {
+    public boolean writeTuple(TupleQueryResult tqr, TupleQueryResultFormat format, int limit, OutputStream out)
+            throws IOException {
         boolean limitExceeded = false;
 
         if (tqr instanceof SesameTupleQueryResult) {
@@ -80,19 +81,20 @@ public class QueryResultsIOService implements QueryResultsIO {
         return limitExceeded;
     }
 
-    private static boolean report(org.eclipse.rdf4j.query.TupleQueryResult tqr, QueryResultHandler handler, int limit) throws TupleQueryResultHandlerException, QueryEvaluationException {
+    private static boolean report(org.eclipse.rdf4j.query.TupleQueryResult tqr, QueryResultHandler handler, int limit)
+            throws TupleQueryResultHandlerException, QueryEvaluationException {
         boolean limitExceeded = false;
         try {
             int limitCounter = 0;
             handler.startQueryResult(tqr.getBindingNames());
 
-            while(tqr.hasNext()) {
+            while (tqr.hasNext()) {
                 limitCounter += 1;
 
                 BindingSet bindingSet = (BindingSet)tqr.next();
                 handler.handleSolution(bindingSet);
 
-                if(limitCounter >= limit){
+                if (limitCounter >= limit) {
                     limitExceeded = true;
                     break;
                 }
