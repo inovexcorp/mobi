@@ -63,14 +63,14 @@ public class Rio {
      * Writes the given statements to the given {@link RDFHandler}.
      *
      * @param iterable A collection of statements, such as a {@link Model}, to be written.
-     * @param writer
-     * @param transformer
-     * @param statementHandlers
+     * @param writer RDFHandler
+     * @param transformer SesameTransformer
      * @param limit number of records to be written
+     * @param statementHandlers StatementHandler
      * @return boolean if limit has been exceeded
      */
-    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer, int limit,
-                                StatementHandler... statementHandlers) {
+    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer,
+                                int limit, StatementHandler... statementHandlers) {
         boolean limitExceeded = false;
         int limitExceededCounter = 0;
         writer.startRDF();
@@ -89,7 +89,7 @@ public class Rio {
             org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
             writer.handleStatement(sesameStatement);
 
-            if(limitExceededCounter >= limit){
+            if (limitExceededCounter >= limit) {
                 limitExceeded = true;
                 break;
             }
