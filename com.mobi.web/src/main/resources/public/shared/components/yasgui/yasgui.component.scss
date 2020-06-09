@@ -59,6 +59,24 @@
       overflow-x: hidden;
       overflow-y: auto;
     }
+
+    &_btn {
+      &.disabled {
+        pointer-events: none;
+      }
+    }
+
+    .yasr_response_limit {
+      display: flex;
+      max-height: 1.3rem;
+      font-size: .93rem;
+      align-self: center;
+      overflow: visible;
+      background: #FEF9C6;
+      white-space: nowrap;
+      justify-content: center;
+      margin-left: .3rem;
+    }
   }
 
 }

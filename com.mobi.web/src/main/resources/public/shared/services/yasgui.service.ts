@@ -39,12 +39,13 @@ yasguiService.$inject = ['REST_PREFIX'];
 
 function yasguiService(REST_PREFIX) {
     const self = this;
+    let dataset = '';
+    let reponseLimitElement = <HTMLElement>{};
     const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/limited-results', document.location.origin);
     let hasInitialized = false
-    let mimetype = 'application/json';
     let yasrContainerSelector = '.yasr .CodeMirror-scroll, .yasr .dataTables_wrapper ';
-
     let yasrRootElement : HTMLElement = <any>{};
+
     const initPlugins = () => {
         //
         if (Yasgui.Yasr) {
@@ -62,8 +63,8 @@ function yasguiService(REST_PREFIX) {
     }
 
     const initEvents = () => {
-
-        self.yasgui.getTab().yasr.on('change',(instance: Yasgui.Yasr, plugin: Plugin) => {
+        const yasgui =  self.yasgui.getTab();
+        yasgui.yasr.on('change',(instance: Yasgui.Yasr, plugin: Plugin) => {
             if(isPluginEnabled(instance?.selectedPlugin)) {
                 refreshPluginData();
             }
@@ -74,9 +75,19 @@ function yasguiService(REST_PREFIX) {
            yasrContentElement.style.height = getYasContainerHeight();
         });
 
-        self.yasgui.getTab().yasr.on("drawn",(instance: Yasgui.yasr, plugin: Plugin) => {
+        yasgui.yasr.once("drawn",(instance: Yasgui.yasr, plugin: Plugin) => {
+            handleYasrVisivility();
+            drawResponseLimitMessage(instance.headerEl);
+            if(!instance.plugins['table'].canHandleResults() && instance.drawnPlugin !== 'table') {
+                yasgui.yasr.draw();
+            }
+        });
+
+        yasgui.yasr.on("drawn",({ results }) => {
+            let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
             let yasrCodeMirrorElement = <HTMLElement>document.querySelector(yasrContainerSelector);
             yasrCodeMirrorElement.style.height = getYasContainerHeight();
+            updateResponseLimitMessage(limit);
         });
 
     }
@@ -88,6 +99,23 @@ function yasguiService(REST_PREFIX) {
         return style;
     }
 
+    const drawResponseLimitMessage = (headerElement) => {
+        reponseLimitElement = document.createElement('div');
+        reponseLimitElement.classList.add('yasr_response_limit');
+        headerElement.insertBefore(reponseLimitElement, headerElement.querySelector('.yasr_response_chip').nextSibling)
+    }
+
+    const updateResponseLimitMessage = (limit = 0) => {
+
+        if(limit) {
+            reponseLimitElement.classList.remove('empty');
+            if(!reponseLimitElement.innerText) {
+                reponseLimitElement.innerText = "Warning: Query Results exceeded the limit of 50000 rows/triples";
+            }
+        } else {
+            reponseLimitElement.classList.add('empty')
+        }
+    }
     const getFormat = (type) => {
        const formatType =  {
            'turtle': 'text/turtle',
@@ -108,14 +136,8 @@ function yasguiService(REST_PREFIX) {
     }
     const getSelectedMimeType =  () => getFormat(self.yasgui.getTab().yasr.selectedPlugin);
 
-    const getEndpointConfig= () => {
-        let format = getSelectedMimeType();
-        let url = getUrl(format);
-       return url;
-    }
-
     const setRequestConfig = () => {
-        let url = getEndpointConfig()
+        let url =  getUrl();
         const { headers } = self.yasgui.getTab().getRequestConfig();
 
         headers.Accept = getSelectedMimeType();
@@ -125,12 +147,14 @@ function yasguiService(REST_PREFIX) {
         });
     }
 
-    const getUrl = (format: string = mimetype) => {
-        const searchValue = 'returnFormat';
-        if (!defaultUrl.searchParams.has(searchValue)) {
-            defaultUrl.searchParams.append(searchValue, format)
-        } else {
-            defaultUrl.searchParams.set(searchValue, format)
+    const getUrl = (datSetUri = dataset) => {
+        const searchValue = 'dataset';
+        if(datSetUri) {
+            if (!defaultUrl.searchParams.has(searchValue)) {
+                defaultUrl.searchParams.append(searchValue, datSetUri)
+            } else {
+                defaultUrl.searchParams.set(searchValue, datSetUri)
+            }
         }
 
         return defaultUrl.href;
@@ -139,7 +163,6 @@ function yasguiService(REST_PREFIX) {
     const refreshPluginData = () => {
         let selectedPlugin = self.yasgui.getTab().yasr.selectedPlugin;
         if (self.yasgui.getTab().yasr.drawnPlugin && selectedPlugin) {
-            setRequestConfig();
             self.submitQuery();
         }
     }
@@ -150,7 +173,6 @@ function yasguiService(REST_PREFIX) {
                 method: 'GET',
                 endpoint: getUrl()
             },
-            persistencyExpire: 0,
             populateFromUrl: false,
             copyEndpointOnNewTab: false
         };
@@ -176,12 +198,21 @@ function yasguiService(REST_PREFIX) {
         //overwrite table plugin
         // update canHandleResults
         // render plugin only when content type is EQ to json
-        self.yasgui.getTab().getYasr().plugins['table'].canHandleResults = function() {
+        let yasr =  self.yasgui.getTab().getYasr();
+        yasr.plugins['table'].canHandleResults = function() {
             return !!this.yasr.results
                 && this.yasr.results?.getVariables()
                 && this.yasr.results?.getVariables().length > 0
                 && this.yasr.results.getContentType() === 'application/json';
         }
+        // call function on init.
+
+
+
+    }
+
+    self.updateDataset = (data) => {
+        dataset = data;
     }
 
     self.initYasgui = (element, config = {}) => {
@@ -202,10 +233,11 @@ function yasguiService(REST_PREFIX) {
         return self.yasgui;
     }
 
+
     // fire a new query
     self.submitQuery  = (queryConfig = {}) => {
         if(hasInitialized) {
-            handleYasrVisivility();
+            setRequestConfig();
             self.yasgui.getTab().yasqe.query(queryConfig);
         } else {
             throw 'Yasgui has not ben inizialize!';

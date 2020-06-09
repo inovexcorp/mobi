@@ -47,8 +47,6 @@ function yasguiComponentCtrl($element, yasguiService) {
     dvm.$onInit = function() {
         let wrapper_element = $element.find('div')[0];
         dvm.yasgui = yasguiService.initYasgui(wrapper_element);
-        console.log( 'Yasqe defaults', dvm.yasgui);
-        
     }
 
 }
