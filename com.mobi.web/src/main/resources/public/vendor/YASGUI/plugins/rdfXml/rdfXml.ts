@@ -84,10 +84,9 @@ export default class RdfXml implements Plugin<PlugingConfig> {
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
-        const lines = value.split("\n");
-
-        if (lines.length > this.config.maxLines) {
-            value = lines.slice(0, this.config.maxLines).join("\n");
+        let contentType = this.yasr.results?.getContentType();
+        if ( contentType === 'application/ld+json') {
+            value = JSON.stringify(value, null, 4);
         }
 
         const codemirrorOpts = {
@@ -101,14 +100,13 @@ export default class RdfXml implements Plugin<PlugingConfig> {
 
         const type = this.yasr.results?.getType();
 
-        if (type === "rdf") {
+        if (type === "xml") {
             codemirrorOpts['mode'] = this.mode;
         }
 
         // testing purpose.
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
-        // Don't show less originally we've already set the value in the codemirrorOpts
-        if (lines.length > this.config.maxLines) this.showLess(false);
+        
     }
 
 
@@ -132,7 +130,7 @@ export default class RdfXml implements Plugin<PlugingConfig> {
     canHandleResults() {
         if (!this.yasr.results) return false;
         if (!this.yasr.results.getOriginalResponseAsString) return false;
-        if (this.yasr.results?.getContentType() !== 'application/rdf+xml') return false;
+        if (this.yasr.results?.getContentType() === 'application/json') return false;
         const response = this.yasr.results.getOriginalResponseAsString();
 
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway

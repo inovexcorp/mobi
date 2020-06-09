@@ -27,6 +27,7 @@ import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
 import { hasClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
 
 import { merge } from 'lodash';
+import { format } from 'path';
 
 /**
  * @ngdoc service
@@ -38,10 +39,10 @@ yasguiService.$inject = ['REST_PREFIX'];
 
 function yasguiService(REST_PREFIX) {
     const self = this;
-    const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/page', document.location.origin);
+    const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/limited-results', document.location.origin);
     let hasInitialized = false
-    let defaultType = 'jsonld';
-    let isInitialLoad = true;
+    let mimetype = 'application/json';
+    let yasrContainerSelector = '.yasr .CodeMirror-scroll, .yasr .dataTables_wrapper ';
 
     let yasrRootElement : HTMLElement = <any>{};
     const initPlugins = () => {
@@ -57,10 +58,7 @@ function yasguiService(REST_PREFIX) {
                 (window as any).Yasr.registerPlugin("jsonLD", YasrJsonLDlPlugin.default as any);
             }
         }
-        Yasgui.Yasr.defaults.pluginOrder = [ "table", "turtle" , "rdfXml", "jsonLD", "response"]
-        // Ordered list of enabled output plugins
-        //Yasgui.Yasr.config.pluginOrder = ["table", "turtle",'rdfXml', 'jsonLD'];
-        //yasr.config.pluginOrder =
+        Yasgui.Yasr.defaults.pluginOrder = [ "table", "turtle" , "rdfXml", "jsonLD", "response"];
     }
 
     const initEvents = () => {
@@ -72,12 +70,12 @@ function yasguiService(REST_PREFIX) {
         });
 
         self.yasgui.getTab().yasqe.on("resize",(element) => {
-           let yasrCodeMirrorElement = <HTMLElement>document.querySelector('.yasr .CodeMirror-scroll');
-           yasrCodeMirrorElement.style.height = getYasContainerHeight();
+           let yasrContentElement = <HTMLElement>document.querySelector(yasrContainerSelector);
+           yasrContentElement.style.height = getYasContainerHeight();
         });
 
         self.yasgui.getTab().yasr.on("drawn",(instance: Yasgui.yasr, plugin: Plugin) => {
-            let yasrCodeMirrorElement = <HTMLElement>document.querySelector('.yasr .CodeMirror-scroll');
+            let yasrCodeMirrorElement = <HTMLElement>document.querySelector(yasrContainerSelector);
             yasrCodeMirrorElement.style.height = getYasContainerHeight();
         });
 
@@ -90,11 +88,12 @@ function yasguiService(REST_PREFIX) {
         return style;
     }
 
-    const getFormat = (type : string =  defaultType) => {
+    const getFormat = (type) => {
        const formatType =  {
-           'turtle': 'turtle',
-           'rdfXml': 'rdf/xml',
-           'jsonLD': 'jsonld'
+           'turtle': 'text/turtle',
+           'rdfXml': 'application/rdf+xml',
+           'jsonLD': 'application/ld+json',
+           'table': 'application/json'
        }
        return formatType?.[type] || formatType.jsonLD;
     }
@@ -107,21 +106,26 @@ function yasguiService(REST_PREFIX) {
             return false;
         }
     }
-    const getSelectedUrlFormat =  () => getFormat(self.yasgui.getTab().yasr.selectedPlugin);
+    const getSelectedMimeType =  () => getFormat(self.yasgui.getTab().yasr.selectedPlugin);
 
-    const getEndpointURL= () => {
-        let format = getSelectedUrlFormat();
+    const getEndpointConfig= () => {
+        let format = getSelectedMimeType();
         let url = getUrl(format);
        return url;
     }
 
-    const setRequestConfigURL = (url) => {
+    const setRequestConfig = () => {
+        let url = getEndpointConfig()
+        const { headers } = self.yasgui.getTab().getRequestConfig();
+
+        headers.Accept = getSelectedMimeType();
         self.yasgui.getTab().setRequestConfig({
-            endpoint: url
+            endpoint: url, 
+            headers: headers
         });
     }
 
-    const getUrl = (format: string = defaultType) => {
+    const getUrl = (format: string = mimetype) => {
         const searchValue = 'returnFormat';
         if (!defaultUrl.searchParams.has(searchValue)) {
             defaultUrl.searchParams.append(searchValue, format)
@@ -135,7 +139,7 @@ function yasguiService(REST_PREFIX) {
     const refreshPluginData = () => {
         let selectedPlugin = self.yasgui.getTab().yasr.selectedPlugin;
         if (self.yasgui.getTab().yasr.drawnPlugin && selectedPlugin) {
-            setRequestConfigURL(getEndpointURL());
+            setRequestConfig();
             self.submitQuery();
         }
     }
@@ -168,13 +172,27 @@ function yasguiService(REST_PREFIX) {
         }
     }
 
+    const overwritePlugins = () => {
+        //overwrite table plugin
+        // update canHandleResults
+        // render plugin only when content type is EQ to json
+        self.yasgui.getTab().getYasr().plugins['table'].canHandleResults = function() {
+            return !!this.yasr.results
+                && this.yasr.results?.getVariables()
+                && this.yasr.results?.getVariables().length > 0
+                && this.yasr.results.getContentType() === 'application/json';
+        }
+    }
+
     self.initYasgui = (element, config = {}) => {
         const localConfig = getDefaultConfig();
         const configuration = merge({}, localConfig, config );
         // Init YASGUI
         initPlugins();
         self.yasgui = new Yasgui(element, configuration);
+
         hasInitialized = true;
+        overwritePlugins();
         // Init UI events
         initEvents();
         yasrRootElement =  self.yasgui.getTab().yasr.rootEl;

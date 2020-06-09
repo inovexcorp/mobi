@@ -83,12 +83,10 @@ export default class JsonLD implements Plugin<PlugingConfig> {
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
-        const lines = value.split("\n");
-
-        if (lines.length > this.config.maxLines) {
-            value = lines.slice(0, this.config.maxLines).join("\n");
+        let contentType = this.yasr.results?.getContentType();
+        if ( contentType === 'application/ld+json') {
+            value = JSON.stringify(value, null, 4);
         }
-
         const codemirrorOpts = {
             readOnly: true,
             lineNumbers: true,
@@ -98,15 +96,10 @@ export default class JsonLD implements Plugin<PlugingConfig> {
             value: value
         };
 
-        const type = this.yasr.results?.getType();
-
-        if (type === "application/json") {
-            codemirrorOpts['mode']  = this.mode;
-        }
-
+        //codemirrorOpts['mode']  = this.mode;
+        codemirrorOpts['mode'] = contentType,
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
-        // Don't show less originally we've already set the value in the codemirrorOpts
-        if (lines.length > this.config.maxLines) this.showLess(false);
+       
     }
 
 
@@ -130,80 +123,13 @@ export default class JsonLD implements Plugin<PlugingConfig> {
     canHandleResults() {
         if (!this.yasr.results) return false;
         if (!this.yasr.results.getOriginalResponseAsString) return false;
-        if (this.yasr.results?.getContentType() !== 'application/ld+json"') return false;
+        if (this.yasr.results?.getContentType() === 'application/json') return false;
         const response = this.yasr.results.getOriginalResponseAsString();
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;
     }
 
-
-    /**
-     *
-     * @param setValue Optional, if set to false the string will not update
-     */
-    showLess(setValue = true) {
-        if (!this.cm) return;
-        // Add overflow
-        addClass(this.cm.getWrapperElement(), "overflow");
-
-        // Remove old instance
-        if (this.overLay) {
-            this.overLay.remove();
-            this.overLay = undefined;
-        }
-
-        // Wrapper
-        this.overLay = document.createElement("div");
-        addClass(this.overLay, "overlay");
-
-        // overlay content
-        const overlayContent = document.createElement("div");
-        addClass(overlayContent, "overlay_content");
-
-        const showMoreButton = document.createElement("button");
-        showMoreButton.title = "Show all";
-        addClass(showMoreButton, "yasr_btn", "overlay_btn");
-        showMoreButton.textContent = "Show all";
-        showMoreButton.onclick = () => this.showMore();
-        overlayContent.append(showMoreButton);
-
-        const downloadButton = document.createElement("button");
-        downloadButton.title = "Download result";
-        addClass(downloadButton, "yasr_btn", "overlay_btn");
-
-        const text = document.createElement("span");
-        text.innerText = "Download result";
-        downloadButton.appendChild(text);
-        downloadButton.appendChild(drawSvgStringAsElement(imgs.download));
-        downloadButton.onclick = () => this.yasr.download();
-
-        overlayContent.appendChild(downloadButton);
-        this.overLay.appendChild(overlayContent);
-        this.cm.getWrapperElement().appendChild(this.overLay);
-        if (setValue) {
-            this.cm.setValue(this.limitData(this.yasr.results?.getOriginalResponseAsString() || ""));
-        }
-    }
-    /**
-     * Render the raw response full length
-     */
-    private limitData(value: string) {
-        const lines = value.split("\n");
-        if (lines.length > this.config.maxLines) {
-            value = lines.slice(0, this.config.maxLines).join("\n");
-        }
-        return value;
-    }
-
-    private showMore() {
-        if (!this.cm) return;
-        removeClass(this.cm.getWrapperElement(), "overflow");
-        this.overLay?.remove();
-        this.overLay = undefined;
-        this.cm.setValue(this.yasr.results?.getOriginalResponseAsString() || "");
-        this.cm.refresh();
-    }
-
+   
     public static defaults: PlugingConfig = {
         maxLines: 30
     };
