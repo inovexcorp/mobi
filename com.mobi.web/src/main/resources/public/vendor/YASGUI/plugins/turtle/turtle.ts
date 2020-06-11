@@ -81,7 +81,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
         }
     }
 
-    // Draw the resultset. This plugin simply draws the string 'True' or 'False'
+    // Draw the resultset.
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
@@ -103,10 +103,9 @@ export default class Turtle implements Plugin<PlugingConfig> {
         if (type === "ttl") {
             codemirrorOpts['mode'] = this.mode;
         }
-
-        // testing purpose.
+        
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
-        // Don't show less originally we've already set the value in the codemirrorOpts
+
     }
 
 

@@ -79,7 +79,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
         }
     }
 
-    // Draw the resultset. This plugin simply draws the string 'True' or 'False'
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
@@ -101,8 +100,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
        
     }
-
-
 
     download() {
         if (!this.yasr.results) return;

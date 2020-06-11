@@ -80,7 +80,7 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         }
     }
 
-    // Draw the resultset. This plugin simply draws the string 'True' or 'False'
+    // Draw the resultset.
     draw() {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
@@ -136,11 +136,9 @@ export default class RdfXml implements Plugin<PlugingConfig> {
     }
 
 
-
-
-
     public static defaults: PlugingConfig = {
         maxLines: 30
     };
+
 }
 
