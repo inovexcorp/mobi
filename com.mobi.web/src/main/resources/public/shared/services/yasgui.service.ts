@@ -75,6 +75,8 @@ function yasguiService(REST_PREFIX) {
            yasrContentElement.style.height = getYasContainerHeight();
         });
 
+        // update yasr container height
+        // add new element to yasr header.
         yasgui.yasr.once("drawn",(instance: Yasgui.yasr, plugin: Plugin) => {
             handleYasrVisivility();
             drawResponseLimitMessage(instance.headerEl);
@@ -83,6 +85,8 @@ function yasguiService(REST_PREFIX) {
             }
         });
 
+        // update yasr codemirror height
+        // update yasr header: response limit message
         yasgui.yasr.on("drawn",({ results }) => {
             let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
             let yasrCodeMirrorElement = <HTMLElement>document.querySelector(yasrContainerSelector);
@@ -106,24 +110,25 @@ function yasguiService(REST_PREFIX) {
     }
 
     const updateResponseLimitMessage = (limit = 0) => {
-
+        let className = 'hide';
         if(limit) {
-            reponseLimitElement.classList.remove('empty');
+            reponseLimitElement.classList.remove(className);
             if(!reponseLimitElement.innerText) {
-                reponseLimitElement.innerText = "Warning: Query Results exceeded the limit of 50000 rows/triples";
+                reponseLimitElement.innerText = `Warning: Query Results exceeded the limit of ${limit} rows/triples`;
             }
         } else {
-            reponseLimitElement.classList.add('empty')
+            reponseLimitElement.classList.add(className)
         }
     }
     const getFormat = (type) => {
+        let format = type || self.yasgui.getTab().yasr.config.defaultPlugin;
        const formatType =  {
            'turtle': 'text/turtle',
            'rdfXml': 'application/rdf+xml',
            'jsonLD': 'application/ld+json',
            'table': 'application/json'
        }
-       return formatType?.[type] || formatType.jsonLD;
+       return formatType?.[format] || formatType.jsonLD;
     }
 
     const isPluginEnabled = (plugin) => {
@@ -134,13 +139,12 @@ function yasguiService(REST_PREFIX) {
             return false;
         }
     }
-    const getSelectedMimeType =  () => getFormat(self.yasgui.getTab().yasr.selectedPlugin);
 
+    // update yasr request configuration
     const setRequestConfig = () => {
         let url =  getUrl();
         const { headers } = self.yasgui.getTab().getRequestConfig();
-
-        headers.Accept = getSelectedMimeType();
+        headers.Accept = getFormat(self.yasgui.getTab().yasr.selectedPlugin);
         self.yasgui.getTab().setRequestConfig({
             endpoint: url, 
             headers: headers
@@ -205,9 +209,35 @@ function yasguiService(REST_PREFIX) {
                 && this.yasr.results?.getVariables().length > 0
                 && this.yasr.results.getContentType() === 'application/json';
         }
-        // call function on init.
 
-
+        // overwrite yasr dowload function
+        yasr.download = function() {
+            const formatType =  {
+                'turtle': 'ttl',
+                'rdfXml': 'rdf',
+                'jsonLD': 'jsonld',
+                'table': 'json'
+            }
+            let queryLink : URL =  new URL('mobirest/sparql/', document.location.origin);
+            let yasResultLink : URL = new URL(this.config.getPlainQueryLinkToEndpoint());
+            const type = formatType[this.drawnPlugin] || formatType[this.config.defaultPlugin];
+            queryLink.searchParams.set( 'fileType', type );
+            queryLink.searchParams.set('query', yasResultLink.searchParams.get('query'))
+            if(queryLink.href) {
+                const link = document.createElement('a');
+                link.href = queryLink.href;
+                link.download = `queryResult.${type}`;
+                if (document.dispatchEvent as any) {
+                    // W3C
+                    const oEvent = document.createEvent("MouseEvents");
+                    oEvent.initMouseEvent("click", true, true, window, 1, 1, 1, 1, 1, false, false, false, false, 0, link);
+                    link.dispatchEvent(oEvent);
+                } else if ((<any>document).fireEvent) {
+                    // IE
+                    link.click();
+                }
+            }
+        };
 
     }
 

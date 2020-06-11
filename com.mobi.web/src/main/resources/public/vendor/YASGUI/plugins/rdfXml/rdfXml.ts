@@ -109,8 +109,6 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         
     }
 
-
-
     download() {
         if (!this.yasr.results) return;
         const contentType = this.yasr.results.getContentType();
@@ -138,72 +136,8 @@ export default class RdfXml implements Plugin<PlugingConfig> {
     }
 
 
-    /**
-     *
-     * @param setValue Optional, if set to false the string will not update
-     */
-    showLess(setValue = true) {
-        if (!this.cm) return;
-        // Add overflow
-        addClass(this.cm.getWrapperElement(), "overflow");
 
-        // Remove old instance
-        if (this.overLay) {
-            this.overLay.remove();
-            this.overLay = undefined;
-        }
 
-        // Wrapper
-        this.overLay = document.createElement("div");
-        addClass(this.overLay, "overlay");
-
-        // overlay content
-        const overlayContent = document.createElement("div");
-        addClass(overlayContent, "overlay_content");
-
-        const showMoreButton = document.createElement("button");
-        showMoreButton.title = "Show all";
-        addClass(showMoreButton, "yasr_btn", "overlay_btn");
-        showMoreButton.textContent = "Show all";
-        showMoreButton.onclick = () => this.showMore();
-        overlayContent.append(showMoreButton);
-
-        const downloadButton = document.createElement("button");
-        downloadButton.title = "Download result";
-        addClass(downloadButton, "yasr_btn", "overlay_btn");
-
-        const text = document.createElement("span");
-        text.innerText = "Download result";
-        downloadButton.appendChild(text);
-        downloadButton.appendChild(drawSvgStringAsElement(imgs.download));
-        downloadButton.onclick = () => this.yasr.download();
-
-        overlayContent.appendChild(downloadButton);
-        this.overLay.appendChild(overlayContent);
-        this.cm.getWrapperElement().appendChild(this.overLay);
-        if (setValue) {
-            this.cm.setValue(this.limitData(this.yasr.results?.getOriginalResponseAsString() || ""));
-        }
-    }
-    /**
-     * Render the raw response full length
-     */
-    private limitData(value: string) {
-        const lines = value.split("\n");
-        if (lines.length > this.config.maxLines) {
-            value = lines.slice(0, this.config.maxLines).join("\n");
-        }
-        return value;
-    }
-
-    private showMore() {
-        if (!this.cm) return;
-        removeClass(this.cm.getWrapperElement(), "overflow");
-        this.overLay?.remove();
-        this.overLay = undefined;
-        this.cm.setValue(this.yasr.results?.getOriginalResponseAsString() || "");
-        this.cm.refresh();
-    }
 
     public static defaults: PlugingConfig = {
         maxLines: 30

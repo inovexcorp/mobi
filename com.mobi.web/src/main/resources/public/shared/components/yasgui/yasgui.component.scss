@@ -64,6 +64,11 @@
       &.disabled {
         pointer-events: none;
       }
+
+      &.selected {
+        color:var(--primary);
+      }
+
     }
 
     .yasr_response_limit {
@@ -72,10 +77,13 @@
       font-size: .93rem;
       align-self: center;
       overflow: visible;
-      background: #FEF9C6;
+      background: var(--yellow);
       white-space: nowrap;
       justify-content: center;
-      margin-left: .3rem;
+      margin-left: .4rem;
+      align-items: center;
+      padding: .3rem;
+      border-radius: 6px;
     }
   }
 
