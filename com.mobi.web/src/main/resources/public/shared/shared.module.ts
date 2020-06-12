@@ -70,7 +70,7 @@ import textAreaComponent from './components/textArea/textArea.component';
 import textInputComponent from './components/textInput/textInput.component';
 import userAccessControlsComponent from './components/userAccessControls/userAccessControls.component';
 import valueDisplayComponent from './components/valueDisplay/valueDisplay.component';
-import yasGuiCompoment from './components/yasgui/yasgui.component';
+import yasguiComponent from './components/yasgui/yasgui.component';
 
 import emailIri from './directives/emailIri/emailIri.directive';
 import aDisabled from './directives/aDisabled/aDisabled.directive';
@@ -142,7 +142,7 @@ import yasguiService from './services/yasgui.service';
  */
 angular.module('shared', [])
     .component('actionMenu', actionMenuComponent)
-    .component('yasguiEditor',yasGuiCompoment)
+    .component('yasguiEditor',yasguiComponent)
     .component('block', blockComponent)
     .component('blockContent', blockContentComponent)
     .component('blockFooter', blockFooterComponent)

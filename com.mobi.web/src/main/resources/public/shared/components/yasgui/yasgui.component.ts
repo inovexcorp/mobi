@@ -20,11 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import "@triply/yasgui/build/yasgui.min.css";
 import './yasgui.component.scss';
-
-import { merge } from 'lodash';
 /**
  * @ngdoc component
  * @name shared.component:yasgui
@@ -37,18 +33,15 @@ const yasguiComponent = {
     controller: yasguiComponentCtrl
 };
 
+yasguiComponentCtrl.$inject = ['yasguiService'];
 
-yasguiComponentCtrl.$inject = ['$element','yasguiService'];
-
-function yasguiComponentCtrl($element, yasguiService) {
+function yasguiComponentCtrl(yasguiService) {
     let dvm = this;
    
-
     dvm.$onInit = function() {
-        let wrapper_element = $element.find('div')[0];
+        let wrapper_element = document.getElementsByClassName('yasgui-editor')[0];
         dvm.yasgui = yasguiService.initYasgui(wrapper_element);
     }
-
 }
 
 export default yasguiComponent;

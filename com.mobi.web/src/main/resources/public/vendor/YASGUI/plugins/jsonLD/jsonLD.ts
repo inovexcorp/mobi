@@ -23,21 +23,19 @@
 /**
  * Make sure not to include any deps from our main index file. That way, we can easily publish the publin as standalone build
  */
-import { Plugin } from '@triply/yasr/src/plugins';
 import Yasr from '@triply/yasr/build/yasr.min.js';
+import { Plugin } from '@triply/yasr/src/plugins';
+import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from "../utils/yasguiUtil";
+import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faBug";
 
 const CodeMirror = require("codemirror");
 require("codemirror/addon/fold/foldcode.js");
 require("codemirror/addon/fold/foldgutter.js");
 require("codemirror/addon/fold/xml-fold.js");
 require("codemirror/addon/fold/brace-fold.js");
-
 require("codemirror/addon/edit/matchbrackets.js");
 require("codemirror/mode/javascript/javascript.js");
 require("codemirror/lib/codemirror.css");
-import {drawFontAwesomeIconAsSvg, drawSvgStringAsElement, removeClass, addClass} from "../utils/yasguiUtil";
-import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faBug";
-import * as imgs from "@triply/yasr/src/imgs";
 
 export interface PlugingConfig {
     maxLines: number
@@ -125,7 +123,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;
     }
-
    
     public static defaults: PlugingConfig = {
         maxLines: 30

@@ -24,22 +24,21 @@
  * Make sure not to include any deps from our main index file. That way, we can easily publish the publin as standalone build
  */
 import { Plugin } from '@triply/yasr/src/plugins/index';
+import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from "../utils/yasguiUtil";
 import Yasr from '@triply/yasr/build/yasr.min.js';
-require("./index.scss");
+import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faAlignLeft";
+
 const CodeMirror = require("codemirror");
 require("codemirror/addon/fold/foldcode.js");
 require("codemirror/addon/fold/foldgutter.js");
 require("codemirror/addon/fold/xml-fold.js");
 require("codemirror/addon/fold/brace-fold.js");
-
 require("codemirror/addon/edit/matchbrackets.js");
 require("codemirror/mode/xml/xml.js");
 require("codemirror/mode/turtle/turtle.js")
 require("codemirror/mode/javascript/javascript.js");
 require("codemirror/lib/codemirror.css");
-import {drawFontAwesomeIconAsSvg, drawSvgStringAsElement, removeClass, addClass} from "../utils/yasguiUtil";
-import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faAlignLeft";
-import * as imgs from "@triply/yasr/src/imgs";
+require("./index.scss");
 
 export interface PlugingConfig {
     maxLines: number
@@ -86,9 +85,11 @@ export default class Turtle implements Plugin<PlugingConfig> {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
         let contentType = this.yasr.results?.getContentType();
+
         if ( contentType === 'application/ld+json') {
             value = JSON.stringify(value, null, 4);
         }
+
         const codemirrorOpts = {
             readOnly: true,
             lineNumbers: true,
@@ -103,12 +104,9 @@ export default class Turtle implements Plugin<PlugingConfig> {
         if (type === "ttl") {
             codemirrorOpts['mode'] = this.mode;
         }
-        
+
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
-
     }
-
-
 
     download() {
         if (!this.yasr.results) return;
@@ -135,9 +133,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
         return true;
     }
 
-
     public static defaults: PlugingConfig = {
         maxLines: 30
     };
 }
-
