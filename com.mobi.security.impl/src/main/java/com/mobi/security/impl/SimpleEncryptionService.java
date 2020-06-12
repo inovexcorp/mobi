@@ -94,11 +94,11 @@ public class SimpleEncryptionService implements EncryptionService {
 
     @Override
     public String encrypt(String strToEncrypt, String configFieldToUpdate, final Configuration config) throws EncryptionOperationNotPossibleException {
-        LOGGER.debug("Attempting to encrypt " + configFieldToUpdate + " field in " + config.getPid() + " config.");
+        LOGGER.trace("Attempting to encrypt " + configFieldToUpdate + " field in " + config.getPid() + " config.");
         if (strToEncrypt == null) {
             return null;
         } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToEncrypt)) {
-            LOGGER.debug("Value was found to already be encrypted.");
+            LOGGER.trace("Value was found to already be encrypted.");
             return strToEncrypt;
         } else {
             String encrypted = PropertyValueEncryptionUtils.encrypt(strToEncrypt, encryptor);
@@ -107,20 +107,20 @@ public class SimpleEncryptionService implements EncryptionService {
                     .collect(Collectors.toMap(Function.identity(), config.getProperties()::get));
             configurationData.put(configFieldToUpdate, encrypted);
             updateServiceConfig(configurationData, config);
-            LOGGER.debug("Encryption successful.");
+            LOGGER.trace("Encryption successful.");
             return encrypted;
         }
     }
 
     @Override
     public String decrypt(String strToDecrypt, String configFieldToDecrypt, final Configuration config) throws EncryptionOperationNotPossibleException{
-        LOGGER.debug("Decrypting " + configFieldToDecrypt + " field in " + config.getPid() + " config.");
+        LOGGER.trace("Decrypting " + configFieldToDecrypt + " field in " + config.getPid() + " config.");
         if (strToDecrypt == null) {
             return null;
         } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToDecrypt)) {
             return PropertyValueEncryptionUtils.decrypt(strToDecrypt, encryptor); // TODO: Don't see a point in checking for length of zero like ticket prescribes. Discuss with reviewer.
         } else {
-            LOGGER.debug("Found unencrypted value. Encryption will now be performed.");
+            LOGGER.trace("Found unencrypted value. Encryption will now be performed.");
             encrypt(strToDecrypt, configFieldToDecrypt, config);
             return strToDecrypt;
         }
