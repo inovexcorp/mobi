@@ -90,8 +90,6 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>security.api</artifactId>
-            <version>1.18.8-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
