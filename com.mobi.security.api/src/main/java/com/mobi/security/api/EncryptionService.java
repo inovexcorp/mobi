@@ -23,19 +23,39 @@ package com.mobi.security.api;
  * #L%
  */
 
-import java.util.Map;
-
-import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
+import com.mobi.exception.MobiException;
 import org.osgi.service.cm.Configuration;
 
+/**
+ * The Encryption service is designed to encrypt/decrypt passwords and other sensitive values in the config files of
+ * other Mobi services. It can be used to automatically encrypt passwords on activation/modification of the service.
+ */
 public interface EncryptionService {
-    String encrypt(String strToEncrypt, String configFieldToUpdate, Configuration config) throws EncryptionOperationNotPossibleException;
+    /**
+     * Takes the provided string, encrypts it, and updates the provided config with the encrypted string as the value
+     * of the provided configFieldToUpdate.
+     *
+     * @param strToEncrypt The string that will be encrypted
+     * @param configFieldToUpdate The config field whose value will be updated with the newly encrypted string
+     * @param config The config that will be updated
+     * @return The encrypted version of the string that was provided.
+     */
+    String encrypt(String strToEncrypt, String configFieldToUpdate, Configuration config) throws MobiException;
 
-    String decrypt(String strToDecrypt, String configFieldToDecrypt, Configuration config) throws EncryptionOperationNotPossibleException;
+    /**
+     * Takes the provided string and decrypts it. If the string is found to be already in plaintext form, encryption is
+     * performed and the associated config is updated.
+     *
+     * @param strToDecrypt The string that will be decrypted
+     * @param configFieldToDecrypt The config field whose value will be updated if encryption is performed
+     * @param config The config that will be updated if encryption is performed
+     * @return The decrypted version of the string that was provided.
+     */
+    String decrypt(String strToDecrypt, String configFieldToDecrypt, Configuration config) throws MobiException;
 
+    /**
+     *
+     * @return A boolean reflecting the value of the isEnabled property of the encryption config.
+     */
     boolean isEnabled();
-
-    // TODO: For reviewer: Do you think this method be in the interface or not? I put it in because 2 of the interface methods accept configs, so I imagine this
-    //  method will always be necessary. However, I don't like that it's public.
-    void updateServiceConfig(Map<String, Object> newConfigurationData, Configuration config);
 }

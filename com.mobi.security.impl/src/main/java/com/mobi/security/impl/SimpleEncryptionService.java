@@ -26,6 +26,7 @@ package com.mobi.security.impl;
 import com.mobi.exception.MobiException;
 import com.mobi.security.api.EncryptionService;
 import com.mobi.security.api.EncryptionServiceConfig;
+import com.mobi.service.config.ConfigUtils;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.jasypt.iv.RandomIvGenerator;
@@ -38,11 +39,7 @@ import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
-import java.io.IOException;
 import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -93,52 +90,51 @@ public class SimpleEncryptionService implements EncryptionService {
     }
 
     @Override
-    public String encrypt(String strToEncrypt, String configFieldToUpdate, final Configuration config) throws EncryptionOperationNotPossibleException {
+    public String encrypt(String strToEncrypt, String configFieldToUpdate, final Configuration config) {
         LOGGER.trace("Attempting to encrypt " + configFieldToUpdate + " field in " + config.getPid() + " config.");
-        if (strToEncrypt == null) {
-            return null;
-        } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToEncrypt)) {
-            LOGGER.trace("Value was found to already be encrypted.");
-            return strToEncrypt;
-        } else {
-            String encrypted = PropertyValueEncryptionUtils.encrypt(strToEncrypt, encryptor);
-            List<String> keys = Collections.list(config.getProperties().keys());
-            Map<String, Object> configurationData = keys.stream()
-                    .collect(Collectors.toMap(Function.identity(), config.getProperties()::get));
-            configurationData.put(configFieldToUpdate, encrypted);
-            updateServiceConfig(configurationData, config);
-            LOGGER.trace("Encryption successful.");
-            return encrypted;
+        try {
+            if (strToEncrypt == null) {
+                return null;
+            } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToEncrypt)) {
+                LOGGER.trace("Value was found to already be encrypted.");
+                return strToEncrypt;
+            } else {
+                String encrypted = PropertyValueEncryptionUtils.encrypt(strToEncrypt, encryptor);
+                List<String> keys = Collections.list(config.getProperties().keys());
+                Map<String, Object> configurationData = keys.stream()
+                        .collect(Collectors.toMap(Function.identity(), config.getProperties()::get));
+                configurationData.put(configFieldToUpdate, encrypted);
+                ConfigUtils.updateServiceConfig(configurationData, config);
+                LOGGER.trace("Encryption successful.");
+                return encrypted;
+            }
+        } catch (EncryptionOperationNotPossibleException e) {
+            throw new MobiException("Could not encrypt/decrypt the " + configFieldToUpdate + ". Make sure that you are not trying to decrypt a password that was " +
+                    "encrypted with a different master password.", e);
         }
     }
 
     @Override
-    public String decrypt(String strToDecrypt, String configFieldToDecrypt, final Configuration config) throws EncryptionOperationNotPossibleException{
-        LOGGER.trace("Decrypting " + configFieldToDecrypt + " field in " + config.getPid() + " config.");
-        if (strToDecrypt == null) {
-            return null;
-        } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToDecrypt)) {
-            return PropertyValueEncryptionUtils.decrypt(strToDecrypt, encryptor); // TODO: Don't see a point in checking for length of zero like ticket prescribes. Discuss with reviewer.
-        } else {
-            LOGGER.trace("Found unencrypted value. Encryption will now be performed.");
-            encrypt(strToDecrypt, configFieldToDecrypt, config);
-            return strToDecrypt;
+    public String decrypt(String strToDecrypt, String configFieldToDecrypt, final Configuration config) {
+        try {
+            LOGGER.trace("Decrypting " + configFieldToDecrypt + " field in " + config.getPid() + " config.");
+            if (strToDecrypt == null) {
+                return null;
+            } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToDecrypt)) {
+                return PropertyValueEncryptionUtils.decrypt(strToDecrypt, encryptor); // TODO: Don't see a point in checking for length of zero like ticket prescribes. Discuss with reviewer.
+            } else {
+                LOGGER.trace("Found unencrypted value. Encryption will now be performed.");
+                encrypt(strToDecrypt, configFieldToDecrypt, config);
+                return strToDecrypt;
+            }
+        } catch (EncryptionOperationNotPossibleException e) {
+            throw new MobiException("Could not encrypt/decrypt the " + configFieldToDecrypt + ". Make sure that you are not trying to decrypt a password that was " +
+                    "encrypted with a different master password.", e);
         }
     }
 
     @Override
     public boolean isEnabled() {
         return this.isEnabled;
-    }
-
-    // TODO: For reviewer: Do you think this method be in the interface or not? I put it in because 2 of the interface methods accept configs, so I imagine this
-    //  method will always be necessary. However, I don't like that it's public.
-    @Override
-    public void updateServiceConfig(final Map<String, Object> newConfigurationData, Configuration config) {
-        try {
-            config.update(new Hashtable<>(newConfigurationData));
-        } catch (IOException e) {
-            LOGGER.error("Issue saving server id to service configuration: " + config.getPid(), e);
-        }
     }
 }
