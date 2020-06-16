@@ -27,7 +27,6 @@ import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
 import { hasClass } from "../../vendor/YASGUI/plugins/utils/yasguiUtil";
 
 import { merge } from 'lodash';
-import { format } from 'path';
 
 /**
  * @ngdoc service
@@ -35,9 +34,9 @@ import { format } from 'path';
  * @requires shared.service:prefixes
  *
  */
-yasguiService.$inject = ['REST_PREFIX'];
+yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService'];
 
-function yasguiService(REST_PREFIX) {
+function yasguiService(REST_PREFIX, sparqlManagerService, modalService) {
     const self = this;
     let dataset = '';
     let reponseLimitElement = <HTMLElement>{};
@@ -47,7 +46,6 @@ function yasguiService(REST_PREFIX) {
     let yasrRootElement : HTMLElement = <any>{};
 
     const initPlugins = () => {
-        //
         if (Yasgui.Yasr) {
             Yasgui.Yasr.registerPlugin("turtle", YasrTurtlePlugin.default as any);
             Yasgui.Yasr.registerPlugin("rdfXml", YasrRdfXmlPlugin.default as any);
@@ -64,6 +62,12 @@ function yasguiService(REST_PREFIX) {
 
     const initEvents = () => {
         const yasgui =  self.yasgui.getTab();
+        const formatType =  {
+            'turtle': 'ttl',
+            'rdfXml': 'rdf',
+            'jsonLD': 'jsonld',
+            'table': 'json'
+        };
         yasgui.yasr.on('change',(instance: Yasgui.Yasr, plugin: Plugin) => {
             if(isPluginEnabled(instance?.selectedPlugin)) {
                 refreshPluginData();
@@ -83,6 +87,17 @@ function yasguiService(REST_PREFIX) {
             if(!instance.plugins['table'].canHandleResults() && instance.drawnPlugin !== 'table') {
                 yasgui.yasr.draw();
             }
+
+            document.querySelector('.yasr_downloadIcon').addEventListener('click', (e) => {
+                e.preventDefault();
+                sparqlManagerService.queryString = yasgui.yasqe.getQueryWithValues();
+                const type = formatType[yasgui.yasr.drawnPlugin] || formatType[yasgui.yasr.config.defaultPlugin];
+                const queryType = yasgui.yasqe.getQueryType()?.toLowerCase();
+                if (type !== 'application/json') {
+                    modalService.fileType = type;
+                }
+                modalService.openModal('downloadQueryOverlay', {queryType}, undefined, 'sm');
+            })
         });
 
         // update yasr codemirror height
@@ -95,7 +110,6 @@ function yasguiService(REST_PREFIX) {
         });
 
     }
-
 
     const getYasContainerHeight = () =>  {
         let yasqeWrapper = <HTMLElement>document.querySelector('.yasqe')
@@ -122,13 +136,13 @@ function yasguiService(REST_PREFIX) {
     }
     const getFormat = (type) => {
         let format = type || self.yasgui.getTab().yasr.config.defaultPlugin;
-       const formatType =  {
+        const formatType =  {
            'turtle': 'text/turtle',
            'rdfXml': 'application/rdf+xml',
            'jsonLD': 'application/ld+json',
            'table': 'application/json'
-       }
-       return formatType?.[format] || formatType.jsonLD;
+        }
+        return formatType?.[format] || formatType.jsonLD;
     }
 
     const isPluginEnabled = (plugin) => {
@@ -212,31 +226,7 @@ function yasguiService(REST_PREFIX) {
 
         // overwrite yasr dowload function
         yasr.download = function() {
-            const formatType =  {
-                'turtle': 'ttl',
-                'rdfXml': 'rdf',
-                'jsonLD': 'jsonld',
-                'table': 'json'
-            }
-            let queryLink : URL =  new URL('mobirest/sparql/', document.location.origin);
-            let yasResultLink : URL = new URL(this.config.getPlainQueryLinkToEndpoint());
-            const type = formatType[this.drawnPlugin] || formatType[this.config.defaultPlugin];
-            queryLink.searchParams.set( 'fileType', type );
-            queryLink.searchParams.set('query', yasResultLink.searchParams.get('query'))
-            if(queryLink.href) {
-                const link = document.createElement('a');
-                link.href = queryLink.href;
-                link.download = `queryResult.${type}`;
-                if (document.dispatchEvent as any) {
-                    // W3C
-                    const oEvent = document.createEvent("MouseEvents");
-                    oEvent.initMouseEvent("click", true, true, window, 1, 1, 1, 1, 1, false, false, false, false, 0, link);
-                    link.dispatchEvent(oEvent);
-                } else if ((<any>document).fireEvent) {
-                    // IE
-                    link.click();
-                }
-            }
+           return false;
         };
 
     }

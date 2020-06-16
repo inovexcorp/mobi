@@ -127,7 +127,6 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
         const attributeValue = get(allOfMatch, 'AttributeValue.content', []);
         const value =  head(attributeValue);
         return value;
-     
     }
     function setInfo(item) {
         const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);

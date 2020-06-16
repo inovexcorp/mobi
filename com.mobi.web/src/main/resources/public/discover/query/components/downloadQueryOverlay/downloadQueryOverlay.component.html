@@ -25,15 +25,12 @@
     <button type="button" class="close" aria-label="Close" ng-click="dvm.cancel()"><span aria-hidden="true">&times;</span></button>
 </div>
 <div class="modal-body">
-    <form name="dvm.form">
+    <form name="dvm.form">{{dvm.queryType}} queryType
         <text-input bind-model="dvm.fileName" change-event="dvm.fileName = value" display-text="'File Name'" required="true" input-name="'fileName'" is-invalid="dvm.form.fileName.$invalid"></text-input>
         <div class="form-group">
             <custom-label>File Type</custom-label>
             <select class="form-control" ng-model="dvm.fileType" required>
-                <option value="csv">CSV</option>
-                <option value="tsv">TSV</option>
-                <option value="xlsx">Excel (2007)</option>
-                <option value="xls">Excel (97-2003)</option>
+                <option ng-repeat="option in dvm.availableOptions" value="{{option.id}}">{{option.name}}</option>
             </select>
         </div>
     </form>

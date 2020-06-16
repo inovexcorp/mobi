@@ -40,7 +40,8 @@ const downloadQueryOverlayComponent = {
     template,
     bindings: {
         close: '&',
-        dismiss: '&'
+        dismiss: '&',
+        resolve: '<'
     },
     controllerAs: 'dvm',
     controller: downloadQueryOverlayComponentCtrl
@@ -50,9 +51,27 @@ downloadQueryOverlayComponentCtrl.$inject = ['sparqlManagerService'];
 
 function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
     var dvm = this;
+    const options =  [
+        {id: 'csv', name: 'CSV',queryType: 'select'},
+        {id: 'tsv', name: 'TSV', queryType: 'select'},
+        {id: 'xlsx', name: 'Excel (2007)', queryType: 'select' },
+        {id: 'xls', name: 'Excel (97-2003)', queryType: 'select'},
+        {id: 'ttl', name: 'Turtle', queryType: 'construct'},
+        {id: 'rdf', name: 'RDF/XML', queryType: 'construct'},
+        {id: 'jsonld', name: 'JsonLD', queryType: 'construct'}
+    ];
+
     var sparql = sparqlManagerService;
     dvm.fileName = 'results';
-    dvm.fileType = 'csv';
+    dvm.fileType = '';
+    dvm.queryType = '';
+    dvm.availableOptions = '';
+
+    dvm.$onInit = function() {
+        dvm.queryType = dvm.resolve.queryType || 'select';
+        dvm.fileType = dvm.queryType == 'select' ? 'csv' : 'ttl';
+        dvm.availableOptions = options.filter( item => item.queryType === dvm.queryType );
+    }
 
     dvm.download = function() {
         sparql.downloadResults(dvm.fileType, dvm.fileName);
