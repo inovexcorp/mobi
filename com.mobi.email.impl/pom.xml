@@ -90,6 +90,7 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>security.api</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
