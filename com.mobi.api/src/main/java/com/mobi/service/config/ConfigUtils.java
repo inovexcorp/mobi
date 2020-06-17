@@ -32,11 +32,9 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Map;
 
-public final class ConfigUtils {
+public class ConfigUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigUtils.class);
-
-    private ConfigUtils() {}
 
     /**
      * Save an updated service configuration.
