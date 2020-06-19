@@ -58,7 +58,7 @@ function downloadQueryOverlayComponentCtrl(sparqlManagerService) {
         {id: 'xls', name: 'Excel (97-2003)', queryType: 'select'},
         {id: 'ttl', name: 'Turtle', queryType: 'construct'},
         {id: 'rdf', name: 'RDF/XML', queryType: 'construct'},
-        {id: 'jsonld', name: 'JsonLD', queryType: 'construct'}
+        {id: 'jsonld', name: 'JSON-LD', queryType: 'construct'}
     ];
 
     var sparql = sparqlManagerService;

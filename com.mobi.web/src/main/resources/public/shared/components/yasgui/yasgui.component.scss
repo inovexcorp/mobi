@@ -41,8 +41,18 @@
 
   .yasr { 
     .CodeMirror-scroll {
-      max-height: 45vh;
       overflow-y: scroll;
+    }
+
+
+    .yasr_header {
+      .yasr_external_ref_btn {
+        display: none;
+      }
+    }
+
+    .yasr_tryQuery {
+      display: none;
     }
 
     //reset overlay style
@@ -60,7 +70,8 @@
       overflow-y: auto;
     }
 
-    &_btn {
+    
+    .yasr_btn.yasr_btnGroup {
       &.disabled {
         pointer-events: none;
       }
@@ -86,8 +97,6 @@
       border-radius: 6px;
     }
   }
-
-
 }
 
 
