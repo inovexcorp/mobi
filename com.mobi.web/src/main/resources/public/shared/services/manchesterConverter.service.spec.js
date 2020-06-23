@@ -61,6 +61,178 @@ describe('Manchester Converter service', function() {
         splitIRIFilter = null;
     });
 
+    describe('should handle customer use cases', function() {
+        beforeEach(function() {
+            var idx = 0;
+            utilSvc.getSkolemizedIRI.and.callFake(function() {
+                var id = '_:genid' + idx;
+                idx++;
+                return id;
+            });
+            utilSvc.setPropertyId.and.callFake(function(obj, prop, value) {
+                obj[prop] = [{'@id': value}];
+            });
+        });
+        it('such as (BFO_0000015 or ProcessAggregate) and (BFO_0000057 some BFO_0000040) and (BFO_0000066 some BFO_0000006) and (BFO_0000199 some BFO_0000008)', function() {
+            let str = '(BFO_0000015 or ProcessAggregate) and (BFO_0000057 some BFO_0000040) and (BFO_0000066 some BFO_0000006) and (BFO_0000199 some BFO_0000008)';
+            let localNameMap = {
+                'BFO_0000015': 'http://purl.obolibrary.org/obo/BFO_0000015',
+                'ProcessAggregate': 'http://www.ontologyrepository.com/CommonCoreOntologies/ProcessAggregate',
+                'BFO_0000057': 'http://purl.obolibrary.org/obo/BFO_0000057',
+                'BFO_0000040': 'http://purl.obolibrary.org/obo/BFO_0000040',
+                'BFO_0000066': 'http://purl.obolibrary.org/obo/BFO_0000066',
+                'BFO_0000006': 'http://purl.obolibrary.org/obo/BFO_0000006',
+                'BFO_0000199': 'http://purl.obolibrary.org/obo/BFO_0000199',
+                'BFO_0000008': 'http://purl.obolibrary.org/obo/BFO_0000008'
+            };
+            let expected = [
+                {
+                    "@id": "_:genid0",
+                    "@type": [
+                        "Class"
+                    ],
+                    "intersectionOf": [
+                        {
+                            "@id": "_:genid2"
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid1",
+                    "@type": [
+                        "Class"
+                    ],
+                    "unionOf": [
+                        {
+                            "@id": "_:genid3"
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid2",
+                    "@type": [
+                        "rdf:List"
+                    ],
+                    "rdf:first": [
+                        {
+                            "@id": "_:genid1"
+                        }
+                    ],
+                    "rdf:rest": [
+                        {
+                            "@id": "_:genid5"
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid3",
+                    "@type": [
+                        "rdf:List"
+                    ],
+                    "rdf:first": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000015"
+                        }
+                    ],
+                    "rdf:rest": [
+                        {
+                            "@list": [
+                                {
+                                    "@id": "http://www.ontologyrepository.com/CommonCoreOntologies/ProcessAggregate"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid4",
+                    "@type": [
+                        "Restriction"
+                    ],
+                    "onProperty": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000057"
+                        }
+                    ],
+                    "someValuesFrom": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000040"
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid5",
+                    "@type": [
+                        "rdf:List"
+                    ],
+                    "rdf:first": [
+                        {
+                            "@id": "_:genid4"
+                        }
+                    ],
+                    "rdf:rest": [
+                        {
+                            "@id": "_:genid7"
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid6",
+                    "@type": [
+                        "Restriction"
+                    ],
+                    "onProperty": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000066"
+                        }
+                    ],
+                    "someValuesFrom": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000006"
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid7",
+                    "@type": [
+                        "rdf:List"
+                    ],
+                    "rdf:first": [
+                        {
+                            "@id": "_:genid6"
+                        }
+                    ],
+                    "rdf:rest": [
+                        {
+                            "@list": [
+                                {
+                                    "@id": "_:genid8"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "@id": "_:genid8",
+                    "@type": [
+                        "Restriction"
+                    ],
+                    "onProperty": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000199"
+                        }
+                    ],
+                    "someValuesFrom": [
+                        {
+                            "@id": "http://purl.obolibrary.org/obo/BFO_0000008"
+                        }
+                    ]
+                }
+            ];
+            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+            expect(result.jsonld).toEqual(expected);
+        });
+    });
     describe('should convert a Manchester syntax string into JSON-LD', function() {
         beforeEach(function() {
             this.localNameMap = {
@@ -101,26 +273,26 @@ describe('Manchester Converter service', function() {
                 this.expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Class']}];
             });
             it('with unionOf', function() {
-                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({
+                    '@id': '_:genid1',
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': this.localNameMap['ClassA'] }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{ '@id': this.localNameMap['ClassB'] }] }]
+                });
                 this.expected[0][prefixes.owl + 'unionOf'] = [{ '@id': '_:genid1' }];
-                this.expected[1][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassA'] }];
-                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                this.expected[2][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassB'] }];
-                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
                 var str = 'ClassA or ClassB';
                 var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with intersectionOf', function() {
-                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({
+                    '@id': '_:genid1',
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': this.localNameMap['ClassA'] }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{ '@id': this.localNameMap['ClassB'] }] }]
+                });
                 this.expected[0][prefixes.owl + 'intersectionOf'] = [{ '@id': '_:genid1' }];
-                this.expected[1][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassA'] }];
-                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                this.expected[2][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassB'] }];
-                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
                 var str = 'ClassA and ClassB';
                 var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
@@ -134,13 +306,13 @@ describe('Manchester Converter service', function() {
                 expect(result.errorMessage).toEqual('');
             });
             it('with oneOf', function() {
-                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({
+                    '@id': '_:genid1',
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': this.localNameMap['IndvA'] }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{ '@id': this.localNameMap['IndvB'] }] }]
+                });
                 this.expected[0][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid1' }];
-                this.expected[1][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['IndvA'] }];
-                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                this.expected[2][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['IndvB'] }];
-                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
                 var str = '{IndvA, IndvB}';
                 var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
                 expect(result.jsonld).toEqual(this.expected);
@@ -149,8 +321,11 @@ describe('Manchester Converter service', function() {
         });
         describe('if given a restriction', function() {
             beforeEach(function() {
-                this.expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Restriction']}];
-                this.expected[0][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropA']}];
+                this.expected = [{
+                    '@id': '_:genid0',
+                    '@type': [prefixes.owl + 'Restriction'],
+                    [prefixes.owl + 'onProperty']: [{'@id': this.localNameMap['PropA']}]
+                }];
             });
             it('with someValuesFrom', function() {
                 this.expected[0][prefixes.owl + 'someValuesFrom'] = [{'@id': this.localNameMap['ClassA']}];
@@ -256,13 +431,13 @@ describe('Manchester Converter service', function() {
                 this.expected = [{'@id': '_:genid0', '@type': [prefixes.rdfs + 'Datatype']}];
             });
             it('with oneOf', function() {
-                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({
+                    '@id': '_:genid1',
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@value': 'A' }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{ '@value': 'B' }] }]
+                });
                 this.expected[0][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid1' }];
-                this.expected[1][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
-                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                this.expected[2][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
-                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
                 var str = '{"A", "B"}';
                 var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap, true);
                 expect(result.jsonld).toEqual(this.expected);
@@ -272,111 +447,93 @@ describe('Manchester Converter service', function() {
         it('with nested blank nodes', function() {
             var str = '(not ClassA) or ((PropD min 1) and (PropE exactly 10)) or (PropA some ClassB) or (PropC value IndvA) or (PropB only {"A", "B"})';
             this.expected = [
-                { //unionOf
+                {
                     '@id': '_:genid0',
-                    '@type': [prefixes.owl + 'Class']
+                    '@type': [prefixes.owl + 'Class'],
+                    [prefixes.owl + 'unionOf']: [{ '@id': '_:genid2' }]
                 },
-                { //complementOf
+                {
                     '@id': '_:genid1',
-                    '@type': [prefixes.owl + 'Class']
+                    '@type': [prefixes.owl + 'Class'],
+                    [prefixes.owl + 'complementOf']: [{'@id': this.localNameMap['ClassA']}]
                 },
-                { //unionOf - 1
+                {
                     '@id': '_:genid2',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': '_:genid1' }],
+                    [prefixes.rdf + 'rest']: [{ '@id': '_:genid4' }]
                 },
-                { //intersectionOf
+                {
                     '@id': '_:genid3',
-                    '@type': [prefixes.owl + 'Class']
+                    '@type': [prefixes.owl + 'Class'],
+                    [prefixes.owl + 'intersectionOf']: [{ '@id': '_:genid6' }]
                 },
-                { //unionOf - 2
+                {
                     '@id': '_:genid4',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': '_:genid3' }],
+                    [prefixes.rdf + 'rest']: [{ '@id': '_:genid9' }]
                 },
-                { //minCardinality
+                {
                     '@id': '_:genid5',
-                    '@type': [prefixes.owl + 'Restriction']
+                    '@type': [prefixes.owl + 'Restriction'],
+                    [prefixes.owl + 'onProperty']: [{'@id': this.localNameMap['PropD']}],
+                    [prefixes.owl + 'minCardinality']: [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}]
                 },
-                { //intersectionOf - 1
+                {
                     '@id': '_:genid6',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': '_:genid5' }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{'@id': '_:genid7'}] }]
                 },
-                { //cardinality
+                {
                     '@id': '_:genid7',
-                    '@type': [prefixes.owl + 'Restriction']
+                    '@type': [prefixes.owl + 'Restriction'],
+                    [prefixes.owl + 'onProperty']: [{'@id': this.localNameMap['PropE']}],
+                    [prefixes.owl + 'cardinality']: [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}]
                 },
-                { //intersectionOf - 2
+                {
                     '@id': '_:genid8',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.owl + 'Restriction'],
+                    [prefixes.owl + 'onProperty']: [{'@id': this.localNameMap['PropA']}],
+                    [prefixes.owl + 'someValuesFrom']: [{'@id': this.localNameMap['ClassB']}]
                 },
-                { //someValuesFrom
+                {
                     '@id': '_:genid9',
-                    '@type': [prefixes.owl + 'Restriction']
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': '_:genid8' }],
+                    [prefixes.rdf + 'rest']: [{ '@id': '_:genid11' }]
                 },
-                { //unionOf - 3
+                {
                     '@id': '_:genid10',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.owl + 'Restriction'],
+                    [prefixes.owl + 'onProperty']: [{'@id': this.localNameMap['PropC']}],
+                    [prefixes.owl + 'hasValue']: [{'@id': this.localNameMap['IndvA']}]
                 },
-                { //hasValue
+                {
                     '@id': '_:genid11',
-                    '@type': [prefixes.owl + 'Restriction']
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@id': '_:genid10' }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{'@id': '_:genid12'}] }]
                 },
-                { //unionOf - 4
+                {
                     '@id': '_:genid12',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.owl + 'Restriction'],
+                    [prefixes.owl + 'onProperty']: [{'@id': this.localNameMap['PropB']}],
+                    [prefixes.owl + 'allValuesFrom']: [{ '@id': '_:genid13' }]
                 },
-                { //allValuesFrom
+                {
                     '@id': '_:genid13',
-                    '@type': [prefixes.owl + 'Restriction']
+                    '@type': [prefixes.rdfs + 'Datatype'],
+                    [prefixes.owl + 'oneOf']: [{ '@id': '_:genid14' }],
                 },
-                { //unionOf - 5
+                {
                     '@id': '_:genid14',
-                    '@type': [prefixes.rdf + 'List']
-                },
-                { //oneOf
-                    '@id': '_:genid15',
-                    '@type': [prefixes.rdfs + 'Datatype']
-                },
-                { //oneOf - 1
-                    '@id': '_:genid16',
-                    '@type': [prefixes.rdf + 'List']
-                },
-                { //oneOf - 2
-                    '@id': '_:genid17',
-                    '@type': [prefixes.rdf + 'List']
+                    '@type': [prefixes.rdf + 'List'],
+                    [prefixes.rdf + 'first']: [{ '@value': 'A' }],
+                    [prefixes.rdf + 'rest']: [{ '@list': [{'@value': 'B'}] }]
                 }
             ];
-            this.expected[0][prefixes.owl + 'unionOf'] = [{ '@id': '_:genid2' }];
-            this.expected[1][prefixes.owl + 'complementOf'] = [{'@id': this.localNameMap['ClassA']}];
-            this.expected[2][prefixes.rdf + 'first'] = [{ '@id': '_:genid1' }];
-            this.expected[2][prefixes.rdf + 'rest'] = [{ '@id': '_:genid4' }];
-            this.expected[3][prefixes.owl + 'intersectionOf'] = [{ '@id': '_:genid6' }];
-            this.expected[4][prefixes.rdf + 'first'] = [{ '@id': '_:genid3' }];
-            this.expected[4][prefixes.rdf + 'rest'] = [{ '@id': '_:genid10' }];
-            this.expected[5][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropD']}];
-            this.expected[5][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-            this.expected[6][prefixes.rdf + 'first'] = [{ '@id': '_:genid5' }];
-            this.expected[6][prefixes.rdf + 'rest'] = [{ '@id': '_:genid8' }];
-            this.expected[7][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropE']}];
-            this.expected[7][prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-            this.expected[8][prefixes.rdf + 'first'] = [{ '@id': '_:genid7' }];
-            this.expected[8][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-            this.expected[9][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropA']}];
-            this.expected[9][prefixes.owl + 'someValuesFrom'] = [{'@id': this.localNameMap['ClassB']}];
-            this.expected[10][prefixes.rdf + 'first'] = [{ '@id': '_:genid9' }];
-            this.expected[10][prefixes.rdf + 'rest'] = [{ '@id': '_:genid12' }];
-            this.expected[11][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropC']}];
-            this.expected[11][prefixes.owl + 'hasValue'] = [{'@id': this.localNameMap['IndvA']}];
-            this.expected[12][prefixes.rdf + 'first'] = [{ '@id': '_:genid11' }];
-            this.expected[12][prefixes.rdf + 'rest'] = [{ '@id': '_:genid14' }];
-            this.expected[13][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropB']}];
-            this.expected[13][prefixes.owl + 'allValuesFrom'] = [{ '@id': '_:genid15' }];
-            this.expected[14][prefixes.rdf + 'first'] = [{ '@id': '_:genid13' }];
-            this.expected[14][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-            this.expected[15][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid16' }];
-            this.expected[16][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
-            this.expected[16][prefixes.rdf + 'rest'] = [{ '@id': '_:genid17' }];
-            this.expected[17][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
-            this.expected[17][prefixes.rdf + 'rest'] = [{ '@list': [] }];
             var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
             expect(result.jsonld).toEqual(this.expected);
             expect(result.errorMessage).toBe('');
