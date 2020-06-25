@@ -39,8 +39,11 @@ function yasguiComponentCtrl(yasguiService) {
     let dvm = this;
    
     dvm.$onInit = function() {
+
+        //let wrapper_element2 = document.getElementsByClassName('yasgui-tst')[0];
+       // dvm.yasgui = yasguiService.initYasgui(wrapper_element2, {name: 'dicovery query2'})
         let wrapper_element = document.getElementsByClassName('yasgui-editor')[0];
-        dvm.yasgui = yasguiService.initYasgui(wrapper_element);
+        dvm.yasgui = yasguiService.initYasgui(wrapper_element, {name: 'dicovery query'});
     }
 }
 
