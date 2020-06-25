@@ -35,7 +35,8 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
     'sparqlManagerService',
     'stateManagerService',
     'userManagerService',
-    'userStateService'
+    'userStateService',
+    'yasguiService'
 ];
 
 /**
@@ -63,7 +64,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * `loginManagerService` is a service that provides access to the Mobi login REST
  * endpoints so users can log into and out of Mobi.
  */
-function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
+function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
     var self = this,
         anon = 'self anon',
         prefix = REST_PREFIX + 'session';
@@ -149,6 +150,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
         ontologyStateService.reset();
         sparqlManagerService.reset();
         catalogStateService.reset();
+        yasguiService.reset();
         $http.delete(prefix)
             .then(response => {
                 self.currentUser = '';

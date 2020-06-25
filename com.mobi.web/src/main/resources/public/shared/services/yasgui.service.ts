@@ -309,6 +309,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService) {
             throw 'Yasgui has not ben initialize!';
         }
     }
+
+    self.reset = () => {
+        self.yasgui.getTab().getYasr().storage.removeNamespace()
+    }
 }
 
 export default yasguiService;
