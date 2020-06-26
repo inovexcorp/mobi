@@ -33,9 +33,11 @@ import { merge } from 'lodash';
  * @requires shared.service:prefixes
  *
  */
-yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService'];
+yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', '$location'];
 
-function yasguiService(REST_PREFIX, sparqlManagerService, modalService) {
+function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $location) {
+    //@todo remove this log
+    console.log($location)
     const self = this;
     const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/limited-results', document.location.origin);
     let dataset = '';
@@ -69,7 +71,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService) {
         timeoutResizeId = setTimeout(() => {
             innerHeight = window.innerHeight;
             let yasrContentElement = <HTMLElement>document.querySelector(yasrContainerSelector);
-            yasrContentElement.style.height = getYasContainerHeight();
+            if (yasrContentElement) {
+                yasrContentElement.style.height = getYasContainerHeight();
+            }
+
         }, 200);
     }
 
@@ -84,6 +89,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService) {
 
         window.addEventListener('resize', resizeYasrContainer);
         yasgui.yasqe.on("resize", resizeYasrContainer);
+
         yasgui.once("query",() => {
             handleYasrVisivility();
         });
@@ -311,7 +317,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService) {
     }
 
     self.reset = () => {
-        self.yasgui.getTab().getYasr().storage.removeNamespace()
+        self.yasgui.getTab().getYasr().storage.removeNamespace();
     }
 }
 
