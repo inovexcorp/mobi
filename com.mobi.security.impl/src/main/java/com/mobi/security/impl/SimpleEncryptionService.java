@@ -53,7 +53,7 @@ public class SimpleEncryptionService implements EncryptionService {
 
     private static final String AES_128 = "PBEWithHmacSHA512AndAES_128";
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEncryptionService.class);
-    private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();;
+    private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
     private boolean isEnabled;
 
     @Activate
