@@ -62,7 +62,7 @@ function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalSer
         dvm.close();
     }
     dvm.hasStatus = function(promise, value) {
-        return get(promise, '$$state.status') === value;
+        return get(promise, '$$.status') === value;
     }
     dvm.isPending = function(item) {
         return httpService.isPending(item.id);

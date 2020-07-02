@@ -36,7 +36,7 @@
             </div>
             <div class="item-details flex-1 remove-min-width">
                 <h3 class="m-0 text-truncate">{{item.title}}</h3>
-                <p ng-if="item.error" class="text-danger m-0"><small>{{item.error}}</small></p>
+                <p ng-if="item.error" class="text-danger m-0"><small>{{item.error.errorMessage}}</small></p> <!-- TODO undefined check for item.error? -->
             </div>
         </div>
     </div>

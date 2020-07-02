@@ -120,7 +120,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         }
         forEach(keywords, word => fd.append('keywords', word));
         var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
-        return promise.then(response => response.data, util.rejectError);
+        return promise.then(response => response.data, util.rejectErrorObject);
     }
     /**
      * @ngdoc method

@@ -302,7 +302,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * `uploadList` holds an array of upload objects which contain properties about the uploaded files.
      * The structure of the upload object is:
      * {
-     *     error: '',
+     *     error: {'errorMessage': '', 'errorDetails': []},
      *     id: '',
      *     promise: {},
      *     title: ''
@@ -614,10 +614,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Adds the error message to the list item with the identified id.
      *
      * @param {string} id The id of the upload item.
-     * @param {string} error The error message for the upload item.
+     * @param {object} error The error message for the upload item.
      */
-    self.addErrorToUploadItem = function(id, error) {
-        set(find(self.uploadList, {id}), 'error', error);
+    self.addErrorToUploadItem = function(id, errorObject) {
+        set(find(self.uploadList, {id}), 'error', errorObject);
     }
     /**
      * @ngdoc method

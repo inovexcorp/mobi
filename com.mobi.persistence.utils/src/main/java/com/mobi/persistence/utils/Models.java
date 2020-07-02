@@ -44,9 +44,11 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.jetbrains.annotations.NotNull;
 import org.obolibrary.obo2owl.OWLAPIObo2Owl;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParser;
+import org.obolibrary.oboformat.parser.OBOFormatParserException;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -65,6 +67,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -211,6 +215,116 @@ public class Models {
         return Optional.empty();
     }
 
+
+    /**
+     * Create a Mobi Model from an InputStream.
+     *
+     * TODO FINISH
+     *
+     * @param inputStream
+     * @param transformer
+     * @param preferredExtension
+     * @return
+     * @throws IOException
+     */
+    public static Model createModel(String preferredExtension,
+                                    InputStream inputStream,
+                                    SesameTransformer transformer,
+                                    LinkedHashMap<String, List<RDFParser>> preferredExtensionParsers,
+                                    List<RDFParser> allRDFParsers) throws IOException {
+        org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
+        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
+
+        RDFParseException rdfParseException = null;
+
+        try {
+            rdfData.mark(0);
+            // Check OBOFormat
+            if(preferredExtension.equalsIgnoreCase("obo") && model.isEmpty()){
+                try {
+                    model = parseOBO(model, rdfData);
+                } catch (OBOFormatParserException e){
+                    rdfParseException = new RDFParseException(String.format("Error parsing OBO format based on obo extension ;;; %s", e.getMessage()));
+                    rdfData.reset();
+                } catch (Exception e) {
+                    rdfData.reset();
+                }
+            }
+
+            if(preferredExtensionParsers.containsKey(preferredExtension.toLowerCase()) && model.isEmpty()){
+                for (RDFParser parser : preferredExtensionParsers.get(preferredExtension)) {
+                    try {
+                        final StatementCollector collector = new StatementCollector();
+                        parser.setRDFHandler(collector);
+                        parser.setParseErrorListener(new ParseErrorLogger());
+                        parser.setParserConfig(new ParserConfig());
+                        parser.parse(rdfData, "");
+                        model = new LinkedHashModel(collector.getStatements());
+                        rdfParseException = null;
+                        break;
+                    } catch (RDFParseException e) {
+                        rdfParseException = new RDFParseException(String.format("Error parsing %s format based on %s extension ;;; %s", parser.getRDFFormat().getName(), preferredExtension,  e.getMessage()));
+                        rdfData.reset();
+                    } catch (Exception e) {
+                        rdfData.reset();
+                    }
+                }
+            }
+
+            // if rdfParseException is not null of this point it means that service knew file extension
+            // at this point throw exception so user will see parse error
+            if(rdfParseException != null){
+                throw rdfParseException;
+            }
+
+            // Try all RDF Parsers if preferredExtension is not found in preferredExtensionParsers map and model is empty
+            if(model.isEmpty()){
+                for (RDFParser parser : allRDFParsers) {
+                    try {
+                        final StatementCollector collector = new StatementCollector();
+                        parser.setRDFHandler(collector);
+                        parser.setParseErrorListener(new ParseErrorLogger());
+                        parser.setParserConfig(new ParserConfig());
+                        parser.parse(rdfData, "");
+                        model = new LinkedHashModel(collector.getStatements());
+                        rdfParseException = null;
+                        break;
+                    } catch (RDFParseException e) {
+                        rdfParseException = new RDFParseException(String.format("Tried all formats. Error parsing %s format ;;; %s", parser.getRDFFormat().getName(), e.getMessage()));
+                        rdfData.reset();
+                    } catch (Exception e) {
+                        rdfData.reset();
+                    }
+                }
+            }
+            // Check OBOFormat
+            if (model.isEmpty()) {
+                try {
+                    model = parseOBO(model, rdfData);
+                } catch (OBOFormatParserException e){
+                    rdfParseException = new RDFParseException(String.format("Error parsing OBO format based on obo extension ;;; %s", e.getMessage()));
+                    rdfData.reset();
+                } catch (Exception e) {
+                    rdfData.reset();
+                }
+            }
+
+        } finally {
+            IOUtils.closeQuietly(rdfData);
+        }
+
+        if (model.isEmpty() && rdfParseException != null){
+            throw rdfParseException;
+        }
+        
+        if (model.isEmpty()) {
+            throw new IllegalArgumentException("InputStream was invalid for all formats.");
+        }
+
+        return transformer.mobiModel(model);
+    }
+
+
     /**
      * Create a Mobi Model from an InputStream. Will attempt to parse the stream as different RDFFormats.
      *
@@ -258,36 +372,7 @@ public class Models {
             if (model.isEmpty()) {
                 // Check OBOFormat
                 try {
-                    OBOFormatParser parser = new OBOFormatParser();
-                    OBODoc obodoc;
-
-                    // Parse into an OBODoc
-                    try (InputStreamReader isReader = new InputStreamReader(rdfData, StandardCharsets.UTF_8);
-                         BufferedReader bufferedReader = new BufferedReader(isReader)) {
-                        parser.setReader(new BufferedReader(bufferedReader));
-                        obodoc = new OBODoc();
-                        parser.parseOBODoc(obodoc);
-                    }
-
-                    // Convert to an OWLOntology
-                    OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-                    manager.setOntologyConfigurator(new OntologyConfigurator());
-                    OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
-                    OWLOntology ontology;
-                    try {
-                        ontology = bridge.convert(obodoc);
-                    } catch (OWLOntologyCreationException e) {
-                        throw new OWLRuntimeException(e);
-                    }
-
-                    // Render into an RDF4J Model
-                    org.eclipse.rdf4j.model.Model sesameModel = new org.eclipse.rdf4j.model.impl.LinkedHashModel();
-                    RDFHandler rdfHandler = new StatementCollector(sesameModel);
-                    OWLDocumentFormat format = ontology.getFormat();
-                    format.setAddMissingTypes(false);
-                    RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
-                    renderer.render();
-                    model = sesameModel;
+                    model = parseOBO(model, rdfData);
                 } catch (Exception e) {
                     rdfData.reset();
                 }
@@ -301,6 +386,40 @@ public class Models {
         }
 
         return transformer.mobiModel(model);
+    }
+
+    private static org.eclipse.rdf4j.model.Model parseOBO(org.eclipse.rdf4j.model.Model model, ByteArrayInputStream rdfData) throws IOException {
+        OBOFormatParser parser = new OBOFormatParser();
+        OBODoc obodoc;
+
+        // Parse into an OBODoc
+        try (InputStreamReader isReader = new InputStreamReader(rdfData, StandardCharsets.UTF_8);
+             BufferedReader bufferedReader = new BufferedReader(isReader)) {
+            parser.setReader(new BufferedReader(bufferedReader));
+            obodoc = new OBODoc();
+            parser.parseOBODoc(obodoc);
+        }
+
+        // Convert to an OWLOntology
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        manager.setOntologyConfigurator(new OntologyConfigurator());
+        OWLAPIObo2Owl bridge = new OWLAPIObo2Owl(manager);
+        OWLOntology ontology;
+        try {
+            ontology = bridge.convert(obodoc);
+        } catch (OWLOntologyCreationException e) {
+            throw new OWLRuntimeException(e);
+        }
+
+        // Render into an RDF4J Model
+        org.eclipse.rdf4j.model.Model sesameModel = new LinkedHashModel();
+        RDFHandler rdfHandler = new StatementCollector(sesameModel);
+        OWLDocumentFormat format = ontology.getFormat();
+        format.setAddMissingTypes(false);
+        RioRenderer renderer = new RioRenderer(ontology, rdfHandler, format);
+        renderer.render();
+        model = sesameModel;
+        return model;
     }
 
     /**
