@@ -265,7 +265,10 @@ function discoverStateService() {
             typeObject: undefined
         };
         self.query = {
-            active: false
+            active: false,
+            queryString: '',
+            result: '',
+            selectedPluging: ''
         };
     }
     function resetOnClear() {

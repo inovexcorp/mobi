@@ -22,7 +22,7 @@
  */
 
 
-.yasgui{
+ .yasgui{
   .tabPanel {
       .autocompleteWrapper, .controlbar, .tabsList, .yasqe_buttons{
            display: none;
@@ -71,15 +71,18 @@
     }
 
     
-    .yasr_btn.yasr_btnGroup {
-      &.disabled {
-        pointer-events: none;
-      }
+    &_btnGroup {
+      .yasr_btn {
 
-      &.selected {
-        color:var(--primary);
-      }
+        &.disabled {
+          pointer-events: none;
+        }
 
+        &.selected {
+          color:var(--primary);
+          border-bottom-color: var(--primary);
+        }
+      }
     }
 
     .yasr_response_limit {
@@ -96,12 +99,19 @@
       padding: .3rem;
       border-radius: 6px;
     }
+
+    &_results {
+      table {
+        width: 100% !important;
+      }
+
+      .grip-container {
+        width: 100% !important;
+      }
+
+    }
+
   }
-}
-
-
-yasgui-editor + .codemirror-wrapper {
-  display: none;
 }
 
 .sparql-result-block {

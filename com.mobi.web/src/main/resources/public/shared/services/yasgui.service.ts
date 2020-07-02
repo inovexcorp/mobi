@@ -33,17 +33,15 @@ import { merge } from 'lodash';
  * @requires shared.service:prefixes
  *
  */
-yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', '$location'];
+yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', '$location', 'discoverStateService'];
 
-function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $location) {
+function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $location, discoverStateService) {
     //@todo remove this log
-    console.log($location)
     const self = this;
     const defaultUrl : URL =  new URL(REST_PREFIX + 'sparql/limited-results', document.location.origin);
     let dataset = '';
     let innerHeight = window.innerHeight;
     let reponseLimitElement = <HTMLElement>{};
-    let hasInitialized = false
     let yasrContainerSelector = '.yasr .CodeMirror-scroll, .yasr .dataTables_wrapper ';
     let yasrRootElement : HTMLElement = <any>{};
     let timeoutResizeId = null;
@@ -92,6 +90,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
 
         yasgui.once("query",() => {
             handleYasrVisivility();
+        });
+
+        yasgui.yasqe.on("blur", () => {
+            discoverStateService.query.queryString = yasgui.yasqe.getValue();
         });
 
         yasgui.yasr.on('change',(instance: Yasgui.Yasr, plugin: Plugin) => {
@@ -223,7 +225,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
             populateFromUrl: false,
             copyEndpointOnNewTab: false
         };
-
     }
 
     const handleYasrVisivility = () => {
@@ -273,9 +274,14 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         };
     }
 
+    self.hasInitialized = false;
+
     self.updateDataset = (data) => {
         dataset = data;
     }
+
+    self.handleYasrContainer = handleYasrVisivility;
+
 
     self.initYasgui = (element, config = {}) => {
         const localConfig = getDefaultConfig();
@@ -286,6 +292,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         const configuration = merge({}, localConfig, config );
         // Init YASGUI
         initPlugins();
+        if(!self.hasInitialized) {
+            self.reset();
+        }
+        
         self.yasgui = new Yasgui(element, configuration);
 
         if (config.name) {
@@ -302,21 +312,33 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
             }
         }
         updateYasguiUI();
-        hasInitialized = true;
+        self.hasInitialized = true;
         return self.yasgui;
     }
 
     // fire a new query
     self.submitQuery  = (queryConfig = {}) => {
-        if (hasInitialized) {
+        if (self.hasInitialized) {
             setRequestConfig();
             self.yasgui.getTab().yasqe.query(queryConfig);
         } else {
-            throw 'Yasgui has not ben initialize!';
+            throw 'Error: Yasgui has not been initialized';
         }
     }
 
     self.reset = () => {
+        if (self.yasgui) {
+            self.clearStorage();
+        } else  {
+            let yasguiKeyName = 'yagui__config';
+
+            if (localStorage.getItem(yasguiKeyName)) {
+                localStorage.removeItem(yasguiKeyName);
+            }
+        }
+    }
+
+    self.clearStorage = () => {
         self.yasgui.getTab().getYasr().storage.removeNamespace();
     }
 }
