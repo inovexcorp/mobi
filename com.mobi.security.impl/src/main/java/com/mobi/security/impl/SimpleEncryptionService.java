@@ -121,7 +121,7 @@ public class SimpleEncryptionService implements EncryptionService {
             if (strToDecrypt == null) {
                 return null;
             } else if (PropertyValueEncryptionUtils.isEncryptedValue(strToDecrypt)) {
-                return PropertyValueEncryptionUtils.decrypt(strToDecrypt, encryptor); // TODO: Don't see a point in checking for length of zero like ticket prescribes. Discuss with reviewer.
+                return PropertyValueEncryptionUtils.decrypt(strToDecrypt, encryptor);
             } else {
                 LOGGER.trace("Found unencrypted value. Encryption will now be performed.");
                 encrypt(strToDecrypt, configFieldToDecrypt, config);

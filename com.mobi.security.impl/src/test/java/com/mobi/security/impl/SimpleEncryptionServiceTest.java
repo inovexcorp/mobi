@@ -27,17 +27,16 @@ import com.mobi.exception.MobiException;
 import com.mobi.security.api.EncryptionServiceConfig;
 import com.mobi.service.config.ConfigUtils;
 import org.jasypt.encryption.StringEncryptor;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
+import org.jasypt.iv.RandomIvGenerator;
 import org.jasypt.properties.PropertyValueEncryptionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.osgi.service.cm.Configuration;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -54,7 +53,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(ConfigUtils.class)
+@PrepareForTest({ConfigUtils.class, PropertyValueEncryptionUtils.class})
 @PowerMockIgnore("javax.crypto.*")
 public class SimpleEncryptionServiceTest {
     private SimpleEncryptionService es;
@@ -171,5 +170,85 @@ public class SimpleEncryptionServiceTest {
 
         String encrypted = es.encrypt(null, "password", configuration);
         assertNull(encrypted);
+    }
+
+    @Test
+    public void encryptionExceptionTest() throws Exception {
+        expectedEx.expect(MobiException.class);
+        expectedEx.expectMessage("Could not encrypt/decrypt");
+
+        String testPassword = "FAKE_PASSWORD";
+        when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
+
+        Dictionary<String, Object> configProperties = new Hashtable<>();
+        configProperties.put("password", testPassword);
+
+        when(configuration.getProperties()).thenReturn(configProperties);
+        when(configuration.getPid()).thenReturn("testEncryptionPid");
+
+        es.start(encryptionServiceConfig);
+
+        mockStatic(PropertyValueEncryptionUtils.class);
+        when(PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class))).thenThrow(EncryptionOperationNotPossibleException.class);
+        es.encrypt(testPassword, "password", configuration);
+        verifyStatic();
+        PropertyValueEncryptionUtils.encrypt(anyString(), any(StringEncryptor.class));
+    }
+
+    @Test
+    public void decryptTest() throws Exception {
+        String testMasterPass = "TEST_MASTER_PASS";
+        String testPasswordToBeEncrypted = "TEST_CLIENT_PASS";
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setPassword(testMasterPass);
+        encryptor.setIvGenerator(new RandomIvGenerator());
+        encryptor.setAlgorithm("PBEWithHmacSHA512AndAES_128");
+
+        String toDecrypt = PropertyValueEncryptionUtils.encrypt(testPasswordToBeEncrypted, encryptor);
+        assertEquals(true, PropertyValueEncryptionUtils.isEncryptedValue(toDecrypt));
+
+        when(encryptionServiceConfig.password()).thenReturn(testMasterPass);
+        es.start(encryptionServiceConfig);
+
+        when(configuration.getPid()).thenReturn("testEncryptionPid");
+        String decrypted = es.decrypt(toDecrypt, "password", configuration);
+        assertEquals(testPasswordToBeEncrypted, decrypted);
+    }
+
+    @Test
+    public void alreadyDecryptedTest() throws Exception {
+        String testPlaintextPass = "TEST_PLAINTEXT_PASS";
+        SimpleEncryptionService spyEncryptionService = spy(es);
+        when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
+        spyEncryptionService.start(encryptionServiceConfig);
+
+        when(configuration.getPid()).thenReturn("testEncryptionPid");
+        doReturn("ENC(ABCDEFG)").when(spyEncryptionService).encrypt(any(), any(), any());
+        String decrypted = spyEncryptionService.decrypt(testPlaintextPass, "password", configuration);
+        verify(spyEncryptionService, times(1)).encrypt(any(), any(), any());
+        assertEquals(testPlaintextPass, decrypted);
+    }
+
+    @Test
+    public void decryptNullTest() throws Exception {
+        when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
+        es.start(encryptionServiceConfig);
+
+        String decrypted = es.decrypt(null, "password", configuration);
+        assertNull(decrypted);
+    }
+
+    @Test
+    public void decryptionExceptionTest() throws Exception {
+        expectedEx.expect(MobiException.class);
+        expectedEx.expectMessage("Could not encrypt/decrypt");
+
+        String testMasterPass = "TEST_MASTER_PASS";
+        String bogusEncrypedString = "ENC(ABCDEFG)";
+        when(encryptionServiceConfig.password()).thenReturn(testMasterPass);
+        es.start(encryptionServiceConfig);
+
+        when(configuration.getPid()).thenReturn("testEncryptionPid");
+        es.decrypt(bogusEncrypedString, "password", configuration);
     }
 }
