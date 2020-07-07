@@ -115,7 +115,7 @@ public class SimpleEmailService implements EmailService {
     }
 
     @Modified
-    void modified(BundleContext bundleContext, Map<String, Object> configuration) throws IOException {
+    void modified(BundleContext bundleContext, Map<String, Object> configuration) {
         activate(bundleContext, configuration);
     }
 
