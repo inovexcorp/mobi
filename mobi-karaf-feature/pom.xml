@@ -289,6 +289,16 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>security.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>security.impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>security.policy.api</artifactId>
             <version>${project.version}</version>
         </dependency>
