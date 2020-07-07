@@ -74,36 +74,6 @@ import java.util.List;
         service = { RecordService.class, SimpleOntologyRecordService.class }
 )
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
-    private static final LinkedHashMap<String, List<RDFParser>> preferredExtensionParsers;
-    private static final List<RDFParser> rdfParsers;
-
-    static{
-        // RDFFormat Parsers
-        RDFParser rdfJsonParser = Rio.createParser(RDFFormat.RDFJSON);
-        RDFParser jsonLdParser = Rio.createParser(RDFFormat.JSONLD);
-        RDFParser turtleParser = Rio.createParser(RDFFormat.TURTLE);
-        RDFParser rdfXmlParser = Rio.createParser(RDFFormat.RDFXML);
-        // OWLAPIRDFFormat Parsers
-        RDFParser rioFunctionalSyntaxParser =  new RioFunctionalSyntaxParserFactory().getParser();
-        RDFParser rioManchesterSyntaxParser =  new RioManchesterSyntaxParserFactory().getParser();
-        RDFParser rioOWLXMLParser =  new RioOWLXMLParserFactory().getParser();
-
-        rdfParsers = Arrays.asList(rdfJsonParser, jsonLdParser, turtleParser, rdfXmlParser,
-                rioFunctionalSyntaxParser, rioManchesterSyntaxParser, rioOWLXMLParser);
-
-        preferredExtensionParsers = new LinkedHashMap<String, List<RDFParser>>();
-        preferredExtensionParsers.put("json", Arrays.asList(rdfJsonParser, jsonLdParser));
-        preferredExtensionParsers.put("jsonld", Arrays.asList(jsonLdParser));
-        preferredExtensionParsers.put("ttl", Arrays.asList(turtleParser));
-        preferredExtensionParsers.put("xml", Arrays.asList(rioOWLXMLParser, rdfXmlParser));
-        preferredExtensionParsers.put("ofn", Arrays.asList(rioFunctionalSyntaxParser));
-        preferredExtensionParsers.put("omn", Arrays.asList(rioManchesterSyntaxParser));
-        preferredExtensionParsers.put("owx", Arrays.asList(rioOWLXMLParser));
-        preferredExtensionParsers.put("rdf", Arrays.asList(rdfXmlParser));
-        preferredExtensionParsers.put("rdfs", Arrays.asList(rdfXmlParser));
-        preferredExtensionParsers.put("owl", Arrays.asList(rdfXmlParser, rioOWLXMLParser));
-    }
-
     private OntologyCache ontologyCache;
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
@@ -222,7 +192,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         if (fileName != null && inputStream != null) {
             try {
                 String fileExtension = FilenameUtils.getExtension(fileName);
-                ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer, preferredExtensionParsers, rdfParsers);
+                ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);
             }

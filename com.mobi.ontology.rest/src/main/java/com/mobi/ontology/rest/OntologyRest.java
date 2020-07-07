@@ -3258,11 +3258,7 @@ public class OntologyRest {
                 }
                 commitId = (Resource) commitStmt.next().getObject();
             }
-        } catch (IllegalArgumentException ex) {
-            ObjectNode objectNode = createJsonErrorObject(ex);
-            Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
-            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
-        } catch (RDFParseException ex) {
+        } catch (IllegalArgumentException | RDFParseException ex) {
             ObjectNode objectNode = createJsonErrorObject(ex, ";;;");
             Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
             throw ErrorUtils.sendError(ex, ex.getMessage(), response);
@@ -3282,29 +3278,29 @@ public class OntologyRest {
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
 
-    private static ObjectNode createJsonErrorObject(Exception ex){
+    private static ObjectNode createJsonErrorObject(Exception ex) {
         return createJsonErrorObject(ex, null);
     }
 
-    private static ObjectNode createJsonErrorObject(Exception ex, String delimiter){
+    private static ObjectNode createJsonErrorObject(Exception ex, String delimiter) {
         ObjectNode objectNode = mapper.createObjectNode();
         ArrayNode arrayNode = mapper.createArrayNode();
         objectNode.put("error", ex.getClass().getSimpleName());
 
         String errorMessage = ex.getMessage();
 
-        if(delimiter == null){
+        if (delimiter == null) {
             objectNode.put("errorMessage", errorMessage);
-        }else if(errorMessage.contains(delimiter)){
+        } else if (errorMessage.contains(delimiter)) {
             String[] errorMessages = errorMessage.split(delimiter);
             objectNode.put("errorMessage", errorMessages[0].trim());
 
             String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
 
-            for(String currentErrorMessage: errorMessagesSlice){
+            for (String currentErrorMessage: errorMessagesSlice) {
                 arrayNode.add(currentErrorMessage.trim());
             }
-        }else{
+        } else {
             objectNode.put("errorMessage", errorMessage);
         }
 
@@ -3312,4 +3308,5 @@ public class OntologyRest {
 
         return objectNode;
     }
+
 }

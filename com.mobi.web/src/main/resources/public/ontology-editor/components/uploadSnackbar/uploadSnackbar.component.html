@@ -31,12 +31,13 @@
             <div class="item-indicator pr-2">
                 <md-progress-circular ng-if="dvm.isPending(item)" md-diameter="18"></md-progress-circular>
                 <div ng-if="!dvm.isPending(item)" class="item-completed">
-                    <i ng-class="{'fa-check text-success': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times text-danger': item.error}" class="fa fa-fw"></i>
+                    <i ng-class="{'fa-check text-success': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times text-danger': (item.error && item.error.errorMessage) }" class="fa fa-fw"></i>
                 </div>
             </div>
             <div class="item-details flex-1 remove-min-width">
                 <h3 class="m-0 text-truncate">{{item.title}}</h3>
-                <p ng-if="item.error" class="text-danger m-0"><small>{{item.error.errorMessage}}</small></p> <!-- TODO undefined check for item.error? -->
+                <p ng-if="item.error" class="text-danger m-0"><small>{{item.error.errorMessage}}</small></p>
+                <a ng-if="item.error" href="" ng-click="dvm.showUploadErrorsOverlay(item)">Details</a>
             </div>
         </div>
     </div>
