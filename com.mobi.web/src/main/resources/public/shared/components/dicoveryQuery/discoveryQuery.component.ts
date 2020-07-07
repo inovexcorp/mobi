@@ -39,28 +39,30 @@ queryController.$inject = ['yasguiService', 'discoverStateService'];
 function queryController(yasguiService, discoverStateService) {
     let dvm = this;
     let yasgui:any = {};
-
+    dvm.ds = discoverStateService;
+    
     const initEventListener = () => {
         yasgui = dvm.yasgui.getTab();
         yasgui.yasqe.on("blur", () => {
-            discoverStateService.query.queryString = yasgui.yasqe.getValue();
+            dvm.ds.query.queryString = yasgui.yasqe.getValue();
         });
 
         yasgui.yasr.on("drawn", (yasr) => {
-            discoverStateService.query.selectedPlugin = yasr.drawnPlugin;
+            dvm.ds.query.selectedPlugin = yasr.drawnPlugin;
         });
 
         yasgui.yasqe.on("queryResponse", (instance, response: any, duration: number) => {
-            discoverStateService.query.response = response;
-            discoverStateService.query.executionTime = duration;
+            dvm.ds.query.response = response;
+            dvm.ds.query.executionTime = duration;
         });
     }
 
     const setValues = () => {
-        let yasqueVaue = discoverStateService.query.queryString || yasgui.yasqe.config.value;
+        let yasqueVaue = dvm.ds.query.queryString || yasgui.yasqe.config.value;
         yasgui.yasqe.setValue(yasqueVaue);
-        if(discoverStateService.query.response) {
-            yasgui.yasr.setResponse(discoverStateService.query.response, discoverStateService.query.executionTime) ;
+        let isResponseEmpty = Object.keys(dvm.ds.query.response).length === 0;
+        if(!isResponseEmpty) {
+            yasgui.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
             yasguiService.handleYasrContainer();
         }
     }
