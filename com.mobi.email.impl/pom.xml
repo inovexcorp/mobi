@@ -87,6 +87,11 @@
             <groupId>com.github.kirviq</groupId>
             <artifactId>dumbster</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>security.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
