@@ -26,6 +26,7 @@ import { configureTestSuite } from 'ng-bullet';
 import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 
+import { mockLoginManager, cleanStylesFromDOM } from '../../../../../../test/ts/Shared';
 import { SharedModule } from "../../../shared/shared.module";
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { LoginPageComponent } from './loginPage.component';
@@ -34,7 +35,7 @@ describe('Login Page component', function() {
     let component: LoginPageComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<LoginPageComponent>;
-    let loginManagerStub = jasmine.createSpyObj('loginManagerService', ['login']);
+    let loginManagerStub;
 
     configureTestSuite(function() {
         TestBed.configureTestingModule({
@@ -43,7 +44,7 @@ describe('Login Page component', function() {
                 LoginPageComponent
             ],
             providers: [
-                { provide: 'loginManagerService', useValue: loginManagerStub },
+                { provide: 'loginManagerService', useClass: mockLoginManager },
                 { provide: 'ErrorDisplayComponent', useClass: MockComponent(ErrorDisplayComponent) }
             ]
         });
@@ -53,6 +54,15 @@ describe('Login Page component', function() {
         fixture = TestBed.createComponent(LoginPageComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        loginManagerStub = TestBed.get('loginManagerService');
+    });
+
+    afterAll(function() {
+        cleanStylesFromDOM();
+        component = null;
+        element = null;
+        fixture = null;
+        loginManagerStub = null;
     });
 
     describe('component methods', function() {

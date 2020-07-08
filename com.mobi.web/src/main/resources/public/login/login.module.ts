@@ -30,10 +30,8 @@ import { SharedModule } from '../shared/shared.module';
 import { LoginPageComponent } from './components/loginPage/loginPage.component';
 
 /**
- * @ngdoc overview
- * @name login
+ * @namespace login
  *
- * @description
  * The `login` module provides components that make up the login page of Mobi.
  */
 @NgModule({
