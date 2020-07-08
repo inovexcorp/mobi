@@ -19,7 +19,7 @@ In order for the tests to run completely, you must have the following requiremen
 
 ##Tips and Tricks
 If attempting to run functional tests and the build fails, try these tips:
-1. If it is an npm error, check the `package.json` file dd and ensure npm is utilizing the latest version of chromedriver.
+1. If it is an npm error, check the `package.json` file and ensure npm is utilizing the latest version of chromedriver. The latest version of the npm package can be found at https://www.npmjs.com/package/chromedriver and you can check version compatibilities at https://chromedriver.chromium.org/downloads.
 2. If the error is docker related:
    - check to ensure that there is not an existing docker container with the same name already created. If there is already an existing container, you can remove it by running `docker rm [options] container [container id}`
    - check to ensure that the docker container from a previous test run has completely stopped running and has been removed.
