@@ -73,7 +73,6 @@
     
     &_btnGroup {
       .yasr_btn {
-
         &.disabled {
           pointer-events: none;
         }
@@ -109,6 +108,13 @@
         width: 100% !important;
       }
 
+      .errorResult {
+        .errorHeader, pre {
+          white-space: pre-wrap;
+          word-wrap: break-word;
+          background-attachment: red;      
+        }
+      }
     }
 
   }
