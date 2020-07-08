@@ -54,6 +54,7 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import com.mobi.repository.impl.sesame.query.utils.QueryResultsIOService;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.sparql.rest.SparqlRest;
 import net.sf.json.JSONArray;
@@ -115,7 +116,6 @@ public class SparqlRestTest extends MobiRestTestNg {
     @Mock
     private SesameTransformer sesameTransformer;
 
-
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
@@ -144,6 +144,7 @@ public class SparqlRestTest extends MobiRestTestNg {
         rest.setDatasetManager(datasetManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setValueFactory(vf);
+        rest.setQueryResultsIO(new QueryResultsIOService());
 
         rest = Mockito.spy(rest);
 
@@ -289,7 +290,8 @@ public class SparqlRestTest extends MobiRestTestNg {
                     }
                     Response response = webTarget.request().get();
 
-                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
+                            anyString(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -344,8 +346,6 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            assertEquals(response.getStatus(), 200);
-
             verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(),
                     anyString(), anyString(), anyString());
 
@@ -356,9 +356,7 @@ public class SparqlRestTest extends MobiRestTestNg {
                 verify(repositoryManager).getRepository("system");
             }
 
-            // assertEquals(response.getHeaderString("Content-Disposition"), null);
-            // TODO should this be null? when request does not have accept header it goes to download
-            //  instead of query endpoint
+            assertEquals(response.getStatus(), 200);
             assertEquals(response.getHeaderString("Content-Type"), MediaType.APPLICATION_JSON);
 
             String responseString = response.readEntity(String.class);
@@ -382,7 +380,8 @@ public class SparqlRestTest extends MobiRestTestNg {
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(),
+                    anyString(), anyString());
             assertEquals(response.getStatus(), 200);
 
             if (dataset != null) {
