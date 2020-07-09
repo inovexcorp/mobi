@@ -62,7 +62,7 @@ function uploadSnackbarComponentCtrl(httpService, ontologyStateService, modalSer
         dvm.close();
     }
     dvm.hasStatus = function(promise, value) { // value: 0 for pending, 1 for fulfilled, or 2 for rejected
-        return get(promise, '$$state.status') === value; 
+        return get(promise, '$$state.status') === value;
     }
     dvm.isPending = function(item) {
         return httpService.isPending(item.id);
