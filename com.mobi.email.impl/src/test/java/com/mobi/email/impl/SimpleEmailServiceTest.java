@@ -4,10 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.dumbster.smtp.SimpleSmtpServer;
 import com.dumbster.smtp.SmtpMessage;
+import com.mobi.security.api.EncryptionService;
 import com.mobi.server.api.Mobi;
 import org.junit.After;
 import org.junit.Before;
@@ -16,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -70,6 +75,12 @@ public class SimpleEmailServiceTest {
     @Mock
     private BundleContext bundleContext;
 
+    @Mock
+    private EncryptionService encryptionService;
+
+    @Mock
+    private ConfigurationAdmin configurationAdmin;
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -79,9 +90,12 @@ public class SimpleEmailServiceTest {
         when(bundleContext.getBundle()).thenReturn(bundle);
         URL logoResource = SimpleEmailServiceTest.class.getResource("/mobi-primary-logo-cropped.png");
         when(bundle.getResource(any())).thenReturn(logoResource);
+        when(encryptionService.isEnabled()).thenReturn(false);
 
         es = new SimpleEmailService();
         es.setMobiServer(mobi);
+        es.setEncryptionService(encryptionService);
+        es.setConfigurationAdmin(configurationAdmin);
 
         smtpServer = SimpleSmtpServer.start(SimpleSmtpServer.AUTO_SMTP_PORT);
 
@@ -105,6 +119,28 @@ public class SimpleEmailServiceTest {
     @After
     public void tearDown() throws Exception {
         smtpServer.stop();
+    }
+
+    @Test
+    public void encryptionEnabledTest() throws Exception {
+        when(encryptionService.isEnabled()).thenReturn(true);
+        when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
+        Method m = es.getClass().getDeclaredMethod("activate", BundleContext.class, Map.class);
+        m.setAccessible(true);
+        m.invoke(es, bundleContext, config);
+        assertNotNull(es);
+        verify(encryptionService, times(1)).decrypt(anyString(), anyString(), any());
+    }
+
+    @Test
+    public void encryptionDisabledTest() throws Exception {
+        when(encryptionService.isEnabled()).thenReturn(false);
+        when(encryptionService.decrypt(anyString(), anyString(), any())).thenReturn("TEST_PASS");
+        Method m = es.getClass().getDeclaredMethod("activate", BundleContext.class, Map.class);
+        m.setAccessible(true);
+        m.invoke(es, bundleContext, config);
+        assertNotNull(es);
+        verify(encryptionService, times(0)).decrypt(anyString(), anyString(), any());
     }
 
     @Test
