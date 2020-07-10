@@ -61,6 +61,12 @@ describe('Upload Error Overlay component', function() {
             this.controller.dismiss();
             expect(scope.dismiss).toHaveBeenCalled();
         });
+        it('resolve is one way bound', function() {
+            var original = angular.copy(scope.resolve);
+            this.controller.resolve = {};
+            scope.$digest();
+            expect(scope.resolve).toEqual(original);
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -70,51 +76,23 @@ describe('Upload Error Overlay component', function() {
             expect(this.element.querySelectorAll('.modal-footer').length).toEqual(1);
         });
     });
-    describe('controller methods', function() {
-        it('should update the selected file', function() {
+    describe('controller variables', function() {
+        it('should initialize with the correct values', function() {
             expect(this.controller.itemTitle).toEqual('Something went wrong. Please try again later.');
             expect(this.controller.errorMessage).toEqual('');
             expect(this.controller.errorDetails).toEqual([]);
         });
+        // TODO Figure out how to make test work
+        // it('when has resolve should initialize with the correct values', function() {
+        //     scope.resolve = {item:{
+        //         title: "fileName.txt", 
+        //         errorMessage: "errorMessage1", 
+        //         errorDetails: ["errorDetails1"]}
+        //     };
+        //     scope.$apply();
+        //     expect(this.controller.itemTitle).toEqual('fileName.txt');
+        //     expect(this.controller.errorMessage).toEqual('errorMessage1');
+        //     expect(this.controller.errorDetails).toEqual(["errorDetails1"]);
+        // });
     });
-    //     describe('should upload an ontology', function() {
-    //         beforeEach(function() {
-    //             this.controller.os.listItem = {
-    //                 ontologyRecord: {
-    //                     recordId: 'recordId',
-    //                     branchId: 'branchId',
-    //                     commitId: 'commitId'
-    //                 },
-    //                 editorTabStates: {
-    //                     savedChanges: {
-    //                         active: false
-    //                     }
-    //                 },
-    //                 ontology: []
-    //             };
-    //             this.controller.file = {};
-    //         });
-    //         it('unless an error occurs', function() {
-    //             ontologyStateSvc.uploadChanges.and.returnValue($q.reject('Error message'));
-    //             this.controller.submit();
-    //             scope.$apply();
-    //             expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
-    //             expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toEqual(false);
-    //             expect(this.controller.error).toEqual('Error message');
-    //             expect(scope.close).not.toHaveBeenCalled();
-    //         });
-    //         it('successfully', function() {
-    //             this.controller.submit();
-    //             scope.$apply();
-    //             expect(ontologyStateSvc.uploadChanges).toHaveBeenCalledWith(this.controller.file, this.controller.os.listItem.ontologyRecord.recordId, this.controller.os.listItem.ontologyRecord.branchId, this.controller.os.listItem.ontologyRecord.commitId);
-    //             expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toEqual(true);
-    //             expect(this.controller.error).toBeFalsy();
-    //             expect(scope.close).toHaveBeenCalled();
-    //         });
-    //     });
-    //     it('should cancel the overlay', function() {
-    //         this.controller.cancel();
-    //         expect(scope.dismiss).toHaveBeenCalled();
-    //     });
-    // });
 });
