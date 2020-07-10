@@ -68,7 +68,6 @@ describe('SPARQL Editor component', function() {
     describe('contains the correct html', function() {
         it('for a form', function() {
             expect(this.element.prop('tagName')).toBe('SPARQL-EDITOR');
-            console.log(this.element);
         });
 
         it('with a discovery-query', function() {
