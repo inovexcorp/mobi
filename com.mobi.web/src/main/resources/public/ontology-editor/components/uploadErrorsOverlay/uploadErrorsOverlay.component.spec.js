@@ -51,7 +51,7 @@ describe('Upload Error Overlay component', function() {
         ontologyStateSvc = null;
         this.element.remove();
     });
-    
+
     describe('controller bound variable', function() {
         it('close should be called in the parent scope', function() {
             this.controller.close();
@@ -72,7 +72,7 @@ describe('Upload Error Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should update the selected file', function() {
-            expect(this.controller.itemTitle).toEqual('');
+            expect(this.controller.itemTitle).toEqual('Something went wrong. Please try again later.');
             expect(this.controller.errorMessage).toEqual('');
             expect(this.controller.errorDetails).toEqual([]);
         });
