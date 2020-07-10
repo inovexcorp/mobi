@@ -85,7 +85,7 @@ before_script:
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
   - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
-#  - ln -s /opt/node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
+  - ln -s /opt/node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
   - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
   -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
   -   git remote set-url origin $PRIVATE_URL
