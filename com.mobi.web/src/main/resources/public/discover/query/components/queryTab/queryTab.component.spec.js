@@ -46,23 +46,17 @@ describe('Query Tab component', function() {
     });
 
     describe('contains the correct html', function() {
+        
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('QUERY-TAB');
         });
-        it('with .rows', function() {
-            expect(this.element.querySelectorAll('.row').length).toBe(2);            
+        it('with flex-1 bg-white', function() {
+            expect(this.element.querySelectorAll('.flex-1.bg-white').length).toBe(1);            
         });
-        it('with a block', function() {
-            expect(this.element.find('block').length).toEqual(1);
-        });
-        it('with a block-content', function() {
-            expect(this.element.find('block-content').length).toEqual(1);
-        });
+        
         it('with a sparql-editor', function() {
             expect(this.element.find('sparql-editor').length).toEqual(1);
         });
-        it('with a sparql-result-block', function() {
-            expect(this.element.find('sparql-result-block').length).toEqual(1);
-        });
+        
     });
 });

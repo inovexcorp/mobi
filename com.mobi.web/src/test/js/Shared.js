@@ -1352,6 +1352,13 @@ export function mockRecordPermissionsManager() {
         });
     });
 }
+export function mockYasguiService() {
+    angular.mock.module(function($provide) {
+        $provide.service('yasguiService', function($q) {
+            this.reset = jasmine.createSpy('reset');
+        });
+    });
+}
 
 export function flushAndVerify($httpBackend) {
     $httpBackend.flush();

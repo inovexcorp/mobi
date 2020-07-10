@@ -37,7 +37,8 @@ describe('Download Query Overlay component', function() {
 
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
-        this.element = $compile(angular.element('<download-query-overlay close="close()" dismiss="dismiss()"></download-query-overlay>'))(scope);
+        scope.resolve = { queryType : '' };
+        this.element = $compile(angular.element('<download-query-overlay close="close()" dismiss="dismiss()" resolve="resolve" ></download-query-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('downloadQueryOverlay');
     });

@@ -25,7 +25,8 @@ import {
     mockPrefixes,
     mockSparqlManager,
     injectTrustedFilter,
-    injectHighlightFilter
+    injectHighlightFilter,
+    mockYasguiService,
 } from '../../../../../../../test/js/Shared';
 
 describe('SPARQL Editor component', function() {
@@ -36,8 +37,10 @@ describe('SPARQL Editor component', function() {
         mockComponent('discover', 'datasetFormGroup');
         mockPrefixes();
         mockSparqlManager();
+        mockYasguiService();
         injectTrustedFilter();
         injectHighlightFilter();
+        
 
         angular.mock.module(function($provide) {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
@@ -61,23 +64,19 @@ describe('SPARQL Editor component', function() {
         this.element.remove();
     });
 
-    describe('initializes with the correct values', function() {
-        it('for prefixes', function() {
-            expect(this.controller.prefixList.length).toBe(_.keys(prefixes).length);
-        });
-    });
+  
     describe('contains the correct html', function() {
         it('for a form', function() {
             expect(this.element.prop('tagName')).toBe('SPARQL-EDITOR');
+            console.log(this.element);
         });
-        it('based on form-group', function() {
-            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
+
+        it('with a discovery-query', function() {
+            expect(this.element.querySelectorAll('discovery-query').length).toBe(1);
         });
+
         it('with a dataset-form-group', function() {
             expect(this.element.find('dataset-form-group').length).toBe(1);
-        });
-        it('with a ui-codemirror', function() {
-            expect(this.element.find('ui-codemirror').length).toBe(1);
         });
     });
 });
