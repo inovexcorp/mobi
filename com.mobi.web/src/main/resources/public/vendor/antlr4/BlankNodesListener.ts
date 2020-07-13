@@ -282,22 +282,19 @@ class BlankNodesListener implements MOSListener {
 
     private _addObjToListNode(mapItem, valueObj) {
         if (mapItem.numChildren > 1) { // If the parent node has more than one child
+            // Create rdf:List bnode
+            var listBnode = this._addBNode(prefixes.rdf + 'List');
+            listBnode[prefixes.rdf + 'first'] = [valueObj];
             if (mapItem.children.length === 0) { // If this is the first item in the list
-                var listBnode = this._addBNode(prefixes.rdf + 'List');
-                listBnode[prefixes.rdf + 'first'] = [valueObj]; // Create the starting bnode of the list
                 mapItem.bnode[mapItem.prop] = [{'@id': listBnode['@id']}]; // Add bnode of the list to the parent node with the specified property
-                mapItem.children.push(listBnode);
             } else { // If this is not the first item in the list
                 var previousListBnode = mapItem.children[mapItem.children.length - 1]; // Get the child bnode right before this
+                previousListBnode[prefixes.rdf + 'rest'] = [{'@id': listBnode['@id']}];  // Add link to the previous bnode
                 if (mapItem.children.length === mapItem.numChildren - 1) { // If this is the last item in the list
-                    previousListBnode[prefixes.rdf + 'rest'] = [{'@list': [valueObj]}]; // Update the rdf:rest property on the previous bnode
-                } else { // If this is not the last item in the list
-                    var listBnode = this._addBNode(prefixes.rdf + 'List');
-                    listBnode[prefixes.rdf + 'first'] = [valueObj]; // Create the bnode of the list
-                    previousListBnode[prefixes.rdf + 'rest'] = [{'@id': listBnode['@id']}]; // Link to the previous bnode
-                    mapItem.children.push(listBnode);
+                    listBnode[prefixes.rdf + 'rest'] = [{'@list': []}];
                 }
             }
+            mapItem.children.push(listBnode); // Add generated bnode to children of parent node
         } else { // If parent node only has one child, set as value
             mapItem.bnode[mapItem.prop] = [{'@list': [valueObj]}]; 
         }
