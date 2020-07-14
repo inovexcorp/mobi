@@ -50,6 +50,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     let reponseLimitElement = <HTMLElement>{};
     let yasrContainerSelector = '.yasr .CodeMirror-scroll, .yasr .dataTables_wrapper ';
     let yasrRootElement : HTMLElement = <any>{};
+    let yasqeRootElement : HTMLElement = <any>{};
     let timeoutResizeId = null;
 
 
@@ -168,11 +169,14 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
 
     // Get container height 
     const getYasContainerHeight = () =>  {
-        let elementHeight = Math.floor(innerHeight
-            - document.querySelector('.yasqe').getBoundingClientRect().bottom
-            - document.querySelector('.material-tabset-headings').clientHeight);
-        let style  = `${elementHeight}px`;
-        return style;
+        if (yasqeRootElement instanceof HTMLElement) {
+            let elementHeight = Math.floor(innerHeight
+                - yasqeRootElement.getBoundingClientRect().bottom
+                - document.querySelector('.material-tabset-headings').clientHeight);
+            let style  = `${elementHeight}px`;
+            return style;
+        }
+        
     }
 
     const drawResponseLimitMessage = (headerElement) => {
@@ -278,6 +282,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         overwritePlugins();
         // Init UI events
         yasrRootElement = self.yasgui.getTab().yasr.rootEl;
+        yasqeRootElement = yasrRootElement = self.yasgui.getTab().yasqe.rootEl;
         if (yasrRootElement instanceof HTMLElement) {
             initEvents();
             handleYasrVisivility();

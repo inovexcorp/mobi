@@ -31,7 +31,7 @@ import {
 
 import yasguiMockResponse from './yasguiMockResponse';
 
-fdescribe('YASGUI service', function() {
+describe('YASGUI service', function() {
     let yasguiSvc, sparqlManagerSvc, discoverStateSvc, modalSvc, $q, scope, httpSvc, $httpBackend, windowSvc, $compile, _yasgui, yasguiWrapper, yasMock;
 
     beforeEach(function() {
@@ -78,7 +78,6 @@ fdescribe('YASGUI service', function() {
 
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            console.log(this.element);
             expect(yasguiWrapper.length).toEqual(1);
             expect(this.element.querySelectorAll('.yasqe').length).toEqual(1);
             expect(this.element.querySelectorAll('.yasqe .CodeMirror').length).toEqual(1);
