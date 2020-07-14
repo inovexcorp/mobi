@@ -44,6 +44,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     };
 
     const defaultUrl : URL =  getDefaultUrl();
+    let customURL = null;
     let dataset = '';
     let innerHeight = $window.innerHeight;
     let reponseLimitElement = <HTMLElement>{};
@@ -77,7 +78,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         timeoutResizeId = setTimeout(() => {
             innerHeight = $window.innerHeight;
 
-            let yasrContentElement = <HTMLElement>document.querySelector(yasrContainerSelector);
+            let yasrContentElement = <HTMLElement>yasrRootElement.querySelector(yasrContainerSelector);
             if (yasrContentElement) {
                 yasrContentElement.style.height = getYasContainerHeight();
             }
@@ -127,22 +128,31 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
                 yasgui.yasr.draw();
             }
 
-            // Display modal
-            document.querySelector('.yasr_downloadIcon').addEventListener('click', (e) => {
-                e.preventDefault();
-                sparqlManagerService.queryString = yasgui.yasqe.getQueryWithValues();
-                const type = formatType[yasgui.yasr.drawnPlugin] || formatType[yasgui.yasr.config.defaultPlugin];
-                const queryType = yasgui.yasqe.getQueryType()?.toLowerCase();
-                modalService.openModal('downloadQueryOverlay', {queryType}, undefined, 'sm');
-            })
+           if(!instance.results.error) {
+                // Display modal
+                let downloadIcon = yasrRootElement.querySelector('.yasr_downloadIcon');
+                if(!downloadIcon) {
+                    return;
+                }
+                downloadIcon.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    sparqlManagerService.queryString = yasgui.yasqe.getQueryWithValues();
+                    const type = formatType[yasgui.yasr.drawnPlugin] || formatType[yasgui.yasr.config.defaultPlugin];
+                    const queryType = yasgui.yasqe.getQueryType()?.toLowerCase();
+                    modalService.openModal('downloadQueryOverlay', {queryType}, undefined, 'sm');
+                });
+           }
+         
         });
 
         // update yasr codemirror height
         // update yasr header: response limit message
         yasgui.yasr.on("drawn",({ results }) => {
             let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
-            let yasrCodeMirrorElement = <HTMLElement>document.querySelector(yasrContainerSelector);
-            if (yasrCodeMirrorElement) { yasrCodeMirrorElement.style.height = getYasContainerHeight(); }
+            let yasrCodeMirrorElement = <HTMLElement>yasrRootElement.querySelector(yasrContainerSelector);
+            if (yasrCodeMirrorElement) { 
+                yasrCodeMirrorElement.style.height = getYasContainerHeight(); 
+            }
             resizeYasrContainer();
             updateResponseLimitMessage(limit);
 
@@ -205,7 +215,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
 
     // update yasr request configuration
     const setRequestConfig = () => {
-        let url =  getUrl();
+        let url =  customURL || getUrl();
         const { headers } = self.yasgui.getTab().getRequestConfig();
         headers.Accept = getFormat(self.yasgui.getTab().yasr.selectedPlugin);
         self.yasgui.getTab().setRequestConfig({
@@ -267,10 +277,14 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     const updateYasguiUI = () => {
         overwritePlugins();
         // Init UI events
-        initEvents();
-        yasrRootElement =  self.yasgui.getTab().yasr.rootEl;
-        handleYasrVisivility();
-        document.querySelector(`.select_response`).classList.add('hide');
+        yasrRootElement = self.yasgui.getTab().yasr.rootEl;
+        if (yasrRootElement instanceof HTMLElement) {
+            initEvents();
+            handleYasrVisivility();
+            if (yasrRootElement.querySelector(`.select_response`)) {
+                yasrRootElement.querySelector(`.select_response`).classList.add('hide');
+            }
+        }
     }
 
     const overwritePlugins = () => {
@@ -308,6 +322,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         const localConfig = getDefaultConfig();
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';
+
+        if(config.endpoint) {
+            customURL = config.endpoint;
+        }
         const configuration = merge({}, localConfig, config );
         // Init YASGUI
         initPlugins();
