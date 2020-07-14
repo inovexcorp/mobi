@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,19 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Injectable } from "@angular/core";
 
 /**
- * @class shared.ErrorDisplayComponent
- *
- * @description
- * `error-display` is a component that creates a styled message for displaying errors from the transcluded content.
- * The content will have red colored text and will be next to an error icon.
+ * @class shared.WindowRef
+ * 
+ * 'WindowRef' is a service that provides a reference to the JS window object.
  */
-@Component({
-    selector: 'error-display',
-    templateUrl: './errorDisplay.component.html'
-})
-export class ErrorDisplayComponent {
+@Injectable()
+export class WindowRef {
     constructor() {}
+
+    getNativeWindow() {
+        return window;
+    }
 }

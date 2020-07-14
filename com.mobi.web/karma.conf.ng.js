@@ -8,16 +8,19 @@ const webpackConfig = webpackMerge.smart(commonConfig, devConfig);
 
 module.exports = function(config) {
   config.set({
+    client: {
+        args: config.build ? ["--build"] : [],
+    },
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['jasmine'],
+    frameworks: (config.build ? ['parallel', 'jasmine'] : ['jasmine']),
 
     files: [
-        'webpack.tests.tdd.js'
+        'webpack.tests.ng.js'
     ],
 
     preprocessors: {
-        'webpack.tests.tdd.js': ['webpack', 'sourcemap']
+        'webpack.tests.ng.js': ['webpack', 'sourcemap']
     },
 
     webpack: {
@@ -32,7 +35,15 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
+    reporters: ['progress', 'html'],
+
+    // configuration for the html reporter
+    htmlReporter: {
+        outputDir: 'target',
+        namedFiles: true,
+        urlFriendlyName: true,
+        reportName: 'specReport'
+    },
 
     // web server port
     port: 9876,
@@ -49,11 +60,22 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    browsers: ['ChromeHeadlessNoSandbox'],
+    customLaunchers: {
+        ChromeHeadlessNoSandbox: {
+          base: 'ChromeHeadless',
+          flags: ['--no-sandbox']
+        }
+    },
+
+    // karma-parallel configuration
+    parallelOptions: {
+        executors: (Math.ceil(require('os').cpus().length / 2))
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false,
+    singleRun: true,
 
     // Concurrency level
     // how many browser should be started simultaneous
