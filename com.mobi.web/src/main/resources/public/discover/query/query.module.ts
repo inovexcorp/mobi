@@ -26,6 +26,7 @@ import downloadQueryOverlayComponent from './components/downloadQueryOverlay/dow
 import queryTabComponent from './components/queryTab/queryTab.component';
 import sparqlEditorComponent from './components/sparqlEditor/sparqlEditor.component';
 import sparqlResultBlockComponent from './components/sparqlResultBlock/sparqlResultBlock.component';
+import discoveryQueryComponent from '../query/components/dicoveryQuery/discoveryQuery.component';
 
 /**
  * @ngdoc overview
@@ -38,4 +39,5 @@ angular.module('query', [])
     .component('downloadQueryOverlay', downloadQueryOverlayComponent)
     .component('queryTab', queryTabComponent)
     .component('sparqlEditor', sparqlEditorComponent)
-    .component('sparqlResultBlock', sparqlResultBlockComponent);
+    .component('sparqlResultBlock', sparqlResultBlockComponent)
+    .component('discoveryQuery', discoveryQueryComponent);

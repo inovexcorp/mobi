@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import '../yasgui/yasgui.component.scss';
+import '../../../../shared/components/yasgui/yasgui.component.scss';
 import './discoveryQuery.component.scss';
 /**
  * @ngdoc component

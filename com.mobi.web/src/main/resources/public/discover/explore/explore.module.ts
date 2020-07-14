@@ -38,6 +38,7 @@ import newInstanceClassOverlayComponent from './components/newInstanceClassOverl
 import newInstancePropertyOverlayComponent from './components/newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import propertyValueOverlayComponent from './components/propertyValueOverlay/propertyValueOverlay.component';
 
+
 /**
  * @ngdoc overview
  * @name explore
