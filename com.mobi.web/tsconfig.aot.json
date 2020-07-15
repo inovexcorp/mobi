@@ -22,6 +22,6 @@
         "src/main/resources/public/main.ts"
     ],
     "angularCompilerOptions": {
-        "genDir": "aot"
+        "outDir": "aot"
     }
 }

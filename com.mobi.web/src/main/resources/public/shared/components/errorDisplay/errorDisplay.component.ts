@@ -20,25 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-const template = require('./errorDisplay.component.html');
+import { Component } from '@angular/core';
 
 /**
- * @ngdoc component
- * @name shared.component:errorDisplay
+ * @class shared.ErrorDisplayComponent
  *
  * @description
- * `errorDisplay` is a component that creates a styled message for displaying errors from the transcluded content.
+ * `error-display` is a component that creates a styled message for displaying errors from the transcluded content.
  * The content will have red colored text and will be next to an error icon.
  */
-const errorDisplayComponent = {
-    template,
-    transclude: true,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: errorDisplayComponentCtrl
-};
-
-function errorDisplayComponentCtrl() {}
-
-export default errorDisplayComponent;
+@Component({
+    selector: 'error-display',
+    templateUrl: './errorDisplay.component.html'
+})
+export class ErrorDisplayComponent {
+    constructor() {}
+}

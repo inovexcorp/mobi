@@ -323,7 +323,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
 
     self.handleYasrContainer = handleYasrVisivility;
 
-    self.initYasgui = (element, config = {}) => {
+    self.initYasgui = (element, config :any = {}) => {
         const localConfig = getDefaultConfig();
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';

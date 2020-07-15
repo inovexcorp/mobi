@@ -21,6 +21,11 @@
  * #L%
  */
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
+import { downgradeComponent } from '@angular/upgrade/static';
 
 import actionMenuComponent from './components/actionMenu/actionMenu.component';
 import blockComponent from './components/block/block.component';
@@ -43,7 +48,6 @@ import editIriOverlayComponent from './components/editIriOverlay/editIriOverlay.
 import emailInputComponent from './components/emailInput/emailInput.component';
 import entityDatesComponent from './components/entityDates/entityDates.component';
 import entityDescriptionComponent from './components/entityDescription/entityDescription.component';
-import errorDisplayComponent from './components/errorDisplay/errorDisplay.component';
 import fileInputComponent from './components/fileInput/fileInput.component';
 import infoMessageComponent from './components/infoMessage/infoMessage.component';
 import warningMessageComponent from './components/warningMessage/warningMessage.component';
@@ -132,13 +136,59 @@ import userStateService from './services/userState.service';
 import utilService from './services/util.service';
 import yasguiService from './services/yasgui.service';
 
+// NgUpgrade
+import {
+    httpServiceProvider,
+    loginManagerServiceProvider,
+    prefixesProvider,
+    provManagerServiceProvider,
+    userManagerServiceProvider,
+    utilServiceProvider,
+    ontologyStateServiceProvider,
+    discoverStateServiceProvider,
+} from '../ajs.upgradedProviders';
+
+import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
+import { WindowRef } from "./services/windowRef.service";
+
 /**
- * @ngdoc overview
- * @name shared
+ * @namespace shared
  *
- * @description
- * The `shared` module provides common components, directives, filters, and services that make up the Shared module in the Mobi application.
+ * The `shared` module provides common components, directives, filters, and services that make up the Shared module in
+ * the Mobi application.
  */
+@NgModule({
+    imports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule
+    ],
+    declarations: [
+        ErrorDisplayComponent
+    ],
+    entryComponents: [
+        ErrorDisplayComponent
+    ],
+    exports: [
+        CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        ErrorDisplayComponent,
+    ],
+    providers: [
+        loginManagerServiceProvider,
+        utilServiceProvider,
+        provManagerServiceProvider,
+        prefixesProvider,
+        httpServiceProvider,
+        userManagerServiceProvider,
+        ontologyStateServiceProvider,
+        discoverStateServiceProvider,
+        WindowRef
+    ]
+})
+export class SharedModule {}
+
 angular.module('shared', [])
     .component('actionMenu', actionMenuComponent)
     .component('block', blockComponent)
@@ -161,7 +211,6 @@ angular.module('shared', [])
     .component('emailInput', emailInputComponent)
     .component('entityDates', entityDatesComponent)
     .component('entityDescription', entityDescriptionComponent)
-    .component('errorDisplay', errorDisplayComponent)
     .component('fileInput', fileInputComponent)
     .component('infoMessage', infoMessageComponent)
     .component('warningMessage', warningMessageComponent)
@@ -244,5 +293,6 @@ angular.module('shared', [])
     .service('userManagerService', userManagerService)
     .service('userStateService', userStateService)
     .service('utilService', utilService)
+    .factory('clickAnywhereButHereService', clickAnywhereButHereService)
     .service('yasguiService',yasguiService)
-    .factory('clickAnywhereButHereService', clickAnywhereButHereService);
+    .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory);

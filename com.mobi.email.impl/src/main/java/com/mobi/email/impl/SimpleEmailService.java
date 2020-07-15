@@ -31,6 +31,7 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
+import com.mobi.security.api.EncryptionService;
 import com.mobi.server.api.Mobi;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.EmailException;
@@ -38,6 +39,7 @@ import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Component(
+        immediate = true,
         designateFactory = EmailServiceConfig.class,
         name = SimpleEmailService.COMPONENT_NAME
 )
@@ -69,6 +72,19 @@ public class SimpleEmailService implements EmailService {
     private Mobi mobiServer;
     private String emailTemplate;
     private URL logo;
+    private EncryptionService encryptionService;
+    private ConfigurationAdmin configurationAdmin;
+    private String emailPassword;
+
+    @Reference
+    void setEncryptionService(EncryptionService encryptionService) {
+        this.encryptionService = encryptionService;
+    }
+
+    @Reference
+    public void setConfigurationAdmin(ConfigurationAdmin admin) {
+        this.configurationAdmin = admin;
+    }
 
     @Reference
     void setMobiServer(Mobi mobiServer) {
@@ -77,7 +93,14 @@ public class SimpleEmailService implements EmailService {
 
     @Activate
     void activate(BundleContext bundleContext, Map<String, Object> configuration) {
-        config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
+         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
+        try {
+            emailPassword = encryptionService.isEnabled() ? encryptionService.decrypt(config.emailPassword(), "emailPassword",
+                    this.configurationAdmin.getConfiguration(COMPONENT_NAME)) : config.emailPassword();
+        } catch (IOException e) {
+            LOGGER.error("Could not get configuration for " + COMPONENT_NAME, e);
+            throw new MobiException(e);
+        }
         try {
             File templateFile = new File(config.emailTemplate());
             if (!templateFile.isAbsolute()) {
@@ -174,8 +197,7 @@ public class SimpleEmailService implements EmailService {
         ImageHtmlEmail email = new ImageHtmlEmail();
         email.setHostName(config.smtpServer());
         email.setSmtpPort(config.port());
-        email.setAuthentication(config.emailAddress(), config.emailPassword());
-
+        email.setAuthentication(config.emailAddress(), emailPassword);
         URL imageBasePath = null;
         try {
             imageBasePath = new URL("file://");

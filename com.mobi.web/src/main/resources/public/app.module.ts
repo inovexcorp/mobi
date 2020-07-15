@@ -24,13 +24,23 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { UpgradeModule } from '@angular/upgrade/static';
 import { HttpModule } from '@angular/http';
+
 import { MODULE_NAME } from './app.module.ajs';
+
+import { SharedModule } from './shared/shared.module';
+import { LoginModule } from './login/login.module';
+import { HomeModule } from "./home/home.module";
+import { UIRouterUpgradeModule } from "@uirouter/angular-hybrid";
 
 @NgModule({
     imports: [
         BrowserModule,
         UpgradeModule,
-        HttpModule
+        HttpModule,
+        UIRouterUpgradeModule.forRoot(),
+        SharedModule,
+        LoginModule,
+        HomeModule
     ],
     declarations: [],
     entryComponents: [],

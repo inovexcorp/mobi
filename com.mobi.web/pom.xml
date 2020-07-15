@@ -27,7 +27,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.18.10-SNAPSHOT</version>
+        <version>1.18.15-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -152,7 +152,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm run tests</id>
+                        <id>npm run tests:ajs</id>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -161,7 +161,22 @@
                             <executable>npm</executable>
                             <arguments>
                                 <argument>run</argument>
-                                <argument>test</argument>
+                                <argument>test:ajs</argument>
+                            </arguments>
+                            <skip>${skipTests}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm run tests:ng</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <executable>npm</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>test:ng</argument>
                             </arguments>
                             <skip>${skipTests}</skip>
                         </configuration>

@@ -21,75 +21,63 @@
  * #L%
  */
 import { get } from 'lodash';
-
-const template = require('./activityCard.component.html');
+import { Component, Inject, OnDestroy, OnInit } from "@angular/core";
 
 /**
- * @ngdoc component
- * @name home.component:activityCard
- * @requires shared.service:provManagerService
- * @requires shared.service:utilService
- * @requires shared.service:prefixes
- * @requires shared.service:httpService
+ * @class home.ActivityCardComponent
  *
- * @description
- * `activityCard` is a component which creates a Bootstrap `.card` containing a infinite scrolled list of the
+ * `activity-card` is a component which creates a Bootstrap `.card` containing a infinite scrolled list of the
  * most recent activities in the application. The activities are loaded 10 at a time and are displayed using
- * {@link home.component:activityTitle activityTitles}.
+ * {@link home.ActivityTitleComponent activityTitles}.
  */
-const activityCardComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: activityCardComponentCtrl
-};
+@Component({
+    selector: 'activity-card',
+    templateUrl: './activityCard.component.html'
+})
+export class ActivityCardComponent implements OnInit, OnDestroy {
+    private increment = 10;
 
-activityCardComponentCtrl.$inject = ['provManagerService', 'utilService', 'prefixes', 'httpService'];
-
-function activityCardComponentCtrl(provManagerService, utilService, prefixes, httpService) {
-    var dvm = this;
-    var increment = 10;
-    var pm = provManagerService;
-    var util = utilService;
-    dvm.limit = increment;
-    dvm.id = 'activity-log';
-    dvm.activities = [];
-    dvm.entities = [];
-    dvm.totalSize = 0;
-
-    dvm.$onInit = function() {
-        dvm.setPage();
+    limit = this.increment;
+    id = 'activity-log';
+    activities = [];
+    entities = [];
+    totalSize = 0;
+    
+    constructor(@Inject('provManagerService') public pm, @Inject('utilService') public util,
+                @Inject('prefixes') private prefixes, @Inject('httpService') private httpService) {}
+    
+    ngOnInit(): void {
+        this.setPage();
     }
-    dvm.$onDestroy = function() {
-        httpService.cancel(dvm.id);
+    ngOnDestroy(): void {
+        this.httpService.cancel(this.id);
     }
-    dvm.loadMore = function() {
-        dvm.limit += increment;
-        dvm.setPage();
+    loadMore(): void {
+        this.limit += this.increment;
+        this.setPage();
     }
-    dvm.setPage = function() {
-        httpService.cancel(dvm.id);
-        pm.getActivities(getConfig(), dvm.id).then(setActivities, createToast);
+    setPage(): void {
+        this.httpService.cancel(this.id);
+        this.pm.getActivities(this.getConfig(), this.id)
+            .then(response => {
+                this.activities = response.data.activities;
+                this.entities = response.data.entities;
+                let headers = response.headers();
+                this.totalSize = get(headers, 'x-total-count', 0);
+            }, errorMessage => {
+                if (errorMessage) {
+                    this.util.createErrorToast(errorMessage);
+                }
+            });
     }
-    dvm.getTimeStamp = function(activity) {
-        var dateStr = util.getPropertyValue(activity, prefixes.prov + 'endedAtTime');
-        return util.getDate(dateStr, 'short')
+    getTimeStamp(activity): string {
+        let dateStr = this.util.getPropertyValue(activity, this.prefixes.prov + 'endedAtTime');
+        return this.util.getDate(dateStr, 'short')
     }
-
-    function setActivities(response) {
-        dvm.activities = response.data.activities;
-        dvm.entities = response.data.entities;
-        var headers = response.headers();
-        dvm.totalSize = get(headers, 'x-total-count', 0);
+    getConfig(): any {
+        return {pageIndex: 0, limit: this.limit};
     }
-    function createToast(errorMessage) {
-        if (errorMessage) {
-            util.createErrorToast(errorMessage);
-        }
-    }
-    function getConfig() {
-        return {pageIndex: 0, limit: dvm.limit};
+    trackByFn(index, item): string {
+        return item['@id'];
     }
 }
-
-export default activityCardComponent;
