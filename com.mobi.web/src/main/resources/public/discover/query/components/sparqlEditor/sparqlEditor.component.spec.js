@@ -26,6 +26,7 @@ import {
     mockSparqlManager,
     injectTrustedFilter,
     injectHighlightFilter,
+    mockDiscoverState,
     mockYasguiService,
 } from '../../../../../../../test/js/Shared';
 
@@ -34,14 +35,14 @@ describe('SPARQL Editor component', function() {
 
     beforeEach(function() {
         angular.mock.module('query');
-        mockComponent('discover', 'datasetFormGroup');
+        mockComponent('discover', 'datasetFormGroup','discoveryQuery');
         mockPrefixes();
         mockSparqlManager();
         mockYasguiService();
         injectTrustedFilter();
         injectHighlightFilter();
+        mockDiscoverState();
         
-
         angular.mock.module(function($provide) {
             $provide.value('escapeHTMLFilter', jasmine.createSpy('escapeHTMLFilter'));
         });
@@ -64,9 +65,9 @@ describe('SPARQL Editor component', function() {
         this.element.remove();
     });
 
-  
     describe('contains the correct html', function() {
         it('for a form', function() {
+            console.log(this.element);
             expect(this.element.prop('tagName')).toBe('SPARQL-EDITOR');
         });
 

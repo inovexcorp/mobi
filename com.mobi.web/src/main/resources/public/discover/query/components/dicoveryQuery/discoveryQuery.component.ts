@@ -42,6 +42,9 @@ function queryController(yasguiService, discoverStateService) {
     dvm.ds = discoverStateService;
     
     const initEventListener = () => {
+        if (!Object.prototype.hasOwnProperty.call(dvm.yasgui, 'getTab')) {
+            return;
+        }
         yasgui = dvm.yasgui.getTab();
         yasgui.yasqe.on("blur", () => {
             dvm.ds.query.queryString = yasgui.yasqe.getValue();
@@ -58,6 +61,10 @@ function queryController(yasguiService, discoverStateService) {
     }
 
     const setValues = () => {
+        if (!Object.prototype.hasOwnProperty.call(dvm.yasgui, 'setValue')) {
+            return;
+        }
+
         let yasqueVaue = dvm.ds.query.queryString || yasgui.yasqe.config.value;
         yasgui.yasqe.setValue(yasqueVaue);
         let isResponseEmpty = Object.keys(dvm.ds.query.response).length === 0;

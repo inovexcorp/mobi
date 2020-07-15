@@ -44,7 +44,8 @@ describe('YASGUI service', function() {
         yasMock = yasguiMockResponse();
 
         this.url = 'mobirest/sparql/limited-results?';
-        inject(function(yasguiService, _sparqlManagerService_, _discoverStateService_, _modalService_, _$q_, _$rootScope_, _httpService_, _$httpBackend_, _$window_, _$compile_) {
+        inject(function(yasguiService, _sparqlManagerService_, _discoverStateService_, _modalService_, _$q_, _$rootScope_,
+             _httpService_, _$httpBackend_, _$window_, _$compile_) {
             yasguiSvc = yasguiService;
             sparqlManagerSvc =  _sparqlManagerService_;
             discoverStateSvc = _discoverStateService_;
@@ -57,7 +58,6 @@ describe('YASGUI service', function() {
             windowSvc = _$window_;
             $compile = _$compile_; 
         });
-
 
         this.element = $compile(angular.element('<sparql-editor></sparql-editor>'))(scope);
         scope.$digest();
