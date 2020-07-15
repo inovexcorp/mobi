@@ -282,7 +282,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         overwritePlugins();
         // Init UI events
         yasrRootElement = self.yasgui.getTab().yasr.rootEl;
-        yasqeRootElement = yasrRootElement = self.yasgui.getTab().yasqe.rootEl;
+        yasqeRootElement = self.yasgui.getTab().yasqe.rootEl;
         if (yasrRootElement instanceof HTMLElement) {
             initEvents();
             handleYasrVisivility();
