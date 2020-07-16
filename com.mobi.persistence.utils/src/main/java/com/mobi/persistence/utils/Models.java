@@ -81,7 +81,7 @@ public class Models {
     public static final LinkedHashMap<String, List<RDFParser>> preferredExtensionParsers;
     public static final List<RDFParser> rdfParsers;
 
-    static{
+    static {
         // RDFFormat Parsers
         RDFParser rdfJsonParser = Rio.createParser(RDFFormat.RDFJSON);
         RDFParser jsonLdParser = Rio.createParser(RDFFormat.JSONLD);
@@ -260,11 +260,11 @@ public class Models {
     /**
      * Create a Mobi Model from an InputStream.
      *
-     * @param preferredExtension
-     * @param inputStream
-     * @param transformer
-     * @return
-     * @throws IOException
+     * @param preferredExtension the preferred extension as a string
+     * @param inputStream the InputStream to parse
+     * @param transformer the SesameTransformer to convert a SesameModel to a Mobi Model
+     * @return a Mobi Model from the parsed InputStream
+     * @throws IOException if a error occurs when accessing the InputStream contents
      */
     public static Model createModel(String preferredExtension,
                                     InputStream inputStream,
@@ -272,7 +272,6 @@ public class Models {
         List<String> triedRDFFormats =  new ArrayList<>();
         org.eclipse.rdf4j.model.Model model = new LinkedHashModel();
         ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
-
         RDFParseException rdfParseException = null;
 
         try {
@@ -282,7 +281,8 @@ public class Models {
                 try {
                     model = parseOBO(model, rdfData);
                 } catch (OBOFormatParserException e) {
-                    rdfParseException = new RDFParseException(String.format("Error parsing OBO format based on obo extension ;;; %s", e.getMessage()));
+                    String template = "Error parsing OBO format based on obo extension ;;; %s";
+                    rdfParseException = new RDFParseException(String.format(template, e.getMessage()));
                     rdfData.reset();
                 } catch (Exception e) {
                     rdfData.reset();
@@ -299,7 +299,8 @@ public class Models {
                         rdfParseException = null;
                         break;
                     } catch (RDFParseException e) {
-                        rdfParseException = new RDFParseException(String.format("Error parsing %s format based on %s extension ;;; %s", parser.getRDFFormat().getName(), preferredExtension,  e.getMessage()));
+                        String template = "Error parsing %s format based on %s extension ;;; %s";
+                        rdfParseException = new RDFParseException(String.format(template, parser.getRDFFormat().getName(), preferredExtension,  e.getMessage()));
                         rdfData.reset();
                     } catch (Exception e) {
                         rdfData.reset();
@@ -318,7 +319,8 @@ public class Models {
                     rdfParseException = null;
                 } catch (OBOFormatParserException e) {
                     triedRDFFormats.add("OBO");
-                    rdfParseException = new RDFParseException(String.format("Error parsing OBO format. No Extension provided ;;; %s", e.getMessage()));
+                    String template = "Error parsing OBO format. No Extension provided ;;; %s";
+                    rdfParseException = new RDFParseException(String.format(template, e.getMessage()));
                     rdfData.reset();
                 } catch (Exception e) {
                     rdfData.reset();
@@ -339,7 +341,8 @@ public class Models {
                     } catch (RDFParseException e) {
                         String parserName = parser.getRDFFormat().getName();
                         triedRDFFormats.add(parserName);
-                        rdfParseException = new RDFParseException(String.format("File was tried against all formats . No extension provided. Error parsing %s format ;;; %s ;;; Formats: %s", parserName, e.getMessage(), triedRDFFormats));
+                        String template = "File was tried against all formats . No extension provided. Error parsing %s format ;;; %s ;;; Formats: %s";
+                        rdfParseException = new RDFParseException(String.format(template, parserName, e.getMessage(), triedRDFFormats));
                         rdfData.reset();
                     } catch (Exception e) {
                         rdfData.reset();
@@ -509,6 +512,4 @@ public class Models {
 //        //TODO Implement
 //        return false;
 //    }
-
-
 }

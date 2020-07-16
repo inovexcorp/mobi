@@ -288,6 +288,20 @@ class ModelsSpec extends Specification{
         }
     }
 
+    def "createModel with invalid extension for OBO format returns correct data"() {
+        setup:
+        def input = getClass().getResourceAsStream("/bfo.obo")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel('invalid', input, transformer)
+
+        then:
+        1 * transformer.mobiModel(_) >> { args ->
+            assert args[0].size() > 1
+        }
+    }
+
     def "createModel with extension for OWL format returns correct data"() {
         setup:
         def input = getClass().getResourceAsStream("/bfo.owl")
@@ -302,6 +316,20 @@ class ModelsSpec extends Specification{
         }
     }
 
+    def "createModel with invalid extension for OWL format returns correct data"() {
+        setup:
+        def input = getClass().getResourceAsStream("/bfo.owl")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel('invalid', input, transformer)
+
+        then:
+        1 * transformer.mobiModel(_) >> { args ->
+            assert args[0].size() > 1
+        }
+    }
+
     def "createModel with extension for invalid format throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalid.owl")
@@ -309,6 +337,18 @@ class ModelsSpec extends Specification{
 
         when:
         Models.createModel('owl', input, transformer)
+
+        then:
+        thrown(RDFParseException.class)
+    }
+
+    def "createModel with invalid extension for invalid format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/invalid.owl")
+        def transformer = Mock(SesameTransformer)
+
+        when:
+        Models.createModel('invalid', input, transformer)
 
         then:
         thrown(RDFParseException.class)
