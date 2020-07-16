@@ -48,7 +48,7 @@ module.exports = {
     plugins: [
         extractCSS,
         extractSCSS,
-        new ngToolsWebpack.AotPlugin({
+        new ngToolsWebpack.AngularCompilerPlugin({
             tsConfigPath: './tsconfig.aot.json',
             entryModule: path.resolve(__dirname, '../src/main/resources/public/app.module.ts#AppModule')
         }),

@@ -21,15 +21,31 @@
  * #L%
  */
 import * as angular from 'angular';
+import { NgModule } from '@angular/core';
 
-import loginPageComponent from './components/loginPage/loginPage.component';
+import { downgradeComponent } from '@angular/upgrade/static';
+
+import { SharedModule } from '../shared/shared.module';
+
+import { LoginPageComponent } from './components/loginPage/loginPage.component';
 
 /**
- * @ngdoc overview
- * @name login
+ * @namespace login
  *
- * @description
  * The `login` module provides components that make up the login page of Mobi.
  */
+@NgModule({
+    imports: [
+        SharedModule
+    ],
+    declarations: [
+        LoginPageComponent
+    ],
+    entryComponents: [
+        LoginPageComponent
+    ]
+})
+export class LoginModule {}
+
 angular.module('login', [])
-    .component('loginPage', loginPageComponent);
+    .directive('loginPage', downgradeComponent({component: LoginPageComponent}) as angular.IDirectiveFactory);

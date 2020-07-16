@@ -22,9 +22,9 @@
   -->
 <div class="quick-action-grid card">
     <div class="card-body h-100 d-flex flex-column">
-        <div class="row no-gutters flex-1" ng-repeat="chunk in dvm.actions track by $index">
-            <div class="col text-center" ng-repeat="action in chunk track by $index">
-                <a href="" class="d-flex flex-column h-100 w-100 align-items-center justify-content-center" ng-click="action.action()">
+        <div class="row no-gutters flex-1" *ngFor="let chunk of actions">
+            <div class="col text-center" *ngFor="let action of chunk">
+                <a href="" class="d-flex flex-column h-100 w-100 align-items-center justify-content-center" (click)="action.action()">
                     <span class="icon-span"><i class="fa {{action.icon}}"></i></span>
                     <span>{{action.title}}</span>
                 </a>
