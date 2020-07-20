@@ -116,6 +116,7 @@ import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
@@ -822,6 +823,72 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(Collections.singleton(user), config.getValue().get(RecordCreateSettings.RECORD_PUBLISHERS));
         assertNotNull(config.getValue().get(OntologyRecordCreateSettings.INPUT_STREAM));
         assertGetUserFromContext();
+    }
+
+    @Test
+    public void testUploadErrorMobiException() {
+        Mockito.doThrow(new MobiException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-local-imports-1e.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), 500);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "MobiException");
+        assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+        assertNotEquals(responseObject.get("errorDetails"), null);
+    }
+
+    @Test
+    public void testUploadErrorRDFParseException() {
+        Mockito.doThrow(new RDFParseException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-local-imports-1e.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), 400);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "RDFParseException");
+        assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+        assertNotEquals(responseObject.get("errorDetails"), null);
+    }
+
+    @Test
+    public void testUploadErrorIllegalArgumentException() {
+        Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(catalogManager).createRecord(any(), any(), any());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-local-imports-1e.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), 400);
+
+        JSONObject responseObject = getResponse(response);
+        assertEquals(responseObject.get("error"), "IllegalArgumentException");
+        assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+        assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
