@@ -132,15 +132,16 @@ update_master_with_new_minor_snapshot:
 
 artifactory_release:
   stage: new_release_deploy
-  dependencies:
-    - update_release
   only:
-    - tags
     - /release\d*\.\d*/
+  except:
+    - branches
   script:
     - mvn $MAVEN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
+  artifacts:
+    paths: mobi-distribution
 
 # build and push the docker image, per instructions in mobi-distribution README
 # tag used to specify we want this job to happen w/ the docker builder runner
@@ -148,11 +149,10 @@ docker_release:
   stage: new_release_deploy
   tags:
     - docker-image-builder
-  dependencies:
-    - update_release
   only:
-    - tags
     - /release\d*\.\d*/
+  except:
+    - branches
   script:
     - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > /root/.m2/ci_settings.xml
     - cd mobi-distribution
