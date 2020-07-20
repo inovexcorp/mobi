@@ -341,8 +341,8 @@ public class Models {
                     } catch (RDFParseException e) {
                         String parserName = parser.getRDFFormat().getName();
                         triedRDFFormats.add(parserName);
-                        String template = "File was tried against all formats . No extension provided. Error parsing %s format ;;; %s ;;; Formats: %s";
-                        rdfParseException = new RDFParseException(String.format(template, parserName, e.getMessage(), triedRDFFormats));
+                        String template = "File was tried against all formats. No extension provided ;;; Formats: %s";
+                        rdfParseException = new RDFParseException(String.format(template, triedRDFFormats));
                         rdfData.reset();
                     } catch (Exception e) {
                         rdfData.reset();
