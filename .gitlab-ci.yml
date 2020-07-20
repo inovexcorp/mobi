@@ -141,7 +141,7 @@ artifactory_release:
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
   artifacts:
-    paths: mobi-distribution
+    paths: ['mobi-distribution']
 
 # build and push the docker image, per instructions in mobi-distribution README
 # tag used to specify we want this job to happen w/ the docker builder runner
