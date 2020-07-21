@@ -98,7 +98,7 @@ unit_integration_test:
     refs:
       - debug
   script:
-    - mvn $MAVEN_CLI_OPTS clean install
+    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
 
 # Happens after NON snapshot commit to master
 deploy_rdf_orm:
