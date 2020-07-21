@@ -21,14 +21,27 @@
  * #L%
  */
 import 'zone.js';
+import * as angular from 'angular';
 import 'reflect-metadata';
 
+import { UIRouter, UrlService } from '@uirouter/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-
 import { setAngularLib } from '@angular/upgrade/static';
-import * as angular from 'angular';
+import { NgZone } from '@angular/core';
 
 import { AppModule } from './app.module';
 
 setAngularLib(angular);
-platformBrowserDynamic().bootstrapModule(AppModule);
+platformBrowserDynamic().bootstrapModule(AppModule)
+    .then(platformRef => {
+        // get() the UIRouter instance from DI to initialize the router
+        const urlService: UrlService = platformRef.injector.get(UIRouter).urlService;
+
+        // Instruct UIRouter to listen to URL changes
+        const startUIRouter = () => {
+            urlService.listen();
+            urlService.sync();
+        };
+        
+        platformRef.injector.get<NgZone>(NgZone).run(startUIRouter);
+    });

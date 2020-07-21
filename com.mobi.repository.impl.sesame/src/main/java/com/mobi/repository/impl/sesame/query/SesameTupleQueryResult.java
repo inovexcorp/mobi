@@ -72,4 +72,9 @@ public class SesameTupleQueryResult extends TupleQueryResult {
             throw new QueryEvaluationException(e);
         }
     }
+
+    public org.eclipse.rdf4j.query.TupleQueryResult getTupleQueryResult() {
+        return tupleQueryResult;
+    }
+    
 }

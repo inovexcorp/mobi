@@ -76,7 +76,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
     dvm.id = 'openOntologyTabTargetedSpinner';
 
     dvm.$onInit = function() {
-        dvm.getPageOntologyRecords(1);
+        dvm.getPageOntologyRecords(1, '');
     }
     dvm.clickUpload = function(id) {
         var upload = <HTMLInputElement> document.getElementById(id);
@@ -148,10 +148,10 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
                 if (!isEmpty(state)) {
                     dvm.os.deleteOntologyState(dvm.recordId);
                 }
-                dvm.getPageOntologyRecords(1);
+                dvm.getPageOntologyRecords(1, dvm.filterText);
             }, dvm.util.createErrorToast);
     }
-    dvm.getPageOntologyRecords = function(page) {
+    dvm.getPageOntologyRecords = function(page, inputFilterText) {
         dvm.currentPage = page;
         var catalogId = get(cm.localCatalog, '@id', '');
         var paginatedConfig = {
@@ -159,7 +159,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
             limit: dvm.limit,
             recordType: prefixes.ontologyEditor + 'OntologyRecord',
             sortOption: find(cm.sortOptions, {field: 'http://purl.org/dc/terms/title', asc: true}),
-            searchText: dvm.filterText
+            searchText: inputFilterText
         };
         httpService.cancel(dvm.id);
         cm.getRecords(catalogId, paginatedConfig, dvm.id).then(response => {
@@ -171,7 +171,7 @@ function openOntologyTabComponentCtrl(httpService, ontologyManagerService, ontol
         });
     }
     dvm.search = function(event) {
-        dvm.getPageOntologyRecords(1);
+        dvm.getPageOntologyRecords(1, dvm.filterText);
     }
     dvm.manageRecords = function() {
         forEach(dvm.filteredList, record => {

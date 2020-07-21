@@ -23,7 +23,7 @@
 
 routeConfig.$inject = ['$stateProvider', '$urlRouterProvider', 'uiSelectConfig'];
 
-function routeConfig($stateProvider, $urlRouterProvider, uiSelectConfig) {
+export function routeConfig($stateProvider, $urlRouterProvider, uiSelectConfig) {
     // Sets proper style for the ui-select directives
     uiSelectConfig.theme = 'bootstrap';
 
@@ -153,4 +153,13 @@ function routeConfig($stateProvider, $urlRouterProvider, uiSelectConfig) {
     }
 }
 
-export default routeConfig;
+urlDeferIntercept.$inject = ['$urlServiceProvider'];
+
+/**
+ * Tells UIRouter to wait until all bootstrapping is complete before doing initial URL synchronization.
+ * 
+ * @param {UrlService} $urlService The UIRouter UrlService
+ */
+export function urlDeferIntercept($urlService) {
+    return $urlService.deferIntercept();
+}

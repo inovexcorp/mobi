@@ -21,27 +21,19 @@
  * #L%
  */
 import './homePage.component.scss';
-
-const template = require('./homePage.component.html');
+import { Component } from "@angular/core";
 
 /**
- * @ngdoc component
- * @name home.component:homePage
+ * @class home.HomePageComponent
  *
- * @description
- * `homePage` is a component which creates the main page of the Home module. The page contains a welcome banner image
- * along with a {@link home.component:quickActionGrid grid of quick actions} and a
- * {@link home.component:activityCard list of activities} within the Mobi instance.
+ * `home-page` is a component which creates the main page of the Home module. The page contains a welcome banner image
+ * along with a {@link home.QuickActionGridComponent grid of quick actions} and a
+ * {@link home.ActivityCardComponent list of activities} within the Mobi instance.
  */
-const homePageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: homePageComponentCtrl
-};
-
-function homePageComponentCtrl() {
-    var dvm = this;
+@Component({
+    selector: 'home-page',
+    templateUrl: './homePage.component.html'
+})
+export class HomePageComponent {
+    constructor() {}
 }
-
-export default homePageComponent;

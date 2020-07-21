@@ -28,11 +28,11 @@
             </li>
         </ul>
     </div>
-    <div class="card-body h-100 vertical-scroll" targeted-spinner="dvm.id">
-        <div class="activity pb-3" ng-repeat="activity in dvm.activities track by activity['@id']">
-            <activity-title activity="activity" entities="dvm.entities"></activity-title>
-            <div class="timestamp text-muted">{{dvm.getTimeStamp(activity)}}</div>
+    <div class="card-body h-100 vertical-scroll" targeted-spinner="id">
+        <div class="activity pb-3" *ngFor="let activity of activities; trackBy: trackByFn">
+            <activity-title [activity]="activity" [entities]="entities"></activity-title>
+            <div class="timestamp text-muted">{{getTimeStamp(activity)}}</div>
         </div>
-        <button class="btn" ng-if="dvm.totalSize > dvm.activities.length" ng-click="dvm.loadMore()">Load More</button>
+        <button class="btn" *ngIf="totalSize > activities.length" (click)="loadMore()">Load More</button>
     </div>
 </div>

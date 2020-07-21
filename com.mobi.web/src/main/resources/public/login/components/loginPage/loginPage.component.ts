@@ -20,37 +20,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 
 import './loginPage.component.scss';
 
-const template = require('./loginPage.component.html');
-
 /**
- * @ngdoc component
- * @name login.component:loginPage
- * @requires shared.service:loginManagerService
+ * @class login.LoginPageComponent
  *
- * @description
  * `loginPage` is a component which creates the main login page of the application. The component contains a simple
  * login form for username and password and displays an error message if an error occurs.
  */
-const loginPageComponent = {
-    template,
-    bindings: {},
-    controllerAs: 'dvm',
-    controller: loginPageComponentCtrl
-};
+@Component({
+    selector: 'login-page',
+    templateUrl: './loginPage.component.html',
+})
+export class LoginPageComponent {
+    loginForm = this.fb.group({
+        username: ['', [Validators.required]],
+        password: ['', [Validators.required]]
+    });
+    errorMessage = '';
 
-loginPageComponentCtrl.$inject = ['loginManagerService'];
+    constructor(@Inject('loginManagerService') private loginManagerService, private fb: FormBuilder) {}
 
-function loginPageComponentCtrl(loginManagerService) {
-    var dvm = this;
-    dvm.errorMessage = '';
-
-    dvm.login = function() {
-        loginManagerService.login(dvm.form.username, dvm.form.password)
-            .then(() => dvm.errorMessage = '', errorMessage => dvm.errorMessage = errorMessage);
+    login(): void {
+        this.loginManagerService.login(this.loginForm.controls.username.value, this.loginForm.controls.password.value)
+            .then(() => {
+                this.errorMessage = '';
+            }, errorMessage => {
+                this.errorMessage = errorMessage;
+            });
     }
 }
-
-export default loginPageComponent;
