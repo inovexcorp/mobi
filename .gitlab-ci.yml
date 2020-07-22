@@ -1,6 +1,6 @@
 include:
   - project: 'matonto/gitlab-ci'
-    ref: debug
+    ref: master
     file: 'shared-template.yml'
 
 # Can steps 2-5 and steps 6-9 be the same 4 stages just with a variable passed in for the version?
@@ -38,7 +38,7 @@ before_script:
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
   - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
-  #- ln -s /opt/node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
+  - ln -s /opt/node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
   - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
   -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
   -   git remote set-url origin $PRIVATE_URL
@@ -55,7 +55,6 @@ test:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   except:
     - master
-    - debug
   only:
     - merge_requests
 
@@ -63,9 +62,9 @@ set_version_parent_pom:
   extends: .apply_root_version_to_parent_pom
   only:
     variables:
-      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'debug'/
+      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
     refs:
-      - debug
+      - master
   stage: set_version_parent_pom
   dependencies:
     - set_version_root_pom
@@ -80,7 +79,7 @@ increment_snapshot_version_parent_pom:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
     refs:
-      - debug
+      - master
   stage: increment_snapshot_version_parent_pom
   dependencies:
     - increment_snapshot_version_root_pom
@@ -96,7 +95,7 @@ unit_integration_test:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
     refs:
-      - debug
+      - master
   script:
     - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
 
