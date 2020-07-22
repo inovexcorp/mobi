@@ -38,7 +38,7 @@ require("codemirror/mode/xml/xml.js");
 require("codemirror/mode/turtle/turtle.js")
 require("codemirror/mode/javascript/javascript.js");
 require("codemirror/lib/codemirror.css");
-require("./index.scss");
+
 
 export interface PlugingConfig {
     maxLines: number

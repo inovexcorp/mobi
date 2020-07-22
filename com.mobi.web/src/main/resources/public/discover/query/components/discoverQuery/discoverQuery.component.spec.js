@@ -24,8 +24,8 @@ import {
     mockSparqlManager
 } from '../../../../../../../test/js/Shared';
 
-describe('Discoverry Query Editor component', function() {
-    var $compile, scope, sparqlManagerSvc, yasguiSvc;
+describe('Discover Query Editor component', function() {
+    var $compile, scope, sparqlManagerSvc;
 
     beforeEach(function() {
         angular.mock.module('query');
@@ -42,9 +42,9 @@ describe('Discoverry Query Editor component', function() {
             scope = _$rootScope_;
         });
 
-        this.element = $compile(angular.element('<div class="yasgui-editor"></div>'))(scope);
+        this.element = $compile(angular.element('<discover-query></discover-query>'))(scope);
         scope.$digest();
-        this.controller = this.element.controller('discoveryQuery');
+        this.controller = this.element.controller('discoverQuery');
     });
 
     afterEach(function() {
@@ -54,9 +54,8 @@ describe('Discoverry Query Editor component', function() {
     });
   
     describe('contains the correct html', function() {
-        it('with a discovery-query', function() {
+        it('with a discover-query', function() {
            expect(this.element.hasClass('yasgui-editor')).toBe(true);
         });
     });
-
 });

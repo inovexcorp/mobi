@@ -53,7 +53,6 @@ describe('YASGUI service', function() {
             $q = _$q_;
             scope = _$rootScope_;
             $httpBackend = _$httpBackend_;
-            //utilSvc = _utilService_;
             httpSvc = _httpService_;
             windowSvc = _$window_;
             $compile = _$compile_; 
@@ -71,7 +70,6 @@ describe('YASGUI service', function() {
         sparqlManagerSvc = null;
         $q = null;
         scope = null;
-        //utilSvc = null;
         httpSvc = null;
         $httpBackend = null;
     });
@@ -93,7 +91,6 @@ describe('YASGUI service', function() {
             this.result = yasMock;
             this.yasr = _yasgui.getTab().yasr;
         });
-
         it('successfully', function() {
             yasguiSvc.submitQuery();
             this.yasr.setResponse(this.result, 50);

@@ -46,17 +46,14 @@ describe('Query Tab component', function() {
     });
 
     describe('contains the correct html', function() {
-        
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('QUERY-TAB');
         });
         it('with flex-1 bg-white', function() {
             expect(this.element.querySelectorAll('.flex-1.bg-white').length).toBe(1);            
         });
-        
         it('with a sparql-editor', function() {
             expect(this.element.find('sparql-editor').length).toEqual(1);
         });
-        
     });
 });

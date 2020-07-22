@@ -20,31 +20,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import '../../../../shared/components/yasgui/yasgui.component.scss';
-import './discoveryQuery.component.scss';
+import './discoverQuery.component.scss';
+
+const template = require('./discoverQuery.component.html');
 /**
  * @ngdoc component
- * @name shared.component:yasgui
+ * @name query.component:discoverQuery
+ * @requires shared.service:yasguiService
+ * @requires shared.service:discoverStateService
  *
+ * @description
+ * `discoveryQuery` is a component which creates a new instace of YASGUI plugin.
+ * Stores YASQUE response
+ * Updates YASR plugin with the data stored by discoverStateService
  */
-const template = require('./discoveryQuery.component.html');
-const discoveryQueryComponent = {
+const discoverQueryComponent = {
     template,
     controllerAs: 'dvm',
-    controller: queryController
+    controller: discoveryQueryComponentCtrl
 };
 
-queryController.$inject = ['yasguiService', 'discoverStateService'];
+discoveryQueryComponentCtrl.$inject = ['$element', '$document', 'yasguiService', 'discoverStateService'];
 
-function queryController(yasguiService, discoverStateService) {
+function discoveryQueryComponentCtrl($element, $document, yasguiService, discoverStateService) {
     let dvm = this;
     let yasgui:any = {};
     dvm.ds = discoverStateService;
-    
+
+    dvm.$onInit = function() {
+        let wrapper_element = $element.querySelectorAll('.discover-query')[0];
+        yasguiService.initYasgui(wrapper_element, {name: 'dicoverQuery'});
+        dvm.yasgui = yasguiService.getYasgui();
+
+        if (dvm.yasgui) {
+            initEventListener();
+            setValues();
+            dvm.error = null;
+        } else {
+            dvm.error = `Something went wrong, try again in a few seconds or refresh the page"`;
+        }
+    }
+
     const initEventListener = () => {
         if (!Object.prototype.hasOwnProperty.call(dvm.yasgui, 'getTab')) {
             return;
         }
+        // get YASGUI instance
+        // cache Yasgui object
         yasgui = dvm.yasgui.getTab();
         yasgui.yasqe.on("blur", () => {
             dvm.ds.query.queryString = yasgui.yasqe.getValue();
@@ -65,27 +87,14 @@ function queryController(yasguiService, discoverStateService) {
             return;
         }
 
-        let yasqueVaue = dvm.ds.query.queryString || yasgui.yasqe.config.value;
-        yasgui.yasqe.setValue(yasqueVaue);
+        let yasqueVaue = dvm.ds.query.queryString || dvm.yasgui.yasqe.config.value;
+        dvm.yasgui.yasqe.setValue(yasqueVaue);
         let isResponseEmpty = Object.keys(dvm.ds.query.response).length === 0;
-        if(!isResponseEmpty) {
-            yasgui.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
+        if (!isResponseEmpty) {
+            dvm.yasgui.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
             yasguiService.handleYasrContainer();
         }
     }
-   
-    dvm.$onInit = function() {
-        let wrapper_element = document.getElementsByClassName('yasgui-editor')[0];
-        dvm.yasgui = yasguiService.initYasgui(wrapper_element, {name: 'dicoveryQuery'});
-        yasgui = dvm.yasgui;
-        if (dvm.yasgui) {
-            initEventListener();
-            setValues();
-        } else {
-            throw 'Error: Yasgui service has not been initialized!';
-        }
-        
-    }
 }
 
-export default discoveryQueryComponent;
+export default discoverQueryComponent;

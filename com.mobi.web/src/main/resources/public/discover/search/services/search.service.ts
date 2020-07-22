@@ -140,7 +140,6 @@ function searchService($q, discoverStateService, httpService, sparqlManagerServi
             query.where = concat(query.where, map(queryConfig.filters, getQueryPart));
         }
         let mapper: any  = map(Object.keys(variables), createVariableExpression);
-        // query.variables = concat(['?Entity'], ma );
         query.variables = concat(['?Entity'], mapper);
         queryConfig.variables = assign({Entity: 'Entity'}, variables);
         var generator = new sparqljs.Generator();
