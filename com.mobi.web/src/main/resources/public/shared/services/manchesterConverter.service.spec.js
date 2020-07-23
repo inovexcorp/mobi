@@ -28,7 +28,7 @@ import {
     injectSplitIRIFilter,
 } from '../../../../../test/js/Shared';
 
-fdescribe('Manchester Converter service', function() {
+describe('Manchester Converter service', function() {
     var manchesterConverterSvc, ontologyManagerSvc, prefixes, utilSvc, splitIRIFilter;
 
     beforeEach(function() {
