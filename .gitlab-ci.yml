@@ -3,7 +3,6 @@ include:
     ref: master
     file: 'shared-template.yml'
 
-# Can steps 2-5 and steps 6-9 be the same 4 stages just with a variable passed in for the version?
 stages:
   - test
   - set_version_root_pom
