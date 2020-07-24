@@ -1364,7 +1364,8 @@ export function mockYasguiService() {
         $qProvider.errorOnUnhandledRejections(false);
         $provide.service('yasguiService', function($q) {
             this.reset = jasmine.createSpy('reset');
-            this.initYasgui = jasmine.createSpy('initYasgui').and.returnValue({});
+            this.initYasgui = jasmine.createSpy('initYasgui');
+            this.getYasgui = jasmine.createSpy('getYasgui').and.returnValue({});
         });
     });
 }

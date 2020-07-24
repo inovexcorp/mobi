@@ -133,9 +133,8 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
                 }
                 downloadIcon.addEventListener('click', (e) => {
                     e.preventDefault();
-                    sparqlManagerService.queryString = yasgui.yasqe.getQueryWithValues();
-                    const type = formatType[yasgui.yasr.drawnPlugin] || formatType[yasgui.yasr.config.defaultPlugin];
-                    const queryType = yasgui.yasqe.getQueryType()?.toLowerCase();
+                    sparqlManagerService.queryString = tab.yasqe.getQueryWithValues();
+                    const queryType = tab.yasqe.getQueryType()?.toLowerCase();
                     modalService.openModal('downloadQueryOverlay', {queryType}, undefined, 'sm');
                 });
            }
@@ -158,17 +157,18 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
             }
 
             if (tab.yasr.getSelectedPluginName() !== tab.yasr.drawnPlugin) {
-                yasgui.yasr.selectPlugin(tab.yasr.drawnPlugin);
+                tab.yasr.selectPlugin(tab.yasr.drawnPlugin);
             }
         });
     }
 
     // Get container height 
     const getYasContainerHeight = () =>  {
-        if (yasqeRootElement instanceof HTMLElement) {
+        let tabSet = document.querySelector('.material-tabset-headings');
+        if (yasqeRootElement instanceof HTMLElement && tabSet) {
             let elementHeight = Math.floor(innerHeight
                 - yasqeRootElement.getBoundingClientRect().bottom
-                - document.querySelector('.material-tabset-headings').clientHeight);
+                - tabSet.clientHeight);
             let style  = `${elementHeight}px`;
             return style;
         }

@@ -62,7 +62,7 @@ function discoveryQueryComponentCtrl($element, $document, yasguiService, discove
     }
 
     const initEventListener = () => {
-        if (!Object.prototype.hasOwnProperty.call(dvm.yasgui, 'getTab')) {
+        if (!(Object.prototype.hasOwnProperty.call(dvm.yasgui, 'rootEl') && dvm.yasgui.rootEl instanceof HTMLElement) ) {
             return;
         }
         // get YASGUI instance
