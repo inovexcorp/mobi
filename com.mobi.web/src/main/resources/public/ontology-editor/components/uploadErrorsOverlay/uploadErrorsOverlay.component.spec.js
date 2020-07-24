@@ -82,17 +82,5 @@ describe('Upload Error Overlay component', function() {
             expect(this.controller.errorMessage).toEqual('');
             expect(this.controller.errorDetails).toEqual([]);
         });
-        // TODO Figure out how to make test work
-        // it('when has resolve should initialize with the correct values', function() {
-        //     scope.resolve = {item:{
-        //         title: "fileName.txt", 
-        //         errorMessage: "errorMessage1", 
-        //         errorDetails: ["errorDetails1"]}
-        //     };
-        //     scope.$apply();
-        //     expect(this.controller.itemTitle).toEqual('fileName.txt');
-        //     expect(this.controller.errorMessage).toEqual('errorMessage1');
-        //     expect(this.controller.errorDetails).toEqual(["errorDetails1"]);
-        // });
     });
 });
