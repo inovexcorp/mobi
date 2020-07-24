@@ -343,6 +343,16 @@ public class Models {
         return transformer.mobiModel(model);
     }
 
+    public static org.eclipse.rdf4j.model.Model parse(ByteArrayInputStream rdfData, RDFParser parser) throws RDFParseException, IOException {
+        final StatementCollector collector = new StatementCollector();
+        parser.setRDFHandler(collector);
+        parser.setParseErrorListener(new ParseErrorLogger());
+        parser.setParserConfig(new ParserConfig());
+        parser.parse(rdfData, "");
+        return new LinkedHashModel(collector.getStatements());
+    }
+
+
     /**
      * Create a Mobi Model from an InputStream. Will attempt to parse the stream as different RDFFormats.
      *
