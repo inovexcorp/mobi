@@ -96,11 +96,13 @@ unit_integration_test:
       - master
   script:
     - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
+  artifacts:
+    paths: ['rdf-orm']
 
 # Happens after NON snapshot commit to master
 deploy_rdf_orm:
   stage: deploy_rdf_orm
-  dependencies: []
+  dependencies: ['unit_integration_test']
   variables:
     NEEDS_GIT_SETTINGS: 0
   only:
