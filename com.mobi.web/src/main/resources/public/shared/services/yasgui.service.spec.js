@@ -37,7 +37,7 @@ import {
 } from './yasguiMockResponse';
 import { element } from 'angular';
 
-fdescribe('YASGUI service', function() {
+describe('YASGUI service', function() {
     let yasguiSvc, sparqlManagerSvc, discoverStateSvc, modalSvc, $q, scope, httpSvc, $httpBackend, windowSvc, $compile, _yasgui, yasguiWrapper, yasMock, turtleResponse, rdfResponse, jsonLDResponse;
 
     beforeEach(function() {
