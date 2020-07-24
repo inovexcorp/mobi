@@ -277,7 +277,7 @@ public class Models {
         try {
             rdfData.mark(0);
             // Check OBOFormat
-            if (preferredExtension.equalsIgnoreCase("obo") && model.isEmpty()) {
+            if (preferredExtension.equalsIgnoreCase("obo")) {
                 try {
                     model = parseOBO(model, rdfData);
                 } catch (OBOFormatParserException e) {
@@ -287,15 +287,11 @@ public class Models {
                 } catch (Exception e) {
                     rdfData.reset();
                 }
-            } else if (preferredExtensionParsers.containsKey(preferredExtension.toLowerCase()) && model.isEmpty()) {
+            }
+            else if (preferredExtensionParsers.containsKey(preferredExtension.toLowerCase())) {
                 for (RDFParser parser : preferredExtensionParsers.get(preferredExtension)) {
                     try {
-                        final StatementCollector collector = new StatementCollector();
-                        parser.setRDFHandler(collector);
-                        parser.setParseErrorListener(new ParseErrorLogger());
-                        parser.setParserConfig(new ParserConfig());
-                        parser.parse(rdfData, "");
-                        model = new LinkedHashModel(collector.getStatements());
+                        model = parse(rdfData, parser);
                         rdfParseException = null;
                         break;
                     } catch (RDFParseException e) {
@@ -306,14 +302,7 @@ public class Models {
                         rdfData.reset();
                     }
                 }
-            }
-            // if rdfParseException is not null of this point it means that service knew file extension
-            // at this point throw exception so user will see parse error
-            if (rdfParseException != null) {
-                throw rdfParseException;
-            }
-            // Check OBOFormat
-            if (model.isEmpty()) {
+            } else {
                 try {
                     model = parseOBO(model, rdfData);
                     rdfParseException = null;
@@ -325,38 +314,31 @@ public class Models {
                 } catch (Exception e) {
                     rdfData.reset();
                 }
-            }
-            // Try all RDF Parsers if preferredExtension is not found in preferredExtensionParsers map and model is empty
-            if (model.isEmpty()) {
-                for (RDFParser parser : rdfParsers) {
-                    try {
-                        final StatementCollector collector = new StatementCollector();
-                        parser.setRDFHandler(collector);
-                        parser.setParseErrorListener(new ParseErrorLogger());
-                        parser.setParserConfig(new ParserConfig());
-                        parser.parse(rdfData, "");
-                        model = new LinkedHashModel(collector.getStatements());
-                        rdfParseException = null;
-                        break;
-                    } catch (RDFParseException e) {
-                        String parserName = parser.getRDFFormat().getName();
-                        triedRDFFormats.add(parserName);
-                        String template = "File was tried against all formats. No extension provided ;;; Formats: %s";
-                        rdfParseException = new RDFParseException(String.format(template, triedRDFFormats));
-                        rdfData.reset();
-                    } catch (Exception e) {
-                        rdfData.reset();
+                if (rdfParseException != null) {
+                    for (RDFParser parser : rdfParsers) {
+                        try {
+                            model = parse(rdfData, parser);
+                            rdfParseException = null;
+                            break;
+                        } catch (RDFParseException e) {
+                            String parserName = parser.getRDFFormat().getName();
+                            triedRDFFormats.add(parserName);
+                            String template = "File was tried against all formats. No extension provided ;;; Formats: %s";
+                            rdfParseException = new RDFParseException(String.format(template, triedRDFFormats));
+                            rdfData.reset();
+                        } catch (Exception e) {
+                            rdfData.reset();
+                        }
                     }
                 }
             }
+
+            // at this point throw exception so user will see parse error
+            if (rdfParseException != null) {
+                throw rdfParseException;
+            }
         } finally {
             IOUtils.closeQuietly(rdfData);
-        }
-        if (model.isEmpty() && rdfParseException != null) {
-            throw rdfParseException;
-        }
-        if (model.isEmpty()) {
-            throw new IllegalArgumentException(String.format("InputStream was invalid for all formats: %s", triedRDFFormats));
         }
         return transformer.mobiModel(model);
     }
