@@ -12,8 +12,8 @@ stages:
   - increment_snapshot_version_parent_pom
   - update_master_with_new_snapshot
   - unit_integration_test
-  - deploy_rdf_orm
   - deploy_artifacts
+  - deploy_rdf_orm
   - create_release_branch
   - update_minor_release_root_pom
   - update_minor_release_parent_pom
