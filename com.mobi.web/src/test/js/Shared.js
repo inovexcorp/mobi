@@ -1059,6 +1059,8 @@ export function mockUtil() {
             });
             this.rejectError = jasmine.createSpy("rejectError").and.returnValue($q.reject(''));
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
+            this.rejectErrorObject = jasmine.createSpy("rejectErrorObject").and.returnValue($q.reject(''));
+            this.getErrorDataObject = jasmine.createSpy('getErrorDataObject').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicatesAndObjects = jasmine.createSpy('getPredicatesAndObjects');
