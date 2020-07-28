@@ -67,21 +67,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         Yasgui.Yasr.defaults.pluginOrder = [ "table", "turtle" , "rdfXml", "jsonLD"];
     }
 
-    const resizeYasrContainer = () => {
-        if (timeoutResizeId) {
-            clearTimeout(timeoutResizeId);
-        }
-        // wait for resizing events to handle yasr container height 
-        timeoutResizeId = setTimeout(() => {
-            innerHeight = $window.innerHeight;
-            let yasrContentElement = <HTMLElement>yasrRootElement.querySelector(yasrContainerSelector);
-
-            if (yasrContentElement) {
-                yasrContentElement.style.height = getYasContainerHeight();
-            }
-        }, 200);
-    }
-
     // Register event listeners
     const initEvents = () => {
         const tab =  yasgui.getTab();
@@ -91,9 +76,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
             'jsonLD': 'jsonld',
             'table': 'json'
         };
-
-        $window.addEventListener('resize', resizeYasrContainer);
-        tab.yasqe.on("resize", resizeYasrContainer);
 
         tab.once("query",() => {
             handleYasrVisivility();
@@ -119,7 +101,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         tab.yasr.once("drawn",(instance: Yasgui.yasr, plugin: Plugin) => {
 
             drawResponseLimitMessage(instance.headerEl);
-            resizeYasrContainer();
             // dont show table plugin as selected if it cant handled the results
             if (!instance.plugins['table'].canHandleResults() && instance.drawnPlugin !== 'table') {
                 tab.yasr.draw();
@@ -146,10 +127,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         tab.yasr.on("drawn",({ results }) => {
             let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
             let yasrCodeMirrorElement = <HTMLElement>yasrRootElement.querySelector(yasrContainerSelector);
-            if (yasrCodeMirrorElement) { 
-                yasrCodeMirrorElement.style.height = getYasContainerHeight(); 
-            }
-            resizeYasrContainer();
+          
             updateResponseLimitMessage(limit);
 
             if (tab.yasr.drawnPlugin === 'table') {
@@ -165,14 +143,17 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     // Get container height 
     const getYasContainerHeight = () =>  {
         let tabSet = document.querySelector('.material-tabset-headings');
+        let yasr = yasgui.getTab().getYasr();
+        if(window.hasOwnProperty('CodeMirror')) {
+            let plugin = yasr.selectedPlugin || yasr.drawnPlugin;
+            console.log(yasr.plugins[plugin]);
+            //yasr.plugins[plugin].refresh();
+        }
         if (yasqeRootElement instanceof HTMLElement && tabSet) {
-            let elementHeight = Math.floor(innerHeight
-                - yasqeRootElement.getBoundingClientRect().bottom
-                - tabSet.clientHeight);
-            let style  = `${elementHeight}px`;
+            let style  = `auto`;
             return style;
         }
-        
+        return 'auto';
     }
 
     const drawResponseLimitMessage = (headerElement) => {
@@ -340,6 +321,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     self.getYasgui = () => {
         return yasgui;
     }
+    
     // fire a new query
     self.submitQuery  = (queryConfig = {}) => {
         if (self.hasInitialized) {

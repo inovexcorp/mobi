@@ -23,16 +23,43 @@
 
 
  .yasgui{
-  .tabPanel {
-      .autocompleteWrapper, .controlbar, .tabsList, .yasqe_buttons{
-           display: none;
-       }
-   }
+   flex: 1;
 
   .tabsList {
     display: none;
   }
   
+  .tabsList + div {
+    height: 100%;
+    overflow-x: hidden;
+   }
+
+  .tabPanel {
+    &.active {
+      display: flex;
+      height: 100%;
+
+      .tabMenu + div {
+        flex:1;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      & > div:nth-child(2) > div:nth-child(3) {
+        flex-direction: column;
+        overflow-x: hidden;
+       }
+       
+
+      .autocompleteWrapper, .controlbar, .tabsList, .yasqe_buttons{
+        display: none;
+      }
+    }
+   }
+
+ 
+
   .yasqe {
     .CodeMirror {
       max-height: 65vh;
@@ -66,8 +93,7 @@
     }
 
     .dataTables_wrapper {
-      overflow-x: hidden;
-      overflow-y: auto;
+      overflow: hidden;
     }
 
     
@@ -100,6 +126,8 @@
     }
 
     &_results {
+      overflow: hidden;
+
       table {
         width: 100% !important;
       }
@@ -118,6 +146,7 @@
     }
 
   }
+  .CodeMirror { height: 100%; }
 }
 
 .sparql-result-block {

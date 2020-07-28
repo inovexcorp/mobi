@@ -20,7 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-discovery-query + .codemirror-wrapper {
-  display: none;
+ 
+.discover-query {
+  height: calc(100vh - 150px);
+  overflow: hidden;
+  display: flex;
 }
