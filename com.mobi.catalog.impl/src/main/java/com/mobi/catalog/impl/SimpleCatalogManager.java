@@ -1227,6 +1227,13 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
+    public Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCommitDifferenceModified(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
+                    conn);
+        }
+    }
+
     @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
         long start = System.currentTimeMillis();

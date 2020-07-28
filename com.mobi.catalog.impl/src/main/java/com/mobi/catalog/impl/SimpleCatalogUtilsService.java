@@ -25,6 +25,9 @@ package com.mobi.catalog.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.TreeMultimap;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
@@ -74,22 +77,16 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -98,6 +95,19 @@ import javax.annotation.Nullable;
 @Component(immediate = true)
 public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final Logger log = LoggerFactory.getLogger(SimpleCatalogUtilsService.class);
+
+//    public static <T> Collector<T, Set<T>, List<T>> unique() {
+//        return Collector.of(
+//                () -> new HashSet<T>(),
+//                (result, item) -> result.addAll(CommitDifference.combine(new ArrayList<CommitDifference>(new CommitDifference()))),
+//                (result1, result2) -> {
+//                    result1.addAll(result2);
+//                    return result1;
+//                },
+//                c -> new ArrayList<T>(c),
+//                Collector.Characteristics.CONCURRENT,
+//                Collector.Characteristics.UNORDERED);
+//    }
 
     private ModelFactory mf;
     private ValueFactory vf;
@@ -912,6 +922,63 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         return sourceCommits;
     }
 
+    public Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn) {
+        long start = System.currentTimeMillis();
+        Map<Statement, Integer> additions = new HashMap<>();
+        Map<Statement, Integer> deletions = new HashMap<>();
+
+        commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+        log.trace("getCommitDifferenceModified took {}ms", System.currentTimeMillis() - start);
+
+        ListMultimap<String, CommitDifference> subjects = MultimapBuilder.treeKeys().arrayListValues().build();
+        additions.forEach( (statement, integer) -> {
+            CommitDifference addition = new CommitDifference();
+            addition.addAddition(statement);
+            subjects.put(statement.getSubject().stringValue(), addition);
+        });
+        deletions.forEach( (statement, integer) -> {
+            CommitDifference deletion = new CommitDifference();
+            deletion.addDeletion(statement);
+            subjects.put(statement.getSubject().stringValue(), deletion);
+        });
+        log.trace("adding to multimap took {}ms", System.currentTimeMillis() - start);
+
+        Set<Statement> additionsSet = new HashSet<>();
+        Set<Statement> deletionsSet = new HashSet<>();
+
+        subjects.keySet().retainAll(subjects.keySet().stream()
+                .skip(0)
+                .limit(50)
+                .collect(Collectors.toSet()));
+
+        log.trace("stream took {}ms", System.currentTimeMillis() - start);
+
+
+        subjects.forEach((subject, commitDifference) -> {
+            additionsSet.addAll(commitDifference.getAdditions());
+            deletionsSet.addAll(commitDifference.getDeletions());
+        });
+//                .forEach(subject -> {
+//                    CommitDifference diff = CommitDifference.combine(subjects.get(subject));
+//                    additionsSet.addAll(diff.getAdditions());
+//                    deletionsSet.addAll(diff.getDeletions());
+//                });
+
+        log.trace("rests of logic took {}ms", System.currentTimeMillis() - start);
+
+        log.trace("Everything took effect");
+
+        // Grab keys from index a to index b
+
+        // when doing createModel, do additions.keySet().retainAll()
+
+        return new Difference.Builder()
+                .additions(mf.createModel(additionsSet))
+                .deletions(mf.createModel(deletionsSet))
+                .build();
+    }
+
+
     @Override
     public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
         Map<Statement, Integer> additions = new HashMap<>();
@@ -931,12 +998,15 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Model addModel = mf.createModel();
         Model deleteModel = mf.createModel();
 
+
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
                 new IllegalStateException("Additions not set on Commit " + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
                 new IllegalStateException("Deletions not set on Commit " + commitId));
 
-        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
+        // Search additions and deletionsGraph simultaneously, group by subject, do ordering, provide limit and offset
+
+        conn.getStatements(null, null, null, additionsGraph, deletionsGraph).forEach(statement ->
                 addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
                 deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));

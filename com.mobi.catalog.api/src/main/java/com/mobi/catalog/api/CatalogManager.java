@@ -881,6 +881,8 @@ public interface CatalogManager {
      */
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
+    Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId);
+
     /**
      * Gets the Difference between the Commits identified by the two provided Resources. Essentially returns the
      * culmination of changes from a common ancestor between the Commits to the source Commit.
