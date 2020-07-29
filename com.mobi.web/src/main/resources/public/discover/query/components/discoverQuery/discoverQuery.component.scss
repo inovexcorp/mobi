@@ -22,7 +22,7 @@
  */
  
 .discover-query {
-  height: calc(100vh - 150px);
-  overflow: hidden;
-  display: flex;
+  .yasgui {
+      height: 100%;
+  }
 }

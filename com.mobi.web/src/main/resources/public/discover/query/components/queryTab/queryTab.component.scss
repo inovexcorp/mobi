@@ -23,15 +23,8 @@
 /* Core variables */
 @import "../../../../css/variables";
 
-.sparql-editor {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 15px;
-
+.query-tab {
     .top-section {
-        display: flex;
-        flex-direction: row;
         justify-content: flex-end;
 
         .form-group {
@@ -50,21 +43,6 @@
         }
         .btn-clear {
             line-height: 3;
-        }
-    }
-
-    .codemirror-wrapper {
-        flex: 1;
-        position: relative;
-
-        .CodeMirror {
-            border: 1px solid #ccc;
-            bottom: 0;
-            height: auto;
-            left: 0;
-            position: absolute;
-            right: 0;
-            top: 0;
         }
     }
 }

@@ -20,16 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import './queryTab.component.scss';
 
 const template = require('./queryTab.component.html');
 
 /**
  * @ngdoc component
  * @name query.component:queryTab
+ * @requires shared.service:sparqlManagerService
+ * @requires shared.service:prefixes
  *
  * @description
- * `queryTab` is a component that provides a {@link query.component:sparqlEditor} and a
- * {@link query.component:sparqlResultBlock} to edit SPARQL queries and display the results of the queries.
+ * `queryTab` is a component that provides a form for submitting and viewing the results of SPARQL queries against the
+ * system repo or a {@link discover.component:datasetFormGroup selected dataset}. The query editor and results are
+ * displayed via {@link query.component:discoverQuery}.
  */
 const queryTabComponent = {
     template,
@@ -38,6 +42,12 @@ const queryTabComponent = {
     controller: queryTabComponentCtrl
 };
 
-function queryTabComponentCtrl() {}
+queryTabComponentCtrl.$inject = ['sparqlManagerService', 'yasguiService'];
+
+function queryTabComponentCtrl(sparqlManagerService, yasguiService) {
+    var dvm = this;
+    dvm.sparql = sparqlManagerService;
+    dvm.yasgui = yasguiService;
+}
 
 export default queryTabComponent;

@@ -21,134 +21,128 @@
  * #L%
  */
 
-
- .yasgui{
-   flex: 1;
-
-  .tabsList {
-    display: none;
-  }
-  
-  .tabsList + div {
-    height: 100%;
-    overflow-x: hidden;
-   }
-
-  .tabPanel {
-    &.active {
-      display: flex;
-      height: 100%;
-
-      .tabMenu + div {
-        flex:1;
-        overflow-x: hidden;
-        display: flex;
-        flex-direction: column;
-      }
-
-      & > div:nth-child(2) > div:nth-child(3) {
-        flex-direction: column;
-        overflow-x: hidden;
-       }
-       
-
-      .autocompleteWrapper, .controlbar, .tabsList, .yasqe_buttons{
+.yasgui {
+    .tabsList {
         display: none;
-      }
     }
-   }
 
- 
+    .tabsList + div {
+        height: 100%;
+        overflow-x: hidden;
+    }
 
-  .yasqe {
+    .tabPanel {
+        &.active {
+            display: flex;
+            height: 100%;
+
+            .tabMenu + div {
+                flex: 1;
+                overflow-x: hidden;
+                display: flex;
+                flex-direction: column;
+            }
+
+            & > div:nth-child(2) > div:nth-child(3) {
+                flex-direction: column;
+                overflow-x: hidden;
+            }
+
+            .autocompleteWrapper,
+            .controlbar,
+            .tabsList,
+            .yasqe_buttons {
+                display: none;
+            }
+        }
+    }
+
+    .yasqe {
+        .CodeMirror {
+            max-height: 65vh;
+        }
+    }
+
+    .yasr {
+        .CodeMirror-scroll {
+            overflow-y: scroll;
+        }
+
+        .yasr_header {
+            .yasr_external_ref_btn {
+                display: none;
+            }
+        }
+
+        .yasr_tryQuery {
+            display: none;
+        }
+
+        //reset overlay style
+        .overlay {
+            background-color: unset;
+            bottom: 35px;
+            left: 0;
+            position: inherit;
+            right: unset;
+            top: unset;
+        }
+
+        .dataTables_wrapper {
+            overflow: hidden;
+        }
+
+        &_btnGroup {
+            .yasr_btn {
+                &.disabled {
+                    pointer-events: none;
+                }
+
+                &.selected {
+                    color: var(--primary);
+                    border-bottom-color: var(--primary);
+                }
+            }
+        }
+
+        .yasr_response_limit {
+            display: flex;
+            max-height: 1.3rem;
+            font-size: 0.93rem;
+            align-self: center;
+            overflow: visible;
+            background: var(--yellow);
+            white-space: nowrap;
+            justify-content: center;
+            margin-left: 0.4rem;
+            align-items: center;
+            padding: 0.3rem;
+            border-radius: 6px;
+        }
+
+        &_results {
+            overflow: hidden;
+
+            table {
+                width: 100% !important;
+            }
+
+            .grip-container {
+                width: 100% !important;
+            }
+
+            .errorResult {
+                .errorHeader,
+                pre {
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                    background-attachment: red;
+                }
+            }
+        }
+    }
+
     .CodeMirror {
-      max-height: 65vh;
+        height: 100%;
     }
-  }
-
-  .yasr { 
-    .CodeMirror-scroll {
-      overflow-y: scroll;
-    }
-
-
-    .yasr_header {
-      .yasr_external_ref_btn {
-        display: none;
-      }
-    }
-
-    .yasr_tryQuery {
-      display: none;
-    }
-
-    //reset overlay style
-    .overlay {
-      background-color: unset;
-      bottom: 35px;
-      left: 0;
-      position: inherit;
-      right: unset;
-      top: unset;
-    }
-
-    .dataTables_wrapper {
-      overflow: hidden;
-    }
-
-    
-    &_btnGroup {
-      .yasr_btn {
-        &.disabled {
-          pointer-events: none;
-        }
-
-        &.selected {
-          color:var(--primary);
-          border-bottom-color: var(--primary);
-        }
-      }
-    }
-
-    .yasr_response_limit {
-      display: flex;
-      max-height: 1.3rem;
-      font-size: .93rem;
-      align-self: center;
-      overflow: visible;
-      background: var(--yellow);
-      white-space: nowrap;
-      justify-content: center;
-      margin-left: .4rem;
-      align-items: center;
-      padding: .3rem;
-      border-radius: 6px;
-    }
-
-    &_results {
-      overflow: hidden;
-
-      table {
-        width: 100% !important;
-      }
-
-      .grip-container {
-        width: 100% !important;
-      }
-
-      .errorResult {
-        .errorHeader, pre {
-          white-space: pre-wrap;
-          word-wrap: break-word;
-          background-attachment: red;      
-        }
-      }
-    }
-
-  }
-  .CodeMirror { height: 100%; }
-}
-
-.sparql-result-block {
-  display: none;
 }

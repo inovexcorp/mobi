@@ -30,9 +30,8 @@ const template = require('./discoverQuery.component.html');
  * @requires shared.service:discoverStateService
  *
  * @description
- * `discoveryQuery` is a component which creates a new instace of YASGUI plugin.
- * Stores YASQUE response
- * Updates YASR plugin with the data stored by discoverStateService
+ * `discoverQuery` is a component which creates a new YASGUI instance for executing SPARQL queries and viewing results.
+ * Stores YASQUE response and updates YASR plugin with the data stored by discoverStateService.
  */
 const discoverQueryComponent = {
     template,
