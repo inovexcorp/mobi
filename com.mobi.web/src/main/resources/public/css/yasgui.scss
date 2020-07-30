@@ -21,8 +21,7 @@
  * #L%
  */
 
-
- .yasgui{
+ .yasgui {
    flex: 1;
 
   .tabsList {
@@ -51,14 +50,14 @@
         overflow-x: hidden;
        }
        
-
-      .autocompleteWrapper, .controlbar, .tabsList, .yasqe_buttons{
+      .autocompleteWrapper,
+      .controlbar,
+      .tabsList,
+      .yasqe_buttons{
         display: none;
       }
     }
    }
-
- 
 
   .yasqe {
     .CodeMirror {
@@ -70,7 +69,6 @@
     .CodeMirror-scroll {
       overflow-y: scroll;
     }
-
 
     .yasr_header {
       .yasr_external_ref_btn {
@@ -96,7 +94,6 @@
       overflow: hidden;
     }
 
-    
     &_btnGroup {
       .yasr_btn {
         &.disabled {
@@ -146,5 +143,9 @@
     }
 
   }
-  .CodeMirror { height: 100%; }
+
+  .CodeMirror { 
+    height: 100%; 
+  }
+
 }
