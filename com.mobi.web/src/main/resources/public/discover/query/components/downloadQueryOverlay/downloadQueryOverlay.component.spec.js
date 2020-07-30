@@ -116,18 +116,22 @@ describe('Download Query Overlay component', function() {
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
     });
-    describe('DropDown has the correct option list ', function() {
-        beforeEach(function compile() {
-            scope.resolve = { queryType : 'construct' };
-            this.element = $compile(angular.element('<download-query-overlay close="close()" dismiss="dismiss()" resolve="resolve" ></download-query-overlay>'))(scope);
-            scope.$digest();
+    describe('initializes correctly', function() {
+        it('with default query type', function() {
+            expect(this.controller.availableOptions.map(opt => opt.id)).toEqual(['csv', 'tsv', 'xlsx', 'xls']);
+            expect(this.controller.fileType).toEqual('csv');
         });
-        it('should display turtle as an option', function() {
-            let select = this.element.find('select');
-            let options =  select.querySelectorAll('option');
-            expect(scope.resolve).toEqual({queryType: 'construct'})
-            expect(select.length).toEqual(1);
-            expect(options[0].value).toEqual('ttl');
+        it('with a select query type', function() {
+            this.controller.resolve = { queryType: 'select' };
+            this.controller.$onInit();
+            expect(this.controller.availableOptions.map(opt => opt.id)).toEqual(['csv', 'tsv', 'xlsx', 'xls']);
+            expect(this.controller.fileType).toEqual('csv');
+        });
+        it('with a construct query type', function() {
+            this.controller.resolve = { queryType: 'construct' };
+            this.controller.$onInit();
+            expect(this.controller.availableOptions.map(opt => opt.id)).toEqual(['ttl', 'rdf', 'jsonld']);
+            expect(this.controller.fileType).toEqual('ttl');
         });
     });
 });

@@ -41,23 +41,80 @@ import { merge } from 'lodash';
  * `yasguiService` is a service that provide access to YASUI library 
  * Extends YASUI:YASR plugins.
  */
-yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', '$location', 'discoverStateService', '$window', '$document'];
+yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', 'discoverStateService', '$window', 'utilService'];
 
-function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $location, discoverStateService, $window, $document) {
-    //@todo remove this log
+function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discoverStateService, $window, utilService) {
     const self = this;
     const defaultUrl : URL = new URL(REST_PREFIX + 'sparql/limited-results', $window.location.origin);;
     let yasgui : any = {};
     let customURL = null;
     let dataset = '';
     let reponseLimitElement = <HTMLElement>{};
-    let yasrContainerSelector = '.yasr .CodeMirror-scroll, .yasr .dataTables_wrapper ';
     let yasrRootElement : HTMLElement = <any>{};
-    let yasqeRootElement : HTMLElement = <any>{};
-    let timeoutResizeId = null;
+    var util = utilService;
 
+    self.initYasgui = (element, config :any = {}) => {
+        const localConfig = getDefaultConfig();
+        config.name = 'mobiQuery';
+        config.tabName = 'mobiQuery';
 
-    const initPlugins = () => {
+        if (config.endpoint) {
+            customURL = config.endpoint;
+        }
+        const configuration = merge({}, localConfig, config );
+        // Init YASGUI
+        initPlugins();
+        if (!self.hasInitialized) {
+            self.reset();
+        }
+        
+        yasgui = new Yasgui(element, configuration);
+        updateYasguiUI();
+        self.hasInitialized = true;
+    }
+
+    self.hasInitialized = false;
+
+    self.updateDataset = (data) => {
+        dataset = data;
+    }
+
+    self.handleYasrContainer = handleYasrVisibility;
+    
+    self.getYasgui = () => {
+        return yasgui;
+    }
+    
+    // fire a new query
+    self.submitQuery  = (queryConfig = {}) => {
+        if (self.hasInitialized) {
+            setRequestConfig();
+            yasgui.getTab().yasqe.query(queryConfig);
+        } else {
+            util.createErrorToast('Error: Yasgui has not been initialized');
+            return false;
+        }
+    }
+
+    self.reset = () => {
+        dataset = '';
+        if (Object.prototype.hasOwnProperty.call(yasgui, 'getTab')) {
+            self.clearStorage();
+        } else  {
+            let yasguiKeyName = 'yagui__config';
+            if (localStorage.getItem(yasguiKeyName)) {
+                localStorage.removeItem(yasguiKeyName);
+            }
+        }
+    }
+
+    self.clearStorage = () => {
+        yasgui.getTab().getYasr().storage.removeNamespace();
+    }
+
+    // private functions
+    // function expressions
+    function initPlugins() {
         // register custom plugins
         if (Yasgui.Yasr) {
             Yasgui.Yasr.registerPlugin("turtle", YasrTurtlePlugin.default as any);
@@ -75,7 +132,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     }
 
     // Register event listeners
-    const initEvents = () => {
+    function initEvents() {
         const tab =  yasgui.getTab();
         const formatType =  {
             'turtle': 'ttl',
@@ -133,8 +190,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         // update yasr header: response limit message
         tab.yasr.on("drawn",({ results }) => {
             let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
-            let yasrCodeMirrorElement = <HTMLElement>yasrRootElement.querySelector(yasrContainerSelector);
-          
             updateResponseLimitMessage(limit);
 
             if (tab.yasr.drawnPlugin === 'table') {
@@ -147,29 +202,13 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         });
     }
 
-    // Get container height 
-    const getYasContainerHeight = () =>  {
-        let tabSet = document.querySelector('.material-tabset-headings');
-        let yasr = yasgui.getTab().getYasr();
-        if (window.hasOwnProperty('CodeMirror')) {
-            let plugin = yasr.selectedPlugin || yasr.drawnPlugin;
-            console.log(yasr.plugins[plugin]);
-            //yasr.plugins[plugin].refresh();
-        }
-        if (yasqeRootElement instanceof HTMLElement && tabSet) {
-            let style  = `auto`;
-            return style;
-        }
-        return 'auto';
-    }
-
-    const drawResponseLimitMessage = (headerElement) => {
+    function drawResponseLimitMessage(headerElement) {
         reponseLimitElement = document.createElement('div');
         reponseLimitElement.classList.add('yasr_response_limit');
         headerElement.insertBefore(reponseLimitElement, headerElement.querySelector('.yasr_response_chip').nextSibling)
     }
 
-    const updateResponseLimitMessage = (limit = 0) => {
+    function updateResponseLimitMessage(limit = 0) {
         let className = 'hide';
         if (limit) {
             reponseLimitElement.classList.remove(className);
@@ -181,7 +220,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         }
     }
 
-    const getFormat = (type) => {
+    function getFormat(type) {
         let format = type || yasgui.getTab().yasr.config.defaultPlugin;
         const formatType =  {
            'turtle': 'text/turtle',
@@ -192,7 +231,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         return formatType?.[format] || formatType.jsonLD;
     }
 
-    const isPluginEnabled = (plugin) => {
+    function isPluginEnabled(plugin) {
         if (!(Object.prototype.hasOwnProperty.call(yasgui, 'rootEl') && yasgui.rootEl instanceof HTMLElement)) {
             return false;
         }
@@ -206,7 +245,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     }
 
     // update yasr request configuration
-    const setRequestConfig = () => {
+    function setRequestConfig() {
         let url =  customURL || getUrl();
         const { headers } = yasgui.getTab().getRequestConfig();
         headers.Accept = getFormat(yasgui.getTab().yasr.selectedPlugin);
@@ -216,7 +255,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         });
     }
 
-    const getUrl = (datSetUri = dataset) => {
+    function getUrl(datSetUri = dataset) {
         const searchValue = 'dataset';
         if (datSetUri) {
             if (!defaultUrl.searchParams.has(searchValue)) {
@@ -232,14 +271,14 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         return defaultUrl.href;
     }
 
-    const refreshPluginData = () => {
+    function refreshPluginData ()  {
         let yasr = yasgui.getTab().yasr;
         if (yasr.drawnPlugin && yasr.selectedPlugin) {
             self.submitQuery();
         }
     }
 
-    const getDefaultConfig =  () => {
+    function getDefaultConfig() {
         return {
             requestConfig : {
                 method: 'GET',
@@ -250,7 +289,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         };
     }
 
-    const handleYasrVisibility = () => {
+    function handleYasrVisibility ()  {
         let className = 'hide'
         let isElementHidden = hasClass(yasrRootElement,className);
         let method = isElementHidden ? 'remove' : 'add'
@@ -265,11 +304,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         }
     }
     
-    const updateYasguiUI = () => {
+    function updateYasguiUI() {
         overwritePlugins();
         // Init UI events
         yasrRootElement = yasgui.getTab().yasr.rootEl;
-        yasqeRootElement = yasgui.getTab().yasqe.rootEl;
         if (yasrRootElement instanceof HTMLElement) {
             initEvents();
             handleYasrVisibility();
@@ -279,7 +317,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         }
     }
 
-    const overwritePlugins = () => {
+    function overwritePlugins () {
         //overwrite table plugin
         // update canHandleResults
         // render plugin only when content type is EQ to json
@@ -291,72 +329,30 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
                 && this.yasr.results.getContentType() == 'application/json';
             return isCompatible;
         }
+
+        yasr.plugins['table'].getUriLinkFromBinding = function(binding, prefixes?: { [key: string]: string }) {
+            const href = binding.value;
+            let visibleString = href;
+            let prefixed = false;
+            if (prefixes) {
+                for (const prefixLabel in prefixes) {
+                if (visibleString.indexOf(prefixes[prefixLabel]) == 0) {
+                    visibleString = prefixLabel + ":" + href.substring(prefixes[prefixLabel].length);
+                    prefixed = true;
+                    break;
+                }
+                }
+            }
+            return `${visibleString}${prefixed}`;
+        }
         // dont show response plugin
         yasr.plugins['response'].canHandleResults = function() {
             return false;
         }
-        // overwrite yasr dowload function
+        // overwrite yasr download function
         yasr.download = function() {
            return false;
         };
-    }
-
-    self.hasInitialized = false;
-
-    self.updateDataset = (data) => {
-        dataset = data;
-    }
-
-    self.handleYasrContainer = handleYasrVisibility;
-
-    self.initYasgui = (element, config :any = {}) => {
-        const localConfig = getDefaultConfig();
-        config.name = 'mobiQuery';
-        config.tabName = 'mobiQuery';
-
-        if (config.endpoint) {
-            customURL = config.endpoint;
-        }
-        const configuration = merge({}, localConfig, config );
-        // Init YASGUI
-        initPlugins();
-        if (!self.hasInitialized) {
-            self.reset();
-        }
-        
-        yasgui = new Yasgui(element, configuration);
-        updateYasguiUI();
-        self.hasInitialized = true;
-    }
-
-    self.getYasgui = () => {
-        return yasgui;
-    }
-    
-    // fire a new query
-    self.submitQuery  = (queryConfig = {}) => {
-        if (self.hasInitialized) {
-            setRequestConfig();
-            yasgui.getTab().yasqe.query(queryConfig);
-        } else {
-            throw 'Error: Yasgui has not been initialized';
-        }
-    }
-
-    self.reset = () => {
-        dataset = '';
-        if (Object.prototype.hasOwnProperty.call(yasgui, 'getTab')) {
-            self.clearStorage();
-        } else  {
-            let yasguiKeyName = 'yagui__config';
-            if (localStorage.getItem(yasguiKeyName)) {
-                localStorage.removeItem(yasguiKeyName);
-            }
-        }
-    }
-
-    self.clearStorage = () => {
-        yasgui.getTab().getYasr().storage.removeNamespace();
     }
 }
 
