@@ -999,17 +999,24 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         Model deleteModel = mf.createModel();
 
 
+        // Possible alternate way - somehow query for all unique subjects in the Revision (not sure how to do this)
+        // Then order and page
+
+
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
                 new IllegalStateException("Additions not set on Commit " + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
                 new IllegalStateException("Deletions not set on Commit " + commitId));
 
+
         // Search additions and deletionsGraph simultaneously, group by subject, do ordering, provide limit and offset
 
-        conn.getStatements(null, null, null, additionsGraph, deletionsGraph).forEach(statement ->
+        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
                 addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
                 deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+        
 
         revision.getGraphRevision().forEach(graphRevision -> {
             Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
