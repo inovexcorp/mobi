@@ -284,8 +284,7 @@ function discoverStateService() {
         self.query.queryString =  '';
         self.query.response = {};
         self.query.selectedPlugin = '';
-    }
-      
+    }   
 }
 
 export default discoverStateService;

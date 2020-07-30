@@ -30,8 +30,16 @@ import { merge } from 'lodash';
 /**
  * @ngdoc service
  * @name shared.service:yasguiService
- * @requires shared.service:prefixes
- *
+ * @requires @trpiply/yasgui
+ * @requires vendor.YASGUI.plugins:turtle
+ * @requires vendor.YASGUI.plugins:rdfXml
+ * @requires vendor.YASGUI.plugins:jsonLD
+ * @requires vendor.YASGUI.plugins.utils:yasguiUtil
+ * @requires lodash
+ * 
+ * @description
+ * `yasguiService` is a service that provide access to YASUI library 
+ * Extends YASUI:YASR plugins.
  */
 yasguiService.$inject = ['REST_PREFIX','sparqlManagerService', 'modalService', '$location', 'discoverStateService', '$window', '$document'];
 
@@ -42,7 +50,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     let yasgui : any = {};
     let customURL = null;
     let dataset = '';
-    let innerHeight = $window.innerHeight;
     let reponseLimitElement = <HTMLElement>{};
     let yasrContainerSelector = '.yasr .CodeMirror-scroll, .yasr .dataTables_wrapper ';
     let yasrRootElement : HTMLElement = <any>{};
@@ -78,7 +85,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         };
 
         tab.once("query",() => {
-            handleYasrVisivility();
+            handleYasrVisibility();
         });
 
         // update query string value on blur
@@ -144,7 +151,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     const getYasContainerHeight = () =>  {
         let tabSet = document.querySelector('.material-tabset-headings');
         let yasr = yasgui.getTab().getYasr();
-        if(window.hasOwnProperty('CodeMirror')) {
+        if (window.hasOwnProperty('CodeMirror')) {
             let plugin = yasr.selectedPlugin || yasr.drawnPlugin;
             console.log(yasr.plugins[plugin]);
             //yasr.plugins[plugin].refresh();
@@ -181,12 +188,16 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
            'rdfXml': 'application/rdf+xml',
            'jsonLD': 'application/ld+json',
            'table': 'application/json'
-        }
+        };
         return formatType?.[format] || formatType.jsonLD;
     }
 
     const isPluginEnabled = (plugin) => {
-        let pluginElement = document.querySelector(`.select_${plugin}`);
+        if (!(Object.prototype.hasOwnProperty.call(yasgui, 'rootEl') && yasgui.rootEl instanceof HTMLElement)) {
+            return false;
+        }
+
+        let pluginElement = yasgui.rootEl.querySelector(`.select_${plugin}`);
         if (pluginElement) {
             return !hasClass(pluginElement, 'disabled');
         } else {
@@ -239,7 +250,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         };
     }
 
-    const handleYasrVisivility = () => {
+    const handleYasrVisibility = () => {
         let className = 'hide'
         let isElementHidden = hasClass(yasrRootElement,className);
         let method = isElementHidden ? 'remove' : 'add'
@@ -261,7 +272,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         yasqeRootElement = yasgui.getTab().yasqe.rootEl;
         if (yasrRootElement instanceof HTMLElement) {
             initEvents();
-            handleYasrVisivility();
+            handleYasrVisibility();
             if (yasrRootElement.querySelector(`.select_response`)) {
                 yasrRootElement.querySelector(`.select_response`).classList.add('hide');
             }
@@ -296,14 +307,14 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         dataset = data;
     }
 
-    self.handleYasrContainer = handleYasrVisivility;
+    self.handleYasrContainer = handleYasrVisibility;
 
     self.initYasgui = (element, config :any = {}) => {
         const localConfig = getDefaultConfig();
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';
 
-        if(config.endpoint) {
+        if (config.endpoint) {
             customURL = config.endpoint;
         }
         const configuration = merge({}, localConfig, config );

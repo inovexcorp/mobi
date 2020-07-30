@@ -97,7 +97,6 @@ describe('Login Manager service', function() {
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
             yasguiSvc = _yasguiService_;
-            
         });
     });
 

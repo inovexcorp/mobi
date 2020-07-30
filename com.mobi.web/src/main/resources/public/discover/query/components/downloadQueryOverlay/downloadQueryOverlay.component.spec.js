@@ -97,6 +97,12 @@ describe('Download Query Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
+        it('should display default list', function() {
+            let select = this.element.find('select');
+            let options =  select.querySelectorAll('option');
+            expect(select.length).toEqual(1);
+            expect(options[0].value).toEqual('csv');
+        });
     });
     it('should call download when the button is clicked', function() {
         spyOn(this.controller, 'download');
@@ -109,5 +115,19 @@ describe('Download Query Overlay component', function() {
         var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
+    });
+    describe('DropDown has the correct option list ', function() {
+        beforeEach(function compile() {
+            scope.resolve = { queryType : 'construct' };
+            this.element = $compile(angular.element('<download-query-overlay close="close()" dismiss="dismiss()" resolve="resolve" ></download-query-overlay>'))(scope);
+            scope.$digest();
+        });
+        it('should display turtle as an option', function() {
+            let select = this.element.find('select');
+            let options =  select.querySelectorAll('option');
+            expect(scope.resolve).toEqual({queryType: 'construct'})
+            expect(select.length).toEqual(1);
+            expect(options[0].value).toEqual('ttl');
+        });
     });
 });

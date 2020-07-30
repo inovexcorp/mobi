@@ -31,8 +31,8 @@
                 <button class="btn btn-primary" ng-click="dvm.yasgui.submitQuery()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
             </div>
         </div>
-        <div class="flex-1 remove-min-height">
-            <discover-query></discover-query>
+        <div class="flex-1 remove-min-height discover-query">
+            <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         </div>
     </form>
 </div>

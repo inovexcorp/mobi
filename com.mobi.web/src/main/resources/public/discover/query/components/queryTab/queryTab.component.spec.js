@@ -23,7 +23,8 @@
 import { 
     mockComponent,
     mockYasguiService,
-    mockSparqlManager
+    mockSparqlManager,
+    mockDiscoverState
 } from '../../../../../../../test/js/Shared';
 
 describe('Query Tab component', function() {
@@ -32,9 +33,9 @@ describe('Query Tab component', function() {
     beforeEach(function() {
         angular.mock.module('query');
         mockComponent('discover', 'datasetFormGroup');
-        mockComponent('query', 'discoverQuery');
         mockYasguiService();
         mockSparqlManager();
+        mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_, _yasguiService_) {
             $compile = _$compile_;
@@ -57,13 +58,10 @@ describe('Query Tab component', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('QUERY-TAB');
         });
-        ['discover-query', 'dataset-form-group'].forEach(test => {
+        ['.discover-query', '.bg-white', 'dataset-form-group'].forEach(test => {
             it('with a ' + test, function() {
                 expect(this.element.querySelectorAll(test).length).toBe(1);
             });
-        });
-        it('with bg-white', function() {
-            expect(this.element.querySelectorAll('.bg-white').length).toBe(1);            
         });
     });
     //TODO: Test for the button

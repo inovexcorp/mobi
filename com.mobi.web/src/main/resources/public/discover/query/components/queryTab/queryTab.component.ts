@@ -29,11 +29,12 @@ const template = require('./queryTab.component.html');
  * @name query.component:queryTab
  * @requires shared.service:sparqlManagerService
  * @requires shared.service:prefixes
+ * @requires shared.service:discoverStateService
  *
  * @description
  * `queryTab` is a component that provides a form for submitting and viewing the results of SPARQL queries against the
  * system repo or a {@link discover.component:datasetFormGroup selected dataset}. The query editor and results are
- * displayed via {@link query.component:discoverQuery}.
+ * displayed via a YASGUI instance tied to the {@link shared.service:discoverStateService}.
  */
 const queryTabComponent = {
     template,
@@ -42,12 +43,67 @@ const queryTabComponent = {
     controller: queryTabComponentCtrl
 };
 
-queryTabComponentCtrl.$inject = ['sparqlManagerService', 'yasguiService'];
+queryTabComponentCtrl.$inject = ['$element', 'sparqlManagerService', 'yasguiService', 'discoverStateService'];
 
-function queryTabComponentCtrl(sparqlManagerService, yasguiService) {
+function queryTabComponentCtrl($element, sparqlManagerService, yasguiService, discoverStateService) {
     var dvm = this;
+    var tab:any = {};
     dvm.sparql = sparqlManagerService;
     dvm.yasgui = yasguiService;
+    dvm.ds = discoverStateService;
+
+    dvm.$onInit = function() {
+        let wrapper_element = $element.querySelectorAll('.discover-query')[0];
+        dvm.yasgui.initYasgui(wrapper_element, {name: 'discoverQuery'});
+        let yasgui = dvm.yasgui.getYasgui();
+       
+        if (yasgui && yasgui.getTab) {
+            tab = yasgui.getTab();
+            initEventListener();
+            setValues();
+            dvm.error = null;
+        } else {
+            dvm.error = `Something went wrong, try again in a few seconds or refresh the page"`;
+        }
+    }
+
+    const isYasguiElementDrawn = () => {
+        return !(Object.prototype.hasOwnProperty.call(tab, 'rootEl') && tab.rootEl instanceof HTMLElement);
+    }
+
+    const initEventListener = () => {
+        if (!isYasguiElementDrawn() ) {
+            return;
+        }
+        // get YASGUI instance
+        // cache Yasgui object
+        tab.yasqe.on("blur", () => {
+            dvm.ds.query.queryString = tab.yasqe.getValue();
+        });
+
+        tab.yasr.on("drawn", (yasr) => {
+            dvm.ds.query.selectedPlugin = yasr.drawnPlugin;
+        });
+
+        tab.yasqe.on('queryResponse', (instance, response: any, duration: number) => {
+            dvm.ds.query.response = response;
+            dvm.ds.query.executionTime = duration;
+        });
+    }
+
+    const setValues = () => {
+        if (Object.prototype.hasOwnProperty.call(tab, 'setValue')) {
+            let yasqueValue = dvm.ds.query.queryString || tab.yasqe.config.value;
+            tab.yasqe.setValue(yasqueValue);
+        }
+        
+        let isResponseEmpty = Object.keys(dvm.ds.query.response).length === 0;
+        if (!isResponseEmpty) {
+            tab.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
+            yasguiService.handleYasrContainer();
+        }
+    }
+
 }
 
 export default queryTabComponent;
