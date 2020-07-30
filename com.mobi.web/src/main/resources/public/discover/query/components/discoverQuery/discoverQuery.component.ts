@@ -44,15 +44,16 @@ discoveryQueryComponentCtrl.$inject = ['$element', '$document', 'yasguiService',
 
 function discoveryQueryComponentCtrl($element, $document, yasguiService, discoverStateService) {
     let dvm = this;
-    let yasgui:any = {};
+    let tab:any = {};
     dvm.ds = discoverStateService;
 
     dvm.$onInit = function() {
         let wrapper_element = $element.querySelectorAll('.discover-query')[0];
         yasguiService.initYasgui(wrapper_element, {name: 'dicoverQuery'});
         dvm.yasgui = yasguiService.getYasgui();
-
+       
         if (dvm.yasgui) {
+            setTab(dvm.yasgui.getTab());
             initEventListener();
             setValues();
             dvm.error = null;
@@ -60,38 +61,44 @@ function discoveryQueryComponentCtrl($element, $document, yasguiService, discove
             dvm.error = `Something went wrong, try again in a few seconds or refresh the page"`;
         }
     }
-
+    const isYasguiElementDrawn = () => {
+        if (!(Object.prototype.hasOwnProperty.call(dvm.yasgui, 'rootEl') && dvm.yasgui.rootEl instanceof HTMLElement)) {
+            return false;
+        }
+        return true;
+    }
+    const setTab = (t) => {
+        tab = t;
+    }
     const initEventListener = () => {
-        if (!(Object.prototype.hasOwnProperty.call(dvm.yasgui, 'rootEl') && dvm.yasgui.rootEl instanceof HTMLElement) ) {
+        if (!isYasguiElementDrawn() ) {
             return;
         }
         // get YASGUI instance
         // cache Yasgui object
-        yasgui = dvm.yasgui.getTab();
-        yasgui.yasqe.on("blur", () => {
-            dvm.ds.query.queryString = yasgui.yasqe.getValue();
+        tab.yasqe.on("blur", () => {
+            dvm.ds.query.queryString = tab.yasqe.getValue();
         });
 
-        yasgui.yasr.on("drawn", (yasr) => {
+        tab.yasr.on("drawn", (yasr) => {
             dvm.ds.query.selectedPlugin = yasr.drawnPlugin;
         });
 
-        yasgui.yasqe.on("queryResponse", (instance, response: any, duration: number) => {
+        tab.yasqe.on('queryResponse', (instance, response: any, duration: number) => {
             dvm.ds.query.response = response;
             dvm.ds.query.executionTime = duration;
         });
     }
 
     const setValues = () => {
-        if (!Object.prototype.hasOwnProperty.call(dvm.yasgui, 'setValue')) {
-            return;
+        if (Object.prototype.hasOwnProperty.call(tab, 'setValue')) {
+            let yasqueValue = dvm.ds.query.queryString || dvm.yasgui.yasqe.config.value;
+            dvm.yasgui.yasqe.setValue(yasqueValue);
         }
-
-        let yasqueVaue = dvm.ds.query.queryString || dvm.yasgui.yasqe.config.value;
-        dvm.yasgui.yasqe.setValue(yasqueVaue);
+        
         let isResponseEmpty = Object.keys(dvm.ds.query.response).length === 0;
         if (!isResponseEmpty) {
-            dvm.yasgui.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
+            tab.yasr.setResponse(dvm.ds.query.response, dvm.ds.query.executionTime) ;
             yasguiService.handleYasrContainer();
         }
     }

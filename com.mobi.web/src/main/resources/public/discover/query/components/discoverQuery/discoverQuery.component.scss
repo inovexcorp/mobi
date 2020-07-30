@@ -20,9 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
- 
-.discover-query {
-  height: calc(100vh - 150px);
-  overflow: hidden;
-  display: flex;
-}
+ discover-query {
+  .discover-query {
+    // calculate discovery query container
+    // 150px account for the space taken by header.
+    height: calc(100vh - 150px);
+    overflow: hidden;
+    display: flex;
+  }
+ }
