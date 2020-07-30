@@ -30,19 +30,19 @@ const template = require('./discoverQuery.component.html');
  * @requires shared.service:discoverStateService
  *
  * @description
- * `discoveryQuery` is a component which creates a new instace of YASGUI plugin.
+ * `discoveyQuery` is a component which creates a new instace of YASGUI plugin.
  * Stores YASQUE response
  * Updates YASR plugin with the data stored by discoverStateService
  */
 const discoverQueryComponent = {
     template,
     controllerAs: 'dvm',
-    controller: discoveryQueryComponentCtrl
+    controller: discoverQueryComponentCtrl
 };
 
-discoveryQueryComponentCtrl.$inject = ['$element', '$document', 'yasguiService', 'discoverStateService'];
+discoverQueryComponentCtrl.$inject = ['$element', '$document', 'yasguiService', 'discoverStateService'];
 
-function discoveryQueryComponentCtrl($element, $document, yasguiService, discoverStateService) {
+function discoverQueryComponentCtrl($element, $document, yasguiService, discoverStateService) {
     let dvm = this;
     let tab:any = {};
     dvm.ds = discoverStateService;

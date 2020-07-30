@@ -69,7 +69,7 @@ describe('SPARQL Editor component', function() {
         it('for a form', function() {
             expect(this.element.prop('tagName')).toBe('SPARQL-EDITOR');
         });
-        it('with a discovery-query', function() {
+        it('with a discover-query', function() {
             expect(this.element.querySelectorAll('.discover-query').length).toBe(1);
         });
         it('with a dataset-form-group', function() {
