@@ -52,7 +52,7 @@ function discoveryQueryComponentCtrl($element, $document, yasguiService, discove
         yasguiService.initYasgui(wrapper_element, {name: 'dicoverQuery'});
         dvm.yasgui = yasguiService.getYasgui();
        
-        if (dvm.yasgui) {
+        if (dvm.yasgui && dvm.yasgui.getTab) {
             setTab(dvm.yasgui.getTab());
             initEventListener();
             setValues();
