@@ -72,7 +72,7 @@ export default class Turtle implements Plugin<PlugingConfig> {
         this.yasr = yasr;
         this.mode = 'text/turtle';
         this.config = Turtle.defaults;
-        if(yasr.config.plugins['turtle'] && yasr.config.plugins['turtle'].dynamicConfig) {
+        if (yasr.config.plugins['turtle'] && yasr.config.plugins['turtle'].dynamicConfig) {
             this.config = {
                 ...this.config,
                 ...yasr.config.plugins['turtle'].dynamicConfig

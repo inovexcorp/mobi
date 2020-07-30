@@ -69,7 +69,7 @@ export default class JsonLD implements Plugin<PlugingConfig> {
         this.yasr = yasr;
         this.mode = 'application/ld+json';
         this.config = JsonLD.defaults;
-        if(yasr.config.plugins['jsonLD'] && yasr.config.plugins['jsonLD'].dynamicConfig) {
+        if (yasr.config.plugins['jsonLD'] && yasr.config.plugins['jsonLD'].dynamicConfig) {
             this.config = {
                 ...this.config,
                 ...yasr.config.plugins['jsonLD'].dynamicConfig

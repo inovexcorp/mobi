@@ -72,7 +72,7 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         this.yasr = yasr;
         this.mode = 'application/xml';
         this.config = RdfXml.defaults;
-        if(yasr.config.plugins['rdfXml'] && yasr.config.plugins['rdfXml'].dynamicConfig) {
+        if (yasr.config.plugins['rdfXml'] && yasr.config.plugins['rdfXml'].dynamicConfig) {
             this.config = {
                 ...this.config,
                 ...yasr.config.plugins['rdfXml'].dynamicConfig

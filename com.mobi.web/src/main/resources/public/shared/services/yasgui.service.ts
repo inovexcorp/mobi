@@ -151,7 +151,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
     const getYasContainerHeight = () =>  {
         let tabSet = document.querySelector('.material-tabset-headings');
         let yasr = yasgui.getTab().getYasr();
-        if(window.hasOwnProperty('CodeMirror')) {
+        if (window.hasOwnProperty('CodeMirror')) {
             let plugin = yasr.selectedPlugin || yasr.drawnPlugin;
             console.log(yasr.plugins[plugin]);
             //yasr.plugins[plugin].refresh();
@@ -314,7 +314,7 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, $locatio
         config.name = 'mobiQuery';
         config.tabName = 'mobiQuery';
 
-        if(config.endpoint) {
+        if (config.endpoint) {
             customURL = config.endpoint;
         }
         const configuration = merge({}, localConfig, config );
