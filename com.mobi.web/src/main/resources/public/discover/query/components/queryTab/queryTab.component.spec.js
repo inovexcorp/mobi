@@ -20,19 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { mockComponent } from '../../../../../../../test/js/Shared';
+import { 
+    mockComponent,
+    mockYasguiService,
+    mockSparqlManager,
+    mockDiscoverState
+} from '../../../../../../../test/js/Shared';
 
 describe('Query Tab component', function() {
-    var $compile, scope;
+    var $compile, scope, yasguiSvc;
 
     beforeEach(function() {
         angular.mock.module('query');
-        mockComponent('query', 'sparqlEditor');
-        mockComponent('query', 'sparqlResultBlock');
+        mockComponent('discover', 'datasetFormGroup');
+        mockYasguiService();
+        mockSparqlManager();
+        mockDiscoverState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _yasguiService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            yasguiSvc = _yasguiService_;
         });
 
         this.element = $compile(angular.element('<query-tab></query-tab>'))(scope);
@@ -42,6 +50,7 @@ describe('Query Tab component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        yasguiSvc = null;
         this.element.remove();
     });
 
@@ -49,11 +58,11 @@ describe('Query Tab component', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('QUERY-TAB');
         });
-        it('with flex-1 bg-white', function() {
-            expect(this.element.querySelectorAll('.flex-1.bg-white').length).toBe(1);            
-        });
-        it('with a sparql-editor', function() {
-            expect(this.element.find('sparql-editor').length).toEqual(1);
+        ['.discover-query', '.bg-white', 'dataset-form-group'].forEach(test => {
+            it('with a ' + test, function() {
+                expect(this.element.querySelectorAll(test).length).toBe(1);
+            });
         });
     });
+    //TODO: Test for the button
 });
