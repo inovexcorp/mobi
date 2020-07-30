@@ -31,6 +31,7 @@ import java.io.InputStream;
 public class OntologyRecordCreateSettings {
 
     public static OperationSetting<InputStream> INPUT_STREAM;
+    public static OperationSetting<String> FILE_NAME;
 
     public OntologyRecordCreateSettings() {
     }
@@ -38,5 +39,7 @@ public class OntologyRecordCreateSettings {
     static {
         INPUT_STREAM = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.ontology.inputstream"),
                 "The input stream file for the ontology", null);
+        FILE_NAME = new OperationSettingImpl<>(("com.mobi.catalog.operation.create.ontology.filename"),
+                "The input stream file name for the ontology", null);
     }
 }

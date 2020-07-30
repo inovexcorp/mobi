@@ -329,6 +329,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
@@ -377,6 +378,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology.ttl"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
@@ -426,6 +428,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-oiri.ttl"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
@@ -475,6 +478,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         users.add(user);
         config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/test-ontology-no-ont.ttl"));
+        config.set(OntologyRecordCreateSettings.FILE_NAME, "test-ontology-no-oiri.ttl");
         config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
         config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, names);
