@@ -30,5 +30,7 @@
             <button class="btn btn-primary" ng-click="dvm.yasgui.submitQuery()"><i class="fa fa-play fa-fw"></i><span>Submit</span></button>
         </div>
     </div>
-    <discover-query></discover-query>
+    <div class="discover-query">
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+    </div>
 </form>

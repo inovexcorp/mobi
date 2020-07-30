@@ -35,7 +35,7 @@ describe('SPARQL Editor component', function() {
 
     beforeEach(function() {
         angular.mock.module('query');
-        mockComponent('discover', 'datasetFormGroup','discoverQuery');
+        mockComponent('discover', 'datasetFormGroup');
         mockPrefixes();
         mockSparqlManager();
         mockYasguiService();
@@ -70,7 +70,7 @@ describe('SPARQL Editor component', function() {
             expect(this.element.prop('tagName')).toBe('SPARQL-EDITOR');
         });
         it('with a discovery-query', function() {
-            expect(this.element.querySelectorAll('discover-query').length).toBe(1);
+            expect(this.element.querySelectorAll('.discover-query').length).toBe(1);
         });
         it('with a dataset-form-group', function() {
             expect(this.element.find('dataset-form-group').length).toBe(1);
