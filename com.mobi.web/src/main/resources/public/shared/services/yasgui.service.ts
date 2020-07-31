@@ -336,12 +336,10 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
         yasr.plugins['table'].getUriLinkFromBinding = function(binding, prefixes?: { [key: string]: string }) {
             const href = binding.value;
             let visibleString = href;
-            let prefixed = false;
             if (prefixes) {
                 for (const prefixLabel in prefixes) {
                     if (visibleString.indexOf(prefixes[prefixLabel]) == 0) {
                         visibleString = prefixLabel + ":" + href.substring(prefixes[prefixLabel].length);
-                        prefixed = true;
                         break;
                     }
                 }
