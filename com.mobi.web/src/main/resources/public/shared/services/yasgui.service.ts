@@ -185,15 +185,24 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
 
         // update yasr header: response limit message
         tab.yasr.on("drawn",({ results }) => {
+            let drawnPlugin = tab.yasr.drawnPlugin;
             let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;
             updateResponseLimitMessage(limit);
 
-            if (tab.yasr.drawnPlugin === 'table') {
+            if (drawnPlugin === 'table') {
                 tab.yasr.plugins['table'].dataTable.column().visible(false);
+                let tableFilterInput = yasrRootElement.querySelector('.tableFilter');
+                if (tableFilterInput) {
+                    tableFilterInput.addEventListener('keypress', function (e:KeyboardEvent) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                        }
+                    });
+                }
             }
 
-            if (tab.yasr.getSelectedPluginName() !== tab.yasr.drawnPlugin) {
-                tab.yasr.selectPlugin(tab.yasr.drawnPlugin);
+            if (tab.yasr.getSelectedPluginName() !== drawnPlugin) {
+                tab.yasr.selectPlugin(drawnPlugin);
             }
         });
     }

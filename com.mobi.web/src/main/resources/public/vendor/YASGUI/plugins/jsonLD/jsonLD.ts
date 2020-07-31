@@ -26,7 +26,7 @@
 import Yasr from '@triply/yasr/build/yasr.min.js';
 import { Plugin } from '@triply/yasr/src/plugins';
 import { drawFontAwesomeIconAsSvg, drawSvgStringAsElement } from "../utils/yasguiUtil";
-import * as faAlignLeft from "@fortawesome/free-solid-svg-icons/faBug";
+import * as faIcon from "@fortawesome/free-solid-svg-icons/faLink";
 
 const CodeMirror = require("codemirror");
 require("codemirror/addon/fold/foldcode.js");
@@ -62,7 +62,7 @@ export default class JsonLD implements Plugin<PlugingConfig> {
     public priority = 11;
     public label = "JSON-LD";
     public getIcon() {
-        return drawSvgStringAsElement(drawFontAwesomeIconAsSvg(faAlignLeft));
+        return drawSvgStringAsElement(drawFontAwesomeIconAsSvg(faIcon));
     }
 
     constructor(yasr: Yasr) {
