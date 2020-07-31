@@ -93,7 +93,6 @@ export default class JsonLD implements Plugin<PlugingConfig> {
             value: value
         };
 
-        //codemirrorOpts['mode']  = this.mode;
         codemirrorOpts['mode'] = contentType,
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);``
        
@@ -123,10 +122,8 @@ export default class JsonLD implements Plugin<PlugingConfig> {
         if ((!response || response.length == 0) && this.yasr.results.getError()) return false; //in this case, show exception instead, as we have nothing to show anyway
         return true;
     }
-
    
     public static defaults: PlugingConfig = {
         maxLines: 30
     };
 }
-

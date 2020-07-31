@@ -39,7 +39,6 @@ require("codemirror/mode/turtle/turtle.js")
 require("codemirror/mode/javascript/javascript.js");
 require("codemirror/lib/codemirror.css");
 
-
 export interface PlugingConfig {
     maxLines: number
 }
@@ -85,7 +84,8 @@ export default class Turtle implements Plugin<PlugingConfig> {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
         let contentType = this.yasr.results?.getContentType();
-
+        const type = this.yasr.results?.getType();
+        
         if ( contentType === 'application/ld+json') {
             value = JSON.stringify(value, null, 4);
         }
@@ -98,8 +98,6 @@ export default class Turtle implements Plugin<PlugingConfig> {
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
             value: value
         };
-
-        const type = this.yasr.results?.getType();
 
         if (type === "ttl") {
             codemirrorOpts['mode'] = this.mode;

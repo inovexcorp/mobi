@@ -65,9 +65,11 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
         if (config.endpoint) {
             customURL = config.endpoint;
         }
+        
         const configuration = merge({}, localConfig, config );
         // Init YASGUI
         initPlugins();
+        
         if (!self.hasInitialized) {
             self.reset();
         }
@@ -138,12 +140,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
     // Register event listeners
     function initEvents() {
         const tab =  yasgui.getTab();
-        const formatType =  {
-            'turtle': 'ttl',
-            'rdfXml': 'rdf',
-            'jsonLD': 'jsonld',
-            'table': 'json'
-        };
 
         tab.once("query",() => {
             handleYasrVisibility();
@@ -162,7 +158,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
         });
 
         /**
-         * Update yasr height 
          * display query limit message
          * overwrite download button functionality
          */
@@ -188,7 +183,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
            }
         });
 
-        // update yasr codemirror height
         // update yasr header: response limit message
         tab.yasr.on("drawn",({ results }) => {
             let limit = (results.res && results.res.headers['x-limit-exceeded']) ? results.res.headers['x-limit-exceeded'] : 0;

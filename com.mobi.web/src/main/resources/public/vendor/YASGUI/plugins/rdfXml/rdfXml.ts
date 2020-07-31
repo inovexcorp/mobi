@@ -31,14 +31,12 @@ require("codemirror/addon/fold/foldcode.js");
 require("codemirror/addon/fold/foldgutter.js");
 require("codemirror/addon/fold/xml-fold.js");
 require("codemirror/addon/fold/brace-fold.js");
-
 require("codemirror/addon/edit/matchbrackets.js");
 require("codemirror/mode/xml/xml.js");
 require("codemirror/mode/javascript/javascript.js");
 require("codemirror/lib/codemirror.css");
 import {drawFontAwesomeIconAsSvg, drawSvgStringAsElement, removeClass, addClass} from "../utils/yasguiUtil";
 import * as faIcon from "@fortawesome/free-solid-svg-icons/faCode";
-import * as imgs from "@triply/yasr/src/imgs";
 
 export interface PlugingConfig {
     maxLines: number
@@ -85,10 +83,10 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         // When the original response is empty, use an empty string
         let value = this.yasr.results?.getOriginalResponseAsString() || "";
         let contentType = this.yasr.results?.getContentType();
+        const type = this.yasr.results?.getType();
         if ( contentType === 'application/ld+json') {
             value = JSON.stringify(value, null, 4);
         }
-
         const codemirrorOpts = {
             readOnly: true,
             lineNumbers: true,
@@ -97,16 +95,12 @@ export default class RdfXml implements Plugin<PlugingConfig> {
             gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
             value: value
         };
-
-        const type = this.yasr.results?.getType();
-
+        
         if (type === "xml") {
             codemirrorOpts['mode'] = this.mode;
         }
-
         // testing purpose.
         this.cm = CodeMirror(this.yasr.resultsEl, codemirrorOpts);
-        
     }
 
     download() {
@@ -135,10 +129,8 @@ export default class RdfXml implements Plugin<PlugingConfig> {
         return true;
     }
 
-
     public static defaults: PlugingConfig = {
         maxLines: 30
     };
 
 }
-
