@@ -36,6 +36,10 @@ import { merge } from 'lodash';
  * @requires vendor.YASGUI.plugins:jsonLD
  * @requires vendor.YASGUI.plugins.utils:yasguiUtil
  * @requires lodash
+ * @requires shared.service:sparqlManagerService
+ * @requires shared.service:modalService
+ * @requires shared.service:discoverStateService
+ * @requires hared.service:utilService
  * 
  * @description
  * `yasguiService` is a service that provide access to YASUI library 
@@ -183,7 +187,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
                     modalService.openModal('downloadQueryOverlay', {queryType}, undefined, 'sm');
                 });
            }
-         
         });
 
         // update yasr codemirror height
@@ -336,14 +339,14 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
             let prefixed = false;
             if (prefixes) {
                 for (const prefixLabel in prefixes) {
-                if (visibleString.indexOf(prefixes[prefixLabel]) == 0) {
-                    visibleString = prefixLabel + ":" + href.substring(prefixes[prefixLabel].length);
-                    prefixed = true;
-                    break;
-                }
+                    if (visibleString.indexOf(prefixes[prefixLabel]) == 0) {
+                        visibleString = prefixLabel + ":" + href.substring(prefixes[prefixLabel].length);
+                        prefixed = true;
+                        break;
+                    }
                 }
             }
-            return `${visibleString}${prefixed}`;
+            return `${visibleString}`;
         }
         // dont show response plugin
         yasr.plugins['response'].canHandleResults = function() {
