@@ -167,7 +167,6 @@ function yasguiService(REST_PREFIX, sparqlManagerService, modalService, discover
          * overwrite download button functionality
          */
         tab.yasr.once("drawn",(instance: Yasgui.yasr, plugin: Plugin) => {
-
             drawResponseLimitMessage(instance.headerEl);
             // dont show table plugin as selected if it cant handled the results
             if (!instance.plugins['table'].canHandleResults() && instance.drawnPlugin !== 'table') {
