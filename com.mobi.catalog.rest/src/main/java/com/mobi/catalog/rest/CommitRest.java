@@ -282,7 +282,7 @@ public class CommitRest {
                 Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
                 if (optCommit.isPresent()) {
                     return createCommitResponse(optCommit.get(),
-                            catalogManager.getCommitDifference(optCommit.get().getResource()),
+                            catalogManager.getCommitDifferenceModified(optCommit.get().getResource()),
                             rdfFormat, transformer, bNodeService);
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).build();

@@ -1,0 +1,17 @@
+CONSTRUCT { ?s ?pred ?obj }
+FROM %ADDITIONS_GRAPH%
+FROM %DELETIONS_GRAPH%
+FROM NAMED %ADDITIONS_GRAPH%
+WHERE {
+    {
+
+        SELECT ?s WHERE {
+            ?s ?p ?o .
+        }
+        GROUP BY ?s
+        ORDER BY ?s
+        LIMIT 1000
+        OFFSET 0
+    }
+    GRAPH %ADDITIONS_GRAPH% { ?s ?pred ?obj }
+}

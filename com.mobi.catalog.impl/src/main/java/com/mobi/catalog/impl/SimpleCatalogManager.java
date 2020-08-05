@@ -1092,6 +1092,17 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Difference getCommitDifferenceModified(Resource commitId) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitDifferenceModified(commitId, conn);
+        } finally {
+            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
     public void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                        Resource inProgressCommitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {

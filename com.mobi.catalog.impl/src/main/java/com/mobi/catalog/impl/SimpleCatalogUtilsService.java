@@ -60,9 +60,11 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
+import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BooleanQuery;
+import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -96,19 +98,6 @@ import javax.annotation.Nullable;
 public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final Logger log = LoggerFactory.getLogger(SimpleCatalogUtilsService.class);
 
-//    public static <T> Collector<T, Set<T>, List<T>> unique() {
-//        return Collector.of(
-//                () -> new HashSet<T>(),
-//                (result, item) -> result.addAll(CommitDifference.combine(new ArrayList<CommitDifference>(new CommitDifference()))),
-//                (result1, result2) -> {
-//                    result1.addAll(result2);
-//                    return result1;
-//                },
-//                c -> new ArrayList<T>(c),
-//                Collector.Characteristics.CONCURRENT,
-//                Collector.Characteristics.UNORDERED);
-//    }
-
     private ModelFactory mf;
     private ValueFactory vf;
     private CatalogFactory catalogFactory;
@@ -124,6 +113,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private GraphRevisionFactory graphRevisionFactory;
     private InProgressCommitFactory inProgressCommitFactory;
 
+    private static final String GET_PAGED_ADDITIONS;
+    private static final String GET_PAGED_DELETIONS;
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_COMMIT_ENTITY_CHAIN;
@@ -135,9 +126,19 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
     private static final String ENTITY_BINDING = "entity";
+    private static final String ADDITIONS_GRAPH_BINDING = "additionsGraph";
+    private static final String DELETIONS_GRAPH_BINDING = "deletionsGraph";
 
     static {
         try {
+            GET_PAGED_ADDITIONS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-additions.rq"),
+                    "UTF-8"
+            );
+            GET_PAGED_DELETIONS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-deletions.rq"),
+                    "UTF-8"
+            );
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-in-progress-commit.rq"),
                     "UTF-8"
@@ -926,6 +927,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         long start = System.currentTimeMillis();
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
+//        Set<String> sub = new HashSet<>();
 
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
         log.trace("getCommitDifferenceModified took {}ms", System.currentTimeMillis() - start);
@@ -991,8 +993,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .build();
     }
 
-    @Override
-    public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
+    public Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn) {
         Revision revision = getRevision(commitId, conn);
 
         Model addModel = mf.createModel();
@@ -1002,21 +1003,71 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         // Possible alternate way - somehow query for all unique subjects in the Revision (not sure how to do this)
         // Then order and page
 
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
+                new IllegalStateException("Additions not set on Commit " + commitId));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
+                new IllegalStateException("Deletions not set on Commit " + commitId));
+
+        String additionsQueryString = GET_PAGED_ADDITIONS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
+        additionsQueryString = additionsQueryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
+
+        String deletionsQueryString = GET_PAGED_DELETIONS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
+        deletionsQueryString = deletionsQueryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
+
+        log.debug("ADDITIONS QUERY: " + additionsQueryString);
+
+        GraphQuery getAdditionsQuery = conn.prepareGraphQuery(additionsQueryString);
+        GraphQuery getDeletionsQuery = conn.prepareGraphQuery(deletionsQueryString);
+
+        getAdditionsQuery.evaluate().forEach(statement ->
+                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        getDeletionsQuery.evaluate().forEach(statement ->
+                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+        // Search additions and deletionsGraph simultaneously, group by subject, do ordering, provide limit and offset
+
+//        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
+//                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+//        conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
+//                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+
+//        revision.getGraphRevision().forEach(graphRevision -> {
+//            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
+//                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
+//            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
+//                    new IllegalStateException("Additions not set on Commit " + commitId));
+//            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
+//                    new IllegalStateException("Deletions not set on Commit " + commitId));
+//
+//            conn.getStatements(null, null, null, adds).forEach(statement ->
+//                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+//            conn.getStatements(null, null, null, dels).forEach(statement ->
+//                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+//        });
+
+        return new Difference.Builder()
+                .additions(addModel)
+                .deletions(deleteModel)
+                .build();
+    }
+
+    @Override
+    public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
+        Revision revision = getRevision(commitId, conn);
+
+        Model addModel = mf.createModel();
+        Model deleteModel = mf.createModel();
 
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
                 new IllegalStateException("Additions not set on Commit " + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
                 new IllegalStateException("Deletions not set on Commit " + commitId));
 
-
-        // Search additions and deletionsGraph simultaneously, group by subject, do ordering, provide limit and offset
-
         conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
                 addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
         conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
                 deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-
-        
 
         revision.getGraphRevision().forEach(graphRevision -> {
             Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
@@ -1036,6 +1087,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .additions(addModel)
                 .deletions(deleteModel)
                 .build();
+
     }
 
     @Override

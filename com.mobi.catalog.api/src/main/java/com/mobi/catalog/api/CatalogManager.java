@@ -719,6 +719,8 @@ public interface CatalogManager {
      */
     Difference getCommitDifference(Resource commitId);
 
+    Difference getCommitDifferenceModified(Resource commitId);
+
     /**
      * Removes the InProgressCommit identified by the provided Resources.
      *
