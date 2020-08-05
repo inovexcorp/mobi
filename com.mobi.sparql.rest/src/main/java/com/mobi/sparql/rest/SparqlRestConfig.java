@@ -1,10 +1,16 @@
+package com.mobi.sparql.rest;
+
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.AttributeType;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.sparql.rest
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2019 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2020 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,18 +26,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../../css/variables";
+@ObjectClassDefinition(name = "SparqlRest Service Config", description = "Configure the SparqlRest Service details")
+public @interface SparqlRestConfig {
 
-.sparql-result-block {
-    height: 100%;
-    position: relative;
+    @AttributeDefinition(name = "limit", description = "Integer used for limit for limited-results endpoint", required = true, type = AttributeType.INTEGER, defaultValue = "500")
+    int limit() default 500;
 
-    .message p {
-        margin: 10px;
-    }
-    pre {
-        background-color: #fff;
-        border: 0;
-    }
 }

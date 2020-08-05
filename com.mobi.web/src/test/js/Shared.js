@@ -1360,3 +1360,14 @@ export function flushAndVerify($httpBackend) {
     $httpBackend.verifyNoOutstandingExpectation();
     $httpBackend.verifyNoOutstandingRequest();
 }
+
+export function mockYasguiService() {
+    angular.mock.module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
+        $provide.service('yasguiService', function($q) {
+            this.reset = jasmine.createSpy('reset');
+            this.initYasgui = jasmine.createSpy('initYasgui');
+            this.getYasgui = jasmine.createSpy('getYasgui').and.returnValue({});
+        });
+    });
+}

@@ -134,6 +134,7 @@ import updateRefsService from './services/updateRefs.service';
 import userManagerService from './services/userManager.service';
 import userStateService from './services/userState.service';
 import utilService from './services/util.service';
+import yasguiService from './services/yasgui.service';
 
 // NgUpgrade
 import {
@@ -293,4 +294,5 @@ angular.module('shared', [])
     .service('userStateService', userStateService)
     .service('utilService', utilService)
     .factory('clickAnywhereButHereService', clickAnywhereButHereService)
+    .service('yasguiService',yasguiService)
     .directive('errorDisplay', downgradeComponent({component: ErrorDisplayComponent}) as angular.IDirectiveFactory);

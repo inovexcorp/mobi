@@ -99,14 +99,14 @@ function individualTypesModalComponentCtrl(ontologyManagerService, ontologyState
             var isConceptScheme = dvm.ontoUtils.containsDerivedConceptScheme(dvm.types);
 
             // Handle added types
-            forEach(addedTypes, type => {
+            forEach(addedTypes, (type:any) => {
                 var indivs = get(dvm.os.listItem.classesAndIndividuals, type, []);
                 indivs.push(dvm.os.listItem.selected['@id']);
                 dvm.os.listItem.classesAndIndividuals[type] = indivs;
             });
 
             // Handle removed types
-            forEach(removedTypes, type => {
+            forEach(removedTypes, ( type:any ) => {
                 var parentAndIndivs = get(dvm.os.listItem.classesAndIndividuals, "['" + type + "']", []);
                 if (parentAndIndivs.length) {
                     remove(parentAndIndivs, item => item === dvm.os.listItem.selected['@id']);

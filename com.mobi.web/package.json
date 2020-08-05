@@ -65,6 +65,7 @@
     "@angular/router": "^5.2.11",
     "@angular/upgrade": "^5.2.11",
     "@uirouter/angular-hybrid": "^6.0.0",
+    "@triply/yasgui": "^4.0.116",
     "angular": "^1.7.7",
     "angular-animate": "1.7.7",
     "angular-aria": "1.7.7",

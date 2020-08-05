@@ -35,13 +35,17 @@ import {
     mockStateManager,
     mockUserManager,
     mockUserState,
+    mockYasguiService,
     injectRestPathConstant,
     flushAndVerify,
     createQueryString
 } from '../../../../../test/js/Shared';
 
 describe('Login Manager service', function() {
-    var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc, datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc, ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc;
+    var loginManagerSvc, $httpBackend, state, scope, $q, catalogManagerSvc, catalogStateSvc, datasetManagerSvc,
+        datasetStateSvc, delimitedManagerSvc, discoverStateSvc, mapperStateSvc, mergeRequestsStateSvc, ontologyManagerSvc,
+        ontologyStateSvc, sparqlManagerSvc, stateManagerSvc, userManagerSvc, userStateSvc, yasguiSvc;
+
 
     beforeEach(function() {
         angular.mock.module('shared');
@@ -59,15 +63,20 @@ describe('Login Manager service', function() {
         mockStateManager();
         mockUserManager();
         mockUserState();
+        mockYasguiService();
         injectRestPathConstant();
-
+        
         angular.mock.module(function($provide) {
             $provide.service('$state', function() {
                 this.go = jasmine.createSpy('go');
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_, _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_, _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_, _userStateService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$rootScope_, _$q_, _catalogManagerService_,
+                        _catalogStateService_, _datasetManagerService_, _datasetStateService_, _delimitedManagerService_,
+                        _discoverStateService_, _mapperStateService_, _mergeRequestsStateService_, _ontologyManagerService_,
+                        _ontologyStateService_, _sparqlManagerService_, _stateManagerService_, _userManagerService_,
+                         _userStateService_,_yasguiService_) {
             loginManagerSvc = loginManagerService;
             $httpBackend = _$httpBackend_;
             state = _$state_;
@@ -87,6 +96,7 @@ describe('Login Manager service', function() {
             stateManagerSvc = _stateManagerService_;
             userManagerSvc = _userManagerService_;
             userStateSvc = _userStateService_;
+            yasguiSvc = _yasguiService_;
         });
     });
 
@@ -110,6 +120,7 @@ describe('Login Manager service', function() {
         stateManagerSvc = null;
         userManagerSvc = null;
         userStateSvc = null;
+        yasguiSvc = null;
     });
 
     describe('should log into an account', function() {
@@ -200,6 +211,7 @@ describe('Login Manager service', function() {
         expect(sparqlManagerSvc.reset).toHaveBeenCalled();
         expect(userStateSvc.reset).toHaveBeenCalled();
         expect(catalogStateSvc.reset).toHaveBeenCalled();
+        expect(yasguiSvc.reset).toHaveBeenCalled();
         expect(loginManagerSvc.currentUser).toBe('');
         expect(loginManagerSvc.currentUserIRI).toBe('');
         expect(state.go).toHaveBeenCalledWith('login');

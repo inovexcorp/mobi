@@ -67,6 +67,8 @@ import 'codemirror-minified/lib/codemirror.css';
 import './css/customMaterial.scss';
 import './css/manchestersyntax.scss';
 import './css/styles.scss';
+import '@triply/yasgui/build/yasgui.min.css';
+import './css/yasgui.scss';
 
 import './vendor/manchestersyntax.js';
 

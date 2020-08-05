@@ -158,8 +158,8 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         if (dvm.commits.length > 0) {
             wrapper = dvm.snap.group();
             // First draw circles in a straight line
-            forEach(dvm.commits, (commit, i) => {
-                var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (i * dvm.circleSpacing), dvm.circleRadius);
+            forEach(dvm.commits, (commit, index : number) => {
+                var circle = dvm.snap.circle(0, dvm.circleSpacing/2 + (index * dvm.circleSpacing), dvm.circleRadius);
                 var title = Snap.parse('<title>' + dvm.util.condenseCommitId(commit.id) + '</title>')
                 circle.append(title);
                 circle.click(() => dvm.openCommitOverlay(commit.id));
