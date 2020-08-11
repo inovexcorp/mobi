@@ -49,6 +49,9 @@ import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import org.apache.commons.io.FilenameUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParser;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -58,15 +61,19 @@ import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.eclipse.rdf4j.rio.Rio;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 @Component(
         immediate = true,
         service = { RecordService.class, SimpleOntologyRecordService.class }
 )
 public class SimpleOntologyRecordService extends AbstractOntologyRecordService<OntologyRecord> {
-
     private OntologyCache ontologyCache;
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyRecordService.class);
@@ -179,12 +186,13 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Override
     protected Model createOntologyModel(RecordOperationConfig config) {
         Model ontologyModel;
-        if (config.get(OntologyRecordCreateSettings.INPUT_STREAM) != null) {
+        String fileName = config.get(OntologyRecordCreateSettings.FILE_NAME);
+        InputStream inputStream = config.get(OntologyRecordCreateSettings.INPUT_STREAM);
+
+        if (fileName != null && inputStream != null) {
             try {
-                ontologyModel = Models.createModel(config.get(OntologyRecordCreateSettings.INPUT_STREAM),
-                        sesameTransformer, new RioFunctionalSyntaxParserFactory().getParser(),
-                        new RioManchesterSyntaxParserFactory().getParser(),
-                        new RioOWLXMLParserFactory().getParser());
+                String fileExtension = FilenameUtils.getExtension(fileName);
+                ontologyModel = Models.createModel(fileExtension, inputStream, sesameTransformer);
             } catch (IOException e) {
                 throw new MobiOntologyException("Could not parse Ontology input stream.", e);
             }

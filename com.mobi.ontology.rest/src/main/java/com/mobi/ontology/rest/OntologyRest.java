@@ -109,7 +109,9 @@ import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -128,6 +130,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -270,7 +273,9 @@ public class OntologyRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context ContainerRequestContext context,
-                               @FormDataParam("file") InputStream fileInputStream, @FormDataParam("title") String title,
+                               @FormDataParam("file") InputStream fileInputStream,
+                               @FormDataParam("file") FormDataContentDisposition fileDetail,
+                               @FormDataParam("title") String title,
                                @FormDataParam("description") String description,
                                @FormDataParam("markdown") String markdown,
                                @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
@@ -284,6 +289,7 @@ public class OntologyRest {
         }
         RecordOperationConfig config = new OperationConfig();
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
+        config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
         return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
@@ -3252,10 +3258,14 @@ public class OntologyRest {
                 }
                 commitId = (Resource) commitStmt.next().getObject();
             }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            ObjectNode objectNode = createJsonErrorObject(ex, ";;;");
+            Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
+            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
+        } catch (MobiException ex) {
+            ObjectNode objectNode = createJsonErrorObject(ex);
+            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString()).build();
+            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
@@ -3267,4 +3277,36 @@ public class OntologyRest {
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
+
+    private static ObjectNode createJsonErrorObject(Exception ex) {
+        return createJsonErrorObject(ex, null);
+    }
+
+    private static ObjectNode createJsonErrorObject(Exception ex, String delimiter) {
+        ObjectNode objectNode = mapper.createObjectNode();
+        ArrayNode arrayNode = mapper.createArrayNode();
+        objectNode.put("error", ex.getClass().getSimpleName());
+
+        String errorMessage = ex.getMessage();
+
+        if (delimiter == null) {
+            objectNode.put("errorMessage", errorMessage);
+        } else if (errorMessage.contains(delimiter)) {
+            String[] errorMessages = errorMessage.split(delimiter);
+            objectNode.put("errorMessage", errorMessages[0].trim());
+
+            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
+
+            for (String currentErrorMessage: errorMessagesSlice) {
+                arrayNode.add(currentErrorMessage.trim());
+            }
+        } else {
+            objectNode.put("errorMessage", errorMessage);
+        }
+
+        objectNode.set("errorDetails", arrayNode);
+
+        return objectNode;
+    }
+
 }

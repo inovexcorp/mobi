@@ -39,7 +39,7 @@ public class Rio {
      * @param iterable A collection of statements, such as a {@link Model}, to be written.
      */
     public static void write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer,
-                             StatementHandler... statementHandlers) {
+                                  StatementHandler... statementHandlers) {
         writer.startRDF();
 
         if (iterable instanceof Model) {
@@ -58,4 +58,44 @@ public class Rio {
         }
         writer.endRDF();
     }
+
+    /**
+     * Writes the given statements to the given {@link RDFHandler}.
+     *
+     * @param iterable A collection of statements, such as a {@link Model}, to be written.
+     * @param writer RDFHandler
+     * @param transformer SesameTransformer
+     * @param limit number of records to be written
+     * @param statementHandlers StatementHandler
+     * @return boolean if limit has been exceeded
+     */
+    public static boolean write(Iterable<Statement> iterable, RDFHandler writer, SesameTransformer transformer,
+                                int limit, StatementHandler... statementHandlers) {
+        boolean limitExceeded = false;
+        int limitExceededCounter = 0;
+        writer.startRDF();
+        if (iterable instanceof Model) {
+            for (Namespace nextNamespace : ((Model) iterable).getNamespaces()) {
+                writer.handleNamespace(nextNamespace.getPrefix(), nextNamespace.getName());
+            }
+        }
+        for (final Statement st : iterable) {
+            limitExceededCounter += 1;
+            Statement handledStatement = st;
+            for (StatementHandler statementHandler : statementHandlers) {
+                handledStatement = statementHandler.handleStatement(handledStatement);
+            }
+
+            org.eclipse.rdf4j.model.Statement sesameStatement = transformer.sesameStatement(handledStatement);
+            writer.handleStatement(sesameStatement);
+
+            if (limitExceededCounter >= limit) {
+                limitExceeded = true;
+                break;
+            }
+        }
+        writer.endRDF();
+        return limitExceeded;
+    }
+
 }

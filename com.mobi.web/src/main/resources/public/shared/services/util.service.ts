@@ -571,6 +571,42 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
     }
     /**
      * @ngdoc method
+     * @name rejectError
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Returns a rejected promise with the status text of the passed HTTP response object if present,
+     * otherwise uses the passed default message.
+     *
+     * @param {Object} error A HTTP response object
+     * @param {string} defaultMessage The optional default error text for the rejection
+     * @return {Promise} A Promise that rejects with an error message
+     */
+    self.rejectErrorObject = function(error, defaultMessage) {
+        return $q.reject(get(error, 'status') === -1 ? {'errorMessage': '', 'errorDetails': []} : self.getErrorDataObject(error, defaultMessage));
+    }
+    /**
+     * @ngdoc method
+     * @name getErrorMessage
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
+     * message.
+     *
+     * @param {Object} error A response from a HTTP calls
+     * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional message
+     * to use if the response doesn't have an error message
+     * @return {string} An error message for the passed HTTP response
+     */
+    self.getErrorDataObject = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
+        return {
+            'errorMessage': get(error, 'data.errorMessage') || defaultMessage,
+            'errorDetails': get(error, 'data.errorDetails') || []
+        }
+    }
+    /**
+     * @ngdoc method
      * @name getChangesById
      * @methodOf shared.service:utilService
      *

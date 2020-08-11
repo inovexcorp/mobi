@@ -220,6 +220,11 @@ describe('Discover State Service', function() {
             targetedId: 'discover-search-results',
             typeObject: undefined
         });
-        expect(discoverStateSvc.query).toEqual({active: false});
+        expect(discoverStateSvc.query).toEqual({
+            active: false,
+            queryString: '',
+            response: {},
+            selectedPlugin: ''
+        });
     }
 });

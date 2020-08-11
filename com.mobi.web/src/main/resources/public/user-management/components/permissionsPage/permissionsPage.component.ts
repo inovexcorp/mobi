@@ -20,10 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, filter, map, forEach, some, chain, find, difference, sortBy, isNull } from 'lodash';
+import { get, map, filter, forEach, some, chain, find, difference, sortBy, isNull, head} from 'lodash';
 
 import './permissionsPage.component.scss';
- 
 const template = require('./permissionsPage.component.html');
 
 /**
@@ -120,25 +119,25 @@ function permissionsPageComponentCtrl($q, policyManagerService, catalogManagerSe
                 }, util.createErrorToast);
     }
     function getRecordType(policy) {
-        return chain(policy)
-            .get('Target.AnyOf', [])
+        const target = get(policy, 'Target.AnyOf', []);
+        const allOfMatch = chain(target)
             .map('AllOf').flatten()
             .map('Match').flatten()
-            .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type'])
-            .get('AttributeValue.content', [])
-            .head()
-            .value();
+            .find(['AttributeDesignator.AttributeId', prefixes.rdf + 'type']).value();
+        const attributeValue = get(allOfMatch, 'AttributeValue.content', []);
+        const value =  head(attributeValue);
+        return value;
     }
     function setInfo(item) {
-        var matches = chain(item.policy)
-            .get('Rule[0].Target.AnyOf[0].AllOf', [])
+        const rules = get(item.policy, 'Rule[0].Target.AnyOf[0].AllOf', []);
+        const matches = chain(rules) 
             .map('Match[0]')
             .map(match => ({
                 id: get(match, 'AttributeDesignator.AttributeId'),
                 value: get(match, 'AttributeValue.content[0]')
             }))
             .value();
-        if (find(matches, {id: prefixes.user + 'hasUserRole', value: userRole})) {
+        if ( find( matches, { id: prefixes.user + 'hasUserRole', value: userRole } )) {
             item.everyone = true;
         } else {
             item.selectedUsers = sortUsers(chain(matches)

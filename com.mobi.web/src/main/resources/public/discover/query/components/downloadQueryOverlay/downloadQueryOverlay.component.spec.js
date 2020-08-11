@@ -37,7 +37,8 @@ describe('Download Query Overlay component', function() {
 
         scope.close = jasmine.createSpy('close');
         scope.dismiss = jasmine.createSpy('dismiss');
-        this.element = $compile(angular.element('<download-query-overlay close="close()" dismiss="dismiss()"></download-query-overlay>'))(scope);
+        scope.resolve = { queryType : '' };
+        this.element = $compile(angular.element('<download-query-overlay close="close()" dismiss="dismiss()" resolve="resolve" ></download-query-overlay>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('downloadQueryOverlay');
     });
@@ -96,6 +97,12 @@ describe('Download Query Overlay component', function() {
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
+        it('should display default list', function() {
+            let select = this.element.find('select');
+            let options =  select.querySelectorAll('option');
+            expect(select.length).toEqual(1);
+            expect(options[0].value).toEqual('csv');
+        });
     });
     it('should call download when the button is clicked', function() {
         spyOn(this.controller, 'download');
@@ -108,5 +115,23 @@ describe('Download Query Overlay component', function() {
         var continueButton = angular.element(this.element.querySelectorAll('.modal-footer button:not(.btn-primary)')[0]);
         continueButton.triggerHandler('click');
         expect(this.controller.cancel).toHaveBeenCalled();
+    });
+    describe('initializes correctly', function() {
+        it('with default query type', function() {
+            expect(this.controller.availableOptions.map(opt => opt.id)).toEqual(['csv', 'tsv', 'xlsx', 'xls']);
+            expect(this.controller.fileType).toEqual('csv');
+        });
+        it('with a select query type', function() {
+            this.controller.resolve = { queryType: 'select' };
+            this.controller.$onInit();
+            expect(this.controller.availableOptions.map(opt => opt.id)).toEqual(['csv', 'tsv', 'xlsx', 'xls']);
+            expect(this.controller.fileType).toEqual('csv');
+        });
+        it('with a construct query type', function() {
+            this.controller.resolve = { queryType: 'construct' };
+            this.controller.$onInit();
+            expect(this.controller.availableOptions.map(opt => opt.id)).toEqual(['ttl', 'rdf', 'jsonld']);
+            expect(this.controller.fileType).toEqual('ttl');
+        });
     });
 });

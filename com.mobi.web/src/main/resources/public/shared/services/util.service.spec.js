@@ -480,6 +480,41 @@ describe('Util service', function() {
         expect(utilSvc.getErrorMessage({statusText: ''})).toBe('Something went wrong. Please try again later.');
         expect(utilSvc.getErrorMessage({statusText: 'Test'})).toBe('Test');
     });
+    describe('should create a rejected promise with an error object', function() {
+        beforeEach(function() {
+            spyOn(utilSvc, 'getErrorDataObject').and.returnValue({'errorMessage': 'test', 'errorDetails': []});
+        });
+        it('unless the response was canceled', function() {
+            utilSvc.rejectErrorObject({status: -1}, 'test')
+                .then(() => {
+                    fail('Promise should have rejected.');
+                }, error => {
+                    expect(error).toEqual({'errorMessage': '', 'errorDetails': []});
+                });
+            scope.$apply();
+            expect(utilSvc.getErrorDataObject).not.toHaveBeenCalled();
+        });
+        it('successfully', function() {
+            utilSvc.rejectErrorObject({}, 'test')
+                .then(() => {
+                    fail('Promise should have rejected.');
+                }, error => {
+                    expect(error).toEqual({'errorMessage': 'test', 'errorDetails': []});
+                });
+            scope.$apply();
+            expect(utilSvc.getErrorDataObject).toHaveBeenCalledWith({}, 'test');
+        });
+    });
+    it('should retrieve an error object from a http response', function() {
+        expect(utilSvc.getErrorDataObject({data: {}}, 'default'))
+            .toEqual({'errorMessage': 'default', 'errorDetails': []});
+        expect(utilSvc.getErrorDataObject({}))
+             .toEqual({'errorMessage': 'Something went wrong. Please try again later.', 'errorDetails': []});
+        expect(utilSvc.getErrorDataObject({data: {errorMessage:''}}))
+            .toEqual({'errorMessage': 'Something went wrong. Please try again later.', 'errorDetails': []});
+        expect(utilSvc.getErrorDataObject({data: {errorMessage:'error'}}))
+            .toEqual({'errorMessage': 'error', 'errorDetails': []});
+    });
     it('should get correct statement predicates and objects for the provided id and array', function() {
         var array = [{
             '@id': 'id',
