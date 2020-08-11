@@ -1092,11 +1092,22 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Difference getCommitDifferenceModified(Resource commitId) {
+    public Difference getCommitDifferenceModified(Resource commitId, int limit, int offset) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-            return utils.getCommitDifferenceModified(commitId, conn);
+            return utils.getCommitDifferenceModified(commitId, conn, limit, offset);
+        } finally {
+            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
+    public boolean hasMoreResults(Resource commitId, int limit, int offset) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.hasMoreResults(commitId, conn, limit, offset);
         } finally {
             log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
@@ -1238,10 +1249,10 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-    public Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId) {
+    public Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId, int limit, int offset) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getCommitDifferenceModified(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
-                    conn);
+                    conn, limit, offset);
         }
     }
 

@@ -46,47 +46,62 @@ const template = require('./commitChangesDisplay.component.html');
 const commitChangesDisplayComponent = {
     template,
     bindings: {
-        additions: '<',
-        deletions: '<',
+        commitId: '<',
         entityNameFunc: '<?'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
 };
 
-commitChangesDisplayComponentCtrl.$inject = ['utilService'];
+commitChangesDisplayComponentCtrl.$inject = ['utilService', 'catalogManagerService'];
 
-function commitChangesDisplayComponentCtrl(utilService) {
+function commitChangesDisplayComponentCtrl(utilService, catalogManagerService) {
     var dvm = this;
-    dvm.size = 100;
-    dvm.index = 0;
+    var cm = catalogManagerService;
+    // dvm.size = 100;
+    // dvm.index = 0;
+    dvm.limit = 100;
+    dvm.offset = 0;
     dvm.util = utilService;
-    dvm.list = [];
-    dvm.chunkList = [];
     dvm.results = {};
+    dvm.hasMoreResults = false;
 
     dvm.$onChanges = function() {
-        var adds = map(dvm.additions, '@id');
-        var deletes = map(dvm.deletions, '@id');
-        dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        dvm.size = 100;
-        dvm.index = 0;
+        // var adds = map(dvm.additions, '@id');
+        // var deletes = map(dvm.deletions, '@id');
+        // dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
+        dvm.limit = 100;
+        dvm.offset = 0;
         dvm.results = getResults();
     }
     dvm.getMoreResults = function() {
-        dvm.index++;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
-        });
+        dvm.offset += dvm.limit;
+        cm.getDifference(dvm.commitId, dvm.limit, dvm.offset)
+            .then(response => {
+                var adds = map(response.data.additions, '@id');
+                var deletes = map(response.data.deletions, '@id');
+                var list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
+                forEach(list, id => {
+                    addToResults(dvm.util.getChangesById(id, response.data.additions), dvm.util.getChangesById(id, response.data.deletions), id, dvm.results);
+                });
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => dvm.error = errorMessage);
     }
 
     function getResults() {
         var results = {};
-        dvm.chunkList = chunk(dvm.list, dvm.size);
-        dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, results);
-        });
+        cm.getDifference(dvm.commitId, dvm.limit, dvm.offset)
+            .then(response => {
+                var adds = map(response.data.additions, '@id');
+                var deletes = map(response.data.deletions, '@id');
+                var list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
+                forEach(list, id => {
+                    addToResults(dvm.util.getChangesById(id, response.data.additions), dvm.util.getChangesById(id, response.data.deletions), id, results);
+                });
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => dvm.error = errorMessage);
         return results;
     }
     function addToResults(additions, deletions, id, results) {

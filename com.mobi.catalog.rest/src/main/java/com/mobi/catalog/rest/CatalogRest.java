@@ -2129,8 +2129,9 @@ public class CatalogRest {
         try {
             ObjectNode differenceJson = mapper.createObjectNode();
             if (format.equals("jsonld")) {
-                differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
-                        format, transformer, bNodeService)));
+                String str = modelToSkolemizedString(difference.getAdditions(),
+                        format, transformer, bNodeService);
+                differenceJson.set("additions", mapper.readTree(str));
                 differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
                         format, transformer, bNodeService)));
             } else {

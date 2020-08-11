@@ -719,7 +719,9 @@ public interface CatalogManager {
      */
     Difference getCommitDifference(Resource commitId);
 
-    Difference getCommitDifferenceModified(Resource commitId);
+    Difference getCommitDifferenceModified(Resource commitId, int limit, int offset);
+
+    boolean hasMoreResults(Resource commitId, int limit, int offset);
 
     /**
      * Removes the InProgressCommit identified by the provided Resources.
@@ -883,7 +885,7 @@ public interface CatalogManager {
      */
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
-    Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId);
+    Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId, int limit, int offset);
 
     /**
      * Gets the Difference between the Commits identified by the two provided Resources. Essentially returns the

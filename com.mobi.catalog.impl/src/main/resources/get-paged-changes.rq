@@ -1,0 +1,22 @@
+SELECT ?s ?additionsPred ?additionsObj ?deletionsPred ?deletionsObj
+FROM %ADDITIONS_GRAPH%
+FROM %DELETIONS_GRAPH%
+FROM NAMED %ADDITIONS_GRAPH%
+FROM NAMED %DELETIONS_GRAPH%
+WHERE {
+    {
+        SELECT ?s WHERE {
+            ?s ?p ?o .
+        }
+        GROUP BY ?s
+        ORDER BY ?s
+        LIMIT %LIMIT%
+        OFFSET %OFFSET%
+    }
+    OPTIONAL {
+        GRAPH %ADDITIONS_GRAPH% { ?s ?additionsPred ?additionsObj }
+    }
+    OPTIONAL {
+        GRAPH %DELETIONS_GRAPH% { ?s ?deletionsPred ?deletionsObj }
+    }
+}

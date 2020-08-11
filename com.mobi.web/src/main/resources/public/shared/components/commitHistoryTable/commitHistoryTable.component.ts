@@ -110,15 +110,10 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         httpService.cancel(dvm.id);
     }
     dvm.openCommitOverlay = function(commitId) {
-        cm.getDifference(commitId)
-            .then(response => {
-                modalService.openModal('commitInfoOverlay', {
-                    commit: find(dvm.commits, {id: commitId}),
-                    additions: response.additions,
-                    deletions: response.deletions,
-                    entityNameFunc: dvm.entityNameFunc
-                }, undefined, 'lg');
-            }, errorMessage => dvm.error = errorMessage);
+        modalService.openModal('commitInfoOverlay', {
+            commit: find(dvm.commits, {id: commitId}),
+            entityNameFunc: dvm.entityNameFunc
+        }, undefined, 'lg');
     }
     dvm.getCommits = function() {
         if (dvm.commitId) {

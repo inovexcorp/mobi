@@ -1,0 +1,6 @@
+SELECT (COUNT(DISTINCT ?s) as ?numSubjects)
+FROM %ADDITIONS_GRAPH%
+FROM %DELETIONS_GRAPH%
+WHERE {
+    ?s ?p ?o .
+}

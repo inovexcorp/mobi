@@ -113,8 +113,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private GraphRevisionFactory graphRevisionFactory;
     private InProgressCommitFactory inProgressCommitFactory;
 
-    private static final String GET_PAGED_ADDITIONS;
-    private static final String GET_PAGED_DELETIONS;
+    private static final String GET_NUM_UNIQUE_SUBJECTS;
+    private static final String GET_PAGED_CHANGES;
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_COMMIT_ENTITY_CHAIN;
@@ -126,17 +126,15 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
     private static final String ENTITY_BINDING = "entity";
-    private static final String ADDITIONS_GRAPH_BINDING = "additionsGraph";
-    private static final String DELETIONS_GRAPH_BINDING = "deletionsGraph";
 
     static {
         try {
-            GET_PAGED_ADDITIONS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-additions.rq"),
+            GET_NUM_UNIQUE_SUBJECTS = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-num-unique-subjects.rq"),
                     "UTF-8"
             );
-            GET_PAGED_DELETIONS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-deletions.rq"),
+            GET_PAGED_CHANGES = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-changes.rq"),
                     "UTF-8"
             );
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
@@ -923,14 +921,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         return sourceCommits;
     }
 
-    public Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn) {
-        long start = System.currentTimeMillis();
+    public Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
-//        Set<String> sub = new HashSet<>();
 
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
-        log.trace("getCommitDifferenceModified took {}ms", System.currentTimeMillis() - start);
 
         ListMultimap<String, CommitDifference> subjects = MultimapBuilder.treeKeys().arrayListValues().build();
         additions.forEach( (statement, integer) -> {
@@ -943,36 +938,19 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             deletion.addDeletion(statement);
             subjects.put(statement.getSubject().stringValue(), deletion);
         });
-        log.trace("adding to multimap took {}ms", System.currentTimeMillis() - start);
 
         Set<Statement> additionsSet = new HashSet<>();
         Set<Statement> deletionsSet = new HashSet<>();
 
         subjects.keySet().retainAll(subjects.keySet().stream()
-                .skip(0)
-                .limit(50)
+                .skip(offset)
+                .limit(limit)
                 .collect(Collectors.toSet()));
-
-        log.trace("stream took {}ms", System.currentTimeMillis() - start);
-
 
         subjects.forEach((subject, commitDifference) -> {
             additionsSet.addAll(commitDifference.getAdditions());
             deletionsSet.addAll(commitDifference.getDeletions());
         });
-//                .forEach(subject -> {
-//                    CommitDifference diff = CommitDifference.combine(subjects.get(subject));
-//                    additionsSet.addAll(diff.getAdditions());
-//                    deletionsSet.addAll(diff.getDeletions());
-//                });
-
-        log.trace("rests of logic took {}ms", System.currentTimeMillis() - start);
-
-        log.trace("Everything took effect");
-
-        // Grab keys from index a to index b
-
-        // when doing createModel, do additions.keySet().retainAll()
 
         return new Difference.Builder()
                 .additions(mf.createModel(additionsSet))
@@ -993,58 +971,76 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .build();
     }
 
-    public Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn) {
+    public boolean hasMoreResults(Resource commitId, RepositoryConnection conn, int limit, int offset) {
+        Revision revision = getRevision(commitId, conn);
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
+                new IllegalStateException("Additions not set on Commit " + commitId));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
+                new IllegalStateException("Deletions not set on Commit " + commitId));
+        String queryString = GET_NUM_UNIQUE_SUBJECTS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
+        queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
+        TupleQueryResult result = conn.prepareTupleQuery(queryString).evaluate();
+        if (result.hasNext()) {
+            int numSubjects = Integer.parseInt(result.next().getBinding("numSubjects").get().getValue().stringValue());
+            return (numSubjects > (limit + offset));
+        } else {
+            throw new MobiException("Could not retrieve subjects from revision");
+        }
+    }
+
+    public Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn, int limit, int offset) {
         Revision revision = getRevision(commitId, conn);
 
         Model addModel = mf.createModel();
         Model deleteModel = mf.createModel();
-
-
-        // Possible alternate way - somehow query for all unique subjects in the Revision (not sure how to do this)
-        // Then order and page
 
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
                 new IllegalStateException("Additions not set on Commit " + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
                 new IllegalStateException("Deletions not set on Commit " + commitId));
 
-        String additionsQueryString = GET_PAGED_ADDITIONS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
-        additionsQueryString = additionsQueryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
+        String queryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
+        queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
+        queryString = queryString.replace("%LIMIT%", String.valueOf(limit));
+        queryString = queryString.replace("%OFFSET%", String.valueOf(offset));
 
-        String deletionsQueryString = GET_PAGED_DELETIONS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
-        deletionsQueryString = deletionsQueryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
+        TupleQuery query = conn.prepareTupleQuery(queryString);
 
-        log.debug("ADDITIONS QUERY: " + additionsQueryString);
+        log.debug("The query is: " + queryString);
 
-        GraphQuery getAdditionsQuery = conn.prepareGraphQuery(additionsQueryString);
-        GraphQuery getDeletionsQuery = conn.prepareGraphQuery(deletionsQueryString);
+        query.evaluate().forEach(bindingSet -> {
+            if (bindingSet.hasBinding("additionsObj")) {
+                addModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj").get()));
+            }
+            if (bindingSet.hasBinding("deletionsObj")) {
+                deleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj").get()));
+            }
+        });
 
-        getAdditionsQuery.evaluate().forEach(statement ->
-                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-        getDeletionsQuery.evaluate().forEach(statement ->
-                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
+                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
+            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
+                    new IllegalStateException("Additions not set on Commit " + commitId));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
+                    new IllegalStateException("Deletions not set on Commit " + commitId));
 
-        // Search additions and deletionsGraph simultaneously, group by subject, do ordering, provide limit and offset
+            String graphRevisionQueryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + adds.stringValue() + ">");
+            graphRevisionQueryString = graphRevisionQueryString.replace("%DELETIONS_GRAPH%", "<" + dels.stringValue() + ">");
+            graphRevisionQueryString = graphRevisionQueryString.replace("%LIMIT%", String.valueOf(limit));
+            graphRevisionQueryString = graphRevisionQueryString.replace("%OFFSET%", String.valueOf(offset));
 
-//        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
-//                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-//        conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
-//                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+            TupleQuery graphRevisionQuery = conn.prepareTupleQuery(graphRevisionQueryString);
 
-
-//        revision.getGraphRevision().forEach(graphRevision -> {
-//            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
-//                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
-//            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-//                    new IllegalStateException("Additions not set on Commit " + commitId));
-//            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-//                    new IllegalStateException("Deletions not set on Commit " + commitId));
-//
-//            conn.getStatements(null, null, null, adds).forEach(statement ->
-//                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
-//            conn.getStatements(null, null, null, dels).forEach(statement ->
-//                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
-//        });
+            graphRevisionQuery.evaluate().forEach(bindingSet -> {
+                if (bindingSet.hasBinding("additionsObj")) {
+                    addModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj").get(), graph));
+                }
+                if (bindingSet.hasBinding("deletionsObj")) {
+                    deleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj").get(), graph));
+                }
+            });
+        });
 
         return new Difference.Builder()
                 .additions(addModel)

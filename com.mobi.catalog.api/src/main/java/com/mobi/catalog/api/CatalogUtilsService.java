@@ -702,10 +702,11 @@ public interface CatalogUtilsService {
      */
     Difference getCommitDifference(Resource commitId, RepositoryConnection conn);
 
-    Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn);
+    Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn, int limit, int offset);
 
-    Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn);
+    Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn, int limit, int offset);
 
+    boolean hasMoreResults(Resource commitId, RepositoryConnection conn, int limit, int offset);
 
 
     /**
