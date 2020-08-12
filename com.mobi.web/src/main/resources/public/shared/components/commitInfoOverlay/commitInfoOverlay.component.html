@@ -34,7 +34,7 @@
         <div class="changes-container">
             <span class="field-name">Changes</span>
             <!-- <p ng-if="!dvm.resolve.additions.length && !dvm.resolve.deletions.length">(None)</p> -->
-            <commit-changes-display commit-id="dvm.resolve.commit.id" entity-name-func="dvm.resolve.entityNameFunc"></commit-changes-display>
+            <commit-changes-display show-more-changes-func="dvm.showMoreChanges(limit, offset)" entity-name-func="dvm.resolve.entityNameFunc"></commit-changes-display>
         </div>
     </form>
 </div>

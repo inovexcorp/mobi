@@ -30,6 +30,7 @@ import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
+import aQute.bnd.service.diff.Diff;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
@@ -277,7 +278,7 @@ public class CommitRest {
     @ApiOperation("Retrieves the Difference of the two specified Commits.")
     public Response getDifference(@PathParam("sourceId") String sourceId,
                                   @QueryParam("targetId") String targetId,
-                                  @QueryParam("limit") int limit,
+                                  @DefaultValue("-1") @QueryParam("limit") int limit,
                                   @QueryParam("offset") int offset,
                                   @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
@@ -287,15 +288,22 @@ public class CommitRest {
             if (StringUtils.isBlank(targetId)) {
                 Optional<Commit> optCommit = catalogManager.getCommit(vf.createIRI(sourceId));
                 if (optCommit.isPresent()) {
-                    boolean hasMoreResults = catalogManager.hasMoreResults(optCommit.get().getResource(), limit, offset);
-                    return Response.fromResponse(createCommitResponse(optCommit.get(),
-                            catalogManager.getCommitDifferenceModified(optCommit.get().getResource(), limit, offset),
-                            rdfFormat, transformer, bNodeService)).header("Has-More-Results", hasMoreResults).build();
+                    if (limit == -1) {
+                        return createCommitResponse(optCommit.get(),
+                                catalogManager.getCommitDifferenceModified(optCommit.get().getResource(), limit, offset),
+                                rdfFormat, transformer, bNodeService);
+                    } else {
+                        boolean hasMoreResults = catalogManager.hasMoreResults(optCommit.get().getResource(), limit, offset);
+                        return Response.fromResponse(createCommitResponse(optCommit.get(),
+                                catalogManager.getCommitDifferenceModified(optCommit.get().getResource(), limit, offset),
+                                rdfFormat, transformer, bNodeService)).header("Has-More-Results", hasMoreResults).build();
+                    }
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).build();
                 }
             } else {
-                Difference diff = catalogManager.getDifferenceModified(vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
+                Difference diff = (limit == -1) ? catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId)) :
+                            catalogManager.getDifferenceModified(vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
                 return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
                         MediaType.APPLICATION_JSON).build();
             }

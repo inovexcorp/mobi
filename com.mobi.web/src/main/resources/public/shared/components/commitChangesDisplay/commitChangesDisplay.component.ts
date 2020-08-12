@@ -47,7 +47,8 @@ const commitChangesDisplayComponent = {
     template,
     bindings: {
         commitId: '<',
-        entityNameFunc: '<?'
+        entityNameFunc: '<?',
+        showMoreChangesFunc: '<'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -76,7 +77,7 @@ function commitChangesDisplayComponentCtrl(utilService, catalogManagerService) {
     }
     dvm.getMoreResults = function() {
         dvm.offset += dvm.limit;
-        cm.getDifference(dvm.commitId, dvm.limit, dvm.offset)
+        dvm.showMoreChangesFunc({limit: dvm.limit, offset: dvm.offset})
             .then(response => {
                 var adds = map(response.data.additions, '@id');
                 var deletes = map(response.data.deletions, '@id');
@@ -91,7 +92,7 @@ function commitChangesDisplayComponentCtrl(utilService, catalogManagerService) {
 
     function getResults() {
         var results = {};
-        cm.getDifference(dvm.commitId, dvm.limit, dvm.offset)
+        dvm.showMoreChangesFunc({limit: dvm.limit, offset: dvm.offset})
             .then(response => {
                 var adds = map(response.data.additions, '@id');
                 var deletes = map(response.data.deletions, '@id');

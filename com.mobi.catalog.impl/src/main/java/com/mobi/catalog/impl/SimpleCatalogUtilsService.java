@@ -980,12 +980,35 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         String queryString = GET_NUM_UNIQUE_SUBJECTS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
         queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
         TupleQueryResult result = conn.prepareTupleQuery(queryString).evaluate();
+
         if (result.hasNext()) {
             int numSubjects = Integer.parseInt(result.next().getBinding("numSubjects").get().getValue().stringValue());
-            return (numSubjects > (limit + offset));
+            if (numSubjects > (limit + offset)) {
+                return true;
+            }
         } else {
             throw new MobiException("Could not retrieve subjects from revision");
         }
+
+        for (GraphRevision graphRevision : revision.getGraphRevision()) {
+            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
+                    new IllegalStateException("Additions not set on Commit " + commitId));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
+                    new IllegalStateException("Deletions not set on Commit " + commitId));
+
+            String graphRevisionQueryString = GET_NUM_UNIQUE_SUBJECTS.replace("%ADDITIONS_GRAPH%", "<" + adds.stringValue() + ">");
+            graphRevisionQueryString = graphRevisionQueryString.replace("%DELETIONS_GRAPH%", "<" + dels.stringValue() + ">");
+            TupleQueryResult graphRevisionQueryResult = conn.prepareTupleQuery(graphRevisionQueryString).evaluate();
+
+            if (graphRevisionQueryResult.hasNext()) {
+                if (Integer.parseInt(result.next().getBinding("numSubjects").get().getValue().stringValue()) > (limit + offset)) {
+                    return true;
+                }
+            } else {
+                throw new MobiException("Could not retrieve subjects from graphRevision: " + (graphRevision.getRevisionedGraph().isPresent() ? graphRevision.getRevisionedGraph().get().stringValue() : "No Revisioned Graph"));
+            }
+        }
+        return false;
     }
 
     public Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn, int limit, int offset) {
@@ -1005,8 +1028,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         queryString = queryString.replace("%OFFSET%", String.valueOf(offset));
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
-
-        log.debug("The query is: " + queryString);
 
         query.evaluate().forEach(bindingSet -> {
             if (bindingSet.hasBinding("additionsObj")) {

@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
+
 const template = require('./commitInfoOverlay.component.html');
 
 /**
@@ -58,15 +60,20 @@ const commitInfoOverlayComponent = {
     controller: commitInfoOverlayComponentCtrl
 };
 
-commitInfoOverlayComponentCtrl.$inject = ['utilService', 'userManagerService']
+commitInfoOverlayComponentCtrl.$inject = ['utilService', 'userManagerService', 'catalogManagerService']
 
-function commitInfoOverlayComponentCtrl(utilService, userManagerService) {
+function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalogManagerService) {
     var dvm = this;
     dvm.util = utilService;
     dvm.um = userManagerService;
+    dvm.cm = catalogManagerService;
 
     dvm.cancel = function() {
         dvm.dismiss();
+    }
+
+    dvm.showMoreChanges = function(limit, offset) {
+        dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
     }
 }
 

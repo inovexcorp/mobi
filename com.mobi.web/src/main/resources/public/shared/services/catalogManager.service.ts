@@ -1067,9 +1067,9 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
      * @return {Promise} A promise that resolves with the Difference of the two resulting Commit chains or 
      *      rejects with an error message
      */
-    self.getDifference = function(commitId, limit, offset, targetId, format='jsonld') {
+    self.getDifference = function(commitId, targetId, limit, offset,  format='jsonld') {
         var config = {
-            params: { limit, offset, targetId, format }
+            params: { targetId, limit, offset, format }
         };
         return $http.get(commitsPrefix + '/' + encodeURIComponent(commitId) + '/difference', config)
             .then($q.resolve, util.rejectError);
