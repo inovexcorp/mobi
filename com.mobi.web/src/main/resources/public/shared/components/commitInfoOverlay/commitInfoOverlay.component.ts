@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
+import { get } from 'lodash';
 
 const template = require('./commitInfoOverlay.component.html');
 
@@ -67,13 +67,27 @@ function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalog
     dvm.util = utilService;
     dvm.um = userManagerService;
     dvm.cm = catalogManagerService;
+    dvm.additions = {};
+    dvm.deletions = {};
+    dvm.hasMoreResults = false;
+
+    dvm.$onInit = function() {
+        dvm.additions = dvm.resolve.additions;
+        dvm.deletions = dvm.resolve.deletions;
+        dvm.hasMoreResults = dvm.resolve.hasMoreResults;
+    }
 
     dvm.cancel = function() {
         dvm.dismiss();
     }
-
-    dvm.showMoreChanges = function(limit, offset) {
+    dvm.retrieveMoreResults = function(limit, offset) {
         dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
+            .then(response => {
+                dvm.additions = response.data.additions;
+                dvm.deletions = response.data.deletions;
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => dvm.error = errorMessage);
     }
 }
 

@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -290,13 +291,13 @@ public class CommitRest {
                 if (optCommit.isPresent()) {
                     if (limit == -1) {
                         return createCommitResponse(optCommit.get(),
-                                catalogManager.getCommitDifferenceModified(optCommit.get().getResource(), limit, offset),
+                                catalogManager.getCommitDifference(optCommit.get().getResource()),
                                 rdfFormat, transformer, bNodeService);
                     } else {
-                        boolean hasMoreResults = catalogManager.hasMoreResults(optCommit.get().getResource(), limit, offset);
+                        PagedDifference pagedDifference = catalogManager.getCommitDifferencePaged(optCommit.get().getResource(), limit, offset);
                         return Response.fromResponse(createCommitResponse(optCommit.get(),
-                                catalogManager.getCommitDifferenceModified(optCommit.get().getResource(), limit, offset),
-                                rdfFormat, transformer, bNodeService)).header("Has-More-Results", hasMoreResults).build();
+                                pagedDifference.getDifference(),
+                                rdfFormat, transformer, bNodeService)).header("Has-More-Results", pagedDifference.hasMoreResults()).build();
                     }
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).build();

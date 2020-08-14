@@ -27,11 +27,11 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.TreeMultimap;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -60,11 +60,10 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.query.GraphQueryResult;
 import com.mobi.query.TupleQueryResult;
 import com.mobi.query.api.Binding;
+import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.BooleanQuery;
-import com.mobi.query.api.GraphQuery;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
@@ -79,7 +78,6 @@ import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.base.RepositoryResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +85,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -113,7 +109,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private GraphRevisionFactory graphRevisionFactory;
     private InProgressCommitFactory inProgressCommitFactory;
 
-    private static final String GET_NUM_UNIQUE_SUBJECTS;
     private static final String GET_PAGED_CHANGES;
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
@@ -129,10 +124,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     static {
         try {
-            GET_NUM_UNIQUE_SUBJECTS = IOUtils.toString(
-                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-num-unique-subjects.rq"),
-                    "UTF-8"
-            );
             GET_PAGED_CHANGES = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-changes.rq"),
                     "UTF-8"
@@ -971,47 +962,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .build();
     }
 
-    public boolean hasMoreResults(Resource commitId, RepositoryConnection conn, int limit, int offset) {
-        Revision revision = getRevision(commitId, conn);
-        IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + commitId));
-        IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + commitId));
-        String queryString = GET_NUM_UNIQUE_SUBJECTS.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
-        queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
-        TupleQueryResult result = conn.prepareTupleQuery(queryString).evaluate();
-
-        if (result.hasNext()) {
-            int numSubjects = Integer.parseInt(result.next().getBinding("numSubjects").get().getValue().stringValue());
-            if (numSubjects > (limit + offset)) {
-                return true;
-            }
-        } else {
-            throw new MobiException("Could not retrieve subjects from revision");
-        }
-
-        for (GraphRevision graphRevision : revision.getGraphRevision()) {
-            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-                    new IllegalStateException("Additions not set on Commit " + commitId));
-            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-                    new IllegalStateException("Deletions not set on Commit " + commitId));
-
-            String graphRevisionQueryString = GET_NUM_UNIQUE_SUBJECTS.replace("%ADDITIONS_GRAPH%", "<" + adds.stringValue() + ">");
-            graphRevisionQueryString = graphRevisionQueryString.replace("%DELETIONS_GRAPH%", "<" + dels.stringValue() + ">");
-            TupleQueryResult graphRevisionQueryResult = conn.prepareTupleQuery(graphRevisionQueryString).evaluate();
-
-            if (graphRevisionQueryResult.hasNext()) {
-                if (Integer.parseInt(result.next().getBinding("numSubjects").get().getValue().stringValue()) > (limit + offset)) {
-                    return true;
-                }
-            } else {
-                throw new MobiException("Could not retrieve subjects from graphRevision: " + (graphRevision.getRevisionedGraph().isPresent() ? graphRevision.getRevisionedGraph().get().stringValue() : "No Revisioned Graph"));
-            }
-        }
-        return false;
-    }
-
-    public Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn, int limit, int offset) {
+    public PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset) {
         Revision revision = getRevision(commitId, conn);
 
         Model addModel = mf.createModel();
@@ -1024,21 +975,48 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
         String queryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
         queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
-        queryString = queryString.replace("%LIMIT%", String.valueOf(limit));
+        queryString = queryString.replace("%LIMIT%", String.valueOf(limit + 1)); // Query for limit plus 1 to see if more results exist
         queryString = queryString.replace("%OFFSET%", String.valueOf(offset));
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
 
-        query.evaluate().forEach(bindingSet -> {
+        Resource lastSubject = null;
+        Iterator<BindingSet> it = query.evaluate().iterator();
+        while(it.hasNext()) {
+            BindingSet bindingSet = it.next();
             if (bindingSet.hasBinding("additionsObj")) {
                 addModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj").get()));
             }
             if (bindingSet.hasBinding("deletionsObj")) {
                 deleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj").get()));
             }
-        });
+            if (!it.hasNext()) {
+                lastSubject = Bindings.requiredResource(bindingSet, "s"); // Keep track of last subject so we can remove it (we queried for limit + 1 subjects)
+            }
+        }
 
-        revision.getGraphRevision().forEach(graphRevision -> {
+        boolean hasMoreResults = false;
+
+        Set<Resource> setOfSubjects = new HashSet<>();
+        setOfSubjects.addAll(addModel.subjects());
+        setOfSubjects.addAll(deleteModel.subjects());
+
+        // Remove last subject if we retrieved more subjects than the limit
+        if (setOfSubjects.size() > limit) {
+            hasMoreResults = true;
+            if (lastSubject != null) {
+                addModel.remove(lastSubject, null, null);
+                deleteModel.remove(lastSubject, null, null);
+            }
+        }
+
+        Model tempAddModel = mf.createModel();
+        Model tempDeleteModel = mf.createModel();
+
+        for (GraphRevision graphRevision : revision.getGraphRevision()) {
+            tempAddModel.clear();
+            tempDeleteModel.clear();
+
             Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
                     new IllegalStateException("GraphRevision missing Revisioned Graph."));
             IRI adds = graphRevision.getAdditions().orElseThrow(() ->
@@ -1048,25 +1026,47 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
             String graphRevisionQueryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + adds.stringValue() + ">");
             graphRevisionQueryString = graphRevisionQueryString.replace("%DELETIONS_GRAPH%", "<" + dels.stringValue() + ">");
-            graphRevisionQueryString = graphRevisionQueryString.replace("%LIMIT%", String.valueOf(limit));
+            graphRevisionQueryString = graphRevisionQueryString.replace("%LIMIT%", String.valueOf(limit + 1));
             graphRevisionQueryString = graphRevisionQueryString.replace("%OFFSET%", String.valueOf(offset));
 
             TupleQuery graphRevisionQuery = conn.prepareTupleQuery(graphRevisionQueryString);
 
-            graphRevisionQuery.evaluate().forEach(bindingSet -> {
+            lastSubject = null;
+            Iterator<BindingSet> graphRevisionQueryResultIterator = graphRevisionQuery.evaluate().iterator();
+            while(graphRevisionQueryResultIterator.hasNext()) {
+                BindingSet bindingSet = graphRevisionQueryResultIterator.next();
                 if (bindingSet.hasBinding("additionsObj")) {
-                    addModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj").get(), graph));
+                    tempAddModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj").get(), graph));
                 }
                 if (bindingSet.hasBinding("deletionsObj")) {
-                    deleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj").get(), graph));
+                    tempDeleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj").get(), graph));
                 }
-            });
-        });
+                if (!graphRevisionQueryResultIterator.hasNext()) {
+                    lastSubject = Bindings.requiredResource(bindingSet, "s"); // Keep track of last subject so we can remove it (we queried for limit + 1 subjects)
+                }
+            }
 
-        return new Difference.Builder()
+            setOfSubjects.clear();
+            setOfSubjects.addAll(tempAddModel.subjects());
+            setOfSubjects.addAll(tempDeleteModel.subjects());
+
+            // Remove last subject if we retrieved more subjects than the limit
+            if (setOfSubjects.size() > limit) {
+                hasMoreResults = true;
+                if (lastSubject != null) {
+                    tempAddModel.remove(lastSubject, null, null);
+                    tempDeleteModel.remove(lastSubject, null, null);
+                }
+            }
+
+            addModel.addAll(tempAddModel);
+            deleteModel.addAll(tempDeleteModel);
+        }
+
+        return new PagedDifference(new Difference.Builder()
                 .additions(addModel)
                 .deletions(deleteModel)
-                .build();
+                .build(), hasMoreResults);
     }
 
     @Override

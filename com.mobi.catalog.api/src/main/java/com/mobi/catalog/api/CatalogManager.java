@@ -23,10 +23,7 @@ package com.mobi.catalog.api;
  * #L%
  */
 
-import com.mobi.catalog.api.builder.Conflict;
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.builder.DistributionConfig;
-import com.mobi.catalog.api.builder.RecordConfig;
+import com.mobi.catalog.api.builder.*;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -719,9 +716,7 @@ public interface CatalogManager {
      */
     Difference getCommitDifference(Resource commitId);
 
-    Difference getCommitDifferenceModified(Resource commitId, int limit, int offset);
-
-    boolean hasMoreResults(Resource commitId, int limit, int offset);
+    PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset);
 
     /**
      * Removes the InProgressCommit identified by the provided Resources.

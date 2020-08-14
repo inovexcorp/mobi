@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommitDifference {
-    List<Statement> additions;
-    List<Statement> deletions;
+    private List<Statement> additions;
+    private List<Statement> deletions;
 
     public CommitDifference(List<Statement> additions, List<Statement> deletions) {
         setAdditions(additions);

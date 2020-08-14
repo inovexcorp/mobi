@@ -25,6 +25,7 @@ package com.mobi.catalog.api;
 
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -702,12 +703,9 @@ public interface CatalogUtilsService {
      */
     Difference getCommitDifference(Resource commitId, RepositoryConnection conn);
 
-    Difference getCommitDifferenceModified(Resource commitId, RepositoryConnection conn, int limit, int offset);
+    PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset);
 
     Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn, int limit, int offset);
-
-    boolean hasMoreResults(Resource commitId, RepositoryConnection conn, int limit, int offset);
-
 
     /**
      * Builds the Difference based on the provided List of Commit ids. The statements contained in the returned
