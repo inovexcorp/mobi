@@ -912,44 +912,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         return sourceCommits;
     }
 
-    public Difference getCommitDifferenceModified(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
-        Map<Statement, Integer> additions = new HashMap<>();
-        Map<Statement, Integer> deletions = new HashMap<>();
-
-        commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
-
-        ListMultimap<String, CommitDifference> subjects = MultimapBuilder.treeKeys().arrayListValues().build();
-        additions.forEach( (statement, integer) -> {
-            CommitDifference addition = new CommitDifference();
-            addition.addAddition(statement);
-            subjects.put(statement.getSubject().stringValue(), addition);
-        });
-        deletions.forEach( (statement, integer) -> {
-            CommitDifference deletion = new CommitDifference();
-            deletion.addDeletion(statement);
-            subjects.put(statement.getSubject().stringValue(), deletion);
-        });
-
-        Set<Statement> additionsSet = new HashSet<>();
-        Set<Statement> deletionsSet = new HashSet<>();
-
-        subjects.keySet().retainAll(subjects.keySet().stream()
-                .skip(offset)
-                .limit(limit)
-                .collect(Collectors.toSet()));
-
-        subjects.forEach((subject, commitDifference) -> {
-            additionsSet.addAll(commitDifference.getAdditions());
-            deletionsSet.addAll(commitDifference.getDeletions());
-        });
-
-        return new Difference.Builder()
-                .additions(mf.createModel(additionsSet))
-                .deletions(mf.createModel(deletionsSet))
-                .build();
-    }
-
-
     @Override
     public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
         Map<Statement, Integer> additions = new HashMap<>();

@@ -32,7 +32,11 @@ import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
-import com.mobi.catalog.api.builder.*;
+import com.mobi.catalog.api.builder.Conflict;
+import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.PagedDifference;
+import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -1095,7 +1099,7 @@ public class SimpleCatalogManager implements CatalogManager {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCommitDifferencePaged(commitId, conn, limit, offset);
         } finally {
-            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
+            log.trace("getCommitDifferencePaged took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -1232,13 +1236,6 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return utils.getCommitDifference(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
                     conn);
-        }
-    }
-
-    public Difference getDifferenceModified(Resource sourceCommitId, Resource targetCommitId, int limit, int offset) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return utils.getCommitDifferenceModified(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
-                    conn, limit, offset);
         }
     }
 

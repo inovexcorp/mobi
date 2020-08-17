@@ -303,10 +303,10 @@ public class CommitRest {
                     return Response.status(Response.Status.NOT_FOUND).build();
                 }
             } else {
-                Difference diff = (limit == -1) ? catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId)) :
-                            catalogManager.getDifferenceModified(vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
+                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
                 return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
                         MediaType.APPLICATION_JSON).build();
+
             }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
