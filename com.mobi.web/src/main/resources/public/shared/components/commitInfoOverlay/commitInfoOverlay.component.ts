@@ -87,7 +87,11 @@ function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalog
                 dvm.deletions = response.data.deletions;
                 var headers = response.headers();
                 dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-            }, errorMessage => dvm.error = errorMessage);
+            }, errorMessage => {
+                if (errorMessage) {
+                    dvm.util.createErrorToast(errorMessage);
+                }
+            });
     }
 }
 
