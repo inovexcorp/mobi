@@ -125,9 +125,9 @@ describe('Commit Info Overlay component', function() {
                     deletions: []
                 };
                 scope.$digest();
-                this.controller.retrieveMoreResults(0, 100);
+                this.controller.retrieveMoreResults(100, 0);
                 scope.$apply();
-                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 0, 100);
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                 expect(this.controller.additions).toEqual([{}]);
                 expect(this.controller.deletions).toEqual([]);
                 expect(this.controller.hasMoreResults).toEqual(true);
@@ -140,9 +140,9 @@ describe('Commit Info Overlay component', function() {
                 };
                 scope.$digest();
                 catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
-                this.controller.retrieveMoreResults(0, 100);
+                this.controller.retrieveMoreResults(100, 0);
                 scope.$apply();
-                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 0, 100);
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
         });
