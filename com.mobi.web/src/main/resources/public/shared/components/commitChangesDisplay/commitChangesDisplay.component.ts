@@ -77,18 +77,18 @@ function commitChangesDisplayComponentCtrl(utilService) {
             dvm.index = 0;
             dvm.results = getResults();
         } else {
-            getPagedResults();
+            dvm.addPagedChangesToResults();
         }
     }
-    function getPagedResults() {
+    dvm.addPagedChangesToResults = function() {
         forEach(dvm.list, id => {
             addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
         });
         dvm.showMore = dvm.hasMoreResults;
     }
-    dvm.getMorePagedResults = function() {
+    dvm.getMorePagedChanges = function() {
         dvm.index += dvm.size;
-        dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index});
+        dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index}); // Should trigger $onChanges
     }
     dvm.getMoreResults = function() {
         dvm.index++;
