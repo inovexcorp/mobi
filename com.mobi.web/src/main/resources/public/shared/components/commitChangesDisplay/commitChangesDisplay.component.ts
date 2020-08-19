@@ -100,7 +100,7 @@ function commitChangesDisplayComponentCtrl(utilService) {
         if (!dvm.showMoreResultsFunc) {
             dvm.getMoreResults();
         } else {
-            dvm.getMorePagedResults();
+            dvm.getMorePagedChanges();
         }
     }
     function getResults() {
