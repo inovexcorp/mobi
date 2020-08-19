@@ -25,8 +25,6 @@ package com.mobi.catalog.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.MultimapBuilder;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
@@ -1066,7 +1064,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .additions(addModel)
                 .deletions(deleteModel)
                 .build();
-
     }
 
     @Override

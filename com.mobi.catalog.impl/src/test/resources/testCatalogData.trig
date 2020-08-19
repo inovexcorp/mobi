@@ -1406,6 +1406,40 @@ GRAPH deletions:quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1
     <http://mobi.com/test/object2> dc:title "Test 1 Title" .
 }
 
+GRAPH commits:quad-test4 {
+    commits:quad-test4 a mcat:Commit ;
+        dc:title "Quad Test 4" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:quad-test4 ;
+        prov:generated revisions:revision4 .
+
+    revisions:revision4 a mcat:Revision ;
+        mcat:additions additions:quad-test4 ;
+        mcat:deletions deletions:quad-test4 ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph1;
+            mcat:additions additions:quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1
+        ] ,
+        [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph4 ;
+            mcat:additions additions:quad-test4%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph4 ;
+            mcat:deletions deletions:quad-test4%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph4
+        ] .
+}
+
+GRAPH additions:quad-test4%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph4 {
+    <http://mobi.com/test/object2> dc:title "Test 4 Title" .
+    <http://mobi.com/test/object99> dc:title "Test 4 Second Title" .
+}
+
+GRAPH deletions:quad-test4%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph4 {
+    <http://mobi.com/test/object2> dc:title "Test 3 Title" .
+    <http://mobi.com/test/object99> dc:title "Test 4 Alt Second Title" .
+}
+
 # Quad Revisioning - InProgressCommit
 
 GRAPH commits:quad-in-progress-commit {
