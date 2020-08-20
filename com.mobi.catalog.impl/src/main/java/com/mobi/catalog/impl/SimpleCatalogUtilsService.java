@@ -922,6 +922,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .build();
     }
 
+    @Override
     public PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset) {
         Revision revision = getRevision(commitId, conn);
 

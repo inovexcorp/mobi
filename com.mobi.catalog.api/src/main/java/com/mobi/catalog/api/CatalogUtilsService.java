@@ -706,8 +706,8 @@ public interface CatalogUtilsService {
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a PagedDifference.
      * The statements returned will be paged by subject using the provided limit and offset. The statements contained in
-     * the returned Difference will have a context that matches the tracked quad. That is, tracked triples will have no
-     * context and tracked quads will have a context that matches the data named graph.
+     * the returned Difference will have no context. Quads will not be included in the paged difference.
+     * TODO: Quad support may be added in the future.
      *
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
      * @param conn     The RepositoryConnection which contains the requested Commit.
