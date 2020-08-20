@@ -970,59 +970,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             }
         }
 
-        Model tempAddModel = mf.createModel();
-        Model tempDeleteModel = mf.createModel();
-
-        for (GraphRevision graphRevision : revision.getGraphRevision()) {
-            tempAddModel.clear();
-            tempDeleteModel.clear();
-
-            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
-                    new IllegalStateException("GraphRevision missing Revisioned Graph."));
-            IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-                    new IllegalStateException("Additions not set on Commit " + commitId));
-            IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-                    new IllegalStateException("Deletions not set on Commit " + commitId));
-
-            String graphRevisionQueryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + adds.stringValue() + ">");
-            graphRevisionQueryString = graphRevisionQueryString.replace("%DELETIONS_GRAPH%", "<" + dels.stringValue() + ">");
-            graphRevisionQueryString = graphRevisionQueryString.replace("%LIMIT%", String.valueOf(limit + 1));
-            graphRevisionQueryString = graphRevisionQueryString.replace("%OFFSET%", String.valueOf(offset));
-
-            TupleQuery graphRevisionQuery = conn.prepareTupleQuery(graphRevisionQueryString);
-
-            lastSubject = null;
-            Iterator<BindingSet> graphRevisionQueryResultIterator = graphRevisionQuery.evaluate().iterator();
-            while(graphRevisionQueryResultIterator.hasNext()) {
-                BindingSet bindingSet = graphRevisionQueryResultIterator.next();
-                if (bindingSet.hasBinding("additionsObj")) {
-                    tempAddModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "additionsPred"), bindingSet.getValue("additionsObj").get(), graph));
-                }
-                if (bindingSet.hasBinding("deletionsObj")) {
-                    tempDeleteModel.add(vf.createStatement(Bindings.requiredResource(bindingSet, "s"), (IRI) Bindings.requiredResource(bindingSet, "deletionsPred"), bindingSet.getValue("deletionsObj").get(), graph));
-                }
-                if (!graphRevisionQueryResultIterator.hasNext()) {
-                    lastSubject = Bindings.requiredResource(bindingSet, "s"); // Keep track of last subject so we can remove it (we queried for limit + 1 subjects)
-                }
-            }
-
-            setOfSubjects.clear();
-            setOfSubjects.addAll(tempAddModel.subjects());
-            setOfSubjects.addAll(tempDeleteModel.subjects());
-
-            // Remove last subject if we retrieved more subjects than the limit
-            if (setOfSubjects.size() > limit) {
-                hasMoreResults = true;
-                if (lastSubject != null) {
-                    tempAddModel.remove(lastSubject, null, null);
-                    tempDeleteModel.remove(lastSubject, null, null);
-                }
-            }
-
-            addModel.addAll(tempAddModel);
-            deleteModel.addAll(tempDeleteModel);
-        }
-
         return new PagedDifference(new Difference.Builder()
                 .additions(addModel)
                 .deletions(deleteModel)
