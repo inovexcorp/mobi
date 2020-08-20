@@ -39,19 +39,30 @@ const template = require('./objectPropertyBlock.component.html');
  */
 const objectPropertyBlockComponent = {
     template,
-    bindings: {},
+    bindings: {
+        selected:'<'
+    },
     controllerAs: 'dvm',
     controller: objectPropertyBlockComponentCtrl
 };
 
-objectPropertyBlockComponentCtrl.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
+objectPropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyUtilsManagerService', 'modalService'];
 
-function objectPropertyBlockComponentCtrl(ontologyStateService, ontologyUtilsManagerService, modalService) {
+function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontologyUtilsManagerService, modalService) {
     var dvm = this;
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
-    dvm.objectProperties = Object.keys(dvm.os.listItem.objectProperties.iris);
+    dvm.objectProperties = [];
+    dvm.objectPropertiesFiltered = [];
 
+    dvm.$onInit = function() {
+        dvm.objectProperties = Object.keys(dvm.os.listItem.objectProperties.iris);
+        dvm.objectPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.objectProperties), dvm.ontoUtils.getLabelForIRI);
+    }
+    dvm.$onChanges = function (changes) { 
+        // console.log(changes);
+        // TODO need to do something here? 
+    }
     dvm.openAddObjectPropOverlay = function() {
         dvm.os.editingProperty = false;
         dvm.os.propertySelect = undefined;

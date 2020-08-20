@@ -45,23 +45,30 @@ const annotationBlockComponent = {
     template,
     bindings: {
         highlightIris: '<',
-        highlightText: '<'
+        highlightText: '<',
+        selected:'<'
     },
     controllerAs: 'dvm',
     controller: annotationBlockComponentCtrl
 };
 
-annotationBlockComponentCtrl.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
+annotationBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'ontologyUtilsManagerService', 'propertyManagerService', 'modalService'];
 
-function annotationBlockComponentCtrl(ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
+function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUtilsManagerService, propertyManagerService, modalService) {
     var dvm = this;
     var pm = propertyManagerService;
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.annotations = [];
+    dvm.annotationsFiltered = [];
 
     dvm.$onInit = function() {
         dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
+        dvm.annotationsFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
+    }
+    dvm.$onChanges = function (changes) { 
+        // console.log(changes);
+        // TODO need to do something here? 
     }
     dvm.openAddOverlay = function() {
         dvm.os.editingAnnotation = false;

@@ -42,19 +42,30 @@ const template = require('./datatypePropertyBlock.component.html');
  */
 const datatypePropertyBlockComponent = {
     template,
-    bindings: {},
+    bindings: {
+        selected:'<'
+    },
     controllerAs: 'dvm',
     controller: datatypePropertyBlockComponentCtrl
 };
 
-datatypePropertyBlockComponentCtrl.$inject = ['ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'modalService'];
+datatypePropertyBlockComponentCtrl.$inject = ['$filter', 'ontologyStateService', 'prefixes', 'ontologyUtilsManagerService', 'modalService'];
 
-function datatypePropertyBlockComponentCtrl(ontologyStateService, prefixes, ontologyUtilsManagerService, modalService) {
+function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService, modalService) {
     var dvm = this;
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
-    dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
+    dvm.dataProperties = [];
+    dvm.dataPropertiesFiltered = [];
 
+    dvm.$onInit = function() {
+        dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
+        dvm.dataPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
+    }
+    dvm.$onChanges = function (changes) { 
+        // console.log(changes);
+        // TODO need to do something here? 
+    }
     dvm.openAddDataPropOverlay = function() {
         dvm.os.editingProperty = false;
         dvm.os.propertySelect = undefined;
