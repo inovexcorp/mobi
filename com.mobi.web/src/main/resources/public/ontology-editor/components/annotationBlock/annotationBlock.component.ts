@@ -67,17 +67,14 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         dvm.updatePropertiesFiltered();
         dvm.initialized = true;
     }
-    dvm.updatePropertiesFiltered = function(){
-        dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
-        dvm.annotationsFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
-    }
     dvm.$onChanges = function (changes) { 
-        console.log("onChanges");
-        console.log(changes);
-
         if(dvm.initialized){
             dvm.updatePropertiesFiltered();
         }
+    }
+    dvm.updatePropertiesFiltered = function(){
+        dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
+        dvm.annotationsFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
     }
     dvm.openAddOverlay = function() {
         dvm.os.editingAnnotation = false;
