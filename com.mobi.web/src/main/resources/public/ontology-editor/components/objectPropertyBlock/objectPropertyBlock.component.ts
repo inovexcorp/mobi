@@ -56,6 +56,10 @@ function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontolog
     dvm.objectPropertiesFiltered = [];
 
     dvm.$onInit = function() {
+        dvm.updatePropertiesFiltered();
+    }
+    dvm.updatePropertiesFiltered = function(){
+        console.log('objectPropertyBlockComponentCtrl - updatePropertiesFiltered');
         dvm.objectProperties = Object.keys(dvm.os.listItem.objectProperties.iris);
         dvm.objectPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.objectProperties), dvm.ontoUtils.getLabelForIRI);
     }
@@ -68,18 +72,20 @@ function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontolog
         dvm.os.propertySelect = undefined;
         dvm.os.propertyValue = '';
         dvm.os.propertyIndex = 0;
-        modalService.openModal('objectPropertyOverlay');
+        modalService.openModal('objectPropertyOverlay', {}, dvm.updatePropertiesFiltered);
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
         dvm.key = key;
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
             dvm.ontoUtils.removeProperty(key, index).then(dvm.removeObjectProperty);
+            dvm.updatePropertiesFiltered();
         });
     }
     dvm.removeObjectProperty = function(axiomObject) {
         var types = dvm.os.listItem.selected['@type'];
         if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
             dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);
+            dvm.updatePropertiesFiltered();
         }
     }
 }

@@ -61,14 +61,23 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.annotations = [];
     dvm.annotationsFiltered = [];
+    dvm.initialized = false;
 
     dvm.$onInit = function() {
+        dvm.updatePropertiesFiltered();
+        dvm.initialized = true;
+    }
+    dvm.updatePropertiesFiltered = function(){
         dvm.annotations = union(Object.keys(dvm.os.listItem.annotations.iris), pm.defaultAnnotations, pm.owlAnnotations);
         dvm.annotationsFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.annotations), dvm.ontoUtils.getLabelForIRI);
     }
     dvm.$onChanges = function (changes) { 
-        // console.log(changes);
-        // TODO need to do something here? 
+        console.log("onChanges");
+        console.log(changes);
+
+        if(dvm.initialized){
+            dvm.updatePropertiesFiltered();
+        }
     }
     dvm.openAddOverlay = function() {
         dvm.os.editingAnnotation = false;
@@ -77,11 +86,12 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         dvm.os.annotationType = undefined;
         dvm.os.annotationIndex = 0;
         dvm.os.annotationLanguage = 'en';
-        modalService.openModal('annotationOverlay');
+        modalService.openModal('annotationOverlay', {}, dvm.updatePropertiesFiltered);
     }
     dvm.openRemoveOverlay = function(key, index) {
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
             dvm.ontoUtils.removeProperty(key, index);
+            dvm.updatePropertiesFiltered();
         });
     }
     dvm.editClicked = function(annotation, index) {
@@ -92,7 +102,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         dvm.os.annotationIndex = index;
         dvm.os.annotationType = get(annotationObj, '@type');
         dvm.os.annotationLanguage = get(annotationObj, '@language');
-        modalService.openModal('annotationOverlay');
+        modalService.openModal('annotationOverlay', {}, dvm.updatePropertiesFiltered);
     }
 }
 

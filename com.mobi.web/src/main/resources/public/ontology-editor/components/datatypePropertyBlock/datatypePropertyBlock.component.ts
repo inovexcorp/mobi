@@ -59,6 +59,10 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
     dvm.dataPropertiesFiltered = [];
 
     dvm.$onInit = function() {
+        dvm.updatePropertiesFiltered();
+    }
+    dvm.updatePropertiesFiltered = function(){
+        console.log('datatypePropertyBlockComponentCtrl - updatePropertiesFiltered');
         dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
         dvm.dataPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
     }
@@ -73,7 +77,7 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
         dvm.os.propertyType = prefixes.xsd + 'string';
         dvm.os.propertyIndex = 0;
         dvm.os.propertyLanguage = 'en';
-        modalService.openModal('datatypePropertyOverlay');
+        modalService.openModal('datatypePropertyOverlay',{} ,dvm.updatePropertiesFiltered);
     }
     dvm.editDataProp = function(property, index) {
         var propertyObj = dvm.os.listItem.selected[property][index];
@@ -83,11 +87,12 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
         dvm.os.propertyIndex = index;
         dvm.os.propertyLanguage = get(propertyObj, '@language');
         dvm.os.propertyType = dvm.os.propertyLanguage ? prefixes.rdf + 'langString' : get(propertyObj, '@type');
-        modalService.openModal('datatypePropertyOverlay');
+        modalService.openModal('datatypePropertyOverlay',{} ,dvm.updatePropertiesFiltered);
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {
             dvm.ontoUtils.removeProperty(key, index);
+            dvm.updatePropertiesFiltered();
         });
     }
 }
