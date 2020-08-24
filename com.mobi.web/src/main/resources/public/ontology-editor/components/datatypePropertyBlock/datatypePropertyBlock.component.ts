@@ -57,20 +57,16 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.dataProperties = [];
     dvm.dataPropertiesFiltered = [];
-    dvm.initialized = false;
 
     dvm.$onInit = function() {
         dvm.updatePropertiesFiltered();
-        dvm.initialized = true;
     }
     dvm.$onChanges = function (changes) { 
-        if(dvm.initialized){
-            dvm.updatePropertiesFiltered();
-        }
+        dvm.updatePropertiesFiltered();
     }
     dvm.updatePropertiesFiltered = function(){
         dvm.dataProperties = Object.keys(dvm.os.listItem.dataProperties.iris);
-        dvm.dataPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
+        dvm.dataPropertiesFiltered = $filter("orderBy")($filter("showProperties")(dvm.os.listItem.selected, dvm.dataProperties), dvm.ontoUtils.getLabelForIRI);
     }
     dvm.openAddDataPropOverlay = function() {
         dvm.os.editingProperty = false;

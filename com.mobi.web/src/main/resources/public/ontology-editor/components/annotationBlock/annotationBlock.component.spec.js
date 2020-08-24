@@ -54,7 +54,7 @@ describe('Annotation Block component', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        this.element = $compile(angular.element('<annotation-block></annotation-block>'))(scope);
+        this.element = $compile(angular.element('<annotation-block selected="dvm.os.listItem.selected"></annotation-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('annotationBlock');
     });
@@ -83,6 +83,8 @@ describe('Annotation Block component', function() {
             expect(this.element.querySelectorAll('.section-header').length).toEqual(1);
         });
         it('depending on how many annotations there are', function() {
+            expect(this.controller.annotationsFiltered).toEqual(['prop1', 'prop2']);
+            console.log(this.element);
             expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
@@ -120,7 +122,7 @@ describe('Annotation Block component', function() {
             expect(ontologyStateSvc.annotationType).toBeUndefined();
             expect(ontologyStateSvc.annotationIndex).toEqual(0);
             expect(ontologyStateSvc.annotationLanguage).toEqual('en');
-            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay', jasmine.any(Object), jasmine.any(Function));
         });
         it('should set the correct manager values when opening the Remove Annotation Overlay', function() {
             this.controller.openRemoveOverlay('key', 1);
@@ -139,7 +141,7 @@ describe('Annotation Block component', function() {
             expect(ontologyStateSvc.annotationIndex).toEqual(0);
             expect(ontologyStateSvc.annotationType).toEqual('type');
             expect(ontologyStateSvc.annotationLanguage).toEqual('language');
-            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay', jasmine.any(Object), jasmine.any(Function));
         });
     });
 });

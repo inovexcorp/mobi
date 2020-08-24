@@ -51,7 +51,7 @@ describe('Object Property Block component', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        this.element = $compile(angular.element('<object-property-block></object-property-block>'))(scope);
+        this.element = $compile(angular.element('<object-property-block selected="dvm.os.listItem.selected"></object-property-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('objectPropertyBlock');
     });
@@ -106,7 +106,7 @@ describe('Object Property Block component', function() {
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toEqual('');
             expect(ontologyStateSvc.propertyIndex).toEqual(0);
-            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay', jasmine.any(Object), jasmine.any(Function));
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);
