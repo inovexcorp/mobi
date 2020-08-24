@@ -12,59 +12,68 @@ SELECT
 (GROUP_CONCAT(DISTINCT ?prefNames;separator="�") as ?pref_names_array)
 (GROUP_CONCAT(DISTINCT ?names;separator="�") as ?names_array)
 WHERE {
-    ?entity a ?type .
-    FILTER(isIRI(?entity))
+    {
+        ?entity a ?type .
+    	FILTER(isIRI(?entity))
 
-    ?entity
-    rdfs:label|
-    dcterms:title|
-    dc:title|
-    skos:prefLabel|
-    skos:altLabel|
-    (skos-xl:prefLabel/skos-xl:literalForm)|
-    (skos-xl:altLabel/skos-xl:literalForm)
-    ?names .
-
-    OPTIONAL {
-        ?entity rdfs:label ?label .
-    }
-    OPTIONAL {
-        ?entity dcterms:title ?dctTitle .
-    }
-    OPTIONAL {
-        ?entity dc:title ?dceTitle .
-    }
-    OPTIONAL {
-        ?entity skos:prefLabel ?prefLabel .
-    }
-    OPTIONAL {
-        ?entity skos:altLabel ?altLabel .
-    }
-    OPTIONAL {
-        ?entity skos-xl:prefLabel ?skosPrefLabel .
-        ?skosPrefLabel a skos-xl:Label ;
-                         skos-xl:literalForm ?skosXLPrefLiteralForm .
-    }
-    OPTIONAL {
-        ?entity skos-xl:altLabel ?skosAltLabel .
-        ?skosAltLabel a skos-xl:Label ;
-                        skos-xl:literalForm ?skosXLAltLiteralForm .
+        ?entity
+        rdfs:label|
+        dcterms:title|
+        dc:title|
+        skos:prefLabel|
+        skos:altLabel|
+        (skos-xl:prefLabel/skos-xl:literalForm)|
+        (skos-xl:altLabel/skos-xl:literalForm)
+        ?names .
     }
 
-    BIND(COALESCE(
-        ?label,
-        ?dctTitle,
-        ?dceTitle,
-        ?prefLabel,
-        ?altLabel,
-        ?skosXLPrefLiteralForm,
-        ?skosXLAltLiteralForm) as ?prefNames)
+    UNION {
+        ?entity a ?type .
+    	FILTER(isIRI(?entity))
 
-    FILTER(BOUND(?prefNames))
+        OPTIONAL {
+            ?entity rdfs:label ?label .
+        }
 
-    OPTIONAL {
-        ?entity ?p ?prefNames
-        FILTER(LANGMATCHES(LANG(?prefNames), "EN"))
-        BIND(?prefNames as ?enPrefNames)
+        OPTIONAL {
+            ?entity dcterms:title ?dctTitle .
+        }
+
+        OPTIONAL {
+            ?entity dc:title ?dceTitle .
+        }
+
+        OPTIONAL {
+            ?entity skos:prefLabel ?prefLabel .
+        }
+
+        OPTIONAL {
+            ?entity skos:altLabel ?altLabel .
+        }
+
+        OPTIONAL {
+            ?entity (skos-xl:prefLabel/skos-xl:literalForm) ?skosXLPrefLiteralForm .
+        }
+
+        OPTIONAL {
+            ?entity (skos-xl:altLabel/skos-xl:literalForm) ?skosXLAltLiteralForm .
+        }
+
+        BIND(COALESCE(
+            ?label,
+            ?dctTitle,
+            ?dceTitle,
+            ?prefLabel,
+            ?altLabel,
+            ?skosXLPrefLiteralForm,
+            ?skosXLAltLiteralForm) as ?prefNames)
+
+        FILTER(BOUND(?prefNames))
+
+        OPTIONAL {
+            ?entity ?p ?prefNames
+            FILTER(LANGMATCHES(LANG(?prefNames), "EN"))
+            BIND(?prefNames as ?enPrefNames)
+        }
     }
 } GROUP BY ?entity HAVING BOUND(?entity)
