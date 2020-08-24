@@ -70,7 +70,7 @@ function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontolog
         dvm.os.propertySelect = undefined;
         dvm.os.propertyValue = '';
         dvm.os.propertyIndex = 0;
-        modalService.openModal('objectPropertyOverlay', {}, dvm.updatePropertiesFiltered);
+        modalService.openModal('objectPropertyOverlay' ,{} ,dvm.updatePropertiesFiltered);
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
         dvm.key = key;

@@ -84,9 +84,9 @@ describe('Annotation Block component', function() {
         });
         it('depending on how many annotations there are', function() {
             expect(this.controller.annotationsFiltered).toEqual(['prop1', 'prop2']);
-            console.log(this.element);
             expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
+            this.controller.updatePropertiesFiltered();
             scope.$digest();
             expect(this.element.find('property-values').length).toEqual(0);
         });

@@ -64,6 +64,11 @@ describe('Object Property Block component', function() {
         this.element.remove();
     });
 
+    it('initializes with the correct data', function() {
+        ontologyStateSvc.listItem.objectProperties.iris = {'annotation1': '', 'default2': '', 'owl2': ''};
+        this.controller.$onInit();
+        expect(this.controller.objectProperties).toEqual(['annotation1', 'default2', 'owl2']);
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('OBJECT-PROPERTY-BLOCK');
@@ -95,6 +100,7 @@ describe('Object Property Block component', function() {
         it('depending on how many datatype properties there are', function() {
             expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
+            this.controller.updatePropertiesFiltered();
             scope.$digest();
             expect(this.element.find('property-values').length).toEqual(0);
         });

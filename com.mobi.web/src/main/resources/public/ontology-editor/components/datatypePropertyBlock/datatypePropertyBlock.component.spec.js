@@ -74,7 +74,6 @@ describe('Datatype Property Block component', function() {
         this.controller.$onInit();
         expect(this.controller.dataProperties).toEqual(['annotation1', 'default2', 'owl2']);
     });
-
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('DATATYPE-PROPERTY-BLOCK');
@@ -98,7 +97,6 @@ describe('Datatype Property Block component', function() {
             ontologyStateSvc.canModify.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(1);
-
             ontologyStateSvc.isSelectedImported.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.section-header a').length).toEqual(0);
@@ -107,7 +105,9 @@ describe('Datatype Property Block component', function() {
             expect(this.controller.dataPropertiesFiltered).toEqual(['prop1', 'prop2']);
             expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
+            this.controller.updatePropertiesFiltered();
             scope.$digest();
+            expect(this.controller.dataPropertiesFiltered).toEqual([]);
             expect(this.element.find('property-values').length).toEqual(0);
         });
     });
