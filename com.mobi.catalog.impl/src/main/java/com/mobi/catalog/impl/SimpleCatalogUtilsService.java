@@ -25,8 +25,11 @@ package com.mobi.catalog.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.builder.CommitDifference;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
@@ -921,6 +924,44 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .deletions(mf.createModel(deletions.keySet()))
                 .build();
     }
+
+    public Difference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
+        Map<Statement, Integer> additions = new HashMap<>();
+        Map<Statement, Integer> deletions = new HashMap<>();
+
+        commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+
+        ListMultimap<String, CommitDifference> subjects = MultimapBuilder.treeKeys().arrayListValues().build();
+        additions.forEach( (statement, integer) -> {
+            CommitDifference addition = new CommitDifference();
+            addition.addAddition(statement);
+            subjects.put(statement.getSubject().stringValue(), addition);
+        });
+        deletions.forEach( (statement, integer) -> {
+            CommitDifference deletion = new CommitDifference();
+            deletion.addDeletion(statement);
+            subjects.put(statement.getSubject().stringValue(), deletion);
+        });
+
+        Set<Statement> additionsSet = new HashSet<>();
+        Set<Statement> deletionsSet = new HashSet<>();
+
+        subjects.keySet().retainAll(subjects.keySet().stream()
+                .skip(offset)
+                .limit(limit)
+                .collect(Collectors.toSet()));
+
+        subjects.forEach((subject, commitDifference) -> {
+            additionsSet.addAll(commitDifference.getAdditions());
+            deletionsSet.addAll(commitDifference.getDeletions());
+        });
+
+        return new Difference.Builder()
+                .additions(mf.createModel(additionsSet))
+                .deletions(mf.createModel(deletionsSet))
+                .build();
+    }
+
 
     @Override
     public PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset) {

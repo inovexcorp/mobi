@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { get } from 'lodash';
+
 const template = require('./commitDifferenceTabset.component.html');
 
 /**
@@ -52,8 +54,35 @@ const commitDifferenceTabsetComponent = {
     controller: commitDifferenceTabsetComponentCtrl
 };
 
-function commitDifferenceTabsetComponentCtrl() {
+commitDifferenceTabsetComponentCtrl.$inject = ['catalogManagerService'];
+
+function commitDifferenceTabsetComponentCtrl(catalogManagerService) {
     var dvm = this;
+
+    dvm.cm = catalogManagerService;
+    dvm.additions = {};
+    dvm.deletions = {};
+    dvm.hasMoreResults = false;
+
+    dvm.$onInit = function() {
+        dvm.additions = dvm.difference.additions;
+        dvm.deletions = dvm.difference.deletions;
+        dvm.hasMoreResults = dvm.difference.hasMoreResults;
+    }
+
+    dvm.retrieveMoreResults = function(limit, offset) {
+        dvm.cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'), limit, offset)
+            .then(response => {
+                dvm.additions = response.data.additions;
+                dvm.deletions = response.data.deletions;
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => {
+                if (errorMessage) {
+                    dvm.util.createErrorToast(errorMessage);
+                }
+            });
+    } 
     dvm.tabs = {
         changes: true,
         commits: false
