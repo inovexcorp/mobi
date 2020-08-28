@@ -80,6 +80,7 @@ import java.util.Set;
 public class Models {
     public static final LinkedHashMap<String, List<RDFParser>> preferredExtensionParsers;
     public static final List<RDFParser> rdfParsers;
+    public static final String ERROR_OBJECT_DELIMITER = ";;;";
 
     static {
         // RDFFormat Parsers
