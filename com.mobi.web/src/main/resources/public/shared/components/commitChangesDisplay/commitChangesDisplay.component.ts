@@ -48,7 +48,9 @@ const commitChangesDisplayComponent = {
     bindings: {
         additions: '<',
         deletions: '<',
-        entityNameFunc: '<?'
+        entityNameFunc: '<?',
+        showMoreResultsFunc: '&?',
+        hasMoreResults: '<?'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -58,20 +60,35 @@ commitChangesDisplayComponentCtrl.$inject = ['utilService'];
 
 function commitChangesDisplayComponentCtrl(utilService) {
     var dvm = this;
-    dvm.size = 100;
+    dvm.size = 100; // Must be the same as the limit prop in the commitHistoryTable
     dvm.index = 0;
     dvm.util = utilService;
     dvm.list = [];
     dvm.chunkList = [];
     dvm.results = {};
+    dvm.showMore = false;
 
     dvm.$onChanges = function() {
         var adds = map(dvm.additions, '@id');
         var deletes = map(dvm.deletions, '@id');
         dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        dvm.size = 100;
-        dvm.index = 0;
-        dvm.results = getResults();
+        if (!dvm.showMoreResultsFunc) {
+            dvm.size = 100;
+            dvm.index = 0;
+            dvm.results = getResults();
+        } else {
+            dvm.addPagedChangesToResults();
+        }
+    }
+    dvm.addPagedChangesToResults = function() {
+        forEach(dvm.list, id => {
+            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
+        });
+        dvm.showMore = dvm.hasMoreResults;
+    }
+    dvm.getMorePagedChanges = function() {
+        dvm.index += dvm.size;
+        dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index}); // Should trigger $onChanges
     }
     dvm.getMoreResults = function() {
         dvm.index++;
@@ -79,7 +96,13 @@ function commitChangesDisplayComponentCtrl(utilService) {
             addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
         });
     }
-
+    dvm.moreResults = function() {
+        if (!dvm.showMoreResultsFunc) {
+            dvm.getMoreResults();
+        } else {
+            dvm.getMorePagedChanges();
+        }
+    }
     function getResults() {
         var results = {};
         dvm.chunkList = chunk(dvm.list, dvm.size);
