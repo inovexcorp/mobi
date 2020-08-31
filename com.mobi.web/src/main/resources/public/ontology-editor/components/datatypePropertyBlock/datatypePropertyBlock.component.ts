@@ -85,7 +85,7 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
         dvm.os.propertyIndex = index;
         dvm.os.propertyLanguage = get(propertyObj, '@language');
         dvm.os.propertyType = dvm.os.propertyLanguage ? prefixes.rdf + 'langString' : get(propertyObj, '@type');
-        modalService.openModal('datatypePropertyOverlay' ,{} ,dvm.updatePropertiesFiltered);
+        modalService.openModal('datatypePropertyOverlay', {}, dvm.updatePropertiesFiltered);
     }
     dvm.showRemovePropertyOverlay = function(key, index) {
         modalService.openConfirmModal(dvm.ontoUtils.getRemovePropOverlayMessage(key, index), () => {

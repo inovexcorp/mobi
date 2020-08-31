@@ -95,7 +95,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
         dvm.os.annotationIndex = index;
         dvm.os.annotationType = get(annotationObj, '@type');
         dvm.os.annotationLanguage = get(annotationObj, '@language');
-        modalService.openModal('annotationOverlay' ,{} ,dvm.updatePropertiesFiltered);
+        modalService.openModal('annotationOverlay', {}, dvm.updatePropertiesFiltered);
     }
 }
 
