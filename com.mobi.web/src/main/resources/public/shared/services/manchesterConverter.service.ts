@@ -264,8 +264,10 @@ function manchesterConverterService($filter, ontologyManagerService, prefixes, u
             var rest = head(entity[prefixes.rdf + 'rest']);
             result += getValue(first, jsonld, index, html);
             if (has(rest, '@list')) {
-                result += listKeyword;
-                result += getValue(rest['@list'][0], jsonld, index, html);
+                if (rest['@list'][0]) {
+                    result += listKeyword;
+                    result += getValue(rest['@list'][0], jsonld, index, html);
+                }
                 end = true;
             } else {
                 result += listKeyword;
