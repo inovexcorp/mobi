@@ -84,7 +84,6 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
     dvm.snap = undefined;
     dvm.colors = [];
     dvm.limit = 100;
-
     dvm.error = '';
     dvm.commit = undefined;
     dvm.additions = [];
