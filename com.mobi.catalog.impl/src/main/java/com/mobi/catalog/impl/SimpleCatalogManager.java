@@ -35,6 +35,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -1088,6 +1089,17 @@ public class SimpleCatalogManager implements CatalogManager {
             return utils.getCommitDifference(commitId, conn);
         } finally {
             log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    @Override
+    public PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitDifferencePaged(commitId, conn, limit, offset);
+        } finally {
+            log.trace("getCommitDifferencePaged took {}ms", System.currentTimeMillis() - start);
         }
     }
 

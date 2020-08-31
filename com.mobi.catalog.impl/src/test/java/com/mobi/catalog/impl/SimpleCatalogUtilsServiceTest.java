@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -43,10 +44,7 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
+import com.mobi.rdf.api.*;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.Thing;
@@ -2105,6 +2103,36 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             Difference diff = service.getCommitDifference(commitId, conn);
             assertEquals(adds, diff.getAdditions());
             assertTrue(diff.getDeletions().equals(dels));
+        }
+    }
+
+    /* getCommitDifferencePaged */
+    @Test
+    public void getCommitDifferencePagedTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2");
+            Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
+            Statement firstAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), typeIRI,
+                    VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            Statement firstDelStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), typeIRI,
+                    VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            Statement secondAddStatement = VALUE_FACTORY.createStatement(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"));
+            Statement secondDelStatement = VALUE_FACTORY.createStatement(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 1 Title"));
+
+            PagedDifference firstPageDiff = service.getCommitDifferencePaged(commitId, conn, 1, 0);
+            assertTrue(firstPageDiff.getDifference().getAdditions().contains(firstAddStatement));
+            assertTrue(firstPageDiff.getDifference().getDeletions().contains(firstDelStatement));
+            assertFalse(firstPageDiff.getDifference().getAdditions().contains(secondAddStatement));
+            assertFalse(firstPageDiff.getDifference().getDeletions().contains(secondDelStatement));
+            assertTrue(firstPageDiff.hasMoreResults());
+
+            PagedDifference secondPageDiff = service.getCommitDifferencePaged(commitId, conn, 1, 1);
+            assertTrue(secondPageDiff.getDifference().getAdditions().contains(secondAddStatement));
+            assertTrue(secondPageDiff.getDifference().getDeletions().contains(secondDelStatement));
+            assertFalse(secondPageDiff.getDifference().getAdditions().contains(firstAddStatement));
+            assertFalse(secondPageDiff.getDifference().getDeletions().contains(firstDelStatement));
+            assertFalse(secondPageDiff.hasMoreResults());
         }
     }
 

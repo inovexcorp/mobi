@@ -1217,7 +1217,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getDifference(this.commitId, this.commitId, 'jsonld')
+            catalogManagerSvc.getDifference(this.commitId, this.commitId, null, null, 'jsonld')
                 .then(() => fail('Promise should have rejected'), response =>  expect(response).toEqual('Error Message'));
             flushAndVerify($httpBackend);
             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
@@ -1226,7 +1226,7 @@ describe('Catalog Manager service', function() {
             this.config.format = 'turtle';
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
-            catalogManagerSvc.getDifference(this.commitId, this.commitId, 'turtle')
+            catalogManagerSvc.getDifference(this.commitId, this.commitId, null, null, 'turtle')
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
@@ -1242,6 +1242,16 @@ describe('Catalog Manager service', function() {
             $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
             catalogManagerSvc.getDifference(this.commitId)
                 .then(response => expect(response).toEqual([]), response => fail('Promise should have resolved'));
+            flushAndVerify($httpBackend);
+        });
+        it('with a limit and offset', function() {
+            this.config.format = 'turtle';
+            this.config.limit = 100;
+            this.config.offset = 0;
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getDifference(this.commitId, this.commitId, 100, 0, 'turtle')
+                .then(response => expect(response.data).toEqual([]), response => fail('Promise should have resolved'));
             flushAndVerify($httpBackend);
         });
     });
