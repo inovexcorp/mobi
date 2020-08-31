@@ -260,12 +260,19 @@ public class CommitRest {
     }
 
     /**
-     * Gets the {@link Difference} for the specified commit or between the two specified {@link Commit}s.
+     * Gets the {@link Difference} for the specified commit or between the two specified {@link Commit}s. If a limit and
+     * offset are passed in, retrieve the differences for the paged subjects using the limit and offset. If the offset
+     * is greater than the number of subjects, the additions and deletions arrays of the response object will be empty
+     * arrays. If limit and offset are provided, a header called has-more-results will be added to the response object
+     * that indicates whether more pages of results exist.
      *
      * @param sourceId  {@link String} value of the source {@link Commit} ID. NOTE: Assumes an {@link IRI} unless
      *                  {@link String} starts with "{@code _:}".
      * @param targetId  Optional {@link String} value of the target {@link Commit} ID. NOTE: Assumes an {@link IRI}
      *                  unless {@link String} starts with "{@code _:}".
+     * @param limit     An optional limit of the number of subjects to retrieve the differences for. The number of subjects in the response
+     *                  object may be less than the limit due to the way some blank nodes are skolemized.
+     * @param offset    An optional integer offset of the subject to start collecting differences from.
      * @param rdfFormat {@link String} representation of the desired {@link RDFFormat}. Default value is
      *                  {@code "jsonld"}.
      * @return A {@link Response} containing the {@link Difference} for the specified commit or between the
