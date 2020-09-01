@@ -76,10 +76,12 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
             cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                 .then(target => {
                     dvm.targetHeadCommitId = target["http://mobi.com/ontologies/catalog#head"][0]["@id"];
-                    return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId);
+                    return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0);
                     }, $q.reject)
-                .then( diff => {
-                    dvm.os.listItem.merge.difference = diff;
+                .then(response => {
+                    dvm.os.listItem.merge.difference = response.data;
+                    var headers = response.headers();
+                    dvm.os.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
                 }, errorMessage => {
                     dvm.util.createErrorToast(errorMessage);
                     dvm.os.listItem.merge.difference = undefined;

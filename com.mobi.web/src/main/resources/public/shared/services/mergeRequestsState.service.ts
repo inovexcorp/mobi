@@ -253,9 +253,11 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                     request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
                     request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
                     request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
-                    cm.getDifference(request.sourceCommit, request.targetCommit)
-                        .then(diff => {
-                            request.difference = diff;
+                    cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0)
+                        .then(response => {
+                            request.difference = response.data;
+                            var headers = response.headers();
+                            request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';        
                         }, util.createErrorToast)
                 } else {
                     var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');

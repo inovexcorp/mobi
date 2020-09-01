@@ -925,9 +925,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .build();
     }
 
-    public Difference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
+    public PagedDifference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
+        boolean hasMoreResults = false;
 
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
 
@@ -948,18 +949,25 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
         subjects.keySet().retainAll(subjects.keySet().stream()
                 .skip(offset)
-                .limit(limit)
+                .limit(limit + 1)
                 .collect(Collectors.toSet()));
+
+        if(subjects.keySet().size() > limit) {
+            hasMoreResults = true;
+            subjects.keySet().retainAll(subjects.keySet().stream()
+                    .limit(limit)
+                    .collect(Collectors.toSet()));
+        }
 
         subjects.forEach((subject, commitDifference) -> {
             additionsSet.addAll(commitDifference.getAdditions());
             deletionsSet.addAll(commitDifference.getDeletions());
         });
 
-        return new Difference.Builder()
+        return new PagedDifference(new Difference.Builder()
                 .additions(mf.createModel(additionsSet))
                 .deletions(mf.createModel(deletionsSet))
-                .build();
+                .build(), hasMoreResults);
     }
 
 
