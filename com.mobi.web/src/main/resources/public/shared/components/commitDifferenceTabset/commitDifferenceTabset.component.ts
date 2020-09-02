@@ -54,24 +54,28 @@ const commitDifferenceTabsetComponent = {
     controller: commitDifferenceTabsetComponentCtrl
 };
 
-commitDifferenceTabsetComponentCtrl.$inject = ['catalogManagerService'];
+commitDifferenceTabsetComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
 
-function commitDifferenceTabsetComponentCtrl(catalogManagerService) {
+function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService) {
     var dvm = this;
 
     dvm.cm = catalogManagerService;
+    dvm.util = utilService;
     dvm.additions = {};
     dvm.deletions = {};
     dvm.hasMoreResults = false;
 
-    dvm.$onInit = function() {
-        dvm.additions = dvm.difference.additions;
-        dvm.deletions = dvm.difference.deletions;
-        dvm.hasMoreResults = dvm.difference.hasMoreResults;
+    dvm.$onChanges = function(changesObj) {
+        // Technically when this component is created it doesn't have a difference until the getDifference REST endpoint completes
+        if (changesObj.difference && dvm.difference) { 
+            dvm.additions = dvm.difference.additions;
+            dvm.deletions = dvm.difference.deletions;
+            dvm.hasMoreResults = dvm.difference.hasMoreResults;
+        }
     }
 
     dvm.retrieveMoreResults = function(limit, offset) {
-        dvm.cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'), limit, offset)
+        dvm.cm.getDifference(dvm.commitId, dvm.targetId, limit, offset)
             .then(response => {
                 dvm.additions = response.data.additions;
                 dvm.deletions = response.data.deletions;

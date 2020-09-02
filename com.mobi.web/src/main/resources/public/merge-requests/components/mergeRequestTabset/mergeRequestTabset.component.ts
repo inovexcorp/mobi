@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { get } from 'lodash';
+
 import './mergeRequestTabset.component.scss';
 
 const template = require('./mergeRequestTabset.component.html');
@@ -43,19 +45,48 @@ const mergeRequestTabsetComponent = {
     template,
     bindings: {
         request: '<',
-        updateRequest: '&'
+        updateRequest: '&',
+        difference: '<'
     },
     controllerAs: 'dvm',
     controller: mergeRequestTabsetComponentCtrl,
 };
 
-function mergeRequestTabsetComponentCtrl() {
+mergeRequestTabsetComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
+
+function mergeRequestTabsetComponentCtrl(catalogManagerService, utilService) {
     var dvm = this;
+    var cm = catalogManagerService;
+    var util = utilService;
+    dvm.additions = {};
+    dvm.deletions = {};
+    dvm.hasMoreResults = false;
+
     dvm.tabs = {
         discussion: true,
         changes: false,
         commits: false
     };
+    dvm.$onChanges = function(changesObj) {
+        if (changesObj.difference && dvm.difference) { 
+            dvm.additions = dvm.difference.additions;
+            dvm.deletions = dvm.difference.deletions;
+            dvm.hasMoreResults = dvm.difference.hasMoreResults;
+        }
+    }
+    dvm.retrieveMoreResults = function(limit, offset) {
+        cm.getDifference(dvm.request.sourceCommit, dvm.request.targetCommit, limit, offset)
+            .then(response => {
+                dvm.additions = response.data.additions;
+                dvm.deletions = response.data.deletions;
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => {
+                if (errorMessage) {
+                    util.createErrorToast(errorMessage);
+                }
+            });
+    }
 }
 
 export default mergeRequestTabsetComponent;

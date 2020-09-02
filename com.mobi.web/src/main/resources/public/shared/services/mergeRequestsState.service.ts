@@ -276,10 +276,12 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                                 request.targetBranch = branch;
                                 request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                                 request.targetTitle = util.getDctermsValue(branch, 'title');
-                                return cm.getDifference(request.sourceCommit, request.targetCommit);
+                                return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0);
                             }, $q.reject)
-                            .then(diff => {
-                                request.difference = diff;
+                            .then(response => {
+                                request.difference = response.data;
+                                var headers = response.headers();
+                                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';    
                                 return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                             }, $q.reject)
                             .then(conflicts => request.conflicts = conflicts, util.createErrorToast);

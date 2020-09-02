@@ -86,6 +86,7 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
                     dvm.util.createErrorToast(errorMessage);
                     dvm.os.listItem.merge.difference = undefined;
                 });
+                
         } else {
             dvm.os.listItem.merge.difference = undefined;
         }
