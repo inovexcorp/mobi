@@ -71,11 +71,13 @@ function mergeRequestViewComponentCtrl($q, mergeRequestManagerService, mergeRequ
         dvm.mm.getRequest(dvm.state.selected.jsonld['@id'])
             .then(jsonld => {
                 dvm.state.selected.jsonld = jsonld;
-                dvm.state.setRequestDetails(dvm.state.selected);
-            }, error => {
+                return dvm.state.setRequestDetails(dvm.state.selected);
+            }, () => {
                 dvm.util.createWarningToast('The request you had selected no longer exists');
                 dvm.back();
-            });
+            }).then(() => {
+                dvm.state.selected = angular.copy(dvm.state.selected);
+            }, dvm.util.createErrorToast);
     }
     dvm.back = function() {
         dvm.state.selected = undefined;

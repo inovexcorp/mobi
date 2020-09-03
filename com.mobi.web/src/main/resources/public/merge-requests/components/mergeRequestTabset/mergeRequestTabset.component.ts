@@ -45,8 +45,7 @@ const mergeRequestTabsetComponent = {
     template,
     bindings: {
         request: '<',
-        updateRequest: '&',
-        difference: '<'
+        updateRequest: '&'
     },
     controllerAs: 'dvm',
     controller: mergeRequestTabsetComponentCtrl,
@@ -68,10 +67,10 @@ function mergeRequestTabsetComponentCtrl(catalogManagerService, utilService) {
         commits: false
     };
     dvm.$onChanges = function(changesObj) {
-        if (changesObj.difference && dvm.difference) { 
-            dvm.additions = dvm.difference.additions;
-            dvm.deletions = dvm.difference.deletions;
-            dvm.hasMoreResults = dvm.difference.hasMoreResults;
+        if (changesObj.request && dvm.request.difference) { 
+            dvm.additions = dvm.request.difference.additions;
+            dvm.deletions = dvm.request.difference.deletions;
+            dvm.hasMoreResults = dvm.request.difference.hasMoreResults;
         }
     }
     dvm.retrieveMoreResults = function(limit, offset) {

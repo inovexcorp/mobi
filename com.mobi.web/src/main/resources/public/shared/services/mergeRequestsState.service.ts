@@ -245,7 +245,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         request.removeSource = '';
         request.difference = '';
         request.comments = [];
-        mm.getComments(request.jsonld['@id'])
+        return mm.getComments(request.jsonld['@id'])
             .then(comments => {
                 request.comments = comments;
                 if (mm.isAccepted(request.jsonld)) {
@@ -271,7 +271,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                         }, $q.reject);
 
                     if (targetIri) {
-                        promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
+                        return promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
                             .then(branch => {
                                 request.targetBranch = branch;
                                 request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
