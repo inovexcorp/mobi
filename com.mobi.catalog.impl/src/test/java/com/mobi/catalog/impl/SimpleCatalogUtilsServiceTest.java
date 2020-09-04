@@ -1959,18 +1959,23 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
     public void getRevisionChangesWithListTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Resource subject = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
+            Resource ontologySub = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
             List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
                     VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
 
-            Model expectAdd = MODEL_FACTORY.createModel();
-            expectAdd.add(VALUE_FACTORY.createStatement(subject, titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title")));
-            Model expectDel = MODEL_FACTORY.createModel();
-            expectDel.add(VALUE_FACTORY.createStatement(subject, titleIRI, VALUE_FACTORY.createLiteral("Test 0 Title")));
+            Statement ontologyAddStmt = VALUE_FACTORY.createStatement(ontologySub, titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"));
+            Statement classAddStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            Statement ontologyDelStmt = VALUE_FACTORY.createStatement(ontologySub, titleIRI, VALUE_FACTORY.createLiteral("Test 0 Title"));
+            Statement classDelStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 1"));
 
             Difference result = service.getCommitDifference(commits, conn);
-            result.getAdditions().forEach(statement -> assertTrue(expectAdd.contains(statement)));
-            result.getDeletions().forEach(statement -> assertTrue(expectDel.contains(statement)));
+            assertTrue(result.getAdditions().contains(ontologyAddStmt));
+            assertTrue(result.getAdditions().contains(classAddStmt));
+
+            assertTrue(result.getDeletions().contains(ontologyDelStmt));
+            assertTrue(result.getDeletions().contains(classDelStmt));
         }
     }
 
@@ -2002,6 +2007,40 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
         }
     }
 
+    /* getCommitDifferencePaged(List<Resource>, RepositoryConnection) */
+
+    @Test
+    public void getPagedRevisionChangesWithListTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource ontologySub = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
+            List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
+
+            Statement ontologyAddStmt = VALUE_FACTORY.createStatement(ontologySub, titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"));
+            Statement classAddStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            Statement ontologyDelStmt = VALUE_FACTORY.createStatement(ontologySub, titleIRI, VALUE_FACTORY.createLiteral("Test 0 Title"));
+            Statement classDelStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 1"));
+
+            PagedDifference firstPage = service.getCommitDifferencePaged(commits, conn, 1, 0);
+            assertTrue(firstPage.getDifference().getAdditions().contains(classAddStmt));
+            assertTrue(firstPage.getDifference().getDeletions().contains(classDelStmt));
+            assertFalse(firstPage.getDifference().getAdditions().contains(ontologyAddStmt));
+            assertFalse(firstPage.getDifference().getDeletions().contains(ontologyDelStmt));
+            assertTrue(firstPage.hasMoreResults());
+
+            PagedDifference secondPage = service.getCommitDifferencePaged(commits, conn, 1, 1);
+            assertFalse(secondPage.getDifference().getAdditions().contains(classAddStmt));
+            assertFalse(secondPage.getDifference().getDeletions().contains(classDelStmt));
+            assertTrue(secondPage.getDifference().getAdditions().contains(ontologyAddStmt));
+            assertTrue(secondPage.getDifference().getDeletions().contains(ontologyDelStmt));
+            assertFalse(secondPage.hasMoreResults());
+
+        }
+    }
+
     /* getCompiledResource(List<Resource>, RepositoryConnection) */
 
     @Test
@@ -2029,6 +2068,9 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             List<Resource> commits = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"), VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1")).collect(Collectors.toList());
             Model expected = MODEL_FACTORY.createModel(Collections.singleton(
                     VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"))));
+            Statement classStmt = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            expected.add(classStmt);
 
             Model result = service.getCompiledResource(commits, conn);
             result.forEach(statement -> assertTrue(expected.contains(statement)));
@@ -2113,10 +2155,10 @@ public class SimpleCatalogUtilsServiceTest extends OrmEnabledTestCase {
             // Setup:
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2");
             Resource ontologyId = VALUE_FACTORY.createIRI("http://mobi.com/test/ontology");
-            Statement firstAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), typeIRI,
-                    VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
-            Statement firstDelStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), typeIRI,
-                    VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Class"));
+            Statement firstAddStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 2"));
+            Statement firstDelStatement = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/class"), titleIRI,
+                    VALUE_FACTORY.createLiteral("Class Title 1"));
             Statement secondAddStatement = VALUE_FACTORY.createStatement(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 2 Title"));
             Statement secondDelStatement = VALUE_FACTORY.createStatement(ontologyId, titleIRI, VALUE_FACTORY.createLiteral("Test 1 Title"));
 
