@@ -30,6 +30,7 @@ const template = require('./commitInfoOverlay.component.html');
  * @name shared.component:commitInfoOverlay
  * @requires shared.service:utilService
  * @requires shared.service:userManagerService
+ * @requires shared.service:catalogManagerService
  *
  * @description
  * `commitInfoOverlay` is a component that creates content for a modal displaying information about the passed
@@ -76,7 +77,6 @@ function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalog
         dvm.deletions = dvm.resolve.deletions;
         dvm.hasMoreResults = dvm.resolve.hasMoreResults;
     }
-
     dvm.cancel = function() {
         dvm.dismiss();
     }
