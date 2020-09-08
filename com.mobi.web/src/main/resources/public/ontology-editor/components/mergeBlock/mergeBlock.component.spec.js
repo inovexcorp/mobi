@@ -142,8 +142,9 @@ describe('Merge Block component', function() {
                 });
                 it('successfully', function() {
                     var difference = {additions: [], deletions: []};
+                    var headers = {'has-more-results': 'false'};            
                     catalogManagerSvc.getRecordBranch.and.returnValue($q.when({'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
-                    catalogManagerSvc.getDifference.and.returnValue($q.when(difference));
+                    catalogManagerSvc.getDifference.and.returnValue($q.when({data: difference, headers: jasmine.createSpy('headers').and.returnValue(headers)}));
                     this.controller.changeTarget(this.branch);
                     scope.$apply();
                     expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);

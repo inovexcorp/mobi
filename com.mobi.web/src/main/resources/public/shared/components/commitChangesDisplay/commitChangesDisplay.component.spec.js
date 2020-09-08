@@ -76,40 +76,10 @@ describe('Commit Changes Display component', function() {
             utilSvc.getChangesById.and.returnValue([]);
             this.controller.$onChanges();
             expect(this.controller.list.length).toEqual(200);
-            expect(this.controller.chunkList.length).toEqual(2);
-            expect(this.controller.chunkList[0].length).toEqual(100);
-            expect(this.controller.chunks).toEqual(1);
             expect(this.controller.results).toEqual(jasmine.objectContaining({
                 '1': {additions: [], deletions: []},
                 '3': {additions: [], deletions: []}
             }));
-        });
-        it('should get more results', function() {
-            this.controller.list = ['1', '2', '3', '4'];
-            this.controller.size = 2;
-            this.controller.index = 0;
-            this.controller.chunkList = [['1', '2'], ['3', '4']];
-            this.additions = [{'@id': 'add'}];
-            this.deletions = [{'@id': 'del'}];
-            this.controller.additions = this.additions;
-            this.controller.deletions = this.deletions;
-            this.controller.results = {
-                '1': {additions: this.additions, deletions: this.deletions},
-                '2': {additions: this.additions, deletions: this.deletions}
-            };
-            utilSvc.getChangesById.and.callFake((id, arr) => arr);
-            this.controller.getMoreResults();
-            expect(this.controller.index).toEqual(1);
-            this.controller.chunkList[1].forEach(id => {
-                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, this.controller.additions);
-                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, this.controller.deletions);
-            });
-            expect(this.controller.results).toEqual({
-                '1': {additions: this.additions, deletions: this.deletions},
-                '2': {additions: this.additions, deletions: this.deletions},
-                '3': {additions: this.additions, deletions: this.deletions},
-                '4': {additions: this.additions, deletions: this.deletions}
-            });
         });
         it('should add paged changes to results', function() {
             this.controller.list = ['3', '4'];

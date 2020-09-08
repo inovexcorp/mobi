@@ -84,7 +84,7 @@ describe('Merge Request Tabset component', function() {
         it('depending on whether the request has any changes', function() {
             expect(this.element.find('info-message').length).toEqual(1);
 
-            this.controller.request.difference.additions = [{}];
+            this.controller.additions = [{}];
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
         });
