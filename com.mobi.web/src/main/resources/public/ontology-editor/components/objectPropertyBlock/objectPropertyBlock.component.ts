@@ -55,9 +55,6 @@ function objectPropertyBlockComponentCtrl($filter, ontologyStateService, ontolog
     dvm.objectProperties = [];
     dvm.objectPropertiesFiltered = [];
 
-    dvm.$onInit = function() {
-        dvm.updatePropertiesFiltered();
-    }
     dvm.$onChanges = function (changes) { 
         dvm.updatePropertiesFiltered();
     }

@@ -58,9 +58,6 @@ function datatypePropertyBlockComponentCtrl($filter, ontologyStateService, prefi
     dvm.dataProperties = [];
     dvm.dataPropertiesFiltered = [];
 
-    dvm.$onInit = function() {
-        dvm.updatePropertiesFiltered();
-    }
     dvm.$onChanges = function (changes) { 
         dvm.updatePropertiesFiltered();
     }
