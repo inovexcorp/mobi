@@ -23,21 +23,24 @@
 import {
     mockComponent,
     mockMergeRequestManager,
-    mockUtil
+    mockUtil,
+    mockCatalogManager
 } from '../../../../../../test/js/Shared';
 
 describe('Merge Request Tabset component', function() {
-    var $compile, scope;
+    var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
+        mockCatalogManager();
         mockComponent('merge-requests', 'mergeRequestDiscussion');
         mockMergeRequestManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         scope.request = {difference: {additions: [], deletions: []}};

@@ -22,23 +22,29 @@
  */
 
  import {
-     mockComponent
+     mockComponent, 
+     mockCatalogManager,
+     mockUtil
  } from '../../../../../../test/js/Shared';
 
  describe('Commit Difference Tabset component', function() {
-    var $compile, scope;
+    var $compile, scope, catalogManagerSvc, utilSvc;
 
     beforeEach(function() {
         angular.mock.module('shared');
+        mockCatalogManager();
+        mockUtil();
         mockComponent('shared', 'commitChangesDisplay');
         mockComponent('shared', 'commitHistoryTable');
         mockComponent('shared', 'infoMessage');
         mockComponent('shared', 'materialTab');
         mockComponent('shared', 'materialTabset');
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            catalogManagerSvc = _catalogManagerService_;
+            utilSvc = _utilService_;
         });
 
         scope.branchTitle = '';

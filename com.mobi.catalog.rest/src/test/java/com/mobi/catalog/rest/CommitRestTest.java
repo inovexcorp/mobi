@@ -451,7 +451,6 @@ public class CommitRestTest extends MobiRestTestNg {
         }
     }
 
-
     @Test
     public void getDifferenceWithoutTargetTest() {
         // When

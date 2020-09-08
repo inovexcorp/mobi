@@ -50,7 +50,13 @@ describe('Merge Requests State service', function() {
             scope = _$rootScope_;
         });
 
+        this.difference = {
+            additions: [],
+            deletions: []
+        };
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
+        catalogManagerSvc.differencePageSize = 100;
+        catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
         mergeRequestsStateSvc.initialize();
     });
@@ -265,43 +271,52 @@ describe('Merge Requests State service', function() {
                     describe('and getBranchConflicts resolves', function() {
                         it('with no conflicts', function () {
                             this.expected.conflicts = [];
-                            catalogManagerSvc.getDifference.and.returnValue($q.when({}));
-                            this.expected.difference = {};
+                            this.expected.difference = {
+                                additions: [],
+                                deletions: [],
+                                hasMoreResults: false
+                            };
                             mergeRequestsStateSvc.setRequestDetails(this.request);
                             scope.$apply();
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(this.request).toEqual(this.expected);
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head');
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
                             expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                         });
                         it('with conflicts', function() {
                             var conflicts = [{'@id': 'recordId'}];
                             this.expected.conflicts = conflicts;
-                            catalogManagerSvc.getDifference.and.returnValue($q.when({}));
                             catalogManagerSvc.getBranchConflicts.and.returnValue($q.when(conflicts));
-                            this.expected.difference = {};
+                            this.expected.difference = {
+                                additions: [],
+                                deletions: [],
+                                hasMoreResults: false
+                            };
                             mergeRequestsStateSvc.setRequestDetails(this.request);
                             scope.$apply();
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(this.request).toEqual(this.expected);
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head');
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
                             expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                         });
                     });
                     it('and getBranchConflicts rejects', function() {
-                        catalogManagerSvc.getDifference.and.returnValue($q.when({}));
                         catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject('Error Message'));
-                        this.expected.difference = {};
+                        this.expected.difference = {
+                            additions: [],
+                            deletions: [],
+                            hasMoreResults: false
+                        };
                         mergeRequestsStateSvc.setRequestDetails(this.request);
                         scope.$apply();
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                         expect(this.request).toEqual(this.expected);
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
                         expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
@@ -328,7 +343,7 @@ describe('Merge Requests State service', function() {
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                     expect(this.request).toEqual(this.expected);
-                    expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head');
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
                     expect(catalogManagerSvc.getBranchConflicts).not.toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 });
