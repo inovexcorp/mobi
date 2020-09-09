@@ -86,7 +86,7 @@ function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService)
                     dvm.util.createErrorToast(errorMessage);
                 }
             });
-    } 
+    }
     dvm.tabs = {
         changes: true,
         commits: false
