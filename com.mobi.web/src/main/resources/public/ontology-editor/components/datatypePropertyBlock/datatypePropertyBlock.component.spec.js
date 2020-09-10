@@ -71,7 +71,7 @@ describe('Datatype Property Block component', function() {
 
     it('initializes with the correct data', function() {
         ontologyStateSvc.listItem.dataProperties.iris = {'annotation1': '', 'default2': '', 'owl2': ''};
-        this.controller.$onInit();
+        this.controller.$onChanges();
         expect(this.controller.dataProperties).toEqual(['annotation1', 'default2', 'owl2']);
     });
     describe('contains the correct html', function() {
@@ -120,7 +120,7 @@ describe('Datatype Property Block component', function() {
             expect(ontologyStateSvc.propertyType).toEqual(prefixes.xsd + 'string');
             expect(ontologyStateSvc.propertyIndex).toEqual(0);
             expect(ontologyStateSvc.propertyLanguage).toEqual('en');
-            expect(modalSvc.openModal).toHaveBeenCalledWith('datatypePropertyOverlay', jasmine.any(Object), jasmine.any(Function));
+            expect(modalSvc.openModal).toHaveBeenCalledWith('datatypePropertyOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
         });
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);
@@ -142,7 +142,7 @@ describe('Datatype Property Block component', function() {
                 expect(ontologyStateSvc.propertyIndex).toEqual(0);
                 expect(ontologyStateSvc.propertyType).toEqual(prefixes.rdf + 'langString');
                 expect(ontologyStateSvc.propertyLanguage).toEqual('lang');
-                expect(modalSvc.openModal).toHaveBeenCalledWith('datatypePropertyOverlay', jasmine.any(Object), jasmine.any(Function));
+                expect(modalSvc.openModal).toHaveBeenCalledWith('datatypePropertyOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
             });
             it('when @language is missing', function() {
                 this.value['@type'] = 'type';
@@ -153,7 +153,7 @@ describe('Datatype Property Block component', function() {
                 expect(ontologyStateSvc.propertyIndex).toEqual(0);
                 expect(ontologyStateSvc.propertyType).toEqual('type');
                 expect(ontologyStateSvc.propertyLanguage).toBeUndefined();
-                expect(modalSvc.openModal).toHaveBeenCalledWith('datatypePropertyOverlay', jasmine.any(Object), jasmine.any(Function));
+                expect(modalSvc.openModal).toHaveBeenCalledWith('datatypePropertyOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
             });
         });
     });

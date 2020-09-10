@@ -73,7 +73,7 @@ describe('Annotation Block component', function() {
         ontologyStateSvc.listItem.annotations.iris = {'annotation1': '', 'default2': '', 'owl2': ''};
         propertyManagerSvc.defaultAnnotations = ['default1', 'default2'];
         propertyManagerSvc.owlAnnotations = ['owl1', 'owl2'];
-        this.controller.$onInit();
+        this.controller.$onChanges();
         expect(this.controller.annotations).toEqual(['annotation1', 'default2', 'owl2', 'default1', 'owl1']);
     });
     describe('contains the correct html', function() {
@@ -122,7 +122,7 @@ describe('Annotation Block component', function() {
             expect(ontologyStateSvc.annotationType).toBeUndefined();
             expect(ontologyStateSvc.annotationIndex).toEqual(0);
             expect(ontologyStateSvc.annotationLanguage).toEqual('en');
-            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay', jasmine.any(Object), jasmine.any(Function));
+            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
         });
         it('should set the correct manager values when opening the Remove Annotation Overlay', function() {
             this.controller.openRemoveOverlay('key', 1);
@@ -141,7 +141,7 @@ describe('Annotation Block component', function() {
             expect(ontologyStateSvc.annotationIndex).toEqual(0);
             expect(ontologyStateSvc.annotationType).toEqual('type');
             expect(ontologyStateSvc.annotationLanguage).toEqual('language');
-            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay', jasmine.any(Object), jasmine.any(Function));
+            expect(modalSvc.openModal).toHaveBeenCalledWith('annotationOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
         });
     });
 });
