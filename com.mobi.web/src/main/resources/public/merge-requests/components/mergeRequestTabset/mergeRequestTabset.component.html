@@ -25,7 +25,7 @@
         <material-tab heading="'Discussion'" active="dvm.tabs.discussion" set-active="dvm.tabs.discussion = value">
             <merge-request-discussion request="dvm.request" update-request="dvm.updateRequest({value: value})"></merge-request-discussion>
         </material-tab>
-        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
+        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.setInitialChangesTab(value)">
             <commit-changes-display additions="dvm.additions" deletions="dvm.deletions" show-more-results-func="dvm.retrieveMoreResults(limit, offset)" has-more-results="dvm.hasMoreResults"></commit-changes-display>
             <info-message ng-if="!dvm.additions.length && !dvm.deletions.length">No changes to display</info-message>
         </material-tab>

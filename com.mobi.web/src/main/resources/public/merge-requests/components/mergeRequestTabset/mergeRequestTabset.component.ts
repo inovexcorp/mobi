@@ -68,10 +68,17 @@ function mergeRequestTabsetComponentCtrl(catalogManagerService, utilService) {
     };
     dvm.$onChanges = function(changesObj) {
         if (changesObj.request && dvm.request.difference) { 
-            dvm.additions = dvm.request.difference.additions;
-            dvm.deletions = dvm.request.difference.deletions;
-            dvm.hasMoreResults = dvm.request.difference.hasMoreResults;
+            dvm.setInitialDifference();
         }
+    }
+    dvm.setInitialChangesTab = function(value) { // When switching back to this tab we need to reset dvm.additions and dvm.deletions because they only have the current page
+        dvm.setInitialDifference();
+        dvm.tabs.changes = value;
+    }
+    dvm.setInitialDifference = function() {
+        dvm.additions = dvm.request.difference.additions;
+        dvm.deletions = dvm.request.difference.deletions;
+        dvm.hasMoreResults = dvm.request.difference.hasMoreResults;
     }
     dvm.retrieveMoreResults = function(limit, offset) {
         cm.getDifference(dvm.request.sourceCommit, dvm.request.targetCommit, limit, offset)

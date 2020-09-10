@@ -64,14 +64,27 @@ function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService)
     dvm.additions = {};
     dvm.deletions = {};
     dvm.hasMoreResults = false;
+    dvm.tabs = {
+        changes: true,
+        commits: false
+    };
 
     dvm.$onChanges = function(changesObj) {
         // Technically when this component is created it doesn't have a difference until the getDifference REST endpoint completes
         if (changesObj.difference && dvm.difference) { 
-            dvm.additions = dvm.difference.additions;
-            dvm.deletions = dvm.difference.deletions;
-            dvm.hasMoreResults = dvm.difference.hasMoreResults;
+            dvm.setInitialDifference()
         }
+    }
+
+    dvm.setInitialChangesTab = function(value) { // When switching back to this tab we need to reset dvm.additions and dvm.deletions because they only have the current page
+        dvm.setInitialDifference();
+        dvm.tabs.changes = value;
+    }
+
+    dvm.setInitialDifference = function() {
+        dvm.additions = dvm.difference.additions;
+        dvm.deletions = dvm.difference.deletions;
+        dvm.hasMoreResults = dvm.difference.hasMoreResults;
     }
 
     dvm.retrieveMoreResults = function(limit, offset) {
@@ -87,10 +100,6 @@ function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService)
                 }
             });
     }
-    dvm.tabs = {
-        changes: true,
-        commits: false
-    };
 }
 
 export default commitDifferenceTabsetComponent;
