@@ -66,7 +66,7 @@ describe('Object Property Block component', function() {
 
     it('initializes with the correct data', function() {
         ontologyStateSvc.listItem.objectProperties.iris = {'annotation1': '', 'default2': '', 'owl2': ''};
-        this.controller.$onInit();
+        this.controller.$onChanges();
         expect(this.controller.objectProperties).toEqual(['annotation1', 'default2', 'owl2']);
     });
     describe('contains the correct html', function() {
@@ -112,7 +112,7 @@ describe('Object Property Block component', function() {
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toEqual('');
             expect(ontologyStateSvc.propertyIndex).toEqual(0);
-            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay', jasmine.any(Object), jasmine.any(Function));
+            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);

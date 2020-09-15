@@ -62,10 +62,7 @@ function annotationBlockComponentCtrl($filter, ontologyStateService, ontologyUti
     dvm.annotations = [];
     dvm.annotationsFiltered = [];
 
-    dvm.$onInit = function() {
-        dvm.updatePropertiesFiltered();
-    }
-    dvm.$onChanges = function (changes) { 
+    dvm.$onChanges = function (changes) {
         dvm.updatePropertiesFiltered();
     }
     dvm.updatePropertiesFiltered = function(){
