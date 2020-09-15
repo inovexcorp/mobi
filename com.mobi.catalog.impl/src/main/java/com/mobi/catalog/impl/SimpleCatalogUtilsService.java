@@ -925,6 +925,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .build();
     }
 
+    @Override
     public PagedDifference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
