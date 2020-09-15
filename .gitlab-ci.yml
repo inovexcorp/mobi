@@ -126,10 +126,6 @@ update_minor_release_parent_pom:
   dependencies:
     - update_minor_release_root_pom
 
-update_master_with_new_minor_snapshot:
-  dependencies:
-    - update_minor_release_parent_pom
-
 artifactory_release:
   stage: new_release_deploy
   only:
@@ -157,3 +153,25 @@ docker_release:
     - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > /root/.m2/ci_settings.xml
     - cd mobi-distribution
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s /root/.m2/ci_settings.xml
+
+
+update_master_with_new_minor_snapshot:
+  dependencies:
+    - update_minor_release_parent_pom
+  stage: update_master_with_new_minor_snapshot
+  only:
+    - /release\/\d+\.\d+/
+  except:
+    - branches
+  dependencies:
+    - update_minor_release_root_pom
+  script:
+    - CURRENT_VERSION="$MAJOR.$MINOR.$MICRO"
+    - git add ./\*pom.xml
+    - git commit -m "AUTOMATED COMMIT - Updates version to $CURRENT_VERSION-SNAPSHOT"
+    - git pull
+    - git push origin HEAD:master
+    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
+    - git push github HEAD:master
+    - git checkout $CI_COMMIT_TAG
+    - git push github HEAD:$CI_COMMIT_TAG
