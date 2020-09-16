@@ -33,7 +33,7 @@
             <directory>src/test/js</directory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
-         <fileSet>
+        <fileSet>
             <directory>src/test/ts</directory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
