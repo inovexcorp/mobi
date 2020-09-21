@@ -22,6 +22,8 @@
  */
 import * as angular from 'angular';
 
+import './datatypePropertyOverlay.component.scss';
+
 const template = require('./datatypePropertyOverlay.component.html');
 
 /**
