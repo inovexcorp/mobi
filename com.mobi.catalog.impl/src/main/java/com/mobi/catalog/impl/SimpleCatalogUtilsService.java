@@ -29,7 +29,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
-import com.mobi.catalog.api.builder.CommitDifference;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.PagedDifference;
@@ -932,8 +931,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         boolean hasMoreResults = false;
 
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
-        ListMultimap<String, Statement> addSubjMap = MultimapBuilder.treeKeys().arrayListValues().build();
-        ListMultimap<String, Statement> addDelMap = MultimapBuilder.treeKeys().arrayListValues().build();
+        ListMultimap<String, Statement> addSubjMap = MultimapBuilder.hashKeys().arrayListValues().build();
+        ListMultimap<String, Statement> addDelMap = MultimapBuilder.hashKeys().arrayListValues().build();
 
         TreeSet<String> subjects = new TreeSet<>();
 
