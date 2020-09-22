@@ -34,6 +34,10 @@
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
         <fileSet>
+            <directory>src/test/ts</directory>
+            <useDefaultExcludes>true</useDefaultExcludes>
+        </fileSet>
+        <fileSet>
             <excludes>
                 <exclude>src/main/resources/public/shared/components/sidebar/filtered/*</exclude>
             </excludes>
