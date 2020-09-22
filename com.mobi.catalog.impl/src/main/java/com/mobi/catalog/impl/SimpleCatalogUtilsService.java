@@ -932,42 +932,39 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         boolean hasMoreResults = false;
 
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+        ListMultimap<String, Statement> addSubjMap = MultimapBuilder.treeKeys().arrayListValues().build();
+        ListMultimap<String, Statement> addDelMap = MultimapBuilder.treeKeys().arrayListValues().build();
 
-        ListMultimap<String, CommitDifference> subjects = MultimapBuilder.treeKeys().arrayListValues().build();
+        TreeSet<String> subjects = new TreeSet<>();
+
         additions.forEach( (statement, integer) -> {
-            CommitDifference addition = new CommitDifference();
-            addition.addAddition(statement);
-            subjects.put(statement.getSubject().stringValue(), addition);
+            String subj = statement.getSubject().stringValue();
+            subjects.add(subj);
+            addSubjMap.put(subj, statement);
         });
+
         deletions.forEach( (statement, integer) -> {
-            CommitDifference deletion = new CommitDifference();
-            deletion.addDeletion(statement);
-            subjects.put(statement.getSubject().stringValue(), deletion);
+            String subj = statement.getSubject().stringValue();
+            subjects.add(subj);
+            addDelMap.put(subj, statement);
         });
 
-        Set<Statement> additionsSet = new HashSet<>();
-        Set<Statement> deletionsSet = new HashSet<>();
-
-        subjects.keySet().retainAll(subjects.keySet().stream()
+        subjects.retainAll(subjects.stream()
                 .skip(offset)
                 .limit(limit + 1)
                 .collect(Collectors.toSet()));
 
-        if(subjects.keySet().size() > limit) {
+        if(subjects.size() > limit) {
             hasMoreResults = true;
-            subjects.keySet().retainAll(subjects.keySet().stream()
-                    .limit(limit)
-                    .collect(Collectors.toSet()));
+            subjects.remove(subjects.last());
         }
 
-        subjects.forEach((subject, commitDifference) -> {
-            additionsSet.addAll(commitDifference.getAdditions());
-            deletionsSet.addAll(commitDifference.getDeletions());
-        });
+        addSubjMap.keySet().retainAll(subjects);
+        addDelMap.keySet().retainAll(subjects);
 
         return new PagedDifference(new Difference.Builder()
-                .additions(mf.createModel(additionsSet))
-                .deletions(mf.createModel(deletionsSet))
+                .additions(mf.createModel(addSubjMap.values()))
+                .deletions(mf.createModel(addDelMap.values()))
                 .build(), hasMoreResults);
     }
 
