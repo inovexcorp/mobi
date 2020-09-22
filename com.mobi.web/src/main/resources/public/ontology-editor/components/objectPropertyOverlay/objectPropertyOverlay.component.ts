@@ -22,6 +22,8 @@
  */
 import * as angular from 'angular';
 
+import './objectPropertyOverlay.component.scss';
+
 const template = require('./objectPropertyOverlay.component.html');
 
 /**
