@@ -931,6 +931,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         boolean hasMoreResults = false;
 
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+
+        /** We are using Multimaps instead of regular maps because Multimaps represent a one key to many values
+        relationship. In this case, one subject may have many statements. The reason that we do not just have a Model
+         or Collection<Statement> as the value of a regular Map is that it would require us to look up the value in
+         order to update it. Doing a lookup on a possibly enormous Map is very computationally expensive if done inside
+         a loop. Using Multimap allows us to avoid a lookup and just add statements as values for a given subject
+         without worrying about what is already there. **/
         ListMultimap<String, Statement> addSubjMap = MultimapBuilder.hashKeys().arrayListValues().build();
         ListMultimap<String, Statement> addDelMap = MultimapBuilder.hashKeys().arrayListValues().build();
 
@@ -953,7 +960,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .limit(limit + 1)
                 .collect(Collectors.toSet()));
 
-        if(subjects.size() > limit) {
+        if (subjects.size() > limit) {
             hasMoreResults = true;
             subjects.remove(subjects.last());
         }
