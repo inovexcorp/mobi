@@ -310,10 +310,15 @@ public class CommitRest {
                     return Response.status(Response.Status.NOT_FOUND).build();
                 }
             } else {
-                Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
-                return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
-                        MediaType.APPLICATION_JSON).build();
-
+                if (limit == -1) {
+                    Difference diff = catalogManager.getDifference(vf.createIRI(sourceId), vf.createIRI(targetId));
+                    return Response.ok(getDifferenceJsonString(diff, rdfFormat, transformer, bNodeService),
+                            MediaType.APPLICATION_JSON).build();
+                } else {
+                    PagedDifference pagedDifference = catalogManager.getDifferencePaged(vf.createIRI(sourceId), vf.createIRI(targetId), limit, offset);
+                    return Response.ok(getDifferenceJsonString(pagedDifference.getDifference(), rdfFormat, transformer, bNodeService),
+                            MediaType.APPLICATION_JSON).header("Has-More-Results", pagedDifference.hasMoreResults()).build();
+                }
             }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);

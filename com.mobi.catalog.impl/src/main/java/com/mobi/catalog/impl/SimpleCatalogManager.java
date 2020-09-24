@@ -1240,6 +1240,14 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public PagedDifference getDifferencePaged(Resource sourceCommitId, Resource targetCommitId, int limit, int offset) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            return utils.getCommitDifferencePaged(utils.getDifferenceChain(sourceCommitId, targetCommitId, conn, true),
+                    conn, limit, offset);
+        }
+    }
+
+    @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
