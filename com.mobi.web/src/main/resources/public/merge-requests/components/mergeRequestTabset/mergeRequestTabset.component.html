@@ -23,11 +23,11 @@
 <div class="merge-request-tabset">
     <material-tabset class="h-100">
         <material-tab heading="'Discussion'" active="dvm.tabs.discussion" set-active="dvm.tabs.discussion = value">
-            <merge-request-discussion request="dvm.request" update-request="dvm.updateRequest(value)"></merge-request-discussion>
+            <merge-request-discussion request="dvm.request" update-request="dvm.updateRequest({value: value})"></merge-request-discussion>
         </material-tab>
-        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
-            <commit-changes-display additions="dvm.request.difference.additions" deletions="dvm.request.difference.deletions" entity-name-func="dvm.state.getEntityNameLabel"></commit-changes-display>
-            <info-message ng-if="!dvm.request.difference.additions.length && !dvm.request.difference.deletions.length">No changes to display</info-message>
+        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.setInitialChangesTab(value)">
+            <commit-changes-display additions="dvm.additions" deletions="dvm.deletions" entity-name-func="dvm.state.getEntityNameLabel" show-more-results-func="dvm.retrieveMoreResults(limit, offset)" has-more-results="dvm.hasMoreResults"></commit-changes-display>
+            <info-message ng-if="!dvm.additions.length && !dvm.deletions.length">No changes to display</info-message>
         </material-tab>
         <material-tab heading="'Commits'" active="dvm.tabs.commits" set-active="dvm.tabs.commits = value">
             <commit-history-table head-title="dvm.request.sourceTitle" commit-id="dvm.request.sourceCommit" target-id="dvm.request.targetCommit" entity-name-func="dvm.state.getEntityNameLabel"></commit-history-table>

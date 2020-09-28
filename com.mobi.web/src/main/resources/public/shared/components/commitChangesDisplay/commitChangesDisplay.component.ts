@@ -49,8 +49,8 @@ const commitChangesDisplayComponent = {
         additions: '<',
         deletions: '<',
         entityNameFunc: '<?',
-        showMoreResultsFunc: '&?',
-        hasMoreResults: '<?'
+        showMoreResultsFunc: '&',
+        hasMoreResults: '<'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -72,13 +72,7 @@ function commitChangesDisplayComponentCtrl(utilService) {
         var adds = map(dvm.additions, '@id');
         var deletes = map(dvm.deletions, '@id');
         dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        if (!dvm.showMoreResultsFunc) {
-            dvm.size = 100;
-            dvm.index = 0;
-            dvm.results = getResults();
-        } else {
-            dvm.addPagedChangesToResults();
-        }
+        dvm.addPagedChangesToResults();
     }
     dvm.addPagedChangesToResults = function() {
         forEach(dvm.list, id => {
@@ -89,28 +83,6 @@ function commitChangesDisplayComponentCtrl(utilService) {
     dvm.getMorePagedChanges = function() {
         dvm.index += dvm.size;
         dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index}); // Should trigger $onChanges
-    }
-    dvm.getMoreResults = function() {
-        dvm.index++;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
-        });
-    }
-    dvm.moreResults = function() {
-        if (!dvm.showMoreResultsFunc) {
-            dvm.getMoreResults();
-        } else {
-            dvm.getMorePagedChanges();
-        }
-    }
-    function getResults() {
-        var results = {};
-        dvm.chunkList = chunk(dvm.list, dvm.size);
-        dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, results);
-        });
-        return results;
     }
     function addToResults(additions, deletions, id, results) {
         results[id] = { additions: additions, deletions: deletions };

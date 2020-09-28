@@ -58,8 +58,10 @@ describe('Request Branch Select component', function() {
             additions: [],
             deletions: []
         };
+        this.headers = {'has-more-results': 'false'};
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
-        catalogManagerSvc.getDifference.and.returnValue($q.when(this.difference));
+        catalogManagerSvc.differencePageSize = 100;
+        catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
         this.sourceBranch = {'@id': 'sourceBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId1'}]};
         this.targetBranch = {'@id': 'targetBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId1'}]};
         this.sourceBranchNewHead = {'@id': 'sourceBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId2'}]};
@@ -185,7 +187,7 @@ describe('Request Branch Select component', function() {
                             scope.$apply();
                             expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
                             expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
                             expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
                             expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
                             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -197,7 +199,7 @@ describe('Request Branch Select component', function() {
                         scope.$apply();
                         expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
                         expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
                         expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
@@ -236,7 +238,7 @@ describe('Request Branch Select component', function() {
                             scope.$apply();
                             expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
                             expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
                             expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
                             expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
                             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -248,7 +250,7 @@ describe('Request Branch Select component', function() {
                         scope.$apply();
                         expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
                         expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
+                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
                         expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });

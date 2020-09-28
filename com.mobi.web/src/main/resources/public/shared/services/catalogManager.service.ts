@@ -112,6 +112,17 @@ function catalogManagerService($http, $httpParamSerializer, httpService, $q, pre
     self.distributedCatalog = undefined;
 
     /**
+     * @ngdoc property
+     * @name differencePageSize
+     * @propertyOf shared.service:catalogManagerService
+     * @type {int}
+     *
+     * @description
+     * `differencePageSize` tracks the number of differences to show per page
+     */
+    self.differencePageSize = 100;
+
+    /**
      * @ngdoc method
      * @name initialize
      * @methodOf shared.service:catalogManagerService
