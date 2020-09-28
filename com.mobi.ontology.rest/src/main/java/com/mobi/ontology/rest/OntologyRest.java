@@ -810,7 +810,7 @@ public class OntologyRest {
             outputStream.write(", \"importedOntologies\": ".getBytes());
             ArrayNode arr = mapper.createArrayNode();
             onlyImports.stream()
-                    .map(ont -> getOntologyIdentifiersAsJsonObject(ont))
+                    .map(this::getOntologyIdentifiersAsJsonObject)
                     .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
             watch.stop();
@@ -2416,6 +2416,54 @@ public class OntologyRest {
         }
     }
 
+    /**
+     * Retrieves the map of EntityNames in an Ontology.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
+     * @return Returns the list of EntityNames for the given Ontology.
+     */
+    @GET
+    @Path("{recordId}/entity-names")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the EntityNames in the identified ontology.")
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getEntityNames(@Context ContainerRequestContext context,
+                                   @PathParam("recordId") String recordIdStr,
+                                   @QueryParam("branchId") String branchIdStr,
+                                   @QueryParam("commitId") String commitIdStr,
+                                   @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+                                   @DefaultValue("true") @QueryParam("applyInProgressCommit")
+                                               boolean applyInProgressCommit) {
+        try {
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = outputStream -> {
+                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(GET_ENTITY_NAMES,
+                            includeImports);
+                    writeEntityNamesToStream(result, outputStream);
+                };
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize,
                                              String format) {
         Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
@@ -2556,7 +2604,7 @@ public class OntologyRest {
             entityNames.setNames(namesSet);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
-
+ 
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
     }
 

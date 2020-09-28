@@ -132,9 +132,9 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * object to be applied to the ontology.
      *
      * @param {File} file The updated ontology file.
-     * @param {string} the ontology record ID.
-     * @param {string} the ontology branch ID.
-     * @param {string} the ontology commit ID.
+     * @param {string} recordId the ontology record ID.
+     * @param {string} branchId the ontology branch ID.
+     * @param {string} commitId the ontology commit ID.
      * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
      */
     self.uploadChangesFile = function(file, recordId, branchId, commitId) {
@@ -169,7 +169,6 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} title The title for the OntologyRecord.
      * @param {string} description The description for the OntologyRecord.
      * @param {string} keywords The array of keywords for the OntologyRecord.
-     * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
      * @returns {Promise} A promise with the ontologyId, recordId, branchId, and commitId for the state of the newly created
      * ontology.
      */
@@ -619,6 +618,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * all ontologies imported by the ontology with the requested ontology ID.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
      * @returns {Promise} A promise containing the list of ontologies that are imported by the requested
      * ontology.
@@ -646,6 +647,8 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
+     * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+     * @param {string} commitId The commit ID of the ontology you want to get from the repository.
      * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
      * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
      * @param {string} id The identifier for this request
@@ -662,6 +665,28 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                 return response.data.results.bindings;
             }
         }, util.rejectError);
+    }
+    /**
+     * @ngdoc method
+     * @name getOntologyEntityNames
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Calls the GET /mobirest/ontologies/{recordId}/entity-names
+     *
+     * @param {string} recordId The record ID of the ontology to query.
+     * @param {string} branchId The branch ID of the ontology to query.
+     * @param {string} commitId The commit ID of the ontology to query.
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
+     * @param {string} [id=''] The id to link this REST call to.
+     * @return {Promise} A Promise with an object containing EntityNames.
+     */
+    self.getOntologyEntityNames = function(recordId, branchId, commitId, includeImports = true, applyInProgressCommit= true, id = '') {
+        var config = { params: { branchId, commitId, includeImports, applyInProgressCommit } };
+        var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
+        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        return promise.then(response => response.data, util.rejectError);
     }
     /**
      * @ngdoc method
@@ -699,12 +724,14 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @description
      * Get the results of the provided SPARQL query.
      *
-     * @param recordId The record ID of the ontology to query.
-     * @param branchId The branch ID of the ontology to query.
-     * @param commitId The commit ID of the ontology to query.
-     * @param query The SPARQL query to run against the ontology.
-     * @param format The return format of the query results.
-     * @param id The id to link this REST call to.
+     * @param {string} recordId The record ID of the ontology to query.
+     * @param {string} branchId The branch ID of the ontology to query.
+     * @param {string} commitId The commit ID of the ontology to query.
+     * @param {string} query The SPARQL query to run against the ontology.
+     * @param {string} format The return format of the query results.
+     * @param {string} [id=''] The id to link this REST call to.
+     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
+     * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes
      * @return {Promise} A promise containing the SPARQL query results
      */
     self.getQueryResults = function(recordId, branchId, commitId, query, format,  id = '', includeImports = true, applyInProgressCommit = false) {
@@ -744,7 +771,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @param {string} recordId The record ID of the ontology you want to get from the repository
      * @param {string} branchId The branch ID of the ontology you want to get from the repository
      * @param {string} commitId The commit ID of the ontology you want to get from the repository
-     * @param {string} entityIRI The entity IRI of the entity you want to retrieve
+     * @param {string} entityId The entity IRI of the entity you want to retrieve
      * @param {string} [format='jsonld'] The RDF format to return the results in
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes

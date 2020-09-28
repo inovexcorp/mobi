@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, map, uniq, noop, forEach, filter, find } from 'lodash';
+import { get, map, uniq, noop, forEach, filter, find, union, pick } from 'lodash';
 
-mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', '$q'];
+mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'ontologyManagerService', 'utilService', 'prefixes', '$q'];
 
 /**
  * @ngdoc service
@@ -37,11 +37,12 @@ mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManag
  * `mergeRequestsStateService` is a service which contains various variables to hold the
  * state of the Merge Requests page and utility functions to update those variables.
  */
-function mergeRequestsStateService(mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes, $q) {
+function mergeRequestsStateService(mergeRequestManagerService, catalogManagerService, userManagerService, ontologyManagerService, utilService, prefixes, $q) {
     var self = this;
     var mm = mergeRequestManagerService;
     var cm = catalogManagerService;
     var um = userManagerService;
+    var om = ontologyManagerService;
     var util = utilService;
 
     var catalogId = '';
@@ -256,7 +257,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                     cm.getDifference(request.sourceCommit, request.targetCommit)
                         .then(diff => {
                             request.difference = diff;
-                        }, util.createErrorToast)
+                            return self.getSourceEntityNames(request);
+                        }, $q.reject)
+                        .then(noop, util.createErrorToast);
                 } else {
                     var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
                     var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
@@ -266,7 +269,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                             request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                             request.sourceTitle = util.getDctermsValue(branch, 'title');
                             request.removeSource = self.removeSource(request.jsonld);
-                        }, $q.reject);
+                            return self.getSourceEntityNames(request);
+                        }, $q.reject)
+                        .then(noop, $q.reject);
 
                     if (targetIri) {
                         promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
@@ -345,7 +350,16 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                 }
             }, util.createErrorToast);
     }
-
+    /**
+     * @ngdoc method
+     * @name getRequestObj
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Transforms the provided JSON-LD into a `requests` object.
+     *
+     * @param {Object} jsonld The JSON-LD representation of the `requests` object
+     */
     self.getRequestObj = function(jsonld) {
         return {
             jsonld,
@@ -355,6 +369,47 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
             assignees: map(get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => get(find(um.users, {iri: obj['@id']}), 'username'))
         };
+    }
+    /**
+     * @ngdoc method
+     * @name getSourceEntityNames
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Populates the self.requestConfig.entityNames object with EntityNames of entities with an addition or deletion.
+     *
+     */
+    self.getSourceEntityNames = function(request = self.requestConfig) {
+        var recordIri = request.recordId ? request.recordId : request.recordIri;
+        om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
+            .then(data => {
+                if (request.difference) {
+                    var diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'))
+                    request.entityNames = pick(data, diffIris);
+                } else {
+                    request.entityNames = data;
+                }
+            }, $q.reject)
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNameLabel
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * If the iri exists in self.requestConfig.entityNames or self.selected.entityNames, returns the label. Otherwise,
+     * returns the beautiful iri.
+     *
+     * @param {string} iri The iri of an entity in the merge request
+     */
+    self.getEntityNameLabel = function(iri) {
+        if (get(self, ['requestConfig', 'entityNames', iri, 'label'])) {
+            return self.requestConfig.entityNames[iri].label;
+        } else if (get(self, ['selected', 'entityNames', iri, 'label'])) {
+            return self.selected.entityNames[iri].label;
+        } else {
+            return util.getBeautifulIRI(iri);
+        }
     }
 
     function getDate(jsonld) {

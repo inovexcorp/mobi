@@ -49,8 +49,11 @@ const mergeRequestTabsetComponent = {
     controller: mergeRequestTabsetComponentCtrl,
 };
 
-function mergeRequestTabsetComponentCtrl() {
+mergeRequestTabsetComponentCtrl.$inject = ['mergeRequestsStateService'];
+
+function mergeRequestTabsetComponentCtrl(mergeRequestsStateService) {
     var dvm = this;
+    dvm.state = mergeRequestsStateService;
     dvm.tabs = {
         discussion: true,
         changes: false,

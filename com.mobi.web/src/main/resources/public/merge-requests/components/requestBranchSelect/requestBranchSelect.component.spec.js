@@ -29,9 +29,10 @@ import {
     injectTrustedFilter,
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
+import { get } from 'lodash';
 
 describe('Request Branch Select component', function() {
-    var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc;
+    var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
@@ -43,17 +44,14 @@ describe('Request Branch Select component', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _mergeRequestsStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _mergeRequestsStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
             utilSvc = _utilService_;
-        });
-
-        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-            return "head";
+            prefixes = _prefixes_;
         });
 
         this.difference = {
@@ -62,12 +60,19 @@ describe('Request Branch Select component', function() {
         };
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         catalogManagerSvc.getDifference.and.returnValue($q.when(this.difference));
-        this.branchDefer = $q.defer();
-        catalogManagerSvc.getRecordBranches.and.returnValue(this.branchDefer.promise);
+        this.sourceBranch = {'@id': 'sourceBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId1'}]};
+        this.targetBranch = {'@id': 'targetBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId1'}]};
+        this.sourceBranchNewHead = {'@id': 'sourceBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId2'}]};
+        this.targetBranchNewHead = {'@id': 'targetBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId2'}]};
         mergeRequestsStateSvc.requestConfig.recordId = 'recordId';
         this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('requestBranchSelect');
+
+        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+            let commit = get(obj, [prefixes.catalog + 'head', 0, '@id']);
+            return commit ? commit : 'head';
+        });
     });
 
     afterEach(function() {
@@ -82,12 +87,59 @@ describe('Request Branch Select component', function() {
 
     describe('should initialize with the correct values for', function() {
         describe('difference if the source and target branches are', function() {
-            it('selected', function() {
-                mergeRequestsStateSvc.requestConfig.sourceBranch = {};
-                mergeRequestsStateSvc.requestConfig.targetBranch = {};
-                this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
-                scope.$digest();
-                expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
+            describe('selected', function() {
+                beforeEach(function () {
+                    mergeRequestsStateSvc.requestConfig.sourceBranch = this.sourceBranch;
+                    mergeRequestsStateSvc.requestConfig.targetBranch = this.targetBranch;
+                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranch, this.targetBranch]}));
+                });
+                it('and both exist', function () {
+                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                    scope.$digest();
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranch);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranch);
+                });
+                it('and neither exist', function () {
+                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: []}));
+                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                    scope.$digest();
+                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(undefined);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(undefined);
+                });
+                it('and source does not exist', function () {
+                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.targetBranch]}));
+                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                    scope.$digest();
+                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(undefined);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranch);
+                });
+                it('and target does not exist', function () {
+                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranch]}));
+                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                    scope.$digest();
+                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranch);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(undefined);
+                });
+                it('and source has new commits', function () {
+                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranchNewHead, this.targetBranch]}));
+                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                    scope.$digest();
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranchNewHead);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranch);
+                });
+                it('and target has new commits', function () {
+                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranch, this.targetBranchNewHead]}));
+                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                    scope.$digest();
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranch);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranchNewHead);
+                });
             });
             it('not selected', function() {
                 scope.$apply();
@@ -96,15 +148,19 @@ describe('Request Branch Select component', function() {
         });
         describe('branches', function() {
             it('successfully', function() {
-                this.branchDefer.resolve({data: [{}]});
-                scope.$apply();
+                catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [{}]}));
+                this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                scope.$digest();
+                this.controller = this.element.controller('requestBranchSelect');
                 expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith('recordId', 'catalogId');
                 expect(this.controller.branches).toEqual([{}]);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('unless an error occurs', function() {
-                this.branchDefer.reject('Error Message');
-                scope.$apply();
+                catalogManagerSvc.getRecordBranches.and.returnValue($q.reject('Error Message'));
+                this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
+                scope.$digest();
+                this.controller = this.element.controller('requestBranchSelect');
                 expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith('recordId', 'catalogId');
                 expect(this.controller.branches).toEqual([]);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
@@ -123,14 +179,17 @@ describe('Request Branch Select component', function() {
                         mergeRequestsStateSvc.requestConfig.sourceBranch = {'@id': 'source'};
                         mergeRequestsStateSvc.requestConfig.sourceBranchId = 'source';
                     });
-                    it('resolves', function() {
-                        this.controller.changeTarget(this.branch);
-                        scope.$apply();
-                        expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
-                        expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
-                        expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
-                        expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                    describe('resolves and getSourceEntityNames', function() {
+                        it('resolves', function() {
+                            this.controller.changeTarget(this.branch);
+                            scope.$apply();
+                            expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
+                            expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
+                            expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
+                            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
+                            expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                        });
                     });
                     it('rejects', function() {
                         catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
@@ -171,14 +230,17 @@ describe('Request Branch Select component', function() {
                         mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'target'};
                         mergeRequestsStateSvc.requestConfig.targetBranchId = 'target';
                     });
-                    it('resolves', function() {
-                        this.controller.changeSource(this.branch);
-                        scope.$apply();
-                        expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
-                        expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
-                        expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
-                        expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                    describe('resolves and getSourceEntityNames', function() {
+                        it('resolves', function () {
+                            this.controller.changeSource(this.branch);
+                            scope.$apply();
+                            expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
+                            expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
+                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head');
+                            expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
+                            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
+                            expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                        });
                     });
                     it('rejects', function() {
                         catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));

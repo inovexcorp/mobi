@@ -25,25 +25,27 @@ import {
     mockCatalogManager,
     mockUserManager,
     mockUtil,
-    mockPrefixes
+    mockPrefixes, mockOntologyManager
 } from '../../../../../test/js/Shared';
 
 describe('Merge Requests State service', function() {
-    var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, utilSvc, prefixes, $q, scope;
+    var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, ontologyManagerSvc, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {
         angular.mock.module('shared');
         mockMergeRequestManager();
         mockCatalogManager();
         mockUserManager();
+        mockOntologyManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(mergeRequestsStateService, _mergeRequestManagerService_, _catalogManagerService_, _userManagerService_, _utilService_, _prefixes_, _$q_, _$rootScope_) {
+        inject(function(mergeRequestsStateService, _mergeRequestManagerService_, _catalogManagerService_, _userManagerService_, _ontologyManagerService_, _utilService_, _prefixes_, _$q_, _$rootScope_) {
             mergeRequestsStateSvc = mergeRequestsStateService;
             mergeRequestManagerSvc = _mergeRequestManagerService_;
             catalogManagerSvc = _catalogManagerService_;
             userManagerSvc = _userManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
             $q = _$q_;

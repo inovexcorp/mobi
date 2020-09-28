@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
+import { get, noop, find } from 'lodash';
 
 import './requestBranchSelect.component.scss';
 
@@ -47,9 +47,9 @@ const requestBranchSelectComponent = {
     controller: requestBranchSelectComponentCtrl
 };
 
-requestBranchSelectComponentCtrl.$inject = ['mergeRequestsStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+requestBranchSelectComponentCtrl.$inject = ['$q', 'mergeRequestsStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogManagerService, utilService, prefixes) {
+function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalogManagerService, utilService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id');
@@ -61,11 +61,15 @@ function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogMana
     dvm.branches = [];
 
     dvm.$onInit = function() {
-        if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
-            updateDifference();
-        }
         cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
-            .then(response => dvm.branches = response.data, error => {
+            .then(response => {
+                dvm.branches = response.data;
+                updateBranch('sourceBranch');
+                updateBranch( 'targetBranch');
+                if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
+                    updateDifference();
+                }
+            }, error => {
                 dvm.util.createErrorToast(error);
                 dvm.branches = [];
             });
@@ -101,10 +105,29 @@ function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogMana
         cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'))
             .then(diff => {
                 dvm.state.requestConfig.difference = diff;
-            }, errorMessage => {
+                return dvm.state.getSourceEntityNames();
+            }, $q.reject)
+            .then(noop, errorMessage => {
                 dvm.util.createErrorToast(errorMessage);
                 dvm.state.requestConfig.difference = undefined;
+                dvm.state.requestConfig.entityNames = undefined;
             });
+    }
+    function updateBranch(branchType) {
+        var branchId = get(dvm.state, ['requestConfig', branchType, '@id']);
+        if (!branchId) {
+            return;
+        }
+        var latestBranch = find(dvm.branches, {'@id': branchId});
+        if (latestBranch) {
+            var latestHead = dvm.util.getPropertyId(latestBranch, dvm.prefixes.catalog + 'head');
+            var selectedHead = dvm.util.getPropertyId(dvm.state.requestConfig[branchType], dvm.prefixes.catalog + 'head');
+            if (latestHead !== selectedHead) {
+                dvm.state.requestConfig[branchType] = latestBranch;
+            }
+        } else {
+            dvm.state.requestConfig[branchType] = undefined;
+        }
     }
 }
 

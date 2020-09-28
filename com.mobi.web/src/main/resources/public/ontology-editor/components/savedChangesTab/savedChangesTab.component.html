@@ -38,7 +38,7 @@
                     <div class="expansion-panel list-group-item">
                         <div aria-controls="collapse_{{$id}}" aria-expanded="false" class="expansion-panel-toggler collapsed" data-target="#collapse_{{$id}}" data-toggle="collapse" id="heading_{{$id}}" role="button">
                             <div class="expansion-panel-header">
-                                <p class="remove-min-width m-0" title="{{item.id}}">{{dvm.util.getBeautifulIRI(item.id)}}</p>
+                                <p class="remove-min-width m-0" title="{{item.id}}">{{dvm.os.getEntityNameByListItem(item.id)}}</p>
                                 <small class="remove-min-width"><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small>
                             </div>
                             <div class="expansion-panel-icon ml-3 text-black-secondary">

@@ -797,6 +797,19 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(queryResults.replaceAll("\\r\\n?", "\n"), "[ {\n  \"@id\" : \"urn:test\",\n  \"urn:prop\" : [ {\n    \"@value\" : \"test\"\n  } ]\n} ]");
     }
 
+    private void assertEntityNames(Response response, boolean fromNode) throws Exception {
+        Map<String, EntityNames> expectedValues = objectMapper.readValue(
+                getResourceString("/getOntologyStuffData/entityNames-results.json"),
+                new TypeReference<Map<String, EntityNames>>() {});
+
+        Map<String, EntityNames> actualValues = objectMapper.convertValue(
+                fromNode ? getResponseNode(response, "entityNames") : getResponse(response),
+                new TypeReference<Map<String, EntityNames>>(){});
+        assertEquals(actualValues.keySet(), expectedValues.keySet());
+        actualValues.forEach((s, entityNames1) ->
+                assertEquals(entityNames1.getNames(), expectedValues.get(s).getNames(), entityNames1.getNames().toString()));
+    }
+
     // Test upload file
 
     @Test
@@ -1546,33 +1559,16 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testGetOntologyStuffEntityNames() throws Exception {
-        setupTupleQueryMock();
-
-        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
-        JSONObject expectedResults = getResource("/getOntologyStuffData/entityNames-results.json");
-
-        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
-            conn.add(data);
-        }
+        setupEntityNamesRepo();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        Map<String, EntityNames> expectedValues = objectMapper.readValue(
-                getResourceString("/getOntologyStuffData/entityNames-results.json"),
-                new TypeReference<Map<String, EntityNames>>() {});
-
-        Map<String, EntityNames> actualValues = objectMapper.convertValue(
-                getResponseNode(response, "entityNames"),
-                new TypeReference<Map<String, EntityNames>>(){});
-
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertEquals(actualValues.keySet(), expectedValues.keySet());
-        actualValues.forEach((s, entityNames1) ->
-                assertEquals(entityNames1.getNames(), expectedValues.get(s).getNames(), entityNames1.getNames().toString()));
+        assertEntityNames(response, true);
     }
 
     @Test
@@ -1593,14 +1589,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testGetOntologyStuffEntityNamesBlankResult() throws Exception {
-        setupTupleQueryMock();
+        setupEntityNamesRepoEmptyEntity();
         JSONObject expectedResults = new JSONObject();
-
-        Model data = getModel("/getOntologyStuffData/ontologyEmptyEntity.ttl");
-
-        try(RepositoryConnection conn = testQueryRepo.getConnection()) {
-            conn.add(data);
-        }
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
@@ -5127,6 +5117,258 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             printModel("Expected Results", expectedResults);
             printModel("Actual Results", results);
             fail(e.getMessage(), e);
+        }
+    }
+
+    // Test getEntityNames
+
+    @Test
+    public void testGetEntityNames() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEntityNames(response, false);
+    }
+
+    @Test
+    public void testGetEntityNamesNoResults() throws Exception {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesBlankResult() throws Exception {
+        setupEntityNamesRepoEmptyEntity();
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesWithNoInProgressCommit() throws Exception {
+        setupTupleQueryMock();
+        setupEntityNamesRepo();
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        assertEntityNames(response, false);
+    }
+
+    @Test
+    public void testGetEntityNamesWithNoInProgressCommitNoResults() throws Exception {
+        setNoInProgressCommit();
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesWithNoInProgressCommitBlankResult() throws Exception {
+        setupEntityNamesRepoEmptyEntity();
+        setNoInProgressCommit();
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesWithCommitIdAndMissingBranchId() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("commitId", commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
+        assertGetOntology(true);
+        assertEntityNames(response, false);
+    }
+
+    @Test
+    public void testGetEntityNamesWithCommitIdAndMissingBranchIdNoResults() throws Exception {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("commitId", commitId.stringValue()).request().get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesWithCommitIdAndMissingBranchIdBlankResult() throws Exception {
+        setupEntityNamesRepoEmptyEntity();
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("commitId", commitId.stringValue()).request().get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesMissingCommitId() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId);
+        assertGetOntology(true);
+        assertEntityNames(response, false);
+    }
+
+    @Test
+    public void testGetEntityNamesMissingCommitIdNoResults() throws Exception {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesMissingCommitIdBlankResult() throws Exception {
+        setupTupleQueryMock();
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).request()
+                .get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesMissingBranchIdAndCommitId() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId);
+        assertGetOntology(true);
+        assertEntityNames(response, false);
+    }
+
+    @Test
+    public void testGetEntityNamesMissingBranchIdAndCommitIdNoResults() throws Exception {
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .request().get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesMissingBranchIdAndCommitIdBlankResult() throws Exception {
+        setupEntityNamesRepoEmptyEntity();
+        JSONObject expectedResults = new JSONObject();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .request().get();
+        JSONObject responseObject = getResponse(response);
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId);
+        assertGetOntology(true);
+        assertEquals(responseObject, expectedResults);
+    }
+
+    @Test
+    public void testGetEntityNamesWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    private void setupEntityNamesRepo() throws Exception {
+        setupTupleQueryMock();
+        Model data = getModel("/getOntologyStuffData/ontologyData.ttl");
+        try (RepositoryConnection conn = testQueryRepo.getConnection()) {
+            conn.add(data);
+        }
+    }
+
+    private void setupEntityNamesRepoEmptyEntity() throws Exception {
+        setupTupleQueryMock();
+        Model data = getModel("/getOntologyStuffData/ontologyEmptyEntity.ttl");
+        try (RepositoryConnection conn = testQueryRepo.getConnection()) {
+            conn.add(data);
         }
     }
 

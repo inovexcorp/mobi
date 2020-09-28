@@ -172,7 +172,7 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
     }
     dvm.orderByIRI = function(item) {
-        return dvm.util.getBeautifulIRI(item.id);
+        return dvm.os.getEntityNameByListItem(item.id);
     }
     dvm.getMoreResults = function() {
         dvm.index++;
