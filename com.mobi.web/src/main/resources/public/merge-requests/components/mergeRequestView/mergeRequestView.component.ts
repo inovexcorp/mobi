@@ -21,7 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-import { forEach, concat, some, isEmpty, get } from 'lodash';
+import { forEach, concat, some, isEmpty, get, noop } from 'lodash';
 
 import './mergeRequestView.component.scss';
 
@@ -75,9 +75,7 @@ function mergeRequestViewComponentCtrl($q, mergeRequestManagerService, mergeRequ
             }, () => {
                 dvm.util.createWarningToast('The request you had selected no longer exists');
                 dvm.back();
-            }).then(() => {
-                dvm.state.selected = angular.copy(dvm.state.selected);
-            }, dvm.util.createErrorToast);
+            }).then(noop, dvm.util.createErrorToast);
     }
     dvm.back = function() {
         dvm.state.selected = undefined;
