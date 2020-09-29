@@ -3259,7 +3259,7 @@ public class OntologyRest {
                 commitId = (Resource) commitStmt.next().getObject();
             }
         } catch (IllegalArgumentException | RDFParseException ex) {
-            ObjectNode objectNode = createJsonErrorObject(ex, ";;;");
+            ObjectNode objectNode = createJsonErrorObject(ex, Models.ERROR_OBJECT_DELIMITER);
             Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
             throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         } catch (MobiException ex) {

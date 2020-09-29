@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { has, find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
+import { get, has, find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
 
 import './commitHistoryTable.component.scss';
 
@@ -83,7 +83,7 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
     dvm.um = userManagerService;
     dvm.snap = undefined;
     dvm.colors = [];
-
+    dvm.limit = 100;
     dvm.error = '';
     dvm.commit = undefined;
     dvm.additions = [];
@@ -110,12 +110,15 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         httpService.cancel(dvm.id);
     }
     dvm.openCommitOverlay = function(commitId) {
-        cm.getDifference(commitId)
+        cm.getDifference(commitId, null, dvm.limit, 0)
             .then(response => {
+                var headers = response.headers();
+                var hasMoreResults = get(headers, 'has-more-results', false) === 'true';
                 modalService.openModal('commitInfoOverlay', {
                     commit: find(dvm.commits, {id: commitId}),
-                    additions: response.additions,
-                    deletions: response.deletions,
+                    additions: response.data.additions,
+                    deletions: response.data.deletions,
+                    hasMoreResults: hasMoreResults,
                     entityNameFunc: dvm.entityNameFunc
                 }, undefined, 'lg');
             }, errorMessage => dvm.error = errorMessage);

@@ -48,7 +48,9 @@ const commitChangesDisplayComponent = {
     bindings: {
         additions: '<',
         deletions: '<',
-        entityNameFunc: '<?'
+        entityNameFunc: '<?',
+        showMoreResultsFunc: '&',
+        hasMoreResults: '<'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -58,36 +60,29 @@ commitChangesDisplayComponentCtrl.$inject = ['utilService'];
 
 function commitChangesDisplayComponentCtrl(utilService) {
     var dvm = this;
-    dvm.size = 100;
+    dvm.size = 100; // Must be the same as the limit prop in the commitHistoryTable
     dvm.index = 0;
     dvm.util = utilService;
     dvm.list = [];
     dvm.chunkList = [];
     dvm.results = {};
+    dvm.showMore = false;
 
     dvm.$onChanges = function() {
         var adds = map(dvm.additions, '@id');
         var deletes = map(dvm.deletions, '@id');
         dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        dvm.size = 100;
-        dvm.index = 0;
-        dvm.results = getResults();
+        dvm.addPagedChangesToResults();
     }
-    dvm.getMoreResults = function() {
-        dvm.index++;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
+    dvm.addPagedChangesToResults = function() {
+        forEach(dvm.list, id => {
             addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
         });
+        dvm.showMore = dvm.hasMoreResults;
     }
-
-    function getResults() {
-        var results = {};
-        dvm.chunkList = chunk(dvm.list, dvm.size);
-        dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, results);
-        });
-        return results;
+    dvm.getMorePagedChanges = function() {
+        dvm.index += dvm.size;
+        dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index}); // Should trigger $onChanges
     }
     function addToResults(additions, deletions, id, results) {
         results[id] = { additions: additions, deletions: deletions };

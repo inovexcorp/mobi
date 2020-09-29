@@ -24,21 +24,26 @@
 import {
     mockComponent,
     mockUserManager,
-    mockUtil
+    mockUtil,
+    mockCatalogManager
 } from '../../../../../../test/js/Shared';
 
 describe('Commit Info Overlay component', function() {
-    var $compile, scope;
+    var $compile, scope, $q, catalogManagerSvc, utilSvc;
 
     beforeEach(function() {
         angular.mock.module('shared');
         mockComponent('shared', 'commitChangesDisplay');
         mockUserManager();
+        mockCatalogManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            catalogManagerSvc = _catalogManagerService_;
+            utilSvc = _utilService_;
         });
 
         scope.resolve = {
@@ -55,6 +60,7 @@ describe('Commit Info Overlay component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        catalogManagerSvc = null;
         this.element.remove();
     });
 
@@ -85,12 +91,14 @@ describe('Commit Info Overlay component', function() {
             expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toEqual(0);
 
             scope.resolve.additions = [{}];
+            this.controller.$onInit();
             scope.$digest();
             expect(this.element.querySelectorAll('.changes-container p').length).toEqual(0);
             expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toEqual(1);
 
             scope.resolve.additions = [];
             scope.resolve.deletions = [{}];
+            this.controller.$onInit();
             scope.$digest();
             expect(this.element.querySelectorAll('.changes-container p').length).toEqual(0);
             expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toEqual(1);
@@ -106,6 +114,37 @@ describe('Commit Info Overlay component', function() {
             this.controller.cancel();
             scope.$digest();
             expect(scope.dismiss).toHaveBeenCalled();
+        });
+        describe('should update additions and deletions', function() {
+            it('if getDifference resolves', function() {
+                this.headers = {'has-more-results': 'true'};
+                catalogManagerSvc.getDifference.and.returnValue($q.when({data: {additions: [{}], deletions: []}, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+                scope.resolve = {
+                    commit: {'id':'123'},
+                    additions: [{}],
+                    deletions: []
+                };
+                scope.$digest();
+                this.controller.retrieveMoreResults(100, 0);
+                scope.$apply();
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
+                expect(this.controller.additions).toEqual([{}]);
+                expect(this.controller.deletions).toEqual([]);
+                expect(this.controller.hasMoreResults).toEqual(true);
+            });
+            it('unless getDifference rejects', function() {
+                scope.resolve = {
+                    commit: {'id':'123'},
+                    additions: [{}],
+                    deletions: []
+                };
+                scope.$digest();
+                catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
+                this.controller.retrieveMoreResults(100, 0);
+                scope.$apply();
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', null, 100, 0);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+            });
         });
     });
 });

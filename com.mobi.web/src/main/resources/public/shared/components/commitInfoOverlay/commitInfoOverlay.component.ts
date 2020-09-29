@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { get } from 'lodash';
+
 const template = require('./commitInfoOverlay.component.html');
 
 /**
@@ -28,6 +30,7 @@ const template = require('./commitInfoOverlay.component.html');
  * @name shared.component:commitInfoOverlay
  * @requires shared.service:utilService
  * @requires shared.service:userManagerService
+ * @requires shared.service:catalogManagerService
  *
  * @description
  * `commitInfoOverlay` is a component that creates content for a modal displaying information about the passed
@@ -58,15 +61,37 @@ const commitInfoOverlayComponent = {
     controller: commitInfoOverlayComponentCtrl
 };
 
-commitInfoOverlayComponentCtrl.$inject = ['utilService', 'userManagerService']
+commitInfoOverlayComponentCtrl.$inject = ['utilService', 'userManagerService', 'catalogManagerService']
 
-function commitInfoOverlayComponentCtrl(utilService, userManagerService) {
+function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalogManagerService) {
     var dvm = this;
     dvm.util = utilService;
     dvm.um = userManagerService;
+    dvm.cm = catalogManagerService;
+    dvm.additions = {};
+    dvm.deletions = {};
+    dvm.hasMoreResults = false;
 
+    dvm.$onInit = function() {
+        dvm.additions = dvm.resolve.additions;
+        dvm.deletions = dvm.resolve.deletions;
+        dvm.hasMoreResults = dvm.resolve.hasMoreResults;
+    }
     dvm.cancel = function() {
         dvm.dismiss();
+    }
+    dvm.retrieveMoreResults = function(limit, offset) {
+        dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
+            .then(response => {
+                dvm.additions = response.data.additions;
+                dvm.deletions = response.data.deletions;
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => {
+                if (errorMessage) {
+                    dvm.util.createErrorToast(errorMessage);
+                }
+            });
     }
 }
 

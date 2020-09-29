@@ -51,7 +51,7 @@ describe('Object Property Block component', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        this.element = $compile(angular.element('<object-property-block></object-property-block>'))(scope);
+        this.element = $compile(angular.element('<object-property-block selected="dvm.os.listItem.selected"></object-property-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('objectPropertyBlock');
     });
@@ -64,6 +64,11 @@ describe('Object Property Block component', function() {
         this.element.remove();
     });
 
+    it('initializes with the correct data', function() {
+        ontologyStateSvc.listItem.objectProperties.iris = {'annotation1': '', 'default2': '', 'owl2': ''};
+        this.controller.$onChanges();
+        expect(this.controller.objectProperties).toEqual(['annotation1', 'default2', 'owl2']);
+    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toEqual('OBJECT-PROPERTY-BLOCK');
@@ -95,6 +100,7 @@ describe('Object Property Block component', function() {
         it('depending on how many datatype properties there are', function() {
             expect(this.element.find('property-values').length).toEqual(2);
             ontologyStateSvc.listItem.selected = undefined;
+            this.controller.updatePropertiesFiltered();
             scope.$digest();
             expect(this.element.find('property-values').length).toEqual(0);
         });
@@ -106,7 +112,7 @@ describe('Object Property Block component', function() {
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toEqual('');
             expect(ontologyStateSvc.propertyIndex).toEqual(0);
-            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('objectPropertyOverlay', jasmine.any(Object), this.controller.updatePropertiesFiltered);
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', function() {
             this.controller.showRemovePropertyOverlay('key', 1);

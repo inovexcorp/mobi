@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.18.22-SNAPSHOT</version>
+    <version>1.18.33-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -81,6 +81,7 @@
         <ehcache.version>3.3.1</ehcache.version>
         <javax.cache.version>1.0.0</javax.cache.version>
         <eclipse.persistence.version>2.6.1</eclipse.persistence.version>
+        <jose-jwt.version>4.41.3</jose-jwt.version>
     </properties>
 
     <dependencyManagement>
@@ -309,7 +310,7 @@
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>4.11</version>
+                <version>${jose-jwt.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
