@@ -45,7 +45,7 @@ describe('Commit Changes Display component', function() {
 
         scope.additions = [];
         scope.deletions = [];
-        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions"></commit-changes-display>'))(scope);
+        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc"></commit-changes-display>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitChangesDisplay');
     });
@@ -67,6 +67,11 @@ describe('Commit Changes Display component', function() {
             this.controller.deletions = [{}];
             scope.$digest();
             expect(scope.deletions).toEqual([]);
+        });
+        it('entityNameFunc should be one way bound', function() {
+            this.controller.entityNameFunc = undefined;
+            scope.$digest();
+            expect(scope.entityNameFunc).toBeDefined();
         });
     });
     describe('controller methods', function() {

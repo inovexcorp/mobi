@@ -31,14 +31,19 @@ const template = require('./statementDisplay.component.html');
  * @name shared.component:statementDisplay
  *
  * @description
- * 
+ * `statementDisplay` is a component that creates a div displaying the provided predicate and object.
+ *
+ * @param {string} predicate A string of the predicate to display
+ * @param {Object} object An object representing the object of a triple to display
+ * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI.
  */
 const statementDisplayComponent = {
     template,
     require: '^^statementContainer',
     bindings: {
         predicate: '<',
-        object: '<'
+        object: '<',
+        entityNameFunc: '<?'
     },
     controllerAs: 'dvm',
     controller: statementDisplayComponentCtrl
@@ -51,7 +56,11 @@ function statementDisplayComponentCtrl($filter) {
     dvm.$onInit = function () {
         if (has(dvm.object, '@id')) {
             dvm.fullObject = dvm.object['@id'];
-            dvm.o = $filter('splitIRI')(dvm.fullObject).end || dvm.fullObject;
+            if (dvm.entityNameFunc) {
+                dvm.o = dvm.entityNameFunc(dvm.fullObject);
+            } else {
+                dvm.o = $filter('splitIRI')(dvm.fullObject).end || dvm.fullObject;
+            }
         } else {
             dvm.o = get(dvm.object, '@value', dvm.object)
                 + (has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
