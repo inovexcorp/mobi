@@ -56,7 +56,8 @@ function statementDisplayComponentCtrl($filter) {
     dvm.$onInit = function () {
         if (has(dvm.object, '@id')) {
             dvm.fullObject = dvm.object['@id'];
-            dvm.o = $filter('splitIRI')(dvm.fullObject).end || dvm.fullObject;
+            var split = $filter('splitIRI')(dvm.fullObject).end;
+            dvm.o = split ? split + ' <' + dvm.fullObject + '>' : dvm.fullObject ;
         } else {
             dvm.o = get(dvm.object, '@value', dvm.object)
                 + (has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
@@ -65,7 +66,11 @@ function statementDisplayComponentCtrl($filter) {
         }
     }
     dvm.displayObj = function () {
-        return dvm.entityNameFunc && has(dvm.object, '@id') ? dvm.entityNameFunc(dvm.fullObject) : dvm.o;
+        if (dvm.entityNameFunc && has(dvm.object, '@id')) {
+            return dvm.entityNameFunc(dvm.fullObject) + ' <' + dvm.fullObject + '>';
+        } else {
+            return dvm.o;
+        }
     }
 }
 

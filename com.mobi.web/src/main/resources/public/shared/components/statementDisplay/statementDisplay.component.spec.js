@@ -94,7 +94,7 @@ describe('Statement Display component', function() {
                 splitIRI.and.returnValue({end: 'id'});
                 this.controller.$onInit();
                 expect(splitIRI).toHaveBeenCalledWith('full/id');
-                expect(this.controller.o).toEqual('id');
+                expect(this.controller.o).toEqual('id <' + this.controller.fullObject + '>');
                 expect(this.controller.fullObject).toEqual('full/id');
             });
             it('and split.end is empty', function() {
@@ -142,17 +142,17 @@ describe('Statement Display component', function() {
             beforeEach(function() {
                 this.controller.object = {'@id': 'full/id'};
                 this.controller.fullObject = 'full/id';
-                this.controller.o = 'id';
+                this.controller.o = 'id <' + this.controller.fullObject + '>';
             });
             it('and entityFunc is present', function() {
                 scope.entityNameFunc.and.returnValue('label');
-                expect(this.controller.displayObj()).toEqual('label');
+                expect(this.controller.displayObj()).toEqual('label <' + this.controller.fullObject + '>');
                 expect(scope.entityNameFunc).toHaveBeenCalledWith(this.controller.fullObject);
             });
             it('and entityFunc is not present', function() {
                 scope.entityNameFunc = undefined;
                 scope.$digest();
-                expect(this.controller.displayObj()).toEqual('id');
+                expect(this.controller.displayObj()).toEqual('id <' + this.controller.fullObject + '>');
             });
         });
         describe('when @id is not present', function() {
