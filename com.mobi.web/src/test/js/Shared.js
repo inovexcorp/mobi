@@ -230,7 +230,8 @@ export function mockOntologyManager() {
             this.getConceptHierarchies = jasmine.createSpy('getConceptHierarchies').and.returnValue($q.when({}));
             this.getConceptSchemeHierarchies = jasmine.createSpy('getConceptSchemeHierarchies').and.returnValue($q.when({}));
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
-            this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
+            this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when({}));
+            this.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue($q.when({}));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
             this.getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue($q.when({}));
             this.getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue($q.when([]));

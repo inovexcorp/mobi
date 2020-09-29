@@ -28,7 +28,7 @@ import {
 } from '../../../../../../test/js/Shared';
 
 describe('Merge Request Tabset component', function() {
-    var $compile, scope, $q, catalogManagerSvc, utilSvc, mergeRequestStateSvc;
+    var $compile, scope, $q, catalogManagerSvc, utilSvc;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
@@ -37,13 +37,12 @@ describe('Merge Request Tabset component', function() {
         mockComponent('merge-requests', 'mergeRequestDiscussion');
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_, _mergeRequestsStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
-            mergeRequestStateSvc = _mergeRequestsStateService_;
         });
 
         scope.request = {difference: {additions: [], deletions: []}};

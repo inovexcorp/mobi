@@ -1085,6 +1085,37 @@ describe('Ontology Manager service', function() {
             });
         });
     });
+    describe('getOntologyEntityNames calls the correct functions when GET /mobirest/ontologies/{recordId}/entity-names', function() {
+        beforeEach(function() {
+            this.params = paramSerializer({
+                branchId: this.branchId,
+                commitId: this.commitId,
+                includeImports: false,
+                applyInProgressCommit: false
+            });
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params).respond(200, {});
+            ontologyManagerSvc.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
+                .then(response => {
+                    expect(response).toEqual({});
+                }, () => {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params).respond(400, null, null, this.error);
+            ontologyManagerSvc.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual(this.error);
+                });
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
+        });
+    });
     describe('getSearchResults should call the correct functions', function() {
         beforeEach(function () {
             this.searchText = 'searchText';

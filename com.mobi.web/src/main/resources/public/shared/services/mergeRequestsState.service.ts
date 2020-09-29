@@ -197,7 +197,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
     }
     /**
      * @ngdoc method
-     * @name initialize
+     * @name setRequests
      * @propertyOf shared.service:mergeRequestsStateService
      *
      * @description
@@ -249,6 +249,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         request.removeSource = '';
         request.difference = '';
         request.comments = [];
+        request.entityNames = {};
         return mm.getComments(request.jsonld['@id'])
             .then(comments => {
                 request.comments = comments;
@@ -274,9 +275,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                             request.sourceCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                             request.sourceTitle = util.getDctermsValue(branch, 'title');
                             request.removeSource = self.removeSource(request.jsonld);
-                            return self.getSourceEntityNames(request);
-                        }, $q.reject)
-                        .then(noop, $q.reject);
+                        }, $q.reject);
 
                     if (targetIri) {
                         return promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
@@ -290,11 +289,15 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                                 request.difference = response.data;
                                 var headers = response.headers();
                                 request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
+                                return self.getSourceEntityNames(request);
+                            }, $q.reject)
+                            .then(() => {
+                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId)
                             }, $q.reject)
                             .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
-                        return promise.then(noop, util.createErrorToast);
+                        return promise.then(self.getSourceEntityNames(request), $q.reject)
+                            .then(noop, util.createErrorToast);
                     }
                 }
             }, util.createErrorToast);
@@ -383,12 +386,15 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * @propertyOf shared.service:mergeRequestsStateService
      *
      * @description
-     * Populates the self.requestConfig.entityNames object with EntityNames of entities with an addition or deletion.
+     * Populates the request.entityNames object with EntityNames of entities with an addition or deletion.
      *
+     * @param {Object} request A request or requestConfig object that contains branch information
+     *
+     * @return {Promise} A Promise indicating the success of retrieving entityNames
      */
     self.getSourceEntityNames = function(request = self.requestConfig) {
-        var recordIri = request.recordId ? request.recordId : request.recordIri;
-        om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
+        let recordIri = request.recordId ? request.recordId : request.recordIri;
+        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
             .then(data => {
                 if (request.difference) {
                     var diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'))
