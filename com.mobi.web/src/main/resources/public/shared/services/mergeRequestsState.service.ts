@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, map, uniq, noop, forEach, filter, find, union, pick } from 'lodash';
+import { get, map, uniq, noop, forEach, filter, find, union, pick, forOwn, has, isArray } from 'lodash';
 
 mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'ontologyManagerService', 'utilService', 'prefixes', '$q'];
 
@@ -394,13 +394,14 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      */
     self.getSourceEntityNames = function(request = self.requestConfig) {
         let recordIri = request.recordId ? request.recordId : request.recordIri;
-        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
+        om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
             .then(data => {
                 if (request.difference) {
-                    var diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'))
-                    request.entityNames = pick(data, diffIris);
+                    let diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
+                    let iris = union(diffIris, getObjIrisFromDifference(request.difference.additions), getObjIrisFromDifference(request.difference.deletions));
+                    request.entityNames = pick(data, iris);
                 } else {
-                    request.entityNames = data;
+                    request.entityNames = {};
                 }
             }, $q.reject)
     }
@@ -432,6 +433,21 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
     function getCreator(jsonld) {
         var iri = util.getDctermsId(jsonld, 'creator');
         return get(find(um.users, {iri}), 'username');
+    }
+    function getObjIrisFromDifference(additionsOrDeletions) {
+        let objIris = [];
+        forEach(additionsOrDeletions, change => {
+            forOwn(change, (value, key) => {
+                if (isArray(value)) {
+                    forEach(value, item => {
+                        if (has(item, '@id')) {
+                            objIris.push(item['@id']);
+                        }
+                    });
+                }
+            });
+        });
+        return objIris;
     }
 }
 

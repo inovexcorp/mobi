@@ -102,6 +102,7 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
     }
 
     function updateDifference() {
+        dvm.state.requestConfig.difference = undefined;
         cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'), cm.differencePageSize, 0)
             .then(response => {
                 dvm.state.requestConfig.difference = response.data;

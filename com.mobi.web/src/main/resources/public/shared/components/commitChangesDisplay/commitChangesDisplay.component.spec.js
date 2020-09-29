@@ -45,6 +45,7 @@ describe('Commit Changes Display component', function() {
 
         scope.additions = [];
         scope.deletions = [];
+        scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
         this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc"></commit-changes-display>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitChangesDisplay');

@@ -87,14 +87,6 @@ describe('Statement Display component', function() {
     });
     describe('check controller.o value', function() {
         describe('when @id is present', function() {
-            it('and entityNameFunc is present', function() {
-                scope.entityNameFunc.and.returnValue('value');
-                this.controller.object = {'@id': 'full/id'};
-                this.controller.$onInit();
-                expect(scope.entityNameFunc).toHaveBeenCalledWith('full/id');
-                expect(this.controller.o).toEqual('value');
-                expect(this.controller.fullObject).toEqual('full/id');
-            });
             it('and split.end is present', function() {
                 scope.entityNameFunc = undefined;
                 scope.$digest();
@@ -143,6 +135,41 @@ describe('Statement Display component', function() {
             this.controller.$onInit();
             expect(this.controller.o).toEqual('words');
             expect(this.controller.fullObject).toEqual('words');
+        });
+    });
+    describe('check display obj method', function() {
+        describe('when @id is present', function() {
+            beforeEach(function() {
+                this.controller.object = {'@id': 'full/id'};
+                this.controller.fullObject = 'full/id';
+                this.controller.o = 'id';
+            });
+            it('and entityFunc is present', function() {
+                scope.entityNameFunc.and.returnValue('label');
+                expect(this.controller.displayObj()).toEqual('label');
+                expect(scope.entityNameFunc).toHaveBeenCalledWith(this.controller.fullObject);
+            });
+            it('and entityFunc is not present', function() {
+                scope.entityNameFunc = undefined;
+                scope.$digest();
+                expect(this.controller.displayObj()).toEqual('id');
+            });
+        });
+        describe('when @id is not present', function() {
+            beforeEach(function() {
+                this.controller.object = {'@value': 'value'};
+                this.controller.fullObject = 'value';
+                this.controller.o = 'value';
+            });
+            it('and entityFunc is present', function() {
+                expect(this.controller.displayObj()).toEqual('value');
+                expect(scope.entityNameFunc).not.toHaveBeenCalled();
+            });
+            it('and entityFunc is not present', function() {
+                scope.entityNameFunc = undefined;
+                scope.$apply();
+                expect(this.controller.displayObj()).toEqual('value');
+            });
         });
     });
 });
