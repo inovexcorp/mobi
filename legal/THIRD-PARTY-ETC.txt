@@ -1,13 +1,85 @@
-(MIT License) AngularJS (https://github.com/angular/angular.js/blob/master/LICENSE)
-(MIT License) lodash (https://lodash.com/license)
-(MIT License) ui-router (https://github.com/angular-ui/ui-router/blob/master/LICENSE)
-(SIL Open Font License, Version 1.1, and MIT License) Font Awesome (https://fortawesome.github.io/Font-Awesome/license/, http://scripts.sil.org/OFL)
-(MIT License) bootstrap (http://getbootstrap.com/getting-started/#license-faqs)
-(MIT License) ui-select (https://github.com/angular-ui/ui-select/blob/master/LICENSE)
-(Eclipse Distribution License) jgit (https://github.com/eclipse/jgit/blob/master/LICENSE, http://www.eclipse.org/org/documents/edl-v10.php)
-(MIT License) Angular-ui-codemirror (https://github.com/angular-ui/ui-codemirror/blob/master/LICENSE)
-(MIT License) Angular-ui-router (https://github.com/angular-ui/ui-router/blob/master/LICENSE)
-(MIT License) Angular-uuid (https://github.com/munkychop/angular-uuid/blob/master/LICENSE.md)
-(MIT License) Codemirror (https://github.com/codemirror/CodeMirror/blob/master/LICENSE)
-(MIT License) Handsontable (https://github.com/handsontable/handsontable/blob/master/LICENSE)
-(MIT License) ngHandsontable (https://github.com/handsontable/ngHandsontable/blob/master/LICENSE)
+name                                   License type       link
+-----------------------------------------------------------------------------------------------------------------------
+@angular/common                        MIT                git+https://github.com/angular/angular.git
+@angular/compiler                      MIT                git+https://github.com/angular/angular.git
+@angular/compiler-cli                  MIT                git+https://github.com/angular/angular.git
+@angular/core                          MIT                git+https://github.com/angular/angular.git
+@angular/forms                         MIT                git+https://github.com/angular/angular.git
+@angular/http                          MIT                git+https://github.com/angular/angular.git
+@angular/platform-browser              MIT                git+https://github.com/angular/angular.git
+@angular/platform-browser-dynamic      MIT                git+https://github.com/angular/angular.git
+@angular/router                        MIT                git+https://github.com/angular/angular.git
+@angular/upgrade                       MIT                git+https://github.com/angular/angular.git
+@uirouter/angular-hybrid               MIT                git+https://github.com/ui-router/angular-hybrid.git
+@triply/yasgui                         MIT                git+https://github.com/TriplyDB/yasgui.git
+angular                                MIT                git+https://github.com/angular/angular.js.git
+angular-animate                        MIT                git+https://github.com/angular/angular.js.git
+angular-aria                           MIT                git+https://github.com/angular/angular.js.git
+angular-cookies                        MIT                git+https://github.com/angular/angular.js.git
+angular-material                       MIT                git://github.com/angular/material.git
+angular-messages                       MIT                git+https://github.com/angular/angular.js.git
+angular-mocks                          MIT                git+https://github.com/angular/angular.js.git
+angular-toastr                         MIT                git+https://github.com/Foxandxss/angular-toastr.git
+angular-touch                          MIT                git+https://github.com/angular/angular.js.git
+angular-ui-codemirror                  n/a                n/a
+angular-uuid                           MIT                git://github.com/munkychop/angular-uuid.git
+antlr4                                 BSD-3-Clause       git+https://github.com/antlr/antlr4.git
+antlr4ts                               BSD-3-Clause       git+https://github.com/tunnelvisionlabs/antlr4ts.git
+bootstrap                              MIT                git+https://github.com/twbs/bootstrap.git
+chroma-js                              n/a                git://github.com/gka/chroma.js.git
+clipboard                              MIT                git+https://github.com/zenorocha/clipboard.js.git
+codemirror-minified                    MIT                git+https://github.com/Dominator008/CodeMirror-minified.git
+codemirror-no-newlines                 n/a                n/a
+core-js                                MIT                git+https://github.com/zloirock/core-js.git
+daemonite-material                     MIT                git+https://github.com/Daemonite/material.git
+font-awesome                           (OFL-1.1 AND MIT)  git+https://github.com/FortAwesome/Font-Awesome.git
+handsontable                           MIT                git+https://github.com/handsontable/handsontable.git
+jquery                                 MIT                git+https://github.com/jquery/jquery.git
+lodash                                 MIT                git+https://github.com/lodash/lodash.git
+ng-handsontable                        MIT                git+https://github.com/handsontable/ngHandsontable.git
+ngclipboard                            MIT                git+ssh://git@github.com/sachinchoolur/ngclipboard.git
+popper.js                              MIT                git+https://github.com/FezVrasta/popper.js.git
+reflect-metadata                       Apache-2.0         git+https://github.com/rbuckton/reflect-metadata.git
+rxjs                                   Apache-2.0         git+ssh://git@github.com/ReactiveX/RxJS.git
+showdown                               BSD-3-Clause       git+https://github.com/showdownjs/showdown.git
+snapsvg                                Apache-2.0         git+ssh://git@github.com/adobe-webplatform/Snap.svg.git
+sparqljs                               MIT                git+https://github.com/RubenVerborgh/SPARQL.js.git
+tslib                                  0BSD               git+https://github.com/Microsoft/tslib.git
+ui-bootstrap4                          MIT                git+https://github.com/morgul/ui-bootstrap4.git
+ui-select                              MIT                git://github.com/angular-ui/ui-select.git
+zone.js                                MIT                git://github.com/angular/zone.js.git
+@ngtools/webpack                       MIT                git+https://github.com/angular/angular-cli.git
+@types/jasmine                         MIT                https://github.com/DefinitelyTyped/DefinitelyTyped.git
+@types/node                            MIT                https://github.com/DefinitelyTyped/DefinitelyTyped.git
+angular2-template-loader               MIT                git+https://github.com/TheLarkInn/angular2-template-loader.git
+antlr4ts-cli                           BSD-3-Clause       git+https://github.com/tunnelvisionlabs/antlr4ts.git
+autoprefixer                           MIT                git+https://github.com/postcss/autoprefixer.git
+copy-webpack-plugin                    MIT                git+https://github.com/webpack-contrib/copy-webpack-plugin.git
+css-loader                             MIT                git+https://github.com/webpack-contrib/css-loader.git
+extract-text-webpack-plugin            MIT                git+ssh://git@github.com/webpack-contrib/extract-text-webpack-plugin.git
+file-loader                            MIT                git+https://github.com/webpack-contrib/file-loader.git
+html-webpack-plugin                    MIT                git+https://github.com/jantimon/html-webpack-plugin.git
+imports-loader                         MIT                git+https://github.com/webpack-contrib/imports-loader.git
+jasmine-core                           MIT                git+https://github.com/jasmine/jasmine.git
+karma                                  MIT                git://github.com/karma-runner/karma.git
+karma-chrome-launcher                  MIT                git://github.com/karma-runner/karma-chrome-launcher.git
+karma-html-reporter                    MIT                git://github.com/dtabuenc/karma-html-reporter.git
+karma-jasmine                          MIT                git://github.com/karma-runner/karma-jasmine.git
+karma-parallel                         MIT                git+https://github.com/joeljeske/karma-parallel.git
+karma-sourcemap-loader                 MIT                git+ssh://git@github.com/demerzel3/karma-sourcemap-loader.git
+karma-webpack                          MIT                git+https://github.com/webpack-contrib/karma-webpack.git
+ng-bullet                              MIT                https://registry.npmjs.org/ng-bullet/-/ng-bullet-1.0.3.tgz
+ng-mocks                               MIT                git+https://github.com/ike18t/ng-mocks.git
+node-sass                              MIT                git+https://github.com/sass/node-sass.git
+optimize-css-assets-webpack-plugin     MIT                git+ssh://git@github.com/NMFR/optimize-css-assets-webpack-plugin.git
+postcss-loader                         MIT                git+https://github.com/postcss/postcss-loader.git
+raw-loader                             MIT                git+https://github.com/webpack-contrib/raw-loader.git
+rimraf                                 ISC                git://github.com/isaacs/rimraf.git
+sass-loader                            MIT                git+https://github.com/webpack-contrib/sass-loader.git
+style-loader                           MIT                git+https://github.com/webpack-contrib/style-loader.git
+ts-loader                              MIT                git+https://github.com/TypeStrong/ts-loader.git
+typescript                             Apache-2.0         git+https://github.com/Microsoft/TypeScript.git
+uglifyjs-webpack-plugin                MIT                git+https://github.com/webpack-contrib/uglifyjs-webpack-plugin.git
+webpack                                MIT                git+https://github.com/webpack/webpack.git
+webpack-dev-server                     MIT                git+https://github.com/webpack/webpack-dev-server.git
+webpack-merge                          MIT                git+https://github.com/survivejs/webpack-merge.git
