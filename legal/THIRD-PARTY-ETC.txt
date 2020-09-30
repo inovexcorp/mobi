@@ -21,15 +21,15 @@ angular-messages                       MIT                git+https://github.com
 angular-mocks                          MIT                git+https://github.com/angular/angular.js.git
 angular-toastr                         MIT                git+https://github.com/Foxandxss/angular-toastr.git
 angular-touch                          MIT                git+https://github.com/angular/angular.js.git
-angular-ui-codemirror                  n/a                n/a
+angular-ui-codemirror                  MIT                git+https://github.com/angular-ui/ui-codemirror.git
 angular-uuid                           MIT                git://github.com/munkychop/angular-uuid.git
 antlr4                                 BSD-3-Clause       git+https://github.com/antlr/antlr4.git
 antlr4ts                               BSD-3-Clause       git+https://github.com/tunnelvisionlabs/antlr4ts.git
 bootstrap                              MIT                git+https://github.com/twbs/bootstrap.git
-chroma-js                              n/a                git://github.com/gka/chroma.js.git
+chroma-js                              BSD-3-Clause       git://github.com/gka/chroma.js.git
 clipboard                              MIT                git+https://github.com/zenorocha/clipboard.js.git
 codemirror-minified                    MIT                git+https://github.com/Dominator008/CodeMirror-minified.git
-codemirror-no-newlines                 n/a                n/a
+codemirror-no-newlines                 MIT                git+https://github.com/isaacev/codemirror-no-newlines.git
 core-js                                MIT                git+https://github.com/zloirock/core-js.git
 daemonite-material                     MIT                git+https://github.com/Daemonite/material.git
 font-awesome                           (OFL-1.1 AND MIT)  git+https://github.com/FortAwesome/Font-Awesome.git
