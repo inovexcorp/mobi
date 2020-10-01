@@ -21,6 +21,7 @@ stages:
   - new_release_deploy
 
 variables:
+  CHROME_VERSION: 85.0.4183.121-1
   ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
   MAVEN_SETTINGS_DOCKER: <server>
       <id>docker-hub</id>
