@@ -88,6 +88,9 @@ update_master_with_new_snapshot:
 
 unit_integration_test:
   stage: unit_integration_test
+  ## Tags section should be removed/updated once all runners have been updated
+  tags:
+    - test
   dependencies: []
   only:
     variables:
@@ -95,7 +98,13 @@ unit_integration_test:
     refs:
       - master
   script:
-    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
+    # Redirect calls to localhost:9080 to host machines (not this container)
+    # A 2nd container running mobi is bound to the host at port 9080
+    - HOST_IP=$(ip route show | awk '/default/ {print $3}')
+    - apt-get update && apt-get install -y redir
+    - redir :9080 $HOST_IP:9080
+    # Run unit, integration, and functional tests
+    - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false
   artifacts:
     paths: ['rdf-orm']
 
