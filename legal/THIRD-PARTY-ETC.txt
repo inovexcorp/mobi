@@ -41,7 +41,7 @@ ngclipboard                            MIT                git+ssh://git@github.c
 popper.js                              MIT                git+https://github.com/FezVrasta/popper.js.git
 reflect-metadata                       Apache-2.0         git+https://github.com/rbuckton/reflect-metadata.git
 rxjs                                   Apache-2.0         git+ssh://git@github.com/ReactiveX/RxJS.git
-showdown                               BSD-3-Clause       git+https://github.com/showdownjs/showdown.git
+showdown                               MIT                git+https://github.com/showdownjs/showdown.git
 snapsvg                                Apache-2.0         git+ssh://git@github.com/adobe-webplatform/Snap.svg.git
 sparqljs                               MIT                git+https://github.com/RubenVerborgh/SPARQL.js.git
 tslib                                  0BSD               git+https://github.com/Microsoft/tslib.git
