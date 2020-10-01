@@ -26,29 +26,33 @@ import {
     mockPrefixes,
     mockUserManager,
     injectTrustedFilter,
-    injectHighlightFilter
+    injectHighlightFilter, mockCatalogManager
 } from '../../../../../../test/js/Shared';
 
 describe('Request Details Form component', function() {
-    var $compile, scope, mergeRequestsStateSvc, utilSvc;
+    var $compile, scope, $q, mergeRequestsStateSvc, catalogManagerSvc, utilSvc;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
         mockMergeRequestsState();
+        mockCatalogManager();
         mockUtil();
         mockPrefixes();
         mockUserManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mergeRequestsStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mergeRequestsStateService_, _catalogManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             mergeRequestsStateSvc = _mergeRequestsStateService_;
+            catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
         });
 
         utilSvc.getDctermsValue.and.callFake((obj, prop) => prop);
+        catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [{}, {}]}));
         this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('requestDetailsForm');
@@ -57,13 +61,49 @@ describe('Request Details Form component', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        $q = null;
         mergeRequestsStateSvc = null;
+        catalogManagerSvc = null;
         utilSvc = null;
         this.element.remove();
     });
 
-    it('should initialize with the correct value for title', function() {
-        expect(mergeRequestsStateSvc.requestConfig.title).toEqual('title');
+    describe('should initialize with the correct values', function() {
+        describe('and getRecordBranches', function() {
+            it('resolves and branches are set', function() {
+                mergeRequestsStateSvc.requestConfig.sourceBranch = {};
+                mergeRequestsStateSvc.requestConfig.targetBranch = {};
+                mergeRequestsStateSvc.createRequestStep = 2;
+                this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);
+                scope.$digest();
+                expect(mergeRequestsStateSvc.requestConfig.title).toEqual('title');
+                expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', [{}, {}]);
+                expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [{}, {}]);
+                expect(mergeRequestsStateSvc.updateRequestConfigDifference).toHaveBeenCalled();
+                expect(mergeRequestsStateSvc.createRequestStep).toEqual(2);
+            });
+            it('resolves and a branch is not set', function() {
+                mergeRequestsStateSvc.requestConfig.sourceBranch = {};
+                mergeRequestsStateSvc.requestConfig.targetBranch = undefined;
+                mergeRequestsStateSvc.createRequestStep = 2;
+                this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);
+                scope.$digest();
+                expect(mergeRequestsStateSvc.requestConfig.title).toEqual('title');
+                expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', [{}, {}]);
+                expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [{}, {}]);
+                expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
+                expect(mergeRequestsStateSvc.createRequestStep).toEqual(1);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Branch was deleted');
+            });
+            it('rejects', function() {
+                catalogManagerSvc.getRecordBranches.and.returnValue($q.reject('Error Message'));
+                this.element = $compile(angular.element('<request-details-form></request-details-form>'))(scope);
+                scope.$digest();
+                expect(mergeRequestsStateSvc.requestConfig.title).toEqual('title');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+            });
+        });
+
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {

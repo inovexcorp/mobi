@@ -1300,6 +1300,8 @@ export function mockMergeRequestsState() {
             this.resolveRequestConflicts = jasmine.createSpy('resolveRequestConflicts').and.returnValue($q.when());
             this.removeSource = jasmine.createSpy('removeSource').and.returnValue(true);
             this.getSourceEntityNames = jasmine.createSpy('getSourceEntityNames').and.returnValue($q.when());
+            this.updateRequestConfigDifference = jasmine.createSpy('updateRequestConfigDifference').and.returnValue($q.when());
+            this.updateRequestConfigBranch = jasmine.createSpy('updateRequestConfigBranch');
         });
     });
 }

@@ -394,7 +394,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      */
     self.getSourceEntityNames = function(request = self.requestConfig) {
         let recordIri = request.recordId ? request.recordId : request.recordIri;
-        om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
+        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
             .then(data => {
                 if (request.difference) {
                     let diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
@@ -423,6 +423,60 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             return self.selected.entityNames[iri].label;
         } else {
             return util.getBeautifulIRI(iri);
+        }
+    }
+    /**
+     * @ngdoc method
+     * @name updateRequestConfigDifference
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Updates the requestConfig.difference with the difference between the requestConfig.sourceBranch and
+     * requestConfig.targetBranch. Once successful
+     *
+     * @return {Promise} A Promise indicating the success of updating the requestConfig difference
+     */
+    self.updateRequestConfigDifference = function() {
+        self.requestConfig.difference = undefined;
+        cm.getDifference(util.getPropertyId(self.requestConfig.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(self.requestConfig.targetBranch, prefixes.catalog + 'head'), cm.differencePageSize, 0)
+            .then(response => {
+                self.requestConfig.difference = response.data;
+                var headers = response.headers();
+                self.requestConfig.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                return self.getSourceEntityNames();
+            }, $q.reject)
+            .then(noop, errorMessage => {
+                self.requestConfig.difference = undefined;
+                self.requestConfig.entityNames = undefined;
+                return $q.reject(errorMessage);
+            });
+    }
+    /**
+     * @ngdoc method
+     * @name updateRequestConfigBranch
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Checks the current `branchType` of 'sourceBranch' or 'targetBranch' against the `branches` provided for newer
+     * head commits or if the branch has been deleted. Updates the requestConfig[branchType] accordingly.
+     *
+     * @param {string} branchType A string indicating if it is a 'sourceBranch' or a 'targetBranch'
+     * @param {Object[]} branches The list of branches to check against
+     */
+    self.updateRequestConfigBranch = function(branchType, branches) {
+        var branchId = get(self, ['requestConfig', branchType, '@id']);
+        if (!branchId) {
+            return;
+        }
+        var latestBranch = find(branches, {'@id': branchId});
+        if (latestBranch) {
+            var latestHead = util.getPropertyId(latestBranch, prefixes.catalog + 'head');
+            var selectedHead = util.getPropertyId(self.requestConfig[branchType], prefixes.catalog + 'head');
+            if (latestHead !== selectedHead) {
+                self.requestConfig[branchType] = latestBranch;
+            }
+        } else {
+            self.requestConfig[branchType] = undefined;
         }
     }
 

@@ -70,11 +70,6 @@ describe('Request Branch Select component', function() {
         this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('requestBranchSelect');
-
-        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
-            let commit = get(obj, [prefixes.catalog + 'head', 0, '@id']);
-            return commit ? commit : 'head';
-        });
     });
 
     afterEach(function() {
@@ -98,49 +93,49 @@ describe('Request Branch Select component', function() {
                 it('and both exist', function () {
                     this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
                     scope.$digest();
-                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
-                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranch);
-                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranch);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).toHaveBeenCalled();
                 });
                 it('and neither exist', function () {
-                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: []}));
+                    mergeRequestsStateSvc.updateRequestConfigBranch.and.callFake((branchType, branches) => {
+                        mergeRequestsStateSvc.requestConfig[branchType] = undefined;
+                    });
                     this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
                     scope.$digest();
-                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
-                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(undefined);
-                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(undefined);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toBeUndefined();
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toBeUndefined();
                 });
                 it('and source does not exist', function () {
-                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.targetBranch]}));
+                    mergeRequestsStateSvc.updateRequestConfigBranch.and.callFake((branchType, branches) => {
+                        if (branchType === 'sourceBranch') {
+                            mergeRequestsStateSvc.requestConfig[branchType] = undefined;
+                        }
+                    });
                     this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
                     scope.$digest();
-                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
-                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(undefined);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toBeUndefined();
                     expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranch);
                 });
                 it('and target does not exist', function () {
-                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranch]}));
+                    mergeRequestsStateSvc.updateRequestConfigBranch.and.callFake((branchType, branches) => {
+                        if (branchType === 'targetBranch') {
+                            mergeRequestsStateSvc.requestConfig[branchType] = undefined;
+                        }
+                    });
                     this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
                     scope.$digest();
-                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('sourceBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [this.sourceBranch, this.targetBranch]);
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
                     expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranch);
-                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(undefined);
-                });
-                it('and source has new commits', function () {
-                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranchNewHead, this.targetBranch]}));
-                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
-                    scope.$digest();
-                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
-                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranchNewHead);
-                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranch);
-                });
-                it('and target has new commits', function () {
-                    catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: [this.sourceBranch, this.targetBranchNewHead]}));
-                    this.element = $compile(angular.element('<request-branch-select></request-branch-select>'))(scope);
-                    scope.$digest();
-                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
-                    expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranch);
-                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranchNewHead);
+                    expect(mergeRequestsStateSvc.requestConfig.targetBranch).toBeUndefined();
                 });
             });
             it('not selected', function() {
@@ -176,39 +171,16 @@ describe('Request Branch Select component', function() {
                 mergeRequestsStateSvc.requestConfig.difference = {};
             });
             describe('if one has been selected and source branch is', function() {
-                describe('set and getDifference', function() {
-                    beforeEach(function() {
-                        mergeRequestsStateSvc.requestConfig.sourceBranch = {'@id': 'source'};
-                        mergeRequestsStateSvc.requestConfig.sourceBranchId = 'source';
-                    });
-                    describe('resolves and getSourceEntityNames', function() {
-                        it('resolves', function() {
-                            this.controller.changeTarget(this.branch);
-                            scope.$apply();
-                            expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
-                            expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
-                            expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
-                            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
-                            expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                        });
-                    });
-                    it('rejects', function() {
-                        catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
-                        this.controller.changeTarget(this.branch);
-                        scope.$apply();
-                        expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
-                        expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
-                        expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
-                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-                    });
+                it('set', function() {
+                    mergeRequestsStateSvc.requestConfig.sourceBranch = {'@id': 'source'};
+                    this.controller.changeTarget(this.branch);
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).toHaveBeenCalled();
                 });
                 it('not set', function() {
                     this.controller.changeTarget(this.branch);
                     expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.branch);
                     expect(mergeRequestsStateSvc.requestConfig.targetBranchId).toEqual('target');
-                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
                     expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
@@ -216,8 +188,8 @@ describe('Request Branch Select component', function() {
             it('if one has not been selected', function() {
                 this.controller.changeTarget();
                 expect(mergeRequestsStateSvc.requestConfig.targetBranch).toBeUndefined();
-                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
+                expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
         });
@@ -227,39 +199,15 @@ describe('Request Branch Select component', function() {
                 mergeRequestsStateSvc.requestConfig.difference = {};
             });
             describe('if one has been selected and target branch is', function() {
-                describe('set and getDifference', function() {
-                    beforeEach(function() {
-                        mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'target'};
-                        mergeRequestsStateSvc.requestConfig.targetBranchId = 'target';
-                    });
-                    describe('resolves and getSourceEntityNames', function() {
-                        it('resolves', function () {
-                            this.controller.changeSource(this.branch);
-                            scope.$apply();
-                            expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
-                            expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
-                            expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.difference);
-                            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
-                            expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                        });
-                    });
-                    it('rejects', function() {
-                        catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
-                        this.controller.changeSource(this.branch);
-                        scope.$apply();
-                        expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
-                        expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                        expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
-                        expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
-                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-                    });
+                it('set', function() {
+                    mergeRequestsStateSvc.requestConfig.targetBranch = {'@id': 'target'};
+                    this.controller.changeSource(this.branch);
+                    expect(mergeRequestsStateSvc.updateRequestConfigDifference).toHaveBeenCalled();
                 });
                 it('not set', function() {
                     this.controller.changeSource(this.branch);
                     expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.branch);
                     expect(mergeRequestsStateSvc.requestConfig.sourceBranchId).toEqual('source');
-                    expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                     expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
@@ -267,7 +215,6 @@ describe('Request Branch Select component', function() {
             it('if one has not been selected', function() {
                 this.controller.changeSource();
                 expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toBeUndefined();
-                expect(catalogManagerSvc.getDifference).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });

@@ -64,12 +64,13 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
             .then(response => {
                 dvm.branches = response.data;
-                updateBranch('sourceBranch');
-                updateBranch( 'targetBranch');
+                dvm.state.updateRequestConfigBranch('sourceBranch', dvm.branches);
+                dvm.state.updateRequestConfigBranch( 'targetBranch', dvm.branches);
                 if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
-                    updateDifference();
+                    return dvm.state.updateRequestConfigDifference();
                 }
-            }, error => {
+            }, $q.reject)
+            .then(noop, error => {
                 dvm.util.createErrorToast(error);
                 dvm.branches = [];
             });
@@ -79,7 +80,7 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         if (dvm.state.requestConfig.sourceBranch) {
             dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
             if (dvm.state.requestConfig.targetBranch) {
-                updateDifference();
+                dvm.state.updateRequestConfigDifference();
             } else {
                 dvm.state.requestConfig.difference = undefined;
             }
@@ -92,44 +93,12 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
         if (dvm.state.requestConfig.targetBranch) {
             dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
             if (dvm.state.requestConfig.sourceBranch) {
-                updateDifference();
+                dvm.state.updateRequestConfigDifference();
             } else {
                 dvm.state.requestConfig.difference = undefined;
             }
         } else {
             dvm.state.requestConfig.difference = undefined;
-        }
-    }
-
-    function updateDifference() {
-        dvm.state.requestConfig.difference = undefined;
-        cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'), cm.differencePageSize, 0)
-            .then(response => {
-                dvm.state.requestConfig.difference = response.data;
-                var headers = response.headers();
-                dvm.state.requestConfig.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                return dvm.state.getSourceEntityNames();
-            }, $q.reject)
-            .then(noop, errorMessage => {
-                dvm.util.createErrorToast(errorMessage);
-                dvm.state.requestConfig.difference = undefined;
-                dvm.state.requestConfig.entityNames = undefined;
-            });
-    }
-    function updateBranch(branchType) {
-        var branchId = get(dvm.state, ['requestConfig', branchType, '@id']);
-        if (!branchId) {
-            return;
-        }
-        var latestBranch = find(dvm.branches, {'@id': branchId});
-        if (latestBranch) {
-            var latestHead = dvm.util.getPropertyId(latestBranch, dvm.prefixes.catalog + 'head');
-            var selectedHead = dvm.util.getPropertyId(dvm.state.requestConfig[branchType], dvm.prefixes.catalog + 'head');
-            if (latestHead !== selectedHead) {
-                dvm.state.requestConfig[branchType] = latestBranch;
-            }
-        } else {
-            dvm.state.requestConfig[branchType] = undefined;
         }
     }
 }
