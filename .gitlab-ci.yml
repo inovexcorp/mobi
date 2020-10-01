@@ -89,9 +89,6 @@ update_master_with_new_snapshot:
 
 unit_integration_test:
   stage: unit_integration_test
-  ## Tags section should be removed/updated once all runners have been updated
-  tags:
-    - test
   dependencies: []
   only:
     variables:
