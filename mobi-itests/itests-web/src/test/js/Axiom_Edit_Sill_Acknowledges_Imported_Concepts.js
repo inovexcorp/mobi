@@ -168,76 +168,36 @@ module.exports = {
                 .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Object Property 0")]]')
                 .click('//div[contains(@class, "section-header")]//h5[text()[contains(., "Axioms")]]//following-sibling::a[contains(@class, "fa-plus")]')
                 .useCss()
-                .waitForElementPresent('axiom-overlay div[placeholder="Select an axiom"] span.btn i.caret.pull-right')
-                .useXpath()
-//                .waitForElementPresent('axiom-overlay ul.ui-select-choices')
-                .waitForElementPresent('//axiom-overlay//div[contains(@placeholder, "Select an axiom")]//following-sibling::ul//li')
-                .useCss()
+                .waitForElementPresent('axiom-overlay div[placeholder="Select an axiom"] span.btn')
+                .waitForElementNotPresent('div.modal.ng-animate')
                 .click('axiom-overlay div[placeholder="Select an axiom"] span.btn')
                 .useXpath()
                 .waitForElementVisible('//axiom-overlay//div[text()[contains(.,"subPropertyOf")]]')
                 .click('//axiom-overlay//div[text()[contains(., "subPropertyOf")]]')
-                .waitForElementNotVisible('css', 'axiom-overlay ul.ui-select-dropdown')
+                .useCss()
+                .waitForElementNotVisible('axiom-overlay ul.ui-select-dropdown')
+                .useXpath()
                 .click('//axiom-overlay//input[contains(@placeholder, "Select values")]')
                 .waitForElementVisible('//axiom-overlay//div[contains(@title, "http://www.w3.org/2004/02/skos/core#broaderTransitive")]')
                 .click('//axiom-overlay//div[contains(@title, "http://www.w3.org/2004/02/skos/core#broaderTransitive")]')
-                .waitForElementNotVisible('css', 'axiom-overlay ul.ui-select-dropdown')
-                .click('//axiom-overlay//button[text()[contains(.,"Submit")]]')
-                .waitForElementVisible('//axiom-overlay')
-
-
-//                .click('branch-select div[placeholder="Select a Branch"] span.btn')
-//                .useXpath()
-//                .waitForElementVisible('//merge-block//branch-select//span[text()[contains(.,"MASTER")]]')
-//                .click('//merge-block//branch-select//span[text()[contains(.,"MASTER")]]')
-//                .useCss()
-//                .waitForElementVisible('div[placeholder="Select a Branch"] > span > span > span')
-//                .assert.containsText('div[placeholder="Select a Branch"] > span > span > span', 'Branch: MASTER')
-
-
-
-    },
-
-    'Step 12: Go back to Ontology List page': function(browser) {
-            browser
+                .useCss()
+                .waitForElementNotVisible('axiom-overlay ul.ui-select-dropdown')
                 .useXpath()
-                .click('xpath', '//ontology-sidebar//button[text()[contains(.,"Ontologies")]]')
-                .waitForElementVisible('//button[text()="New Ontology"]')
-    },
-
-    'Step 13: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
-        browser
-            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-1.ttl")]]')
-    },
-
-    'Step 14: Validate Ontology Imports Appearance' : function (browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('.imports-block')
-            .useXpath()
-            .assert.visible('//imports-block//p//a[text()[contains(.,"http://mobi.com/ontology/test-local-imports-2")]]')
-            .assert.visible('//imports-block//div[contains(@class, "indirect-import-container")]//p//a[text()[contains(.,"http://mobi.com/ontology/test-local-imports-3")]]')
-            .assert.visible('//imports-block//div[contains(@class, "indirect-import-container")]//p//a[text()[contains(.,"http://www.w3.org/2004/02/skos/core")]]')
-    },
-
-    'Step 15: Click concepts tab' : function (browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('div.material-tabset li.nav-item')
-            .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
+                .click('//axiom-overlay//button[text()[contains(.,"Submit")]]')
+                .waitForElementNotVisible('//axiom-overlay')
     },
 
     'Step 16: Click the concepts tab' : function (browser) {
             browser
-                .useCss()
-                .waitForElementVisible('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
+                .useXpath()
+                .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
     },
 
-    'Step 17: Verify concept is still imported' : function (browser) {
-            browser
-                .useXpath()
-                .waitForElementVisible('xpath', '//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]')
-                .assert.visible('xpath', '//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]//ancestor::div[contains(@class, "imported")]')
+    'Step 17: Check for Imported Concept' : function (browser) {
+                browser
+                    .useXpath()
+                    .waitForElementVisible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]')
+                    .assert.visible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]//ancestor::div[contains(@class, "imported")]');
     }
 }
