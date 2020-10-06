@@ -25,6 +25,8 @@ package com.mobi.catalog.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
 import com.mobi.catalog.api.CatalogUtilsService;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.builder.Conflict;
@@ -921,6 +923,57 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .deletions(mf.createModel(deletions.keySet()))
                 .build();
     }
+
+    @Override
+    public PagedDifference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset) {
+        Map<Statement, Integer> additions = new HashMap<>();
+        Map<Statement, Integer> deletions = new HashMap<>();
+        boolean hasMoreResults = false;
+
+        commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
+
+        /** We are using Multimaps instead of regular maps because Multimaps represent a one key to many values
+        relationship. In this case, one subject may have many statements. The reason that we do not just have a Model
+         or Collection<Statement> as the value of a regular Map is that it would require us to look up the value in
+         order to update it. Doing a lookup on a possibly enormous Map is very computationally expensive if done inside
+         a loop. Using Multimap allows us to avoid a lookup and just add statements as values for a given subject
+         without worrying about what is already there. **/
+        ListMultimap<String, Statement> addSubjMap = MultimapBuilder.hashKeys().arrayListValues().build();
+        ListMultimap<String, Statement> addDelMap = MultimapBuilder.hashKeys().arrayListValues().build();
+
+        TreeSet<String> subjects = new TreeSet<>();
+
+        additions.forEach( (statement, integer) -> {
+            String subj = statement.getSubject().stringValue();
+            subjects.add(subj);
+            addSubjMap.put(subj, statement);
+        });
+
+        deletions.forEach( (statement, integer) -> {
+            String subj = statement.getSubject().stringValue();
+            subjects.add(subj);
+            addDelMap.put(subj, statement);
+        });
+
+        subjects.retainAll(subjects.stream()
+                .skip(offset)
+                .limit(limit + 1)
+                .collect(Collectors.toSet()));
+
+        if (subjects.size() > limit) {
+            hasMoreResults = true;
+            subjects.remove(subjects.last());
+        }
+
+        addSubjMap.keySet().retainAll(subjects);
+        addDelMap.keySet().retainAll(subjects);
+
+        return new PagedDifference(new Difference.Builder()
+                .additions(mf.createModel(addSubjMap.values()))
+                .deletions(mf.createModel(addDelMap.values()))
+                .build(), hasMoreResults);
+    }
+
 
     @Override
     public PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset) {
