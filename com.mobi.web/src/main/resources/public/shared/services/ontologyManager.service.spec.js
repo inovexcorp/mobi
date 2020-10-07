@@ -1085,7 +1085,7 @@ describe('Ontology Manager service', function() {
             });
         });
     });
-    describe('getOntologyEntityNames calls the correct functions when GET /mobirest/ontologies/{recordId}/entity-names', function() {
+    describe('getOntologyEntityNames calls the correct functions when POST /mobirest/ontologies/{recordId}/entity-names', function() {
         beforeEach(function() {
             this.params = paramSerializer({
                 branchId: this.branchId,
@@ -1093,9 +1093,16 @@ describe('Ontology Manager service', function() {
                 includeImports: false,
                 applyInProgressCommit: false
             });
+
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params).respond(200, {});
+            $httpBackend.expectPOST('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params,
+                () => {
+                    return {'filterResources' : []};
+                },
+                function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(200, {});
             ontologyManagerSvc.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
                 .then(response => {
                     expect(response).toEqual({});
@@ -1105,7 +1112,12 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params).respond(400, null, null, this.error);
+            $httpBackend.expectPOST('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params,
+                () =>  {
+                    return {'filterResources' : []};
+                }, function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(400, null, null, this.error);
             ontologyManagerSvc.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
                 .then(() => {
                     fail('Promise should have rejected');

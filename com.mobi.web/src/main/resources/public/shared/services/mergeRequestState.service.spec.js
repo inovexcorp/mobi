@@ -30,7 +30,7 @@ import {
 } from '../../../../../test/js/Shared';
 import {get} from "lodash";
 
-describe('Merge Requests State service', function() {
+fdescribe('Merge Requests State service', function() {
     var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, ontologyManagerSvc, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {
@@ -598,7 +598,7 @@ describe('Merge Requests State service', function() {
                 };
                 mergeRequestsStateSvc.getSourceEntityNames(this.request);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.request.recordIri, this.request.sourceBranch['@id'], 'commit', false, false);
+                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.request.recordIri, this.request.sourceBranch['@id'], 'commit', false, false, [ 'iri1', 'iri3' ]);
                 expect(this.request.entityNames).toEqual(this.filtered);
             });
             it('with no difference set', function() {
@@ -609,7 +609,7 @@ describe('Merge Requests State service', function() {
                 };
                 mergeRequestsStateSvc.getSourceEntityNames(this.request);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.request.recordIri, this.request.sourceBranch['@id'], 'commit', false, false);
+                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
                 expect(this.request.entityNames).toEqual({});
             });
         });

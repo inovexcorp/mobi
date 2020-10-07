@@ -67,6 +67,7 @@ function requestDetailsFormComponentCtrl($q, mergeRequestsStateService, userMana
                     return dvm.state.updateRequestConfigDifference();
                 } else {
                     dvm.state.createRequestStep = 1;
+                    dvm.state.difference = undefined;
                     return $q.reject('Branch was deleted');
                 }
             }, $q.reject)

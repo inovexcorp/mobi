@@ -672,20 +672,25 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
      * @methodOf shared.service:ontologyManagerService
      *
      * @description
-     * Calls the GET /mobirest/ontologies/{recordId}/entity-names
+     * Calls the POST /mobirest/ontologies/{recordId}/entity-names
      *
      * @param {string} recordId The record ID of the ontology to query.
      * @param {string} branchId The branch ID of the ontology to query.
      * @param {string} commitId The commit ID of the ontology to query.
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
      * @param {boolean} [applyInProgressCommit=true] Whether to apply the in progress commit changes.
+     * @param {string[]} [filterResources = []] The list of resources to filter the entity names query by.
      * @param {string} [id=''] The id to link this REST call to.
      * @return {Promise} A Promise with an object containing EntityNames.
      */
-    self.getOntologyEntityNames = function(recordId, branchId, commitId, includeImports = true, applyInProgressCommit= true, id = '') {
-        var config = { params: { branchId, commitId, includeImports, applyInProgressCommit } };
+    self.getOntologyEntityNames = function(recordId, branchId, commitId, includeImports = true, applyInProgressCommit= true, filterResources = [], id = '') {
+        var config = { params: { branchId, commitId, includeImports, applyInProgressCommit },
+            headers: {
+                'Content-Type': 'application/json'
+            } };
         var url = prefix + '/' + encodeURIComponent(recordId) + '/entity-names';
-        var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+        var data = {filterResources};
+        var promise = id ? httpService.post(url, data, config, id) : $http.post(url, data, config);
         return promise.then(response => response.data, util.rejectError);
     }
     /**

@@ -93,8 +93,11 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -910,7 +913,8 @@ public class OntologyRest {
             log.trace("Start entityNames");
             watch.start();
             outputStream.write(", \"entityNames\": ".getBytes());
-            writeEntityNamesToStream(ontology.getTupleQueryResults(GET_ENTITY_NAMES, true), outputStream);
+            String queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", "");
+            writeEntityNamesToStream(ontology.getTupleQueryResults(queryString, true), outputStream);
             watch.stop();
             log.trace("End entityNames: " + watch.getTime() + "ms");
 
@@ -2433,11 +2437,13 @@ public class OntologyRest {
      *                              applied to the return value
      * @return Returns the list of EntityNames for the given Ontology.
      */
-    @GET
+    @POST
     @Path("{recordId}/entity-names")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Gets the EntityNames in the identified ontology.")
+    @ActionId(Read.TYPE)
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getEntityNames(@Context ContainerRequestContext context,
                                    @PathParam("recordId") String recordIdStr,
@@ -2445,16 +2451,48 @@ public class OntologyRest {
                                    @QueryParam("commitId") String commitIdStr,
                                    @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
                                    @DefaultValue("true") @QueryParam("applyInProgressCommit")
-                                               boolean applyInProgressCommit) {
+                                               boolean applyInProgressCommit,
+                                   String filterJson) {
         try {
+            StopWatch watch = new StopWatch();
+            log.trace("Start entityNames");
+            watch.start();
+
+            JSONObject json = JSONObject.fromObject(filterJson);
+            Optional<JSONArray> optArr = Optional.ofNullable(json.optJSONArray("filterResources"));
+            Set<Resource> resources = new HashSet<>();
+            if (optArr.isPresent()) {
+                JSONArray jsonArray = optArr.get();
+                for (int i = 0; i < jsonArray.size(); i ++) {
+                    Optional<String> optStr = Optional.ofNullable(jsonArray.optString(i));
+                    optStr.ifPresent(resourceString -> {
+                        try {
+                            resources.add(valueFactory.createIRI(resourceString));
+                        } catch (IllegalArgumentException e) {
+                            log.warn("Could not create entity name filter IRI for " + resourceString);
+                        }
+                    });
+                }
+            }
+
+            String queryString = null;
+            if (resources.isEmpty()) {
+                queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", "");
+            } else {
+                String resourcesString = "VALUES ?entity {<" + resources.stream().map(Resource::stringValue)
+                        .collect(Collectors.joining("> <")) + ">}";
+                queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", resourcesString);
+            }
             Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit);
             if (optionalOntology.isPresent()) {
+                String finalQueryString = queryString;
                 StreamingOutput output = outputStream -> {
-                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(GET_ENTITY_NAMES,
-                            includeImports);
+                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(finalQueryString, includeImports);
                     writeEntityNamesToStream(result, outputStream);
                 };
+                watch.stop();
+                log.trace("ENTITY NAMES: " + watch.getTime() + "ms");
                 return Response.ok(output).build();
             } else {
                 throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);

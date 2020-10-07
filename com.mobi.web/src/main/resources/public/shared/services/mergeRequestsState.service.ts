@@ -393,16 +393,16 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * @return {Promise} A Promise indicating the success of retrieving entityNames
      */
     self.getSourceEntityNames = function(request = self.requestConfig) {
+        if (!request.difference) {
+            request.entityNames = {};
+            return $q.reject('Difference is not set. Cannot get ontology entity names.');
+        }
         let recordIri = request.recordId ? request.recordId : request.recordIri;
-        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false)
+        let diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
+        let iris = union(diffIris, getObjIrisFromDifference(request.difference.additions), getObjIrisFromDifference(request.difference.deletions));
+        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
             .then(data => {
-                if (request.difference) {
-                    let diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
-                    let iris = union(diffIris, getObjIrisFromDifference(request.difference.additions), getObjIrisFromDifference(request.difference.deletions));
-                    request.entityNames = pick(data, iris);
-                } else {
-                    request.entityNames = {};
-                }
+                request.entityNames = data;
             }, $q.reject)
     }
     /**

@@ -93,6 +93,7 @@ describe('Request Details Form component', function() {
                 expect(mergeRequestsStateSvc.updateRequestConfigBranch).toHaveBeenCalledWith('targetBranch', [{}, {}]);
                 expect(mergeRequestsStateSvc.updateRequestConfigDifference).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.createRequestStep).toEqual(1);
+                expect(mergeRequestsStateSvc.difference).toBeUndefined();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Branch was deleted');
             });
             it('rejects', function() {
