@@ -24,12 +24,12 @@ var adminUsername = "admin"
 var adminPassword = "admin"
 var validURL = 'https://avm.inovexcorp.com/ontologies/10/2019';
 var invalidURL = 'https://avm.inovexcorp.com/ontolo<gies/10/2019';
-var validEndsWith = 'test-local-imports-1';
+var validEndsWith = 'CurrencyUnitOntology';
 var invalidEndsWidth = 'test`-local-`imports-1';
 var input_iriBegin = '//input[@id="iriBegin"]';
 var input_iriEnds = '//input[@id="iriEnd"]';
 
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
+var Onto1 = process.cwd()+ '/src/test/resources/ontologies/CurrencyUnitOntology.ttl'
 
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
@@ -79,15 +79,15 @@ module.exports = {
             .waitForElementVisible('div.ontologies')
             .useXpath()
             // check ontology list
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"CurrencyUnitOntology.ttl")]]')
             // check snackbar
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"CurrencyUnitOntology.ttl")]]')
             .useCss()
     },
 
-    'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
+    'Step 8: Click on Ontology called “CurrencyUnitOntology.ttl' : function (browser) {
         browser
-            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"CurrencyUnitOntology.ttl")]]')
     },
 
     'Step 9: Open edit IRI Modal' : function (browser) {
