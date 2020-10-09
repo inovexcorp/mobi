@@ -67,8 +67,11 @@ module.exports = {
         browser
             .waitForElementVisible('div.ontologies')
             .assert.elementNotPresent('div.modal-header')
+            .setValue('open-ontology-tab search-bar input', 'UHTC')
+            .keys(browser.Keys.ENTER)
             .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .waitForElementVisible('//div[contains(@class, "list-group")]//small[text()[contains(.,"http://matonto.org/ontologies/uhtc")]]')
+            .assert.visible('//div[contains(@class, "list-group")]//small[text()[contains(.,"http://matonto.org/ontologies/uhtc")]]')
             .useCss()
     },
 
