@@ -98,9 +98,11 @@ function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogMana
     }
 
     function updateDifference() {
-        cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'))
-            .then(diff => {
-                dvm.state.requestConfig.difference = diff;
+        cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'), cm.differencePageSize, 0)
+            .then(response => {
+                dvm.state.requestConfig.difference = response.data;
+                var headers = response.headers();
+                dvm.state.requestConfig.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
             }, errorMessage => {
                 dvm.util.createErrorToast(errorMessage);
                 dvm.state.requestConfig.difference = undefined;

@@ -21,6 +21,8 @@
  * #L%
  */
 
+import { get } from 'lodash';
+
 const template = require('./commitDifferenceTabset.component.html');
 
 /**
@@ -52,12 +54,52 @@ const commitDifferenceTabsetComponent = {
     controller: commitDifferenceTabsetComponentCtrl
 };
 
-function commitDifferenceTabsetComponentCtrl() {
+commitDifferenceTabsetComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
+
+function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService) {
     var dvm = this;
+
+    dvm.cm = catalogManagerService;
+    dvm.util = utilService;
+    dvm.additions = {};
+    dvm.deletions = {};
+    dvm.hasMoreResults = false;
     dvm.tabs = {
         changes: true,
         commits: false
     };
+
+    dvm.$onChanges = function(changesObj) {
+        // Technically when this component is created it doesn't have a difference until the getDifference REST endpoint completes
+        if (changesObj.difference && dvm.difference) { 
+            dvm.setInitialDifference()
+        }
+    }
+
+    dvm.setInitialChangesTab = function(value) { // When switching back to this tab we need to reset dvm.additions and dvm.deletions because they only have the current page
+        dvm.setInitialDifference();
+        dvm.tabs.changes = value;
+    }
+
+    dvm.setInitialDifference = function() {
+        dvm.additions = dvm.difference.additions;
+        dvm.deletions = dvm.difference.deletions;
+        dvm.hasMoreResults = dvm.difference.hasMoreResults;
+    }
+
+    dvm.retrieveMoreResults = function(limit, offset) {
+        dvm.cm.getDifference(dvm.commitId, dvm.targetId, limit, offset)
+            .then(response => {
+                dvm.additions = response.data.additions;
+                dvm.deletions = response.data.deletions;
+                var headers = response.headers();
+                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            }, errorMessage => {
+                if (errorMessage) {
+                    dvm.util.createErrorToast(errorMessage);
+                }
+            });
+    }
 }
 
 export default commitDifferenceTabsetComponent;

@@ -1002,11 +1002,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem.derivedConceptSchemes = get(response, 'derivedConceptSchemes', []);
                 listItem.derivedSemanticRelations = get(response, 'derivedSemanticRelations', []);
                 listItem.concepts.iris = {};
+                listItem.conceptSchemes.iris = {};
                 response.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
+                response.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
+                forEach(get(response, 'importedIRIs'), iriList => {
+                    iriList.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, iriList.id));
+                    iriList.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
+                });
                 setHierarchyInfo(listItem.concepts, response, 'conceptHierarchy');
                 listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
-                listItem.conceptSchemes.iris = {};
-                response.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
                 setHierarchyInfo(listItem.conceptSchemes, response, 'conceptSchemeHierarchy');
                 listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
                 unset(listItem.editorTabStates.concepts, 'entityIRI');

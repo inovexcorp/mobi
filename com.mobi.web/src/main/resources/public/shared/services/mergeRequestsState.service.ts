@@ -234,6 +234,8 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * branch with their titles, source and target commits, and the difference between the two commits.
      *
      * @param {Object} request An item from the `requests` array that represents the request to select
+     * 
+     * @return {Promise} A Promise indicating the success of the resolution
      */
     self.setRequestDetails = function(request) {
         request.sourceTitle = '';
@@ -245,7 +247,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         request.removeSource = '';
         request.difference = '';
         request.comments = [];
-        mm.getComments(request.jsonld['@id'])
+        return mm.getComments(request.jsonld['@id'])
             .then(comments => {
                 request.comments = comments;
                 if (mm.isAccepted(request.jsonld)) {
@@ -253,9 +255,11 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                     request.targetTitle = util.getPropertyValue(request.jsonld, prefixes.mergereq + 'targetBranchTitle');
                     request.sourceCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceCommit')
                     request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
-                    cm.getDifference(request.sourceCommit, request.targetCommit)
-                        .then(diff => {
-                            request.difference = diff;
+                    return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0)
+                        .then(response => {
+                            request.difference = response.data;
+                            var headers = response.headers();
+                            request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';        
                         }, util.createErrorToast)
                 } else {
                     var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
@@ -269,20 +273,22 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                         }, $q.reject);
 
                     if (targetIri) {
-                        promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
+                        return promise.then(() => cm.getRecordBranch(targetIri, request.recordIri, catalogId), $q.reject)
                             .then(branch => {
                                 request.targetBranch = branch;
                                 request.targetCommit = util.getPropertyId(branch, prefixes.catalog + 'head')
                                 request.targetTitle = util.getDctermsValue(branch, 'title');
-                                return cm.getDifference(request.sourceCommit, request.targetCommit);
+                                return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0);
                             }, $q.reject)
-                            .then(diff => {
-                                request.difference = diff;
+                            .then(response => {
+                                request.difference = response.data;
+                                var headers = response.headers();
+                                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';    
                                 return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
                             }, $q.reject)
                             .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
-                        promise.then(noop, util.createErrorToast);
+                        return promise.then(noop, util.createErrorToast);
                     }
                 }
             }, util.createErrorToast);

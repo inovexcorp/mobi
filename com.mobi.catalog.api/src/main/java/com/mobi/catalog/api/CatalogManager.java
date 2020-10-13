@@ -911,6 +911,22 @@ public interface CatalogManager {
     Difference getDifference(Resource sourceCommitId, Resource targetCommitId);
 
     /**
+     * Gets the PagedDifference between the Commits identified by the two provided Resources. The statements returned
+     * will be paged by subject using the provided limit and offset. Essentially returns the culmination of changes from
+     * a common ancestor between the Commits to the source Commit.
+     *
+     * @param sourceCommitId The source (first) Commit.
+     * @param targetCommitId The target (second) Commit.
+     * @param limit    The number of results to retrieve.
+     * @param offset   The number of subjects to skip when retrieving results.
+     * @return A PagedDifference between the two Commits identified by the provided Resources a boolean
+     * indicating whether another page of results exist.
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    PagedDifference getDifferencePaged(Resource sourceCommitId, Resource targetCommitId, int limit, int offset);
+
+    /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.
      *
      * @param leftId  The left (first) Commit.
