@@ -22,3 +22,5 @@ enabled=true
 variable=MY_CHOSEN_ENVIRONMENT_VARIABLE
 ```
 If you use an environment variable, make sure before you start Mobi that you have stored a unique password as the value for that environment variable.
+
+To disable password encryption: stop Mobi, change the enabled property to false in `com.mobi.security.api.EncryptionService.cfg`, re-enter all of your passwords in plaintext, and restart Mobi.
