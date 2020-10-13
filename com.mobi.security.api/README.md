@@ -14,7 +14,7 @@ password=ENTER_A_UNIQUE_PASSWORD_HERE # This password is not the password you wa
 
 IMPORTANT: If there is a default password in the password field (i.e. `CHANGEME`), make sure you change it before you start Mobi. Otherwise your passwords will be easy to decrypt.
 
-An alternate way of providing a encryption master password is via environment variable. To configure the use of an environment variable, use the following fields:
+An alternate way of providing an encryption master password is via environment variable. To configure the use of an environment variable, use the following fields:
 
 ```
 enabled=true
