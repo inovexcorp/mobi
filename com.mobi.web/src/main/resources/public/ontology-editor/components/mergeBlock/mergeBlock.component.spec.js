@@ -23,7 +23,7 @@
 import {
     mockUtil,
     mockOntologyState,
-    mockCatalogManager
+    mockCatalogManager, mockPrefixes
 } from '../../../../../../test/js/Shared';
 
 describe('Merge Block component', function() {
@@ -34,6 +34,7 @@ describe('Merge Block component', function() {
         mockUtil();
         mockOntologyState();
         mockCatalogManager();
+        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _utilService_, _catalogManagerService_) {
             $compile = _$compile_;
@@ -131,27 +132,23 @@ describe('Merge Block component', function() {
                 });
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getRecordBranch.and.returnValue($q.when({'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
-                    catalogManagerSvc.getDifference.and.returnValue($q.reject('Error'));
+                    ontologyStateSvc.getMergeDifferences.and.returnValue($q.reject('Error'));
                     this.controller.changeTarget(this.branch);
                     scope.$apply();
                     expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalled();
-                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
+                    expect(ontologyStateSvc.getMergeDifferences).toHaveBeenCalledWith('', '', catalogManagerSvc.differencePageSize, 0);
                     expect(util.createErrorToast).toHaveBeenCalledWith('Error');
                     expect(ontologyStateSvc.listItem.merge.difference).toBeUndefined();
                 });
                 it('successfully', function() {
-                    var difference = {additions: [], deletions: []};
-                    var headers = {'has-more-results': 'false'};            
                     catalogManagerSvc.getRecordBranch.and.returnValue($q.when({'http://mobi.com/ontologies/catalog#head': [{'@id': 'targetHead'}]}));
-                    catalogManagerSvc.getDifference.and.returnValue($q.when({data: difference, headers: jasmine.createSpy('headers').and.returnValue(headers)}));
                     this.controller.changeTarget(this.branch);
                     scope.$apply();
                     expect(ontologyStateSvc.listItem.merge.target).toEqual(this.branch);
                     expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalled();
-                    expect(catalogManagerSvc.getDifference).toHaveBeenCalled();
+                    expect(ontologyStateSvc.getMergeDifferences).toHaveBeenCalledWith('', '', catalogManagerSvc.differencePageSize, 0);
                     expect(util.createErrorToast).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.merge.difference).toEqual(difference);
                 });
             });
         });

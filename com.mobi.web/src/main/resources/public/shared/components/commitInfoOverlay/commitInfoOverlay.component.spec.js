@@ -25,24 +25,26 @@ import {
     mockComponent,
     mockUserManager,
     mockUtil,
-    mockCatalogManager
+    mockCatalogManager, mockOntologyManager
 } from '../../../../../../test/js/Shared';
 
 describe('Commit Info Overlay component', function() {
-    var $compile, scope, $q, catalogManagerSvc, utilSvc;
+    var $compile, scope, $q, catalogManagerSvc, ontologyManagerSvc, utilSvc;
 
     beforeEach(function() {
         angular.mock.module('shared');
         mockComponent('shared', 'commitChangesDisplay');
         mockUserManager();
         mockCatalogManager();
+        mockOntologyManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
         });
 

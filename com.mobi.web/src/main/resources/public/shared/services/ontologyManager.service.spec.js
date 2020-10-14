@@ -105,7 +105,7 @@ describe('Ontology Manager service', function() {
         ontologyManagerSvc.initialize();
         this.ontologyObj = {
             '@id': this.ontologyId,
-            '@type': [prefixes.owl + 'Ontology']
+            '@type': [prefixes.owl + 'Ontology', prefixes.ontologyEditor + 'OntologyRecord']
         };
         this.classObj = {
             '@id': this.classId,
@@ -1333,6 +1333,14 @@ describe('Ontology Manager service', function() {
         });
         it('false if the entity does not contain the ontology type', function() {
             expect(ontologyManagerSvc.isOntology({})).toBe(false);
+        });
+    });
+    describe('isOntologyRecord should return', function() {
+        it('true if the entity contains the ontology type', function() {
+            expect(ontologyManagerSvc.isOntologyRecord(this.ontologyObj)).toBe(true);
+        });
+        it('false if the entity does not contain the ontology type', function() {
+            expect(ontologyManagerSvc.isOntologyRecord({})).toBe(false);
         });
     });
     describe('hasOntologyEntity should return', function() {

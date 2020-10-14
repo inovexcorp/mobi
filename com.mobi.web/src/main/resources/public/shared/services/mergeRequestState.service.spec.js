@@ -99,7 +99,9 @@ describe('Merge Requests State service', function() {
             sourceBranchId: '',
             targetBranchId: '',
             recordId: '',
-            assignees: []
+            assignees: [],
+            entityNames: {},
+            startIndex: 0
         });
         expect(mergeRequestsStateSvc.createRequest).toEqual(false);
         expect(mergeRequestsStateSvc.createRequestStep).toEqual(0);

@@ -4664,7 +4664,8 @@ describe('Ontology State Service', function() {
             resolutions: {
                 additions: [{}],
                 deletions: [{}]
-            }
+            },
+            startIndex: 100
         }
         ontologyStateSvc.cancelMerge();
         expect(ontologyStateSvc.listItem.merge).toEqual({
@@ -4676,7 +4677,8 @@ describe('Ontology State Service', function() {
             resolutions: {
                 additions: [],
                 deletions: []
-            }
+            },
+            startIndex: 0
         });
     });
     describe('canModify should determine whether the current user can modify the ontology', function() {
