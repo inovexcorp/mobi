@@ -119,16 +119,6 @@ public class SimpleEmailServiceTest {
         when(emailServiceConfig.security()).thenReturn("");
         when(emailServiceConfig.emailTemplate()).thenReturn("emailTemplate.html");
 
-
-//        config = new HashMap<>();
-//        config.put("emailAddress", TO_EMAIL_ADDRESS);
-//        config.put("emailPassword", "Don't4get");
-//        config.put("port", smtpServer.getPort());
-//        config.put("smtpServer", "localhost");
-//        config.put("security", "");
-//        config.put("imageBasePath", "https://mobi.inovexcorp.com");
-//        config.put("emailTemplate", "emailTemplate.html");
-
         System.setProperty("karaf.etc", SimpleEmailServiceTest.class.getResource("/").getPath());
 
         Method m = es.getClass().getDeclaredMethod("activate", EmailServiceConfig.class);
