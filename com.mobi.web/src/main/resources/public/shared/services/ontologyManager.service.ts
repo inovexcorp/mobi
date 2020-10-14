@@ -820,6 +820,20 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     /**
      * @ngdoc method
+     * @name isOntologyRecord
+     * @methodOf shared.service:ontologyManagerService
+     *
+     * @description
+     * Checks if the provided entity is an ontologyEditor:OntologyRecord entity. Returns a boolean.
+     *
+     * @param {Object} entity The entity you want to check.
+     * @returns {boolean} Returns true if it is an ontologyEditor:OntologyRecord entity, otherwise returns false.
+     */
+    self.isOntologyRecord = function(entity) {
+        return includes(get(entity, '@type', []), prefixes.ontologyEditor + 'OntologyRecord');
+    }
+    /**
+     * @ngdoc method
      * @name hasOntologyEntity
      * @methodOf shared.service:ontologyManagerService
      *

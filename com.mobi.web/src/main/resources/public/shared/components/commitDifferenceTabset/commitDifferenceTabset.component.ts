@@ -38,7 +38,10 @@ const template = require('./commitDifferenceTabset.component.html');
  * @param {Object} sourceBranch The JSON-LD of the source branch of the difference
  * @param {string} targetBranchId The IRI of the target branch of the difference
  * @param {Object} difference The object representing the difference between the two Commits
+ * @param {Function} showMoreResultsFunc A function that takes limit and offset to update the difference provided
  * @param {Function} entityNameFunc An optional function to pass to `commitChangesDisplay` to control the display of
+ * @param {int} startIndex An integer representing how many differences to display
+ * @oaram {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
  * each entity's name
  */
 const commitDifferenceTabsetComponent = {
@@ -48,7 +51,10 @@ const commitDifferenceTabsetComponent = {
         commitId: '<',
         targetId: '<',
         difference: '<',
-        entityNameFunc: '<?'
+        showMoreResultsFunc: '&',
+        entityNameFunc: '<?',
+        startIndex: '<?',
+        recordId: '<?'
     },
     controllerAs: 'dvm',
     controller: commitDifferenceTabsetComponentCtrl
@@ -61,44 +67,12 @@ function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService)
 
     dvm.cm = catalogManagerService;
     dvm.util = utilService;
-    dvm.additions = {};
-    dvm.deletions = {};
-    dvm.hasMoreResults = false;
     dvm.tabs = {
         changes: true,
         commits: false
     };
-
-    dvm.$onChanges = function(changesObj) {
-        // Technically when this component is created it doesn't have a difference until the getDifference REST endpoint completes
-        if (changesObj.difference && dvm.difference) { 
-            dvm.setInitialDifference()
-        }
-    }
-
-    dvm.setInitialChangesTab = function(value) { // When switching back to this tab we need to reset dvm.additions and dvm.deletions because they only have the current page
-        dvm.setInitialDifference();
+    dvm.setInitialChangesTab = function(value) {
         dvm.tabs.changes = value;
-    }
-
-    dvm.setInitialDifference = function() {
-        dvm.additions = dvm.difference.additions;
-        dvm.deletions = dvm.difference.deletions;
-        dvm.hasMoreResults = dvm.difference.hasMoreResults;
-    }
-
-    dvm.retrieveMoreResults = function(limit, offset) {
-        dvm.cm.getDifference(dvm.commitId, dvm.targetId, limit, offset)
-            .then(response => {
-                dvm.additions = response.data.additions;
-                dvm.deletions = response.data.deletions;
-                var headers = response.headers();
-                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-            }, errorMessage => {
-                if (errorMessage) {
-                    dvm.util.createErrorToast(errorMessage);
-                }
-            });
     }
 }
 

@@ -28,6 +28,7 @@ const template = require('./branchList.component.html');
  * @ngdoc component
  * @name catalog.component:branchList
  * @requires shared.service:catalogManagerService
+ * @requires shared.service:ontologyManagerService
  * @requires shared.service:utilService
  * @requires shared.service:prefixes
  *
@@ -48,11 +49,12 @@ const branchListComponent = {
     controller: branchListComponentCtrl
 };
 
-branchListComponentCtrl.$inject = ['catalogManagerService', 'utilService', 'prefixes'];
+branchListComponentCtrl.$inject = ['catalogManagerService', 'ontologyManagerService', 'utilService', 'prefixes'];
 
-function branchListComponentCtrl(catalogManagerService, utilService, prefixes) {
+function branchListComponentCtrl(catalogManagerService, ontologyManagerService, utilService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
+    var om = ontologyManagerService;
     dvm.util = utilService;
     dvm.prefixes = prefixes;
     dvm.totalSize = 0;
@@ -60,6 +62,7 @@ function branchListComponentCtrl(catalogManagerService, utilService, prefixes) {
     dvm.catalogId = '';
     var increment = 10;
     dvm.limit = increment;
+    dvm.recordId = undefined;
 
     dvm.$onInit = function() {
         if (dvm.record && !isEmpty(dvm.record)) {
@@ -82,6 +85,7 @@ function branchListComponentCtrl(catalogManagerService, utilService, prefixes) {
         branch.show = true;
     }
     dvm.setBranches = function() {
+        dvm.recordId = om.isOntologyRecord(dvm.record) ? dvm.record['@id'] : undefined;
         if (cm.isVersionedRDFRecord(dvm.record)) {
             var paginatedConfig = {
                 pageIndex: 0,

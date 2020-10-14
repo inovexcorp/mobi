@@ -44,15 +44,12 @@ import {
     mapValues,
     lowerCase,
     sortBy,
-    merge, 
+    merge,
     unset,
     head,
     forOwn,
     omit,
     pull,
-    pullAt,
-    result,
-    findLast,
     isEqual,
     findKey,
     tail,
@@ -60,10 +57,10 @@ import {
     join,
     replace,
     findIndex,
-    isObject, 
+    isObject,
     mergeWith,
-    indexOf,
-    identity
+    identity,
+    unionBy
 } from 'lodash';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
@@ -185,7 +182,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             resolutions: {
                 additions: [],
                 deletions: []
-            }
+            },
+            startIndex: 0
         },
         dataPropertyRange: {},
         derivedConcepts: [],
@@ -1825,6 +1823,20 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 }
             }, $q.reject);
     }
+    self.getMergeDifferences = function(sourceCommitId, targetCommitId, limit, offset) {
+        self.listItem.merge.startIndex = offset;
+        return cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
+        .then(response => {
+            if (!self.listItem.merge.difference) {
+                self.listItem.merge.difference = {};
+            }
+            self.listItem.merge.difference.additions = unionBy(self.listItem.merge.difference.additions, response.data.additions, '@id');
+            self.listItem.merge.difference.deletions = unionBy(self.listItem.merge.difference.deletions, response.data.deletions, '@id');
+            var headers = response.headers();
+            self.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            return $q.when();
+        }, $q.reject);
+    }
     self.merge = function() {
         var sourceId = self.listItem.ontologyRecord.branchId;
         var checkbox = self.listItem.merge.checkbox;
@@ -1852,6 +1864,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             additions: [],
             deletions: []
         };
+        self.listItem.merge.startIndex = 0;
     }
     self.canModify = function() {
         if (!self.listItem.ontologyRecord.branchId) {

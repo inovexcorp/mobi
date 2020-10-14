@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, noop, find } from 'lodash';
+import { get, noop } from 'lodash';
 
 import './requestBranchSelect.component.scss';
 
@@ -29,9 +29,11 @@ const template = require('./requestBranchSelect.component.html');
 /**
  * @ngdoc component
  * @name merge-requests.component:requestBranchSelect
+ * @requires $q
  * @requires shared.service:mergeRequestsStateService
  * @requires shared.service:catalogManagerService
  * @requires shared.service:utilService
+ * @requires shared.service:prefixes
  *
  * @description
  * `requestBranchSelect` is a component which creates a div containing a form with ui-selects
@@ -61,6 +63,10 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
     dvm.branches = [];
 
     dvm.$onInit = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
             .then(response => {
                 dvm.branches = response.data;
@@ -74,6 +80,12 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
                 dvm.util.createErrorToast(error);
                 dvm.branches = [];
             });
+    }
+    dvm.$onDestroy = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
     }
     dvm.changeSource = function(value) {
         dvm.state.requestConfig.sourceBranch = value;

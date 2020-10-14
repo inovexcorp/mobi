@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, map, uniq, noop, forEach, filter, find, union, pick, forOwn, has, isArray } from 'lodash';
+import { get, map, uniq, noop, forEach, filter, find, union, unionBy, difference, merge } from 'lodash';
 
 mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'ontologyManagerService', 'utilService', 'prefixes', '$q'];
 
@@ -108,6 +108,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      *     title: '', // The title for the Merge Request
      *     description: '' // The description for the Merge Request
      *     removeSource: false // A boolean indicating whether the source branch should be removed upon acceptance
+     *     entityNames: {} // An object representing the entity names associated with the source record
      * }
      * ```
      */
@@ -118,7 +119,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         title: '',
         description: '',
         assignees: [],
-        removeSource: false
+        removeSource: false,
+        entityNames: {},
+        startIndex: 0
     };
     /**
      * @ngdoc property
@@ -159,7 +162,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             targetBranchId: '',
             title: '',
             description: '',
-            assignees: []
+            assignees: [],
+            entityNames: {},
+            startIndex: 0
         };
     }
     /**
@@ -189,7 +194,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             targetBranchId: '',
             title: '',
             description: '',
-            assignees: []
+            assignees: [],
+            entityNames: {},
+            startIndex: 0
         };
         self.createRequest = false;
         self.createRequestStep = 0;
@@ -250,6 +257,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         request.difference = '';
         request.comments = [];
         request.entityNames = {};
+        request.startIndex = 0;
         return mm.getComments(request.jsonld['@id'])
             .then(comments => {
                 request.comments = comments;
@@ -397,13 +405,21 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             request.entityNames = {};
             return $q.reject('Difference is not set. Cannot get ontology entity names.');
         }
-        let recordIri = request.recordId ? request.recordId : request.recordIri;
-        let diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
-        let iris = union(diffIris, getObjIrisFromDifference(request.difference.additions), getObjIrisFromDifference(request.difference.deletions));
-        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
-            .then(data => {
-                request.entityNames = data;
-            }, $q.reject)
+        var recordIri = request.recordId ? request.recordId : request.recordIri;
+        var diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
+        if (request.previousDiffIris) {
+            diffIris = difference(diffIris, request.previousDiffIris);
+        }
+        var iris = union(diffIris, util.getObjIrisFromDifference(request.difference.additions), util.getObjIrisFromDifference(request.difference.deletions));
+        if (iris.length > 0) {
+            return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
+                .then(data => {
+                    merge(request.entityNames, data);
+                    return $q.when();
+                }, $q.reject)
+        } else {
+            return $q.when();
+        }
     }
     /**
      * @ngdoc method
@@ -479,6 +495,27 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             self.requestConfig[branchType] = undefined;
         }
     }
+    self.retrieveMoreResults = function(limit, offset) {
+        var request;
+        if (self.selected && self.selected.difference) {
+            request = self.selected;
+        } else if (self.requestConfig && self.requestConfig.difference) {
+            request = self.requestConfig;
+        } else {
+            util.createErrorToast("Could not load more results.");
+        }
+        request.startIndex = offset;
+        cm.getDifference(util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(request.targetBranch, prefixes.catalog + 'head'), limit, offset)
+            .then(response => {
+                request.previousDiffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
+                request.difference.additions = unionBy(request.difference.additions, response.data.additions, '@id');
+                request.difference.deletions = unionBy(request.difference.deletions, response.data.deletions, '@id');
+                var headers = response.headers();
+                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                return self.getSourceEntityNames(request);
+            }, $q.reject)
+            .then(noop, util.createErrorToast);
+    }
 
     function getDate(jsonld) {
         var dateStr = util.getDctermsValue(jsonld, 'issued');
@@ -487,21 +524,6 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
     function getCreator(jsonld) {
         var iri = util.getDctermsId(jsonld, 'creator');
         return get(find(um.users, {iri}), 'username');
-    }
-    function getObjIrisFromDifference(additionsOrDeletions) {
-        let objIris = [];
-        forEach(additionsOrDeletions, change => {
-            forOwn(change, (value, key) => {
-                if (isArray(value)) {
-                    forEach(value, item => {
-                        if (has(item, '@id')) {
-                            objIris.push(item['@id']);
-                        }
-                    });
-                }
-            });
-        });
-        return objIris;
     }
 }
 

@@ -638,34 +638,53 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         return results;
     }
     /**
-         * @ngdoc method
-         * @name getPredicatesAndObjects
-         * @methodOf shared.service:utilService
-         *
-         * @description
-         * Transforms an object containing addition or deletion information into an array of subject, predicate, object triples.
-         *
-         * @param {Object} additionOrDeletion An object containing the addition or deletion.
-         * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
-         * statements which have the provided id as a subject.
-         */
-        self.getPredicatesAndObjects = function(additionOrDeletion) {
-            var results = [];
-            forOwn(additionOrDeletion, (value, key) => {
-                if (key !== '@id') {
-                    var actualKey = key;
-                    if (key === '@type') {
-                        actualKey = prefixes.rdf + 'type';
-                    }
-                    if (isArray(value)) {
-                        forEach(value, item => results.push({p: actualKey, o: item}));
-                    } else {
-                        results.push({p: actualKey, o: value});
-                    }
+     * @ngdoc method
+     * @name getPredicatesAndObjects
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Transforms an object containing addition or deletion information into an array of subject, predicate, object triples.
+     *
+     * @param {Object} additionOrDeletion An object containing the addition or deletion.
+     * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+     * statements which have the provided id as a subject.
+     */
+    self.getPredicatesAndObjects = function(additionOrDeletion) {
+        var results = [];
+        forOwn(additionOrDeletion, (value, key) => {
+            if (key !== '@id') {
+                var actualKey = key;
+                if (key === '@type') {
+                    actualKey = prefixes.rdf + 'type';
+                }
+                if (isArray(value)) {
+                    forEach(value, item => results.push({p: actualKey, o: item}));
+                } else {
+                    results.push({p: actualKey, o: value});
+                }
+            }
+        });
+        return results;
+    }
+    /**
+     * TODO:
+     * @param additionOrDeletion
+     */
+    self.getObjIrisFromDifference = function(additionOrDeletion) {
+        var objIris = [];
+        forEach(additionOrDeletion, change => {
+            forOwn(change, (value, key) => {
+                if (isArray(value)) {
+                    forEach(value, item => {
+                        if (has(item, '@id')) {
+                            objIris.push(item['@id']);
+                        }
+                    });
                 }
             });
-            return results;
-        }
+        });
+        return objIris;
+    }
     /**
      * @ngdoc method
      * @name getPredicateLocalName

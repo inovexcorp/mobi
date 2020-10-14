@@ -28,10 +28,12 @@ const template = require('./requestDetailsForm.component.html');
 /**
  * @ngdoc component
  * @name merge-requests.component:requestDetailsForm
+ * @requires $q
  * @requires shared.service:mergeRequestsStateService
  * @requires shared.service:userManagerService
  * @requires shared.service:catalogManagerService
  * @requires shared.service:utilService
+ * @requires shared.service:prefixes
  *
  * @description
  * `requestDetailsForm` is a component which creates a div containing a form with inputs for
@@ -58,6 +60,10 @@ function requestDetailsFormComponentCtrl($q, mergeRequestsStateService, userMana
     dvm.um = userManagerService;
 
     dvm.$onInit = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         dvm.state.requestConfig.title = dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title');
         cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
             .then(response => {
@@ -72,6 +78,12 @@ function requestDetailsFormComponentCtrl($q, mergeRequestsStateService, userMana
                 }
             }, $q.reject)
             .then(noop, dvm.util.createErrorToast);
+    }
+    dvm.$onDestroy = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
     }
 }
 

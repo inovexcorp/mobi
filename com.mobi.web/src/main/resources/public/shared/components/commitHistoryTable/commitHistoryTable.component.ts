@@ -45,12 +45,13 @@ const template = require('./commitHistoryTable.component.html');
  * provide a variable to bind the retrieved commits to. The directive is replaced by the content of the template.
  *
  * @param {string} commitId The IRI string of a commit in the local catalog
- * @param {string} headTitle The title to put on the top commit
+ * @param {string} [headTitle=''] headTitle The optional title to put on the top commit
  * @param {string} [targetId=''] targetId limits the commits displayed to only go as far back as this specified
  *      commit.
- * @param {Object[]} commitData A variable to bind the retrieved commits to
- * @param {Function} entityNameFunc An optional function to pass to `commitInfoOverlay` to control the display of
- * each entity's name
+ * @param {string} [entityId=''] entityId The optional IRI string of an entity whose history is to be displayed
+ * @param {string} [recordId=''] recordId The optional IRI string of an OntologyRecord associated with the commit
+ * @param {Function} [receiveCommits=undefined] receiveCommits The optional function receive more commits
+ * @param {string} graph A string that if present, shows graph data of the commits
  */
 const commitHistoryTableComponent = {
     template,
@@ -60,7 +61,7 @@ const commitHistoryTableComponent = {
         headTitle: '<?',
         targetId: '<?',
         entityId: '<?',
-        entityNameFunc: '<?',
+        recordId: '<?',
         receiveCommits: '&?',
         graph: '@'
     },
@@ -110,18 +111,10 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
         httpService.cancel(dvm.id);
     }
     dvm.openCommitOverlay = function(commitId) {
-        cm.getDifference(commitId, null, dvm.limit, 0)
-            .then(response => {
-                var headers = response.headers();
-                var hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                modalService.openModal('commitInfoOverlay', {
-                    commit: find(dvm.commits, {id: commitId}),
-                    additions: response.data.additions,
-                    deletions: response.data.deletions,
-                    hasMoreResults: hasMoreResults,
-                    entityNameFunc: dvm.entityNameFunc
-                }, undefined, 'lg');
-            }, errorMessage => dvm.error = errorMessage);
+        modalService.openModal('commitInfoOverlay', {
+            commit: find(dvm.commits, {id: commitId}),
+            recordId: dvm.recordId
+        }, undefined, 'lg');
     }
     dvm.getCommits = function() {
         if (dvm.commitId) {

@@ -24,6 +24,7 @@
 import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
 
 import './commitChangesDisplay.component.scss';
+import {start} from "repl";
 
 const template = require('./commitChangesDisplay.component.html');
 
@@ -41,6 +42,8 @@ const template = require('./commitChangesDisplay.component.html');
  * @param {Object[]} additions An array of JSON-LD objects representing statements added
  * @param {Object[]} deletions An array of JSON-LD objects representing statements deleted
  * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI.
+ * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
+ * @param {int} startIndex An integer representing how many differences to display
  * The component will pass the IRI of the entity as the only argument
  */
 const commitChangesDisplayComponent = {
@@ -50,7 +53,8 @@ const commitChangesDisplayComponent = {
         deletions: '<',
         entityNameFunc: '<?',
         showMoreResultsFunc: '&',
-        hasMoreResults: '<'
+        hasMoreResults: '<',
+        startIndex: '<?'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -68,6 +72,11 @@ function commitChangesDisplayComponentCtrl(utilService) {
     dvm.results = {};
     dvm.showMore = false;
 
+    dvm.$onInit = function() {
+        if (dvm.startIndex) {
+            dvm.index = dvm.startIndex;
+        }
+    }
     dvm.$onChanges = function() {
         var adds = map(dvm.additions, '@id');
         var deletes = map(dvm.deletions, '@id');
