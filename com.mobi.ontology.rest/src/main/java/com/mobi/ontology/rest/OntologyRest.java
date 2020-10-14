@@ -2504,7 +2504,7 @@ public class OntologyRest {
                     writeEntityNamesToStream(result, outputStream);
                 };
                 watch.stop();
-                log.trace("ENTITY NAMES: " + watch.getTime() + "ms");
+                log.trace("Entity names endpoint: " + watch.getTime() + "ms");
                 return Response.ok(output).build();
             } else {
                 throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);

@@ -30,7 +30,7 @@ import {
 } from '../../../../../test/js/Shared';
 import {get} from "lodash";
 
-fdescribe('Merge Requests State service', function() {
+describe('Merge Requests State service', function() {
     var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, ontologyManagerSvc, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {

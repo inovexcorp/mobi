@@ -144,15 +144,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.cache.Cache;
@@ -797,17 +791,23 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(queryResults.replaceAll("\\r\\n?", "\n"), "[ {\n  \"@id\" : \"urn:test\",\n  \"urn:prop\" : [ {\n    \"@value\" : \"test\"\n  } ]\n} ]");
     }
 
-    private void assertEntityNames(Response response, boolean fromNode) throws Exception {
+    private void assertEntityNames(Response response, boolean fromNode, Set<String> keys) throws Exception {
         Map<String, EntityNames> expectedValues = objectMapper.readValue(
                 getResourceString("/getOntologyStuffData/entityNames-results.json"),
                 new TypeReference<Map<String, EntityNames>>() {});
+        if (keys.size() > 0) {
+            expectedValues = keys.stream()
+                    .filter(expectedValues::containsKey)
+                    .collect(Collectors.toMap(Function.identity(), expectedValues::get));
+        }
 
         Map<String, EntityNames> actualValues = objectMapper.convertValue(
                 fromNode ? getResponseNode(response, "entityNames") : getResponse(response),
                 new TypeReference<Map<String, EntityNames>>(){});
         assertEquals(actualValues.keySet(), expectedValues.keySet());
+        Map<String, EntityNames> finalExpectedValues = expectedValues;
         actualValues.forEach((s, entityNames1) ->
-                assertEquals(entityNames1.getNames(), expectedValues.get(s).getNames(), entityNames1.getNames().toString()));
+                assertEquals(entityNames1.getNames(), finalExpectedValues.get(s).getNames(), entityNames1.getNames().toString()));
     }
 
     // Test upload file
@@ -1568,7 +1568,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertEntityNames(response, true);
+        assertEntityNames(response, true, Collections.emptySet());
     }
 
     @Test
@@ -5128,12 +5128,26 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertEntityNames(response, false);
+        assertEntityNames(response, false, Collections.emptySet());
+    }
+
+    @Test
+    public void testGetEntityNamesFiltered() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
     }
 
     @Test
@@ -5142,7 +5156,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5158,7 +5172,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5175,12 +5189,28 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        assertEntityNames(response, false);
+        assertEntityNames(response, false, Collections.emptySet());
+    }
+
+    @Test
+    public void testGetEntityNamesWithNoInProgressCommitFiltered() throws Exception {
+        setupTupleQueryMock();
+        setupEntityNamesRepo();
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
     }
 
     @Test
@@ -5190,7 +5220,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5207,7 +5237,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5221,12 +5251,26 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         setupEntityNamesRepo();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
-                .queryParam("commitId", commitId.stringValue()).request().get();
+                .queryParam("commitId", commitId.stringValue()).request().post(Entity.json(new JSONObject()));
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
-        assertEntityNames(response, false);
+        assertEntityNames(response, false, Collections.emptySet());
+    }
+
+    @Test
+    public void testGetEntityNamesWithCommitIdAndMissingBranchIdFiltered() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("commitId", commitId.stringValue()).request()
+                .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
+        assertGetOntology(true);
+        assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
     }
 
     @Test
@@ -5234,7 +5278,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject expectedResults = new JSONObject();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
-                .queryParam("commitId", commitId.stringValue()).request().get();
+                .queryParam("commitId", commitId.stringValue()).request().post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5249,7 +5293,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject expectedResults = new JSONObject();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
-                .queryParam("commitId", commitId.stringValue()).request().get();
+                .queryParam("commitId", commitId.stringValue()).request().post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5264,12 +5308,26 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        assertEntityNames(response, false);
+        assertEntityNames(response, false, Collections.emptySet());
+    }
+
+    @Test
+    public void testGetEntityNamesMissingCommitIdFiltered() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .queryParam("branchId", branchId.stringValue()).request()
+                .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId);
+        assertGetOntology(true);
+        assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
     }
 
     @Test
@@ -5278,7 +5336,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5294,7 +5352,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5308,12 +5366,25 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         setupEntityNamesRepo();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
-                .request().get();
+                .request().post(Entity.json(new JSONObject()));
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        assertEntityNames(response, false);
+        assertEntityNames(response, false, Collections.emptySet());
+    }
+
+    @Test
+    public void testGetEntityNamesMissingBranchIdAndCommitIdFiltered() throws Exception {
+        setupEntityNamesRepo();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
+                .request().post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId);
+        assertGetOntology(true);
+        assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
     }
 
     @Test
@@ -5321,7 +5392,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject expectedResults = new JSONObject();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
-                .request().get();
+                .request().post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5336,7 +5407,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject expectedResults = new JSONObject();
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
-                .request().get();
+                .request().post(Entity.json(new JSONObject()));
         JSONObject responseObject = getResponse(response);
 
         assertEquals(response.getStatus(), 200);
@@ -5351,7 +5422,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .thenReturn(Optional.empty());
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
-                .get();
+                .post(Entity.json(new JSONObject()));
 
         assertEquals(response.getStatus(), 400);
     }
