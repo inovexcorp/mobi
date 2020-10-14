@@ -670,6 +670,8 @@ public class OntologyRest {
     }
 
     private StreamingOutput getVocabularyStuffStream(Ontology ontology) {
+        Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
+        
         return outputStream -> {
             StopWatch watch = new StopWatch();
             log.trace("Start concepts");
@@ -689,6 +691,16 @@ public class OntologyRest {
 
             watch.stop();
             log.trace("End conceptSchemes: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start importedIRIs");
+            watch.start();
+
+            outputStream.write(", \"importedIRIs\": ".getBytes());
+            outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
+                    .getBytes());
+
+            watch.stop();
+            log.trace("End importedIRIs: " + watch.getTime() + "ms");
             watch.reset();
             log.trace("Start derivedConcepts");
             watch.start();

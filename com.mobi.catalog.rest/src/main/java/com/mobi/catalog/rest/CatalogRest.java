@@ -1262,7 +1262,7 @@ public class CatalogRest {
                          @Context UriInfo uriInfo,
                          @PathParam("catalogId") String catalogId,
                          @PathParam("recordId") String recordId,
-                         @QueryParam("sort") String sort,
+                         @DefaultValue("http://purl.org/dc/terms/title") @QueryParam("sort") String sort,
                          @DefaultValue("0") @QueryParam("offset") int offset,
                          @DefaultValue("100") @QueryParam("limit") int limit,
                          @DefaultValue("true") @QueryParam("ascending") boolean asc,
