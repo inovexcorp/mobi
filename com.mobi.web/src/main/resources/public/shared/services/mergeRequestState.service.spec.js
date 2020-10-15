@@ -55,7 +55,7 @@ describe('Merge Requests State service', function() {
         });
 
         this.difference = {
-            additions: [],
+            additions: [{'@id': 'iri1'}],
             deletions: []
         };
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
@@ -245,7 +245,8 @@ describe('Merge Requests State service', function() {
                 targetBranch: '',
                 targetCommit: '',
                 difference: '',
-                jsonld: {}
+                jsonld: {},
+                startIndex: 0
             };
         });
         describe('accepted and getDifference', function() {
@@ -274,16 +275,22 @@ describe('Merge Requests State service', function() {
                     expect(this.request.difference).toEqual(this.expectedDifference);
                     expect(this.request.entityNames).toEqual(this.expectedEntityNames);
                     expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceCommit', prefixes.mergereq + 'targetCommit', 100, 0);
-                    expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.mergereq + 'sourceCommit', false, false);
+                    expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.mergereq + 'sourceCommit', false, false, ['iri1']);
                 });
                 it('rejects', function() {
+                    this.request.sourceBranch = {'@id': 'sourceBranchId'};
+                    this.difference2 = {
+                        additions: [{'@id': 'iri1'}],
+                        deletions: []
+                    };
                     this.expectedDifference = {
-                        additions: [],
+                        additions: [{'@id': 'iri1'}],
                         deletions: [],
                         hasMoreResults: false
                     };
-                    mergeRequestManagerSvc.isAccepted.and.returnValue(true);
+                    catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference2, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
                     ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                    mergeRequestManagerSvc.isAccepted.and.returnValue(true);
                     mergeRequestsStateSvc.setRequestDetails(this.request);
                     scope.$apply();
                     expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
@@ -293,7 +300,7 @@ describe('Merge Requests State service', function() {
                     expect(this.request.difference).toEqual(this.expectedDifference);
                     expect(this.request.entityNames).toEqual({});
                     expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceCommit', prefixes.mergereq + 'targetCommit', 100, 0);
-                    expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.mergereq + 'sourceCommit', false, false);
+                    expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.mergereq + 'sourceCommit', false, false, ['iri1']);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 });
             });
@@ -328,6 +335,7 @@ describe('Merge Requests State service', function() {
                     this.expected.removeSource = false;
                     this.expected.comments = [];
                     this.expected.entityNames = {};
+                    this.expected.startIndex = 0;
                 });
                 describe('and getDifference resolves', function() {
                     describe('and getOntologyEntityNames resolves', function() {
@@ -335,7 +343,7 @@ describe('Merge Requests State service', function() {
                             it('with no conflicts', function() {
                                 this.expected.conflicts = [];
                                 this.expected.difference = {
-                                    additions: [],
+                                    additions: [{'@id': 'iri1'}],
                                     deletions: [],
                                     hasMoreResults: false
                                 };
@@ -346,7 +354,7 @@ describe('Merge Requests State service', function() {
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                                 expect(this.request).toEqual(this.expected);
                                 expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
-                                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false);
+                                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
                                 expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                             });
@@ -355,7 +363,7 @@ describe('Merge Requests State service', function() {
                                 this.expected.conflicts = conflicts;
                                 catalogManagerSvc.getBranchConflicts.and.returnValue($q.when(conflicts));
                                 this.expected.difference = {
-                                    additions: [],
+                                    additions: [{'@id': 'iri1'}],
                                     deletions: [],
                                     hasMoreResults: false
                                 };
@@ -366,7 +374,7 @@ describe('Merge Requests State service', function() {
                                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                                 expect(this.request).toEqual(this.expected);
                                 expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
-                                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false);
+                                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
                                 expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                             });
@@ -375,7 +383,7 @@ describe('Merge Requests State service', function() {
                             catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject('Error Message'));
                             ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.when({}));
                             this.expected.difference = {
-                                additions: [],
+                                additions: [{'@id': 'iri1'}],
                                 deletions: [],
                                 hasMoreResults: false
                             };
@@ -386,7 +394,7 @@ describe('Merge Requests State service', function() {
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(this.request).toEqual(this.expected);
                             expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
-                            expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false);
+                            expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
                             expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                         });
@@ -394,7 +402,7 @@ describe('Merge Requests State service', function() {
                     it('unless getOntologyEntityNames rejects', function() {
                         ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
                         this.expected.difference = {
-                            additions: [],
+                            additions: [{'@id': 'iri1'}],
                             deletions: [],
                             hasMoreResults: false
                         };
@@ -405,7 +413,7 @@ describe('Merge Requests State service', function() {
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                         expect(this.request).toEqual(this.expected);
                         expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
-                        expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false);
+                        expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
                 });
@@ -535,79 +543,90 @@ describe('Merge Requests State service', function() {
     describe('should get source EntityNames', function() {
         beforeEach(function() {
             this.entityNames = {'iri1':{}, 'iri2':{}, 'iri3':{}};
-            this.filtered = {'iri1':{}, 'iri3':{}};
             this.difference = {
-                additions: [{'@id': 'iri1'}],
+                additions: [{'@id': 'iri1'}, {'@id': 'iri2'}],
                 deletions: [{'@id': 'iri3'}]
             }
             ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.when(this.entityNames));
         });
         describe('when request object is the requestConfig', function() {
-            it('with difference set', function() {
+            it('with no previousDiffIris', function() {
                 this.requestConfig = {
                     recordId: 'id',
                     sourceBranch: {'@id': 'source'},
-                    difference: this.difference
+                    difference: this.difference,
+                    entityNames: {}
                 };
                 mergeRequestsStateSvc.requestConfig = this.requestConfig;
                 mergeRequestsStateSvc.getSourceEntityNames();
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false);
-                expect(mergeRequestsStateSvc.requestConfig.entityNames).toEqual(this.filtered);
+                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false,  [ 'iri1', 'iri2', 'iri3' ]);
+                expect(mergeRequestsStateSvc.requestConfig.entityNames).toEqual(this.entityNames);
             });
-            it('with no difference set', function() {
+            it('with matching previousDiffIris', function() {
                 this.requestConfig = {
                     recordId: 'id',
-                    sourceBranch: {'@id': 'source'}
+                    sourceBranch: {'@id': 'source'},
+                    previousDiffIris: ['iri1', 'iri2', 'iri3'],
+                    difference: this.difference,
+                    entityNames: {}
                 };
                 mergeRequestsStateSvc.requestConfig = this.requestConfig;
                 mergeRequestsStateSvc.getSourceEntityNames();
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false);
+                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
                 expect(mergeRequestsStateSvc.requestConfig.entityNames).toEqual({});
             });
         });
         describe('when request object is a passed requestConfig', function() {
-            it('with difference set', function() {
+            it('with no previousDiffIris', function() {
                 this.requestConfig = {
                     recordId: 'id',
                     sourceBranch: {'@id': 'source'},
-                    difference: this.difference
+                    difference: this.difference,
+                    entityNames: {}
                 };
                 mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false);
-                expect(this.requestConfig.entityNames).toEqual(this.filtered);
+                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false, [ 'iri1', 'iri2', 'iri3' ]);
+                expect(this.requestConfig.entityNames).toEqual(this.entityNames);
             });
-            it('with no difference set', function() {
+            it('with matching previousDiffIris', function() {
                 this.requestConfig = {
                     recordId: 'id',
                     sourceBranch: {'@id': 'source'},
+                    difference: this.difference,
+                    previousDiffIris: ['iri1', 'iri2', 'iri3'],
+                    entityNames: {}
                 };
                 mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false);
+                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
                 expect(this.requestConfig.entityNames).toEqual({});
             });
         });
         describe('when a request is passed', function() {
-            it('with difference set', function() {
+            it('with no previousDiffIris', function() {
                 this.request = {
                     recordIri: 'recordIri',
                     sourceCommit: 'commit',
                     sourceBranch: {'@id': 'source'},
-                    difference: this.difference
+                    difference: this.difference,
+                    entityNames: {}
                 };
                 mergeRequestsStateSvc.getSourceEntityNames(this.request);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.request.recordIri, this.request.sourceBranch['@id'], 'commit', false, false, [ 'iri1', 'iri3' ]);
-                expect(this.request.entityNames).toEqual(this.filtered);
+                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.request.recordIri, this.request.sourceBranch['@id'], 'commit', false, false, [ 'iri1', 'iri2', 'iri3' ]);
+                expect(this.request.entityNames).toEqual(this.entityNames);
             });
-            it('with no difference set', function() {
+            it('with matching previousDiffIris', function() {
                 this.request = {
                     recordIri: 'recordIri',
                     sourceCommit: 'commit',
-                    sourceBranch: {'@id': 'source'}
+                    sourceBranch: {'@id': 'source'},
+                    difference: this.difference,
+                    previousDiffIris: ['iri1', 'iri2', 'iri3'],
+                    entityNames: {}
                 };
                 mergeRequestsStateSvc.getSourceEntityNames(this.request);
                 scope.$apply();
@@ -707,6 +726,39 @@ describe('Merge Requests State service', function() {
             mergeRequestsStateSvc.updateRequestConfigBranch('targetBranch', [this.targetBranchNewHead]);
             scope.$apply();
             expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranchNewHead);
+        });
+    });
+    describe('should update difference when retrieveMoreResults', function() {
+        it('resolves', function() {
+            this.headers = {'has-more-results': 'false'};
+            var request = {
+                recordIri: 'recordIri',
+                difference: {additions: [{'@id': 'iri1'}], deletions: []}
+            };
+            mergeRequestsStateSvc.selected = request;
+            var diff = {
+                additions: [{'@id': 'iri2'}],
+                deletions: []
+            };
+            catalogManagerSvc.getDifference.and.returnValue($q.when({data: diff, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            mergeRequestsStateSvc.retrieveMoreResults(100, 200);
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('', '', 100, 200);
+            expect(mergeRequestsStateSvc.selected.previousDiffIris).toEqual(['iri1']);
+            expect(mergeRequestsStateSvc.selected.difference.additions).toEqual([{'@id': 'iri1'}, {'@id': 'iri2'}]);
+            expect(mergeRequestsStateSvc.selected.difference.hasMoreResults).toBeFalsy();
+        });
+        it('rejects', function() {
+            var request = {
+                recordIri: 'recordIri',
+                difference: {additions: [{'@id': 'iri1'}], deletions: []}
+            };
+            mergeRequestsStateSvc.selected = request;
+            catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
+            mergeRequestsStateSvc.retrieveMoreResults(100, 200);
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('', '', 100, 200);
+            expect(utilSvc.createErrorToast('ErrorMessage'));
         });
     });
 });

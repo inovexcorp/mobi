@@ -22,27 +22,20 @@
  */
 import {
     mockComponent,
-    mockMergeRequestsState,
-    mockUtil,
-    mockCatalogManager
+    mockMergeRequestsState
 } from '../../../../../../test/js/Shared';
 
 describe('Merge Request Tabset component', function() {
-    var $compile, scope, $q, catalogManagerSvc, utilSvc;
+    var $compile, scope;
 
     beforeEach(function() {
         angular.mock.module('merge-requests');
-        mockCatalogManager();
         mockMergeRequestsState();
         mockComponent('merge-requests', 'mergeRequestDiscussion');
-        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            $q = _$q_;
-            catalogManagerSvc = _catalogManagerService_;
-            utilSvc = _utilService_;
         });
 
         scope.request = {difference: {additions: [], deletions: []}};
@@ -86,42 +79,9 @@ describe('Merge Request Tabset component', function() {
         it('depending on whether the request has any changes', function() {
             expect(this.element.find('info-message').length).toEqual(1);
 
-            this.controller.additions = [{}];
+            scope.request = {difference: {additions: [{}], deletions: [{}]}};
             scope.$digest();
             expect(this.element.find('info-message').length).toEqual(0);
-        });
-    });
-    describe('controller methods', function() {
-        describe('should update additions and deletions', function() {
-            it('if getDifference resolves', function() {
-                this.headers = {'has-more-results': 'true'};
-                scope.request = {
-                    sourceCommit: '123',
-                    targetCommit: '456',
-                    difference: {}
-                }
-                scope.$digest();
-                catalogManagerSvc.getDifference.and.returnValue($q.when({data: {additions: [{}], deletions: []}, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
-                this.controller.retrieveMoreResults(100, 0);
-                scope.$apply();
-                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', '456', 100, 0);
-                expect(this.controller.additions).toEqual([{}]);
-                expect(this.controller.deletions).toEqual([]);
-                expect(this.controller.hasMoreResults).toEqual(true);
-            });
-            it('unless getDifference rejects', function() {
-                scope.request = {
-                    sourceCommit: '123',
-                    targetCommit: '456',
-                    difference: {}
-                }
-                scope.$digest();
-                catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
-                this.controller.retrieveMoreResults(100, 0);
-                scope.$apply();
-                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('123', '456', 100, 0);
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
-            });
         });
     });
 });

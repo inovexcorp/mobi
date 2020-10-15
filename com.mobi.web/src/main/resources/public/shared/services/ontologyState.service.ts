@@ -1823,6 +1823,21 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 }
             }, $q.reject);
     }
+    /**
+     * @ngdoc method
+     * @name getMergeDifferences
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Updates self.listItem.merge with the updated additions and deletions for the provided commit information
+     *
+     * @param sourceCommitId {string} The string IRI of the source commit to get the difference
+     * @param targetCommitId {string} The string IRI of the target commit to get the difference
+     * @param limit {int} The limit for the paged difference
+     * @param offset {int} The offset for the paged difference
+     *
+     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     */
     self.getMergeDifferences = function(sourceCommitId, targetCommitId, limit, offset) {
         self.listItem.merge.startIndex = offset;
         return cm.getDifference(sourceCommitId, targetCommitId, limit, offset)

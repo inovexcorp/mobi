@@ -22,7 +22,7 @@
   -->
 <div class="commit-difference-tabset">
     <material-tabset centered>
-        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.setInitialChangesTab(value)">
+        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
             <commit-changes-display ng-if="dvm.difference" additions="dvm.difference.additions" deletions="dvm.difference.deletions" entity-name-func="dvm.entityNameFunc" show-more-results-func="dvm.showMoreResultsFunc({limit, offset})" has-more-results="dvm.difference.hasMoreResults" start-index="dvm.startIndex"></commit-changes-display>
             <info-message ng-if="!dvm.difference.additions.length && !dvm.difference.deletions.length">No changes to display</info-message>
         </material-tab>

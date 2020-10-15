@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { get, has, find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
+import { has, find, startsWith, split, forEach, includes, join, map, indexOf, head } from 'lodash';
 
 import './commitHistoryTable.component.scss';
 
@@ -87,8 +87,6 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
     dvm.limit = 100;
     dvm.error = '';
     dvm.commit = undefined;
-    dvm.additions = [];
-    dvm.deletions = [];
     dvm.commits = [];
     dvm.circleRadius = 5;
     dvm.circleSpacing = 48;

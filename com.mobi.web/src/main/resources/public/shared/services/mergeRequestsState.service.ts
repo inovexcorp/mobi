@@ -431,6 +431,8 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * returns the beautiful iri.
      *
      * @param {string} iri The iri of an entity in the merge request
+     *
+     * @return {string} The entity name of the provided IRI
      */
     self.getEntityNameLabel = function(iri) {
         if (get(self, ['requestConfig', 'entityNames', iri, 'label'])) {
@@ -495,6 +497,18 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             self.requestConfig[branchType] = undefined;
         }
     }
+    /**
+     * @ngdoc method
+     * @name retrieveMoreResults
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Updates the request difference based on the provided limit and offset. Combines the results with any previous
+     * difference information.
+     *
+     * @param limit {int} The limit of results to retrieve
+     * @param offset {int} The paged offset specifying where to continue retrieval from
+     */
     self.retrieveMoreResults = function(limit, offset) {
         var request;
         if (self.selected && self.selected.difference) {

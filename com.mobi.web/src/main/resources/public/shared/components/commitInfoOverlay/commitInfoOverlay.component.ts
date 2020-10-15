@@ -68,8 +68,8 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
     dvm.util = utilService;
     dvm.um = userManagerService;
     dvm.cm = catalogManagerService;
-    dvm.additions = {};
-    dvm.deletions = {};
+    dvm.additions = [];
+    dvm.deletions = [];
     dvm.hasMoreResults = false;
     dvm.entityNames = {};
 
@@ -90,9 +90,7 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
                 if (dvm.resolve.recordId) {
                     var diffIris = union(map(dvm.additions, '@id'), map(dvm.deletions, '@id'));
                     var filterIris = union(diffIris, dvm.util.getObjIrisFromDifference(dvm.additions), dvm.util.getObjIrisFromDifference(dvm.deletions));
-                    if (filterIris.length > 0) {
-                        return om.getOntologyEntityNames(dvm.resolve.recordId, '', dvm.resolve.commit.id, false, false, filterIris);
-                    }
+                    return om.getOntologyEntityNames(dvm.resolve.recordId, '', dvm.resolve.commit.id, false, false, filterIris);
                 }
                 return $q.when();
             }, $q.reject)

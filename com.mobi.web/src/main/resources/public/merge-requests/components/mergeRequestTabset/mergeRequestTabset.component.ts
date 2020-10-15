@@ -49,7 +49,7 @@ const mergeRequestTabsetComponent = {
         updateRequest: '&'
     },
     controllerAs: 'dvm',
-    controller: mergeRequestTabsetComponentCtrl,
+    controller: mergeRequestTabsetComponentCtrl
 };
 
 mergeRequestTabsetComponentCtrl.$inject = ['mergeRequestsStateService'];
@@ -63,9 +63,6 @@ function mergeRequestTabsetComponentCtrl(mergeRequestsStateService) {
         changes: false,
         commits: false
     };
-    dvm.setInitialChangesTab = function(value) {
-        dvm.tabs.changes = value;
-    }
 }
 
 export default mergeRequestTabsetComponent;

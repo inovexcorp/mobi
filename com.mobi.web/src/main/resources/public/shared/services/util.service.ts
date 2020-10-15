@@ -667,12 +667,19 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         return results;
     }
     /**
-     * TODO:
-     * @param additionOrDeletion
+     * @ngdoc method
+     * @name getObjIrisFromDifference
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Transforms an array of additions or deletions into an array of object IRIs.
+     *
+     * @param additionsOrDeletionsArr {Object[]} An array of additions or deletions
+     * @return {string[]} An array of the IRIs in the objects of the addition or deletion statements
      */
-    self.getObjIrisFromDifference = function(additionOrDeletion) {
+    self.getObjIrisFromDifference = function(additionsOrDeletionsArr) {
         var objIris = [];
-        forEach(additionOrDeletion, change => {
+        forEach(additionsOrDeletionsArr, change => {
             forOwn(change, (value, key) => {
                 if (isArray(value)) {
                     forEach(value, item => {

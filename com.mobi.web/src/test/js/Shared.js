@@ -1067,6 +1067,7 @@ export function mockUtil() {
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicatesAndObjects = jasmine.createSpy('getPredicatesAndObjects');
+            this.getObjIrisFromDifference = jasmine.createSpy('getObjIrisFromDifference');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');

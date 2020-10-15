@@ -21,8 +21,6 @@
  * #L%
  */
 
-import { get } from 'lodash';
-
 const template = require('./commitDifferenceTabset.component.html');
 
 /**
@@ -60,20 +58,13 @@ const commitDifferenceTabsetComponent = {
     controller: commitDifferenceTabsetComponentCtrl
 };
 
-commitDifferenceTabsetComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
-
-function commitDifferenceTabsetComponentCtrl(catalogManagerService, utilService) {
+function commitDifferenceTabsetComponentCtrl() {
     var dvm = this;
 
-    dvm.cm = catalogManagerService;
-    dvm.util = utilService;
     dvm.tabs = {
         changes: true,
         commits: false
     };
-    dvm.setInitialChangesTab = function(value) {
-        dvm.tabs.changes = value;
-    }
 }
 
 export default commitDifferenceTabsetComponent;
