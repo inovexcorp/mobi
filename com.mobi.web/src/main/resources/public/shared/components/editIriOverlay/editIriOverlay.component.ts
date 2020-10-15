@@ -64,6 +64,7 @@ function editIriOverlayComponentCtrl(REGEX) {
     var dvm = this;
     dvm.namespacePattern = undefined;
     dvm.localNamePattern = undefined;
+    dvm.endsWithPattern = undefined;
     
     dvm.iriBegin = '';
     dvm.iriThen = '';
@@ -72,6 +73,7 @@ function editIriOverlayComponentCtrl(REGEX) {
     dvm.$onInit = function() {
         dvm.namespacePattern = REGEX.IRI;
         dvm.localNamePattern = REGEX.LOCALNAME;
+        dvm.endsWithPattern = /^[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
         
         dvm.iriBegin = dvm.resolve.iriBegin;
         dvm.iriThen = dvm.resolve.iriThen;
