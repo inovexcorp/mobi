@@ -24,7 +24,8 @@ import {
     mockComponent,
     mockCatalogManager,
     mockUtil,
-    mockPrefixes, mockOntologyManager
+    mockPrefixes,
+    mockOntologyManager
 } from '../../../../../../test/js/Shared';
 
 describe('Branch List component', function() {

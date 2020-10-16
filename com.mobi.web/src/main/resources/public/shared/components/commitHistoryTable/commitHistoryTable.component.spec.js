@@ -161,6 +161,11 @@ describe('Commit History Table component', function() {
             this.controller.receiveCommits({commits: []});
             expect(scope.receiveCommits).toHaveBeenCalledWith([]);
         });
+        it('recordId should be one way bound', function() {
+            this.controller.recordId = 'newId';
+            scope.$digest();
+            expect(scope.recordId).toEqual('record');
+        });
     });
     describe('controller methods', function() {
         it('should open the commitInfoOverlay', function() {

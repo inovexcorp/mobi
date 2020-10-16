@@ -46,7 +46,9 @@ describe('Commit Changes Display component', function() {
         scope.additions = [];
         scope.deletions = [];
         scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
-        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc"></commit-changes-display>'))(scope);
+        scope.showMoreResultsFunc = jasmine.createSpy('showMoreResultsFunc');
+        scope.hasMoreResults = false;
+        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc" show-more-results-func="showMoreResultsFunc(limit, offset)" has-more-results="hasMoreResults"></commit-changes-display>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitChangesDisplay');
     });
@@ -73,6 +75,31 @@ describe('Commit Changes Display component', function() {
             this.controller.entityNameFunc = undefined;
             scope.$digest();
             expect(scope.entityNameFunc).toBeDefined();
+        });
+        it('showMoreResultsFunc should be called in the parent scope', function() {
+            this.controller.showMoreResultsFunc({limit: 100, offset: 200});
+            scope.$apply();
+            expect(scope.showMoreResultsFunc).toHaveBeenCalledWith(100, 200);
+        });
+        it('hasMoreResults should be one way bound', function() {
+            this.controller.hasMoreResults = true;
+            scope.$digest();
+            expect(scope.hasMoreResults).toBeFalsy();
+        });
+        it('startIndex should be one way bound', function() {
+            this.controller.startIndex = 100;
+            scope.$digest();
+            expect(scope.startIndex).toBeUndefined();
+        });
+    });
+    describe('initializes correctly', function() {
+        it('if startIndex is populated', function() {
+            scope.startIndex = 1000;
+            this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc" show-more-results-func="showMoreResultsFunc" has-more-results="hasMoreResults" start-index="startIndex"></commit-changes-display>'))(scope);
+            this.controller = this.element.controller('commitChangesDisplay');
+            this.controller.$onInit();
+            scope.$apply();
+            expect(this.controller.index).toEqual(1000);
         });
     });
     describe('controller methods', function() {

@@ -29,7 +29,6 @@ import {
     injectTrustedFilter,
     injectHighlightFilter
 } from '../../../../../../test/js/Shared';
-import { get } from 'lodash';
 
 describe('Request Branch Select component', function() {
     var $compile, scope, $q, catalogManagerSvc, mergeRequestsStateSvc, utilSvc, prefixes;

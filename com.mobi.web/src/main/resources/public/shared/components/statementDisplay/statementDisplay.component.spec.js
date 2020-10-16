@@ -144,12 +144,12 @@ describe('Statement Display component', function() {
                 this.controller.fullObject = 'full/id';
                 this.controller.o = 'id <' + this.controller.fullObject + '>';
             });
-            it('and entityFunc is present', function() {
+            it('and entityNameFunc is present', function() {
                 scope.entityNameFunc.and.returnValue('label');
                 expect(this.controller.displayObj()).toEqual('label <' + this.controller.fullObject + '>');
                 expect(scope.entityNameFunc).toHaveBeenCalledWith(this.controller.fullObject);
             });
-            it('and entityFunc is not present', function() {
+            it('and entityNameFunc is not present', function() {
                 scope.entityNameFunc = undefined;
                 scope.$digest();
                 expect(this.controller.displayObj()).toEqual('id <' + this.controller.fullObject + '>');
@@ -161,11 +161,11 @@ describe('Statement Display component', function() {
                 this.controller.fullObject = 'value';
                 this.controller.o = 'value';
             });
-            it('and entityFunc is present', function() {
+            it('and entityNameFunc is present', function() {
                 expect(this.controller.displayObj()).toEqual('value');
                 expect(scope.entityNameFunc).not.toHaveBeenCalled();
             });
-            it('and entityFunc is not present', function() {
+            it('and entityNameFunc is not present', function() {
                 scope.entityNameFunc = undefined;
                 scope.$apply();
                 expect(this.controller.displayObj()).toEqual('value');

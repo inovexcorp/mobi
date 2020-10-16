@@ -23,7 +23,8 @@
 import {
     mockUtil,
     mockOntologyState,
-    mockCatalogManager, mockPrefixes
+    mockCatalogManager,
+    mockPrefixes
 } from '../../../../../../test/js/Shared';
 
 describe('Merge Block component', function() {

@@ -35,7 +35,7 @@ const template = require('./statementDisplay.component.html');
  *
  * @param {string} predicate A string of the predicate to display
  * @param {Object} object An object representing the object of a triple to display
- * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI.
+ * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by its IRI.
  */
 const statementDisplayComponent = {
     template,

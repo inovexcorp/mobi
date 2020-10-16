@@ -47,7 +47,7 @@ const template = require('./commitInfoOverlay.component.html');
  * @param {Object} resolve commit.creator An object containing information about the creator of the commit,
  * including the username, first name, and last name
  * @param {string} resolve.commit.date The date string of when the commit was created
- * @oaram {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
+ * @oaram {string} [recordId=''] resolve.recordId An optional IRI string representing an OntologyRecord to query for names if present
  * @param {Function} dismiss A function that dismisses the modal
  */
 const commitInfoOverlayComponent = {

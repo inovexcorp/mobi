@@ -26,7 +26,8 @@ import {
     mockPrefixes,
     mockUserManager,
     injectTrustedFilter,
-    injectHighlightFilter, mockCatalogManager
+    injectHighlightFilter,
+    mockCatalogManager
 } from '../../../../../../test/js/Shared';
 
 describe('Request Details Form component', function() {

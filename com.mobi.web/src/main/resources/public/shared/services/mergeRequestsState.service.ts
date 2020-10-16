@@ -109,6 +109,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      *     description: '' // The description for the Merge Request
      *     removeSource: false // A boolean indicating whether the source branch should be removed upon acceptance
      *     entityNames: {} // An object representing the entity names associated with the source record
+     *     startIndex: 0 // The startIndex indicating how many differences have been loaded for usage when navigating between tabs
      * }
      * ```
      */

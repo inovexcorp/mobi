@@ -41,10 +41,10 @@ const template = require('./commitChangesDisplay.component.html');
  *
  * @param {Object[]} additions An array of JSON-LD objects representing statements added
  * @param {Object[]} deletions An array of JSON-LD objects representing statements deleted
- * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI.
+ * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The component will pass the IRI of the entity as the only argument
+ * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as arguments.
  * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
  * @param {int} startIndex An integer representing how many differences to display
- * The component will pass the IRI of the entity as the only argument
  */
 const commitChangesDisplayComponent = {
     template,
