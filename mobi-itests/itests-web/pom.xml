@@ -34,7 +34,7 @@
     <name>itests-web</name>
     <properties>
         <http-port>9081</http-port>
-        <https-port>9082</https-port>
+        <https-port>9080</https-port>
         <rmi-reg-port>1100</rmi-reg-port>
         <ssh-port>8102</ssh-port>
         <rmi-server-port></rmi-server-port>
