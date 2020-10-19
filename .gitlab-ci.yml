@@ -47,8 +47,7 @@ before_script:
 
 # For merge requests, just do an initial test
 test:
-  variables:
-    NEEDS_GIT_SETTINGS: 0
+  before_script: []
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test

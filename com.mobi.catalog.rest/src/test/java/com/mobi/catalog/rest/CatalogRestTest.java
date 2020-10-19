@@ -2035,6 +2035,25 @@ public class CatalogRestTest extends MobiRestTestNg {
     }
 
     @Test
+    public void getBranchesWithoutSortTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
+                .queryParam("offset", 0)
+                .queryParam("limit", 10)
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager).getBranches(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "2");
+        assertEquals(response.getLinks().size(), 0);
+        try {
+            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            assertEquals(result.size(), 2);
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void getBranchesWithNegativeOffsetTest() {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI) + "/branches")
                 .queryParam("sort", DCTERMS.TITLE.stringValue()).queryParam("offset", -1).request().get();
