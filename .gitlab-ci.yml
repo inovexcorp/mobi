@@ -21,7 +21,6 @@ stages:
   - new_release_deploy
 
 variables:
-  CHROME_VERSION: 85.0.4183.121-1
   ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
   MAVEN_SETTINGS_DOCKER: <server>
       <id>docker-hub</id>
@@ -101,7 +100,7 @@ unit_integration_test:
     - apt-get update && apt-get install -y redir
     - redir :9080 $HOST_IP:9080
     # Update Chrome Version
-    - apt-get -y install google-chrome-stable=$CHROME_VERSION
+    - apt-get -y update && apt-get -y install google-chrome-stable
     # Run unit, integration, and functional tests
     - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false
   artifacts:
