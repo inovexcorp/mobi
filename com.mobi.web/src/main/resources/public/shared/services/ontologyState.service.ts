@@ -59,8 +59,7 @@ import {
     findIndex,
     isObject,
     mergeWith,
-    identity,
-    unionBy
+    identity
 } from 'lodash';
 
 ontologyStateService.$inject = ['$q', '$filter', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'policyEnforcementService', 'policyManagerService', 'httpService', 'uuid'];
@@ -1843,10 +1842,13 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         return cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
         .then(response => {
             if (!self.listItem.merge.difference) {
-                self.listItem.merge.difference = {};
+                self.listItem.merge.difference = {
+                    additions: [],
+                    deletions: []
+                };
             }
-            self.listItem.merge.difference.additions = unionBy(self.listItem.merge.difference.additions, response.data.additions, '@id');
-            self.listItem.merge.difference.deletions = unionBy(self.listItem.merge.difference.deletions, response.data.deletions, '@id');
+            self.listItem.merge.difference.additions = concat(self.listItem.merge.difference.additions, response.data.additions);
+            self.listItem.merge.difference.deletions = concat(self.listItem.merge.difference.deletions, response.data.deletions);
             var headers = response.headers();
             self.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
             return $q.when();
@@ -1873,7 +1875,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         self.listItem.merge.active = false;
         self.listItem.merge.target = undefined;
         self.listItem.merge.checkbox = false;
-        self.listItem.merge.difference = undefined;
+        self.listItem.merge.difference = {};
         self.listItem.merge.conflicts = [];
         self.listItem.merge.resolutions = {
             additions: [],

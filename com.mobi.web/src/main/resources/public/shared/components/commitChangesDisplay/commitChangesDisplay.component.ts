@@ -21,10 +21,9 @@
  * #L%
  */
 
-import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
+import { map, forEach } from 'lodash';
 
 import './commitChangesDisplay.component.scss';
-import {start} from "repl";
 
 const template = require('./commitChangesDisplay.component.html');
 

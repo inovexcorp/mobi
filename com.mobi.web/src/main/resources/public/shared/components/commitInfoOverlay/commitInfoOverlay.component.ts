@@ -21,7 +21,7 @@
  * #L%
  */
 
-import {get, map, merge, union, unionBy} from 'lodash';
+import {get, map, merge, union, concat} from 'lodash';
 
 const template = require('./commitInfoOverlay.component.html');
 
@@ -72,6 +72,8 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
     dvm.deletions = [];
     dvm.hasMoreResults = false;
     dvm.entityNames = {};
+    dvm.tempAdditions = [];
+    dvm.tempDeletions = [];
 
     dvm.$onInit = function() {
         dvm.retrieveMoreResults(100, 0);
@@ -82,14 +84,14 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
     dvm.retrieveMoreResults = function(limit, offset) {
         dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
             .then(response => {
-                dvm.additions = unionBy(dvm.additions, response.data.additions, '@id');
-                dvm.deletions = unionBy(dvm.deletions, response.data.deletions, '@id');
+                dvm.tempAdditions = concat(dvm.additions, response.data.additions);
+                dvm.tempDeletions = concat(dvm.deletions, response.data.deletions);
                 var headers = response.headers();
                 dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
 
                 if (dvm.resolve.recordId) {
-                    var diffIris = union(map(dvm.additions, '@id'), map(dvm.deletions, '@id'));
-                    var filterIris = union(diffIris, dvm.util.getObjIrisFromDifference(dvm.additions), dvm.util.getObjIrisFromDifference(dvm.deletions));
+                    var diffIris = union(map(dvm.tempAdditions, '@id'), map(dvm.tempDeletions, '@id'));
+                    var filterIris = union(diffIris, dvm.util.getObjIrisFromDifference(dvm.tempAdditions), dvm.util.getObjIrisFromDifference(dvm.tempDeletions));
                     return om.getOntologyEntityNames(dvm.resolve.recordId, '', dvm.resolve.commit.id, false, false, filterIris);
                 }
                 return $q.when();
@@ -97,6 +99,10 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
             .then(data => {
                 if (data) {
                     merge(dvm.entityNames, data);
+                    dvm.additions = dvm.tempAdditions;
+                    dvm.deletions = dvm.tempDeletions;
+                    dvm.tempAdditions = [];
+                    dvm.tempDeletions = [];
                 }
             }, errorMessage => {
                 if (errorMessage) {

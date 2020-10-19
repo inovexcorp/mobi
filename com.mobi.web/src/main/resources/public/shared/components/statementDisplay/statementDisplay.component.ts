@@ -57,19 +57,16 @@ function statementDisplayComponentCtrl($filter) {
         if (has(dvm.object, '@id')) {
             dvm.fullObject = dvm.object['@id'];
             var split = $filter('splitIRI')(dvm.fullObject).end;
-            dvm.o = split ? split + ' <' + dvm.fullObject + '>' : dvm.fullObject ;
+            if (dvm.entityNameFunc) {
+                dvm.o = dvm.entityNameFunc(dvm.fullObject) + ' <' + dvm.fullObject + '>';
+            } else {
+                dvm.o = split ? split + ' <' + dvm.fullObject + '>' : dvm.fullObject;
+            }
         } else {
             dvm.o = get(dvm.object, '@value', dvm.object)
                 + (has(dvm.object, '@language') ? ' [language: ' + dvm.object['@language'] + ']' : '')
                 + (has(dvm.object, '@type') ? ' [type: ' + $filter('prefixation')(dvm.object['@type']) + ']' : '');
             dvm.fullObject = dvm.o;
-        }
-    }
-    dvm.displayObj = function () {
-        if (dvm.entityNameFunc && has(dvm.object, '@id')) {
-            return dvm.entityNameFunc(dvm.fullObject) + ' <' + dvm.fullObject + '>';
-        } else {
-            return dvm.o;
         }
     }
 }

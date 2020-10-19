@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, map, uniq, noop, forEach, filter, find, union, unionBy, difference, merge } from 'lodash';
+import { get, map, uniq, noop, forEach, filter, find, union, concat, difference, merge } from 'lodash';
 
 mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'ontologyManagerService', 'utilService', 'prefixes', '$q'];
 
@@ -269,10 +269,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                     request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
                     return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0)
                         .then(response => {
-                            request.difference = response.data;
-                            var headers = response.headers();
-                            request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                            return self.getSourceEntityNames(request);
+                            return self.getSourceEntityNames(request, response);
                         }, $q.reject)
                         .then(noop, util.createErrorToast);
                 } else {
@@ -295,18 +292,14 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                                 return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0);
                             }, $q.reject)
                             .then(response => {
-                                request.difference = response.data;
-                                var headers = response.headers();
-                                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                                return self.getSourceEntityNames(request);
+                                return self.getSourceEntityNames(request, response);
                             }, $q.reject)
                             .then(() => {
                                 return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId)
                             }, $q.reject)
                             .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
-                        return promise.then(self.getSourceEntityNames(request), $q.reject)
-                            .then(noop, util.createErrorToast);
+                        return promise.then(noop, util.createErrorToast);
                     }
                 }
             }, util.createErrorToast);
@@ -398,24 +391,34 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * Populates the request.entityNames object with EntityNames of entities with an addition or deletion.
      *
      * @param {Object} request A request or requestConfig object that contains branch information
+     * @param {Object} response A response containing a difference object to update the request with once entityNames are populated
      *
      * @return {Promise} A Promise indicating the success of retrieving entityNames
      */
-    self.getSourceEntityNames = function(request = self.requestConfig) {
-        if (!request.difference) {
+    self.getSourceEntityNames = function(request = self.requestConfig, response) {
+        if (!response) {
             request.entityNames = {};
             return $q.reject('Difference is not set. Cannot get ontology entity names.');
         }
+        var difference = response.data;
         var recordIri = request.recordId ? request.recordId : request.recordIri;
-        var diffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
-        if (request.previousDiffIris) {
-            diffIris = difference(diffIris, request.previousDiffIris);
-        }
-        var iris = union(diffIris, util.getObjIrisFromDifference(request.difference.additions), util.getObjIrisFromDifference(request.difference.deletions));
+        var diffIris = union(map(difference.additions, '@id'), map(difference.deletions, '@id'));
+
+        var iris = union(diffIris, util.getObjIrisFromDifference(difference.additions), util.getObjIrisFromDifference(difference.deletions));
         if (iris.length > 0) {
             return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
                 .then(data => {
                     merge(request.entityNames, data);
+                    if (!request.difference) {
+                        request.difference = {
+                            additions: [],
+                            deletions: []
+                        }
+                    }
+                    request.difference.additions = concat(request.difference.additions, difference.additions);
+                    request.difference.deletions = concat(request.difference.deletions, difference.deletions);
+                    var headers = response.headers();
+                    request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
                     return $q.when();
                 }, $q.reject)
         } else {
@@ -457,12 +460,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      */
     self.updateRequestConfigDifference = function() {
         self.requestConfig.difference = undefined;
-        cm.getDifference(util.getPropertyId(self.requestConfig.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(self.requestConfig.targetBranch, prefixes.catalog + 'head'), cm.differencePageSize, 0)
+        return cm.getDifference(util.getPropertyId(self.requestConfig.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(self.requestConfig.targetBranch, prefixes.catalog + 'head'), cm.differencePageSize, 0)
             .then(response => {
-                self.requestConfig.difference = response.data;
-                var headers = response.headers();
-                self.requestConfig.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                return self.getSourceEntityNames();
+                return self.getSourceEntityNames(self.requestConfig, response);
             }, $q.reject)
             .then(noop, errorMessage => {
                 self.requestConfig.difference = undefined;
@@ -522,12 +522,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         request.startIndex = offset;
         cm.getDifference(util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(request.targetBranch, prefixes.catalog + 'head'), limit, offset)
             .then(response => {
-                request.previousDiffIris = union(map(request.difference.additions, '@id'), map(request.difference.deletions, '@id'));
-                request.difference.additions = unionBy(request.difference.additions, response.data.additions, '@id');
-                request.difference.deletions = unionBy(request.difference.deletions, response.data.deletions, '@id');
-                var headers = response.headers();
-                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                return self.getSourceEntityNames(request);
+                return self.getSourceEntityNames(request, response);
             }, $q.reject)
             .then(noop, util.createErrorToast);
     }

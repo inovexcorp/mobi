@@ -102,7 +102,7 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
                 deletions: inProgressItem.deletions,
                 disableAll: hasSpecificType(inProgressItem.additions) || hasSpecificType(inProgressItem.deletions)
         }));
-        dvm.list = sortBy(dvm.list, dvm.orderByIRI)
+        dvm.list = sortBy(dvm.list, dvm.orderByEntityName)
         dvm.showList = getList();
     }
     dvm.go = function($event, id) {
@@ -171,7 +171,7 @@ function savedChangesTabComponentCtrl($q, ontologyStateService, ontologyManagerS
             }, $q.reject)
             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
     }
-    dvm.orderByIRI = function(item) {
+    dvm.orderByEntityName = function(item) {
         return dvm.os.getEntityNameByListItem(item.id);
     }
     dvm.getMoreResults = function() {
