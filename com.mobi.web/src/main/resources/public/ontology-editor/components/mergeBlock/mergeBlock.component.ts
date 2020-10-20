@@ -73,8 +73,10 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
         dvm.changeTarget();
     }
     dvm.$onDestroy = function() {
-        dvm.os.listItem.merge.difference = undefined;
-        dvm.os.merge.startIndex = 0;
+        if (dvm.os.listItem.merge) {
+            dvm.os.listItem.merge.difference = undefined;
+            dvm.os.listItem.merge.startIndex = 0;
+        }
     }
     dvm.changeTarget = function(value) {
         dvm.os.listItem.merge.difference = undefined;

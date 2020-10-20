@@ -712,7 +712,9 @@ describe('Merge Requests State service', function() {
             this.headers = {'has-more-results': 'false'};
             var request = {
                 recordIri: 'recordIri',
-                difference: {additions: [{'@id': 'iri1'}], deletions: []}
+                difference: {additions: [{'@id': 'iri1'}], deletions: []},
+                sourceCommit: 'headCommitId1',
+                targetCommit: 'headCommitId2'
             };
             mergeRequestsStateSvc.selected = request;
             var diff = {
@@ -722,20 +724,22 @@ describe('Merge Requests State service', function() {
             catalogManagerSvc.getDifference.and.returnValue($q.when({data: diff, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
             mergeRequestsStateSvc.retrieveMoreResults(100, 200);
             scope.$apply();
-            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('', '', 100, 200);
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('headCommitId1', 'headCommitId2', 100, 200);
             expect(mergeRequestsStateSvc.selected.difference.additions).toEqual([{'@id': 'iri1'}, {'@id': 'iri2'}]);
             expect(mergeRequestsStateSvc.selected.difference.hasMoreResults).toBeFalsy();
         });
         it('rejects', function() {
             var request = {
                 recordIri: 'recordIri',
-                difference: {additions: [{'@id': 'iri1'}], deletions: []}
+                difference: {additions: [{'@id': 'iri1'}], deletions: []},
+                sourceCommit: 'headCommitId1',
+                targetCommit: 'headCommitId2'
             };
             mergeRequestsStateSvc.selected = request;
             catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
             mergeRequestsStateSvc.retrieveMoreResults(100, 200);
             scope.$apply();
-            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('', '', 100, 200);
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('headCommitId1', 'headCommitId2', 100, 200);
             expect(utilSvc.createErrorToast('ErrorMessage'));
         });
     });

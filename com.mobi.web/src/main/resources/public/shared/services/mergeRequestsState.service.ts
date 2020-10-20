@@ -406,33 +406,37 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         var diffIris = union(map(difference.additions, '@id'), map(difference.deletions, '@id'));
         var iris = union(diffIris, util.getObjIrisFromDifference(difference.additions), util.getObjIrisFromDifference(difference.deletions));
 
-        return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
-            .then(data => {
-                merge(request.entityNames, data);
-                if (!request.difference) {
-                    request.difference = {
-                        additions: [],
-                        deletions: []
+        if (iris.length > 0) {
+            return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
+                .then(data => {
+                    merge(request.entityNames, data);
+                    if (!request.difference) {
+                        request.difference = {
+                            additions: [],
+                            deletions: []
+                        }
                     }
-                }
-                request.difference.additions = concat(request.difference.additions, difference.additions);
-                request.difference.deletions = concat(request.difference.deletions, difference.deletions);
-                var headers = response.headers();
-                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                return $q.when();
-            }, error => {
-                if (!request.difference) {
-                    request.difference = {
-                        additions: [],
-                        deletions: []
+                    request.difference.additions = concat(request.difference.additions, difference.additions);
+                    request.difference.deletions = concat(request.difference.deletions, difference.deletions);
+                    var headers = response.headers();
+                    request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                    return $q.when();
+                }, error => {
+                    if (!request.difference) {
+                        request.difference = {
+                            additions: [],
+                            deletions: []
+                        }
                     }
-                }
-                request.difference.additions = concat(request.difference.additions, difference.additions);
-                request.difference.deletions = concat(request.difference.deletions, difference.deletions);
-                var headers = response.headers();
-                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                return $q.reject(error);
-            });
+                    request.difference.additions = concat(request.difference.additions, difference.additions);
+                    request.difference.deletions = concat(request.difference.deletions, difference.deletions);
+                    var headers = response.headers();
+                    request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                    return $q.reject(error);
+                });
+        } else {
+            return $q.when();
+        }
     }
     /**
      * @ngdoc method
@@ -471,7 +475,6 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         self.requestConfig.difference = undefined;
         return cm.getDifference(util.getPropertyId(self.requestConfig.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(self.requestConfig.targetBranch, prefixes.catalog + 'head'), cm.differencePageSize, 0)
             .then(response => {
-                console.log('here');
                 return self.getSourceEntityNames(self.requestConfig, response);
             }, $q.reject)
             .then(noop, errorMessage => {
@@ -529,8 +532,16 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         } else {
             util.createErrorToast("Could not load more results.");
         }
+        var sourceHead = util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head');
+        if (!sourceHead) {
+            sourceHead = request.sourceCommit;
+        }
+        var targetHead = util.getPropertyId(request.targetBranch, prefixes.catalog + 'head');
+        if (!targetHead) {
+            targetHead = request.targetCommit;
+        }
         request.startIndex = offset;
-        cm.getDifference(util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(request.targetBranch, prefixes.catalog + 'head'), limit, offset)
+        cm.getDifference(sourceHead, targetHead, limit, offset)
             .then(response => {
                 return self.getSourceEntityNames(request, response);
             }, $q.reject)
