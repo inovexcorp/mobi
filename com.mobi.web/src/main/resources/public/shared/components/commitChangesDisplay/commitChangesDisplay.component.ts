@@ -21,7 +21,7 @@
  * #L%
  */
 
-import {map, forEach, filter, has} from 'lodash';
+import { map, forEach, filter, has, union, orderBy, isEmpty } from 'lodash';
 
 import './commitChangesDisplay.component.scss';
 
@@ -78,9 +78,17 @@ function commitChangesDisplayComponentCtrl(utilService) {
     }
     dvm.$onChanges = function(changesObj) {
         if (has(changesObj, 'additions') || has(changesObj, 'deletions')) {
-            var adds = filter(map(dvm.additions, '@id'), id => !dvm.results[id]);
-            var deletes = filter(map(dvm.deletions, '@id'), id => !dvm.results[id]);
-            dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
+            var adds;
+            var deletes;
+            if (isEmpty(dvm.results)) {
+                adds = map(dvm.additions, '@id');
+                deletes = map(dvm.deletions, '@id');
+            } else {
+                adds = filter(map(dvm.additions, '@id'), id => !dvm.results[id]);
+                deletes = filter(map(dvm.deletions, '@id'), id => !dvm.results[id]);
+            }
+            var combined = union(adds, deletes);
+            dvm.list = orderBy(combined, item => item, 'asc');
             dvm.addPagedChangesToResults();
         }
     }
