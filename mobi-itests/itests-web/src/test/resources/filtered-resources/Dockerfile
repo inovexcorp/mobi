@@ -13,5 +13,5 @@ RUN echo "\norg.osgi.service.http.port=${http-port}" >> ./mobi-distribution-$MOB
     && sed -i "s|sshPort = 8101|sshPort = ${ssh-port} |g" ./mobi-distribution-$MOBI_VERSION/etc/org.apache.karaf.shell.cfg
 CMD ./mobi-distribution-$MOBI_VERSION/bin/karaf server
 
-EXPOSE 9082
+EXPOSE 9080
 
