@@ -84,8 +84,8 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
     dvm.retrieveMoreResults = function(limit, offset) {
         dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
             .then(response => {
-                dvm.tempAdditions = concat(dvm.additions, response.data.additions);
-                dvm.tempDeletions = concat(dvm.deletions, response.data.deletions);
+                dvm.tempAdditions = response.data.additions;
+                dvm.tempDeletions = response.data.deletions;
                 var headers = response.headers();
                 dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
 
@@ -99,11 +99,11 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
             .then(data => {
                 if (data) {
                     merge(dvm.entityNames, data);
-                    dvm.additions = dvm.tempAdditions;
-                    dvm.deletions = dvm.tempDeletions;
-                    dvm.tempAdditions = [];
-                    dvm.tempDeletions = [];
                 }
+                dvm.additions = dvm.tempAdditions;
+                dvm.deletions = dvm.tempDeletions;
+                dvm.tempAdditions = [];
+                dvm.tempDeletions = [];
             }, errorMessage => {
                 if (errorMessage) {
                     dvm.util.createErrorToast(errorMessage);

@@ -1875,7 +1875,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
         self.listItem.merge.active = false;
         self.listItem.merge.target = undefined;
         self.listItem.merge.checkbox = false;
-        self.listItem.merge.difference = {};
+        self.listItem.merge.difference = undefined;
         self.listItem.merge.conflicts = [];
         self.listItem.merge.resolutions = {
             additions: [],

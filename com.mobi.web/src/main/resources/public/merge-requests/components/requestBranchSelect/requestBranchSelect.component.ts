@@ -89,6 +89,10 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
     }
     dvm.changeSource = function(value) {
         dvm.state.requestConfig.sourceBranch = value;
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         if (dvm.state.requestConfig.sourceBranch) {
             dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
             if (dvm.state.requestConfig.targetBranch) {
@@ -102,6 +106,10 @@ function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalog
     }
     dvm.changeTarget = function(value) {
         dvm.state.requestConfig.targetBranch = value;
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         if (dvm.state.requestConfig.targetBranch) {
             dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
             if (dvm.state.requestConfig.sourceBranch) {

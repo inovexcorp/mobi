@@ -56,10 +56,10 @@ function statementDisplayComponentCtrl($filter) {
     dvm.$onInit = function () {
         if (has(dvm.object, '@id')) {
             dvm.fullObject = dvm.object['@id'];
-            var split = $filter('splitIRI')(dvm.fullObject).end;
             if (dvm.entityNameFunc) {
                 dvm.o = dvm.entityNameFunc(dvm.fullObject) + ' <' + dvm.fullObject + '>';
             } else {
+                var split = $filter('splitIRI')(dvm.fullObject).end;
                 dvm.o = split ? split + ' <' + dvm.fullObject + '>' : dvm.fullObject;
             }
         } else {

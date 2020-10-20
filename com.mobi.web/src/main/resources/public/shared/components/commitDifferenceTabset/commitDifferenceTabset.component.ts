@@ -38,7 +38,7 @@ const template = require('./commitDifferenceTabset.component.html');
  * @param {Object} difference The object representing the difference between the two Commits
  * @param {Function} showMoreResultsFunc A function that takes limit and offset to update the difference provided
  * @param {Function} entityNameFunc An optional function to pass to `commitChangesDisplay` to control the display of
- * @param {int} startIndex An integer representing how many differences to display
+ * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
  * @oaram {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
  * each entity's name
  */

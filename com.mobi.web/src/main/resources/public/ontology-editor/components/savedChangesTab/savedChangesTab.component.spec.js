@@ -271,9 +271,9 @@ describe('Saved Changes Tab component', function() {
                 expect(this.controller.error).toEqual('error');
             });
         });
-        it('orderByIRI should call the correct method', function() {
+        it('orderByEntityName should call the correct method', function() {
             ontologyStateSvc.getEntityNameByListItem.and.returnValue('iri');
-            expect(this.controller.orderByIRI({id: 'id'})).toEqual('iri');
+            expect(this.controller.orderByEntityName({id: 'id'})).toEqual('iri');
             expect(ontologyStateSvc.getEntityNameByListItem).toHaveBeenCalledWith('id');
         });
 

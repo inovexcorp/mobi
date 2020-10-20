@@ -60,6 +60,7 @@ describe('Merge Requests State service', function() {
         };
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         catalogManagerSvc.differencePageSize = 100;
+        this.headers = {'has-more-results': 'false'};
         catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
         mergeRequestsStateSvc.initialize();
@@ -547,66 +548,45 @@ describe('Merge Requests State service', function() {
                 additions: [{'@id': 'iri1'}, {'@id': 'iri2'}],
                 deletions: [{'@id': 'iri3'}]
             }
+            this.diffResponse = {data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}
             ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.when(this.entityNames));
         });
-        describe('when request object is the requestConfig', function() {
-            it('with no previousDiffIris', function() {
-                this.requestConfig = {
-                    recordId: 'id',
-                    sourceBranch: {'@id': 'source'},
-                    difference: this.difference,
-                    entityNames: {}
-                };
-                mergeRequestsStateSvc.requestConfig = this.requestConfig;
-                mergeRequestsStateSvc.getSourceEntityNames();
-                scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false,  [ 'iri1', 'iri2', 'iri3' ]);
-                expect(mergeRequestsStateSvc.requestConfig.entityNames).toEqual(this.entityNames);
-            });
-            it('with matching previousDiffIris', function() {
-                this.requestConfig = {
-                    recordId: 'id',
-                    sourceBranch: {'@id': 'source'},
-                    previousDiffIris: ['iri1', 'iri2', 'iri3'],
-                    difference: this.difference,
-                    entityNames: {}
-                };
-                mergeRequestsStateSvc.requestConfig = this.requestConfig;
-                mergeRequestsStateSvc.getSourceEntityNames();
-                scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
-                expect(mergeRequestsStateSvc.requestConfig.entityNames).toEqual({});
-            });
+        it('and getDifference response is not present', function() {
+            this.request = {};
+            mergeRequestsStateSvc.getSourceEntityNames(this.request);
+            scope.$apply();
+            expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
+            expect(this.request).toEqual({});
         });
-        describe('when request object is a passed requestConfig', function() {
-            it('with no previousDiffIris', function() {
+        describe('when request object is the requestConfig', function() {
+            beforeEach(function() {
                 this.requestConfig = {
                     recordId: 'id',
                     sourceBranch: {'@id': 'source'},
                     difference: this.difference,
                     entityNames: {}
                 };
-                mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig);
-                scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.requestConfig.recordId, this.requestConfig.sourceBranch['@id'], undefined, false, false, [ 'iri1', 'iri2', 'iri3' ]);
-                expect(this.requestConfig.entityNames).toEqual(this.entityNames);
             });
-            it('with matching previousDiffIris', function() {
-                this.requestConfig = {
-                    recordId: 'id',
-                    sourceBranch: {'@id': 'source'},
-                    difference: this.difference,
-                    previousDiffIris: ['iri1', 'iri2', 'iri3'],
-                    entityNames: {}
-                };
-                mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig);
+            it('and getOntologyEntityNames resolves', function() {
+                mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig, this.diffResponse);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
+                expect(this.requestConfig.entityNames).toEqual(this.entityNames);
+                expect(this.requestConfig.difference.additions).toEqual(this.difference.additions);
+                expect(this.requestConfig.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.requestConfig.difference.hasMoreResults).toBeFalsy();
+            });
+            it('and getOntologyEntityNames rejects', function() {
+                ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig, this.diffResponse);
+                scope.$apply();
                 expect(this.requestConfig.entityNames).toEqual({});
+                expect(this.requestConfig.difference.additions).toEqual(this.difference.additions);
+                expect(this.requestConfig.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.requestConfig.difference.hasMoreResults).toBeFalsy();
             });
         });
         describe('when a request is passed', function() {
-            it('with no previousDiffIris', function() {
+            beforeEach(function() {
                 this.request = {
                     recordIri: 'recordIri',
                     sourceCommit: 'commit',
@@ -614,24 +594,23 @@ describe('Merge Requests State service', function() {
                     difference: this.difference,
                     entityNames: {}
                 };
-                mergeRequestsStateSvc.getSourceEntityNames(this.request);
-                scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith(this.request.recordIri, this.request.sourceBranch['@id'], 'commit', false, false, [ 'iri1', 'iri2', 'iri3' ]);
-                expect(this.request.entityNames).toEqual(this.entityNames);
             });
-            it('with matching previousDiffIris', function() {
-                this.request = {
-                    recordIri: 'recordIri',
-                    sourceCommit: 'commit',
-                    sourceBranch: {'@id': 'source'},
-                    difference: this.difference,
-                    previousDiffIris: ['iri1', 'iri2', 'iri3'],
-                    entityNames: {}
-                };
-                mergeRequestsStateSvc.getSourceEntityNames(this.request);
+            it('and getOntologyEntityNames resolves', function() {
+                mergeRequestsStateSvc.getSourceEntityNames(this.request, this.diffResponse);
                 scope.$apply();
-                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
+                expect(this.request.entityNames).toEqual(this.entityNames);
+                expect(this.request.difference.additions).toEqual(this.difference.additions);
+                expect(this.request.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.request.difference.hasMoreResults).toBeFalsy();
+            });
+            it('and getOntologyEntityNames rejects', function() {
+                ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                mergeRequestsStateSvc.getSourceEntityNames(this.request, this.diffResponse);
+                scope.$apply();
                 expect(this.request.entityNames).toEqual({});
+                expect(this.request.difference.additions).toEqual(this.difference.additions);
+                expect(this.request.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.request.difference.hasMoreResults).toBeFalsy();
             });
         });
     });
@@ -671,7 +650,8 @@ describe('Merge Requests State service', function() {
             this.expectedDifference = angular.copy(this.difference);
             this.expectedDifference.hasMoreResults = false;
             spyOn(mergeRequestsStateSvc, 'getSourceEntityNames');
-            catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            this.diffResponse = {data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)};
+            catalogManagerSvc.getDifference.and.returnValue($q.when(this.diffResponse));
             utilSvc.getPropertyId.and.callFake(function(obj, prop) {
                 let commit = get(obj, [prefixes.catalog + 'head', 0, '@id']);
                 return commit ? commit : 'head';
@@ -681,8 +661,7 @@ describe('Merge Requests State service', function() {
             mergeRequestsStateSvc.updateRequestConfigDifference();
             scope.$apply();
             expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
-            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalled();
-            expect(mergeRequestsStateSvc.requestConfig.difference).toEqual(this.expectedDifference);
+            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalledWith(mergeRequestsStateSvc.requestConfig, this.diffResponse);
         });
         it('rejects', function() {
             catalogManagerSvc.getDifference.and.returnValue($q.reject());
@@ -744,7 +723,6 @@ describe('Merge Requests State service', function() {
             mergeRequestsStateSvc.retrieveMoreResults(100, 200);
             scope.$apply();
             expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('', '', 100, 200);
-            expect(mergeRequestsStateSvc.selected.previousDiffIris).toEqual(['iri1']);
             expect(mergeRequestsStateSvc.selected.difference.additions).toEqual([{'@id': 'iri1'}, {'@id': 'iri2'}]);
             expect(mergeRequestsStateSvc.selected.difference.hasMoreResults).toBeFalsy();
         });

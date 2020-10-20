@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { map, forEach } from 'lodash';
+import {map, forEach, filter, has} from 'lodash';
 
 import './commitChangesDisplay.component.scss';
 
@@ -43,7 +43,7 @@ const template = require('./commitChangesDisplay.component.html');
  * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The component will pass the IRI of the entity as the only argument
  * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as arguments.
  * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
- * @param {int} startIndex An integer representing how many differences to display
+ * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
  */
 const commitChangesDisplayComponent = {
     template,
@@ -76,11 +76,13 @@ function commitChangesDisplayComponentCtrl(utilService) {
             dvm.index = dvm.startIndex;
         }
     }
-    dvm.$onChanges = function() {
-        var adds = map(dvm.additions, '@id');
-        var deletes = map(dvm.deletions, '@id');
-        dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        dvm.addPagedChangesToResults();
+    dvm.$onChanges = function(changesObj) {
+        if (has(changesObj, 'additions') || has(changesObj, 'deletions')) {
+            var adds = filter(map(dvm.additions, '@id'), id => !dvm.results[id]);
+            var deletes = filter(map(dvm.deletions, '@id'), id => !dvm.results[id]);
+            dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
+            dvm.addPagedChangesToResults();
+        }
     }
     dvm.addPagedChangesToResults = function() {
         forEach(dvm.list, id => {

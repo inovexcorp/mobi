@@ -107,7 +107,7 @@ describe('Commit Changes Display component', function() {
             this.controller.additions = _.map(_.range(0, 150), i => ({'@id': `${i}`}));
             this.controller.deletions = _.map(_.range(50, 200), i => ({'@id': `${i}`}));
             utilSvc.getChangesById.and.returnValue([]);
-            this.controller.$onChanges();
+            this.controller.$onChanges({additions:{}, deletions:{}});
             expect(this.controller.list.length).toEqual(200);
             expect(this.controller.results).toEqual(jasmine.objectContaining({
                 '1': {additions: [], deletions: []},

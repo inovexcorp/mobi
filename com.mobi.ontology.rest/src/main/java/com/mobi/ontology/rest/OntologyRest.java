@@ -96,8 +96,6 @@ import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -2470,20 +2468,11 @@ public class OntologyRest {
             log.trace("Start entityNames");
             watch.start();
 
-            JSONObject json = JSONObject.fromObject(filterJson);
-            Optional<JSONArray> optArr = Optional.ofNullable(json.optJSONArray("filterResources"));
             Set<Resource> resources = new HashSet<>();
-            if (optArr.isPresent()) {
-                JSONArray jsonArray = optArr.get();
-                for (int i = 0; i < jsonArray.size(); i ++) {
-                    Optional<String> optStr = Optional.ofNullable(jsonArray.optString(i));
-                    optStr.ifPresent(resourceString -> {
-                        try {
-                            resources.add(valueFactory.createIRI(resourceString));
-                        } catch (IllegalArgumentException e) {
-                            log.warn("Could not create entity name filter IRI for " + resourceString);
-                        }
-                    });
+            JsonNode arrNode = mapper.readTree(filterJson).get("filterResources");
+            if (arrNode != null && arrNode.isArray()) {
+                for (final JsonNode objNode : arrNode) {
+                    resources.add(valueFactory.createIRI(objNode.asText()));
                 }
             }
 
@@ -2509,7 +2498,7 @@ public class OntologyRest {
             } else {
                 throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
             }
-        } catch (MobiException e) {
+        } catch (MobiException | IOException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

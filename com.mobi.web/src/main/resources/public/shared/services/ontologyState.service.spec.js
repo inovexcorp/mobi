@@ -4512,7 +4512,7 @@ describe('Ontology State Service', function() {
     describe('getMergeDifferences sets fields listItem.merge when getDifference', function() {
         it('resolves', function() {
             ontologyStateSvc.listItem.merge = {};
-            ontologyStateSvc.listItem.merge.difference = {};
+            ontologyStateSvc.listItem.merge.difference = undefined;
             var data = {
                 additions: [{'@id': 'iri1'}],
                 deletions: [{'@id': 'iri2'}]
