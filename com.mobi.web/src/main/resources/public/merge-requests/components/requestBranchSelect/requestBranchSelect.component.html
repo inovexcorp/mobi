@@ -36,5 +36,13 @@
             </div>
         </form>
     </div>
-    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference" difference="dvm.state.requestConfig.difference" branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')" target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')" commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"></commit-difference-tabset>
+    <commit-difference-tabset ng-if="dvm.state.requestConfig.difference"
+                              difference="dvm.state.requestConfig.difference"
+                              branch-title="dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')"
+                              target-id="dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head')"
+                              commit-id="dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head')"
+                              entity-name-func="dvm.state.getEntityNameLabel"
+                              show-more-results-func="dvm.state.retrieveMoreResults(limit, offset)"
+                              start-index="dvm.state.requestConfig.startIndex"
+                              record-id="dvm.state.requestConfig.recordId"></commit-difference-tabset>
 </div>

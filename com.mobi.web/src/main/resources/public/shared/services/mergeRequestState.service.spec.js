@@ -25,25 +25,29 @@ import {
     mockCatalogManager,
     mockUserManager,
     mockUtil,
-    mockPrefixes
+    mockPrefixes,
+    mockOntologyManager
 } from '../../../../../test/js/Shared';
+import {get} from "lodash";
 
 describe('Merge Requests State service', function() {
-    var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, utilSvc, prefixes, $q, scope;
+    var mergeRequestsStateSvc, mergeRequestManagerSvc, catalogManagerSvc, userManagerSvc, ontologyManagerSvc, utilSvc, prefixes, $q, scope;
 
     beforeEach(function() {
         angular.mock.module('shared');
         mockMergeRequestManager();
         mockCatalogManager();
         mockUserManager();
+        mockOntologyManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(mergeRequestsStateService, _mergeRequestManagerService_, _catalogManagerService_, _userManagerService_, _utilService_, _prefixes_, _$q_, _$rootScope_) {
+        inject(function(mergeRequestsStateService, _mergeRequestManagerService_, _catalogManagerService_, _userManagerService_, _ontologyManagerService_, _utilService_, _prefixes_, _$q_, _$rootScope_) {
             mergeRequestsStateSvc = mergeRequestsStateService;
             mergeRequestManagerSvc = _mergeRequestManagerService_;
             catalogManagerSvc = _catalogManagerService_;
             userManagerSvc = _userManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
             $q = _$q_;
@@ -51,11 +55,12 @@ describe('Merge Requests State service', function() {
         });
 
         this.difference = {
-            additions: [],
+            additions: [{'@id': 'iri1'}],
             deletions: []
         };
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         catalogManagerSvc.differencePageSize = 100;
+        this.headers = {'has-more-results': 'false'};
         catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
         mergeRequestsStateSvc.initialize();
@@ -65,6 +70,7 @@ describe('Merge Requests State service', function() {
         mergeRequestsStateSvc = null;
         mergeRequestManagerSvc = null;
         catalogManagerSvc = null;
+        ontologyManagerSvc = null;
         userManagerSvc = null;
         utilSvc = null;
         prefixes = null;
@@ -94,7 +100,9 @@ describe('Merge Requests State service', function() {
             sourceBranchId: '',
             targetBranchId: '',
             recordId: '',
-            assignees: []
+            assignees: [],
+            entityNames: {},
+            startIndex: 0
         });
         expect(mergeRequestsStateSvc.createRequest).toEqual(false);
         expect(mergeRequestsStateSvc.createRequestStep).toEqual(0);
@@ -238,17 +246,78 @@ describe('Merge Requests State service', function() {
                 targetBranch: '',
                 targetCommit: '',
                 difference: '',
-                jsonld: {}
+                jsonld: {},
+                startIndex: 0
             };
         });
-        it('accepted', function() {
-            mergeRequestManagerSvc.isAccepted.and.returnValue(true);
-            mergeRequestsStateSvc.setRequestDetails(this.request);
-            scope.$apply();
-            expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
-            expect(this.request.targetTitle).toEqual(prefixes.mergereq + 'targetBranchTitle');
-            expect(this.request.sourceCommit).toEqual(prefixes.mergereq + 'sourceCommit');
-            expect(this.request.targetCommit).toEqual(prefixes.mergereq + 'targetCommit');
+        describe('accepted and getDifference', function() {
+            describe('resolves and getOntologyEntityNames', function() {
+                it('resolves', function() {
+                    this.request.sourceBranch = {'@id': 'sourceBranchId'};
+                    this.difference2 = {
+                        additions: [{'@id': 'iri1'}],
+                        deletions: []
+                    };
+                    this.expectedDifference = {
+                        additions: [{'@id': 'iri1'}],
+                        deletions: [],
+                        hasMoreResults: false
+                    };
+                    this.expectedEntityNames = {'iri1':{}};
+                    catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference2, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+                    ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.when(this.expectedEntityNames));
+                    mergeRequestManagerSvc.isAccepted.and.returnValue(true);
+                    mergeRequestsStateSvc.setRequestDetails(this.request);
+                    scope.$apply();
+                    expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
+                    expect(this.request.targetTitle).toEqual(prefixes.mergereq + 'targetBranchTitle');
+                    expect(this.request.sourceCommit).toEqual(prefixes.mergereq + 'sourceCommit');
+                    expect(this.request.targetCommit).toEqual(prefixes.mergereq + 'targetCommit');
+                    expect(this.request.difference).toEqual(this.expectedDifference);
+                    expect(this.request.entityNames).toEqual(this.expectedEntityNames);
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceCommit', prefixes.mergereq + 'targetCommit', 100, 0);
+                    expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.mergereq + 'sourceCommit', false, false, ['iri1']);
+                });
+                it('rejects', function() {
+                    this.request.sourceBranch = {'@id': 'sourceBranchId'};
+                    this.difference2 = {
+                        additions: [{'@id': 'iri1'}],
+                        deletions: []
+                    };
+                    this.expectedDifference = {
+                        additions: [{'@id': 'iri1'}],
+                        deletions: [],
+                        hasMoreResults: false
+                    };
+                    catalogManagerSvc.getDifference.and.returnValue($q.when({data: this.difference2, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+                    ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                    mergeRequestManagerSvc.isAccepted.and.returnValue(true);
+                    mergeRequestsStateSvc.setRequestDetails(this.request);
+                    scope.$apply();
+                    expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
+                    expect(this.request.targetTitle).toEqual(prefixes.mergereq + 'targetBranchTitle');
+                    expect(this.request.sourceCommit).toEqual(prefixes.mergereq + 'sourceCommit');
+                    expect(this.request.targetCommit).toEqual(prefixes.mergereq + 'targetCommit');
+                    expect(this.request.difference).toEqual(this.expectedDifference);
+                    expect(this.request.entityNames).toEqual({});
+                    expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceCommit', prefixes.mergereq + 'targetCommit', 100, 0);
+                    expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.mergereq + 'sourceCommit', false, false, ['iri1']);
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+                });
+            });
+            it('rejects', function() {
+                mergeRequestManagerSvc.isAccepted.and.returnValue(true);
+                catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
+                mergeRequestsStateSvc.setRequestDetails(this.request);
+                scope.$apply();
+                expect(this.request.sourceTitle).toEqual(prefixes.mergereq + 'sourceBranchTitle');
+                expect(this.request.targetTitle).toEqual(prefixes.mergereq + 'targetBranchTitle');
+                expect(this.request.sourceCommit).toEqual(prefixes.mergereq + 'sourceCommit');
+                expect(this.request.targetCommit).toEqual(prefixes.mergereq + 'targetCommit');
+                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.mergereq + 'sourceCommit', prefixes.mergereq + 'targetCommit', 100, 0);
+                expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
+            });
         });
         describe('open', function() {
             beforeEach(function() {
@@ -266,58 +335,86 @@ describe('Merge Requests State service', function() {
                     this.expected.targetCommit = prefixes.catalog + 'head';
                     this.expected.removeSource = false;
                     this.expected.comments = [];
+                    this.expected.entityNames = {};
+                    this.expected.startIndex = 0;
                 });
                 describe('and getDifference resolves', function() {
-                    describe('and getBranchConflicts resolves', function() {
-                        it('with no conflicts', function () {
-                            this.expected.conflicts = [];
-                            this.expected.difference = {
-                                additions: [],
-                                deletions: [],
-                                hasMoreResults: false
-                            };
-                            mergeRequestsStateSvc.setRequestDetails(this.request);
-                            scope.$apply();
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
-                            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(this.request).toEqual(this.expected);
-                            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
-                            expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                    describe('and getOntologyEntityNames resolves', function() {
+                        describe('and getBranchConflicts resolves', function() {
+                            it('with no conflicts', function() {
+                                this.expected.conflicts = [];
+                                this.expected.difference = {
+                                    additions: [{'@id': 'iri1'}],
+                                    deletions: [],
+                                    hasMoreResults: false
+                                };
+                                this.expected.entityNames = {};
+                                mergeRequestsStateSvc.setRequestDetails(this.request);
+                                scope.$apply();
+                                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
+                                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                                expect(this.request).toEqual(this.expected);
+                                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
+                                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
+                                expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                            });
+                            it('with conflicts', function() {
+                                var conflicts = [{'@id': 'recordId'}];
+                                this.expected.conflicts = conflicts;
+                                catalogManagerSvc.getBranchConflicts.and.returnValue($q.when(conflicts));
+                                this.expected.difference = {
+                                    additions: [{'@id': 'iri1'}],
+                                    deletions: [],
+                                    hasMoreResults: false
+                                };
+                                this.expected.entityNames = {};
+                                mergeRequestsStateSvc.setRequestDetails(this.request);
+                                scope.$apply();
+                                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
+                                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                                expect(this.request).toEqual(this.expected);
+                                expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
+                                expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
+                                expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                            });
                         });
-                        it('with conflicts', function() {
-                            var conflicts = [{'@id': 'recordId'}];
-                            this.expected.conflicts = conflicts;
-                            catalogManagerSvc.getBranchConflicts.and.returnValue($q.when(conflicts));
+                        it('and getBranchConflicts rejects', function() {
+                            catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject('Error Message'));
+                            ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.when({}));
                             this.expected.difference = {
-                                additions: [],
+                                additions: [{'@id': 'iri1'}],
                                 deletions: [],
                                 hasMoreResults: false
                             };
+                            this.expected.entityNames = {};
                             mergeRequestsStateSvc.setRequestDetails(this.request);
                             scope.$apply();
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
                             expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                             expect(this.request).toEqual(this.expected);
                             expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
+                            expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
                             expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
-                            expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                         });
                     });
-                    it('and getBranchConflicts rejects', function() {
-                        catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject('Error Message'));
+                    it('unless getOntologyEntityNames rejects', function() {
+                        ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
                         this.expected.difference = {
-                            additions: [],
+                            additions: [{'@id': 'iri1'}],
                             deletions: [],
                             hasMoreResults: false
                         };
                         mergeRequestsStateSvc.setRequestDetails(this.request);
                         scope.$apply();
+
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', 'recordIri', 'catalogId');
                         expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
                         expect(this.request).toEqual(this.expected);
                         expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith(prefixes.catalog + 'head', prefixes.catalog + 'head', 100, 0);
-                        expect(catalogManagerSvc.getBranchConflicts).toHaveBeenCalledWith(prefixes.mergereq + 'sourceBranch', prefixes.mergereq + 'targetBranch', 'recordIri', 'catalogId');
+                        expect(ontologyManagerSvc.getOntologyEntityNames).toHaveBeenCalledWith('recordIri', undefined, prefixes.catalog + 'head', false, false, ['iri1']);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                     });
                 });
@@ -358,6 +455,7 @@ describe('Merge Requests State service', function() {
                 this.expected.difference = '';
                 this.expected.removeSource = '';
                 this.expected.comments = [];
+                this.expected.entityNames = {};
                 catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error Message'));
                 mergeRequestsStateSvc.setRequestDetails(this.request);
                 scope.$apply();
@@ -441,6 +539,208 @@ describe('Merge Requests State service', function() {
                 expect(mergeRequestsStateSvc.setRequests).toHaveBeenCalledWith(mergeRequestsStateSvc.acceptedFilter);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
+        });
+    });
+    describe('should get source EntityNames', function() {
+        beforeEach(function() {
+            this.entityNames = {'iri1':{}, 'iri2':{}, 'iri3':{}};
+            this.difference = {
+                additions: [{'@id': 'iri1'}, {'@id': 'iri2'}],
+                deletions: [{'@id': 'iri3'}]
+            }
+            this.diffResponse = {data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}
+            ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.when(this.entityNames));
+        });
+        it('and getDifference response is not present', function() {
+            this.request = {};
+            mergeRequestsStateSvc.getSourceEntityNames(this.request);
+            scope.$apply();
+            expect(ontologyManagerSvc.getOntologyEntityNames).not.toHaveBeenCalled();
+            expect(this.request).toEqual({});
+        });
+        describe('when request object is the requestConfig', function() {
+            beforeEach(function() {
+                this.requestConfig = {
+                    recordId: 'id',
+                    sourceBranch: {'@id': 'source'},
+                    difference: this.difference,
+                    entityNames: {}
+                };
+            });
+            it('and getOntologyEntityNames resolves', function() {
+                mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig, this.diffResponse);
+                scope.$apply();
+                expect(this.requestConfig.entityNames).toEqual(this.entityNames);
+                expect(this.requestConfig.difference.additions).toEqual(this.difference.additions);
+                expect(this.requestConfig.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.requestConfig.difference.hasMoreResults).toBeFalsy();
+            });
+            it('and getOntologyEntityNames rejects', function() {
+                ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                mergeRequestsStateSvc.getSourceEntityNames(this.requestConfig, this.diffResponse);
+                scope.$apply();
+                expect(this.requestConfig.entityNames).toEqual({});
+                expect(this.requestConfig.difference.additions).toEqual(this.difference.additions);
+                expect(this.requestConfig.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.requestConfig.difference.hasMoreResults).toBeFalsy();
+            });
+        });
+        describe('when a request is passed', function() {
+            beforeEach(function() {
+                this.request = {
+                    recordIri: 'recordIri',
+                    sourceCommit: 'commit',
+                    sourceBranch: {'@id': 'source'},
+                    difference: this.difference,
+                    entityNames: {}
+                };
+            });
+            it('and getOntologyEntityNames resolves', function() {
+                mergeRequestsStateSvc.getSourceEntityNames(this.request, this.diffResponse);
+                scope.$apply();
+                expect(this.request.entityNames).toEqual(this.entityNames);
+                expect(this.request.difference.additions).toEqual(this.difference.additions);
+                expect(this.request.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.request.difference.hasMoreResults).toBeFalsy();
+            });
+            it('and getOntologyEntityNames rejects', function() {
+                ontologyManagerSvc.getOntologyEntityNames.and.returnValue($q.reject('Error Message'));
+                mergeRequestsStateSvc.getSourceEntityNames(this.request, this.diffResponse);
+                scope.$apply();
+                expect(this.request.entityNames).toEqual({});
+                expect(this.request.difference.additions).toEqual(this.difference.additions);
+                expect(this.request.difference.deletions).toEqual(this.difference.deletions);
+                expect(this.request.difference.hasMoreResults).toBeFalsy();
+            });
+        });
+    });
+    describe('should retrieve the label of an entityName', function() {
+        beforeEach(function() {
+            this.entityNames = {'iri1':{'label':'label1'}};
+            utilSvc.getBeautifulIRI.and.returnValue('beautifulIri');
+        });
+        describe('when the requestConfig is set and the entity', function() {
+           it('exists in entityNames', function() {
+               mergeRequestsStateSvc.requestConfig.entityNames = this.entityNames;
+               expect(mergeRequestsStateSvc.getEntityNameLabel('iri1')).toEqual('label1');
+           }) ;
+           it('does not exist in entityNames', function() {
+               mergeRequestsStateSvc.requestConfig.entityNames = this.entityNames;
+               expect(mergeRequestsStateSvc.getEntityNameLabel('iri2')).toEqual('beautifulIri');
+           });
+        });
+        describe('when selected is set and the entity', function() {
+            it('exists in entityNames', function() {
+                mergeRequestsStateSvc.selected = {'entityNames': this.entityNames};
+                expect(mergeRequestsStateSvc.getEntityNameLabel('iri1')).toEqual('label1');
+            }) ;
+            it('does not exist in entityNames', function() {
+                mergeRequestsStateSvc.selected = {'entityNames': this.entityNames};
+                expect(mergeRequestsStateSvc.getEntityNameLabel('iri2')).toEqual('beautifulIri');
+            });
+        });
+    });
+    describe('should update the requestConfig difference when getDifference', function() {
+        beforeEach(function() {
+            this.requestConfig = {};
+            this.difference = {
+                additions: [],
+                deletions: []
+            };
+            this.expectedDifference = angular.copy(this.difference);
+            this.expectedDifference.hasMoreResults = false;
+            spyOn(mergeRequestsStateSvc, 'getSourceEntityNames');
+            this.diffResponse = {data: this.difference, headers: jasmine.createSpy('headers').and.returnValue(this.headers)};
+            catalogManagerSvc.getDifference.and.returnValue($q.when(this.diffResponse));
+            utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+                let commit = get(obj, [prefixes.catalog + 'head', 0, '@id']);
+                return commit ? commit : 'head';
+            });
+        });
+        it('resolves', function() {
+            mergeRequestsStateSvc.updateRequestConfigDifference();
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
+            expect(mergeRequestsStateSvc.getSourceEntityNames).toHaveBeenCalledWith(mergeRequestsStateSvc.requestConfig, this.diffResponse);
+        });
+        it('rejects', function() {
+            catalogManagerSvc.getDifference.and.returnValue($q.reject());
+            mergeRequestsStateSvc.updateRequestConfigDifference();
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('head', 'head', 100, 0);
+            expect(mergeRequestsStateSvc.getSourceEntityNames).not.toHaveBeenCalled();
+            expect(mergeRequestsStateSvc.requestConfig.difference).toBeUndefined();
+            expect(mergeRequestsStateSvc.requestConfig.entityNames).toBeUndefined();
+        });
+    });
+    describe('should update the requestConfig branch information when', function() {
+        beforeEach(function () {
+            utilSvc.getPropertyId.and.callFake((obj, prop) => {
+                return obj[prop][0]['@id'];
+            });
+            this.sourceBranch = {'@id': 'sourceBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId1'}]};
+            this.targetBranch = {'@id': 'targetBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId1'}]};
+            this.sourceBranchNewHead = {'@id': 'sourceBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId2'}]};
+            this.targetBranchNewHead = {'@id': 'targetBranchId', [prefixes.catalog + 'head']:[{'@id': 'headCommitId2'}]};
+            this.branches = [this.sourceBranch, this.targetBranch];
+            mergeRequestsStateSvc.requestConfig.sourceBranch = this.sourceBranch;
+            mergeRequestsStateSvc.requestConfig.targetBranch = this.targetBranch;
+        });
+        it('source does not exist', function () {
+            mergeRequestsStateSvc.updateRequestConfigBranch('sourceBranch', [this.targetBranch]);
+            scope.$apply();
+            expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(undefined);
+        });
+        it('target does not exist', function () {
+            mergeRequestsStateSvc.updateRequestConfigBranch('targetBranch', [this.sourceBranch]);
+            scope.$apply();
+            expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(undefined);
+        });
+        it('source has new commits', function () {
+            mergeRequestsStateSvc.updateRequestConfigBranch('sourceBranch', [this.sourceBranchNewHead]);
+            scope.$apply();
+            expect(mergeRequestsStateSvc.requestConfig.sourceBranch).toEqual(this.sourceBranchNewHead);
+        });
+        it('target has new commits', function () {
+            mergeRequestsStateSvc.updateRequestConfigBranch('targetBranch', [this.targetBranchNewHead]);
+            scope.$apply();
+            expect(mergeRequestsStateSvc.requestConfig.targetBranch).toEqual(this.targetBranchNewHead);
+        });
+    });
+    describe('should update difference when retrieveMoreResults', function() {
+        it('resolves', function() {
+            this.headers = {'has-more-results': 'false'};
+            var request = {
+                recordIri: 'recordIri',
+                difference: {additions: [{'@id': 'iri1'}], deletions: []},
+                sourceCommit: 'headCommitId1',
+                targetCommit: 'headCommitId2'
+            };
+            mergeRequestsStateSvc.selected = request;
+            var diff = {
+                additions: [{'@id': 'iri2'}],
+                deletions: []
+            };
+            catalogManagerSvc.getDifference.and.returnValue($q.when({data: diff, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            mergeRequestsStateSvc.retrieveMoreResults(100, 200);
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('headCommitId1', 'headCommitId2', 100, 200);
+            expect(mergeRequestsStateSvc.selected.difference.additions).toEqual([{'@id': 'iri1'}, {'@id': 'iri2'}]);
+            expect(mergeRequestsStateSvc.selected.difference.hasMoreResults).toBeFalsy();
+        });
+        it('rejects', function() {
+            var request = {
+                recordIri: 'recordIri',
+                difference: {additions: [{'@id': 'iri1'}], deletions: []},
+                sourceCommit: 'headCommitId1',
+                targetCommit: 'headCommitId2'
+            };
+            mergeRequestsStateSvc.selected = request;
+            catalogManagerSvc.getDifference.and.returnValue($q.reject('Error Message'));
+            mergeRequestsStateSvc.retrieveMoreResults(100, 200);
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('headCommitId1', 'headCommitId2', 100, 200);
+            expect(utilSvc.createErrorToast('ErrorMessage'));
         });
     });
 });
