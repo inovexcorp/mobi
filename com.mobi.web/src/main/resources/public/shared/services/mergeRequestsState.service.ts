@@ -392,49 +392,53 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * is delayed until after the entityNames are present. This allows for the statementDisplay to calculate the entityNames
      * once on changes, rather than requiring a binding to constantly calculate the names.
      *
-     * @param {Object} request A request or requestConfig object that contains branch information
-     * @param {Object} response A response containing a difference object to update the request with once entityNames are populated
+     * @param {Object} mergeRequest A merge request or requestConfig object that contains branch information
+     * @param {Object} diffResponse A response containing a difference object to update the request with once entityNames are populated
      *
      * @return {Promise} A Promise indicating the success of retrieving entityNames
      */
-    self.getSourceEntityNames = function(request, response) {
-        if (!response) {
+    self.getSourceEntityNames = function(mergeRequest, diffResponse) {
+        if (!diffResponse) {
             return $q.reject('Difference is not set. Cannot get ontology entity names.');
         }
-        var difference = response.data;
-        var recordIri = request.recordId ? request.recordId : request.recordIri;
+        var difference = diffResponse.data;
+        var recordIri = mergeRequest.recordId ? mergeRequest.recordId : mergeRequest.recordIri;
         var diffIris = union(map(difference.additions, '@id'), map(difference.deletions, '@id'));
         var iris = union(diffIris, util.getObjIrisFromDifference(difference.additions), util.getObjIrisFromDifference(difference.deletions));
 
         if (iris.length > 0) {
-            return om.getOntologyEntityNames(recordIri, get(request.sourceBranch, '@id'), request.sourceCommit, false, false, iris)
+            return om.getOntologyEntityNames(recordIri, get(mergeRequest.sourceBranch, '@id'), mergeRequest.sourceCommit, false, false, iris)
                 .then(data => {
-                    merge(request.entityNames, data);
-                    if (!request.difference) {
-                        request.difference = {
+                    merge(mergeRequest.entityNames, data);
+                    if (!mergeRequest.difference) {
+                        mergeRequest.difference = {
                             additions: [],
                             deletions: []
                         }
                     }
-                    request.difference.additions = concat(request.difference.additions, difference.additions);
-                    request.difference.deletions = concat(request.difference.deletions, difference.deletions);
-                    var headers = response.headers();
-                    request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                    mergeRequest.difference.additions = concat(mergeRequest.difference.additions, difference.additions);
+                    mergeRequest.difference.deletions = concat(mergeRequest.difference.deletions, difference.deletions);
+                    var headers = diffResponse.headers();
+                    mergeRequest.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
                     return $q.when();
                 }, error => {
-                    if (!request.difference) {
-                        request.difference = {
+                    if (!mergeRequest.difference) {
+                        mergeRequest.difference = {
                             additions: [],
                             deletions: []
                         }
                     }
-                    request.difference.additions = concat(request.difference.additions, difference.additions);
-                    request.difference.deletions = concat(request.difference.deletions, difference.deletions);
-                    var headers = response.headers();
-                    request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                    mergeRequest.difference.additions = concat(mergeRequest.difference.additions, difference.additions);
+                    mergeRequest.difference.deletions = concat(mergeRequest.difference.deletions, difference.deletions);
+                    var headers = diffResponse.headers();
+                    mergeRequest.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
                     return $q.reject(error);
                 });
         } else {
+            mergeRequest.difference = {
+                additions: [],
+                deletions: []
+            }
             return $q.when();
         }
     }
