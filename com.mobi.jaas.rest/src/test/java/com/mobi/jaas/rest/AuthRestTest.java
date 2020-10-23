@@ -37,7 +37,6 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -48,10 +47,9 @@ import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.MobiRestTestNg;
+import com.mobi.web.security.util.AuthenticationProps;
 import com.mobi.web.security.util.RestSecurityUtils;
-import com.nimbusds.jose.Payload;
 import com.nimbusds.jwt.SignedJWT;
-import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.oauth1.signature.Base64;
@@ -69,6 +67,7 @@ import java.util.Optional;
 import javax.security.auth.Subject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
@@ -89,6 +88,7 @@ public class AuthRestTest extends MobiRestTestNg {
     private static final String ANON_USER = "{\"sub\": \"" + ANON + "\"}";
     private static final String TOKEN_NAME = "mobi_web_token";
 
+    private boolean error = false;
     private EngineManager engineManager;
     private MobiConfiguration mobiConfiguration;
     private TokenManager tokenManager;
@@ -150,8 +150,6 @@ public class AuthRestTest extends MobiRestTestNg {
         when(user.getUsername()).thenReturn(Optional.of(usernameLit));
         when(requiredRole.getResource()).thenReturn(vf.createIRI("http://test.com/" + AuthRest.REQUIRED_ROLE));
         when(otherRole.getResource()).thenReturn(vf.createIRI("http://test.com/other"));
-        when(signedJWT.getPayload()).thenReturn(new Payload(VALID_USER));
-        when(unauthSignedJWT.getPayload()).thenReturn(new Payload(ANON_USER));
 
         AuthRest rest = new AuthRest();
         rest.setConfiguration(mobiConfiguration);
@@ -160,7 +158,16 @@ public class AuthRestTest extends MobiRestTestNg {
 
         return new ResourceConfig()
                 .register(rest)
-                .register(MultiPartFeature.class);
+                .register(MultiPartFeature.class)
+                .register((ContainerRequestFilter) requestContext -> requestContext.setProperty(AuthenticationProps.USERNAME, getUsername()));
+    }
+
+    private String getUsername() {
+        if (error) {
+            return null;
+        } else {
+            return USERNAME;
+        }
     }
 
     @Override
@@ -170,40 +177,29 @@ public class AuthRestTest extends MobiRestTestNg {
 
     @Test
     public void getCurrentUserTest() throws Exception {
+        // Setup:
+        error = false;
+
         Response response = target().path("session").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(tokenManager).getTokenString(any(ContainerRequestContext.class));
-        verify(tokenManager).verifyToken(TOKEN_STRING);
         verify(tokenManager, never()).generateUnauthToken();
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
-        try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(removeWhitespace(VALID_USER), removeWhitespace(result.toString()));
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+        assertEquals(USERNAME, response.readEntity(String.class));
     }
 
     @Test
     public void getCurrentUserNotVerifiedTest() throws Exception {
         // Setup:
-        when(tokenManager.getTokenString(any(ContainerRequestContext.class))).thenReturn(ERROR);
+        error = true;
 
         Response response = target().path("session").request().get();
         assertEquals(response.getStatus(), 200);
-        verify(tokenManager).getTokenString(any(ContainerRequestContext.class));
-        verify(tokenManager).verifyToken(ERROR);
         verify(tokenManager).generateUnauthToken();
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(ANON, cookies.get(TOKEN_NAME).getValue());
-        try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(removeWhitespace(ANON_USER), removeWhitespace(result.toString()));
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+        assertTrue(response.readEntity(String.class).isEmpty());
     }
 
     @Test
@@ -305,12 +301,7 @@ public class AuthRestTest extends MobiRestTestNg {
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(USERNAME, cookies.get(TOKEN_NAME).getValue());
-        try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(removeWhitespace(VALID_USER), removeWhitespace(result.toString()));
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+        assertEquals(USERNAME, response.readEntity(String.class));
     }
 
     @Test
@@ -387,12 +378,7 @@ public class AuthRestTest extends MobiRestTestNg {
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(USERNAME, cookies.get(TOKEN_NAME).getValue());
-        try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(removeWhitespace(VALID_USER), removeWhitespace(result.toString()));
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+        assertEquals(USERNAME, response.readEntity(String.class));
     }
 
     @Test
@@ -403,12 +389,7 @@ public class AuthRestTest extends MobiRestTestNg {
         Map<String, NewCookie> cookies = response.getCookies();
         assertTrue(cookies.containsKey(TOKEN_NAME));
         assertEquals(ANON, cookies.get(TOKEN_NAME).getValue());
-        try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(removeWhitespace(ANON_USER), removeWhitespace(result.toString()));
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+        assertTrue(response.readEntity(String.class).isEmpty());
     }
 
     private String removeWhitespace(String s) {
