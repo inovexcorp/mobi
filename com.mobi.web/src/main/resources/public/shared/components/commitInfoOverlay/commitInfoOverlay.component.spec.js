@@ -128,11 +128,11 @@ describe('Commit Info Overlay component', function() {
                     this.headers = {'has-more-results': 'true'};
                     catalogManagerSvc.getDifference.and.returnValue($q.when({data: {additions: [{'@id': 'iri1'}], deletions: []}, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
                 })
-                describe('and resolve.recordId is set', function() {
+                describe('and resolve.ontRecordId is set', function() {
                     beforeEach(function() {
                         scope.resolve = {
                             commit: {'id':'123'},
-                            recordId: 'recordId'
+                            ontRecordId: 'recordId'
                         };
                         scope.$digest();
                         utilSvc.getObjIrisFromDifference.and.returnValue([]);
