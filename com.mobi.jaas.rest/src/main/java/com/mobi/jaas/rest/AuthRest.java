@@ -92,8 +92,8 @@ public class AuthRest {
     }
 
     /**
-     * Retrieves the current User session as a JSON response. If there is no User session, returns an anonymous User
-     * session.
+     * Retrieves the current User username as a plaintext response. If there is no User session, returns an empty
+     * response representing an anonymous User session.
      *
      * @return a plaintext response with the current User's username
      */
@@ -114,7 +114,7 @@ public class AuthRest {
 
     /**
      * Attempts to login to Mobi using the provided username and password and create a new session. If successful,
-     * returns the new User session as a JSON response.
+     * returns the new User username as a plaintext response.
      *
      * @return a plaintext response with the newly logged in User's username
      */
@@ -151,7 +151,8 @@ public class AuthRest {
     }
 
     /**
-     * Logs out of Mobi by removing the current User session. Returns an anonymous User session.
+     * Logs out of Mobi by removing the current User session. Returns an empty response representing an anonymous User
+     * session.
      *
      * @return an empty response representing an anonymous User's session
      */
