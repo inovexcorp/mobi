@@ -24,24 +24,27 @@ import {
     mockComponent,
     mockCatalogManager,
     mockUtil,
-    mockPrefixes
+    mockPrefixes,
+    mockOntologyManager
 } from '../../../../../../test/js/Shared';
 
 describe('Branch List component', function() {
-    var $compile, scope, $q, catalogManagerSvc, utilSvc, prefixes;
+    var $compile, scope, $q, catalogManagerSvc, ontologyManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         angular.mock.module('catalog');
         mockComponent('catalog', 'entityPublisher');
         mockCatalogManager();
+        mockOntologyManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _ontologyManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
@@ -75,6 +78,7 @@ describe('Branch List component', function() {
         scope = null;
         $q = null;
         catalogManagerSvc = null;
+        ontologyManagerSvc = null;
         utilSvc = null;
         prefixes = null;
         this.element.remove();
@@ -124,6 +128,7 @@ describe('Branch List component', function() {
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.recordId, this.catalogId, {pageIndex: 0, limit: this.controller.limit, sortOption: jasmine.any(Object)});
                     expect(this.controller.branches).toEqual(this.branches);
                     expect(this.controller.totalSize).toEqual(this.totalSize);
+                    expect(ontologyManagerSvc.isOntologyRecord).toHaveBeenCalledWith(scope.record);
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
                 });
                 it('unless getRecordBranches rejects', function() {
@@ -133,6 +138,7 @@ describe('Branch List component', function() {
                     expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.recordId, this.catalogId, {pageIndex: 0, limit: this.controller.limit, sortOption: jasmine.any(Object)});
                     expect(this.controller.branches).toEqual([]);
                     expect(this.controller.totalSize).toEqual(0);
+                    expect(ontologyManagerSvc.isOntologyRecord).toHaveBeenCalledWith(scope.record);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 });
             });

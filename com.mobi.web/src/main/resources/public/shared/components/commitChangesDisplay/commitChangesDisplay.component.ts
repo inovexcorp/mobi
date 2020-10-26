@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
+import { map, forEach, filter, has, union, orderBy, isEmpty } from 'lodash';
 
 import './commitChangesDisplay.component.scss';
 
@@ -40,8 +40,10 @@ const template = require('./commitChangesDisplay.component.html');
  *
  * @param {Object[]} additions An array of JSON-LD objects representing statements added
  * @param {Object[]} deletions An array of JSON-LD objects representing statements deleted
- * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI.
- * The component will pass the IRI of the entity as the only argument
+ * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The component will pass the IRI of the entity as the only argument
+ * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as arguments.
+ * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
+ * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
  */
 const commitChangesDisplayComponent = {
     template,
@@ -50,7 +52,8 @@ const commitChangesDisplayComponent = {
         deletions: '<',
         entityNameFunc: '<?',
         showMoreResultsFunc: '&',
-        hasMoreResults: '<'
+        hasMoreResults: '<',
+        startIndex: '<?'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -68,11 +71,26 @@ function commitChangesDisplayComponentCtrl(utilService) {
     dvm.results = {};
     dvm.showMore = false;
 
-    dvm.$onChanges = function() {
-        var adds = map(dvm.additions, '@id');
-        var deletes = map(dvm.deletions, '@id');
-        dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        dvm.addPagedChangesToResults();
+    dvm.$onInit = function() {
+        if (dvm.startIndex) {
+            dvm.index = dvm.startIndex;
+        }
+    }
+    dvm.$onChanges = function(changesObj) {
+        if (has(changesObj, 'additions') || has(changesObj, 'deletions')) {
+            var adds;
+            var deletes;
+            if (isEmpty(dvm.results)) {
+                adds = map(dvm.additions, '@id');
+                deletes = map(dvm.deletions, '@id');
+            } else {
+                adds = filter(map(dvm.additions, '@id'), id => !dvm.results[id]);
+                deletes = filter(map(dvm.deletions, '@id'), id => !dvm.results[id]);
+            }
+            var combined = union(adds, deletes);
+            dvm.list = orderBy(combined, item => item, 'asc');
+            dvm.addPagedChangesToResults();
+        }
     }
     dvm.addPagedChangesToResults = function() {
         forEach(dvm.list, id => {

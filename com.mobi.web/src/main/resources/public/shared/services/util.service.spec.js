@@ -552,6 +552,17 @@ describe('Util service', function() {
             p: 'prop5', o: 'value5'
         }];
         expect(utilSvc.getPredicatesAndObjects(addition)).toEqual(expected);
+    });
+    it('should get correct object IRIs for the provided addition or deletion', function() {
+        var additions = [{
+            '@id': 'id',
+            prop1: 'value1',
+            prop2: [{'@id': 'iri1'}],
+            prop3: [{'@id': 'iri2'}, {'@id': 'iri3'}],
+            prop5: 'value5'
+        }];
+        var expected = ['iri1', 'iri2', 'iri3'];
+        expect(utilSvc.getObjIrisFromDifference(additions)).toEqual(expected);
     })
     it("should return the localname of the split IRI for the provided object's p property", function() {
         splitIRIFilter.and.returnValue({end: 'localname'});

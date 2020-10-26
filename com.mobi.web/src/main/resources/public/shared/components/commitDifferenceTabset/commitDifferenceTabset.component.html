@@ -22,12 +22,12 @@
   -->
 <div class="commit-difference-tabset">
     <material-tabset centered>
-        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.setInitialChangesTab(value)">
-            <commit-changes-display additions="dvm.additions" deletions="dvm.deletions" entity-name-func="dvm.entityNameFunc" show-more-results-func="dvm.retrieveMoreResults(limit, offset)" has-more-results="dvm.hasMoreResults"></commit-changes-display>
-            <info-message ng-if="!dvm.additions.length && !dvm.deletions.length">No changes to display</info-message>
+        <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
+            <commit-changes-display ng-if="dvm.difference" additions="dvm.difference.additions" deletions="dvm.difference.deletions" entity-name-func="dvm.entityNameFunc" show-more-results-func="dvm.showMoreResultsFunc({limit, offset})" has-more-results="dvm.difference.hasMoreResults" start-index="dvm.startIndex"></commit-changes-display>
+            <info-message ng-if="!dvm.difference.additions.length && !dvm.difference.deletions.length">No changes to display</info-message>
         </material-tab>
         <material-tab heading="'Commits'" active="dvm.tabs.commits" set-active="dvm.tabs.commits = value">
-            <commit-history-table head-title="dvm.branchTitle" commit-id="dvm.commitId" target-id="dvm.targetId" entity-name-func="dvm.entityNameFunc"></commit-history-table>
+            <commit-history-table head-title="dvm.branchTitle" commit-id="dvm.commitId" target-id="dvm.targetId" entity-name-func="dvm.entityNameFunc" record-id="dvm.recordId"></commit-history-table>
         </material-tab>
     </material-tabset>
 </div>
