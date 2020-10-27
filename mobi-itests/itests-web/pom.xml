@@ -26,7 +26,7 @@
     <parent>
         <artifactId>mobi-itests</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.18.41-SNAPSHOT</version>
+        <version>1.18.46-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -34,7 +34,7 @@
     <name>itests-web</name>
     <properties>
         <http-port>9081</http-port>
-        <https-port>9082</https-port>
+        <https-port>9080</https-port>
         <rmi-reg-port>1100</rmi-reg-port>
         <ssh-port>8102</ssh-port>
         <rmi-server-port></rmi-server-port>

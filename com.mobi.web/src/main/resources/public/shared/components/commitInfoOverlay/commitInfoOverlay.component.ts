@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { get } from 'lodash';
+import {get, map, merge, union, concat} from 'lodash';
 
 const template = require('./commitInfoOverlay.component.html');
 
@@ -47,8 +47,7 @@ const template = require('./commitInfoOverlay.component.html');
  * @param {Object} resolve commit.creator An object containing information about the creator of the commit,
  * including the username, first name, and last name
  * @param {string} resolve.commit.date The date string of when the commit was created
- * @param {Object[]} resolve.additions An array of JSON-LD objects representing statements added in the commit
- * @param {Object[]} resolve.deletions An array of JSON-LD objects representing statements deleted in the commit
+ * @oaram {string} [recordId=''] resolve.recordId An optional IRI string representing an OntologyRecord to query for names if present
  * @param {Function} dismiss A function that dismisses the modal
  */
 const commitInfoOverlayComponent = {
@@ -61,21 +60,23 @@ const commitInfoOverlayComponent = {
     controller: commitInfoOverlayComponentCtrl
 };
 
-commitInfoOverlayComponentCtrl.$inject = ['utilService', 'userManagerService', 'catalogManagerService']
+commitInfoOverlayComponentCtrl.$inject = ['$q', 'utilService', 'userManagerService', 'catalogManagerService', 'ontologyManagerService']
 
-function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalogManagerService) {
+function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, catalogManagerService, ontologyManagerService) {
     var dvm = this;
+    var om = ontologyManagerService;
     dvm.util = utilService;
     dvm.um = userManagerService;
     dvm.cm = catalogManagerService;
-    dvm.additions = {};
-    dvm.deletions = {};
+    dvm.additions = [];
+    dvm.deletions = [];
     dvm.hasMoreResults = false;
+    dvm.entityNames = {};
+    dvm.tempAdditions = [];
+    dvm.tempDeletions = [];
 
     dvm.$onInit = function() {
-        dvm.additions = dvm.resolve.additions;
-        dvm.deletions = dvm.resolve.deletions;
-        dvm.hasMoreResults = dvm.resolve.hasMoreResults;
+        dvm.retrieveMoreResults(100, 0);
     }
     dvm.cancel = function() {
         dvm.dismiss();
@@ -83,15 +84,38 @@ function commitInfoOverlayComponentCtrl(utilService, userManagerService, catalog
     dvm.retrieveMoreResults = function(limit, offset) {
         dvm.cm.getDifference(dvm.resolve.commit.id, null, limit, offset)
             .then(response => {
-                dvm.additions = response.data.additions;
-                dvm.deletions = response.data.deletions;
+                dvm.tempAdditions = response.data.additions;
+                dvm.tempDeletions = response.data.deletions;
                 var headers = response.headers();
                 dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+
+                if (dvm.resolve.recordId) {
+                    var diffIris = union(map(dvm.tempAdditions, '@id'), map(dvm.tempDeletions, '@id'));
+                    var filterIris = union(diffIris, dvm.util.getObjIrisFromDifference(dvm.tempAdditions), dvm.util.getObjIrisFromDifference(dvm.tempDeletions));
+                    return om.getOntologyEntityNames(dvm.resolve.recordId, '', dvm.resolve.commit.id, false, false, filterIris);
+                }
+                return $q.when();
+            }, $q.reject)
+            .then(data => {
+                if (data) {
+                    merge(dvm.entityNames, data);
+                }
+                dvm.additions = dvm.tempAdditions;
+                dvm.deletions = dvm.tempDeletions;
+                dvm.tempAdditions = [];
+                dvm.tempDeletions = [];
             }, errorMessage => {
                 if (errorMessage) {
                     dvm.util.createErrorToast(errorMessage);
                 }
             });
+    }
+    dvm.getEntityName = function(iri) {
+        if (get(dvm, ['entityNames', iri, 'label'])) {
+            return dvm.entityNames[iri].label;
+        } else {
+            return dvm.util.getBeautifulIRI(iri);
+        }
     }
 }
 

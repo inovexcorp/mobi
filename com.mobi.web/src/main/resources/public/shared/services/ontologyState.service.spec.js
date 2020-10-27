@@ -4509,6 +4509,33 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.listItem.merge.conflicts).toEqual([]);
         });
     });
+    describe('getMergeDifferences sets fields listItem.merge when getDifference', function() {
+        it('resolves', function() {
+            ontologyStateSvc.listItem.merge = {};
+            ontologyStateSvc.listItem.merge.difference = undefined;
+            var data = {
+                additions: [{'@id': 'iri1'}],
+                deletions: [{'@id': 'iri2'}]
+            };
+            this.headers = {'has-more-results': 'true'};
+            catalogManagerSvc.getDifference.and.returnValue($q.when({data, headers: jasmine.createSpy('headers').and.returnValue(this.headers)}));
+            ontologyStateSvc.getMergeDifferences('sourceId', 'targetId', 100, 0);
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('sourceId', 'targetId', 100, 0);
+            expect(ontologyStateSvc.listItem.merge.difference.additions).toEqual(data.additions);
+            expect(ontologyStateSvc.listItem.merge.difference.deletions).toEqual(data.deletions);
+            expect(ontologyStateSvc.listItem.merge.difference.hasMoreResults).toBeTruthy();
+        });
+        it('rejects', function() {
+            ontologyStateSvc.listItem.merge = {};
+            catalogManagerSvc.getDifference.and.returnValue($q.reject('Error'));
+            ontologyStateSvc.getMergeDifferences('sourceId', 'targetId', 100, 0).then(_.noop, error => {
+                expect(error).toEqual('Error');
+            });
+            scope.$apply();
+            expect(catalogManagerSvc.getDifference).toHaveBeenCalledWith('sourceId', 'targetId', 100, 0);
+        });
+    });
     describe('merge should correctly return and call the correct methods if mergeBranches', function() {
         beforeEach(function() {
             catalogManagerSvc.mergeBranches.and.returnValue($q.when(this.commitId));
@@ -4664,7 +4691,8 @@ describe('Ontology State Service', function() {
             resolutions: {
                 additions: [{}],
                 deletions: [{}]
-            }
+            },
+            startIndex: 100
         }
         ontologyStateSvc.cancelMerge();
         expect(ontologyStateSvc.listItem.merge).toEqual({
@@ -4676,7 +4704,8 @@ describe('Ontology State Service', function() {
             resolutions: {
                 additions: [],
                 deletions: []
-            }
+            },
+            startIndex: 0
         });
     });
     describe('canModify should determine whether the current user can modify the ontology', function() {

@@ -46,8 +46,7 @@ before_script:
 
 # For merge requests, just do an initial test
 test:
-  variables:
-    NEEDS_GIT_SETTINGS: 0
+  before_script: []
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
@@ -95,7 +94,15 @@ unit_integration_test:
     refs:
       - master
   script:
-    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
+    # Redirect calls to localhost:9080 to host machines (not this container);
+    # a 2nd container running mobi is bound to the host at port 9080.
+    - HOST_IP=$(ip route show | awk '/default/ {print $3}')
+    - apt-get update && apt-get install -y redir
+    - redir :9080 $HOST_IP:9080
+    # Update Chrome Version
+    - apt-get -y update && apt-get -y install google-chrome-stable
+    # Run unit, integration, and functional tests
+    - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false
   artifacts:
     paths: ['rdf-orm']
 
