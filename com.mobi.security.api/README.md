@@ -7,11 +7,10 @@ In order to enable password encryption, you must ensure that a file called `com.
 
 ```
 enabled=true
-# This password is not the password you want 
-# to encrypt, rather it is a unique master password used for encrypt and decrypt 
-# operations 
 password=ENTER_A_UNIQUE_PASSWORD_HERE 
 ```
+
+**_NOTE:_** This password is not the password you want to encrypt, rather it is a unique master password used for encrypt and decrypt operations 
 
 IMPORTANT: If there is a default password in the password field (i.e. `CHANGEME`), make sure you change it before you start Mobi. Otherwise your passwords will be easy to decrypt.
 
