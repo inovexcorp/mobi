@@ -10,9 +10,9 @@ enabled=true
 password=ENTER_A_UNIQUE_PASSWORD_HERE 
 ```
 
-**_NOTE:_** This password is not the password you want to encrypt, rather it is a unique master password used for encrypt and decrypt operations 
+**NOTE:** This password is not the password you want to encrypt, rather it is a unique master password used for encrypt and decrypt operations 
 
-IMPORTANT: If there is a default password in the password field (i.e. `CHANGEME`), make sure you change it before you start Mobi. Otherwise your passwords will be easy to decrypt.
+**IMPORTANT:** If there is a default password in the password field (i.e. `CHANGEME`), make sure you change it before you start Mobi. Otherwise your passwords will be easy to decrypt.
 
 An alternate way of providing an encryption master password is via environment variable. To configure the use of an environment variable, use the following fields:
 
