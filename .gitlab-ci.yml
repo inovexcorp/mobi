@@ -41,8 +41,6 @@ before_script:
 
 # For merge requests, just do an initial test
 unit_test:
-  tags:
-    - test
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
@@ -54,8 +52,6 @@ unit_test:
 
 # For commits to master and releases do a full test
 full_test:
-  tags:
-    - test
   stage: test
   only: 
     - merge_requests
@@ -81,8 +77,6 @@ full_test:
 
 # Happens after commit to master
 deploy_artifacts:
-  tags:
-    - test
   stage: deploy
   only:
     - master
@@ -96,8 +90,6 @@ deploy_artifacts:
     # - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
 
 artifactory_release:
-  tags:
-    - test
   stage: deploy
   only:
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
@@ -115,9 +107,6 @@ artifactory_release:
 # build and push the docker image, per instructions in mobi-distribution README
 # tag used to specify we want this job to happen w/ the docker builder runner
 docker_release:
-  tags:
-    - test
-    - docker-image-builder
   stage: deploy-docker
   only:
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
@@ -128,8 +117,6 @@ docker_release:
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag
 
 increment_version:
-  tags:
-    - test
   stage: deploy
   only:
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
