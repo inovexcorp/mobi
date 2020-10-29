@@ -49,7 +49,7 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  * @requires shared.service:catalogStateService
  * @requires shared.service:datasetManagerService
  * @requires shared.service:datasetStateService
- * @requires shared.service:delimitedManangerService
+ * @requires shared.service:delimitedManagerService
  * @requires shared.service:discoverStateService
  * @requires shared.service:mapperStateService
  * @requires shared.service:mergeRequestsStateService
@@ -66,7 +66,6 @@ loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
  */
 function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, mergeRequestsStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService, yasguiService) {
     var self = this,
-        anon = 'self anon',
         prefix = REST_PREFIX + 'session';
     
     self.weGood = false;
@@ -89,7 +88,7 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
      * @type {string}
      *
      * @description
-     * `currentUserIRI` holds the IRI of the user that is currenlty logged into Mobi.
+     * `currentUserIRI` holds the IRI of the user that is currently logged into Mobi.
      */
     self.currentUserIRI = '';
 
@@ -111,8 +110,8 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
         var config = { params: { username, password } };
         return $http.post(prefix, null, config)
             .then(response => {
-                if (response.status === 200 && response.data.scope !== anon) {
-                    self.currentUser = response.data.sub;
+                if (response.status === 200 && response.data) {
+                    self.currentUser = response.data;
                     return userManagerService.getUser(self.currentUser)
                         .then(user => {
                             self.currentUserIRI = user.iri;
@@ -187,13 +186,13 @@ function loginManagerService($q, $http, $state, REST_PREFIX, catalogManagerServi
             $state.go('login');
         };
         return self.getCurrentLogin().then(data => {
-            if (data.scope === anon) {
+            if (!data) {
                 return $q.reject(data);
             }
             var promises = [
                 stateManagerService.initialize(),
                 userManagerService.initialize(),
-                userManagerService.getUser(data.sub).then(user => {
+                userManagerService.getUser(data).then(user => {
                     self.currentUserIRI = user.iri;
                     self.currentUser = user.username;
                 })

@@ -89,10 +89,10 @@ function commitInfoOverlayComponentCtrl($q, utilService, userManagerService, cat
                 var headers = response.headers();
                 dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
 
-                if (dvm.resolve.recordId) {
+                if (dvm.resolve.ontRecordId) {
                     var diffIris = union(map(dvm.tempAdditions, '@id'), map(dvm.tempDeletions, '@id'));
                     var filterIris = union(diffIris, dvm.util.getObjIrisFromDifference(dvm.tempAdditions), dvm.util.getObjIrisFromDifference(dvm.tempDeletions));
-                    return om.getOntologyEntityNames(dvm.resolve.recordId, '', dvm.resolve.commit.id, false, false, filterIris);
+                    return om.getOntologyEntityNames(dvm.resolve.ontRecordId, '', dvm.resolve.commit.id, false, false, filterIris);
                 }
                 return $q.when();
             }, $q.reject)

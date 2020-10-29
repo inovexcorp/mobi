@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { includes, has } from 'lodash';
+import { includes, has, get } from 'lodash';
 
 requestInterceptor.$inject = ['$q', '$rootScope'];
 
@@ -28,7 +28,7 @@ function requestInterceptor($q, $rootScope) {
     $rootScope.pendingRequests = 0;
 
     function checkConfig(config) {
-        return !includes(config.url, '.html') && !has(config, 'timeout');
+        return !includes(get(config, 'url'), '.html') && !has(config, 'timeout');
     }
 
     function handleStop(config) {

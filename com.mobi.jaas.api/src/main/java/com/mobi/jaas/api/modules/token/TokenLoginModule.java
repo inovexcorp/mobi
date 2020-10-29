@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 import javax.security.auth.Subject;
@@ -53,6 +52,8 @@ public abstract class TokenLoginModule<T extends TokenCallback> implements Login
     protected abstract Optional<SignedJWT> verifyToken(T callback);
 
     protected abstract void verifyUser(String user, T callback) throws LoginException;
+
+    protected abstract String getUsername(SignedJWT signedJWT) throws LoginException;
 
     @Override
     public void initialize(Subject subject, CallbackHandler handler, Map<String, ?> state, Map<String, ?> options) {
@@ -95,14 +96,7 @@ public abstract class TokenLoginModule<T extends TokenCallback> implements Login
         LOG.debug("Token found and verified.");
         SignedJWT token = tokenOptional.get();
 
-        String user;
-        try {
-            user = token.getJWTClaimsSet().getSubject();
-        } catch (ParseException e) {
-            String msg = "Problem parsing JWT";
-            LOG.debug(msg);
-            throw new FailedLoginException(msg);
-        }
+        String user = getUsername(token);
 
         verifyUser(user, callbacks[0]);
 
