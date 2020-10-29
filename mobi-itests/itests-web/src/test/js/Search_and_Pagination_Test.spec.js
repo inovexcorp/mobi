@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+/*jshint esnext: true */
 var adminUsername = "admin"
 var adminPassword = "admin"
 var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
@@ -42,53 +44,42 @@ var ontologies = [
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: login as admin': function (browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+    'Step 1: Initial Setup' : function(browser) {
+        browser.globals.initial_steps(browser)
     },
 
-    'Step 2: check for visibility of home elements': function (browser) {
-        browser
-            .waitForElementVisible('.home-page')
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, ...ontologies)
     },
 
-    'Step 3: navigate to the Ontology Editor page': function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-    },
+//    'Step 4: Upload and submit all Ontologies': function (browser) {
+//        for (var count = 0; count < ontologies.length; count++) {
+//            browser
+//                .waitForElementNotPresent('div.spinner')
+//                .waitForElementVisible('div.btn-container button')
+//                .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
+//                .setValue('input[type=file]', ontologies[count])
+//                .click('xpath', '//button[text()[contains(.,"Submit")]]')
+//                .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+//        }
+//    },
 
-    'Step 4: Upload and submit all Ontologies': function (browser) {
-        for (var count = 0; count < ontologies.length; count++) {
-            browser
-                .waitForElementNotPresent('div.spinner')
-                .waitForElementVisible('div.btn-container button')
-                .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-                .setValue('input[type=file]', ontologies[count])
-                .click('xpath', '//button[text()[contains(.,"Submit")]]')
-                .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-        }
-    },
-
-    'Step 5: Validate Correct Number of Ontologies are Uploaded': function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .waitForElementVisible('div.ontologies')
-            .useXpath()
-            .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
-            .assert.elementNotPresent('//paging//ul//li[3]//a[contains(@class, "disabled" )]')
-    },
+//    'Step 5: Validate Correct Number of Ontologies are Uploaded': function (browser) {
+//        browser
+//            .waitForElementVisible('div.ontologies')
+//            .assert.elementNotPresent('div.modal-header')
+//            .waitForElementVisible('div.ontologies')
+//            .useXpath()
+//            .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
+//            .assert.elementNotPresent('//paging//ul//li[3]//a[contains(@class, "disabled" )]')
+//    },
 
     'Step 6: Validate Pagination With No text': function (browser) {
         browser
-            .click('xpath', '//div[contains(@class, "upload-snackbar")]//div//button[text()[contains(.,"close")]]')
+            .useXpath()
+            .click('//div[contains(@class, "upload-snackbar")]//div//button[text()[contains(.,"close")]]')
             .waitForElementNotVisible('//div[contains(@class, "upload-snackbar")]')
-            .click('xpath', '//div[contains(@class, "paging")]//li[3]//a')
+            .click('//div[contains(@class, "paging")]//li[3]//a')
             .useCss()
             .waitForElementNotPresent('div.spinner')
             .useXpath()

@@ -29,50 +29,12 @@ var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+    'Step 1: Initial Setup' : function(browser) {
+        browser.globals.initial_steps(browser)
     },
 
-    'Step 2: check for visibility of home elements' : function(browser) {
-        browser
-            .waitForElementVisible('.home-page')
-    },
-
-    'Step 3: navigate to the Ontology Editor page' : function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-    },
-
-    'Step 4: click upload ontology' : function (browser) {
-        browser
-            .waitForElementNotPresent('div.spinner')
-            .waitForElementVisible('div.btn-container button')
-            .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-    },
-
-    'Step 5: Upload and submit an Ontology' : function (browser) {
-        browser
-            .setValue('input[type=file]', OntoSample)
-            .waitForElementVisible('upload-ontology-overlay')
-            .click('xpath', '//button[text()[contains(.,"Submit")]]')
-    },
-
-    'Step 6: Validate Ontology Appearance' : function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .setValue('open-ontology-tab search-bar input', 'UHTC')
-            .keys(browser.Keys.ENTER)
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "list-group")]//small[text()[contains(.,"http://matonto.org/ontologies/uhtc")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//small[text()[contains(.,"http://matonto.org/ontologies/uhtc")]]')
-            .useCss()
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, OntoSample)
     },
 
     'Step 7: Navigate to datasets tab' : function (browser) {

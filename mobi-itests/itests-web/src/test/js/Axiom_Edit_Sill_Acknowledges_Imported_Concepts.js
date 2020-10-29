@@ -30,69 +30,16 @@ var skosOnt = process.cwd()+ '/src/test/resources/ontologies/skos.rdf'
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+    'Step 1: Login and navigate to Ontology Editor' : function (browser) {
+        browser.globals.initial_steps(browser)
     },
 
-    'Step 2: check for visibility of home elements' : function(browser) {
-        browser
-            .waitForElementVisible('.home-page')
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, vocab, Onto2, Onto3, skosOnt)
     },
 
-    'Step 3: navigate to the Ontology Editor page' : function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-    },
-
-    'Step 4: click upload ontology' : function (browser) {
-        browser
-            .waitForElementNotPresent('div.spinner')
-            .waitForElementVisible('div.btn-container button')
-            .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-    },
-
-    'Step 5: Upload an Ontology' : function (browser) {
-        browser
-            .setValue('input[type=file]', vocab)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto2)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto3)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', skosOnt)
-    },
-
-    'Step 6: Submit all ontology files' : function (browser) {
-        browser
-            .waitForElementVisible('upload-ontology-overlay')
-            .click('xpath', '//button[text()[contains(.,"Submit All")]]')
-    },
-
-    'Step 7: Validate Ontology Appearance' : function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .waitForElementVisible('div.ontologies')
-            .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"single-concept-vocab.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"skos.rdf")]]')
-            .useCss()
-    },
-
-    'Step 8: Click on Ontology called “test-local-imports-2.ttl' : function (browser) {
-            browser
-                .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-2.ttl")]]')
+    'Step 3: Open test-local-imports-2 Ontology' : function (browser) {
+        browser.globals.open_ontology(browser, Onto2)
     },
 
     'Step 9: Validate Ontology Imports Appearance' : function (browser) {

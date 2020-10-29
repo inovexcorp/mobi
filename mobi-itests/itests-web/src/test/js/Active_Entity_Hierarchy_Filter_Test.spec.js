@@ -28,51 +28,25 @@ var Onto3 = process.cwd()+ '/src/test/resources/ontologies/active-entity-filter-
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Initial Setup: ' : function(browser) {
+    'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser)
     },
 
-    'Step 1: Upload an Ontology' : function (browser) {
-        browser
-            .setValue('input[type=file]', Onto1)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto2)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto3)
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
     },
 
-    'Step 2: Submit all ontology files' : function (browser) {
-        browser
-            .waitForElementVisible('upload-ontology-overlay')
-            .click('xpath', '//button[text()[contains(.,"Submit All")]]')
+    'Step 3: Open active-entity-filter-1 Ontology' : function (browser) {
+        browser.globals.open_ontology(browser, Onto1)
     },
 
-    'Step 3: Validate Ontology Appearance' : function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .waitForElementVisible('div.ontologies')
-            .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"active-entity-filter-3.ttl")]]')
-            .useCss()
-    },
-
-    'Step 4: Click on Ontology called active-entity-filter-1.ttl' : function (browser) {
-        browser
-            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"active-entity-filter-1.ttl")]]')
-    },
-
-    'Step 5: Click classes tab' : function (browser) {
+    'Step 4: Click classes tab' : function (browser) {
         browser
             .waitForElementVisible('div.material-tabset li.nav-item')
             .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
     },
 
-    'Step 6: Check for Ontology classes' : function (browser) {
+    'Step 5: Check for Ontology classes' : function (browser) {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()
@@ -83,7 +57,7 @@ module.exports = {
             .assert.elementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
     },
 
-    'Step 7: Click on an imported class' : function (browser) {
+    'Step 6: Click on an imported class' : function (browser) {
         browser
             .useCss()
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]//parent::a')
@@ -92,7 +66,7 @@ module.exports = {
             .assert.containsText('selected-details .entity-name', 'Other Class')
     },
 
-    'Step 8: Apply the Active Entity Filter' : function (browser) {
+    'Step 7: Apply the Active Entity Filter' : function (browser) {
         browser
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')
@@ -103,29 +77,29 @@ module.exports = {
             .waitForElementNotVisible('class-hierarchy-block .dropdown-menu checkbox')
     },
 
-    'Step 9: Ensure that imported entities have been filtered out' : function(browser) {
+    'Step 8: Ensure that imported entities have been filtered out' : function(browser) {
         browser
             .waitForElementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
             .waitForElementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
     },
 
-    'Step 10: Ensure that all active entities are visible' : function(browser) {
+    'Step 9: Ensure that all active entities are visible' : function(browser) {
         browser
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
             .assert.visible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
     },
 
-    'Step 11: Ensure that imported parents of active entities are visible' : function(browser) {
+    'Step 10: Ensure that imported parents of active entities are visible' : function(browser) {
         browser
             .assert.visible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
     },
 
-    'Step 12: Ensure the selected entity view is still visible to the user, even if the entity is filtered out of the active list.': function(browser) {
+    'Step 11: Ensure the selected entity view is still visible to the user, even if the entity is filtered out of the active list.': function(browser) {
         browser
             .assert.containsText('selected-details .entity-name', 'Other Class')
     },
 
-    'Step 13: Remove the Active Entity filter' : function(browser) {
+    'Step 12: Remove the Active Entity filter' : function(browser) {
         browser
             .click('.hierarchy-filter a')
             .waitForElementVisible('class-hierarchy-block .dropdown-menu checkbox')
@@ -136,7 +110,7 @@ module.exports = {
 
     },
 
-    'Step 14: Verify the Active Entity filtered state was applied to the pre-filtered state' : function(browser) {
+    'Step 13: Verify the Active Entity filtered state was applied to the pre-filtered state' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
@@ -146,7 +120,7 @@ module.exports = {
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
     },
 
-    'Step 15: Verify that a message is displayed when no entities match the filter criteria' : function(browser) {
+    'Step 14: Verify that a message is displayed when no entities match the filter criteria' : function(browser) {
         browser
             .useCss()
             .assert.visible('search-bar input')

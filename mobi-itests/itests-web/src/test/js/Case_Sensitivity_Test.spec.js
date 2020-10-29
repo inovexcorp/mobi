@@ -26,21 +26,8 @@ var adminPassword = "admin"
 module.exports = {
   '@tags': ['login', 'sanity'],
 
-  'Step 1: login as admin' : function(browser) {
-    browser
-        .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-        .useXpath()
-      .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-      .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-      .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername)
-      .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword)
-      .click('//button[@type="submit"]')
-  },
-
-  'Step 2: check for visibility of home element' : function(browser) {
-    browser
-        .useCss()
-        .waitForElementVisible('.home-page')
+  'Step 1: Initial Setup' : function(browser) {
+      browser.globals.initial_steps(browser)
   },
 
   'Step 3: Navigate to administration page' : function(browser) {
@@ -90,6 +77,5 @@ module.exports = {
       .click('//i[@class= "fa fa-sign-out fa-fw"]/following-sibling::span[text()[contains(.,"Logout")]]')
       .assert.visible('//div[@class="form-group"]//input[@id="username"]')
       .assert.visible('//div[@class="form-group"]//input[@id="password"]')
-  },
-
+  }
 };
