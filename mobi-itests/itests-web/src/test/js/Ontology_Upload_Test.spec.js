@@ -20,9 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
-
 var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
 var Onto1e = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1e.ttl'  // has syntax issue
 var Onto1s = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.ttl'  // same as test-local-imports-1
@@ -40,7 +37,7 @@ module.exports = {
         browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
     },
 
-    'Step 5: Upload Corrupt Ontologies' : function (browser) {
+    'Step 3: Upload Corrupt Ontologies' : function (browser) {
         browser
             .setValue('input[type=file]', Onto1e)
             .click('upload-ontology-overlay div.modal-footer button.btn')
@@ -48,13 +45,13 @@ module.exports = {
             .setValue('input[type=file]', Onto1s)
     },
 
-    'Step 6: Submit all ontology files' : function (browser) {
+    'Step 4: Submit all ontology files' : function (browser) {
         browser
             .waitForElementVisible('upload-ontology-overlay')
             .click('xpath', '//button[text()[contains(.,"Submit All")]]')
     },
 
-   'Step 7: Validate Ontology Appearance' : function (browser) {
+   'Step 5: Validate Ontology Appearance' : function (browser) {
        browser
            .waitForElementVisible('div.ontologies')
            .assert.elementNotPresent('div.modal-header')
@@ -78,17 +75,17 @@ module.exports = {
            .keys(browser.Keys.ENTER)
    },
 
-    'Step 3: Open an Ontology called “test-local-imports-1.ttl' : function (browser) {
+    'Step 6: Open an Ontology called “test-local-imports-1.ttl' : function (browser) {
         browser.globals.open_ontology(browser, Onto1)
     },
 
-    'Step 9: Click classes tab' : function (browser) {
+    'Step 7: Click classes tab' : function (browser) {
         browser
             .waitForElementVisible('div.material-tabset li.nav-item')
             .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
     },
 
-    'Step 10: Check for Ontology classes' : function (browser) {
+    'Step 8: Check for Ontology classes' : function (browser) {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()

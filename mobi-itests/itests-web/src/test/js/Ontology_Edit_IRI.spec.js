@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
 var validURL = 'https://avm.inovexcorp.com/ontologies/10/2019';
 var invalidURL = 'https://avm.inovexcorp.com/ontolo<gies/10/2019';
 var validEndsWith = 'CurrencyUnitOntology';
@@ -42,11 +40,11 @@ module.exports = {
         browser.globals.upload_ontologies(browser, Onto1)
     },
 
-    'Step 8: Open on Ontology called “CurrencyUnitOntology.ttl' : function (browser) {
+    'Step 3: Open on Ontology called “CurrencyUnitOntology.ttl' : function (browser) {
         browser.globals.open_ontology(browser, Onto1)
     },
 
-    'Step 9: Open edit IRI Modal' : function (browser) {
+    'Step 4: Open edit IRI Modal' : function (browser) {
             browser
             .useXpath()
             .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-penci")]')

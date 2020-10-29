@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
 var vocab = process.cwd()+ '/src/test/resources/ontologies/single-concept-vocab.ttl'
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
@@ -42,7 +40,7 @@ module.exports = {
         browser.globals.open_ontology(browser, Onto2)
     },
 
-    'Step 9: Validate Ontology Imports Appearance' : function (browser) {
+    'Step 4: Validate Ontology Imports Appearance' : function (browser) {
             browser
                 .waitForElementVisible('.imports-block')
                 .useXpath()
@@ -51,7 +49,7 @@ module.exports = {
                 .assert.not.elementPresent('//imports-block//div[contains(@class, "indirect-import-container")]//p//a[text()[contains(.,"http://www.w3.org/2004/02/skos/core")]]')
     },
 
-    'Step 10: Add a vocab as an import': function (browser) {
+    'Step 5: Add a vocab as an import': function (browser) {
             browser
                 .useCss()
                 .click('.imports-block a.fa-plus')
@@ -70,7 +68,7 @@ module.exports = {
                 .assert.visible('//imports-block//p//a[text()[contains(.,"http://mobi.com/ontology/single-concept-vocab")]]');
     },
 
-    'Step 11: Commit Changes': function(browser) {
+    'Step 6: Commit Changes': function(browser) {
             browser
                 .useCss()
                 .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
@@ -85,27 +83,27 @@ module.exports = {
                 .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
     },
 
-    'Step 12: Click the concepts tab' : function (browser) {
+    'Step 7: Click the concepts tab' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
     },
 
-    'Step 13: Check for Imported Concept' : function (browser) {
+    'Step 8: Check for Imported Concept' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]')
                 .assert.visible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]//ancestor::div[contains(@class, "imported")]');
     },
 
-    'Step 14: Click the properties tab' : function (browser) {
+    'Step 9: Click the properties tab' : function (browser) {
             browser
                 .useXpath()
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Properties")]]')
     },
 
-    'Step 15: Check for Add Subproperty Axiom to Object Property' : function (browser) {
+    'Step 10: Check for Add Subproperty Axiom to Object Property' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Object Properties")]]')
@@ -134,14 +132,14 @@ module.exports = {
                 .waitForElementNotVisible('//axiom-overlay')
     },
 
-    'Step 16: Click the concepts tab' : function (browser) {
+    'Step 11: Click the concepts tab' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
     },
 
-    'Step 17: Check for Imported Concept' : function (browser) {
+    'Step 12: Check for Imported Concept' : function (browser) {
                 browser
                     .useXpath()
                     .waitForElementVisible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]')

@@ -22,8 +22,6 @@
  */
 
 /*jshint esnext: true */
-var adminUsername = "admin"
-var adminPassword = "admin"
 var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
@@ -52,29 +50,7 @@ module.exports = {
         browser.globals.upload_ontologies(browser, ...ontologies)
     },
 
-//    'Step 4: Upload and submit all Ontologies': function (browser) {
-//        for (var count = 0; count < ontologies.length; count++) {
-//            browser
-//                .waitForElementNotPresent('div.spinner')
-//                .waitForElementVisible('div.btn-container button')
-//                .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-//                .setValue('input[type=file]', ontologies[count])
-//                .click('xpath', '//button[text()[contains(.,"Submit")]]')
-//                .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-//        }
-//    },
-
-//    'Step 5: Validate Correct Number of Ontologies are Uploaded': function (browser) {
-//        browser
-//            .waitForElementVisible('div.ontologies')
-//            .assert.elementNotPresent('div.modal-header')
-//            .waitForElementVisible('div.ontologies')
-//            .useXpath()
-//            .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
-//            .assert.elementNotPresent('//paging//ul//li[3]//a[contains(@class, "disabled" )]')
-//    },
-
-    'Step 6: Validate Pagination With No text': function (browser) {
+    'Step 3: Validate Pagination With No text': function (browser) {
         browser
             .useXpath()
             .click('//div[contains(@class, "upload-snackbar")]//div//button[text()[contains(.,"close")]]')
@@ -86,7 +62,7 @@ module.exports = {
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
     },
 
-    'Step 7: Go Back to Previous Page': function (browser) {
+    'Step 4: Go Back to Previous Page': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
             .useCss()
@@ -95,7 +71,7 @@ module.exports = {
             .assert.visible('//open-ontology-tab//div[contains(@class, "ontologies")]//div//div[contains(@class, "list-group-item")][10]')
     },
 
-    'Step 8: Validate Pagination With Unconfirmed Search Text': function (browser) {
+    'Step 5: Validate Pagination With Unconfirmed Search Text': function (browser) {
         browser
             .click('xpath', '//search-bar')
             .keys('test')
@@ -108,7 +84,7 @@ module.exports = {
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"uhtc-ontology.ttl")]]')
     },
 
-    'Step 9: Validate Search Function': function (browser) {
+    'Step 6: Validate Search Function': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
             .waitForElementNotPresent('css','div.spinner')
