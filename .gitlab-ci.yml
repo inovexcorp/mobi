@@ -129,7 +129,8 @@ increment_version:
     - git config --global user.email 'gitlab.runner@inovexcorp.com'
     - git config --global user.name 'Gitlab Runner'
     # Ensure working on latest commit on master
-    - git pull
+    - git fetch
+    - git pull origin master
     # Push release to github
     - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
     - git push github HEAD:master
