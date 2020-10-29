@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 var OntoSample = process.cwd()+ '/src/test/resources/ontologies/uhtc-ontology.ttl'
 var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
 
@@ -27,7 +29,7 @@ module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser)
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 var validURL = 'https://avm.inovexcorp.com/ontologies/10/2019';
 var invalidURL = 'https://avm.inovexcorp.com/ontolo<gies/10/2019';
 var validEndsWith = 'CurrencyUnitOntology';
@@ -33,7 +35,7 @@ module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser)
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

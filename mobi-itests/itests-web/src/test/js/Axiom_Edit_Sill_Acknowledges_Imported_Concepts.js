@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 var vocab = process.cwd()+ '/src/test/resources/ontologies/single-concept-vocab.ttl'
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
@@ -29,7 +31,7 @@ module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: Login and navigate to Ontology Editor' : function (browser) {
-        browser.globals.initial_steps(browser)
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

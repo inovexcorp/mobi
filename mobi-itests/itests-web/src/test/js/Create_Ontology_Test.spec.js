@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser)
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Create a new Ontology' : function(browser) {

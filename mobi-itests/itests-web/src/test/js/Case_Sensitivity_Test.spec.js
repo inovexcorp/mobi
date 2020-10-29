@@ -27,7 +27,7 @@ module.exports = {
   '@tags': ['login', 'sanity'],
 
   'Step 1: Initial Setup' : function(browser) {
-      browser.globals.initial_steps(browser)
+    browser.globals.initial_steps(browser, adminUsername, adminPassword)
   },
 
   'Step 2: Navigate to administration page' : function(browser) {

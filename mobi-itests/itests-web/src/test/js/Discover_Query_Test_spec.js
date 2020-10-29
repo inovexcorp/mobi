@@ -29,7 +29,7 @@ module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser)
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

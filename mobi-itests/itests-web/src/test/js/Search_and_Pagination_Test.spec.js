@@ -22,9 +22,9 @@
  */
 
 /*jshint esnext: true */
-var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
-var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
+var adminUsername = 'admin'
+var adminPassword = 'admin'
+
 var ontologies = [
     process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl',
     process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl',
@@ -42,11 +42,11 @@ var ontologies = [
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser)
+    'Step 1: Initial Setup': function (browser) {
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: Upload Ontologies' : function(browser) {
+    'Step 2: Upload Ontologies': function (browser) {
         browser.globals.upload_ontologies(browser, ...ontologies)
     },
 
@@ -87,10 +87,10 @@ module.exports = {
     'Step 6: Validate Search Function': function (browser) {
         browser
             .click('xpath', '//div[contains(@class, "paging")]//li[1]//a')
-            .waitForElementNotPresent('css','div.spinner')
+            .waitForElementNotPresent('css', 'div.spinner')
             .click('xpath', '//search-bar')
             .keys(browser.Keys.ENTER)
-            .waitForElementNotPresent('css','div.spinner')
+            .waitForElementNotPresent('css', 'div.spinner')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-1")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-2")]')
             .assert.visible('//div[contains(@class, "list-group")]//small[contains(text(), "test-local-imports-3")]')

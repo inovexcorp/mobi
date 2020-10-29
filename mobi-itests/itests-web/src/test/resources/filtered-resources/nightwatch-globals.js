@@ -1,16 +1,13 @@
 module.exports = {
   'globalPort' : '${https-port}',
 
-  'initial_steps' : function (browser) {
-      var adminUsername = 'admin'
-      var adminPassword = 'admin'
-
+  'initial_steps' : function (browser, user, password) {
       browser
           .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
           .waitForElementVisible('input#username')
           .waitForElementVisible('input#password')
-          .setValue('input#username', adminUsername)
-          .setValue('input#password', adminPassword)
+          .setValue('input#username', user)
+          .setValue('input#password', password)
           .click('button[type=submit]')
           .waitForElementVisible('.home-page')
           .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
@@ -21,7 +18,6 @@ module.exports = {
   // TODO: Add a check to see if the ontology already exists, and if it does, either skip upload or delete and re-upload.
   'upload_ontologies' : function (browser, ...args) {
       browser
-          .useCss()
           .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
       for (var i = 0; i < args.length - 1; i++) {
           browser
@@ -37,7 +33,6 @@ module.exports = {
           .assert.elementNotPresent('div.modal-header');
       for (var j = 0; j < args.length; j++) {
           browser
-            .useCss()
             .clearValue('open-ontology-tab search-bar input')
             .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
             .keys(browser.Keys.ENTER)
@@ -48,7 +43,6 @@ module.exports = {
             .useCss()
       }
       browser
-          .useCss()
           .clearValue('open-ontology-tab search-bar input')
           .setValue('open-ontology-tab search-bar input', '')
           .keys(browser.Keys.ENTER)
@@ -57,7 +51,6 @@ module.exports = {
 
   'open_ontology' : function (browser, ontology) {
       browser
-          .useCss()
           .setValue('open-ontology-tab search-bar input', ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
           .keys(browser.Keys.ENTER)
           .waitForElementVisible('open-ontology-tab search-bar')
@@ -66,9 +59,5 @@ module.exports = {
           .click('//div[contains(@class, "ontology-info")]//div[contains(@class, "header-title")]//span[text()[contains(.,"' + ontology.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
           .useCss()
           .waitForElementVisible('div.material-tabset li.nav-item')
-  },
-
-  "cleanup_steps" : function (browser) {
-      browser
   }
 }
