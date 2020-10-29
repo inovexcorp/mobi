@@ -144,5 +144,14 @@ module.exports = {
             .waitForElementNotPresent(dropDownSelector)
             .click('//query-tab//form//button')
             .waitForElementVisible('//query-tab//form//div[contains(@class, "yasr")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//div[contains(@class, "yasr_btnGroup")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//div[contains(@class, "yasr_response_chip")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "yasr_header")]//div[contains(@class, "yasr_plugin_control")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table//thead')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table//tbody')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]//a[contains(@class, "paginate_button")]')
     }
 }
