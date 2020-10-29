@@ -271,10 +271,10 @@ describe('Saved Changes Tab component', function() {
                 expect(this.controller.error).toEqual('error');
             });
         });
-        it('orderByIRI should call the correct method', function() {
-            utilSvc.getBeautifulIRI.and.returnValue('iri');
-            expect(this.controller.orderByIRI({id: 'id'})).toEqual('iri');
-            expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith('id');
+        it('orderByEntityName should call the correct method', function() {
+            ontologyStateSvc.getEntityNameByListItem.and.returnValue('iri');
+            expect(this.controller.orderByEntityName({id: 'id'})).toEqual('iri');
+            expect(ontologyStateSvc.getEntityNameByListItem).toHaveBeenCalledWith('id');
         });
 
         describe('restoreBranchWithUserBranch calls the correct method', function() {

@@ -68,7 +68,7 @@ function replyCommentComponentCtrl($q, mergeRequestManagerService, utilService) 
             }, $q.reject)
             .then(comments => {
                 dvm.request.comments = comments;
-                dvm.updateRequest({value: dvm.request})
+                dvm.updateRequest({value: dvm.request});
             }, util.createErrorToast);
     }
     dvm.cancel = function() {
