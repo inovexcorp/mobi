@@ -131,7 +131,7 @@ describe('Login Manager service', function() {
             };
         });
         it('unless the credentials are wrong', function() {
-            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(401, {});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(401, "");
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(() => {
                     fail('Promise should have rejected');
@@ -141,7 +141,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(400, {});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(400, "");
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(() => {
                     fail('Promise should have rejected');
@@ -151,7 +151,7 @@ describe('Login Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless something else went wrong', function() {
-            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(201, {});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(201, "");
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(response => {
                     expect(response).not.toBe(true);
@@ -164,7 +164,7 @@ describe('Login Manager service', function() {
             expect(loginManagerSvc.currentUserIRI).toBeFalsy();
         });
         it('unless the account is anonymous', function() {
-            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(200, {scope: 'self anon'});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(this.params)).respond(200, "");
             loginManagerSvc.login(this.params.username, this.params.password)
                 .then(response => {
                     expect(response).not.toBe(true);
@@ -183,7 +183,7 @@ describe('Login Manager service', function() {
                 username: 'user'
             };
             userManagerSvc.getUser.and.returnValue($q.when(user));
-            $httpBackend.expectPOST('/mobirest/session' + createQueryString(params)).respond(200, {sub: params.username});
+            $httpBackend.expectPOST('/mobirest/session' + createQueryString(params)).respond(200, params.username);
             loginManagerSvc.login(params.username, params.password)
                 .then(response => {
                     expect(response).toBe(true);
@@ -197,7 +197,7 @@ describe('Login Manager service', function() {
         });
     });
     it('should log a user out', function() {
-        $httpBackend.expectDELETE('/mobirest/session').respond(200, {});
+        $httpBackend.expectDELETE('/mobirest/session').respond(200, "");
         loginManagerSvc.logout();
         flushAndVerify($httpBackend);
         expect(datasetStateSvc.reset).toHaveBeenCalled();
@@ -218,30 +218,30 @@ describe('Login Manager service', function() {
     });
     describe('should get the current login', function() {
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/session').respond(400, {});
+            $httpBackend.expectGET('/mobirest/session').respond(400, "");
             loginManagerSvc.getCurrentLogin()
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
-                    expect(response).toEqual({});
+                    expect(response).toEqual("");
                 });
             flushAndVerify($httpBackend);
         });
         it('unless something else went wrong', function() {
-            $httpBackend.expectGET('/mobirest/session').respond(201, {});
+            $httpBackend.expectGET('/mobirest/session').respond(201, "");
             loginManagerSvc.getCurrentLogin()
                 .then(() => {
                     fail('Promise should have rejected');
                 }, response => {
-                    expect(response).toEqual({});
+                    expect(response).toEqual("");
                 });
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/session').respond(200, {});
+            $httpBackend.expectGET('/mobirest/session').respond(200, "");
             loginManagerSvc.getCurrentLogin()
                 .then(response => {
-                    expect(response).toEqual({});
+                    expect(response).toEqual("");
                 }, () => {
                     fail('Promise should have resolved');
                 });
@@ -250,7 +250,7 @@ describe('Login Manager service', function() {
     });
     describe('should correctly test authentication', function() {
         it('unless an error happened', function() {
-            spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.reject({}));
+            spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.reject(""));
             loginManagerSvc.isAuthenticated()
                 .then(response => {
                     expect(response).toBeUndefined();
@@ -263,7 +263,7 @@ describe('Login Manager service', function() {
             expect(state.go).toHaveBeenCalledWith('login');
         });
         it('unless no one is logged in', function() {
-            spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({scope: 'self anon'}));
+            spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve(""));
             loginManagerSvc.isAuthenticated()
                 .then(() => {
                     expect(response).toBeUndefined();
@@ -281,7 +281,7 @@ describe('Login Manager service', function() {
                     iri: 'userIRI',
                     username: 'user'
                 };
-                spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
+                spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve('user'));
                 userManagerSvc.getUser.and.returnValue($q.when(this.user));
             });
             it('and this is the first time the method is called', function() {
