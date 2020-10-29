@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var adminUsername = "admin"
+var adminPassword = "admin"
 
 module.exports = {
   '@tags': ['login', 'sanity'],
