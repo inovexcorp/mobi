@@ -62,9 +62,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
@@ -353,7 +353,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         try {
             if (file.isFile()) {
                 try (InputStream inputStream = file.readContent()) {
-                    String policyStr = IOUtils.toString(inputStream);
+                    String policyStr = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                     return new BalanaPolicy(policyStr, vf);
                 }
             }
@@ -476,8 +476,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(policy.toString().getBytes());
-            return new String(hash, "UTF-8");
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            return new String(hash, StandardCharsets.UTF_8);
+        } catch (NoSuchAlgorithmException e) {
             throw new MobiException(e);
         }
     }

@@ -53,6 +53,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -219,7 +220,7 @@ public class Backup implements Action {
 
     private void addConfigFolderToZip(File rootPath, File srcFolder, ZipOutputStream zip) throws Exception {
         List<String> blacklistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist.txt"),
-                "UTF-8");
+                StandardCharsets.UTF_8);
         for (File fileName : Objects.requireNonNull(srcFolder.listFiles())) {
             if (!blacklistedFiles.contains(fileName.getName())) {
                 addFileToZip(rootPath, fileName, zip);

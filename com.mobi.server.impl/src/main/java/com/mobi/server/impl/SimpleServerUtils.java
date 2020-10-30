@@ -34,6 +34,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.UUID;
 
@@ -50,13 +51,11 @@ public class SimpleServerUtils implements ServerUtils {
             final byte[] mac_byte = network.getHardwareAddress();
             if (mac_byte == null) {
                 LOGGER.warn("Could not determine MAC ID to generate server ID. Falling back to random UUID.");
-                return UUID.randomUUID().toString().getBytes("UTF-8");
+                return UUID.randomUUID().toString().getBytes(StandardCharsets.UTF_8);
             }
             return mac_byte;
         } catch (SocketException e) {
             throw new MobiException("Issue determining MAC ID of server to generate our unique server ID", e);
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException("Unsupported character encoding used to generate byte array.", e);
         }
     }
 

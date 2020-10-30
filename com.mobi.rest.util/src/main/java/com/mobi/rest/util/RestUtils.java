@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -237,7 +238,8 @@ public class RestUtils {
     public static Model jsonldToModel(String jsonld, SesameTransformer transformer) {
         long start = System.currentTimeMillis();
         try {
-            return transformer.mobiModel(Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD));
+            return transformer.mobiModel(Rio.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8), "",
+                    RDFFormat.JSONLD));
         } catch (Exception e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
         } finally {

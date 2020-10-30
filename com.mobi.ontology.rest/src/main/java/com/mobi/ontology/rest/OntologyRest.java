@@ -197,7 +197,8 @@ public class OntologyRest {
                     OntologyRest.class.getResourceAsStream("/query-class-properties.rq"), StandardCharsets.UTF_8
             );
             GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
-                    OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"), StandardCharsets.UTF_8
+                    OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"),
+                    StandardCharsets.UTF_8
             );
             GET_ENTITY_NAMES = IOUtils.toString(
                     OntologyRest.class.getResourceAsStream("/query-entity-names.rq"), StandardCharsets.UTF_8

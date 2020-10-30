@@ -53,6 +53,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -76,7 +77,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         try {
             ONTOLOGY_IRI_QUERY = IOUtils.toString(
                     OntologyRecordVersioningService.class.getResourceAsStream("/record-with-master.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
