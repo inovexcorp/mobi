@@ -116,7 +116,7 @@ docker_release:
     - cd mobi-distribution
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag
 
-increment_version:
+increment_minor_version:
   stage: deploy
   only:
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
