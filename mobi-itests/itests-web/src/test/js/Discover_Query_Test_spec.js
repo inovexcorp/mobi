@@ -28,63 +28,20 @@ var Onto1 = process.cwd()+ '/src/test/resources/ontologies/EventOntology.ttl'
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+    'Step 1: Initial Setup' : function(browser) {
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: check for visibility of home elements' : function(browser) {
-        browser
-            .waitForElementVisible('.home-page')
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, Onto1)
     },
 
-    'Step 3: navigate to the Ontology Editor page' : function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-    },
-
-    'Step 4: click upload ontology' : function (browser) {
-        browser
-            .waitForElementNotPresent('div.spinner')
-            .waitForElementVisible('div.btn-container button')
-            .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-    },
-
-    'Step 5: Upload an Ontology' : function (browser) {
-        browser
-            .setValue('input[type=file]', Onto1)
-    },
-
-    'Step 6: Submit all ontology files' : function (browser) {
-        browser
-            .waitForElementVisible('upload-ontology-overlay')
-            .click('xpath', '//button[text()[contains(.,"Submit All")]]')
-    },
-
-    'Step 7: Validate Ontology Appearance' : function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .waitForElementVisible('div.ontologies')
-            .useXpath()
-            // check ontology list
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"EventOntology.ttl")]]')
-            // check snackbar
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"EventOntology.ttl")]]')
-            .useCss()
-    },
-
-    'Step 8: Navigate to datasets tab' : function (browser) {
+    'Step 3: Navigate to datasets tab' : function (browser) {
         browser
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/datasets"]')
     },
 
-    'Step 9: Create a new Dataset' : function (browser) {
+    'Step 4: Create a new Dataset' : function (browser) {
         browser
             .waitForElementNotPresent('div.spinner')
             .click('div.datasets-tabset button.btn-primary')
@@ -95,7 +52,7 @@ module.exports = {
             .waitForElementNotPresent('div.spinner')
             .click('div.modal-footer button.btn-primary')
     },
-    'Step 10: Validate dataset Appearance' : function (browser) {
+    'Step 5: Validate dataset Appearance' : function (browser) {
         browser
             .useXpath()
             .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"Event ontology data")]]')
@@ -112,7 +69,7 @@ module.exports = {
             .setValue('//input[@type="file"]', Onto1)
             .assert.visible('//file-input//div[@class="file-input form-group"]//div//span[text()[contains(.,"EventOntology.ttl")]]')
     },
-    'Step 12: Submit data' : function (browser) {
+    'Step 6: Submit data' : function (browser) {
         browser
             .click('//button[text()[contains(.,"Submit")]]')
             .waitForElementVisible('//div[@id="toast-container"]')
@@ -120,13 +77,13 @@ module.exports = {
             .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
             .waitForElementNotPresent('//div[contains(@class,"toast")]')
     },
-    'Step 13: Navigate to Discover' : function (browser) {
+    'Step 7: Navigate to Discover' : function (browser) {
         browser
             .click('//div//ul//a[@class="nav-link"][@href="#/discover"]')
             .waitForElementVisible('//discover-page')
             .assert.visible('//material-tabset')
     },
-    'Step 14: Navigate to Discover Query tab' : function (browser) {
+    'Step 8: Navigate to Discover Query tab' : function (browser) {
         browser
             .click('//material-tabset//ul[contains(@class,"nav-tabs")]//li//a//span[text()[contains(., "Query")]]')
             .waitForElementVisible('//discover-tabset//query-tab')
@@ -136,7 +93,7 @@ module.exports = {
             .assert.visible('//query-tab//form//div[contains(@class, "discover-query")]')
             .assert.not.visible('//query-tab//form//div[contains(@class, "yasr")]')
     },
-    'Step 15: Submit query' : function (browser) {
+    'Step 9: Submit query' : function (browser) {
         browser
             .click('//query-tab//form//dataset-form-group//div[contains(@class, "dropdown")]')
             .waitForElementVisible(dropDownSelector)

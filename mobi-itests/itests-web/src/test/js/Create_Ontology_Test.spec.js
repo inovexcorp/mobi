@@ -20,24 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity'],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('#username')
-            .waitForElementVisible('#password')
-            .setValue('#username', 'admin')
-            .setValue('#password', 'admin')
-            .click('button[type=submit]')
+    'Step 1: Initial Setup' : function(browser) {
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Create a new Ontology' : function(browser) {
         browser
-            .waitForElementVisible('a[href="#/ontology-editor"]')
-            .click('a[href="#/ontology-editor"]')
             .useXpath()
             .waitForElementVisible('//button[text()="New Ontology"]')
             .click('//button[text()="New Ontology"]')
