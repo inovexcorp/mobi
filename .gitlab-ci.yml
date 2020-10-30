@@ -131,10 +131,6 @@ increment_version:
     # Ensure working on latest commit on master
     - git fetch
     - git pull origin master
-    # Push release to github
-    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
-    - git push github HEAD:master
-    - git push github $CI_COMMIT_REF_NAME #pushing release tag
     # Update Version to snapshot
     - NEW_MINOR=$((MINOR + 1))
     - NEW_VERSION="$MAJOR.$NEW_MINOR.0-SNAPSHOT"
@@ -143,3 +139,8 @@ increment_version:
     - git commit -am "AUTOMATED COMMIT - Update version to $NEW_VERSION"
     # Push change to master (gitlab)
     - git push origin HEAD:master
+    # Push release to github
+    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
+    - git push github HEAD:master
+    - git push github $CI_COMMIT_REF_NAME #pushing release tag
+    
