@@ -88,7 +88,12 @@ module.exports = {
             .waitForElementNotPresent('div.spinner')
             .waitForElementVisible('mapping-config-overlay')
             .waitForElementNotPresent('div.spinner')
-            .click('xpath', '//md-list-item//h4[text()[contains(.,"uhtc-ontology.ttl")]]')
+            .setValue('mapping-config-overlay search-bar input', 'uhtc')
+            .keys(browser.Keys.ENTER)
+            .useXpath()
+            .waitForElementVisible('//md-list-item//h4//span[text()[contains(.,"uhtc")]]')
+            .click('//md-list-item//h4//span[text()[contains(.,"uhtc")]]')
+            .useCss()
             .waitForElementNotPresent('div.spinner')
             .click('button.btn-primary')
     },
