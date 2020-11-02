@@ -20,6 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
+ /*jslint browser: true */
+/*global window */
+/*global console */
+/*jshint multistr: true */
+
 var adminUsername = "admin"
 var adminPassword = "admin"
 var dropDownSelector = '//query-tab//form//dataset-form-group//ul[contains(@class, "ui-select-choices")]//li[contains(@class, "ui-select-choices-group")]//div[contains(@class,"ui-select-choices-row")]';
@@ -109,6 +115,15 @@ module.exports = {
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table//thead')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table//tbody')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]')
-            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]//a[contains(@class, "paginate_button")]')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]//div[contains(@class, "dataTables_paginate")]')
+            .execute(function updateYasqe() {
+                var value = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n\
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n\
+                SELECT * WHERE { ?sub ?pred ?obj .}";
+                document.getElementsByClassName('CodeMirror')[0].CodeMirror.setValue(value);
+            }, [])
+            .click('//query-tab//form//button')
+            .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]//div[contains(@class, "dataTables_paginate")]')
+            .expect.elements('//tbody/tr').count.to.equal(50)
     }
 }
