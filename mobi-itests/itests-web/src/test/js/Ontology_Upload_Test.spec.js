@@ -20,9 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
-
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
 var Onto1e = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1e.ttl'  // has syntax issue
 var Onto1s = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.ttl'  // same as test-local-imports-1
@@ -32,94 +31,63 @@ var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+    'Step 1: Initial Setup' : function(browser) {
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: check for visibility of home elements' : function(browser) {
-        browser
-            .waitForElementVisible('.home-page')
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
     },
 
-    'Step 3: navigate to the Ontology Editor page' : function (browser) {
+    'Step 3: Upload Corrupt Ontologies' : function (browser) {
         browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
-    },
-
-    'Step 4: click upload ontology' : function (browser) {
-        browser
-            .waitForElementNotPresent('div.spinner')
-            .waitForElementVisible('div.btn-container button')
-            .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-    },
-
-    'Step 5: Upload an Ontology' : function (browser) {
-        browser
-            .setValue('input[type=file]', Onto1)
-
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto2)
-
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto3)
-
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto1e)
-
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto1s)
-
     },
 
-    'Step 6: Submit all ontology files' : function (browser) {
+    'Step 4: Submit all ontology files' : function (browser) {
         browser
             .waitForElementVisible('upload-ontology-overlay')
             .click('xpath', '//button[text()[contains(.,"Submit All")]]')
     },
 
-    'Step 7: Validate Ontology Appearance' : function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .waitForElementVisible('div.ontologies')
-            .useXpath()
-            // check ontology list
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
-            .assert.elementNotPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1e.ttl")]]')
-            .assert.elementNotPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1s.ttl")]]')
-            // check snackbar
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1.ttl")]]')
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1e.ttl")]]')
-            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1s.ttl")]]')
-            .useCss()
+   'Step 5: Validate Ontology Appearance' : function (browser) {
+       browser
+           .waitForElementVisible('div.ontologies')
+           .assert.elementNotPresent('div.modal-header')
+           .waitForElementVisible('div.ontologies')
+           .clearValue('open-ontology-tab search-bar input')
+           .setValue('open-ontology-tab search-bar input', Onto1e.replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
+           .keys(browser.Keys.ENTER)
+           .useXpath()
+           .assert.elementNotPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1e.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+           .useCss()
+           .clearValue('open-ontology-tab search-bar input')
+           .setValue('open-ontology-tab search-bar input', Onto1s.replace(process.cwd()+ '/src/test/resources/ontologies/', ''))
+           .keys(browser.Keys.ENTER)
+           .useXpath()
+           .assert.elementNotPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+           .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"' + Onto1s.replace(process.cwd()+ '/src/test/resources/ontologies/', '') + '")]]')
+           .useCss()
+           .clearValue('open-ontology-tab search-bar input')
+           .setValue('open-ontology-tab search-bar input', '')
+           .keys(browser.Keys.ENTER)
+   },
+
+    'Step 6: Open an Ontology called “test-local-imports-1.ttl' : function (browser) {
+        browser.globals.open_ontology(browser, Onto1)
     },
 
-    'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
-        browser
-            .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-1.ttl")]]')
-    },
-
-    'Step 9: Click classes tab' : function (browser) {
+    'Step 7: Click classes tab' : function (browser) {
         browser
             .waitForElementVisible('div.material-tabset li.nav-item')
             .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Classes")]]')
     },
 
-    'Step 10: Check for Ontology classes' : function (browser) {
+    'Step 8: Check for Ontology classes' : function (browser) {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()
@@ -130,6 +98,4 @@ module.exports = {
             .assert.attributeContains('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]//ancestor::tree-item', 'data-path-to', 'test-local-imports-2#Class2.http://mobi.com/ontology/test-local-imports-1#Class1')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
     }
-
-
 }
