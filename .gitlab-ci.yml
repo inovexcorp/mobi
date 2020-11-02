@@ -170,13 +170,12 @@ update_master_with_new_minor_snapshot:
     - /release\/\d+\.\d+/
   except:
     - branches
-  dependencies:
-    - update_minor_release_root_pom
   script:
     - CURRENT_VERSION="$MAJOR.$MINOR.$MICRO"
     - git add ./\*pom.xml
     - git commit -m "AUTOMATED COMMIT - Updates version to $CURRENT_VERSION-SNAPSHOT"
-    - git pull
+    - git fetch
+    - git pull origin master
     - git push origin HEAD:master
     - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
     - git push github HEAD:master
