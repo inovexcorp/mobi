@@ -103,6 +103,7 @@ import superPropertySelectComponent from './components/superPropertySelect/super
 import treeItemComponent from './components/treeItem/treeItem.component';
 import uploadChangesOverlayComponent from './components/uploadChangesOverlay/uploadChangesOverlay.component';
 import uploadOntologyOverlayComponent from './components/uploadOntologyOverlay/uploadOntologyOverlay.component';
+import uploadErrorsOverlayComponent from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
 import uploadSnackbarComponent from './components/uploadSnackbar/uploadSnackbar.component';
 import usagesBlockComponent from './components/usagesBlock/usagesBlock.component';
 
@@ -194,6 +195,7 @@ angular.module('ontology-editor', [])
     .component('superPropertySelect', superPropertySelectComponent)
     .component('treeItem', treeItemComponent)
     .component('uploadChangesOverlay', uploadChangesOverlayComponent)
+    .component('uploadErrorsOverlay', uploadErrorsOverlayComponent)
     .component('uploadOntologyOverlay', uploadOntologyOverlayComponent)
     .component('uploadSnackbar', uploadSnackbarComponent)
     .component('usagesBlock', usagesBlockComponent);

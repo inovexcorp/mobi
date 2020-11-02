@@ -68,6 +68,7 @@
     "@angular/router": "~5.2.11",
     "@angular/upgrade": "~5.2.11",
     "@uirouter/angular-hybrid": "^6.0.0",
+    "@triply/yasgui": "^4.0.116",
     "angular": "^1.7.7",
     "angular-animate": "1.7.7",
     "angular-aria": "1.7.7",
@@ -100,6 +101,7 @@
     "showdown": "^1.9.0",
     "snapsvg": "^0.5.1",
     "sparqljs": "^1.5.1",
+    "tslib": "^2.0.0",
     "ui-bootstrap4": "^3.0.3",
     "ui-select": "^0.19.8",
     "zone.js": "~0.8.20"

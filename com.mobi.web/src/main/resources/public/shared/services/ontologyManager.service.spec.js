@@ -63,6 +63,8 @@ describe('Ontology Manager service', function() {
         this.description = 'description';
         this.keywords = ['keyword1', 'keyword2'];
         this.error = 'error';
+        this.errorObject = {'errorMessage': 'error', 'errorDetails': []};
+
         this.records = {
             data: [{
                 'dcterms:identifier': 'id1'
@@ -103,7 +105,7 @@ describe('Ontology Manager service', function() {
         ontologyManagerSvc.initialize();
         this.ontologyObj = {
             '@id': this.ontologyId,
-            '@type': [prefixes.owl + 'Ontology']
+            '@type': [prefixes.owl + 'Ontology', prefixes.ontologyEditor + 'OntologyRecord']
         };
         this.classObj = {
             '@id': this.classId,
@@ -186,6 +188,7 @@ describe('Ontology Manager service', function() {
         };
 
         util.rejectError.and.returnValue($q.reject(this.error));
+        util.rejectErrorObject.and.returnValue($q.reject(this.errorObject));
     });
 
     afterEach(function() {
@@ -205,6 +208,7 @@ describe('Ontology Manager service', function() {
         ontologyManagerSvc.reset();
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
     });
+
     describe('uploadFile hits the proper endpoint', function() {
         describe('without an id and', function() {
             it('with description and keywords', function() {
@@ -243,20 +247,21 @@ describe('Ontology Manager service', function() {
                         return data instanceof FormData;
                     }, function(headers) {
                         return headers['Content-Type'] === undefined;
-                    }).respond(400, null, null, this.error);
+                    }).respond(400, this.errorObject, null, this.error);
                 ontologyManagerSvc.uploadFile(this.file, this.title)
                     .then(() => {
                         fail('Promise should have rejected');
                     }, response => {
-                        expect(response).toEqual(this.error);
+                        expect(response).toEqual(this.errorObject);
                     });
                 flushAndVerify($httpBackend);
-                expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                expect(util.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({
                     status: 400,
                     statusText: this.error
                 }));
             });
         });
+
         describe('with an id', function() {
             beforeEach(function() {
                 this.config = {
@@ -303,7 +308,7 @@ describe('Ontology Manager service', function() {
                     });
                 scope.$apply();
                 expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
-                expect(util.rejectError).toHaveBeenCalledWith({statusText: this.error});
+                expect(util.rejectErrorObject).toHaveBeenCalledWith({statusText: this.error});
             });
         });
     });
@@ -1080,6 +1085,49 @@ describe('Ontology Manager service', function() {
             });
         });
     });
+    describe('getOntologyEntityNames calls the correct functions when POST /mobirest/ontologies/{recordId}/entity-names', function() {
+        beforeEach(function() {
+            this.params = paramSerializer({
+                branchId: this.branchId,
+                commitId: this.commitId,
+                includeImports: false,
+                applyInProgressCommit: false
+            });
+
+        });
+        it('successfully', function() {
+            $httpBackend.expectPOST('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params,
+                () => {
+                    return {'filterResources' : []};
+                },
+                function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(200, {});
+            ontologyManagerSvc.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
+                .then(response => {
+                    expect(response).toEqual({});
+                }, () => {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST('/mobirest/ontologies/' + this.recordId + '/entity-names?' + this.params,
+                () =>  {
+                    return {'filterResources' : []};
+                }, function(headers) {
+                    return headers['Content-Type'] === 'application/json';
+                }).respond(400, null, null, this.error);
+            ontologyManagerSvc.getOntologyEntityNames(this.recordId, this.branchId, this.commitId, false, false)
+                .then(() => {
+                    fail('Promise should have rejected');
+                }, response => {
+                    expect(response).toEqual(this.error);
+                });
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
+        });
+    });
     describe('getSearchResults should call the correct functions', function() {
         beforeEach(function () {
             this.searchText = 'searchText';
@@ -1285,6 +1333,14 @@ describe('Ontology Manager service', function() {
         });
         it('false if the entity does not contain the ontology type', function() {
             expect(ontologyManagerSvc.isOntology({})).toBe(false);
+        });
+    });
+    describe('isOntologyRecord should return', function() {
+        it('true if the entity contains the ontology type', function() {
+            expect(ontologyManagerSvc.isOntologyRecord(this.ontologyObj)).toBe(true);
+        });
+        it('false if the entity does not contain the ontology type', function() {
+            expect(ontologyManagerSvc.isOntologyRecord({})).toBe(false);
         });
     });
     describe('hasOntologyEntity should return', function() {

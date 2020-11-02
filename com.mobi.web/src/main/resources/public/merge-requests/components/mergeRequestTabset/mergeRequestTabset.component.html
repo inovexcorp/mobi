@@ -23,14 +23,14 @@
 <div class="merge-request-tabset">
     <material-tabset class="h-100">
         <material-tab heading="'Discussion'" active="dvm.tabs.discussion" set-active="dvm.tabs.discussion = value">
-            <merge-request-discussion request="dvm.request" update-request="dvm.updateRequest(value)"></merge-request-discussion>
+            <merge-request-discussion request="dvm.request" update-request="dvm.updateRequest({value})"></merge-request-discussion>
         </material-tab>
         <material-tab heading="'Changes'" active="dvm.tabs.changes" set-active="dvm.tabs.changes = value">
-            <commit-changes-display additions="dvm.request.difference.additions" deletions="dvm.request.difference.deletions"></commit-changes-display>
+            <commit-changes-display additions="dvm.request.difference.additions" deletions="dvm.request.difference.deletions" entity-name-func="dvm.state.getEntityNameLabel" show-more-results-func="dvm.state.retrieveMoreResults(limit, offset)" has-more-results="dvm.request.difference.hasMoreResults" start-index="dvm.request.startIndex"></commit-changes-display>
             <info-message ng-if="!dvm.request.difference.additions.length && !dvm.request.difference.deletions.length">No changes to display</info-message>
         </material-tab>
         <material-tab heading="'Commits'" active="dvm.tabs.commits" set-active="dvm.tabs.commits = value">
-            <commit-history-table head-title="dvm.request.sourceTitle" commit-id="dvm.request.sourceCommit" target-id="dvm.request.targetCommit"></commit-history-table>
+            <commit-history-table head-title="dvm.request.sourceTitle" commit-id="dvm.request.sourceCommit" target-id="dvm.request.targetCommit" record-id="dvm.request.recordIri"></commit-history-table>
         </material-tab>
     </material-tabset>
 </div>

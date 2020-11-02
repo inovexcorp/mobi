@@ -46,7 +46,9 @@
         scope.targetId = '';
         scope.difference = {};
         scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
-        this.element = $compile(angular.element('<commit-difference-tabset commit-id="commitId" branch-title="branchTitle" target-id="targetId" difference="difference" entity-name-func="entityNameFunc"></commit-difference-tabset>'))(scope);
+        scope.showMoreResultsFunc = jasmine.createSpy('showMoreResultsFunc');
+        scope.recordId = 'recordId';
+        this.element = $compile(angular.element('<commit-difference-tabset commit-id="commitId" branch-title="branchTitle" target-id="targetId" difference="difference" entity-name-func="entityNameFunc" show-more-results-func="showMoreResultsFunc(limit, offset)" record-id="recordId"></commit-difference-tabset>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitDifferenceTabset');
     });
@@ -82,6 +84,21 @@
             this.controller.entityNameFunc = undefined;
             scope.$digest();
             expect(scope.entityNameFunc).toBeDefined();
+        });
+        it('showMoreResultsFunc should be called in the parent scope', function() {
+            this.controller.showMoreResultsFunc({limit: 100, offset: 200});
+            scope.$apply();
+            expect(scope.showMoreResultsFunc).toHaveBeenCalledWith(100, 200);
+        });
+        it('startIndex should be one way bound', function() {
+            this.controller.startIndex = 100;
+            scope.$digest();
+            expect(scope.startIndex).toBeUndefined();
+        });
+        it('recordId should be one way bound', function() {
+            this.controller.recordId = 'newId';
+            scope.$digest();
+            expect(scope.recordId).toEqual('recordId');
         });
     });
     describe('contains the correct html', function() {

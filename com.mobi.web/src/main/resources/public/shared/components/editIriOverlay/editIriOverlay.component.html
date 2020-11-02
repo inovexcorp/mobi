@@ -47,9 +47,9 @@
         <!-- Ends with -->
         <div class="form-group ends-container">
             <custom-label>Ends with</custom-label>
-            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="/^\S+$/" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriEnd.$error.pattern}" required />
+            <input class="form-control" id="iriEnd" name="iriEnd" ng-model="dvm.iriEnd" ng-pattern="dvm.endsWithPattern" ng-trim="false" ng-class="{'is-invalid': dvm.iriForm.iriEnd.$error.pattern}" required />
             <p ng-messages="dvm.iriForm.iriEnd.$error" class="invalid-feedback">
-                <ng-message when="pattern">Spaces are not allowed.</ng-message>
+                <ng-message when="pattern">There is an invalid character.</ng-message>
             </p>
         </div>
     </form>

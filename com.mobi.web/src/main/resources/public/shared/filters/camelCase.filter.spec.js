@@ -70,6 +70,10 @@ describe('Camel Case filter', function() {
             {
                 value: 'abc def',
                 result: 'AbcDef'
+            },
+            {
+                value: '`abcdef',
+                result: 'abcdef'
             }
         ];
         _.forEach(tests, function(test) {

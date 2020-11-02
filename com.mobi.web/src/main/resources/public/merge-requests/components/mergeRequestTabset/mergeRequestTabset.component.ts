@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { get } from 'lodash';
+
 import './mergeRequestTabset.component.scss';
 
 const template = require('./mergeRequestTabset.component.html');
@@ -27,6 +29,7 @@ const template = require('./mergeRequestTabset.component.html');
 /**
  * @ngdoc component
  * @name merge-requests.component:mergeRequestTabset
+ * @requires shared.service:mergeRequestsStateService
  *
  * @description
  * `mergeRequestTabset` is a component which creates a div containing a
@@ -46,11 +49,15 @@ const mergeRequestTabsetComponent = {
         updateRequest: '&'
     },
     controllerAs: 'dvm',
-    controller: mergeRequestTabsetComponentCtrl,
+    controller: mergeRequestTabsetComponentCtrl
 };
 
-function mergeRequestTabsetComponentCtrl() {
+mergeRequestTabsetComponentCtrl.$inject = ['mergeRequestsStateService'];
+
+function mergeRequestTabsetComponentCtrl(mergeRequestsStateService) {
     var dvm = this;
+    dvm.state = mergeRequestsStateService;
+
     dvm.tabs = {
         discussion: true,
         changes: false,

@@ -26,6 +26,7 @@ package com.mobi.catalog.api;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -720,6 +721,22 @@ public interface CatalogManager {
     Difference getCommitDifference(Resource commitId);
 
     /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a PagedDifference.
+     * The statements returned will be paged by subject using the provided limit and offset. The statements contained in
+     * the returned Difference will have a context that matches the tracked quad. That is, tracked triples will have no
+     * context and tracked quads will have a context that matches the data named graph.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @param limit    The number of results to retrieve.
+     * @param offset   The number of subjects to skip when retrieving results.
+     * @return A PagedDifference object containing the addition and deletion statements of a Commit and a boolean
+     * indicating whether another page of results exist.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found
+     * @throws IllegalStateException    Thrown if the Commit does not have the additions/deletions set.
+     */
+    PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset);
+
+    /**
      * Removes the InProgressCommit identified by the provided Resources.
      *
      * @param catalogId            The Resource identifying the Catalog which contains the Record.
@@ -892,6 +909,22 @@ public interface CatalogManager {
      * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
      */
     Difference getDifference(Resource sourceCommitId, Resource targetCommitId);
+
+    /**
+     * Gets the PagedDifference between the Commits identified by the two provided Resources. The statements returned
+     * will be paged by subject using the provided limit and offset. Essentially returns the culmination of changes from
+     * a common ancestor between the Commits to the source Commit.
+     *
+     * @param sourceCommitId The source (first) Commit.
+     * @param targetCommitId The target (second) Commit.
+     * @param limit    The number of results to retrieve.
+     * @param offset   The number of subjects to skip when retrieving results.
+     * @return A PagedDifference between the two Commits identified by the provided Resources a boolean
+     * indicating whether another page of results exist.
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException    Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    PagedDifference getDifferencePaged(Resource sourceCommitId, Resource targetCommitId, int limit, int offset);
 
     /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.

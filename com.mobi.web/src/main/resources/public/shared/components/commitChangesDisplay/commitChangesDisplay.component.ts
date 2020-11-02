@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { unionWith, get, map, isEqual, forEach, chunk} from 'lodash';
+import { map, forEach, filter, has, union, orderBy, isEmpty } from 'lodash';
 
 import './commitChangesDisplay.component.scss';
 
@@ -40,15 +40,20 @@ const template = require('./commitChangesDisplay.component.html');
  *
  * @param {Object[]} additions An array of JSON-LD objects representing statements added
  * @param {Object[]} deletions An array of JSON-LD objects representing statements deleted
- * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI.
- * The component will pass the IRI of the entity as the only argument
+ * @param {Function} [entityNameFunc=undefined] An optional function to retrieve the name of an entity by it's IRI. The component will pass the IRI of the entity as the only argument
+ * @param {Function} showMoreResultsFunc A function retrieve more difference results. Will pass the limit and offset as arguments.
+ * @param {boolean} hasMoreResults A boolean indicating if the commit has more results to display
+ * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
  */
 const commitChangesDisplayComponent = {
     template,
     bindings: {
         additions: '<',
         deletions: '<',
-        entityNameFunc: '<?'
+        entityNameFunc: '<?',
+        showMoreResultsFunc: '&',
+        hasMoreResults: '<',
+        startIndex: '<?'
     },
     controllerAs: 'dvm',
     controller: commitChangesDisplayComponentCtrl
@@ -58,36 +63,44 @@ commitChangesDisplayComponentCtrl.$inject = ['utilService'];
 
 function commitChangesDisplayComponentCtrl(utilService) {
     var dvm = this;
-    dvm.size = 100;
+    dvm.size = 100; // Must be the same as the limit prop in the commitHistoryTable
     dvm.index = 0;
     dvm.util = utilService;
     dvm.list = [];
     dvm.chunkList = [];
     dvm.results = {};
+    dvm.showMore = false;
 
-    dvm.$onChanges = function() {
-        var adds = map(dvm.additions, '@id');
-        var deletes = map(dvm.deletions, '@id');
-        dvm.list = adds.concat(deletes.filter(i => adds.indexOf(i) == -1));
-        dvm.size = 100;
-        dvm.index = 0;
-        dvm.results = getResults();
+    dvm.$onInit = function() {
+        if (dvm.startIndex) {
+            dvm.index = dvm.startIndex;
+        }
     }
-    dvm.getMoreResults = function() {
-        dvm.index++;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
+    dvm.$onChanges = function(changesObj) {
+        if (has(changesObj, 'additions') || has(changesObj, 'deletions')) {
+            var adds;
+            var deletes;
+            if (isEmpty(dvm.results)) {
+                adds = map(dvm.additions, '@id');
+                deletes = map(dvm.deletions, '@id');
+            } else {
+                adds = filter(map(dvm.additions, '@id'), id => !dvm.results[id]);
+                deletes = filter(map(dvm.deletions, '@id'), id => !dvm.results[id]);
+            }
+            var combined = union(adds, deletes);
+            dvm.list = orderBy(combined, item => item, 'asc');
+            dvm.addPagedChangesToResults();
+        }
+    }
+    dvm.addPagedChangesToResults = function() {
+        forEach(dvm.list, id => {
             addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, dvm.results);
         });
+        dvm.showMore = dvm.hasMoreResults;
     }
-
-    function getResults() {
-        var results = {};
-        dvm.chunkList = chunk(dvm.list, dvm.size);
-        dvm.chunks = dvm.chunkList.length === 0 ? 0 : dvm.chunkList.length - 1;
-        forEach(get(dvm.chunkList, dvm.index, dvm.list), id => {
-            addToResults(dvm.util.getChangesById(id, dvm.additions), dvm.util.getChangesById(id, dvm.deletions), id, results);
-        });
-        return results;
+    dvm.getMorePagedChanges = function() {
+        dvm.index += dvm.size;
+        dvm.showMoreResultsFunc({limit: dvm.size, offset: dvm.index}); // Should trigger $onChanges
     }
     function addToResults(additions, deletions, id, results) {
         results[id] = { additions: additions, deletions: deletions };

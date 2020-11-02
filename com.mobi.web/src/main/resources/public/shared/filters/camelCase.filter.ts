@@ -45,13 +45,7 @@ function camelCase() {
             var capitalize = false,
                 whitespace = /\s/,
                 alphaNumeric = /[a-zA-Z0-9]/,
-                i = 1;
-
-            if (type === 'class') {
-                result += value[0].toUpperCase();
-            } else {
-                result += value[0].toLowerCase();
-            }
+                i = 0;
 
             while (i < value.length) {
                 if (value[i].match(whitespace) !== null) {
@@ -61,6 +55,8 @@ function camelCase() {
                 } else if( capitalize || (i === 0 && type === 'class')) {
                     result += value[i].toUpperCase();
                     capitalize = false;
+                } else if (i === 0 && type !== 'class') {
+                    result += value[0].toLowerCase();
                 } else {
                     result += value[i];
                 }

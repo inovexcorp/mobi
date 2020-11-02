@@ -32,6 +32,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.server.api.Mobi;
 import com.mobi.server.api.MobiConfig;
 import com.mobi.server.api.ServerUtils;
+import com.mobi.service.config.ConfigUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.osgi.service.cm.Configuration;
@@ -92,7 +93,7 @@ public class MobiImpl implements Mobi {
             this.serverId = UUID.nameUUIDFromBytes(macId);
             final Map<String, Object> data = new HashMap<>(configuration);
             data.put("serverId", this.serverId.toString());
-            updateServiceConfig(data);
+            ConfigUtils.updateServiceConfig(data, configurationAdmin, SERVICE_NAME);
         } else {
             final String id = serviceConfig.serverId();
             LOGGER.info("Server ID present in service configuration. {}", id);
@@ -183,20 +184,5 @@ public class MobiImpl implements Mobi {
     @Override
     public String getHostName() {
         return this.hostName;
-    }
-
-    /**
-     * Save an updated service configuration.
-     *
-     * @param configuration The modified map of configuration to persist
-     */
-    private void updateServiceConfig(final Map<String, Object> configuration) {
-        try {
-            final Configuration config = this.configurationAdmin.getConfiguration(SERVICE_NAME);
-            config.update(new Hashtable<>(configuration));
-        } catch (IOException e) {
-            LOGGER.error("Issue saving server id to service configuration: " + SERVICE_NAME, e);
-            // Continue along, since we'll just re-generate the service configuration next time the server starts.
-        }
     }
 }

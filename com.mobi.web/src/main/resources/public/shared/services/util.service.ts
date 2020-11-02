@@ -571,6 +571,42 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
     }
     /**
      * @ngdoc method
+     * @name rejectError
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Returns a rejected promise with the status text of the passed HTTP response object if present,
+     * otherwise uses the passed default message.
+     *
+     * @param {Object} error A HTTP response object
+     * @param {string} defaultMessage The optional default error text for the rejection
+     * @return {Promise} A Promise that rejects with an error message
+     */
+    self.rejectErrorObject = function(error, defaultMessage) {
+        return $q.reject(get(error, 'status') === -1 ? {'errorMessage': '', 'errorDetails': []} : self.getErrorDataObject(error, defaultMessage));
+    }
+    /**
+     * @ngdoc method
+     * @name getErrorMessage
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Retrieves an error message from a HTTP response if available, otherwise uses the passed default
+     * message.
+     *
+     * @param {Object} error A response from a HTTP calls
+     * @param {string='Something went wrong. Please try again later.'} defaultMessage The optional message
+     * to use if the response doesn't have an error message
+     * @return {string} An error message for the passed HTTP response
+     */
+    self.getErrorDataObject = function(error, defaultMessage = 'Something went wrong. Please try again later.') {
+        return {
+            'errorMessage': get(error, 'data.errorMessage') || defaultMessage,
+            'errorDetails': get(error, 'data.errorDetails') || []
+        }
+    }
+    /**
+     * @ngdoc method
      * @name getChangesById
      * @methodOf shared.service:utilService
      *
@@ -602,34 +638,60 @@ function utilService($filter, $http, $q, $window, $rootScope, uuid, toastr, pref
         return results;
     }
     /**
-         * @ngdoc method
-         * @name getPredicatesAndObjects
-         * @methodOf shared.service:utilService
-         *
-         * @description
-         * Transforms an object containing addition or deletion information into an array of subject, predicate, object triples.
-         *
-         * @param {Object} additionOrDeletion An object containing the addition or deletion.
-         * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
-         * statements which have the provided id as a subject.
-         */
-        self.getPredicatesAndObjects = function(additionOrDeletion) {
-            var results = [];
-            forOwn(additionOrDeletion, (value, key) => {
-                if (key !== '@id') {
-                    var actualKey = key;
-                    if (key === '@type') {
-                        actualKey = prefixes.rdf + 'type';
-                    }
-                    if (isArray(value)) {
-                        forEach(value, item => results.push({p: actualKey, o: item}));
-                    } else {
-                        results.push({p: actualKey, o: value});
-                    }
+     * @ngdoc method
+     * @name getPredicatesAndObjects
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Transforms an object containing addition or deletion information into an array of subject, predicate, object triples.
+     *
+     * @param {Object} additionOrDeletion An object containing the addition or deletion.
+     * @return {Object[]} An array of Objects, {p: string, o: string} which are the predicate and object for
+     * statements which have the provided id as a subject.
+     */
+    self.getPredicatesAndObjects = function(additionOrDeletion) {
+        var results = [];
+        forOwn(additionOrDeletion, (value, key) => {
+            if (key !== '@id') {
+                var actualKey = key;
+                if (key === '@type') {
+                    actualKey = prefixes.rdf + 'type';
+                }
+                if (isArray(value)) {
+                    forEach(value, item => results.push({p: actualKey, o: item}));
+                } else {
+                    results.push({p: actualKey, o: value});
+                }
+            }
+        });
+        return results;
+    }
+    /**
+     * @ngdoc method
+     * @name getObjIrisFromDifference
+     * @methodOf shared.service:utilService
+     *
+     * @description
+     * Transforms an array of additions or deletions into an array of object IRIs.
+     *
+     * @param additionsOrDeletionsArr {Object[]} An array of additions or deletions
+     * @return {string[]} An array of the IRIs in the objects of the addition or deletion statements
+     */
+    self.getObjIrisFromDifference = function(additionsOrDeletionsArr) {
+        var objIris = [];
+        forEach(additionsOrDeletionsArr, change => {
+            forOwn(change, (value, key) => {
+                if (isArray(value)) {
+                    forEach(value, item => {
+                        if (has(item, '@id')) {
+                            objIris.push(item['@id']);
+                        }
+                    });
                 }
             });
-            return results;
-        }
+        });
+        return objIris;
+    }
     /**
      * @ngdoc method
      * @name getPredicateLocalName

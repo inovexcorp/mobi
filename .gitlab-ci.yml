@@ -1,18 +1,26 @@
+include:
+  - project: 'matonto/gitlab-ci'
+    ref: master
+    file: 'shared-template.yml'
+
 stages:
   - test
-  - update_master
-  - new_master_version
-  - new_release_build
+  - set_version_root_pom
+  - set_version_parent_pom
+  - update_master_with_new_version
+  - increment_snapshot_version_root_pom
+  - increment_snapshot_version_parent_pom
+  - update_master_with_new_snapshot
+  - unit_integration_test
+  - deploy_artifacts
+  - deploy_rdf_orm
+  - create_release_branch
+  - update_minor_release_root_pom
+  - update_minor_release_parent_pom
+  - update_master_with_new_minor_snapshot
   - new_release_deploy
 
 variables:
-  # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
-  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
-  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=/root/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
-  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
-  # when running from the command line.
-  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
-  MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
   ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
   MAVEN_SETTINGS_DOCKER: <server>
       <id>docker-hub</id>
@@ -22,62 +30,6 @@ variables:
         <email>PLACEHOLDER_EMAIL</email>
       </configuration>
     </server>
-  MAVEN_SETTINGS_NEXUS: <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
-         http://maven.apache.org/xsd/settings-1.0.0.xsd">
-         <localRepository>/root/.m2/repository</localRepository>
-         <mirrors>
-                 <mirror>
-                         <id>inovex</id>
-                         <name>iNovex Sonatype Nexus</name>
-                         <url>http://nexus.inovexcorp.com/nexus/content/groups/public/</url>
-                         <mirrorOf>central</mirrorOf>
-                 </mirror>
-         </mirrors> 
-         <servers>
-                 <server>
-                         <id>inovex</id>
-                         <username>PLACEHOLDER_USERNAME</username>
-                         <password>PLACEHOLDER_PW</password>
-                 </server>
-                 <server>
-                         <id>inovex.hanover</id>
-                         <username>PLACEHOLDER_USERNAME</username>
-                         <password>PLACEHOLDER_PW</password>
-                 </server>
-         </servers> 
-         <profiles>
-                 <profile>
-                         <id>inovex</id>
-                         <activation>
-                                 <activeByDefault>true</activeByDefault>
-                         </activation>
-                         <repositories>
-                                 <repository>
-                                         <id>central</id>
-                                         <url>http://central</url>
-                                         <releases>
-                                                 <enabled>true</enabled>
-                                         </releases>
-                                         <snapshots>
-                                                 <enabled>true</enabled>
-                                         </snapshots>
-                                 </repository>
-                         </repositories>
-                 </profile>
-         </profiles> 
-    </settings>
-  NEEDS_GIT_SETTINGS: 1
-
-# This template uses jdk8 for verifying and deploying images
-image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
-
-# Cache downloaded dependencies and plugins between builds.
-# To keep cache across branches add 'key: "$CI_JOB_NAME"'
-# cache:
-#   paths:
-#     - /root/.m2/repository
-  #   - com.mobi.web/node_modules/
-  # key: one-key-to-rule-them-all
 
 before_script:
   - rm -r /root/.m2/repository && ln -s /opt/m2/repository /root/.m2/repository
@@ -85,7 +37,6 @@ before_script:
   - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
   - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
   - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
-  - ln -s /opt/node_modules $CI_PROJECT_DIR/com.mobi.web/node_modules
   - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
   -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
   -   git remote set-url origin $PRIVATE_URL
@@ -95,8 +46,7 @@ before_script:
 
 # For merge requests, just do an initial test
 test:
-  variables: 
-    NEEDS_GIT_SETTINGS: 0
+  before_script: []
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
@@ -105,33 +55,61 @@ test:
   only:
     - merge_requests
 
-# Once a merge request is committed to master, need to update both the root level pom.xml and the parent pom.xml
-update_master:
-  stage: update_master
+set_version_parent_pom:
+  extends: .apply_root_version_to_parent_pom
   only:
     variables:
       - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
     refs:
       - master
+  stage: set_version_parent_pom
+  dependencies:
+    - set_version_root_pom
+
+update_master_with_new_version:
+  dependencies:
+    - set_version_parent_pom
+
+increment_snapshot_version_parent_pom:
+  extends: .apply_root_version_to_parent_pom
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
+    refs:
+      - master
+  stage: increment_snapshot_version_parent_pom
+  dependencies:
+    - increment_snapshot_version_root_pom
+
+update_master_with_new_snapshot:
+  dependencies:
+    - increment_snapshot_version_parent_pom
+
+unit_integration_test:
+  stage: unit_integration_test
+  dependencies: []
+  only:
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
+    refs:
+      - master
   script:
-    - CURR_VERSION="$MAJOR.$MINOR.$MICRO"
-    - NEW_VERSION="$MAJOR.$MINOR.$((MICRO+1))"
-    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION
-    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$CURR_VERSION && cd ..
-    - mvn $MAVEN_CLI_OPTS versions:commit
-    - git add ./\*pom.xml
-    - git commit -m"AUTOMATED COMMIT - Updates version to $CURR_VERSION"
-    - git push -f origin HEAD:master
-    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT
-    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION-SNAPSHOT && cd ..
-    - mvn versions:commit
-    - git add ./\*pom.xml
-    - git commit -m"AUTOMATED COMMIT - Updates version to $NEW_VERSION-SNAPSHOT"
-    - git push -f origin HEAD:master
+    # Redirect calls to localhost:9080 to host machines (not this container);
+    # a 2nd container running mobi is bound to the host at port 9080.
+    - HOST_IP=$(ip route show | awk '/default/ {print $3}')
+    - apt-get update && apt-get install -y redir
+    - redir :9080 $HOST_IP:9080
+    # Update Chrome Version
+    - apt-get -y update && apt-get -y install google-chrome-stable
+    # Run unit, integration, and functional tests
+    - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false
+  artifacts:
+    paths: ['rdf-orm']
 
 # Happens after NON snapshot commit to master
-unit_integration_test:
-  stage: new_master_version
+deploy_rdf_orm:
+  stage: deploy_rdf_orm
+  dependencies: ['unit_integration_test']
   variables:
     NEEDS_GIT_SETTINGS: 0
   only:
@@ -140,47 +118,33 @@ unit_integration_test:
     refs:
       - master
   script:
-    - mvn $MAVEN_CLI_OPTS clean install -DskipITs=false
-    - if [[ "$?" -ne "0" ]]; then echo "Tests failed so not deploying to nexus" && exit 1; fi
-    - echo $MAVEN_SETTINGS_NEXUS | sed -e "s/PLACEHOLDER_USERNAME/$NEXUS_USERNAME/g" -e "s/PLACEHOLDER_PW/$NEXUS_PW/g" > /root/.m2/ci_settings.xml
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
-    - cd $CI_PROJECT_DIR
-    - mvn $MAVEN_CLI_OPTS deploy -s /root/.m2/ci_settings.xml
 
-# Happens after release tag has been pushed. Deletes the tag, creates new branch based off of the tag name, and updates minor release on master
-update_release:
-  stage: new_release_build
+update_minor_release_parent_pom:
+  extends: .apply_root_version_to_parent_pom
+  stage: update_minor_release_parent_pom
   only:
-    - tags
     - /release\/\d+\.\d+/
-  script:
-    - git tag -d $CI_COMMIT_TAG
-    - git push origin :$CI_COMMIT_TAG
-    - git checkout -b $CI_COMMIT_TAG
-    - git push -f origin $CI_COMMIT_TAG
-    - NEW_MASTER_VERSION="$MAJOR.$((MINOR+1)).0-SNAPSHOT"
-    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION
-    - cd mobi-parent && mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_MASTER_VERSION-SNAPSHOT && cd ..
-    - mvn versions:commit
-    - git add ./\*pom.xml
-    - git commit -m"AUTOMATED RELEASE COMMIT - Updates version to $NEW_MASTER_VERSION"
-    - git push -f origin HEAD:master
+  except:
+    - branches
   artifacts:
-    paths:
-      - mobi-distribution
+    paths: ['pom.xml', '*/pom.xml', '*/*/pom.xml']
+  dependencies:
+    - update_minor_release_root_pom
 
 artifactory_release:
   stage: new_release_deploy
-  dependencies:
-    - update_release
   only:
-    - tags
     - /release\d*\.\d*/
+  except:
+    - branches
   script:
     - mvn $MAVEN_CLI_OPTS clean install -P release-build -DproductId=$GA_KEY
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
+  artifacts:
+    paths: ['mobi-distribution']
 
 # build and push the docker image, per instructions in mobi-distribution README
 # tag used to specify we want this job to happen w/ the docker builder runner
@@ -188,13 +152,33 @@ docker_release:
   stage: new_release_deploy
   tags:
     - docker-image-builder
-  dependencies:
-    - update_release
   only:
-    - tags
     - /release\d*\.\d*/
+  except:
+    - branches
   script:
     - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > /root/.m2/ci_settings.xml
     - cd mobi-distribution
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s /root/.m2/ci_settings.xml
 
+
+update_master_with_new_minor_snapshot:
+  dependencies:
+    - update_minor_release_parent_pom
+  stage: update_master_with_new_minor_snapshot
+  only:
+    - /release\/\d+\.\d+/
+  except:
+    - branches
+  dependencies:
+    - update_minor_release_root_pom
+  script:
+    - CURRENT_VERSION="$MAJOR.$MINOR.$MICRO"
+    - git add ./\*pom.xml
+    - git commit -m "AUTOMATED COMMIT - Updates version to $CURRENT_VERSION-SNAPSHOT"
+    - git pull
+    - git push origin HEAD:master
+    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
+    - git push github HEAD:master
+    - git checkout $CI_COMMIT_TAG
+    - git push github HEAD:$CI_COMMIT_TAG

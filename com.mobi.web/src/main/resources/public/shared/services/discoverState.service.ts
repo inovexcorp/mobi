@@ -265,7 +265,10 @@ function discoverStateService() {
             typeObject: undefined
         };
         self.query = {
-            active: false
+            active: false,
+            queryString: '',
+            response: {},
+            selectedPlugin: ''
         };
     }
     function resetOnClear() {
@@ -278,7 +281,10 @@ function discoverStateService() {
             entity: {},
             metadata: {}
         };
-    }
+        self.query.queryString =  '';
+        self.query.response = {};
+        self.query.selectedPlugin = '';
+    }   
 }
 
 export default discoverStateService;

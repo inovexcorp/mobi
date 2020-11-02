@@ -39,6 +39,12 @@
         "property 5","property 5 literal form"
       ]
   },
+  "http://test.com/Ontology1#prop5Label": {
+    "label": "property 5 literal form",
+    "names": [
+      "property 5 literal form"
+    ]
+  },
   "http://test.com/Ontology1#classA": {
     "label": "class A",
     "names": [

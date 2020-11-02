@@ -38,6 +38,8 @@ module.exports = function(config) {
         reportName: 'specReport'
     },
 
+    browserNoActivityTimeout: 100000,
+
     // web server port
     port: 9876,
 

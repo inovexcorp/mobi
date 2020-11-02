@@ -1,0 +1,8 @@
+<http://mobi.com/ontology/single-concept-vocab> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://www.w3.org/2002/07/owl#imports> <http://www.w3.org/2004/02/skos/core> .
+
+<http://mobi.com/ontology/test-local-imports-2#Class2> a <http://www.w3.org/2002/07/owl#Class> .
+
+<http://mobi.com/ontology/single-concept-vocab#concept1> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <http://www.w3.org/2004/02/skos/core#Concept>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept 1" .

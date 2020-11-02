@@ -412,12 +412,12 @@ GRAPH commits:test2 {
 
 GRAPH additions:test2 {
     <http://mobi.com/test/ontology> dc:title "Test 2 Title" .
-    <http://mobi.com/test/class> a owl:Class .
+    <http://mobi.com/test/class> dc:title "Class Title 2" .
 }
 
 GRAPH deletions:test2 {
     <http://mobi.com/test/ontology> dc:title "Test 1 Title" .
-    <http://mobi.com/test/class> a owl:Class .
+    <http://mobi.com/test/class> dc:title "Class Title 1" .
 }
 
 GRAPH commits:test4a {

@@ -25,6 +25,7 @@ package com.mobi.catalog.api;
 
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
+import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -703,6 +704,20 @@ public interface CatalogUtilsService {
     Difference getCommitDifference(Resource commitId, RepositoryConnection conn);
 
     /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a PagedDifference.
+     * The statements returned will be paged by subject using the provided limit and offset. The statements contained in
+     * the returned PagedDifference will have no context. Quads will not be included in the paged difference.
+     * TODO: Quad support may be added in the future.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @param conn     The RepositoryConnection which contains the requested Commit.
+     * @param limit    The number of results to retrieve.
+     * @param offset   The number of subjects to skip when retrieving results.
+     * @return A PagedDifference object containing the addition and deletion statements of a Commit and a boolean
+     * indicating whether another page of results exist.     */
+    PagedDifference getCommitDifferencePaged(Resource commitId, RepositoryConnection conn, int limit, int offset);
+
+    /**
      * Builds the Difference based on the provided List of Commit ids. The statements contained in the returned
      * Difference will have a context that matches the tracked quad. That is, tracked triples will have no context and
      * tracked quads will have a context that matches the data named graph.
@@ -712,6 +727,20 @@ public interface CatalogUtilsService {
      * @return The Difference containing the aggregation of all the Commit additions and deletions.
      */
     Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn);
+
+    /**
+     * Builds the PagedDifference based on the provided List of Commit ids. The statements returned will be paged by
+     * subject using the provided limit and offset. The statements contained in the returned PagedDifference will have
+     * not context.  Quads will not be included in the PagedDifference.
+     *
+     * @param commits The List of Commit ids which are supposed to be contained in the Model in ascending order.
+     * @param conn    The RepositoryConnection which contains the requested Commits.
+     * @param limit    The number of results to retrieve.
+     * @param offset   The number of subjects to skip when retrieving results.
+     * @return The PagedDifference containing the aggregation of all the Commit additions and deletions and a boolean
+     * indicating whether another page of results exist..
+     */
+    PagedDifference getCommitDifferencePaged(List<Resource> commits, RepositoryConnection conn, int limit, int offset);
 
     /**
      * Applies the additions and deletions in the provided Difference to the provided Model and returns the result.

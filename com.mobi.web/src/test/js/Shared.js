@@ -230,12 +230,14 @@ export function mockOntologyManager() {
             this.getConceptHierarchies = jasmine.createSpy('getConceptHierarchies').and.returnValue($q.when({}));
             this.getConceptSchemeHierarchies = jasmine.createSpy('getConceptSchemeHierarchies').and.returnValue($q.when({}));
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
-            this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
+            this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when({}));
+            this.getOntologyEntityNames = jasmine.createSpy('getOntologyEntityNames').and.returnValue($q.when({}));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
             this.getQueryResults = jasmine.createSpy('getQueryResults').and.returnValue($q.when({}));
             this.getEntityAndBlankNodes = jasmine.createSpy('getEntityAndBlankNodes').and.returnValue($q.when([]));
             this.isDeprecated = jasmine.createSpy('isDeprecated');
             this.isOntology = jasmine.createSpy('isOntology');
+            this.isOntologyRecord = jasmine.createSpy('isOntologyRecord');
             this.hasOntologyEntity = jasmine.createSpy('hasOntologyEntity');
             this.getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
             this.getOntologyIRI = jasmine.createSpy('getOntologyIRI').and.returnValue('');
@@ -775,6 +777,7 @@ export function mockOntologyState() {
             this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
             this.attemptMerge = jasmine.createSpy('attemptMerge').and.returnValue($q.when());
             this.checkConflicts = jasmine.createSpy('checkConflicts').and.returnValue($q.when());
+            this.getMergeDifferences = jasmine.createSpy('getMergeDifferences').and.returnValue($q.when());
             this.merge = jasmine.createSpy('merge').and.returnValue($q.when());
             this.cancelMerge = jasmine.createSpy('cancelMerge');
             this.canModify = jasmine.createSpy('canModify');
@@ -1059,9 +1062,12 @@ export function mockUtil() {
             });
             this.rejectError = jasmine.createSpy("rejectError").and.returnValue($q.reject(''));
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
+            this.rejectErrorObject = jasmine.createSpy("rejectErrorObject").and.returnValue($q.reject(''));
+            this.getErrorDataObject = jasmine.createSpy('getErrorDataObject').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicatesAndObjects = jasmine.createSpy('getPredicatesAndObjects');
+            this.getObjIrisFromDifference = jasmine.createSpy('getObjIrisFromDifference');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
@@ -1296,6 +1302,9 @@ export function mockMergeRequestsState() {
             this.startCreate = jasmine.createSpy('startCreate');
             this.resolveRequestConflicts = jasmine.createSpy('resolveRequestConflicts').and.returnValue($q.when());
             this.removeSource = jasmine.createSpy('removeSource').and.returnValue(true);
+            this.getSourceEntityNames = jasmine.createSpy('getSourceEntityNames').and.returnValue($q.when());
+            this.updateRequestConfigDifference = jasmine.createSpy('updateRequestConfigDifference').and.returnValue($q.when());
+            this.updateRequestConfigBranch = jasmine.createSpy('updateRequestConfigBranch');
         });
     });
 }
@@ -1357,4 +1366,15 @@ export function flushAndVerify($httpBackend) {
     $httpBackend.flush();
     $httpBackend.verifyNoOutstandingExpectation();
     $httpBackend.verifyNoOutstandingRequest();
+}
+
+export function mockYasguiService() {
+    angular.mock.module(function($provide, $qProvider) {
+        $qProvider.errorOnUnhandledRejections(false);
+        $provide.service('yasguiService', function($q) {
+            this.reset = jasmine.createSpy('reset');
+            this.initYasgui = jasmine.createSpy('initYasgui');
+            this.getYasgui = jasmine.createSpy('getYasgui').and.returnValue({});
+        });
+    });
 }

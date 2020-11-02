@@ -41,9 +41,10 @@ describe('Statement Display component', function() {
 
         scope.predicate = 'predicate';
         scope.object = 'object';
+        scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
         var parent = $compile('<div></div>')(scope);
         parent.data('$statementContainerController', {});
-        this.element = angular.element('<statement-display predicate="predicate" object="object"></statement-display>');
+        this.element = angular.element('<statement-display predicate="predicate" object="object" entity-name-func="entityNameFunc"></statement-display>');
         parent.append(this.element);
         this.element = $compile(this.element)(scope);
         splitIRI.and.returnValue({});
@@ -69,6 +70,11 @@ describe('Statement Display component', function() {
             scope.$apply();
             expect(scope.object).toEqual('object');
         });
+        it('entityNameFunc should be one way bound', function() {
+            this.controller.entityNameFunc = undefined;
+            scope.$digest();
+            expect(scope.entityNameFunc).toBeDefined();
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -81,21 +87,36 @@ describe('Statement Display component', function() {
     });
     describe('check controller.o value', function() {
         describe('when @id is present', function() {
-            it('and split.end is present', function() {
+            it('and entityNameFunc is present', function() {
+                scope.entityNameFunc.and.returnValue('label');
+                scope.$digest();
                 this.controller.object = {'@id': 'full/id'};
-                splitIRI.and.returnValue({end: 'id'});
                 this.controller.$onInit();
-                expect(splitIRI).toHaveBeenCalledWith('full/id');
-                expect(this.controller.o).toEqual('id');
                 expect(this.controller.fullObject).toEqual('full/id');
+                expect(this.controller.o).toEqual('label <' + this.controller.fullObject + '>');
+                expect(scope.entityNameFunc).toHaveBeenCalledWith('full/id');
             });
-            it('and split.end is empty', function() {
-                this.controller.object = {'@id': 'full/id'};
-                splitIRI.and.returnValue({end: ''});
-                this.controller.$onInit();
-                expect(splitIRI).toHaveBeenCalledWith('full/id');
-                expect(this.controller.o).toEqual('full/id');
-                expect(this.controller.fullObject).toEqual('full/id');
+            describe('and entityNameFunc is not present', function() {
+                it('and split.end is present', function() {
+                    scope.entityNameFunc = undefined;
+                    scope.$digest();
+                    this.controller.object = {'@id': 'full/id'};
+                    splitIRI.and.returnValue({end: 'id'});
+                    this.controller.$onInit();
+                    expect(splitIRI).toHaveBeenCalledWith('full/id');
+                    expect(this.controller.fullObject).toEqual('full/id');
+                    expect(this.controller.o).toEqual('id <' + this.controller.fullObject + '>');
+                });
+                it('and split.end is empty', function() {
+                    scope.entityNameFunc = undefined;
+                    scope.$digest();
+                    this.controller.object = {'@id': 'full/id'};
+                    splitIRI.and.returnValue({end: ''});
+                    this.controller.$onInit();
+                    expect(splitIRI).toHaveBeenCalledWith('full/id');
+                    expect(this.controller.o).toEqual('full/id');
+                    expect(this.controller.fullObject).toEqual('full/id');
+                });
             });
         });
         it('when @value is present', function() {

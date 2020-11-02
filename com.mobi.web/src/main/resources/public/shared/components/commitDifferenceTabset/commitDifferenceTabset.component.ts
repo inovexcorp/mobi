@@ -36,7 +36,10 @@ const template = require('./commitDifferenceTabset.component.html');
  * @param {Object} sourceBranch The JSON-LD of the source branch of the difference
  * @param {string} targetBranchId The IRI of the target branch of the difference
  * @param {Object} difference The object representing the difference between the two Commits
+ * @param {Function} showMoreResultsFunc A function that takes limit and offset to update the difference provided
  * @param {Function} entityNameFunc An optional function to pass to `commitChangesDisplay` to control the display of
+ * @param {int} startIndex The startIndex for the offset. Used when reloading the display.
+ * @oaram {string} [recordId=''] recordId An optional IRI string representing an OntologyRecord to query for names if present
  * each entity's name
  */
 const commitDifferenceTabsetComponent = {
@@ -46,7 +49,10 @@ const commitDifferenceTabsetComponent = {
         commitId: '<',
         targetId: '<',
         difference: '<',
-        entityNameFunc: '<?'
+        showMoreResultsFunc: '&',
+        entityNameFunc: '<?',
+        startIndex: '<?',
+        recordId: '<?'
     },
     controllerAs: 'dvm',
     controller: commitDifferenceTabsetComponentCtrl
@@ -54,6 +60,7 @@ const commitDifferenceTabsetComponent = {
 
 function commitDifferenceTabsetComponentCtrl() {
     var dvm = this;
+
     dvm.tabs = {
         changes: true,
         commits: false

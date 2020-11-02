@@ -93,6 +93,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
+import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.collections.CollectionUtils;
@@ -109,7 +110,9 @@ import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.ParsedTupleQuery;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -128,6 +131,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -270,7 +274,9 @@ public class OntologyRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context ContainerRequestContext context,
-                               @FormDataParam("file") InputStream fileInputStream, @FormDataParam("title") String title,
+                               @FormDataParam("file") InputStream fileInputStream,
+                               @FormDataParam("file") FormDataContentDisposition fileDetail,
+                               @FormDataParam("title") String title,
                                @FormDataParam("description") String description,
                                @FormDataParam("markdown") String markdown,
                                @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
@@ -284,6 +290,7 @@ public class OntologyRest {
         }
         RecordOperationConfig config = new OperationConfig();
         config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
+        config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
         return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
@@ -661,6 +668,8 @@ public class OntologyRest {
     }
 
     private StreamingOutput getVocabularyStuffStream(Ontology ontology) {
+        Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
+        
         return outputStream -> {
             StopWatch watch = new StopWatch();
             log.trace("Start concepts");
@@ -680,6 +689,16 @@ public class OntologyRest {
 
             watch.stop();
             log.trace("End conceptSchemes: " + watch.getTime() + "ms");
+            watch.reset();
+            log.trace("Start importedIRIs");
+            watch.start();
+
+            outputStream.write(", \"importedIRIs\": ".getBytes());
+            outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
+                    .getBytes());
+
+            watch.stop();
+            log.trace("End importedIRIs: " + watch.getTime() + "ms");
             watch.reset();
             log.trace("Start derivedConcepts");
             watch.start();
@@ -804,7 +823,7 @@ public class OntologyRest {
             outputStream.write(", \"importedOntologies\": ".getBytes());
             ArrayNode arr = mapper.createArrayNode();
             onlyImports.stream()
-                    .map(ont -> getOntologyIdentifiersAsJsonObject(ont))
+                    .map(this::getOntologyIdentifiersAsJsonObject)
                     .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
             watch.stop();
@@ -904,7 +923,8 @@ public class OntologyRest {
             log.trace("Start entityNames");
             watch.start();
             outputStream.write(", \"entityNames\": ".getBytes());
-            writeEntityNamesToStream(ontology.getTupleQueryResults(GET_ENTITY_NAMES, true), outputStream);
+            String queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", "");
+            writeEntityNamesToStream(ontology.getTupleQueryResults(queryString, true), outputStream);
             watch.stop();
             log.trace("End entityNames: " + watch.getTime() + "ms");
 
@@ -2410,6 +2430,79 @@ public class OntologyRest {
         }
     }
 
+    /**
+     * Retrieves the map of EntityNames in an Ontology.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     *                              applied to the return value
+     * @return Returns the list of EntityNames for the given Ontology.
+     */
+    @POST
+    @Path("{recordId}/entity-names")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets the EntityNames in the identified ontology.")
+    @ActionId(Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getEntityNames(@Context ContainerRequestContext context,
+                                   @PathParam("recordId") String recordIdStr,
+                                   @QueryParam("branchId") String branchIdStr,
+                                   @QueryParam("commitId") String commitIdStr,
+                                   @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
+                                   @DefaultValue("true") @QueryParam("applyInProgressCommit")
+                                               boolean applyInProgressCommit,
+                                   String filterJson) {
+        try {
+            StopWatch watch = new StopWatch();
+            log.trace("Start entityNames");
+            watch.start();
+
+            Set<Resource> resources = new HashSet<>();
+            JsonNode arrNode = mapper.readTree(filterJson).get("filterResources");
+            if (arrNode != null && arrNode.isArray()) {
+                for (final JsonNode objNode : arrNode) {
+                    resources.add(valueFactory.createIRI(objNode.asText()));
+                }
+            }
+
+            String queryString = null;
+            if (resources.isEmpty()) {
+                queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", "");
+            } else {
+                String resourcesString = "VALUES ?entity {<" + resources.stream().map(Resource::stringValue)
+                        .collect(Collectors.joining("> <")) + ">}";
+                queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", resourcesString);
+            }
+            Optional<Ontology> optionalOntology = getOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit);
+            if (optionalOntology.isPresent()) {
+                String finalQueryString = queryString;
+                StreamingOutput output = outputStream -> {
+                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(finalQueryString, includeImports);
+                    writeEntityNamesToStream(result, outputStream);
+                };
+                watch.stop();
+                log.trace("Entity names endpoint: " + watch.getTime() + "ms");
+                return Response.ok(output).build();
+            } else {
+                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            }
+        } catch (MobiException | IOException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private Response getReponseForGraphQuery(Ontology ontology, String query, boolean includeImports, boolean skolemize,
                                              String format) {
         Model entityData = ontology.getGraphQueryResults(query, includeImports, modelFactory);
@@ -2550,7 +2643,7 @@ public class OntologyRest {
             entityNames.setNames(namesSet);
             entityNamesMap.putIfAbsent(entity, entityNames);
         });
-
+ 
         outputStream.write(mapper.valueToTree(entityNamesMap).toString().getBytes());
     }
 
@@ -3252,10 +3345,14 @@ public class OntologyRest {
                 }
                 commitId = (Resource) commitStmt.next().getObject();
             }
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            ObjectNode objectNode = createJsonErrorObject(ex, Models.ERROR_OBJECT_DELIMITER);
+            Response response = Response.status(Response.Status.BAD_REQUEST).entity(objectNode.toString()).build();
+            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
+        } catch (MobiException ex) {
+            ObjectNode objectNode = createJsonErrorObject(ex);
+            Response response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(objectNode.toString()).build();
+            throw ErrorUtils.sendError(ex, ex.getMessage(), response);
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
@@ -3267,4 +3364,36 @@ public class OntologyRest {
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
     }
+
+    private static ObjectNode createJsonErrorObject(Exception ex) {
+        return createJsonErrorObject(ex, null);
+    }
+
+    private static ObjectNode createJsonErrorObject(Exception ex, String delimiter) {
+        ObjectNode objectNode = mapper.createObjectNode();
+        ArrayNode arrayNode = mapper.createArrayNode();
+        objectNode.put("error", ex.getClass().getSimpleName());
+
+        String errorMessage = ex.getMessage();
+
+        if (delimiter == null) {
+            objectNode.put("errorMessage", errorMessage);
+        } else if (errorMessage.contains(delimiter)) {
+            String[] errorMessages = errorMessage.split(delimiter);
+            objectNode.put("errorMessage", errorMessages[0].trim());
+
+            String[] errorMessagesSlice = Arrays.copyOfRange(errorMessages, 1 ,errorMessages.length);
+
+            for (String currentErrorMessage: errorMessagesSlice) {
+                arrayNode.add(currentErrorMessage.trim());
+            }
+        } else {
+            objectNode.put("errorMessage", errorMessage);
+        }
+
+        objectNode.set("errorDetails", arrayNode);
+
+        return objectNode;
+    }
+
 }

@@ -21,9 +21,7 @@
  * #L%
  */
 import * as angular from 'angular';
-
 import exploreUtilsService from './services/exploreUtils.service';
-
 import classBlockComponent from './components/classBlock/classBlock.component';
 import classBlockHeaderComponent from './components/classBlockHeader/classBlockHeader.component';
 import classCardsComponent from './components/classCards/classCards.component';
@@ -37,7 +35,6 @@ import instanceViewComponent from './components/instanceView/instanceView.compon
 import newInstanceClassOverlayComponent from './components/newInstanceClassOverlay/newInstanceClassOverlay.component';
 import newInstancePropertyOverlayComponent from './components/newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import propertyValueOverlayComponent from './components/propertyValueOverlay/propertyValueOverlay.component';
-
 /**
  * @ngdoc overview
  * @name explore

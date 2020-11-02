@@ -45,7 +45,10 @@ describe('Commit Changes Display component', function() {
 
         scope.additions = [];
         scope.deletions = [];
-        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions"></commit-changes-display>'))(scope);
+        scope.entityNameFunc = jasmine.createSpy('entityNameFunc');
+        scope.showMoreResultsFunc = jasmine.createSpy('showMoreResultsFunc');
+        scope.hasMoreResults = false;
+        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc" show-more-results-func="showMoreResultsFunc(limit, offset)" has-more-results="hasMoreResults"></commit-changes-display>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('commitChangesDisplay');
     });
@@ -68,27 +71,55 @@ describe('Commit Changes Display component', function() {
             scope.$digest();
             expect(scope.deletions).toEqual([]);
         });
+        it('entityNameFunc should be one way bound', function() {
+            this.controller.entityNameFunc = undefined;
+            scope.$digest();
+            expect(scope.entityNameFunc).toBeDefined();
+        });
+        it('showMoreResultsFunc should be called in the parent scope', function() {
+            this.controller.showMoreResultsFunc({limit: 100, offset: 200});
+            scope.$apply();
+            expect(scope.showMoreResultsFunc).toHaveBeenCalledWith(100, 200);
+        });
+        it('hasMoreResults should be one way bound', function() {
+            this.controller.hasMoreResults = true;
+            scope.$digest();
+            expect(scope.hasMoreResults).toBeFalsy();
+        });
+        it('startIndex should be one way bound', function() {
+            this.controller.startIndex = 100;
+            scope.$digest();
+            expect(scope.startIndex).toBeUndefined();
+        });
+    });
+    describe('initializes correctly', function() {
+        it('if startIndex is populated', function() {
+            scope.startIndex = 1000;
+            this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" entity-name-func="entityNameFunc" show-more-results-func="showMoreResultsFunc" has-more-results="hasMoreResults" start-index="startIndex"></commit-changes-display>'))(scope);
+            this.controller = this.element.controller('commitChangesDisplay');
+            this.controller.$onInit();
+            scope.$apply();
+            expect(this.controller.index).toEqual(1000);
+        });
     });
     describe('controller methods', function() {
         it('$onChanges should produce current number of list elements', function() {
             this.controller.additions = _.map(_.range(0, 150), i => ({'@id': `${i}`}));
             this.controller.deletions = _.map(_.range(50, 200), i => ({'@id': `${i}`}));
             utilSvc.getChangesById.and.returnValue([]);
-            this.controller.$onChanges();
+            this.controller.$onChanges({additions:{}, deletions:{}});
             expect(this.controller.list.length).toEqual(200);
-            expect(this.controller.chunkList.length).toEqual(2);
-            expect(this.controller.chunkList[0].length).toEqual(100);
-            expect(this.controller.chunks).toEqual(1);
             expect(this.controller.results).toEqual(jasmine.objectContaining({
                 '1': {additions: [], deletions: []},
                 '3': {additions: [], deletions: []}
             }));
         });
-        it('should get more results', function() {
-            this.controller.list = ['1', '2', '3', '4'];
+        it('should add paged changes to results', function() {
+            this.controller.list = ['3', '4'];
+            this.controller.hasMoreResults = true;
+            this.controller.showMore = false;
             this.controller.size = 2;
-            this.controller.index = 0;
-            this.controller.chunkList = [['1', '2'], ['3', '4']];
+            this.controller.index = 2;
             this.additions = [{'@id': 'add'}];
             this.deletions = [{'@id': 'del'}];
             this.controller.additions = this.additions;
@@ -98,18 +129,32 @@ describe('Commit Changes Display component', function() {
                 '2': {additions: this.additions, deletions: this.deletions}
             };
             utilSvc.getChangesById.and.callFake((id, arr) => arr);
-            this.controller.getMoreResults();
-            expect(this.controller.index).toEqual(1);
-            this.controller.chunkList[1].forEach(id => {
-                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, this.controller.additions);
-                expect(utilSvc.getChangesById).toHaveBeenCalledWith(id, this.controller.deletions);
-            });
+            this.controller.addPagedChangesToResults();
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('3', this.controller.additions);
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('3', this.controller.deletions);
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('4', this.controller.additions);
+            expect(utilSvc.getChangesById).toHaveBeenCalledWith('4', this.controller.deletions);
             expect(this.controller.results).toEqual({
                 '1': {additions: this.additions, deletions: this.deletions},
                 '2': {additions: this.additions, deletions: this.deletions},
                 '3': {additions: this.additions, deletions: this.deletions},
                 '4': {additions: this.additions, deletions: this.deletions}
             });
+            expect(this.controller.showMore).toEqual(true);
+        });
+        it('should call showMoreResultsFunc in the parent scope when more paged changes are retrieved', function() {
+            scope.additions = [];
+            scope.deletions = [];
+            scope.showMoreResultsFunc = jasmine.createSpy('showMoreResultsFunc');
+            this.element = $compile(angular.element('<commit-changes-display additions="additions" show-more-results-func="showMoreResultsFunc(limit, offset)" deletions="deletions"></commit-changes-display>'))(scope);
+            this.controller = this.element.controller('commitChangesDisplay');
+
+            this.controller.index = 0;
+            this.controller.limit = 100;
+            this.controller.getMorePagedChanges();
+            expect(scope.showMoreResultsFunc).toHaveBeenCalledWith(100, 100);
+            expect(this.controller.index).toEqual(100);
+            expect(this.controller.limit).toEqual(100);
         });
     });
     describe('contains the correct html', function() {

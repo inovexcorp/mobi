@@ -22,7 +22,10 @@
  */
 var adminUsername = "admin"
 var adminPassword = "admin"
+
 var Onto1 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1.ttl'
+var Onto1e = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1e.ttl'  // has syntax issue
+var Onto1s = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-1s.ttl'  // same as test-local-imports-1
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
 
@@ -59,12 +62,23 @@ module.exports = {
     'Step 5: Upload an Ontology' : function (browser) {
         browser
             .setValue('input[type=file]', Onto1)
+
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto2)
+
             .click('upload-ontology-overlay div.modal-footer button.btn')
             .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
             .setValue('input[type=file]', Onto3)
+
+            .click('upload-ontology-overlay div.modal-footer button.btn')
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .setValue('input[type=file]', Onto1e)
+
+            .click('upload-ontology-overlay div.modal-footer button.btn')
+            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
+            .setValue('input[type=file]', Onto1s)
+
     },
 
     'Step 6: Submit all ontology files' : function (browser) {
@@ -79,9 +93,18 @@ module.exports = {
             .assert.elementNotPresent('div.modal-header')
             .waitForElementVisible('div.ontologies')
             .useXpath()
+            // check ontology list
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1.ttl")]]')
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
             .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
+            .assert.elementNotPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1e.ttl")]]')
+            .assert.elementNotPresent('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-1s.ttl")]]')
+            // check snackbar
+            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1.ttl")]]')
+            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-2.ttl")]]')
+            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-3.ttl")]]')
+            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1e.ttl")]]')
+            .assert.visible('//div[contains(@class, "snackbar-body")]//div[contains(@class, "item-details")]//h3[text()[contains(.,"test-local-imports-1s.ttl")]]')
             .useCss()
     },
 

@@ -126,7 +126,7 @@ module.exports = {
             .waitForElementVisible('//a[@class="nav-link active"]//span[text()[contains(.,"Changes")]]')
             .useCss()
             .waitForElementVisible('saved-changes-tab .expansion-panel p[title*="FirstClass"]')
-            .assert.containsText('saved-changes-tab .expansion-panel p[title*="FirstClass"]', 'First Class') // Verify Title
+            .assert.containsText('saved-changes-tab .expansion-panel p[title*="FirstClass"]', 'firstClass') // Verify Title
             .assert.containsText('saved-changes-tab .expansion-panel p[title*="FirstClass"] ~ small a', 'FirstClass') // Verify IRI
             .assert.hidden('saved-changes-tab .additions')
             .click('saved-changes-tab .expansion-panel p[title*="FirstClass"]')

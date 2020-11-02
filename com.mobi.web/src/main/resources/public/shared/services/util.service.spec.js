@@ -480,6 +480,41 @@ describe('Util service', function() {
         expect(utilSvc.getErrorMessage({statusText: ''})).toBe('Something went wrong. Please try again later.');
         expect(utilSvc.getErrorMessage({statusText: 'Test'})).toBe('Test');
     });
+    describe('should create a rejected promise with an error object', function() {
+        beforeEach(function() {
+            spyOn(utilSvc, 'getErrorDataObject').and.returnValue({'errorMessage': 'test', 'errorDetails': []});
+        });
+        it('unless the response was canceled', function() {
+            utilSvc.rejectErrorObject({status: -1}, 'test')
+                .then(() => {
+                    fail('Promise should have rejected.');
+                }, error => {
+                    expect(error).toEqual({'errorMessage': '', 'errorDetails': []});
+                });
+            scope.$apply();
+            expect(utilSvc.getErrorDataObject).not.toHaveBeenCalled();
+        });
+        it('successfully', function() {
+            utilSvc.rejectErrorObject({}, 'test')
+                .then(() => {
+                    fail('Promise should have rejected.');
+                }, error => {
+                    expect(error).toEqual({'errorMessage': 'test', 'errorDetails': []});
+                });
+            scope.$apply();
+            expect(utilSvc.getErrorDataObject).toHaveBeenCalledWith({}, 'test');
+        });
+    });
+    it('should retrieve an error object from a http response', function() {
+        expect(utilSvc.getErrorDataObject({data: {}}, 'default'))
+            .toEqual({'errorMessage': 'default', 'errorDetails': []});
+        expect(utilSvc.getErrorDataObject({}))
+             .toEqual({'errorMessage': 'Something went wrong. Please try again later.', 'errorDetails': []});
+        expect(utilSvc.getErrorDataObject({data: {errorMessage:''}}))
+            .toEqual({'errorMessage': 'Something went wrong. Please try again later.', 'errorDetails': []});
+        expect(utilSvc.getErrorDataObject({data: {errorMessage:'error'}}))
+            .toEqual({'errorMessage': 'error', 'errorDetails': []});
+    });
     it('should get correct statement predicates and objects for the provided id and array', function() {
         var array = [{
             '@id': 'id',
@@ -517,6 +552,17 @@ describe('Util service', function() {
             p: 'prop5', o: 'value5'
         }];
         expect(utilSvc.getPredicatesAndObjects(addition)).toEqual(expected);
+    });
+    it('should get correct object IRIs for the provided addition or deletion', function() {
+        var additions = [{
+            '@id': 'id',
+            prop1: 'value1',
+            prop2: [{'@id': 'iri1'}],
+            prop3: [{'@id': 'iri2'}, {'@id': 'iri3'}],
+            prop5: 'value5'
+        }];
+        var expected = ['iri1', 'iri2', 'iri3'];
+        expect(utilSvc.getObjIrisFromDifference(additions)).toEqual(expected);
     })
     it("should return the localname of the split IRI for the provided object's p property", function() {
         splitIRIFilter.and.returnValue({end: 'localname'});

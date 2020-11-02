@@ -44,15 +44,12 @@ import {
     mapValues,
     lowerCase,
     sortBy,
-    merge, 
+    merge,
     unset,
     head,
     forOwn,
     omit,
     pull,
-    pullAt,
-    result,
-    findLast,
     isEqual,
     findKey,
     tail,
@@ -60,9 +57,8 @@ import {
     join,
     replace,
     findIndex,
-    isObject, 
+    isObject,
     mergeWith,
-    indexOf,
     identity
 } from 'lodash';
 
@@ -185,7 +181,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             resolutions: {
                 additions: [],
                 deletions: []
-            }
+            },
+            startIndex: 0
         },
         dataPropertyRange: {},
         derivedConcepts: [],
@@ -302,7 +299,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * `uploadList` holds an array of upload objects which contain properties about the uploaded files.
      * The structure of the upload object is:
      * {
-     *     error: '',
+     *     error: {'errorMessage': '', 'errorDetails': []},
      *     id: '',
      *     promise: {},
      *     title: ''
@@ -614,10 +611,10 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      * Adds the error message to the list item with the identified id.
      *
      * @param {string} id The id of the upload item.
-     * @param {string} error The error message for the upload item.
+     * @param {object} error The error message for the upload item.
      */
-    self.addErrorToUploadItem = function(id, error) {
-        set(find(self.uploadList, {id}), 'error', error);
+    self.addErrorToUploadItem = function(id, errorObject) {
+        set(find(self.uploadList, {id}), 'error', errorObject);
     }
     /**
      * @ngdoc method
@@ -1002,11 +999,15 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 listItem.derivedConceptSchemes = get(response, 'derivedConceptSchemes', []);
                 listItem.derivedSemanticRelations = get(response, 'derivedSemanticRelations', []);
                 listItem.concepts.iris = {};
+                listItem.conceptSchemes.iris = {};
                 response.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, listItem.ontologyId));
+                response.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
+                forEach(get(response, 'importedIRIs'), iriList => {
+                    iriList.concepts.forEach(iri => addIri(listItem, 'concepts.iris', iri, iriList.id));
+                    iriList.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, iriList.id));
+                });
                 setHierarchyInfo(listItem.concepts, response, 'conceptHierarchy');
                 listItem.concepts.flat = self.flattenHierarchy(listItem.concepts, listItem);
-                listItem.conceptSchemes.iris = {};
-                response.conceptSchemes.forEach(iri => addIri(listItem, 'conceptSchemes.iris', iri, listItem.ontologyId));
                 setHierarchyInfo(listItem.conceptSchemes, response, 'conceptSchemeHierarchy');
                 listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes, listItem);
                 unset(listItem.editorTabStates.concepts, 'entityIRI');
@@ -1756,7 +1757,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
     self.openAt = function(flatHierarchy, entityIRI) {
         var path = get(find(flatHierarchy, {entityIRI}), 'path', []);
         if (path.length) {
-            var pathString = head(path);
+            var pathString : any = head(path);
             forEach(tail(initial(path)), pathPart => {
                 pathString += '.' + pathPart;
                 self.listItem.editorTabStates[self.getActiveKey()].open[pathString] = true;
@@ -1821,6 +1822,38 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 }
             }, $q.reject);
     }
+    /**
+     * @ngdoc method
+     * @name getMergeDifferences
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Updates self.listItem.merge with the updated additions and deletions for the provided commit information
+     *
+     * @param sourceCommitId {string} The string IRI of the source commit to get the difference
+     * @param targetCommitId {string} The string IRI of the target commit to get the difference
+     * @param limit {int} The limit for the paged difference
+     * @param offset {int} The offset for the paged difference
+     *
+     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     */
+    self.getMergeDifferences = function(sourceCommitId, targetCommitId, limit, offset) {
+        self.listItem.merge.startIndex = offset;
+        return cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
+        .then(response => {
+            if (!self.listItem.merge.difference) {
+                self.listItem.merge.difference = {
+                    additions: [],
+                    deletions: []
+                };
+            }
+            self.listItem.merge.difference.additions = concat(self.listItem.merge.difference.additions, response.data.additions);
+            self.listItem.merge.difference.deletions = concat(self.listItem.merge.difference.deletions, response.data.deletions);
+            var headers = response.headers();
+            self.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            return $q.when();
+        }, $q.reject);
+    }
     self.merge = function() {
         var sourceId = self.listItem.ontologyRecord.branchId;
         var checkbox = self.listItem.merge.checkbox;
@@ -1848,6 +1881,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             additions: [],
             deletions: []
         };
+        self.listItem.merge.startIndex = 0;
     }
     self.canModify = function() {
         if (!self.listItem.ontologyRecord.branchId) {

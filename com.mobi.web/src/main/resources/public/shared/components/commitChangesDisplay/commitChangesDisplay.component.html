@@ -30,17 +30,19 @@
             <statement-container ng-if="value.additions.length" additions>
                 <statement-display
                         ng-repeat="addition in value.additions | orderBy:dvm.util.getPredicateLocalName"
-                        predicate="addition.p" object="addition.o"></statement-display>
+                        predicate="addition.p" object="addition.o"
+                        entity-name-func="dvm.entityNameFunc"></statement-display>
             </statement-container>
             <statement-container ng-if="value.deletions.length" deletions>
                 <statement-display
                         ng-repeat="deletion in value.deletions | orderBy:dvm.util.getPredicateLocalName"
-                        predicate="deletion.p" object="deletion.o"></statement-display>
+                        predicate="deletion.p" object="deletion.o"
+                        entity-name-func="dvm.entityNameFunc"></statement-display>
             </statement-container>
         </div>
     </div>
     <div class="text-center">
-        <a ng-if="dvm.chunks !== dvm.index" ng-click="dvm.getMoreResults()">
+        <a ng-if="dvm.showMore" ng-click="dvm.getMorePagedChanges()">
             <i class="fa fa-fw fa-plus"></i><span>Load More</span>
         </a>
     </div>

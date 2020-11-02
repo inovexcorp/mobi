@@ -33,8 +33,8 @@
 
         <div class="changes-container">
             <span class="field-name">Changes</span>
-            <p ng-if="!dvm.resolve.additions.length && !dvm.resolve.deletions.length">(None)</p>
-            <commit-changes-display ng-if="dvm.resolve.additions.length || dvm.resolve.deletions.length" additions="dvm.resolve.additions" deletions="dvm.resolve.deletions" entity-name-func="dvm.resolve.entityNameFunc"></commit-changes-display>
+            <p ng-if="!dvm.additions.length && !dvm.deletions.length">(None)</p>
+            <commit-changes-display ng-if="dvm.additions.length || dvm.deletions.length" additions="dvm.additions" deletions="dvm.deletions" entity-name-func="dvm.getEntityName" show-more-results-func="dvm.retrieveMoreResults(limit, offset)" has-more-results="dvm.hasMoreResults"></commit-changes-display>
         </div>
     </form>
 </div>
