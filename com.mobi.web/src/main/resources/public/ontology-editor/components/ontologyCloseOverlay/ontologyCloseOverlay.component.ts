@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import './ontologyCloseOverlay.component.scss';
 
 const template = require('./ontologyCloseOverlay.component.html');
 
