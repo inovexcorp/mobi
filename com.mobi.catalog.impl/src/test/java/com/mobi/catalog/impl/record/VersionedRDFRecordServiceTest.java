@@ -92,6 +92,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -404,7 +405,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
         assertTrue(outputModel.containsAll(testRecord.getModel()));
         assertTrue(outputModel.containsAll(branch.getModel()));
         assertTrue(outputModel.containsAll(difference.getAdditions()));
@@ -434,7 +435,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
         assertTrue(outputModel.containsAll(testRecord.getModel()));
         assertFalse(outputModel.containsAll(branch.getModel()));
         assertFalse(outputModel.containsAll(difference.getDeletions()));
@@ -471,7 +472,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
         testRecord.removeBranch(doNotWriteBranch);
         assertTrue(outputModel.containsAll(testRecord.getModel()));
         assertTrue(outputModel.containsAll(branch.getModel()));

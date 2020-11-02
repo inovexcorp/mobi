@@ -77,6 +77,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
@@ -154,7 +155,7 @@ public class MappingRestTest extends MobiRestTestNg {
         rest.setConfigProvider(configProvider);
         rest.setCatalogManager(catalogManager);
 
-        mappingJsonld = IOUtils.toString(getClass().getResourceAsStream("/mapping.jsonld"));
+        mappingJsonld = IOUtils.toString(getClass().getResourceAsStream("/mapping.jsonld"), StandardCharsets.UTF_8);
 
         return new ResourceConfig()
                 .register(rest)

@@ -1,0 +1,167 @@
+@prefix : <http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology#> .
+@prefix cco: <http://www.ontologyrepository.com/CommonCoreOntologies/> .
+@prefix obo: <http://purl.obolibrary.org/obo/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology> .
+
+<http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology> rdf:type owl:Ontology ;
+                                                                            owl:versionIRI <http://www.ontologyrepository.com/CommonCoreOntologies/Mid/2019-08-29/EventOntology> ;
+                                                                            owl:imports <http://www.ontologyrepository.com/CommonCoreOntologies/Mid/InformationEntityOntology> ;
+                                                                            cco:code_license "The 3-Clause BSD License: https://opensource.org/licenses/BSD-3-Clause"^^xsd:string ;
+                                                                            cco:content_license "The Creative Commons BY 3.0 License: https://creativecommons.org/licenses/by/3.0/"^^xsd:string ;
+                                                                            cco:copyright "COPYRIGHT © 2015-2019 CUBRC, Inc."^^xsd:string ;
+                                                                            rdfs:comment "This ontology is designed to represent processual entities, especially those performed by agents, that occur within multiple domains."^^xsd:string ;
+                                                                            rdfs:label "Event Ontology"^^xsd:string ;
+                                                                            owl:versionInfo "Version 1.2"^^xsd:string .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/process_preceded_by
+cco:process_preceded_by rdf:type owl:ObjectProperty ;
+                        owl:inverseOf cco:process_precedes ;
+                        cco:definition "P preceded_by P' if and only if: given any process p that instantiates P at a time t, there is some process p' such that p' instantiates P' at time t', and t' is earlier than t."^^xsd:string ;
+                        cco:definition_source "Derived from the deprecated http://www.obofoundry.org/ro/ro.owl#preceded_by"^^xsd:string ;
+                        cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                        rdfs:label "process preceded by"^^xsd:string ;
+                        rdfs:seeAlso "http://purl.obolibrary.org/obo/BFO_0000062"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/process_precedes
+cco:process_precedes rdf:type owl:ObjectProperty ;
+                     cco:definition "Inverse of process preceded by."^^xsd:string ;
+                     cco:definition_source "Derived from the deprecated http://www.obofoundry.org/ro/ro.owl#precedes"^^xsd:string ;
+                     cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                     rdfs:label "process precedes"^^xsd:string ;
+                     rdfs:seeAlso "http://purl.obolibrary.org/obo/BFO_0000063"^^xsd:string .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/Acceleration
+cco:Acceleration rdf:type owl:Class ;
+                 rdfs:subClassOf obo:BFO_0000144 ,
+                                 [ rdf:type owl:Restriction ;
+                                   owl:onProperty cco:has_process_part ;
+                                   owl:someValuesFrom cco:Velocity
+                                 ] ;
+                 cco:definition "A Process Profile that is the rate of change of the Velocity of an object."^^xsd:string ;
+                 cco:definition_source "https://en.wikipedia.org/wiki/Acceleration"^^xsd:string ;
+                 cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                 rdfs:label "Acceleration"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/Act
+cco:Act rdf:type owl:Class ;
+        rdfs:subClassOf obo:BFO_0000015 ;
+        cco:definition "A Process in which at least one Agent plays a causative role."^^xsd:string ;
+        cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+        rdfs:label "Act"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfAdvising
+cco:ActOfAdvising rdf:type owl:Class ;
+                  rdfs:subClassOf cco:ActOfDirectiveCommunication ;
+                  cco:definition "An Act of Directive Communication performed by providing advice or counsel to another agent."^^xsd:string ;
+                  cco:definition_source "http://www.dictionary.com/browse/advising"^^xsd:string ;
+                  cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                  rdfs:label "Act of Advising"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfApologizing
+cco:ActOfApologizing rdf:type owl:Class ;
+                     rdfs:subClassOf cco:ActOfExpressiveCommunication ;
+                     cco:definition "An Act of Expressive Communication performed by acknowledging and expressing regret for a fault, shortcoming, or failure."^^xsd:string ;
+                     cco:definition_source "http://wordnetweb.princeton.edu/perl/webwn?s=apologizing"^^xsd:string ;
+                     cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                     rdfs:label "Act of Apologizing"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfAppraisal
+cco:ActOfAppraisal rdf:type owl:Class ;
+                   rdfs:subClassOf cco:ActOfMeasuring ;
+                   cco:definition "An Act of Measuring that involves evaluating, assessing, estimating, or judging the nature, value, importance, condition, or quality of something or someone."^^xsd:string ;
+                   cco:elucidation "In the context of an Act of Appraisal, the terms 'value', 'condition', and 'quality' do not have the same meanings as their counterparts that are defined in the Common Core Ontologies. For example, a knife may be appraised to be of high quality if it is sharp and sturdy or to be of inferior quality if it is dull or fragile."^^xsd:string ;
+                   cco:example_of_usage "a food critic rating the quality of a restaurant's ambiance, service, and food"^^xsd:string ,
+                                        "a mechanic assessing whether a damaged vehicle is repairable"^^xsd:string ,
+                                        "an insurance agent appraising the financial value of a building"^^xsd:string ;
+                   cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                   rdfs:comment "Note that, while most if not all Acts of Appraisal involve some estimating and many Acts of Estimation involve some appraising (i.e. these classes are not disjoint), neither class subsumes the other. For example, some Acts of Appraisal (e.g. a tax assessor appraising the value of a building) impart a normative element to the measured value while others (e.g. a gustatory appraisal that fresh green beans taste better than canned green beans) involve complete information. Furthermore, many Acts of Estimation (e.g. estimating the height of a tree) are concerned solely with determining a numerical value (as opposed to the nature, value, importance, condition, or quality)."^^xsd:string ;
+                   rdfs:label "Act of Appraisal"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfArrival
+cco:ActOfArrival rdf:type owl:Class ;
+                 rdfs:subClassOf cco:ActOfLocationChange ;
+                 cco:definition "An Act of Location Change that consists of the participating entity reaching its destination such that the larger Act of Location Change is completed."^^xsd:string ;
+                 cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                 rdfs:label "Act of Arrival"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfArtifactAssembly
+cco:ActOfArtifactAssembly rdf:type owl:Class ;
+                          rdfs:subClassOf cco:ActOfArtifactProcessing ;
+                          cco:definition "An Act of Artifact Processing wherein a new Artifact is created by fitting component parts together."^^xsd:string ;
+                          cco:example_of_usage "putting together a piece of furniture purchased from Ikea"^^xsd:string ;
+                          cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                          rdfs:comment "Many Acts of Manufacturing and Construction involve one or more Acts of Artifact Assembly, but Acts of Artifact Assembly can also occur in isolation from these activities."^^xsd:string ;
+                          rdfs:label "Act of Artifact Assembly"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfArtifactEmployment
+cco:ActOfArtifactEmployment rdf:type owl:Class ;
+                            rdfs:subClassOf cco:IntentionalAct ;
+                            cco:definition "An Intentional Act of using an Artifact."^^xsd:string ;
+                            cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                            rdfs:label "Act of Artifact Employment"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfArtifactModification
+cco:ActOfArtifactModification rdf:type owl:Class ;
+                              rdfs:subClassOf cco:ActOfArtifactProcessing ;
+                              cco:definition "An Act of Artifact Processing in which an existing Artifact is acted upon in a manner that changes, adds, or removes one or more of its Qualities, Dispositions, or Functions."^^xsd:string ;
+                              cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                              rdfs:comment "Excluded from this class are instances of role change or role creation such as the introduction of an artifact as a piece of evidence in a trial or the loading of artifacts onto a ship for transport."^^xsd:string ;
+                              rdfs:label "Act of Artifact Modification"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfArtifactProcessing
+cco:ActOfArtifactProcessing rdf:type owl:Class ;
+                            rdfs:subClassOf cco:IntentionalAct ;
+                            cco:definition "An Intentional Act of performing a series of mechanical or chemical operations on something in order to change or preserve it."^^xsd:string ;
+                            cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                            rdfs:label "Act of Artifact Processing"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfAssassination
+cco:ActOfAssassination rdf:type owl:Class ;
+                       rdfs:subClassOf cco:ActOfMurder ;
+                       cco:definition "An Act of Murder of a prominent person."^^xsd:string ;
+                       cco:definition_source "JC3IEDM-MIRD-DMWG-Edition_3.0.2_20090514"^^xsd:string ;
+                       cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                       rdfs:label "Act of Assassination"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfAssignment
+cco:ActOfAssignment rdf:type owl:Class ;
+                    rdfs:subClassOf cco:ActOfDeclarativeCommunication ;
+                    cco:definition "An Act of Declarative Communication in which rights held by one party (the assignor) are transferred to another party (the assignee) with regard to a particular entity as specified by the details of the assignment, which is often prescribed by a contract."^^xsd:string ;
+                    cco:definition_source "https://en.wikipedia.org/wiki/Assignment_%28law%29"^^xsd:string ;
+                    cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                    rdfs:label "Act of Assignment"^^xsd:string .
+
+
+###  http://www.ontologyrepository.com/CommonCoreOntologies/ActOfAssociation
+cco:ActOfAssociation rdf:type owl:Class ;
+                     rdfs:subClassOf cco:SocialAct ;
+                     cco:definition "A Social Act wherein an Agent unites with some other Agent in an Intentional Act, enterprise or business."^^xsd:string ;
+                     cco:definition_source "http://en.wiktionary.org/wiki/associate"^^xsd:string ;
+                     cco:is_curated_in_ontology "http://www.ontologyrepository.com/CommonCoreOntologies/Mid/EventOntology"^^xsd:string ;
+                     rdfs:label "Act of Association"^^xsd:string .

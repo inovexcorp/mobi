@@ -71,6 +71,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -120,7 +121,7 @@ public class ProvRestTest extends MobiRestTestNg {
         activityFactory = getRequiredOrmFactory(Activity.class);
         entityFactory = getRequiredOrmFactory(Entity.class);
 
-        provData = IOUtils.toString(getClass().getResourceAsStream("/prov-data.ttl"));
+        provData = IOUtils.toString(getClass().getResourceAsStream("/prov-data.ttl"), StandardCharsets.UTF_8);
         activityIRIs = IntStream.range(0, 10)
                 .mapToObj(i -> ACTIVITY_NAMESPACE + "Activity" + i)
                 .collect(Collectors.toList());

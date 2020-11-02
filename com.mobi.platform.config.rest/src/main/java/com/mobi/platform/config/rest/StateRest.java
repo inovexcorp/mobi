@@ -43,6 +43,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -145,8 +146,8 @@ public class StateRest {
                          String stateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
-            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(stateJson), "",
-                    RDFFormat.JSONLD));
+            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(stateJson, StandardCharsets.UTF_8),
+                    "", RDFFormat.JSONLD));
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
             }
@@ -213,8 +214,8 @@ public class StateRest {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
                 throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
             }
-            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
-                    RDFFormat.JSONLD));
+            Model newState = transformer.mobiModel(Rio.parse(
+                    IOUtils.toInputStream(newStateJson, StandardCharsets.UTF_8), "", RDFFormat.JSONLD));
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
             }
