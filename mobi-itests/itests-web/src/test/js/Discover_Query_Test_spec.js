@@ -63,7 +63,7 @@ module.exports = {
             .useXpath()
             .assert.visible('//div[contains(@class, "dataset-info")]//h3[text()[contains(.,"Event ontology data")]]')
     },
-    'Step 11: Click Upload data' : function (browser) {
+    'Step 6: Click Upload data' : function (browser) {
         browser
             .click('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//button')
             .waitForElementVisible('//div[contains(@class, "list-group")]//action-menu//div[contains(@class, "dropdown")]//div[contains(@class, "dropdown-menu")]//a[contains(@class, "dropdown-item")]')
@@ -75,7 +75,7 @@ module.exports = {
             .setValue('//input[@type="file"]', Onto1)
             .assert.visible('//file-input//div[@class="file-input form-group"]//div//span[text()[contains(.,"EventOntology.ttl")]]')
     },
-    'Step 6: Submit data' : function (browser) {
+    'Step 7: Submit data' : function (browser) {
         browser
             .click('//button[text()[contains(.,"Submit")]]')
             .waitForElementVisible('//div[@id="toast-container"]')
@@ -83,13 +83,13 @@ module.exports = {
             .waitForElementNotPresent('//div[contains(@class, "ng-animate")]')
             .waitForElementNotPresent('//div[contains(@class,"toast")]')
     },
-    'Step 7: Navigate to Discover' : function (browser) {
+    'Step 8: Navigate to Discover' : function (browser) {
         browser
             .click('//div//ul//a[@class="nav-link"][@href="#/discover"]')
             .waitForElementVisible('//discover-page')
             .assert.visible('//material-tabset')
     },
-    'Step 8: Navigate to Discover Query tab' : function (browser) {
+    'Step 9: Navigate to Discover Query tab' : function (browser) {
         browser
             .click('//material-tabset//ul[contains(@class,"nav-tabs")]//li//a//span[text()[contains(., "Query")]]')
             .waitForElementVisible('//discover-tabset//query-tab')
@@ -99,7 +99,7 @@ module.exports = {
             .assert.visible('//query-tab//form//div[contains(@class, "discover-query")]')
             .assert.not.visible('//query-tab//form//div[contains(@class, "yasr")]')
     },
-    'Step 9: Submit query' : function (browser) {
+    'Step 10: Submit default query' : function (browser) {
         browser
             .click('//query-tab//form//dataset-form-group//div[contains(@class, "dropdown")]')
             .waitForElementVisible(dropDownSelector)
@@ -116,6 +116,10 @@ module.exports = {
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//table//tbody')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]')
             .assert.visible('//query-tab//form//div[contains(@class, "yasr")]//div[contains(@class, "dataTable")]//div[contains(@class, "dataTables_paginate")]')
+            .expect.elements('//tbody/tr').count.to.equal(10)
+    },
+    'Step 11: Submit custom query' : function (browser) {
+        browser
             .execute(function updateYasqe() {
                 var value = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n\
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n\
