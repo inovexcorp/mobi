@@ -81,7 +81,7 @@
         <ehcache.version>3.3.1</ehcache.version>
         <javax.cache.version>1.0.0</javax.cache.version>
         <eclipse.persistence.version>2.6.1</eclipse.persistence.version>
-        <jose-jwt.version>4.41.3</jose-jwt.version>
+        <jose-jwt.version>7.9</jose-jwt.version>
     </properties>
 
     <dependencyManagement>
