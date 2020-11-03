@@ -39,22 +39,18 @@ before_script:
   - echo "$MESSAGE - $VERSION"
   - cp /m2/settings.xml ~/.m2/settings.xml
 
-# For merge requests, just do an initial test
+# For merge requests, just do an unit tests
 unit_test:
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
   only:
-    - branches
-  except:
     - merge_requests
-    - master
 
 # For commits to master and releases do a full test
 full_test:
   stage: test
   only: 
-    - merge_requests
     - master
     - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
@@ -85,7 +81,7 @@ deploy_artifacts:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
   script:
-    - mvn $MAVEN_CLI_OPTS deploy
+    - mvn $MAVEN_CLI_OPTS deploy #TODO Skip unit tests and build
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
 
