@@ -66,7 +66,7 @@
     "@angular/upgrade": "^5.2.11",
     "@uirouter/angular-hybrid": "^6.0.0",
     "@triply/yasgui": "^4.0.116",
-    "angular": "^1.7.7",
+    "angular": "^1.8.0",
     "angular-animate": "1.7.7",
     "angular-aria": "1.7.7",
     "angular-cookies": "1.7.7",
