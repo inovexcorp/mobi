@@ -57,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -88,15 +89,15 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         try {
             GET_GRAPHS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/get-graphs.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_NAMED_GRAPHS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/get-named-graphs.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_DEFAULT_NAMED_GRAPHS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/get-default-named-graphs.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

@@ -525,7 +525,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     private JSONObject getResource(String path) throws Exception {
-        return JSONObject.fromObject(IOUtils.toString(getClass().getResourceAsStream(path)));
+        return JSONObject.fromObject(IOUtils.toString(getClass().getResourceAsStream(path), StandardCharsets.UTF_8));
     }
 
     private String getResourceString(String path) throws IOException {
@@ -533,7 +533,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     }
 
     private JSONArray getResourceArray(String path) throws Exception {
-        return JSONArray.fromObject(IOUtils.toString(getClass().getResourceAsStream(path)));
+        return JSONArray.fromObject(IOUtils.toString(getClass().getResourceAsStream(path), StandardCharsets.UTF_8));
     }
 
     private void assertGetInProgressCommitIRI(boolean hasInProgressCommit) {

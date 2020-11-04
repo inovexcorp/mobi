@@ -31,6 +31,7 @@ import org.apache.http.message.BasicNameValuePair;
 import com.mobi.rest.util.jaxb.Links;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.core.MultivaluedMap;
@@ -50,7 +51,7 @@ public class LinksUtils {
             }
         });
 
-        return URLEncodedUtils.format(params, '&', Charset.forName("UTF-8"));
+        return URLEncodedUtils.format(params, '&', StandardCharsets.UTF_8);
     }
 
     /**

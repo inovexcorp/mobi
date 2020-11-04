@@ -30,6 +30,7 @@ import com.nimbusds.jwt.SignedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 import javax.security.auth.Subject;
@@ -60,6 +61,17 @@ public class SimpleTokenLoginModule extends TokenLoginModule<TokenCallback> {
     protected void verifyUser(String user, TokenCallback callback) throws LoginException {
         if (!engineManager.userExists(user)) {
             throw new FailedLoginException("User " + user + " does not exist");
+        }
+    }
+
+    @Override
+    protected String getUsername(SignedJWT signedJWT) throws LoginException {
+        try {
+            return signedJWT.getJWTClaimsSet().getSubject();
+        } catch (ParseException e) {
+            String msg = "Problem parsing JWT";
+            LOG.debug(msg);
+            throw new FailedLoginException(msg);
         }
     }
 

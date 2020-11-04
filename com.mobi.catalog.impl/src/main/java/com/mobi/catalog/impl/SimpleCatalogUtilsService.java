@@ -84,6 +84,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -126,31 +127,31 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         try {
             GET_PAGED_CHANGES = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-paged-changes.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-in-progress-commit.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_COMMIT_ENTITY_CHAIN = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-entity-chain.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-new-latest-version.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_COMMIT_PATHS = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-paths.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             COMMIT_IN_RECORD = IOUtils.toString(
                     SimpleCatalogUtilsService.class.getResourceAsStream("/commit-in-record.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

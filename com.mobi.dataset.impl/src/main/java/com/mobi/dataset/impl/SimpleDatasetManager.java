@@ -58,6 +58,7 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.RepositoryResult;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -83,11 +84,11 @@ public class SimpleDatasetManager implements DatasetManager {
         try {
             FIND_DATASETS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/find-datasets.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             FIND_DATASET_RECORDS_QUERY = IOUtils.toString(
                     SimpleDatasetManager.class.getResourceAsStream("/find-dataset-records.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
