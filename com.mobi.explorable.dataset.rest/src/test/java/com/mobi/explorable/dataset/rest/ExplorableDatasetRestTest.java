@@ -82,6 +82,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -337,7 +338,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         //Setup:
         String otherClassId = "http://mobi.com/ontologies/uhtc/CrystalStructure";
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-instance-details.json")));
+                .getResourceAsStream("/expected-instance-details.json"), StandardCharsets.UTF_8));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(otherClassId) + "/instance-details").request().get();
@@ -475,7 +476,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
     public void getClassPropertyDetailsTest() throws Exception {
         //Setup:
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-class-property-details.json")));
+                .getResourceAsStream("/expected-class-property-details.json"), StandardCharsets.UTF_8));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
@@ -492,7 +493,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
     public void getClassPropertyDetailsWhenNotFoundInOntologyTest() throws Exception {
         //Setup:
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-class-property-details.json")));
+                .getResourceAsStream("/expected-class-property-details.json"), StandardCharsets.UTF_8));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(MISSING_ID) + "/property-details").request().get();
@@ -548,7 +549,7 @@ public class ExplorableDatasetRestTest extends MobiRestTestNg {
         when(ontology2.getTupleQueryResults(anyString(), anyBoolean())).thenReturn(new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
         when(ontologyManager.retrieveOntology(vf.createIRI(ontologyId), vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology2));
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-class-property-details.json")));
+                .getResourceAsStream("/expected-class-property-details.json"), StandardCharsets.UTF_8));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();

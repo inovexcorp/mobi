@@ -84,6 +84,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -145,83 +146,83 @@ public class SimpleOntology implements Ontology {
         try {
             GET_SUB_CLASSES_OF = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-classes-of.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CLASSES_FOR = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-classes-for.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_PROPERTIES_FOR = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-properties-for.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_SUB_DATATYPE_PROPERTIES_OF = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-datatype-properties-of.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_SUB_OBJECT_PROPERTIES_OF = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-object-properties-of.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CLASSES_WITH_INDIVIDUALS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-classes-with-individuals.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             SELECT_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-entity-usages.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             CONSTRUCT_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/construct-entity-usages.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-concept-relationships.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CONCEPT_SCHEME_RELATIONSHIPS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-concept-scheme-relationships.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-search-results.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CLASS_DATA_PROPERTIES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-class-data-properties.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CLASS_OBJECT_PROPERTIES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-class-object-properties.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ALL_ANNOTATIONS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-annotations.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ONTOLOGY_ANNOTATIONS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-ontology-annotations.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_INDIVIDUALS_OF_TYPE = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-individuals-of-type.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ALL_NO_DOMAIN_OBJECT_PROPERTIES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-no-domain-object-properties.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ALL_NO_DOMAIN_DATA_PROPERTIES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-no-domain-data-properties.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ALL_INDIVIDUALS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-all-individuals.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

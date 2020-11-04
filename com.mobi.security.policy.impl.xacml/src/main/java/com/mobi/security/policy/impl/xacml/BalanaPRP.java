@@ -71,6 +71,7 @@ import org.wso2.balana.finder.PolicyFinderResult;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -190,7 +191,7 @@ public class BalanaPRP extends PolicyFinderModule implements PRP<BalanaPolicy> {
                                 vf.createIRI(BinaryFile.retrievalURL_IRI), null);
                         VirtualFile file = vfs.resolveVirtualFile(statements.iterator().next().getObject()
                                 .stringValue());
-                        String policyStr = IOUtils.toString(file.readContent(), "UTF-8");
+                        String policyStr = IOUtils.toString(file.readContent(), StandardCharsets.UTF_8);
                         cache.get().put(policyId.stringValue(), new BalanaPolicy(policyStr, vf));
                     } catch (IOException e) {
                         throw new MobiException("Error retrieving policy from VFS.", e);

@@ -86,6 +86,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -796,7 +797,7 @@ public class DelimitedRestTest extends MobiRestTestNg {
     }
 
     private List<String> getCsvResourceLines(String fileName) throws Exception {
-        return IOUtils.readLines(getClass().getClassLoader().getResourceAsStream(fileName));
+        return IOUtils.readLines(getClass().getClassLoader().getResourceAsStream(fileName), StandardCharsets.UTF_8);
     }
 
     private List<String> getExcelResourceLines(String fileName) {

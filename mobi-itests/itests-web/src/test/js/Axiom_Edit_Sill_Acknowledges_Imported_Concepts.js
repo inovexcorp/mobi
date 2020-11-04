@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 var vocab = process.cwd()+ '/src/test/resources/ontologies/single-concept-vocab.ttl'
 var Onto2 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-2.ttl'
 var Onto3 = process.cwd()+ '/src/test/resources/ontologies/test-local-imports-3.ttl'
@@ -30,72 +30,19 @@ var skosOnt = process.cwd()+ '/src/test/resources/ontologies/skos.rdf'
 module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+    'Step 1: Login and navigate to Ontology Editor' : function (browser) {
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: check for visibility of home elements' : function(browser) {
-        browser
-            .waitForElementVisible('.home-page')
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, vocab, Onto2, Onto3, skosOnt)
     },
 
-    'Step 3: navigate to the Ontology Editor page' : function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
+    'Step 3: Open test-local-imports-2 Ontology' : function (browser) {
+        browser.globals.open_ontology(browser, Onto2)
     },
 
-    'Step 4: click upload ontology' : function (browser) {
-        browser
-            .waitForElementNotPresent('div.spinner')
-            .waitForElementVisible('div.btn-container button')
-            .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
-    },
-
-    'Step 5: Upload an Ontology' : function (browser) {
-        browser
-            .setValue('input[type=file]', vocab)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto2)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', Onto3)
-            .click('upload-ontology-overlay div.modal-footer button.btn')
-            .waitForElementNotPresent('upload-ontology-overlay div.modal-header button.close span')
-            .setValue('input[type=file]', skosOnt)
-    },
-
-    'Step 6: Submit all ontology files' : function (browser) {
-        browser
-            .waitForElementVisible('upload-ontology-overlay')
-            .click('xpath', '//button[text()[contains(.,"Submit All")]]')
-    },
-
-    'Step 7: Validate Ontology Appearance' : function (browser) {
-        browser
-            .waitForElementVisible('div.ontologies')
-            .assert.elementNotPresent('div.modal-header')
-            .waitForElementVisible('div.ontologies')
-            .useXpath()
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"single-concept-vocab.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-2.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"test-local-imports-3.ttl")]]')
-            .assert.visible('//div[contains(@class, "list-group")]//div[text()[contains(.,"skos.rdf")]]')
-            .useCss()
-    },
-
-    'Step 8: Click on Ontology called “test-local-imports-2.ttl' : function (browser) {
-            browser
-                .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-2.ttl")]]')
-    },
-
-    'Step 9: Validate Ontology Imports Appearance' : function (browser) {
+    'Step 4: Validate Ontology Imports Appearance' : function (browser) {
             browser
                 .waitForElementVisible('.imports-block')
                 .useXpath()
@@ -104,7 +51,7 @@ module.exports = {
                 .assert.not.elementPresent('//imports-block//div[contains(@class, "indirect-import-container")]//p//a[text()[contains(.,"http://www.w3.org/2004/02/skos/core")]]')
     },
 
-    'Step 10: Add a vocab as an import': function (browser) {
+    'Step 5: Add a vocab as an import': function (browser) {
             browser
                 .useCss()
                 .click('.imports-block a.fa-plus')
@@ -123,7 +70,7 @@ module.exports = {
                 .assert.visible('//imports-block//p//a[text()[contains(.,"http://mobi.com/ontology/single-concept-vocab")]]');
     },
 
-    'Step 11: Commit Changes': function(browser) {
+    'Step 6: Commit Changes': function(browser) {
             browser
                 .useCss()
                 .moveToElement('circle-button-stack .base-btn.fa-plus', 0, 0)
@@ -138,27 +85,27 @@ module.exports = {
                 .waitForElementNotPresent('commit-overlay .modal-header h3', 5000)
     },
 
-    'Step 12: Click the concepts tab' : function (browser) {
+    'Step 7: Click the concepts tab' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
     },
 
-    'Step 13: Check for Imported Concept' : function (browser) {
+    'Step 8: Check for Imported Concept' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]')
                 .assert.visible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]//ancestor::div[contains(@class, "imported")]');
     },
 
-    'Step 14: Click the properties tab' : function (browser) {
+    'Step 9: Click the properties tab' : function (browser) {
             browser
                 .useXpath()
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Properties")]]')
     },
 
-    'Step 15: Check for Add Subproperty Axiom to Object Property' : function (browser) {
+    'Step 10: Check for Add Subproperty Axiom to Object Property' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Object Properties")]]')
@@ -187,14 +134,14 @@ module.exports = {
                 .waitForElementNotVisible('//axiom-overlay')
     },
 
-    'Step 16: Click the concepts tab' : function (browser) {
+    'Step 11: Click the concepts tab' : function (browser) {
             browser
                 .useXpath()
                 .waitForElementVisible('//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
                 .click('xpath', '//div[contains(@class, "material-tabset")]//li[contains(@class, "nav-item")]//span[text()[contains(., "Concepts")]]')
     },
 
-    'Step 17: Check for Imported Concept' : function (browser) {
+    'Step 12: Check for Imported Concept' : function (browser) {
                 browser
                     .useXpath()
                     .waitForElementVisible('//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]')
