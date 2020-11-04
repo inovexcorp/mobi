@@ -81,7 +81,7 @@ deploy_artifacts:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
   script:
-    - mvn $MAVEN_CLI_OPTS deploy #TODO Skip unit tests and build
+    - mvn $MAVEN_CLI_OPTS deploy #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
 
