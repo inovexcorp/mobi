@@ -83,7 +83,7 @@ deploy_artifacts:
   script:
     - mvn $MAVEN_CLI_OPTS deploy #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
     - cd rdf-orm/rdf-orm-gradle-plugin
-    - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
+    - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$INOVEX_USERNAME -PnexusPassword=$INOVEX_PASSWORD
 
 artifactory_release:
   stage: deploy
