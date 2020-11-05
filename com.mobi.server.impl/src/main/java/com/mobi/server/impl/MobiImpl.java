@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -72,7 +73,7 @@ public class MobiImpl implements Mobi {
         try {
             PRODUCT_ID = IOUtils.toString(
                     MobiImpl.class.getResourceAsStream("/product/prod_id.txt"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             ).trim();
         } catch (IOException | NullPointerException e) {
             LOGGER.debug("Product ID is not configured");

@@ -173,7 +173,7 @@ describe('Commit History Table component', function() {
             this.headers = {'has-more-results': 'false'};
             this.controller.openCommitOverlay(this.commitId);
             scope.$apply();
-            expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, recordId: this.recordId}, undefined, 'lg');
+            expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, ontRecordId: this.recordId}, undefined, 'lg');
         });
         describe('should get the list of commits', function() {
             beforeEach(function() {
@@ -337,6 +337,6 @@ describe('Commit History Table component', function() {
         scope.$digest();
         var id = angular.element(this.element.querySelectorAll('table tr td.commit-id a')[0]);
         id.triggerHandler('click');
-        expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, recordId: this.recordId}, undefined, 'lg');
+        expect(modalSvc.openModal).toHaveBeenCalledWith('commitInfoOverlay', {commit: {id: this.commitId}, ontRecordId: this.recordId}, undefined, 'lg');
     });
 });

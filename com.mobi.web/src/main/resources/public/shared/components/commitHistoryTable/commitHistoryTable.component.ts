@@ -111,7 +111,7 @@ function commitHistoryTableComponentCtrl($scope, httpService, catalogManagerServ
     dvm.openCommitOverlay = function(commitId) {
         modalService.openModal('commitInfoOverlay', {
             commit: find(dvm.commits, {id: commitId}),
-            recordId: dvm.recordId
+            ontRecordId: dvm.recordId
         }, undefined, 'lg');
     }
     dvm.getCommits = function() {
