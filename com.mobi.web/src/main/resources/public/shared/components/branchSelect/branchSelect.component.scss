@@ -23,40 +23,17 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.request-branch-select {
-    display: flex;
-    flex-direction: column;
-
-    .form-container {
-        text-align: center;
-
-
-        .branch-select-form {
-            .form-control-static {
-                padding: 0;
-                word-break: break-all;
-            }
-            .ui-select-toggle {
-                width: 100%;
-            }
-            input.ui-select-search {
-                width: 100% !important;
-
-                &.ng-hide {
-                    display: block !important;
-                    visibility: hidden;
-                    height: 0;
-                    border: 0;
-                    padding: 0;
-                }
-            }
-            .select-branch {
-                // margin: 0 5px;
-                text-overflow: ellipsis;
-            }
-        }
+.branch-select{
+    .ui-select-match-text span{
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 40px;
     }
-    .commit-difference-tabset {
-        margin-top: 20px;
+    .ui-select-toggle > .btn.btn-link{
+        margin-right: 10px;
+        top: 6px;
+        position: absolute;
+        right: 10px;
     }
 }

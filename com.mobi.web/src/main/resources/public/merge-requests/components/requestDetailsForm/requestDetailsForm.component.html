@@ -24,9 +24,9 @@
     <div class="details-form-container w-100 row">
         <div class="col-8 offset-2">
             <div class="summary-line">
-                <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}}</strong> into 
-                <strong>Branch: {{dvm.util.getDctermsValue(dvm.state.requestConfig.targetBranch, 'title')}}</strong> in 
-                <strong>{{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}</strong>
+                <strong> Branch: </strong> {{dvm.util.getDctermsValue(dvm.state.requestConfig.sourceBranch, 'title')}} <strong> into Branch: </strong>
+                {{dvm.util.getDctermsValue(dvm.state.requestConfig.targetBranch, 'title')}} <strong> in Ontology:</strong> 
+                {{dvm.util.getDctermsValue(dvm.state.requestConfig.record, 'title')}}
             </div>
             <form>
                 <text-input bind-model="dvm.state.requestConfig.title" change-event="dvm.state.requestConfig.title = value" display-text="'Title'" required="true"></text-input>

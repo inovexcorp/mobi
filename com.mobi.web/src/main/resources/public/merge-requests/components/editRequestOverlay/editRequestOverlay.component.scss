@@ -32,6 +32,7 @@ edit-request-overlay {
         .form-control-static {
             padding: 0;
             flex-grow: unset;
+            word-break: break-word;
         }
         .ui-select-toggle {
             width: 100%;
@@ -50,6 +51,11 @@ edit-request-overlay {
         .select-branch {
             margin: 0 25px 0px 5px;
             box-sizing: content-box;
+        }
+    }
+    form{
+        .checkbox .form-check-label{
+            word-break: break-all;
         }
     }
 }
