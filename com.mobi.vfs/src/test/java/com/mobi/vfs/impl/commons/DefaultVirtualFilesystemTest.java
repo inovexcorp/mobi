@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class DefaultVirtualFilesystemTest extends TestCase {
         writeFileRelative = "./testFile.txt";
         writeFileNestedRelative = "./test/nested/directory/testFile.txt";
         testFileInputStream = DefaultVirtualFilesystemTest.class.getResourceAsStream("/test.txt");
-        fileContents = IOUtils.toString(DefaultVirtualFilesystemTest.class.getResourceAsStream("/test.txt"), "UTF-8");
+        fileContents = IOUtils.toString(DefaultVirtualFilesystemTest.class.getResourceAsStream("/test.txt"), StandardCharsets.UTF_8);
         fs = new SimpleVirtualFilesystem();
 
         Map<String, Object> config = new HashMap<>();

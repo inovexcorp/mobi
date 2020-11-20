@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -96,7 +97,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         try {
             RECORD_NO_POLICY_QUERY = IOUtils.toString(
                     AbstractVersionedRDFRecordService.class.getResourceAsStream("/record-no-policy.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -183,7 +184,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                     MASTER_BRANCH_IRI_BINDING};
             String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
                     masterBranchId.stringValue()};
-            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
+            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
                     search, replace);
 
             return addPolicy(recordPolicy);
@@ -206,7 +207,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             String[] replace = {user.stringValue(), recordPolicyResource.stringValue(), encodedRecordIRI};
             InputStream policyPolicyStream = AbstractVersionedRDFRecordService.class
                     .getResourceAsStream("/policyPolicy.xml");
-            String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, "UTF-8"),
+            String policyPolicy = StringUtils.replaceEach(IOUtils.toString(policyPolicyStream, StandardCharsets.UTF_8),
                     search, replace);
             addPolicy(policyPolicy);
         } catch (IOException e) {

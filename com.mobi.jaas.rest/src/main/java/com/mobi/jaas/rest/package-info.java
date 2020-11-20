@@ -1,4 +1,4 @@
-@Version("2.2.2.${build}")
+@Version("2.3.0.${build}")
 
 package com.mobi.jaas.rest;
 

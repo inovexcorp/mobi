@@ -51,6 +51,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.cache.Cache;
@@ -78,7 +79,7 @@ public abstract class AbstractOntologyManager implements OntologyManager  {
         try {
             FIND_ONTOLOGY = IOUtils.toString(
                     AbstractOntologyManager.class.getResourceAsStream("/find-ontology.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

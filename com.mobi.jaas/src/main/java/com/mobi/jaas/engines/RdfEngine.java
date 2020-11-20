@@ -71,6 +71,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -118,23 +119,23 @@ public class RdfEngine implements Engine {
         try {
             GET_USERS_QUERY = IOUtils.toString(
                     RdfEngine.class.getResourceAsStream("/get_users.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_GROUPS_QUERY = IOUtils.toString(
                     RdfEngine.class.getResourceAsStream("/get_groups.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_USER_ROLES_QUERY = IOUtils.toString(
                     RdfEngine.class.getResourceAsStream("/get_user_roles.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_USER_IRI = IOUtils.toString(
                     RdfEngine.class.getResourceAsStream("/get_user_iri.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_GROUP_IRI = IOUtils.toString(
                     RdfEngine.class.getResourceAsStream("/get_group_iri.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

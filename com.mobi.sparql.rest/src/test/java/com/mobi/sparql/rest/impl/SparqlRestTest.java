@@ -72,6 +72,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -156,9 +157,9 @@ public class SparqlRestTest extends MobiRestTestNg {
         DATASET_ID = "http://example.com/datasets/0";
 
         ALL_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
-                .getResourceAsStream("all_query.rq")));
+                .getResourceAsStream("all_query.rq"), StandardCharsets.UTF_8));
         CONSTRUCT_QUERY = ResourceUtils.encode(IOUtils.toString(getClass().getClassLoader()
-                .getResourceAsStream("construct_query.rq")));
+                .getResourceAsStream("construct_query.rq"), StandardCharsets.UTF_8));
 
         fileTypesMimes = new LinkedHashMap<>();
         constructFileTypesMimes = new LinkedHashMap<>();

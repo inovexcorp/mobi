@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -106,7 +107,7 @@ public class SimpleEmailService implements EmailService {
             if (!templateFile.isAbsolute()) {
                 templateFile = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
             }
-            emailTemplate = FileUtils.readFileToString(templateFile, "UTF-8");
+            emailTemplate = FileUtils.readFileToString(templateFile, StandardCharsets.UTF_8);
             Bundle bundle = bundleContext.getBundle();
             logo = bundle.getResource("mobi-primary-logo-cropped.png");
         } catch (IOException e) {

@@ -52,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,9 +85,10 @@ public class SimpleStateManager implements StateManager {
     static {
         try {
             GET_STATES_QUERY = IOUtils.toString(
-                    SimpleStateManager.class.getResourceAsStream("/get-states.rq"), "UTF-8");
+                    SimpleStateManager.class.getResourceAsStream("/get-states.rq"), StandardCharsets.UTF_8);
             GET_APPLICATION_STATES_QUERY = IOUtils.toString(
-                    SimpleStateManager.class.getResourceAsStream("/get-application-states.rq"), "UTF-8");
+                    SimpleStateManager.class.getResourceAsStream("/get-application-states.rq"),
+                    StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new MobiException(e);
         }

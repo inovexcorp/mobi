@@ -29,6 +29,7 @@ const template = require('./mergeRequestTabset.component.html');
 /**
  * @ngdoc component
  * @name merge-requests.component:mergeRequestTabset
+ * @requires shared.service:mergeRequestsStateService
  *
  * @description
  * `mergeRequestTabset` is a component which creates a div containing a
@@ -48,51 +49,20 @@ const mergeRequestTabsetComponent = {
         updateRequest: '&'
     },
     controllerAs: 'dvm',
-    controller: mergeRequestTabsetComponentCtrl,
+    controller: mergeRequestTabsetComponentCtrl
 };
 
-mergeRequestTabsetComponentCtrl.$inject = ['catalogManagerService', 'utilService'];
+mergeRequestTabsetComponentCtrl.$inject = ['mergeRequestsStateService'];
 
-function mergeRequestTabsetComponentCtrl(catalogManagerService, utilService) {
+function mergeRequestTabsetComponentCtrl(mergeRequestsStateService) {
     var dvm = this;
-    var cm = catalogManagerService;
-    var util = utilService;
-    dvm.additions = {};
-    dvm.deletions = {};
-    dvm.hasMoreResults = false;
+    dvm.state = mergeRequestsStateService;
 
     dvm.tabs = {
         discussion: true,
         changes: false,
         commits: false
     };
-    dvm.$onChanges = function(changesObj) {
-        if (changesObj.request && dvm.request.difference) { 
-            dvm.setInitialDifference();
-        }
-    }
-    dvm.setInitialChangesTab = function(value) { // When switching back to this tab we need to reset dvm.additions and dvm.deletions because they only have the current page
-        dvm.setInitialDifference();
-        dvm.tabs.changes = value;
-    }
-    dvm.setInitialDifference = function() {
-        dvm.additions = dvm.request.difference.additions;
-        dvm.deletions = dvm.request.difference.deletions;
-        dvm.hasMoreResults = dvm.request.difference.hasMoreResults;
-    }
-    dvm.retrieveMoreResults = function(limit, offset) {
-        cm.getDifference(dvm.request.sourceCommit, dvm.request.targetCommit, limit, offset)
-            .then(response => {
-                dvm.additions = response.data.additions;
-                dvm.deletions = response.data.deletions;
-                var headers = response.headers();
-                dvm.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-            }, errorMessage => {
-                if (errorMessage) {
-                    util.createErrorToast(errorMessage);
-                }
-            });
-    }
 }
 
 export default mergeRequestTabsetComponent;

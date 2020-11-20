@@ -35,7 +35,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import javax.annotation.Nonnull;
 
@@ -121,9 +120,9 @@ public class MobiStringUtils {
         String replaceWith = "xml:lang=\"" + languageSuffix + "\"";
         String content = StringUtils.replace(outputStream.toString(), toReplace, replaceWith);
         try {
-            result.write(content.getBytes(Charset.forName("UTF-8")));
+            result.write(content.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            throw new MobiOntologyException("Error replacing language tag in output stream!", e);
+            throw new MobiOntologyException("Error replacing languagetag in output stream!", e);
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
@@ -141,7 +140,7 @@ public class MobiStringUtils {
         String content = StringUtils.replace(outputStream.toString(), signature,"");
 
         try {
-            result.write(content.getBytes(Charset.forName("UTF-8")));
+            result.write(content.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new MobiOntologyException("Error removing owl generator signature!", e);
         } finally {

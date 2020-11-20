@@ -31,6 +31,7 @@ import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiWebException;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.web.security.util.RestSecurityUtils;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
@@ -91,38 +92,34 @@ public class AuthRest {
     }
 
     /**
-     * Retrieves the current User session as a JSON response. If there is no User session, returns an anonymous User
-     * session.
+     * Retrieves the current User username as a plaintext response. If there is no User session, returns an empty
+     * response representing an anonymous User session.
      *
-     * @return a JSON response representing the current User session
+     * @return a plaintext response with the current User's username
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation("Gets the current user token")
     public Response getCurrentUser(@Context ContainerRequestContext context) {
-        String token = tokenManager.getTokenString(context);
-        Optional<SignedJWT> tokenOptional = tokenManager.verifyToken(token);
-        if (tokenOptional.isPresent()) {
-            log.debug("Token found and verified.");
-            log.debug("Writing payload to response.");
-            SignedJWT signedToken = tokenOptional.get();
-            return Response.ok(signedToken.getPayload().toString()).build();
+        Optional<String> optUsername = RestUtils.optActiveUsername(context);
+        if (optUsername.isPresent()) {
+            log.debug("Found username in request headers");
+            return Response.ok(optUsername.get()).build();
         } else {
-            log.debug("Token missing or unverified. Generating unauthenticated token.");
+            log.debug("No username found in request headers. Generating unauthenticated token.");
             SignedJWT signedToken = tokenManager.generateUnauthToken();
-            log.debug("Writing payload to response.");
-            return createResponse(signedToken);
+            return createResponse(signedToken, null);
         }
     }
 
     /**
      * Attempts to login to Mobi using the provided username and password and create a new session. If successful,
-     * returns the new User session as a JSON response.
+     * returns the new User username as a plaintext response.
      *
-     * @return a JSON response representing the newly created User session
+     * @return a plaintext response with the newly logged in User's username
      */
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation("Logs in into Mobi creating a new token")
     public Response login(@Context ContainerRequestContext context,
                    @QueryParam("username") String username,
@@ -147,30 +144,36 @@ public class AuthRest {
             SignedJWT token = tokenManager.generateAuthToken(user.getUsername()
                     .orElseThrow(() -> new IllegalStateException("User must have username")).stringValue());
             log.debug("Authentication successful.");
-            return createResponse(token);
+            return createResponse(token, userCreds.getUsername());
         }
         log.debug("Authentication failed.");
         return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
     /**
-     * Logs out of Mobi by removing the current User session. Returns an anonymous User session.
+     * Logs out of Mobi by removing the current User session. Returns an empty response representing an anonymous User
+     * session.
      *
-     * @return a JSON response representing anonymous User session
+     * @return an empty response representing an anonymous User's session
      */
     @DELETE
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     @ApiOperation("Logs out of Mobi by setting unauth token")
     public Response logout() {
         log.debug("Requested logout. Generating unauthenticated token.");
         SignedJWT unauthToken = tokenManager.generateUnauthToken();
-        return createResponse(unauthToken);
+        return createResponse(unauthToken, null);
     }
 
-    private Response createResponse(SignedJWT token) {
-        log.debug("Writing payload to response.");
-        return Response.ok(token.getPayload().toString())
-                .cookie(tokenManager.createSecureTokenNewCookie(token)).build();
+    private Response createResponse(SignedJWT token, String username) {
+        log.debug("Setting token in response.");
+        Response.ResponseBuilder builder;
+        if (username != null) {
+            builder = Response.ok(username);
+        } else {
+            builder = Response.ok();
+        }
+        return builder.cookie(tokenManager.createSecureTokenNewCookie(token)).build();
     }
 
     private boolean authenticated(String username, String password) {

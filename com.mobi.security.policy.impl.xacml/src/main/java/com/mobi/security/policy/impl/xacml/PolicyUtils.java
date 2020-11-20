@@ -34,6 +34,7 @@ import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -54,7 +55,7 @@ public class PolicyUtils {
         try {
             policyQuery = IOUtils.toString(
                     BalanaPolicyManager.class.getResourceAsStream("/find-policies.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
