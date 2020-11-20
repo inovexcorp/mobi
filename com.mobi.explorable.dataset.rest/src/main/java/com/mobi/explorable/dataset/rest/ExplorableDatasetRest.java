@@ -81,6 +81,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -148,27 +149,27 @@ public class ExplorableDatasetRest {
         try {
             GET_CLASSES_TYPES = IOUtils.toString(
                     ExplorableDatasetRest.class.getResourceAsStream("/get-classes-types.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CLASSES_DETAILS = IOUtils.toString(
                     ExplorableDatasetRest.class.getResourceAsStream("/get-classes-details.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CLASSES_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRest.class.getResourceAsStream("/get-classes-instances.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ALL_CLASS_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRest.class.getResourceAsStream("/get-all-class-instances.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_REIFIED_STATEMENTS = IOUtils.toString(
                     ExplorableDatasetRest.class.getResourceAsStream("/get-reified-statements.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_CARDINALITY_RESTRICTIONS = IOUtils.toString(
                     ExplorableDatasetRest.class.getResourceAsStream("/get-cardinality-restrictions.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

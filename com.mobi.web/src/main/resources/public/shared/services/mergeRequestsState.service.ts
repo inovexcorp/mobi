@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, map, uniq, noop, forEach, filter, find } from 'lodash';
+import { get, map, uniq, noop, forEach, filter, find, union, concat, difference, merge } from 'lodash';
 
-mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'utilService', 'prefixes', '$q'];
+mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManagerService', 'userManagerService', 'ontologyManagerService', 'utilService', 'prefixes', '$q'];
 
 /**
  * @ngdoc service
@@ -30,6 +30,7 @@ mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManag
  * @requires shared.service:mergeRequestManagerService
  * @requires shared.service:catalogManagerService
  * @requires shared.service:userManagerService
+ * @requires shared.service:ontologyManagerService
  * @requires shared.service:utilService
  * @requires shared.service:prefixes
  *
@@ -37,11 +38,12 @@ mergeRequestsStateService.$inject = ['mergeRequestManagerService', 'catalogManag
  * `mergeRequestsStateService` is a service which contains various variables to hold the
  * state of the Merge Requests page and utility functions to update those variables.
  */
-function mergeRequestsStateService(mergeRequestManagerService, catalogManagerService, userManagerService, utilService, prefixes, $q) {
+function mergeRequestsStateService(mergeRequestManagerService, catalogManagerService, userManagerService, ontologyManagerService, utilService, prefixes, $q) {
     var self = this;
     var mm = mergeRequestManagerService;
     var cm = catalogManagerService;
     var um = userManagerService;
+    var om = ontologyManagerService;
     var util = utilService;
 
     var catalogId = '';
@@ -106,6 +108,8 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      *     title: '', // The title for the Merge Request
      *     description: '' // The description for the Merge Request
      *     removeSource: false // A boolean indicating whether the source branch should be removed upon acceptance
+     *     entityNames: {} // An object representing the entity names associated with the source record
+     *     startIndex: 0 // The startIndex indicating how many differences have been loaded for usage when navigating between tabs
      * }
      * ```
      */
@@ -116,7 +120,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         title: '',
         description: '',
         assignees: [],
-        removeSource: false
+        removeSource: false,
+        entityNames: {},
+        startIndex: 0
     };
     /**
      * @ngdoc property
@@ -157,7 +163,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             targetBranchId: '',
             title: '',
             description: '',
-            assignees: []
+            assignees: [],
+            entityNames: {},
+            startIndex: 0
         };
     }
     /**
@@ -187,7 +195,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             targetBranchId: '',
             title: '',
             description: '',
-            assignees: []
+            assignees: [],
+            entityNames: {},
+            startIndex: 0
         };
         self.createRequest = false;
         self.createRequestStep = 0;
@@ -195,7 +205,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
     }
     /**
      * @ngdoc method
-     * @name initialize
+     * @name setRequests
      * @propertyOf shared.service:mergeRequestsStateService
      *
      * @description
@@ -234,7 +244,7 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
      * branch with their titles, source and target commits, and the difference between the two commits.
      *
      * @param {Object} request An item from the `requests` array that represents the request to select
-     * 
+     *
      * @return {Promise} A Promise indicating the success of the resolution
      */
     self.setRequestDetails = function(request) {
@@ -247,6 +257,8 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
         request.removeSource = '';
         request.difference = '';
         request.comments = [];
+        request.entityNames = {};
+        request.startIndex = 0;
         return mm.getComments(request.jsonld['@id'])
             .then(comments => {
                 request.comments = comments;
@@ -257,10 +269,9 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                     request.targetCommit = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetCommit')
                     return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0)
                         .then(response => {
-                            request.difference = response.data;
-                            var headers = response.headers();
-                            request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';        
-                        }, util.createErrorToast)
+                            return self.getSourceEntityNames(request, response);
+                        }, $q.reject)
+                        .then(noop, util.createErrorToast);
                 } else {
                     var sourceIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'sourceBranch');
                     var targetIri = util.getPropertyId(request.jsonld, prefixes.mergereq + 'targetBranch');
@@ -281,10 +292,10 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                                 return cm.getDifference(request.sourceCommit, request.targetCommit, cm.differencePageSize, 0);
                             }, $q.reject)
                             .then(response => {
-                                request.difference = response.data;
-                                var headers = response.headers();
-                                request.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';    
-                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId);
+                                return self.getSourceEntityNames(request, response);
+                            }, $q.reject)
+                            .then(() => {
+                                return cm.getBranchConflicts(sourceIri, targetIri, request.recordIri, catalogId)
                             }, $q.reject)
                             .then(conflicts => request.conflicts = conflicts, util.createErrorToast);
                     } else {
@@ -351,7 +362,16 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
                 }
             }, util.createErrorToast);
     }
-
+    /**
+     * @ngdoc method
+     * @name getRequestObj
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Transforms the provided JSON-LD into a `requests` object.
+     *
+     * @param {Object} jsonld The JSON-LD representation of the `requests` object
+     */
     self.getRequestObj = function(jsonld) {
         return {
             jsonld,
@@ -361,6 +381,175 @@ function mergeRequestsStateService(mergeRequestManagerService, catalogManagerSer
             recordIri: util.getPropertyId(jsonld, prefixes.mergereq + 'onRecord'),
             assignees: map(get(jsonld, "['" + prefixes.mergereq + "assignee']"), obj => get(find(um.users, {iri: obj['@id']}), 'username'))
         };
+    }
+    /**
+     * @ngdoc method
+     * @name getSourceEntityNames
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Populates the request.entityNames object with EntityNames of entities with an addition or deletion. Difference setting
+     * is delayed until after the entityNames are present. This allows for the statementDisplay to calculate the entityNames
+     * once on changes, rather than requiring a binding to constantly calculate the names.
+     *
+     * @param {Object} mergeRequest A merge request or requestConfig object that contains branch information
+     * @param {Object} diffResponse A response containing a difference object to update the request with once entityNames are populated
+     *
+     * @return {Promise} A Promise indicating the success of retrieving entityNames
+     */
+    self.getSourceEntityNames = function(mergeRequest, diffResponse) {
+        if (!diffResponse) {
+            return $q.reject('Difference is not set. Cannot get ontology entity names.');
+        }
+        var difference = diffResponse.data;
+        var recordIri = mergeRequest.recordId ? mergeRequest.recordId : mergeRequest.recordIri;
+        var diffIris = union(map(difference.additions, '@id'), map(difference.deletions, '@id'));
+        var iris = union(diffIris, util.getObjIrisFromDifference(difference.additions), util.getObjIrisFromDifference(difference.deletions));
+
+        if (iris.length > 0) {
+            return om.getOntologyEntityNames(recordIri, get(mergeRequest.sourceBranch, '@id'), mergeRequest.sourceCommit, false, false, iris)
+                .then(data => {
+                    merge(mergeRequest.entityNames, data);
+                    if (!mergeRequest.difference) {
+                        mergeRequest.difference = {
+                            additions: [],
+                            deletions: []
+                        }
+                    }
+                    mergeRequest.difference.additions = concat(mergeRequest.difference.additions, difference.additions);
+                    mergeRequest.difference.deletions = concat(mergeRequest.difference.deletions, difference.deletions);
+                    var headers = diffResponse.headers();
+                    mergeRequest.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                    return $q.when();
+                }, error => {
+                    if (!mergeRequest.difference) {
+                        mergeRequest.difference = {
+                            additions: [],
+                            deletions: []
+                        }
+                    }
+                    mergeRequest.difference.additions = concat(mergeRequest.difference.additions, difference.additions);
+                    mergeRequest.difference.deletions = concat(mergeRequest.difference.deletions, difference.deletions);
+                    var headers = diffResponse.headers();
+                    mergeRequest.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+                    return $q.reject(error);
+                });
+        } else {
+            mergeRequest.difference = {
+                additions: [],
+                deletions: []
+            }
+            return $q.when();
+        }
+    }
+    /**
+     * @ngdoc method
+     * @name getEntityNameLabel
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * If the iri exists in self.requestConfig.entityNames or self.selected.entityNames, returns the label. Otherwise,
+     * returns the beautiful iri.
+     *
+     * @param {string} iri The iri of an entity in the merge request
+     *
+     * @return {string} The entity name of the provided IRI
+     */
+    self.getEntityNameLabel = function(iri) {
+        if (get(self, ['requestConfig', 'entityNames', iri, 'label'])) {
+            return self.requestConfig.entityNames[iri].label;
+        } else if (get(self, ['selected', 'entityNames', iri, 'label'])) {
+            return self.selected.entityNames[iri].label;
+        } else {
+            return util.getBeautifulIRI(iri);
+        }
+    }
+    /**
+     * @ngdoc method
+     * @name updateRequestConfigDifference
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Updates the requestConfig.difference with the difference between the requestConfig.sourceBranch and
+     * requestConfig.targetBranch. Once successful
+     *
+     * @return {Promise} A Promise indicating the success of updating the requestConfig difference
+     */
+    self.updateRequestConfigDifference = function() {
+        self.requestConfig.difference = undefined;
+        return cm.getDifference(util.getPropertyId(self.requestConfig.sourceBranch, prefixes.catalog + 'head'), util.getPropertyId(self.requestConfig.targetBranch, prefixes.catalog + 'head'), cm.differencePageSize, 0)
+            .then(response => {
+                return self.getSourceEntityNames(self.requestConfig, response);
+            }, $q.reject)
+            .then(noop, errorMessage => {
+                self.requestConfig.difference = undefined;
+                self.requestConfig.entityNames = undefined;
+                return $q.reject(errorMessage);
+            });
+    }
+    /**
+     * @ngdoc method
+     * @name updateRequestConfigBranch
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Checks the current `branchType` of 'sourceBranch' or 'targetBranch' against the `branches` provided for newer
+     * head commits or if the branch has been deleted. Updates the requestConfig[branchType] accordingly.
+     *
+     * @param {string} branchType A string indicating if it is a 'sourceBranch' or a 'targetBranch'
+     * @param {Object[]} branches The list of branches to check against
+     */
+    self.updateRequestConfigBranch = function(branchType, branches) {
+        var branchId = get(self, ['requestConfig', branchType, '@id']);
+        if (!branchId) {
+            return;
+        }
+        var latestBranch = find(branches, {'@id': branchId});
+        if (latestBranch) {
+            var latestHead = util.getPropertyId(latestBranch, prefixes.catalog + 'head');
+            var selectedHead = util.getPropertyId(self.requestConfig[branchType], prefixes.catalog + 'head');
+            if (latestHead !== selectedHead) {
+                self.requestConfig[branchType] = latestBranch;
+            }
+        } else {
+            self.requestConfig[branchType] = undefined;
+        }
+    }
+    /**
+     * @ngdoc method
+     * @name retrieveMoreResults
+     * @propertyOf shared.service:mergeRequestsStateService
+     *
+     * @description
+     * Updates the request difference based on the provided limit and offset. Combines the results with any previous
+     * difference information.
+     *
+     * @param limit {int} The limit of results to retrieve
+     * @param offset {int} The paged offset specifying where to continue retrieval from
+     */
+    self.retrieveMoreResults = function(limit, offset) {
+        var request;
+        if (self.selected && self.selected.difference) {
+            request = self.selected;
+        } else if (self.requestConfig && self.requestConfig.difference) {
+            request = self.requestConfig;
+        } else {
+            util.createErrorToast("Could not load more results.");
+        }
+        var sourceHead = util.getPropertyId(request.sourceBranch, prefixes.catalog + 'head');
+        if (!sourceHead) {
+            sourceHead = request.sourceCommit;
+        }
+        var targetHead = util.getPropertyId(request.targetBranch, prefixes.catalog + 'head');
+        if (!targetHead) {
+            targetHead = request.targetCommit;
+        }
+        request.startIndex = offset;
+        cm.getDifference(sourceHead, targetHead, limit, offset)
+            .then(response => {
+                return self.getSourceEntityNames(request, response);
+            }, $q.reject)
+            .then(noop, util.createErrorToast);
     }
 
     function getDate(jsonld) {

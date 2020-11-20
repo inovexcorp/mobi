@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get, reject, find } from 'lodash';
+import { get, reject, find, noop } from 'lodash';
 
 import './mergeBlock.component.scss';
 
@@ -29,9 +29,11 @@ const template = require('./mergeBlock.component.html');
 /**
  * @ngdoc component
  * @name ontology-editor.component:mergeBlock
+ * @requires $q
  * @requires shared.service:utilService
  * @requires shared.service:ontologyStateService
  * @requires shared.service:catalogManagerService
+ * @requires shared.service:prefixes
  *
  * @description
  * `mergeBlock` is a component that creates a form for merging the current branch of the opened
@@ -48,9 +50,9 @@ const mergeBlockComponent = {
     controller: mergeBlockComponentCtrl
 };
 
-mergeBlockComponentCtrl.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', '$q'];
+mergeBlockComponentCtrl.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManagerService, $q) {
+function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManagerService, prefixes, $q) {
     var dvm = this;
     var cm = catalogManagerService;
     dvm.os = ontologyStateService;
@@ -70,26 +72,33 @@ function mergeBlockComponentCtrl(utilService, ontologyStateService, catalogManag
 
         dvm.changeTarget();
     }
+    dvm.$onDestroy = function() {
+        if (dvm.os.listItem.merge) {
+            dvm.os.listItem.merge.difference = undefined;
+            dvm.os.listItem.merge.startIndex = 0;
+        }
+    }
     dvm.changeTarget = function(value) {
+        dvm.os.listItem.merge.difference = undefined;
+        dvm.os.listItem.merge.startIndex = 0;
         dvm.os.listItem.merge.target = value;
         if (dvm.os.listItem.merge.target) {
             cm.getRecordBranch(dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                 .then(target => {
-                    dvm.targetHeadCommitId = target["http://mobi.com/ontologies/catalog#head"][0]["@id"];
-                    return cm.getDifference(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0);
+                    dvm.targetHeadCommitId = dvm.util.getPropertyId(target, prefixes.catalog + 'head');
+                    return dvm.os.getMergeDifferences(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, cm.differencePageSize, 0);
                     }, $q.reject)
-                .then(response => {
-                    dvm.os.listItem.merge.difference = response.data;
-                    var headers = response.headers();
-                    dvm.os.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-                }, errorMessage => {
+                .then(noop, errorMessage => {
                     dvm.util.createErrorToast(errorMessage);
                     dvm.os.listItem.merge.difference = undefined;
                 });
-                
         } else {
             dvm.os.listItem.merge.difference = undefined;
         }
+    }
+    dvm.retrieveMoreResults = function(limit, offset) {
+        dvm.os.getMergeDifferences(dvm.os.listItem.ontologyRecord.commitId, dvm.targetHeadCommitId, limit, offset)
+            .then(noop, dvm.util.createErrorToast);
     }
     dvm.submit = function() {
         dvm.os.attemptMerge()

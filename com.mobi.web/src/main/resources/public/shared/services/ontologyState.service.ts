@@ -44,15 +44,12 @@ import {
     mapValues,
     lowerCase,
     sortBy,
-    merge, 
+    merge,
     unset,
     head,
     forOwn,
     omit,
     pull,
-    pullAt,
-    result,
-    findLast,
     isEqual,
     findKey,
     tail,
@@ -60,9 +57,8 @@ import {
     join,
     replace,
     findIndex,
-    isObject, 
+    isObject,
     mergeWith,
-    indexOf,
     identity
 } from 'lodash';
 
@@ -185,7 +181,8 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             resolutions: {
                 additions: [],
                 deletions: []
-            }
+            },
+            startIndex: 0
         },
         dataPropertyRange: {},
         derivedConcepts: [],
@@ -1825,6 +1822,38 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
                 }
             }, $q.reject);
     }
+    /**
+     * @ngdoc method
+     * @name getMergeDifferences
+     * @methodOf shared.service:ontologyStateService
+     *
+     * @description
+     * Updates self.listItem.merge with the updated additions and deletions for the provided commit information
+     *
+     * @param sourceCommitId {string} The string IRI of the source commit to get the difference
+     * @param targetCommitId {string} The string IRI of the target commit to get the difference
+     * @param limit {int} The limit for the paged difference
+     * @param offset {int} The offset for the paged difference
+     *
+     * @returns {Promise} Promise that resolves if the action was successful; rejects otherwise
+     */
+    self.getMergeDifferences = function(sourceCommitId, targetCommitId, limit, offset) {
+        self.listItem.merge.startIndex = offset;
+        return cm.getDifference(sourceCommitId, targetCommitId, limit, offset)
+        .then(response => {
+            if (!self.listItem.merge.difference) {
+                self.listItem.merge.difference = {
+                    additions: [],
+                    deletions: []
+                };
+            }
+            self.listItem.merge.difference.additions = concat(self.listItem.merge.difference.additions, response.data.additions);
+            self.listItem.merge.difference.deletions = concat(self.listItem.merge.difference.deletions, response.data.deletions);
+            var headers = response.headers();
+            self.listItem.merge.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
+            return $q.when();
+        }, $q.reject);
+    }
     self.merge = function() {
         var sourceId = self.listItem.ontologyRecord.branchId;
         var checkbox = self.listItem.merge.checkbox;
@@ -1852,6 +1881,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
             additions: [],
             deletions: []
         };
+        self.listItem.merge.startIndex = 0;
     }
     self.canModify = function() {
         if (!self.listItem.ontologyRecord.branchId) {

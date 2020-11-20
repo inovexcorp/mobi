@@ -66,6 +66,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -247,7 +248,7 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
         exporter.endRDF();
         assertFalse(exporter.isActive());
 
-        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString())), "", RDFFormat.JSONLD));
+        Model outputModel = Values.mobiModel(Rio.parse((IOUtils.toInputStream(os.toString(), StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
         assertEquals(testRecord.getModel(), outputModel);
 
         verify(utilsService).optObject(eq(testIRI), any(OrmFactory.class), eq(connection));

@@ -57,6 +57,7 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
@@ -99,7 +100,8 @@ public class RecordPermissionsRestTest extends MobiRestTestNg {
         MockitoAnnotations.initMocks(this);
         vf = getValueFactory();
 
-        recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"), "UTF-8");
+        recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"),
+                StandardCharsets.UTF_8);
         recordIRI = vf.createIRI("http://mobi.com/records/testRecord1");
         recordPolicyIRI = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
         policyPolicyIRI = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%testRecord1");
@@ -128,8 +130,10 @@ public class RecordPermissionsRestTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setUpMocks() throws Exception {
-        recordPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.xml"), "UTF-8"), vf);
-        policyPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/policyPolicy.xml"), "UTF-8"), vf);
+        recordPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.xml"),
+                StandardCharsets.UTF_8), vf);
+        policyPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/policyPolicy.xml"),
+                StandardCharsets.UTF_8), vf);
 
         reset(policyManager);
         when(repo.getConnection()).thenReturn(conn);

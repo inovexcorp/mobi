@@ -20,7 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 var pages = ["Catalog", "Ontology Editor", "Merge Requests", "Mapping Tool", "Datasets", "Discover"]
 
 module.exports = {
@@ -32,8 +33,8 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
             .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', 'admin')
-            .setValue('//div[@class="form-group"]//input[@id="password"]', 'admin')
+            .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername)
+            .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword)
             .click('//button[@type="submit"]')
     },
 
@@ -110,5 +111,4 @@ module.exports = {
         browser
             .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
     }
-
 }

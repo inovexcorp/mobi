@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { get } from 'lodash';
+import { get, noop } from 'lodash';
 
 import './requestBranchSelect.component.scss';
 
@@ -29,9 +29,11 @@ const template = require('./requestBranchSelect.component.html');
 /**
  * @ngdoc component
  * @name merge-requests.component:requestBranchSelect
+ * @requires $q
  * @requires shared.service:mergeRequestsStateService
  * @requires shared.service:catalogManagerService
  * @requires shared.service:utilService
+ * @requires shared.service:prefixes
  *
  * @description
  * `requestBranchSelect` is a component which creates a div containing a form with ui-selects
@@ -47,9 +49,9 @@ const requestBranchSelectComponent = {
     controller: requestBranchSelectComponentCtrl
 };
 
-requestBranchSelectComponentCtrl.$inject = ['mergeRequestsStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+requestBranchSelectComponentCtrl.$inject = ['$q', 'mergeRequestsStateService', 'catalogManagerService', 'utilService', 'prefixes'];
 
-function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogManagerService, utilService, prefixes) {
+function requestBranchSelectComponentCtrl($q, mergeRequestsStateService, catalogManagerService, utilService, prefixes) {
     var dvm = this;
     var cm = catalogManagerService;
     var catalogId = get(cm.localCatalog, '@id');
@@ -61,21 +63,40 @@ function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogMana
     dvm.branches = [];
 
     dvm.$onInit = function() {
-        if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
-            updateDifference();
-        }
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         cm.getRecordBranches(dvm.state.requestConfig.recordId, catalogId)
-            .then(response => dvm.branches = response.data, error => {
+            .then(response => {
+                dvm.branches = response.data;
+                dvm.state.updateRequestConfigBranch('sourceBranch', dvm.branches);
+                dvm.state.updateRequestConfigBranch( 'targetBranch', dvm.branches);
+                if (dvm.state.requestConfig.sourceBranch && dvm.state.requestConfig.targetBranch) {
+                    return dvm.state.updateRequestConfigDifference();
+                }
+            }, $q.reject)
+            .then(noop, error => {
                 dvm.util.createErrorToast(error);
                 dvm.branches = [];
             });
     }
+    dvm.$onDestroy = function() {
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
+    }
     dvm.changeSource = function(value) {
         dvm.state.requestConfig.sourceBranch = value;
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         if (dvm.state.requestConfig.sourceBranch) {
             dvm.state.requestConfig.sourceBranchId = dvm.state.requestConfig.sourceBranch['@id'];
             if (dvm.state.requestConfig.targetBranch) {
-                updateDifference();
+                dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast);
             } else {
                 dvm.state.requestConfig.difference = undefined;
             }
@@ -85,28 +106,20 @@ function requestBranchSelectComponentCtrl(mergeRequestsStateService, catalogMana
     }
     dvm.changeTarget = function(value) {
         dvm.state.requestConfig.targetBranch = value;
+        dvm.state.requestConfig.entityNames = {};
+        dvm.state.requestConfig.difference = undefined;
+        dvm.state.requestConfig.previousDiffIris = [];
+        dvm.state.requestConfig.startIndex = 0;
         if (dvm.state.requestConfig.targetBranch) {
             dvm.state.requestConfig.targetBranchId = dvm.state.requestConfig.targetBranch['@id'];
             if (dvm.state.requestConfig.sourceBranch) {
-                updateDifference();
+                dvm.state.updateRequestConfigDifference().then(noop, dvm.util.createErrorToast);
             } else {
                 dvm.state.requestConfig.difference = undefined;
             }
         } else {
             dvm.state.requestConfig.difference = undefined;
         }
-    }
-
-    function updateDifference() {
-        cm.getDifference(dvm.util.getPropertyId(dvm.state.requestConfig.sourceBranch, dvm.prefixes.catalog + 'head'), dvm.util.getPropertyId(dvm.state.requestConfig.targetBranch, dvm.prefixes.catalog + 'head'), cm.differencePageSize, 0)
-            .then(response => {
-                dvm.state.requestConfig.difference = response.data;
-                var headers = response.headers();
-                dvm.state.requestConfig.difference.hasMoreResults = get(headers, 'has-more-results', false) === 'true';
-            }, errorMessage => {
-                dvm.util.createErrorToast(errorMessage);
-                dvm.state.requestConfig.difference = undefined;
-            });
     }
 }
 
