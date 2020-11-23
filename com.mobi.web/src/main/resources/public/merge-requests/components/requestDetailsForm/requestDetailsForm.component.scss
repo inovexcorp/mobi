@@ -25,7 +25,12 @@
 
 .merge-requests-page {
     .summary-line {
-        word-break: break-word;
+        word-break: break-all;
+
+        p {
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
     }
     form{
         .checkbox{

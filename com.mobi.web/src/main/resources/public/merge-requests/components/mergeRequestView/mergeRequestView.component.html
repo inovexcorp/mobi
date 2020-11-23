@@ -34,7 +34,11 @@
                         <div class="description">
                             {{dvm.util.getDctermsValue(dvm.state.selected.jsonld, 'description') || 'No description'}}
                         </div>
-                        <div class="request-summary"><strong>Branch:</strong> {{dvm.state.selected.sourceTitle}}<strong> into Branch: </strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}<strong> in Ontology: </strong>{{dvm.state.selected.recordTitle}}</div>
+                        <div class="request-summary">
+                            <p><strong>Branch:</strong> {{dvm.state.selected.sourceTitle}}</p>
+                            <p><strong>Into Branch: </strong>{{dvm.state.selected.targetTitle ? dvm.state.selected.targetTitle : 'NO TARGET'}}</p>
+                            <p><strong>In Ontology: </strong>{{dvm.state.selected.recordTitle}}</p>
+                        </div>
                         <div class="assignees">
                             <span class="field-name">Assignee(s): </span>
                             <ul class="assignees">

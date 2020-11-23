@@ -32,7 +32,12 @@ edit-request-overlay {
         .form-control-static {
             padding: 0;
             flex-grow: unset;
-            word-break: break-word;
+            word-break: break-all;
+
+            p {
+                margin-top: 0px;
+                margin-bottom: 0px;
+            }
         }
         .ui-select-toggle {
             width: 100%;
