@@ -23,11 +23,6 @@ package com.mobi.email.impl;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Activate;
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Modified;
-import aQute.bnd.annotation.component.Reference;
-import aQute.bnd.annotation.metatype.Configurable;
 import com.mobi.email.api.EmailService;
 import com.mobi.email.api.EmailServiceConfig;
 import com.mobi.exception.MobiException;
@@ -38,8 +33,13 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,15 +51,14 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Component(
         immediate = true,
-        designateFactory = EmailServiceConfig.class,
         name = SimpleEmailService.COMPONENT_NAME
 )
+@Designate(ocd = EmailServiceConfig.class)
 public class SimpleEmailService implements EmailService {
 
     static final String COMPONENT_NAME = "com.mobi.email.api.EmailService";
@@ -69,17 +68,29 @@ public class SimpleEmailService implements EmailService {
     private static final String MESSAGE_BINDING = "!|$MESSAGE!|$";
     private static final String HOSTNAME_BINDING = "!|$HOSTNAME!|$";
     private static final String LOGO_BINDING = "!|$LOGO!|$";
-    private EmailServiceConfig config;
     private Mobi mobiServer;
     private String emailTemplate;
     private URL logo;
     private EncryptionService encryptionService;
     private ConfigurationAdmin configurationAdmin;
+    private String emailAddress;
     private String emailPassword;
+    private String smtpServer;
+    private int port;
+    private String security;
 
     @Reference
     void setEncryptionService(EncryptionService encryptionService) {
         this.encryptionService = encryptionService;
+    }
+
+    void updatedEncryptionService(EncryptionService encryptionService) {
+        try {
+            encryptionService.encrypt(emailPassword, "emailPassword", this.configurationAdmin.getConfiguration(COMPONENT_NAME));
+        } catch (IOException e) {
+            LOGGER.error("Could not get configuration for " + COMPONENT_NAME, e);
+            throw new MobiException(e);
+        }
     }
 
     @Reference
@@ -93,31 +104,30 @@ public class SimpleEmailService implements EmailService {
     }
 
     @Activate
-    void activate(BundleContext bundleContext, Map<String, Object> configuration) {
-         config = Configurable.createConfigurable(EmailServiceConfig.class, configuration);
+    @Modified
+    void activate(final EmailServiceConfig emailServiceConfig) {
         try {
-            emailPassword = encryptionService.isEnabled() ? encryptionService.decrypt(config.emailPassword(), "emailPassword",
-                    this.configurationAdmin.getConfiguration(COMPONENT_NAME)) : config.emailPassword();
+            emailPassword = encryptionService.isEnabled() ? encryptionService.decrypt(emailServiceConfig.emailPassword(), "emailPassword",
+                    this.configurationAdmin.getConfiguration(COMPONENT_NAME)) : emailServiceConfig.emailPassword();
         } catch (IOException e) {
             LOGGER.error("Could not get configuration for " + COMPONENT_NAME, e);
             throw new MobiException(e);
         }
         try {
-            File templateFile = new File(config.emailTemplate());
+            File templateFile = new File(emailServiceConfig.emailTemplate());
             if (!templateFile.isAbsolute()) {
-                templateFile = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + config.emailTemplate());
+                templateFile = new File(URLDecoder.decode(System.getProperty("karaf.etc"), "UTF-8") + File.separator + emailServiceConfig.emailTemplate());
             }
             emailTemplate = FileUtils.readFileToString(templateFile, StandardCharsets.UTF_8);
-            Bundle bundle = bundleContext.getBundle();
+            Bundle bundle = FrameworkUtil.getBundle(this.getClass());
             logo = bundle.getResource("mobi-primary-logo-cropped.png");
         } catch (IOException e) {
             throw new MobiException(e);
         }
-    }
-
-    @Modified
-    void modified(BundleContext bundleContext, Map<String, Object> configuration) {
-        activate(bundleContext, configuration);
+        smtpServer = emailServiceConfig.smtpServer();
+        port = emailServiceConfig.port();
+        security = emailServiceConfig.security();
+        emailAddress = emailServiceConfig.emailAddress();
     }
 
     @Override
@@ -196,9 +206,9 @@ public class SimpleEmailService implements EmailService {
 
     private ImageHtmlEmail setUpEmail() {
         ImageHtmlEmail email = new ImageHtmlEmail();
-        email.setHostName(config.smtpServer());
-        email.setSmtpPort(config.port());
-        email.setAuthentication(config.emailAddress(), emailPassword);
+        email.setHostName(smtpServer);
+        email.setSmtpPort(port);
+        email.setAuthentication(emailAddress, emailPassword);
         URL imageBasePath = null;
         try {
             imageBasePath = new URL("file://");
@@ -209,15 +219,15 @@ public class SimpleEmailService implements EmailService {
 
         email.setDataSourceResolver(new DataSourceUrlResolver(imageBasePath));
 
-        if (config.security().equals("SSL") || config.security().equals("TLS")) {
+        if (security.equals("SSL") || security.equals("TLS")) {
             email.setSSLOnConnect(true);
             email.setSSLCheckServerIdentity(true);
-        } else if (config.security().equals("STARTTLS")) {
+        } else if (security.equals("STARTTLS")) {
             email.setStartTLSRequired(true);
         }
 
         try {
-            email.setFrom(config.emailAddress());
+            email.setFrom(emailAddress);
         } catch (EmailException e) {
             LOGGER.error("Invalid 'From' email address.", e);
             throw new MobiException("Invalid 'From' email address.", e);

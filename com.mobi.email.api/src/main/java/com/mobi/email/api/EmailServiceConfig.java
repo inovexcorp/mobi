@@ -1,5 +1,8 @@
 package com.mobi.email.api;
 
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
+
 /*-
  * #%L
  * com.mobi.email.api
@@ -23,17 +26,15 @@ package com.mobi.email.api;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-
-@Meta.OCD
-public interface EmailServiceConfig {
+@ObjectClassDefinition(name = "Email Service Config", description = "Configure the email details")
+public @interface EmailServiceConfig {
 
     /**
      * The Outgoing Mail (SMTP) server address.
      *
      * @return The configured SMTP server address
      */
-    @Meta.AD(required = true)
+    @AttributeDefinition
     String smtpServer();
 
     /**
@@ -41,7 +42,7 @@ public interface EmailServiceConfig {
      *
      * @return The email address to send emails from
      */
-    @Meta.AD(required = true)
+    @AttributeDefinition
     String emailAddress();
 
     /**
@@ -49,7 +50,7 @@ public interface EmailServiceConfig {
      *
      * @return The password associated with the provided email address
      */
-    @Meta.AD(required = true)
+    @AttributeDefinition
     String emailPassword();
 
     /**
@@ -57,7 +58,7 @@ public interface EmailServiceConfig {
      *
      * @return The port used by the SMTP server
      */
-    @Meta.AD(deflt = "587")
+    @AttributeDefinition(defaultValue = "587")
     int port();
 
     /**
@@ -65,7 +66,7 @@ public interface EmailServiceConfig {
      *
      * @return The connection security setting to use to connect to the SMTP server
      */
-    @Meta.AD(deflt = "SSL")
+    @AttributeDefinition(defaultValue = "SSL")
     String security();
 
     /**
@@ -73,6 +74,6 @@ public interface EmailServiceConfig {
      *
      * @return The default email template filename
      */
-    @Meta.AD(deflt = "emailTemplate.html")
+    @AttributeDefinition(defaultValue = "emailTemplate.html")
     String emailTemplate();
 }
