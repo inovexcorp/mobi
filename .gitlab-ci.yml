@@ -51,7 +51,7 @@ before_script:
 full_test:
   stage: test
   only: 
-    -merge_requests
+    - merge_requests
   except:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
