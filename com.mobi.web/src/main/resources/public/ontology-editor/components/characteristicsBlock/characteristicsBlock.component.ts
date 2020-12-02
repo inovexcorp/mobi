@@ -75,6 +75,18 @@ function characteristicsBlockComponentCtrl(prefixes, ontologyStateService, ontol
             typeIRI: prefixes.owl + 'AsymmetricProperty',
             displayText: 'Asymmetric Property',
             objectOnly: true
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'SymmetricProperty',
+            displayText: 'Symmetric Property',
+            objectOnly: true
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'TransitiveProperty',
+            displayText: 'Transitive Property',
+            objectOnly: true
         }
     ];
 

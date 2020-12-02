@@ -57,6 +57,8 @@ describe('Create Object Property Overlay component', function() {
         this.iri = 'iri#';
         this.asymmetricProperty = prefixes.owl + 'AsymmetricProperty';
         this.functionalProperty = prefixes.owl + 'FunctionalProperty';
+        this.symmetricProperty = prefixes.owl + 'SymmetricProperty';
+        this.transitiveProperty = prefixes.owl + 'TransitiveProperty';
         ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
 
         scope.close = jasmine.createSpy('close');
@@ -92,6 +94,18 @@ describe('Create Object Property Overlay component', function() {
                 checked: false,
                 typeIRI: prefixes.owl + 'AsymmetricProperty',
                 displayText: 'Asymmetric Property',
+            },
+            {
+                checked: false,
+                typeIRI: prefixes.owl + 'SymmetricProperty',
+                displayText: 'Symmetric Property',
+                objectOnly: true
+            },
+            {
+                checked: false,
+                typeIRI: prefixes.owl + 'TransitiveProperty',
+                displayText: 'Transitive Property',
+                objectOnly: true
             }
         ]);
     });
@@ -119,7 +133,7 @@ describe('Create Object Property Overlay component', function() {
             expect(this.element.find('static-iri').length).toEqual(1);
         });
         it('with checkboxes', function() {
-            expect(this.element.find('checkbox').length).toEqual(2);
+            expect(this.element.find('checkbox').length).toEqual(4);
         });
         it('with a text-area', function() {
             expect(this.element.find('text-area').length).toEqual(1);
@@ -276,11 +290,15 @@ describe('Create Object Property Overlay component', function() {
                     this.controller.create();
                     expect(_.includes(this.controller.property['@type'], this.functionalProperty)).toEqual(true);
                     expect(_.includes(this.controller.property['@type'], this.asymmetricProperty)).toEqual(true);
+                    expect(_.includes(this.controller.property['@type'], this.symmetricProperty)).toEqual(true);
+                    expect(_.includes(this.controller.property['@type'], this.transitiveProperty)).toEqual(true);
                 });
                 it('are not set', function() {
                     this.controller.create();
                     expect(_.includes(this.controller.property['@type'], this.functionalProperty)).toEqual(false);
                     expect(_.includes(this.controller.property['@type'], this.asymmetricProperty)).toEqual(false);
+                    expect(_.includes(this.controller.property['@type'], this.symmetricProperty)).toEqual(false);
+                    expect(_.includes(this.controller.property['@type'], this.transitiveProperty)).toEqual(false);
                 });
             });
         });
