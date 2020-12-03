@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -88,11 +89,16 @@ import javax.security.auth.Subject;
 
 public class KarafTestSupport {
 
-    public static final String RMI_SERVER_PORT = "44445";
-    public static final String HTTP_PORT = "9081";
-    public static final String HTTPS_PORT = "9082";
-    public static final String RMI_REG_PORT = "1100";
-    public static final String SSH_PORT = "8102";
+    public static final String MIN_RMI_SERVER_PORT = "44444";
+    public static final String MAX_RMI_SERVER_PORT = "66666";
+    public static final String MIN_HTTP_PORT = "9080";
+    public static final String MAX_HTTP_PORT = "9539";
+    public static final String MIN_HTTPS_PORT = "9540";
+    public static final String MAX_HTTPS_PORT = "9999";
+    public static final String MIN_RMI_REG_PORT = "1099";
+    public static final String MAX_RMI_REG_PORT = "9999";
+    public static final String MIN_SSH_PORT = "8101";
+    public static final String MAX_SSH_PORT = "8888";
 
     protected static Set<String> bundleList = new HashSet<>();
     protected static Set<String> serviceFilters = new HashSet<>();
@@ -127,10 +133,15 @@ public class KarafTestSupport {
 
     @Configuration
     public Option[] config() throws IOException, URISyntaxException {
+        String httpPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_HTTP_PORT), Integer.parseInt(MAX_HTTP_PORT)));
+        String httpsPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_HTTPS_PORT), Integer.parseInt(MAX_HTTPS_PORT)));
+        String rmiRegistryPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_RMI_REG_PORT), Integer.parseInt(MAX_RMI_REG_PORT)));
+        String rmiServerPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_RMI_SERVER_PORT), Integer.parseInt(MAX_RMI_SERVER_PORT)));
+        String sshPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_SSH_PORT), Integer.parseInt(MAX_SSH_PORT)));
         MavenArtifactUrlReference karafUrl = CoreOptions.maven()
                 .groupId("com.mobi")
                 .artifactId("mobi-distribution")
-                .version(MavenUtils.getArtifactVersion("com.mobi", "mobi-distribution"))
+                .versionAsInProject()
                 .type("tar.gz");
 
         List<Option> options = new ArrayList<>(Arrays.asList(
@@ -141,21 +152,41 @@ public class KarafTestSupport {
                 KarafDistributionOption.keepRuntimeFolder(),
                 KarafDistributionOption.logLevel(LogLevel.INFO),
                 KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", getFileResource("/etc/org.ops4j.pax.logging.cfg")),
-                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", HTTP_PORT),
-                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", HTTPS_PORT),
-                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", RMI_REG_PORT),
-                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", SSH_PORT),
-                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", RMI_SERVER_PORT),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", httpPort),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort),
+                KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
                 CoreOptions.mavenBundle()
                         .groupId("com.mobi")
                         .artifactId("itests-support")
-                        .version(MavenUtils.getArtifactVersion("com.mobi", "itests-support"))
+                        .versionAsInProject()
         ));
 
         Files.list(getFileResource("/etc").toPath()).forEach(path ->
                 options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile())));
 
         return options.toArray(new Option[options.size()]);
+    }
+
+    public static int getAvailablePort(int min, int max) {
+        for (int i = min; i <= max; i++) {
+            try (ServerSocket socket = new ServerSocket(i)) {
+                return socket.getLocalPort();
+            } catch (Exception e) {
+                System.err.println("Port " + i + " not available, trying next one");
+                continue; // try next port
+            }
+        }
+        throw new IllegalStateException("Can't find available network ports");
+    }
+
+    public String getHttpsPort() throws IOException {
+        org.osgi.service.cm.Configuration configuration = configAdmin.getConfiguration("org.ops4j.pax.web", null);
+        if (configuration != null) {
+            return configuration.getProperties().get("org.osgi.service.http.port.secure").toString();
+        }
+        return "9082";
     }
 
     protected File getFileResource(String path) throws URISyntaxException {

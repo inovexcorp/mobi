@@ -23,7 +23,6 @@ package com.mobi.itests.rest.utils;
  * #L%
  */
 
-import static com.mobi.itests.support.KarafTestSupport.HTTPS_PORT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -45,7 +44,8 @@ public class RestITUtils {
 
     public static String username = "admin";
     public static String password = "admin";
-    public static String baseUrl = "https://localhost:" + HTTPS_PORT + "/mobirest";
+    private static String hostUrl = "https://localhost:";
+    private static String path =  "/mobirest";
 
     public static CloseableHttpClient createHttpClient() throws GeneralSecurityException {
         SSLContextBuilder builder = new SSLContextBuilder();
@@ -54,14 +54,34 @@ public class RestITUtils {
         return HttpClients.custom().setSSLSocketFactory(factory).build();
     }
 
-    public static void authenticateUser(HttpClientContext context)
+    public static void authenticateUser(HttpClientContext context, String port)
             throws IOException, GeneralSecurityException {
         try (CloseableHttpClient client = createHttpClient()) {
-            HttpPost post = new HttpPost(baseUrl + "/session?password="
-                    + URLEncoder.encode(password, "UTF-8") + "&username=" + URLEncoder.encode(username, "UTF-8"));
-            CloseableHttpResponse response = client.execute(post, context);
-            assertNotNull(response);
-            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+            // Added retries due to server not being ready before trying to authenticate
+            int status = -1;
+            int count = 0;
+            while (count < 3) {
+                HttpPost post = new HttpPost(getBaseUrl(port) + "/session?password="
+                        + URLEncoder.encode(password, "UTF-8") + "&username="
+                        + URLEncoder.encode(username, "UTF-8"));
+                CloseableHttpResponse response = client.execute(post, context);
+                System.out.print(response.getStatusLine().getReasonPhrase());
+                assertNotNull(response);
+                status = response.getStatusLine().getStatusCode();
+                if (status != HttpStatus.SC_OK) {
+                    count++;
+                    Thread.sleep(3000);
+                } else {
+                    break;
+                }
+            }
+            assertEquals(HttpStatus.SC_OK, status);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+    }
+
+    public static String getBaseUrl(String port) {
+        return hostUrl + port + path;
     }
 }
