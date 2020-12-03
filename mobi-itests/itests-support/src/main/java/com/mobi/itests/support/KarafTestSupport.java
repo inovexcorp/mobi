@@ -32,7 +32,6 @@ import org.apache.karaf.shell.api.console.SessionFactory;
 import org.junit.Assert;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.CoreOptions;
-import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
@@ -145,6 +144,7 @@ public class KarafTestSupport {
                 .type("tar.gz");
 
         List<Option> options = new ArrayList<>(Arrays.asList(
+                //KarafDistributionOption.debugConfiguration("8889", true),
                 KarafDistributionOption.karafDistributionConfiguration()
                         .frameworkUrl(karafUrl)
                         .unpackDirectory(new File("target/exam"))
