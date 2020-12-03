@@ -40,18 +40,19 @@ before_script:
   - cp /m2/settings.xml ~/.m2/settings.xml
 
 # For merge requests, just do an unit tests
-#unit_test:
-#  stage: test
-#  script:
-#    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
-#  only:
-#    - merge_requests
+unit_test:
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
+  only:
+    - merge_requests
 
 # For commits to master and releases do a full test
 full_test:
   stage: test
   only: 
-    - merge_requests
+    - master
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
