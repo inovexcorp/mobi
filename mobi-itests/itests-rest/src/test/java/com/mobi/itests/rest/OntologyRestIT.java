@@ -23,7 +23,9 @@ package com.mobi.itests.rest;
  * #L%
  */
 
-import static com.mobi.itests.rest.utils.RestITUtils.*;
+import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
+import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
+import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
