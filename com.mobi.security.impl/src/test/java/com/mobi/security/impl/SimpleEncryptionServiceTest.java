@@ -106,28 +106,44 @@ public class SimpleEncryptionServiceTest {
 
     @Test
     public void startChangeMasterPassTest() throws Exception {
-        String testPassword = "FAKE_PASSWORD";
-        when(encryptionServiceConfig.password()).thenReturn(testPassword);
+        String testMasterPass = "TEST_MASTER_PASS";
+        String testPasswordToBeEncrypted = "TEST_CLIENT_PASS";
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setPassword(testMasterPass);
+        encryptor.setIvGenerator(new RandomIvGenerator());
+        encryptor.setAlgorithm("PBEWithHmacSHA512AndAES_128");
 
-        Dictionary<String, Object> configProperties = new Hashtable<>();
-        configProperties.put("password", testPassword);
+        String toDecrypt = PropertyValueEncryptionUtils.encrypt(testPasswordToBeEncrypted, encryptor);
+        assertEquals(true, PropertyValueEncryptionUtils.isEncryptedValue(toDecrypt));
 
-        when(configuration.getProperties()).thenReturn(configProperties);
+        // Initialize first encryptor with master password
+        when(encryptionServiceConfig.password()).thenReturn(testMasterPass);
+        es.start(encryptionServiceConfig);
+
         when(configuration.getPid()).thenReturn("testEncryptionPid");
 
-        verify(encryptionServiceConfig, atMost(0)).enabled(); // encryptionServiceConfig.enabled() has not been called yet
-        when(encryptionServiceConfig.password()).thenReturn("TEST_MASTER_PASS");
-        es.start(encryptionServiceConfig);
-        // encryptor.isInitialized() is false, so it will pass the first if statement and encryptionServiceConfig.enabled is called
-        verify(encryptionServiceConfig, atMost(1)).enabled();
+        // Decrypt
+        String decrypted = es.decrypt(toDecrypt, "password", configuration);
+        assertEquals(testPasswordToBeEncrypted, decrypted);
 
-        // Call encrypt to initialize the encryptor
-        es.encrypt(testPassword, "password", configuration);
-
-        when(encryptionServiceConfig.password()).thenReturn("TEST_NEW_PASS");
+        String newMasterPass = "NEW_MASTER_PASS";
+        when(encryptionServiceConfig.password()).thenReturn(newMasterPass);
         es.start(encryptionServiceConfig);
-        // encryptor.isInitialized() is true, so it will return out of the function and encryptionServiceConfig.enabled will not be called
-        verify(encryptionServiceConfig, atMost(1)).enabled();
+
+        when(configuration.getPid()).thenReturn("testEncryptionPid");
+        expectedEx.expect(MobiException.class);
+        expectedEx.expectMessage("Could not encrypt/decrypt");
+        String unableToDecrypt = es.decrypt(toDecrypt, "password", configuration);
+        expectedEx = ExpectedException.none();
+
+        StandardPBEStringEncryptor newEncryptor = new StandardPBEStringEncryptor();
+        newEncryptor.setPassword(newMasterPass);
+        newEncryptor.setIvGenerator(new RandomIvGenerator());
+        newEncryptor.setAlgorithm("PBEWithHmacSHA512AndAES_128");
+
+        String newToDecrypt = PropertyValueEncryptionUtils.encrypt(testPasswordToBeEncrypted, encryptor);
+        String newDecrypted = es.decrypt(newToDecrypt, "password", configuration);
+        assertEquals(testPasswordToBeEncrypted, newDecrypted);
     }
 
     @Test
