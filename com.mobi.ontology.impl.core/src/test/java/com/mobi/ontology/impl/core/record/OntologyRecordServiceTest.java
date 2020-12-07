@@ -28,6 +28,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -44,6 +45,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -102,10 +104,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,6 +119,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
+    private final IRI inProgressCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/inProgressCommits#commit");
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
     private final IRI masterBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#master");
@@ -158,6 +163,12 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private Statement statement;
+
+    @Mock
+    private RepositoryResult<Statement> inProgressResults;
+
+    @Mock
+    private InProgressCommit inProgressCommit;
 
     @Mock
     private TupleQuery tupleQuery;
@@ -269,6 +280,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(results.next()).thenReturn(statement);
         when(statement.getSubject()).thenReturn(recordPolicyIRI);
         when(configProvider.getRepository()).thenReturn(repository);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(repository.getConnection()).thenReturn(connection);
         when(connection.prepareTupleQuery(anyString())).thenReturn(tupleQuery);
         when(tupleQuery.evaluate()).thenReturn(tupleQueryResult);
@@ -278,6 +290,15 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         when(binding.getValue()).thenReturn(VALUE_FACTORY.createLiteral("urn:record"),
                 VALUE_FACTORY.createLiteral("urn:master"), VALUE_FACTORY.createLiteral("urn:user"));
         when(sesameTransformer.mobiModel(any(org.eclipse.rdf4j.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.eclipse.rdf4j.model.Model.class)));
+
+        // InProgressCommit deletion setup
+        when(connection.getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), any(IRI.class))).thenReturn(inProgressResults);
+        Set<Statement> inProgressCommitIris = new HashSet<>();
+        inProgressCommitIris.add(VALUE_FACTORY.createStatement(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testIRI));
+        when(inProgressResults.iterator()).thenReturn(inProgressCommitIris.iterator());
+        doCallRealMethod().when(inProgressResults).forEach(any(Consumer.class));
+        when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), eq(connection))).thenReturn(inProgressCommit);
+        doNothing().when(utilsService).removeInProgressCommit(any(InProgressCommit.class), eq(connection));
 
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.setOntologyManager(ontologyManager);
@@ -642,6 +663,9 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         verify(utilsService).removeVersion(eq(testRecord.getResource()), any(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).removeBranch(eq(testRecord.getResource()), any(Resource.class), any(List.class), any(RepositoryConnection.class));
         verify(provUtils).endDeleteActivity(any(DeleteActivity.class), any(Record.class));
+        verify(connection).getStatements(eq(null), eq(VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI)), eq(testIRI));
+        verify(utilsService).getInProgressCommit(eq(catalogId), eq(testIRI), eq(inProgressCommitIRI), eq(connection));
+        verify(utilsService).removeInProgressCommit(eq(inProgressCommit), eq(connection));
         verify(ontologyCache).clearCache(any(Resource.class));
         verify(ontologyCache).clearCacheImports(any(Resource.class));
     }
