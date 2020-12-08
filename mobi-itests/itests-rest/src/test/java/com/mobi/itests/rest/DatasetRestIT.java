@@ -24,7 +24,7 @@ package com.mobi.itests.rest;
  */
 
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
-import static com.mobi.itests.rest.utils.RestITUtils.baseUrl;
+import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -157,16 +157,16 @@ public class DatasetRestIT extends KarafTestSupport {
 
     private CloseableHttpResponse createDataset(CloseableHttpClient client, HttpEntity entity)
             throws IOException, GeneralSecurityException {
-        authenticateUser(context);
-        HttpPost post = new HttpPost(baseUrl + "/datasets");
+        authenticateUser(context, getHttpsPort());
+        HttpPost post = new HttpPost(getBaseUrl(getHttpsPort()) + "/datasets");
         post.setEntity(entity);
         return client.execute(post, context);
     }
 
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, Resource datasetId, HttpEntity entity)
             throws IOException, GeneralSecurityException {
-        authenticateUser(context);
-        HttpPost post = new HttpPost(baseUrl + "/datasets/" + ResourceUtils.encode(datasetId.stringValue()) + "/data");
+        authenticateUser(context, getHttpsPort());
+        HttpPost post = new HttpPost(getBaseUrl(getHttpsPort()) + "/datasets/" + ResourceUtils.encode(datasetId.stringValue()) + "/data");
         post.setEntity(entity);
         return client.execute(post, context);
     }
