@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { unset, get } from 'lodash';
+import { unset, get, forEach} from 'lodash';
 
 const template = require('./createBranchOverlay.component.html');
 
@@ -75,7 +75,9 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
             dvm.os.listItem.branches.push(branch);
             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
             commitId = branch[prefixes.catalog + 'head'][0]['@id'];
+            collapseFlatLists();
             dvm.os.listItem.upToDate = true;
+            dvm.os.resetStateTabs();
             return dvm.os.updateOntologyState({recordId: dvm.os.listItem.ontologyRecord.recordId, commitId, branchId: dvm.os.listItem.ontologyRecord.branchId});
         }, $q.reject)
         .then(() => {
@@ -90,6 +92,29 @@ function createBranchOverlayComponentCtrl($q, catalogManagerService, ontologySta
     function onError(errorMessage) {
         dvm.error = errorMessage;
     }
+
+    function collapseFlatLists() {
+        var flatLists = ['classes', 'dataProperties', 'objectProperties', 'annotations', 
+            'concepts', 'conceptSchemes', 'dataProperties'];
+
+        forEach(flatLists, listKey =>{
+            if('flat' in dvm.os.listItem[listKey]){
+                dvm.os.listItem[listKey].flat = dvm.os.listItem[listKey].flat.map(closeNodeMapper);
+            }
+        });
+        
+        if('flatEverythingTree' in dvm.os.listItem){
+            dvm.os.listItem['flatEverythingTree'] = dvm.os.listItem['flatEverythingTree'].map(closeNodeMapper);
+        }
+    }
+
+    function closeNodeMapper(item){
+        if('isOpened' in item){
+            item.isOpened = false;
+        }
+        return item;
+    }
+
 }
 
 export default createBranchOverlayComponent;
