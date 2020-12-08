@@ -15,6 +15,7 @@ variables:
 before_script:
   # Sets Version variables for use in job steps and updates pom to correct version for run
   - REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)" #Uses bash regex
+  - DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/
   - |- 
     if [[ $CI_COMMIT_TAG =~ $REGEX ]]; then
       VERSION=`echo $CI_COMMIT_TAG | sed -e "s/^v//"`
@@ -23,6 +24,7 @@ before_script:
       MICRO=`echo $VERSION | cut -d. -f3`
       mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
       MESSAGE="Building release"
+      DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/
     elif [[ $CI_COMMIT_REF_NAME == "master" ]]
     then
       POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
@@ -81,7 +83,7 @@ deploy_artifacts:
     variables:
       - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
   script:
-    - mvn $MAVEN_CLI_OPTS deploy #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
+    - mvn $MAVEN_CLI_OPTS deploy -DaltDeploymentRepository=central::default::$DEPLOY_REPO #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -Pversion=$VERSION -PnexusUsername=$INOVEX_USERNAME -PnexusPassword=$INOVEX_PASSWORD
 
