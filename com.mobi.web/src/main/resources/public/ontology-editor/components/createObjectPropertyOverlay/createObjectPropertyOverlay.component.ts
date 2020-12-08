@@ -70,6 +70,18 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
             checked: false,
             typeIRI: prefixes.owl + 'AsymmetricProperty',
             displayText: 'Asymmetric Property',
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'SymmetricProperty',
+            displayText: 'Symmetric Property',
+            objectOnly: true
+        },
+        {
+            checked: false,
+            typeIRI: prefixes.owl + 'TransitiveProperty',
+            displayText: 'Transitive Property',
+            objectOnly: true
         }
     ];
     dvm.prefixes = prefixes;
