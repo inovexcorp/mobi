@@ -615,26 +615,26 @@
 
     <distributionManagement>
         <repository>
-            <id>inovex.hanover</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-releases/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/</url>
         </repository>
         <snapshotRepository>
-            <id>inovex.hanover</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/</url>
         </snapshotRepository>
     </distributionManagement>
 
     <repositories>
         <repository>
-            <id>mobi.releases</id>
-            <url>https://artifactory.inovexcorp.com/artifactory/mobi-releases/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-dev-group/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
-            <id>mobi.releases</id>
-            <url>https://artifactory.inovexcorp.com/artifactory/mobi-releases/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-dev-group/</url>
         </pluginRepository>
     </pluginRepositories>
 </project>

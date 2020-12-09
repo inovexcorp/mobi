@@ -254,12 +254,14 @@ public class OntologyRest {
     }
 
     /**
-     * Ingests/uploads an ontology file to a data store and creates and stores an OntologyRecord using the form data in
-     * the repository to track the work done on it. A master Branch is created and stored with an initial Commit
-     * containing the data provided in the ontology file.
+     * Ingests/uploads an ontology file or the JSON-LD of an ontology to a data store and creates and stores an
+     * OntologyRecord using the form data in the repository to track the work done on it. A master Branch is created
+     * and stored with an initial Commit containing the data provided in the ontology file. Only provide either an
+     * ontology file or ontology JSON-LD.
      *
      * @param context         the context of the request.
      * @param fileInputStream the ontology file to upload.
+     * @param ontologyJson    the ontology JSON-LD to upload.
      * @param title           the title for the OntologyRecord.
      * @param description     the optional description for the OntologyRecord.
      * @param markdown        the optional markdown abstract for the new OntologyRecord.
@@ -274,62 +276,38 @@ public class OntologyRest {
     @ApiOperation("Uploads an ontology file to the data store.")
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadFile(@Context ContainerRequestContext context,
-                               @FormDataParam("file") InputStream fileInputStream,
-                               @FormDataParam("file") FormDataContentDisposition fileDetail,
-                               @FormDataParam("title") String title,
-                               @FormDataParam("description") String description,
-                               @FormDataParam("markdown") String markdown,
-                               @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
+    public Response uploadOntology(@Context ContainerRequestContext context,
+                                   @FormDataParam("file") InputStream fileInputStream,
+                                   @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                   @FormDataParam("json") String ontologyJson,
+                                   @FormDataParam("title") String title,
+                                   @FormDataParam("description") String description,
+                                   @FormDataParam("markdown") String markdown,
+                                   @FormDataParam("keywords") List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
-        if (fileInputStream == null) {
-            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+        if (fileInputStream == null && ontologyJson == null) {
+            throw ErrorUtils.sendError("The ontology data is missing.", Response.Status.BAD_REQUEST);
+        } else if (fileInputStream != null && ontologyJson != null) {
+            throw ErrorUtils.sendError("Only provide either an ontology file or ontology json data.",
+                    Response.Status.BAD_REQUEST);
         }
+
         Set<String> keywordSet = Collections.emptySet();
         if (keywords != null) {
             keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
         }
-        RecordOperationConfig config = new OperationConfig();
-        config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
-        config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
-        return createOntologyRecord(context, title, description, markdown, keywordSet, config);
-    }
-
-    /**
-     * Ingests/uploads the JSON-LD of an ontology to a data store and creates and stores an OntologyRecord using the
-     * form data in the repository to track the work done on it. A master Branch is created and stored with an initial
-     * Commit containing the data provided in the JSON-LD for the ontology.
-     *
-     * @param context      the context of the request.
-     * @param title        the title for the OntologyRecord.
-     * @param description  the optional description for the OntologyRecord.
-     * @param markdown     the optional markdown abstract for the new OntologyRecord.
-     * @param keywords     the optional list of keyword strings for the OntologyRecord.
-     * @param ontologyJson the ontology JSON-LD to upload.
-     * @return OK with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
-     *      SERVER ERROR if there is a problem creating the OntologyRecord.
-     */
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @ApiOperation("Uploads ontology JSON-LD to the data store.")
-    @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
-    @ResourceId("http://mobi.com/catalog-local")
-    public Response uploadOntologyJson(@Context ContainerRequestContext context, @QueryParam("title") String title,
-                                       @QueryParam("description") String description,
-                                       @QueryParam("markdown") String markdown,
-                                       @QueryParam("keywords") List<String> keywords, String ontologyJson) {
-        checkStringParam(title, "The title is missing.");
-        checkStringParam(ontologyJson, "The ontologyJson is missing.");
-        Set<String> keywordSet = Collections.emptySet();
-        if (keywords != null) {
-            keywordSet = new HashSet<>(keywords);
+        if (fileInputStream != null) {
+            RecordOperationConfig config = new OperationConfig();
+            config.set(OntologyRecordCreateSettings.INPUT_STREAM, fileInputStream);
+            config.set(OntologyRecordCreateSettings.FILE_NAME, fileDetail.getFileName());
+            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
+        } else {
+            checkStringParam(ontologyJson, "The ontologyJson is missing.");
+            RecordOperationConfig config = new OperationConfig();
+            Model jsonModel = getModelFromJson(ontologyJson);
+            config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
+            return createOntologyRecord(context, title, description, markdown, keywordSet, config);
         }
-        RecordOperationConfig config = new OperationConfig();
-        Model jsonModel = getModelFromJson(ontologyJson);
-        config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, jsonModel);
-        return createOntologyRecord(context, title, description, markdown, keywordSet, config);
     }
 
     /**
