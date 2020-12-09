@@ -921,8 +921,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         fd.field("keywords", "keyword1");
         fd.field("keywords", "keyword2");
 
-        Response response = target().path("ontologies").request().post(Entity.entity(fd,
-                MediaType.MULTIPART_FORM_DATA));
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -931,13 +930,16 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     @Test
     public void testUploadOntologyJson() {
         JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("json", ontologyJson.toString());
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
 
-        Response response = target().path("ontologies")
-                .queryParam("title", "title")
-                .queryParam("description", "description")
-                .queryParam("markdown", "#markdown")
-                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
-                .request().post(Entity.json(ontologyJson));
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
         assertEquals(response.getStatus(), 201);
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(catalogManager).createRecord(any(User.class), config.capture(), eq(OntologyRecord.class));
@@ -956,22 +958,43 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     public void testUploadOntologyJsonWithoutTitle() {
         JSONObject entity = new JSONObject().element("@id", "http://mobi.com/entity");
 
-        Response response = target().path("ontologies")
-                .queryParam("description", "description")
-                .queryParam("markdown", "#markdown")
-                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
-                .request().post(Entity.json(entity));
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("json", entity.toString());
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void testUploadOntologyJsonWithoutJson() {
-        Response response = target().path("ontologies")
-                .queryParam("title", "title")
-                .queryParam("markdown", "#markdown")
-                .queryParam("description", "description")
-                .queryParam("keywords", "keyword1").queryParam("keywords", "keyword2")
-                .request().post(Entity.json(""));
+    public void testUploadOntologyWithoutJsonOrFile() {
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testUploadOntologyJsonAndFile() {
+        JSONObject ontologyJson = new JSONObject().element("@id", "http://mobi.com/ontology");
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("json", ontologyJson.toString());
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("markdown", "#markdown");
+        fd.field("keywords", "keyword1");
+        fd.field("keywords", "keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
     }
 

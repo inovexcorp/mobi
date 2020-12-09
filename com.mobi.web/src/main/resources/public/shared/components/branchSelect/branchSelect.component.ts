@@ -21,7 +21,10 @@
  * #L%
  */
 
+import './branchSelect.component.scss';
+
 const template = require('./branchSelect.component.html');
+
 
 /**
  * @ngdoc component

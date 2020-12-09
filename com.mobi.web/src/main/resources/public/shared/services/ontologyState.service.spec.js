@@ -1967,9 +1967,9 @@ describe('Ontology State Service', function() {
         });
     });
     describe('createOntology calls the correct methods', function() {
-        describe('when uploadJson succeeds', function() {
+        describe('when uploadOntology succeeds', function() {
             beforeEach(function() {
-                ontologyManagerSvc.uploadJson.and.returnValue($q.when({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId}));
+                ontologyManagerSvc.uploadOntology.and.returnValue($q.when({ontologyId: this.ontologyId, recordId: this.recordId, branchId: this.branchId, commitId: this.commitId}));
                 ontologyStateSvc.list = [];
                 spyOn(ontologyStateSvc, 'setSelected');
                 spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('entityId');
@@ -1997,8 +1997,8 @@ describe('Ontology State Service', function() {
                 scope.$apply();
             });
         });
-        it('when uploadJson rejects', function() {
-            ontologyManagerSvc.uploadJson.and.returnValue($q.reject(this.error));
+        it('when uploadOntology rejects', function() {
+            ontologyManagerSvc.uploadOntology.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntology(this.ontologyObj, this.title)
                 .then(() => {
                     fail('Promise should have rejected');

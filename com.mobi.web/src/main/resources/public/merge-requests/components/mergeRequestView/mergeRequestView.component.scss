@@ -24,6 +24,9 @@
 @import "../../../css/variables";
 
 .merge-request-view {
+    .main-details .title{
+        word-break: break-all;
+    }
     h2 {
         display: inline-block;
     }
@@ -88,6 +91,11 @@
 
         .description {
             padding-bottom: 10px;
+        }
+
+        .request-summary p {
+            margin-top: 0px;
+            margin-bottom: 0px;
         }
     }
 }
