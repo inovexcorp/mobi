@@ -96,6 +96,7 @@ function recordMarkdownComponentCtrl($q, utilService, showdown) {
                 .then(() => {
                     dvm.edit = false;
                     dvm.editMarkdown = '';
+                    dvm.$onChanges();
                 }, () => {
                     util.updateDctermsValue(dvm.record, 'abstract', this.originalValue);
                 });
