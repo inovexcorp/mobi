@@ -209,159 +209,210 @@ describe('Ontology Manager service', function() {
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
     });
 
-    describe('uploadFile hits the proper endpoint', function() {
-        describe('without an id and', function() {
-            it('with description and keywords', function() {
-                $httpBackend.expectPOST('/mobirest/ontologies',
-                    function(data) {
-                        return data instanceof FormData;
-                    }, function(headers) {
-                        return headers['Content-Type'] === undefined;
-                    }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-                ontologyManagerSvc.uploadFile(this.file, this.title, this.description, this.keywords)
-                    .then(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
-                    }, () => {
-                        fail('Promise should have resolved');
-                    });
-                flushAndVerify($httpBackend);
+    describe('uploadOntology hits the proper endpoint', function() {
+        describe('with a file', function() {
+            describe('without an id and', function() {
+                it('with description and keywords', function() {
+                    $httpBackend.expectPOST('/mobirest/ontologies',
+                        function(data) {
+                            return data instanceof FormData;
+                        }, function(headers) {
+                            return headers['Content-Type'] === undefined;
+                        }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, this.description, this.keywords)
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    flushAndVerify($httpBackend);
+                });
+                it('with no description or keywords', function() {
+                    $httpBackend.expectPOST('/mobirest/ontologies',
+                        function(data) {
+                            return data instanceof FormData;
+                        }, function(headers) {
+                            return headers['Content-Type'] === undefined;
+                        }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title)
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    flushAndVerify($httpBackend);
+                });
+                it('unless an error occurs', function() {
+                    $httpBackend.expectPOST('/mobirest/ontologies',
+                        function(data) {
+                            return data instanceof FormData;
+                        }, function(headers) {
+                            return headers['Content-Type'] === undefined;
+                        }).respond(400, this.errorObject, null, this.error);
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title)
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual(this.errorObject);
+                        });
+                    flushAndVerify($httpBackend);
+                    expect(util.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: this.error
+                    }));
+                });
             });
-            it('with no description or keywords', function() {
-                $httpBackend.expectPOST('/mobirest/ontologies',
-                    function(data) {
-                        return data instanceof FormData;
-                    }, function(headers) {
-                        return headers['Content-Type'] === undefined;
-                    }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-                ontologyManagerSvc.uploadFile(this.file, this.title)
-                    .then(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
-                    }, () => {
-                        fail('Promise should have resolved');
+            describe('with an id', function() {
+                beforeEach(function() {
+                    this.config = {
+                        transformRequest: jasmine.any(Function),
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                    this.fd = new FormData();
+                    this.fd.append('file', this.file);
+                    this.fd.append('title', this.title);
+                });
+                it('with description and keywords', function() {
+                    httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
+                    this.fd.append('description', this.description);
+                    this.keywords.forEach(word => {
+                        this.fd.append('keywords', word);
                     });
-                flushAndVerify($httpBackend);
-            });
-            it('unless an error occurs', function() {
-                $httpBackend.expectPOST('/mobirest/ontologies',
-                    function(data) {
-                        return data instanceof FormData;
-                    }, function(headers) {
-                        return headers['Content-Type'] === undefined;
-                    }).respond(400, this.errorObject, null, this.error);
-                ontologyManagerSvc.uploadFile(this.file, this.title)
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    }, response => {
-                        expect(response).toEqual(this.errorObject);
-                    });
-                flushAndVerify($httpBackend);
-                expect(util.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({
-                    status: 400,
-                    statusText: this.error
-                }));
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, this.description, this.keywords, 'id')
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
+                });
+                it('with no description or keywords', function() {
+                    httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, undefined, undefined, 'id')
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
+                });
+                it('unless an error occurs', function() {
+                    httpSvc.post.and.returnValue($q.reject({statusText: this.error}));
+                    ontologyManagerSvc.uploadOntology(this.file, undefined, this.title, undefined, undefined, 'id')
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
+                    expect(util.rejectErrorObject).toHaveBeenCalledWith({statusText: this.error});
+                });
             });
         });
-
-        describe('with an id', function() {
-            beforeEach(function() {
-                this.config = {
-                    transformRequest: jasmine.any(Function),
-                    headers: {
-                        'Content-Type': undefined
-                    }
-                };
-                this.fd = new FormData();
-                this.fd.append('file', this.file);
-                this.fd.append('title', this.title);
-            });
-            it('with description and keywords', function() {
-                httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
-                this.fd.append('description', this.description);
-                this.keywords.forEach(word => {
-                    this.fd.append('keywords', word);
+        describe('with JSON-LD', function() {
+            describe('without an id and', function() {
+                it('with description and keywords', function() {
+                    $httpBackend.expectPOST('/mobirest/ontologies',
+                        function(data) {
+                            return data instanceof FormData;
+                        }, function(headers) {
+                            return headers['Content-Type'] === undefined;
+                        }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, this.description, this.keywords)
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    flushAndVerify($httpBackend);
                 });
-                ontologyManagerSvc.uploadFile(this.file, this.title, this.description, this.keywords, 'id')
-                    .then(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
-                    }, () => {
-                        fail('Promise should have resolved');
+                it('with no description or keywords', function() {
+                    $httpBackend.expectPOST('/mobirest/ontologies',
+                        function(data) {
+                            return data instanceof FormData;
+                        }, function(headers) {
+                            return headers['Content-Type'] === undefined;
+                        }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title)
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    flushAndVerify($httpBackend);
+                });
+                it('unless an error occurs', function() {
+                    $httpBackend.expectPOST('/mobirest/ontologies',
+                        function(data) {
+                            return data instanceof FormData;
+                        }, function(headers) {
+                            return headers['Content-Type'] === undefined;
+                        }).respond(400, this.errorObject, null, this.error);
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title)
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        }, response => {
+                            expect(response).toEqual(this.errorObject);
+                        });
+                    flushAndVerify($httpBackend);
+                    expect(util.rejectErrorObject).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: this.error
+                    }));
+                });
+            });
+            describe('with an id', function() {
+                beforeEach(function() {
+                    this.config = {
+                        transformRequest: jasmine.any(Function),
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
+                    this.fd = new FormData();
+                    this.fd.append('file', this.file);
+                    this.fd.append('title', this.title);
+                });
+                it('with description and keywords', function() {
+                    httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
+                    this.fd.append('description', this.description);
+                    this.keywords.forEach(word => {
+                        this.fd.append('keywords', word);
                     });
-                scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
-            });
-            it('with no description or keywords', function() {
-                httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
-                ontologyManagerSvc.uploadFile(this.file, this.title, undefined, undefined, 'id')
-                    .then(response => {
-                        expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
-                    }, () => {
-                        fail('Promise should have resolved');
-                    });
-                scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
-            });
-            it('unless an error occurs', function() {
-                httpSvc.post.and.returnValue($q.reject({statusText: this.error}));
-                ontologyManagerSvc.uploadFile(this.file, this.title, undefined, undefined, 'id')
-                    .then(() => {
-                        fail('Promise should have rejected');
-                    });
-                scope.$apply();
-                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
-                expect(util.rejectErrorObject).toHaveBeenCalledWith({statusText: this.error});
-            });
-        });
-    });
-    describe('uploadJson hits the proper endpoint', function() {
-        it('with description and keywords', function() {
-            var params = paramSerializer({
-                title: this.title,
-                description: this.description,
-                keywords: this.keywords
-            });
-            $httpBackend.expectPOST('/mobirest/ontologies?' + params, this.ontologyObj,
-                function(headers) {
-                    return headers['Content-Type'] === 'application/json';
-                }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-            ontologyManagerSvc.uploadJson(this.ontologyObj, this.title, this.description, this.keywords)
-                .then(data => {
-                    expect(data).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
-                }, () => {
-                    fail('Promise should have resolved');
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, this.description, this.keywords, 'id')
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
                 });
-            flushAndVerify($httpBackend);
-        });
-        it('with no description or keywords', function() {
-            var params = paramSerializer({ title: this.title });
-            $httpBackend.expectPOST('/mobirest/ontologies?' + params, this.ontologyObj,
-                function(headers) {
-                    return headers['Content-Type'] === 'application/json';
-                }).respond(200, {ontologyId: this.ontologyId, recordId: this.recordId});
-            ontologyManagerSvc.uploadJson(this.ontologyObj, this.title)
-                .then(data => {
-                    expect(data).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
-                }, () => {
-                    fail('Promise should have resolved');
+                it('with no description or keywords', function() {
+                    httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, undefined, undefined, 'id')
+                        .then(response => {
+                            expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});
+                        }, () => {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
                 });
-            flushAndVerify($httpBackend);
-        });
-        it('unless an error occurs', function() {
-            var params = paramSerializer({ title: this.title });
-            $httpBackend.expectPOST('/mobirest/ontologies?' + params, this.ontologyObj,
-                function(headers) {
-                    return headers['Content-Type'] === 'application/json';
-                }).respond(400, null, null, this.error);
-            ontologyManagerSvc.uploadJson(this.ontologyObj, this.title)
-                .then(() => {
-                    fail('Promise should have rejected');
-                }, response => {
-                    expect(response).toEqual(this.error);
+                it('unless an error occurs', function() {
+                    httpSvc.post.and.returnValue($q.reject({statusText: this.error}));
+                    ontologyManagerSvc.uploadOntology(undefined, this.ontologyObj, this.title, undefined, undefined, 'id')
+                        .then(() => {
+                            fail('Promise should have rejected');
+                        });
+                    scope.$apply();
+                    expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
+                    expect(util.rejectErrorObject).toHaveBeenCalledWith({statusText: this.error});
                 });
-            flushAndVerify($httpBackend);
-            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                status: 400,
-                statusText: this.error
-            }));
+            });
         });
     });
     describe('deleteOntology hits the proper endpoint', function() {

@@ -728,7 +728,7 @@ function ontologyStateService($q, $filter, ontologyManagerService, updateRefsSer
      */
     self.createOntology = function(ontologyJson, title, description, keywords) {
         var listItem;
-        return om.uploadJson(ontologyJson, title, description, keywords)
+        return om.uploadOntology(undefined, ontologyJson, title, description, keywords)
             .then(data => {
                 listItem = setupListItem(data.recordId, data.branchId, data.commitId, emptyInProgressCommit, true, title);
                 return cm.getRecordBranch(data.branchId, data.recordId, catalogId);
