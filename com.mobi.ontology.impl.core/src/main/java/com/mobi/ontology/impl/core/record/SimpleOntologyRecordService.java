@@ -50,24 +50,15 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import org.apache.commons.io.FilenameUtils;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParser;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
-import org.semanticweb.owlapi.rio.RioFunctionalSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
-import org.semanticweb.owlapi.rio.RioOWLXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.eclipse.rdf4j.rio.Rio;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
 
 @Component(
         immediate = true,
@@ -176,9 +167,9 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Override
     protected void deleteRecord(OntologyRecord record, RepositoryConnection conn) {
         long start = getStartTime();
+        deleteVersionedRDFData(record, conn);
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
-        deleteVersionedRDFData(record, conn);
         clearOntologyCache(record);
         logTrace("deleteOntology(recordId)", start);
     }

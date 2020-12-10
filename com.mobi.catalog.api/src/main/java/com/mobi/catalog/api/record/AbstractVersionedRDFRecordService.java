@@ -30,6 +30,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
@@ -50,6 +51,7 @@ import com.mobi.query.api.BindingSet;
 import com.mobi.query.api.TupleQuery;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.repository.api.RepositoryConnection;
@@ -301,13 +303,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
 
     @Override
     protected void deleteRecord(T record, RepositoryConnection conn) {
+        deleteVersionedRDFData(record, conn);
         deleteRecordObject(record, conn);
         deletePolicies(record, conn);
-        deleteVersionedRDFData(record, conn);
     }
 
     /**
-     * Deletes VersionedRDFRecord specific data (Branches, Commits, Tags) from the repository.
+     * Deletes VersionedRDFRecord specific data (Branches, Commits, Tags, InProgressCommits) from the repository.
      *
      * @param record The VersionedRDFRecord to delete
      * @param conn A RepositoryConnection to use for lookup
@@ -321,6 +323,15 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         List<Resource> deletedCommits = new ArrayList<>();
         record.getBranch_resource().forEach(resource -> utilsService.removeBranch(record.getResource(),
                 resource, deletedCommits, conn));
+        Resource recordIri = record.getResource();
+        Set<Resource> inProgressCommitIris = new HashSet<>();
+        conn.getStatements(null, valueFactory.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIri)
+                .forEach(result -> inProgressCommitIris.add(result.getSubject()));
+        inProgressCommitIris.forEach(resource -> {
+            InProgressCommit commit = utilsService.getInProgressCommit(configProvider.getLocalCatalogIRI(), recordIri,
+                    resource, conn);
+            utilsService.removeInProgressCommit(commit, conn);
+        });
     }
 
     /**
