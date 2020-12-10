@@ -60,6 +60,7 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
     dvm.os = ontologyStateService;
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
+    dvm.duplicateCheck = true;
     dvm.property = {
         '@id': dvm.prefix,
         '@type': [dvm.prefixes.owl + 'AnnotationProperty'],
@@ -82,6 +83,7 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
             unset(dvm.property, prefixes.dcterms + 'description');
         }
@@ -101,6 +103,7 @@ function createAnnotationPropertyOverlayComponentCtrl($filter, ontologyStateServ
         dvm.os.listItem.goTo.active = true;
         // hide the overlay
         dvm.close();
+        // dvm.duplicateCheck = true;
     }
     dvm.cancel = function() {
         dvm.dismiss();

@@ -67,6 +67,7 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
     dvm.concepts = [];
     dvm.selectedConcepts = [];
     dvm.prefix = dvm.os.getDefaultPrefix();
+    dvm.duplicateCheck = true;
     dvm.scheme = {
         '@id': dvm.prefix,
         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'ConceptScheme'],
@@ -87,6 +88,7 @@ function createConceptSchemeOverlayComponentCtrl($filter, ontologyManagerService
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.selectedConcepts.length) {
             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.selectedConcepts;
         }

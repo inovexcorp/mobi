@@ -73,6 +73,7 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.values = [];
+    dvm.duplicateCheck = true;
     dvm.property = {
         '@id': dvm.prefix,
         '@type': [dvm.prefixes.owl + 'DatatypeProperty'],
@@ -97,6 +98,7 @@ function createDataPropertyOverlayComponentCtrl($filter, ontologyStateService, p
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
             unset(dvm.property, prefixes.dcterms + 'description');
         }
