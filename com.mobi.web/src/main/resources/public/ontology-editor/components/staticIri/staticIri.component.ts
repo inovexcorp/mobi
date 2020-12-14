@@ -66,13 +66,9 @@ function staticIriComponentCtrl($filter, ontologyStateService, ontologyUtilsMana
     dvm.ontoUtils = ontologyUtilsManagerService;
 
     dvm.$onInit = function() {
-        dvm.setVariables();            
+        dvm.setVariables();
     }
     dvm.$onChanges = function(changesObj) {
-        console.log("staticIriComponentCtrl-onChanges");
-        console.log(changesObj);
-        console.log(dvm);
-
         if (!changesObj.iri || !changesObj.iri.isFirstChange()) {
             dvm.setVariables();
         }
