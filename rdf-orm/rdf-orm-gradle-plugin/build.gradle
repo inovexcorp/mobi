@@ -29,8 +29,8 @@ dependencies {
 publishing {
     repositories {
         maven {
-            def releasesRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/matonto-releases/"
-            def snapshotsRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/"
+            def releasesRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/"
+            def snapshotsRepoUrl = "http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/"
             // Testing purposes
             // def releasesRepoUrl = "$buildDir/repos/releases"
             // def snapshotsRepoUrl = "$buildDir/repos/snapshots"

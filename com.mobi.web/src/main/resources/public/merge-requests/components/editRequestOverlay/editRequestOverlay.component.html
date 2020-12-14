@@ -35,7 +35,10 @@
         </div>
         <div class="edit-target-branch">
             <div class="form-group">
-                <span class="form-control-static">In <strong>Ontology: {{dvm.state.selected.recordTitle}}</strong>, merge <strong>Branch: {{dvm.request.sourceTitle}}</strong> into</span>
+                <span class="form-control-static">
+                    <p><strong>In Ontology: </strong>{{dvm.state.selected.recordTitle}}</p>
+                    <p><strong>Merge Branch: </strong>{{dvm.request.sourceTitle}}<strong> into </strong></p>
+                </span>
             </div>
         </div>
         <branch-select class="select-branch" bind-model="dvm.request.targetBranch" required="true" change-event="dvm.request.targetBranch = value" branches="dvm.branches"></branch-select>

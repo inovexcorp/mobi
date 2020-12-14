@@ -90,22 +90,23 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     /**
      * @ngdoc method
-     * @name uploadFile
+     * @name uploadOntology
      * @methodOf shared.service:ontologyManagerService
      *
      * @description
      * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
-     * with the file provided. This creates a new OntologyRecord associated with this ontology. Returns a
-     * promise indicating whether the ontology was persisted.
+     * with the file/JSON-LD provided. This creates a new OntologyRecord associated with this ontology. Returns a
+     * promise indicating whether the ontology was persisted. Provide either a file or JSON-LD, but not both.
      *
      * @param {File} file The ontology file.
+     * @param {Object} ontologyJson The ontology json.
      * @param {string} title The record title.
      * @param {string} description The record description.
      * @param {string} keywords The array of keywords for the record.
      * @param {string} id The identifier for this request.
      * @returns {Promise} A promise indicating whether the ontology was persisted.
      */
-    self.uploadFile = function(file, title, description, keywords, id = '') {
+    self.uploadOntology = function(file, ontologyJson, title, description, keywords, id = '') {
         var fd = new FormData(),
             config = {
                 transformRequest: identity,
@@ -113,7 +114,12 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
                     'Content-Type': undefined
                 }
             };
-        fd.append('file', file);
+        if (file != undefined) {
+            fd.append('file', file);
+        }
+        if (ontologyJson != undefined) {
+            fd.append('json', JSON.stringify(ontologyJson));
+        }
         fd.append('title', title);
         if (description) {
             fd.append('description', description);
@@ -124,7 +130,7 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
     }
     /**
      * @ngdoc method
-     * @name uploadFile
+     * @name uploadChangesFile
      * @methodOf shared.service:ontologyManagerService
      *
      * @description
@@ -153,39 +159,6 @@ function ontologyManagerService($http, $q, prefixes, catalogManagerService, util
         fd.append('file', file);
 
         return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
-            .then(response => response.data, util.rejectError);
-    }
-    /**
-     * @ngdoc method
-     * @name uploadJson
-     * @methodOf shared.service:ontologyManagerService
-     *
-     * @description
-     * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
-     * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
-     * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
-     *
-     * @param {string} ontologyJson The JSON-LD representing the ontology.
-     * @param {string} title The title for the OntologyRecord.
-     * @param {string} description The description for the OntologyRecord.
-     * @param {string} keywords The array of keywords for the OntologyRecord.
-     * @returns {Promise} A promise with the ontologyId, recordId, branchId, and commitId for the state of the newly created
-     * ontology.
-     */
-    self.uploadJson = function(ontologyJson, title, description, keywords) {
-        var config: any = {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            params: {title}
-        };
-        if (description) {
-            config.params.description = description;
-        }
-        if (keywords && keywords.length) {
-            config.params.keywords = keywords;
-        }
-        return $http.post(prefix, ontologyJson, config)
             .then(response => response.data, util.rejectError);
     }
     /**

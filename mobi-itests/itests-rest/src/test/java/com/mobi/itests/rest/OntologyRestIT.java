@@ -24,7 +24,7 @@ package com.mobi.itests.rest;
  */
 
 import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
-import static com.mobi.itests.rest.utils.RestITUtils.baseUrl;
+import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -161,15 +161,15 @@ public class OntologyRestIT extends KarafTestSupport {
     }
 
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, HttpEntity entity) throws IOException, GeneralSecurityException {
-        authenticateUser(context);
-        HttpPost post = new HttpPost(baseUrl + "/ontologies");
+        authenticateUser(context, getHttpsPort());
+        HttpPost post = new HttpPost(getBaseUrl(getHttpsPort()) + "/ontologies");
         post.setEntity(entity);
         return client.execute(post, context);
     }
 
     private CloseableHttpResponse deleteOntology(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
-        authenticateUser(context);
-        HttpDelete delete = new HttpDelete(baseUrl + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
+        authenticateUser(context, getHttpsPort());
+        HttpDelete delete = new HttpDelete(getBaseUrl(getHttpsPort()) + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
         return client.execute(delete, context);
     }
 

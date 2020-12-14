@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { iteratee } from 'lodash';
 import {
     mockPrefixes,
     mockUtil,
@@ -857,6 +856,29 @@ describe('Manchester Converter service', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA exactly 1 ClassA');
                 });
+            });
+            it('with onClass being a blank node', function() {
+                this.jsonld = [
+                    this.blankNode,
+                    {
+                        '@id': '_:genid1',
+                        '@type': [prefixes.owl + 'Class'],
+                        [prefixes.owl + 'unionOf']: [{'@id': '_:genid2'}]
+                    },
+                    {
+                        '@id': '_:genid2', '@type': [prefixes.rdf + 'List'],
+                        [prefixes.rdf + 'first']: [{'@id': 'ClassA'}],
+                        [prefixes.rdf + 'rest']: [{'@list': [{'@id': 'ClassB'}]}]
+                    }
+                ];
+
+                this.index['_:genid1'] = { position: 1 } ;
+                this.index['_:genid2'] = { position: 2 } ;
+
+                this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                this.blankNode[prefixes.owl + 'onClass'] = [{'@id': '_:genid1'}];
+                var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                expect(result).toBe('PropA min 1 (ClassA or ClassB)');
             });
         });
         describe('if given a datatype', function() {

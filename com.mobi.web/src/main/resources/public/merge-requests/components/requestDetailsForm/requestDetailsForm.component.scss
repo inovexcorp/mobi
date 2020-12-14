@@ -23,40 +23,19 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.request-branch-select {
-    display: flex;
-    flex-direction: column;
+.merge-requests-page {
+    .summary-line {
+        word-break: break-all;
+        margin-bottom: 20px;
 
-    .form-container {
-        text-align: left;
-
-
-        .branch-select-form {
-            .form-control-static {
-                padding: 0;
-                word-break: break-all;
-            }
-            .ui-select-toggle {
-                width: 100%;
-            }
-            input.ui-select-search {
-                width: 100% !important;
-
-                &.ng-hide {
-                    display: block !important;
-                    visibility: hidden;
-                    height: 0;
-                    border: 0;
-                    padding: 0;
-                }
-            }
-            .select-branch {
-                // margin: 0 5px;
-                text-overflow: ellipsis;
-            }
+        p {
+            margin-top: 0px;
+            margin-bottom: 0px;
         }
     }
-    .commit-difference-tabset {
-        margin-top: 20px;
+    form{
+        .checkbox{
+            word-break: break-all;
+        }
     }
 }
