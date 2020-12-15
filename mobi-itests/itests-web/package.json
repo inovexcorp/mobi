@@ -8,7 +8,7 @@
     "verify": "./node_modules/.bin/verify-junit-xml ./target/nightwatch-reports/*.xml"
   },
   "devDependencies": {
-    "chromedriver": "^86.0.0",
+    "chromedriver": "^87.0.0",
     "nightwatch": "^1.2.1",
     "verify-junit-xml": "0.0.3"
   },

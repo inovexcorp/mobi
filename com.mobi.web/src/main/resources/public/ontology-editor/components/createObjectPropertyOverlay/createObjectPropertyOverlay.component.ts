@@ -60,6 +60,7 @@ createObjectPropertyOverlayComponentCtrl.$inject = ['$filter', 'ontologyStateSer
 
 function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService, prefixes, ontologyUtilsManagerService) {
     var dvm = this;
+    dvm.duplicateCheck = true;
     dvm.characteristics = [
         {
             checked: false,
@@ -113,6 +114,7 @@ function createObjectPropertyOverlayComponentCtrl($filter, ontologyStateService,
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
             unset(dvm.property, prefixes.dcterms + 'description');
         }

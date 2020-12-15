@@ -62,6 +62,7 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
     dvm.ontoUtils = ontologyUtilsManagerService;
     dvm.prefix = dvm.os.getDefaultPrefix();
     dvm.values = [];
+    dvm.duplicateCheck = true;
     dvm.clazz = {
         '@id': dvm.prefix,
         '@type': [prefixes.owl + 'Class'],
@@ -85,6 +86,7 @@ function createClassOverlayComponentCtrl($filter, ontologyStateService, prefixes
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         if (isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
             unset(dvm.clazz, prefixes.dcterms + 'description');
         }
