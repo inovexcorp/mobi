@@ -518,6 +518,7 @@
                 <version>2.22.2</version>
                 <configuration>
                     <useFile>false</useFile>
+                    <trimStackTrace>false</trimStackTrace>
                     <includes>
                         <include>**/*Spec.java</include>
                         <include>**/*Test.java</include>
