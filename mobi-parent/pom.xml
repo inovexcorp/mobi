@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.18.48-SNAPSHOT</version>
+    <version>1.19.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -515,9 +515,10 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.22.2</version>
                 <configuration>
                     <useFile>false</useFile>
+                    <trimStackTrace>false</trimStackTrace>
                     <includes>
                         <include>**/*Spec.java</include>
                         <include>**/*Test.java</include>
@@ -527,9 +528,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>2.22.2</version>
                 <configuration>
                     <skipTests>${skipITs}</skipTests>
+                    <trimStackTrace>false</trimStackTrace>
                 </configuration>
                 <executions>
                     <execution>
@@ -613,26 +615,26 @@
 
     <distributionManagement>
         <repository>
-            <id>inovex.hanover</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-releases/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/</url>
         </repository>
         <snapshotRepository>
-            <id>inovex.hanover</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/matonto-snapshots/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/</url>
         </snapshotRepository>
     </distributionManagement>
 
     <repositories>
         <repository>
-            <id>mobi.releases</id>
-            <url>https://artifactory.inovexcorp.com/artifactory/mobi-releases/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-dev-group/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
-            <id>mobi.releases</id>
-            <url>https://artifactory.inovexcorp.com/artifactory/mobi-releases/</url>
+            <id>inovex</id>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-dev-group/</url>
         </pluginRepository>
     </pluginRepositories>
 </project>

@@ -60,9 +60,7 @@ public class SimpleEncryptionService implements EncryptionService {
     @Modified
     protected void start(final EncryptionServiceConfig encryptionServiceConfig) {
         if (encryptor.isInitialized()) {
-            LOGGER.debug("Encryptor has already been initialized. Modifications to the encryption config will not take effect until karaf is restarted." +
-                    "If the master password is changed, you will need to re-store all passwords in plaintext before next run.");
-            return;
+            encryptor = new StandardPBEStringEncryptor();
         }
         isEnabled = encryptionServiceConfig.enabled();
         if (isEnabled) {

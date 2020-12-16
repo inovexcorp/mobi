@@ -45,6 +45,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 
 public abstract class AbstractMappingRecordService<T extends MappingRecord>
@@ -88,7 +89,7 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
                     MASTER_BRANCH_IRI_BINDING};
             String[] replace = {user.stringValue(), recordId.stringValue(), encodedRecordIRI,
                     masterBranchId.stringValue()};
-            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, "UTF-8"),
+            String recordPolicy = StringUtils.replaceEach(IOUtils.toString(recordPolicyStream, StandardCharsets.UTF_8),
                     search, replace);
 
             return addPolicy(recordPolicy);

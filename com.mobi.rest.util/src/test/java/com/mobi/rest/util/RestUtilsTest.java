@@ -62,6 +62,7 @@ import org.mockito.MockitoAnnotations;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -115,13 +116,16 @@ public class RestUtilsTest {
     public void setUp() throws Exception {
         setUpModels();
 
-        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"));
-        expectedTypedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test-typed.json"));
-        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"));
-        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"));
-        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
-        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"));
-        expectedTrig= IOUtils.toString(getClass().getResourceAsStream("/test.trig"));
+        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"), StandardCharsets.UTF_8);
+        expectedTypedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test-typed.json"),
+                StandardCharsets.UTF_8);
+        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"), StandardCharsets.UTF_8);
+        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"),
+                StandardCharsets.UTF_8);
+        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"), StandardCharsets.UTF_8);
+        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"),
+                StandardCharsets.UTF_8);
+        expectedTrig= IOUtils.toString(getClass().getResourceAsStream("/test.trig"), StandardCharsets.UTF_8);
 
         MockitoAnnotations.initMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");

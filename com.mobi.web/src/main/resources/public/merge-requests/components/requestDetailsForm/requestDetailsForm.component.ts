@@ -25,6 +25,8 @@ import {get, noop} from "lodash";
 
 const template = require('./requestDetailsForm.component.html');
 
+import './requestDetailsForm.component.scss';
+
 /**
  * @ngdoc component
  * @name merge-requests.component:requestDetailsForm

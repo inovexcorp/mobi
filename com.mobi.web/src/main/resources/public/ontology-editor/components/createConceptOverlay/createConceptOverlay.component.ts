@@ -68,6 +68,7 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
     dvm.schemes = [];
     dvm.selectedSchemes = [];
     dvm.prefix = dvm.os.getDefaultPrefix();
+    dvm.duplicateCheck = true;
     dvm.concept = {
         '@id': dvm.prefix,
         '@type': [prefixes.owl + 'NamedIndividual', prefixes.skos + 'Concept'],
@@ -88,6 +89,7 @@ function createConceptOverlayComponentCtrl($filter, ontologyManagerService, onto
         dvm.os.setCommonIriParts(iriBegin, iriThen);
     }
     dvm.create = function() {
+        dvm.duplicateCheck = false;
         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
         // add the entity to the ontology
         dvm.os.addEntity(dvm.concept);

@@ -1,142 +1,96 @@
-include:
-  - project: 'matonto/gitlab-ci'
-    ref: master
-    file: 'shared-template.yml'
+image: gitlab.inovexcorp.com:4567/ilab/docker-images/maven-node-jdk8
 
 stages:
   - test
-  - set_version_root_pom
-  - set_version_parent_pom
-  - update_master_with_new_version
-  - increment_snapshot_version_root_pom
-  - increment_snapshot_version_parent_pom
-  - update_master_with_new_snapshot
-  - unit_integration_test
-  - deploy_artifacts
-  - deploy_rdf_orm
-  - create_release_branch
-  - update_minor_release_root_pom
-  - update_minor_release_parent_pom
-  - update_master_with_new_minor_snapshot
-  - new_release_deploy
+  - deploy
+  - deploy-docker
 
 variables:
+  GIT_DEPTH: 10 #Sets git depth to a lower number to optimize speed
   ARTIFACTORY_BASE_URL: "https://artifactory.inovexcorp.com/artifactory/"
-  MAVEN_SETTINGS_DOCKER: <server>
-      <id>docker-hub</id>
-      <username>PLACEHOLDER_USERNAME</username>
-      <password>PLACEHOLDER_PW</password>
-      <configuration>
-        <email>PLACEHOLDER_EMAIL</email>
-      </configuration>
-    </server>
+  # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log. `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --show-version"
 
 before_script:
-  - rm -r /root/.m2/repository && ln -s /opt/m2/repository /root/.m2/repository
-  - POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
-  - MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
-  - MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
-  - MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
-  - if [[ "$NEEDS_GIT_SETTINGS" == "1" ]]; then
-  -   PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
-  -   git remote set-url origin $PRIVATE_URL
-  -   git config --global user.email 'gitlab.runner@inovexcorp.com'
-  -   git config --global user.name 'Gitlab Runner'
-  - fi
+  - cp /m2/settings.xml ~/.m2/settings.xml
+  # Sets Version variables for use in job steps and updates pom to correct version for run
+  - REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)" #Uses bash regex
+  - DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/foundry-maven-dev-hosted/
+  - |- 
+    if [[ $CI_COMMIT_TAG =~ $REGEX ]]; then
+      VERSION=`echo $CI_COMMIT_TAG | sed -e "s/^v//"`
+      MAJOR=`echo $VERSION | cut -d. -f1`
+      MINOR=`echo $VERSION | cut -d. -f2`
+      MICRO=`echo $VERSION | cut -d. -f3`
+      mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
+      MESSAGE="Building release"
+      DEPLOY_REPO=http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-hosted/
+    elif [[ $CI_COMMIT_REF_NAME == "master" ]]
+    then
+      POM_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+      MAJOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f1)
+      MINOR=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f2)
+      MICRO=$(echo $POM_VERSION | cut -d- -f1 | cut -d. -f3)
+      VERSION=$MAJOR.$MINOR.$MICRO-rc-$CI_PIPELINE_IID
+      mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$VERSION -DprocessAllModules -DgenerateBackupPoms=false
+      MESSAGE="Building release candidate"
+    else 
+      VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout)
+      MESSAGE="Building snapshot"
+    fi
+  - echo "$MESSAGE - $VERSION"
 
-# For merge requests, just do an initial test
-test:
-  before_script: []
+# For merge requests, just do an unit tests
+unit_test:
   stage: test
   script:
     - mvn $MAVEN_CLI_OPTS -pl '!mobi-distribution,!mobi-itests,!:itests-support,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' test
-  except:
-    - master
   only:
     - merge_requests
 
-set_version_parent_pom:
-  extends: .apply_root_version_to_parent_pom
-  only:
+# For commits to master and releases do a full test
+full_test:
+  stage: test
+  only: 
+    - master
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
+  except:
     variables:
-      - $CI_COMMIT_TITLE =~ /Merge branch .* into 'master'/
-    refs:
-      - master
-  stage: set_version_parent_pom
-  dependencies:
-    - set_version_root_pom
-
-update_master_with_new_version:
-  dependencies:
-    - set_version_parent_pom
-
-increment_snapshot_version_parent_pom:
-  extends: .apply_root_version_to_parent_pom
-  only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
-    refs:
-      - master
-  stage: increment_snapshot_version_parent_pom
-  dependencies:
-    - increment_snapshot_version_root_pom
-
-update_master_with_new_snapshot:
-  dependencies:
-    - increment_snapshot_version_parent_pom
-
-unit_integration_test:
-  stage: unit_integration_test
-  dependencies: []
-  only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
-    refs:
-      - master
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/ #Should not run on automated commits
   script:
-    # Redirect calls to localhost:9080 to host machines (not this container);
-    # a 2nd container running mobi is bound to the host at port 9080.
+    - apt-get update
+    # Redirect calls to localhost:9080 to host machines (not this container), a 2nd container running mobi will be bound to the host at port 9080 (by functional tests).
+    - apt-get install -y redir
     - HOST_IP=$(ip route show | awk '/default/ {print $3}')
-    - apt-get update && apt-get install -y redir
     - redir :9080 $HOST_IP:9080
     # Update Chrome Version
-    - apt-get -y update && apt-get -y install google-chrome-stable
+    - apt-get -y install google-chrome-stable
     # Run unit, integration, and functional tests
     - mvn $MAVEN_CLI_OPTS clean install -DskipFunctional=false -DskipITs=false
   artifacts:
-    paths: ['rdf-orm']
+    when: on_failure
+    paths:
+      - mobi-itests/itests-web/target/nightwatch-screenshots #in the event that the functional tests fail, screenshots of failures are stored in the directory
 
-# Happens after NON snapshot commit to master
-deploy_rdf_orm:
-  stage: deploy_rdf_orm
-  dependencies: ['unit_integration_test']
-  variables:
-    NEEDS_GIT_SETTINGS: 0
+# Happens after commit to master
+deploy_artifacts:
+  stage: deploy
   only:
-    variables:
-      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Updates version to \d+\.\d+\.\d+$/
-    refs:
-      - master
-  script:
-    - cd rdf-orm/rdf-orm-gradle-plugin
-    - ./gradlew publish -Pversion=$MAJOR.$MINOR.$MICRO -PnexusUsername=$NEXUS_USERNAME -PnexusPassword=$NEXUS_PW
-
-update_minor_release_parent_pom:
-  extends: .apply_root_version_to_parent_pom
-  stage: update_minor_release_parent_pom
-  only:
-    - /release\/\d+\.\d+/
+    - master
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
-    - branches
-  artifacts:
-    paths: ['pom.xml', '*/pom.xml', '*/*/pom.xml']
-  dependencies:
-    - update_minor_release_root_pom
+    variables:
+      - $CI_COMMIT_TITLE =~ /^AUTOMATED COMMIT - Update version to \d+\.\d+\.\d+$/
+  script:
+    - mvn $MAVEN_CLI_OPTS deploy -DaltDeploymentRepository=central::default::$DEPLOY_REPO #TODO Skip unit tests and build - Future work to decrease duplication and increase the speed of execution
+    - cd rdf-orm/rdf-orm-gradle-plugin
+    - ./gradlew publish -Pversion=$VERSION -PnexusUsername=$INOVEX_USERNAME -PnexusPassword=$INOVEX_PASSWORD
 
 artifactory_release:
-  stage: new_release_deploy
+  stage: deploy
   only:
-    - /release\d*\.\d*/
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     - branches
   script:
@@ -144,41 +98,88 @@ artifactory_release:
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/win/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.zip
     - curl -u $ARTIFACTORY_USER:$ARTIFACTORY_PW -X PUT "$ARTIFACTORY_BASE_URL/mobi-binaries/nix/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz" -T mobi-distribution/target/mobi-distribution-$MAJOR.$MINOR.$MICRO.tar.gz
   artifacts:
-    paths: ['mobi-distribution']
+    paths:
+      - mobi-distribution/target/mobi-distribution-$VERSION* 
+      - mobi-distribution/target/assembly/docker #Required for docker_release
 
 # build and push the docker image, per instructions in mobi-distribution README
 # tag used to specify we want this job to happen w/ the docker builder runner
 docker_release:
-  stage: new_release_deploy
-  tags:
-    - docker-image-builder
+  stage: deploy-docker
   only:
-    - /release\d*\.\d*/
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
   except:
     - branches
   script:
-    - echo $MAVEN_SETTINGS_DOCKER | sed -e "s/PLACEHOLDER_USERNAME/$DOCKER_USERNAME/" -e "s/PLACEHOLDER_PW/$DOCKER_PW/" -e "s/PLACEHOLDER_EMAIL/$DOCKER_EMAIL/" > /root/.m2/ci_settings.xml
     - cd mobi-distribution
-    - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag -s /root/.m2/ci_settings.xml
+    - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag
 
-
-update_master_with_new_minor_snapshot:
-  dependencies:
-    - update_minor_release_parent_pom
-  stage: update_master_with_new_minor_snapshot
+increment_minor_version:
+  stage: deploy
   only:
-    - /release\/\d+\.\d+/
+    - /v(\d+)\.(\d+)\.([0]$)/  #Applies to release tags in the form "vX.X.0"
   except:
     - branches
-  dependencies:
-    - update_minor_release_root_pom
+  before_script: [] #Skip before script so as not to set a version before git pull (would introduce conflicts)
   script:
-    - CURRENT_VERSION="$MAJOR.$MINOR.$MICRO"
-    - git add ./\*pom.xml
-    - git commit -m "AUTOMATED COMMIT - Updates version to $CURRENT_VERSION-SNAPSHOT"
-    - git pull
+    # Configure git
+    - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
+    - git remote set-url origin $PRIVATE_URL
+    - git config --global user.email 'gitlab.runner@inovexcorp.com'
+    - git config --global user.name 'Gitlab Runner'
+    # Ensure working on latest commit on master
+    - git fetch
+    - git pull origin master
+    # Get current version
+    - VERSION=`echo $CI_COMMIT_TAG | sed -e "s/^v//"`
+    - MAJOR=`echo $VERSION | cut -d. -f1`
+    - MINOR=`echo $VERSION | cut -d. -f2`
+    - MICRO=`echo $VERSION | cut -d. -f3`
+    # Update minor version
+    - NEW_MINOR=$((MINOR + 1))
+    - NEW_VERSION="$MAJOR.$NEW_MINOR.0-SNAPSHOT"
+    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION -DprocessAllModules -DgenerateBackupPoms=false
+    # Commit change to git
+    - git commit -am "AUTOMATED COMMIT - Update version to $NEW_VERSION"
+    # Push change to master (gitlab)
     - git push origin HEAD:master
+    # Push release to github
     - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
     - git push github HEAD:master
-    - git checkout $CI_COMMIT_TAG
-    - git push github HEAD:$CI_COMMIT_TAG
+    - git push github $CI_COMMIT_REF_NAME #pushing release tag
+
+support_branch_increment_micro_version:
+  stage: deploy
+  only:
+    - /v(\d+)\.(\d+)\.([1-9]\d*)/  #Applies to tags where the micro version is >= 1.
+  except:
+    - branches
+  before_script: [] #Skip before script so as not to set a version before git pull (would introduce conflicts)
+  script:
+    # Get current version
+    - VERSION=`echo $CI_COMMIT_TAG | sed -e "s/^v//"`
+    - MAJOR=`echo $VERSION | cut -d. -f1`
+    - MINOR=`echo $VERSION | cut -d. -f2`
+    - MICRO=`echo $VERSION | cut -d. -f3`
+    # Configure git
+    - PRIVATE_URL="$(echo $CI_PROJECT_URL | sed "s|https://|https://gitlab-ci-token:$ACCESS_TOKEN@|g").git"
+    - git remote set-url origin $PRIVATE_URL
+    - git config --global user.email 'gitlab.runner@inovexcorp.com'
+    - git config --global user.name 'Gitlab Runner'
+    # Set working branch
+    - $BRANCH="support/$MAJOR.$MICRO"
+    # Ensure working on latest commit on branch
+    - git fetch
+    - git pull origin $BRANCH
+    # Update micro version
+    - NEW_MICRO=$((MICRO + 1))
+    - NEW_VERSION="$MAJOR.$MINOR.$NEW_MICRO-SNAPSHOT"
+    - mvn $MAVEN_CLI_OPTS versions:set -DnewVersion=$NEW_VERSION -DprocessAllModules -DgenerateBackupPoms=false
+    # Commit change to git
+    - git commit -am "AUTOMATED COMMIT - Update support branch version to $NEW_VERSION"
+    # Push change to master (gitlab)
+    - git push origin HEAD:$BRANCH
+    # Push release to github
+    - git remote add github https://$GITHUB_NAME:$GITHUB_TOKEN@github.com:inovexcorp/mobi.git
+    - git push github HEAD:$BRANCH
+    - git push github $CI_COMMIT_REF_NAME #pushing release tag

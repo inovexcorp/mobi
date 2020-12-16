@@ -26,7 +26,7 @@
             <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
         </ui-select-match>
         <ui-select-choices repeat="branch in dvm.branches | branchesToDisplay | filter:$select.search">
-            <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
+            <span title="{{ dvm.util.getDctermsValue(branch, 'title') }}" ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
         </ui-select-choices>
     </ui-select>
 </div>

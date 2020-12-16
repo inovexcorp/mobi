@@ -141,6 +141,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -195,15 +196,15 @@ public class SimpleOntology implements Ontology {
         try {
             SELECT_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-entity-usages.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             CONSTRUCT_ENTITY_USAGES = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/construct-entity-usages.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntology.class.getResourceAsStream("/get-search-results.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

@@ -112,7 +112,7 @@ describe('Upload Ontology Overlay component', function() {
                 });
                 it('less than controller.files.length', function() {
                     this.controller.submit();
-                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', ['keywords'], this.newId);
+                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId);
                     expect(this.controller.index).toEqual(1);
                     expect(this.controller.title).toEqual('file2');
                     expect(this.controller.description).toEqual('');
@@ -124,7 +124,7 @@ describe('Upload Ontology Overlay component', function() {
                 it('equal to controller.files.length', function() {
                     this.controller.total = 1;
                     this.controller.submit();
-                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', ['keywords'], this.newId);
+                    expect(ontologyManagerSvc.uploadOntology).toHaveBeenCalledWith({name: 'file1'}, undefined, 'title', 'description', ['keywords'], this.newId);
                     expect(scope.resolve.startUpload).toHaveBeenCalled();
                     expect(ontologyStateSvc.uploadList).toContain({promise: jasmine.any(Object), id: this.newId, title: 'title', error: undefined});
                     expect(scope.close).toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe('Upload Ontology Overlay component', function() {
             });
             describe('when uploadFile is', function() {
                 it('resolved', function() {
-                    ontologyManagerSvc.uploadFile.and.returnValue($q.when());
+                    ontologyManagerSvc.uploadOntology.and.returnValue($q.when());
                     this.controller.submit();
                     scope.$apply();
                     expect(ontologyStateSvc.addErrorToUploadItem).not.toHaveBeenCalled();
@@ -141,7 +141,7 @@ describe('Upload Ontology Overlay component', function() {
                 it('rejected', function() {
                     this.controller.index = 0;
                     this.newId = 'upload-' + (ontologyStateSvc.uploadList.length + this.controller.index);
-                    ontologyManagerSvc.uploadFile.and.returnValue($q.reject('error'));
+                    ontologyManagerSvc.uploadOntology.and.returnValue($q.reject('error'));
                     this.controller.submit();
                     scope.$apply();
                     expect(ontologyStateSvc.addErrorToUploadItem).toHaveBeenCalledWith(this.newId, 'error');

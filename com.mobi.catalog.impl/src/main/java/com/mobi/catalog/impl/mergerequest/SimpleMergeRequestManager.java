@@ -55,6 +55,7 @@ import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,7 +91,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     static {
         try {
             GET_COMMENT_CHAINS = IOUtils.toString(
-                    SimpleMergeRequestManager.class.getResourceAsStream("/get-comment-chains.rq"), "UTF-8");
+                    SimpleMergeRequestManager.class.getResourceAsStream("/get-comment-chains.rq"),
+                    StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -161,7 +163,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     static {
         try {
             GET_MERGE_REQUESTS_QUERY = IOUtils.toString(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-merge-requests.rq"), "UTF-8"
+                    .getResourceAsStream("/get-merge-requests.rq"), StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);

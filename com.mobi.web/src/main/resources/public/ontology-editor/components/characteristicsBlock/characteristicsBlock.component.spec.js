@@ -48,6 +48,8 @@ describe('Characteristics Block component', function() {
 
         this.functionalProperty = prefixes.owl + 'FunctionalProperty';
         this.asymmetricProperty = prefixes.owl + 'AsymmetricProperty';
+        this.symmetricProperty = prefixes.owl + 'SymmetricProperty';
+        this.transitiveProperty = prefixes.owl + 'TransitiveProperty';
         scope.iri = '';
         scope.types = [];
         scope.updateTypes = jasmine.createSpy('updateTypes');
@@ -94,7 +96,7 @@ describe('Characteristics Block component', function() {
             it('object property is selected', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 scope.$digest();
-                expect(this.element.find('checkbox').length).toEqual(2);
+                expect(this.element.find('checkbox').length).toEqual(4);
             });
             it('data property is selected', function() {
                 scope.$digest();
@@ -186,7 +188,7 @@ describe('Characteristics Block component', function() {
             obj.checked = false;
         });
         spyOn(this.controller, 'onChange');
-        this.controller.types = [this.functionalProperty, this.asymmetricProperty];
+        this.controller.types = [this.functionalProperty, this.asymmetricProperty, this.symmetricProperty, this.transitiveProperty];
         this.controller.$onChanges();
         expect(this.controller.onChange).not.toHaveBeenCalled();
         _.forEach(this.controller.characteristics, obj => {

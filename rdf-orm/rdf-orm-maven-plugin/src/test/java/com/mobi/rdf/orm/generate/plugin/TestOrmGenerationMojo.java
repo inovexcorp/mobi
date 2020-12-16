@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 @RunWith(BlockJUnit4ClassRunner.class)
@@ -70,7 +71,7 @@ public class TestOrmGenerationMojo {
         final String URL = "http://xmlns.com/foaf/spec/index.rdf";
         try {
             URL val = new URL(URL);
-            System.out.println(IOUtils.toString(val.openStream()));
+            System.out.println(IOUtils.toString(val.openStream(), StandardCharsets.UTF_8));
             // Process then
 
             OrmGenerationMojo mojo = new OrmGenerationMojo();

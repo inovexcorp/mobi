@@ -58,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -97,15 +98,15 @@ public class ProvRest {
         try {
             GET_ACTIVITIES_COUNT_QUERY = IOUtils.toString(
                     ProvRest.class.getResourceAsStream("/get-activities-count.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ACTIVITIES_QUERY = IOUtils.toString(
                     ProvRest.class.getResourceAsStream("/get-activities.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
             GET_ENTITIES_QUERY = IOUtils.toString(
                     ProvRest.class.getResourceAsStream("/get-entities.rq"),
-                    "UTF-8"
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
