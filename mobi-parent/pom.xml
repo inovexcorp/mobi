@@ -627,14 +627,14 @@
     <repositories>
         <repository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-dev-group/</url>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>inovex</id>
-            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-dev-group/</url>
+            <url>http://nexus.inovexcorp.com/nexus/content/repositories/public-maven-prod-group/</url>
         </pluginRepository>
     </pluginRepositories>
 </project>
