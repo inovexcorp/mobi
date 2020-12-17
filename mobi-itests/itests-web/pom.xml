@@ -166,7 +166,7 @@
                                                 <!-- Check for this URL to return a 200 return code .... -->
                                                 <url>https://localhost:${https-port}/mobi/index.html#/home</url>
                                             </http>
-                                            <time>60000</time>
+                                            <time>300000</time>
                                         </wait>
                                     </run>
                                 </image>
