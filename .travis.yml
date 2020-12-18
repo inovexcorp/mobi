@@ -10,6 +10,9 @@ jdk:
 
 # https://docs.travis-ci.com/user/customizing-the-build/#Skipping-the-Installation-Step
 
+services:
+  - docker
+
 cache:
   directories:
   - $HOME/.m2
@@ -24,6 +27,6 @@ before_install:
 
 
 script: 
-    - mvn clean install -q
+    - mvn clean install -DskipFunctional=false -DskipITs=false
 
 
