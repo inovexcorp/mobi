@@ -8,5 +8,14 @@ jdk:
 
 # sudo: false # faster builds
 
+before_install:
+  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
+  - source ~/.nvm/nvm.sh
+  - nvm install 10 # for Node v5
+  - node --version
+
+
 script: 
     - mvn clean install
+
+
