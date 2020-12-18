@@ -27,6 +27,6 @@ before_install:
 
 
 script: 
-    - mvn clean install -DskipFunctional=false -DskipITs=false
+    - mvn clean install -DskipFunctional=false -DskipITs=false -l temp.build.log
 
 
