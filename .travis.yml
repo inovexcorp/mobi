@@ -27,6 +27,6 @@ before_install:
 
 
 script: 
-    - travis_wait 60 mvn clean install -DskipFunctional=false -DskipITs=false -l temp.build.log ; grep -B 1000 -A 500 Reactor\ Summary temp.build.log; rm temp.build.log
+    - travis_wait 60 mvn clean install -e -DskipFunctional=false -DskipITs=false -l temp.build.log ; grep -B 1000 -A 500 Reactor\ Summary temp.build.log; rm temp.build.log
 
 
