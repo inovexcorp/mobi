@@ -24,6 +24,6 @@ before_install:
 
 
 script: 
-    - mvn clean install > /dev/null
+    - mvn clean install -q
 
 
