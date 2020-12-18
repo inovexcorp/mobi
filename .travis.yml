@@ -24,6 +24,7 @@ before_install:
   - source ~/.nvm/nvm.sh
   - nvm install 10 # for Node v5
   - node --version
+  - apt update && apt install chromium-browser chromium-chromedriver
 
 
 script: 
