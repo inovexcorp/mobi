@@ -21,8 +21,8 @@
   #L%
   -->
 <div class="profile-tab row h-100 py-2">
-    <div class="col-6 offset-3">
-        <h1>{{currentUser.username}}</h1>
+    <div class="col-6 offset-3 mat-elevation-z4 tab-box">
+        <h1 class="admin-top">{{currentUser.username}}</h1>
         <form [formGroup]="profileForm" (ngSubmit)="save()">
             <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
             <p *ngIf="success && profileForm.pristine" class="text-success">
@@ -30,16 +30,16 @@
             </p>
             <!-- TODO: Switch back to textInput when upgraded -->
             <div class="form-group">
-                <label class="control-label" for="firstName">First Name <small class="text-muted">(Optional)</small></label>
-                <input type="text" name="firstName" class="form-control" formControlName="firstName">
+                <label class="control-label admin-label" for="firstName">First Name <small class="text-muted">(Optional)</small></label>
+                <input type="text" name="firstName" class="form-control admin-input" formControlName="firstName">
             </div>
             <div class="form-group">
-                <label class="control-label" for="lastName">Last Name <small class="text-muted">(Optional)</small></label>
-                <input type="text" name="lastName" class="form-control" formControlName="lastName">
+                <label class="control-label admin-label" for="lastName">Last Name <small class="text-muted">(Optional)</small></label>
+                <input type="text" name="lastName" class="form-control admin-input" formControlName="lastName">
             </div>
             <div class="form-group">
-                <label class="control-label" for="email">Email <small class="text-muted">(Optional)</small></label>
-                <input type="text" name="email" class="form-control" [ngClass]="{'is-invalid': profileForm.controls.email.dirty && profileForm.controls.email.invalid, 'is-valid': profileForm.controls.email.dirty && profileForm.controls.email.valid}" formControlName="email">
+                <label class="control-label admin-label" for="email">Email <small class="text-muted">(Optional)</small></label>
+                <input type="text" name="email" class="form-control admin-input" [ngClass]="{'is-invalid': profileForm.controls.email.dirty && profileForm.controls.email.invalid, 'is-valid': profileForm.controls.email.dirty && profileForm.controls.email.valid}" formControlName="email">
             </div>
             <button class="btn btn-primary" type="submit" [disabled]="profileForm.pristine || profileForm.invalid || currentUser.external">Save</button>
         </form>

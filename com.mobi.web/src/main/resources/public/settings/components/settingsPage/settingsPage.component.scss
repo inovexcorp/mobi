@@ -38,6 +38,21 @@
         .mat-tab-body-wrapper {
             flex: 1;
             min-height: 0;
+            background-color: rgb(245, 245, 245);
         }
+        .tab-box {
+            background-color: white;
+
+            .admin-top {
+                margin-top: 15px;
+            }
+            .admin-label {
+                font-size: 16px;
+            }
+            .admin-input {
+                font-size: 20px;
+            }
+        }
+
     }
 }
