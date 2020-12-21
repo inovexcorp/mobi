@@ -34,10 +34,13 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
+import org.ops4j.pax.exam.RelativeTimeout;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.karaf.options.KarafExamSystemConfigurationOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
+import org.ops4j.pax.exam.options.TimeoutOption;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -104,8 +107,8 @@ public class KarafTestSupport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KarafTestSupport.class);
 
-    static final Long COMMAND_TIMEOUT = 30000L;
-    static final Long SERVICE_TIMEOUT = 30000L;
+    static final Long COMMAND_TIMEOUT = 300000L;
+    static final Long SERVICE_TIMEOUT = 300000L;
 
     @Inject
     protected BundleContext bundleContext;
@@ -150,6 +153,7 @@ public class KarafTestSupport {
                         .unpackDirectory(new File("target/exam"))
                         .useDeployFolder(false),
                 KarafDistributionOption.keepRuntimeFolder(),
+                new TimeoutOption(300000),
                 KarafDistributionOption.logLevel(LogLevel.INFO),
                 KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", getFileResource("/etc/org.ops4j.pax.logging.cfg")),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", httpPort),
@@ -162,7 +166,7 @@ public class KarafTestSupport {
                         .artifactId("itests-support")
                         .versionAsInProject()
         ));
-
+        
         Files.list(getFileResource("/etc").toPath()).forEach(path ->
                 options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile())));
 
