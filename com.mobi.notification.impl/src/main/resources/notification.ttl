@@ -1,0 +1,31 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix : <http://mobi.com/ontologies/notification#>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix um: <http://mobi.com/ontologies/user/management#>.
+@prefix pref: <http://mobi.com/ontologies/preference#>.
+@base <http://mobi.com/ontologies/notification>.
+
+<http://mobi.com/ontologies/notification> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/notification/1.0>;
+    owl:imports <http://www.w3.org/ns/shacl#>, <http://mobi.com/ontologies/preference>;
+    rdfs:label "The Mobi preference ontology"@en;
+    rdfs:comment "The Mobi preference ontology describes how preferences are defined within the Mobi framework."@en;
+    dct:creator [foaf:name "Ben Greenberg"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
+    dct:modified "2020-12-15"^^xsd:date.
+
+:EmailNotificationPreference a owl:Class, sh:NodeShape;
+    rdfs:subClassOf pref:Preference;
+    rdfs:label "Email Notification Preference"@en;
+    rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
+    sh:property :EmailNotificationPreferencePropertyShape .
+
+:EmailNotificationPreferencePropertyShape a sh:PropertyShape;
+    sh:path pref:hasDataValue;
+    sh:datatype xsd:boolean;
+    sh:minCount 1 ;
+    sh:maxCount 1 .

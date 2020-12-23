@@ -1,0 +1,6 @@
+CONSTRUCT { ?userPreference ?p ?o }
+WHERE {
+    ?userPreference pref:forUser ?user ;
+        a ?preferenceType ;
+        ?p ?o .
+}
