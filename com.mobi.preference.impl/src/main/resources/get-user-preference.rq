@@ -1,3 +1,5 @@
+PREFIX pref: <http://mobi.com/ontologies/preference#>
+
 CONSTRUCT { ?userPreference ?p ?o }
 WHERE {
     ?userPreference pref:forUser ?user ;

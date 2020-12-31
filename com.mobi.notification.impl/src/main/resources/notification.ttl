@@ -22,10 +22,14 @@
     rdfs:subClassOf pref:Preference;
     rdfs:label "Email Notification Preference"@en;
     rdfs:comment "A preference that a user can have within the Mobi framework that signifies whether they want to receive email notifications."@en;
-    sh:property :EmailNotificationPreferencePropertyShape .
+    sh:property :EmailNotificationPreferencePropertyShape;
+    pref:inGroup :NotificationPreferenceGroup .
 
 :EmailNotificationPreferencePropertyShape a sh:PropertyShape;
     sh:path pref:hasDataValue;
     sh:datatype xsd:boolean;
     sh:minCount 1 ;
     sh:maxCount 1 .
+
+# Definitely need more here
+:NotificationPreferenceGroup a pref:PreferenceGroup .

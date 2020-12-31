@@ -62,9 +62,9 @@
                         <Bundle-Name>Mobi Preference API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.preference.api.*,
+                            com.mobi.preference.api*,
                         </Export-Package>
-                        <_metatype>*</_metatype>
+                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>

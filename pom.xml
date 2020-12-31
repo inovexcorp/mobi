@@ -110,6 +110,7 @@
         <module>com.mobi.utils.cli</module>
         <module>com.mobi.preference.api</module>
         <module>com.mobi.preference.impl</module>
+        <module>com.mobi.preference.rest</module>
         <module>com.mobi.notification.impl</module>
     </modules>
 

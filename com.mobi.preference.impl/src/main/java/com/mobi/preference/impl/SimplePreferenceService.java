@@ -12,12 +12,12 @@ package com.mobi.preference.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -25,7 +25,6 @@ package com.mobi.preference.impl;
 
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.QueryResults;
 import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.Statements;
@@ -45,13 +44,14 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component(immediate = true)
+@Component
 public class SimplePreferenceService implements PreferenceService {
     private static final String PREFERENCE_TYPE_BINDING = "preferenceType";
     private static final String USER_BINDING = "user";
@@ -97,25 +97,27 @@ public class SimplePreferenceService implements PreferenceService {
 
     @Override
     public Set<Preference> getUserPreferences(User user) {
-        Model userPreferences = mf.createModel();
         try (RepositoryConnection conn = repository.getConnection()) {
             Set<Resource> userPreferenceIris = RepositoryResults.asModel(conn.getStatements(null,
                     vf.createIRI(Preference.forUser_IRI), user.getResource(), context), mf).subjects();
-            addEntitiesToModel(userPreferenceIris, userPreferences, conn);
-            return preferenceFactory.getAllExisting(userPreferences).stream().map(preference -> {
-                // For each instance of preference, retrieve all entities connected by hasObjectValue
-                addEntitiesToModel(preference.getHasObjectValue_resource(), userPreferences, conn);
+            // TODO: I didn't use preferenceFactory.getAllExisting() because the backing model for each of the resulting
+            // TODO: preferences was exactly the same for some reason. Not sure why.
+            return userPreferenceIris.stream().map(userPreferenceIri -> {
+                Model preferenceModel = RepositoryResults.asModel(conn.getStatements(userPreferenceIri, null, null, context), mf);
+                Preference preference = preferenceFactory.getExisting(userPreferenceIri, preferenceModel).orElseThrow(() ->
+                        new IllegalStateException("Preference " + userPreferenceIri + " could not be found"));
+                addEntitiesToModel(preference.getHasObjectValue_resource(), preferenceModel, conn);
                 return preference;
             }).collect(Collectors.toSet());
         }
     }
 
     @Override
-    public Optional<Preference> getPreference(User user, Resource preferenceNodeShapeIRI) {
+    public Optional<Preference> getPreference(User user, Resource preferenceType) {
         try (RepositoryConnection conn = repository.getConnection()) {
             GraphQuery query = conn.prepareGraphQuery(GET_USER_PREFERENCE);
             query.setBinding(USER_BINDING, user.getResource());
-            query.setBinding(PREFERENCE_TYPE_BINDING, preferenceNodeShapeIRI);
+            query.setBinding(PREFERENCE_TYPE_BINDING, preferenceType);
             Model userPreferenceModel = QueryResults.asModel(query.evaluate(), mf);
             Set<Preference> preferences =
                     preferenceFactory.getAllExisting(userPreferenceModel).stream().map(preference -> {
@@ -128,7 +130,7 @@ public class SimplePreferenceService implements PreferenceService {
             } else if (preferences.isEmpty()) {
                 return Optional.empty();
             } else {
-                throw new RepositoryException("More than one preference of type " + preferenceNodeShapeIRI + " exists" +
+                throw new RepositoryException("More than one preference of type " + preferenceType + " exists" +
                         " for user " + user.getResource());
             }
         }
@@ -146,14 +148,23 @@ public class SimplePreferenceService implements PreferenceService {
 
     // This method might not work. How would the object IRI already exist in the repo? The frontend wouldn't know how
     // to retrieve that object IRI. It would probably create a new one.
+    // TODO: Need to check if a preference exists for that type in the repo
     @Override
     public void addPreference(User user, Preference preference) {
         try (RepositoryConnection conn = repository.getConnection()) {
             if (conn.contains(preference.getResource(), null, null, context)) {
                 throw new IllegalArgumentException("Preference " + preference.getResource() + " already exists");
             }
+            Resource preferenceType = getPreferenceType(preference);
+            // TODO: Am I throwing errors of the correct type?
+            if (getPreference(user, preferenceType).isPresent()) {
+                throw new IllegalArgumentException("Preference of type " + preferenceType + " already exists for user "
+                    + user.getResource());
+            }
             preference.addForUser(user);
             conn.add(preference.getModel(), context);
+            // TODO: This code might need to be adjusted. I think creation of these objects might require more than just this.
+            // TODO: I don't think it will know the ids for the attached objects
             preference.getHasObjectValue().forEach(objectValue -> {
                 addIfNotExists(objectValue, conn);
             });
@@ -168,16 +179,16 @@ public class SimplePreferenceService implements PreferenceService {
     Remove all triples with a subject of the existingPreference IRI
      */
     @Override
-    public void deletePreference(Preference preference) {
+    public void deletePreference(Resource preferenceIRI) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (!conn.contains(preference.getResource(), null, null, context)) {
-                throw new IllegalArgumentException("Preference " + preference.getResource() + " does not exist");
+            if (!conn.contains(preferenceIRI, null, null, context)) {
+                throw new IllegalArgumentException("Preference " + preferenceIRI + " does not exist");
             }
             conn.begin();
-            List<Resource> hasValue = getReferencedEntityIRIs(preference.getResource(), Preference.hasObjectValue_IRI
+            List<Resource> hasValue = getReferencedEntityIRIs(preferenceIRI, Preference.hasObjectValue_IRI
                     , conn);
-            conn.remove(preference.getResource(), null, null, context);
-            conn.remove((Resource) null, null, preference.getResource(), context);
+            conn.remove(preferenceIRI, null, null, context);
+            conn.remove((Resource) null, null, preferenceIRI, context);
             hasValue.forEach(resource -> removeIfNotReferenced(resource, conn));
             conn.commit();
         }
@@ -186,8 +197,10 @@ public class SimplePreferenceService implements PreferenceService {
 
     // TODO: Need to implement
     @Override
-    public void updatePreference(com.mobi.jaas.api.ontologies.usermanagement.User user, Preference preference,
-                                 Preference existingPreference) {
+    public void updatePreference(User user, Preference newPreference) {
+        // TODO: Should I implement some kind of rollback if the delete or add is not successful?
+        deletePreference(newPreference.getResource());
+        addPreference(user, newPreference);
     }
 
     @Override
@@ -222,7 +235,17 @@ public class SimplePreferenceService implements PreferenceService {
         });
     }
 
-    private void addEntitiesToModel(Set<Entity> entities, Model model) {
-        entities.forEach(entity -> model.addAll(entity.getModel()));
+    private Resource getPreferenceType(Preference preference) {
+        Model tempModel = mf.createModel(preference.getModel().filter(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null));
+        tempModel.remove(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Preference.TYPE));
+        tempModel.remove(preference.getResource(), vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Thing.TYPE));
+        if (tempModel.objects().size() == 1) {
+            return vf.createIRI(tempModel.objects().iterator().next().stringValue());
+        } else if (tempModel.objects().size() == 0) {
+            // TODO: Is this the correct type of exception to throw?
+            throw new IllegalArgumentException("Preference type could not be found");
+        } else {
+            throw new IllegalStateException("Preference should not have more than 3 types");
+        }
     }
 }
